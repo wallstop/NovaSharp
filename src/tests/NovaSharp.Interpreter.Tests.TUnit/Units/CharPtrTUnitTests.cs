@@ -218,5 +218,355 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Units
                 .IsGreaterThan(0)
                 .ConfigureAwait(false);
         }
+
+        [global::TUnit.Core.Test]
+        public async Task StringConstructorThrowsOnNullInput()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = new CharPtr((string)null);
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("str").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CharPtrCopyConstructorThrowsOnNullInput()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = new CharPtr((CharPtr)null);
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CharPtrWithIndexConstructorThrowsOnNullInput()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = new CharPtr((CharPtr)null, 0);
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CharArrayConstructorThrowsOnNullInput()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = new CharPtr((char[])null);
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("chars").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CharArrayWithIndexConstructorThrowsOnNullInput()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = new CharPtr((char[])null, 0);
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("chars").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ByteArrayConstructorThrowsOnNullInput()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = new CharPtr((byte[])null);
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("bytes").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task AdditionOperatorThrowsOnNullPtr()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = (CharPtr)null + 1;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SubtractionOperatorIntThrowsOnNullPtr()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = (CharPtr)null - 1;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task AdditionOperatorUintThrowsOnNullPtr()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = (CharPtr)null + 1u;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SubtractionOperatorUintThrowsOnNullPtr()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = (CharPtr)null - 1u;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task EqualityOperatorWithCharThrowsOnNullPtr()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = (CharPtr)null == 'a';
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task EqualityOperatorCharLeftThrowsOnNullPtr()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = 'a' == (CharPtr)null;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InequalityOperatorWithCharThrowsOnNullPtr()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = (CharPtr)null != 'a';
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InequalityOperatorCharLeftThrowsOnNullPtr()
+        {
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = 'a' != (CharPtr)null;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ConcatenationOperatorThrowsOnNullLeftPtr()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = (CharPtr)null + valid;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr1").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ConcatenationOperatorThrowsOnNullRightPtr()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                CharPtr _ = valid + (CharPtr)null;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr2").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SubtractionOperatorPtrPtrThrowsOnNullLeft()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                int _ = (CharPtr)null - valid;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr1").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SubtractionOperatorPtrPtrThrowsOnNullRight()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                int _ = valid - (CharPtr)null;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr2").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LessThanOperatorThrowsOnNullLeft()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = (CharPtr)null < valid;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr1").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LessThanOperatorThrowsOnNullRight()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = valid < (CharPtr)null;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr2").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LessOrEqualOperatorThrowsOnNullLeft()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = (CharPtr)null <= valid;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr1").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LessOrEqualOperatorThrowsOnNullRight()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = valid <= (CharPtr)null;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr2").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GreaterThanOperatorThrowsOnNullLeft()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = (CharPtr)null > valid;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr1").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GreaterThanOperatorThrowsOnNullRight()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = valid > (CharPtr)null;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr2").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GreaterOrEqualOperatorThrowsOnNullLeft()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = (CharPtr)null >= valid;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr1").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GreaterOrEqualOperatorThrowsOnNullRight()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+            {
+                bool _ = valid >= (CharPtr)null;
+            });
+
+            await Assert.That(exception.ParamName).IsEqualTo("ptr2").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CompareThrowsOnNullLeft()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                CharPtr.Compare(null, valid)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("left").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CompareThrowsOnNullRight()
+        {
+            CharPtr valid = "test";
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                CharPtr.Compare(valid, null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("right").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task EqualsWithNullObjectReturnsFalse()
+        {
+            CharPtr ptr = "test";
+
+            await Assert.That(ptr.Equals(null)).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task EqualsWithNonCharPtrObjectReturnsFalse()
+        {
+            CharPtr ptr = "test";
+
+            await Assert.That(ptr.Equals("test")).IsFalse().ConfigureAwait(false);
+        }
     }
 }

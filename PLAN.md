@@ -2,8 +2,8 @@
 
 ## Repository Snapshot — 2025-12-05 (UTC)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true>` enforced.
-- **Tests**: **3,037** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
-- **Coverage**: Interpreter at **95.85% line / 93.17% branch / 97.84% method**. Branch coverage still below 95% target for enabling `COVERAGE_GATING_MODE=enforce`.
+- **Tests**: **3,097** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Coverage**: Interpreter at **96.0% line / 93.3% branch / 97.8% method**. Branch coverage still below 95% target for enabling `COVERAGE_GATING_MODE=enforce`.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
 - **Regions**: Runtime/tooling/tests remain region-free.
 
@@ -16,14 +16,15 @@
 ## Active Initiatives
 
 ### 1. Coverage and test depth
-- **Current**: 3,037 tests, **95.85% line / 93.17% branch / 97.84% method** coverage.
+- **Current**: 3,097 tests, **96.0% line / 93.3% branch / 97.8% method** coverage.
 - **Target**: Branch coverage >= 95% to enable `COVERAGE_GATING_MODE=enforce`.
 - **Priority targets** (remaining low-branch coverage files):
-  1. **DebugModule** (~67%): Most uncovered paths are in debug.debug REPL loop (requires DebugInput/DebugPrint hooks).
-  2. **StreamFileUserDataBase** (75.9%): Stream operations - most remaining branches are Windows-specific (CRLF normalization).
-  3. **LuaCompatibilityProfile** (78.6%): Version-specific feature gates.
-  4. **CharPtr** (82.1%): String pointer operations.
-- **Next step**: Focus on `DebugModule` hooks, `StreamFileUserDataBase` Windows paths, or `LuaCompatibilityProfile` version gates.
+  1. **DebugModule** (~85%): Most uncovered paths are in debug.debug REPL loop. **Note (2025-12-05)**: The REPL loop within `debug.debug()` cannot be tested because using `ReplInterpreter` inside a running script triggers a VM state issue (`ArgumentOutOfRangeException` in `ProcessingLoop`). Added 18 tests for debug.getinfo, debug.getlocal, debug.setlocal, debug.gethook/sethook covering CLR frame placeholders, function placeholders, and invalid indices.
+  2. **StreamFileUserDataBase** (77.6%): Stream operations - most remaining branches are Windows-specific (CRLF normalization).
+  3. **LuaCompatibilityProfile** (92.2%): Version-specific feature gates - mostly covered.
+  4. **CharPtr** (~95%+): String pointer operations - added 30 null-argument tests covering all constructors and operators.
+  5. **OverloadedMethodMemberDescriptor** (~85%): Overload resolution branches - added 8 tests covering out/ref params, extra args, Script/Context injection, and CallbackArguments.
+- **Next step**: Continue with DebugModule remaining paths and other uncovered branches.
 
 ### 2. Codebase organization & namespace hygiene
 - **Problem**: Monolithic layout mirrors legacy MoonSharp; contributors struggle to locate feature-specific code.

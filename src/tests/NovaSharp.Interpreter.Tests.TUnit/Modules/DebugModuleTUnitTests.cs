@@ -462,6 +462,507 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(tuple[1].String).IsEqualTo("=[C]");
         }
 
+        [global::TUnit.Core.Test]
+        public async Task DebugDebugThrowsWhenDebugInputIsNull()
+        {
+            // Must explicitly set DebugInput to null; the default options have a delegate configured.
+            ScriptOptions options = new() { DebugInput = null, DebugPrint = _ => { } };
+            Script script = new(CoreModules.PresetComplete, options);
+
+            DynValue result = script.DoString(
+                @"
+                local ok, err = pcall(function() debug.debug() end)
+                return ok, err
+            "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple[1].String).Contains("not supported").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DebugDebugExitsImmediatelyWhenDefaultInputReturnsNull()
+        {
+            // Default DebugInput returns null via Platform.DefaultInput - loop exits immediately
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString("return debug.debug()");
+
+            // Should return nil without throwing
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        // NOTE: Tests for the debug.debug REPL loop (interactive input) are skipped because
+        // using ReplInterpreter within a running script context triggers a VM state issue
+        // (ArgumentOutOfRangeException in ProcessingLoop). This is a pre-existing limitation
+        // documented in PLAN.md. The DebugInput check and null-exits-loop paths are covered above.
+
+        [global::TUnit.Core.Test]
+        public async Task GetInfoReturnsFunctionPlaceholderForClrFunctionWithFFlag()
+        {
+            // When using debug.getinfo with a function value, 'f' returns the function itself
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local info = debug.getinfo(print, 'f')
+                return info.func
+                "
+            );
+
+            // For function-based getinfo, 'f' returns the actual function
+            await Assert.That(result.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetInfoReturnsLuaFunctionPlaceholderWithFFlag()
+        {
+            // When using debug.getinfo with a function value, 'f' returns the function itself
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function sample() end
+                local info = debug.getinfo(sample, 'f')
+                return info.func
+                "
+            );
+
+            // For function-based getinfo, 'f' returns the actual function
+            await Assert.That(result.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetInfoFromFrameReturnsStringPlaceholderForClrFunction()
+        {
+            // Tests BuildFunctionPlaceholder for CLR functions (frame.Address < 0)
+            // Using a callback to get a frame-based getinfo for a CLR frame
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "callback",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        // Get info about self (level 0) with 'f' flag
+                        DynValue info = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getinfo");
+                        return ctx.Call(info, DynValue.NewNumber(0), DynValue.NewString("f"));
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return callback()");
+            Table infoTable = result.Table;
+
+            await Assert.That(infoTable).IsNotNull().ConfigureAwait(false);
+            DynValue func = infoTable.Get("func");
+            // Frame-based getinfo for CLR frames returns a string placeholder
+            await Assert.That(func.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(func.String).StartsWith("function:").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetInfoFromFrameReturnsStringPlaceholderForLuaFunction()
+        {
+            // Tests BuildFunctionPlaceholder for Lua functions (frame.Address >= 0)
+            // Level 1 gets the Lua caller's frame (probe), level 0 is getinfo itself
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function probe()
+                    local info = debug.getinfo(1, 'f')
+                    return info.func
+                end
+                return probe()
+                "
+            );
+
+            // Frame-based getinfo for Lua frames returns a hex address placeholder
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).StartsWith("function: 0x").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetLocalFromClrFunctionReturnsPlaceholderLocals()
+        {
+            // Tests the CLR frame path in GetClrDebugLocalTuple - level 0 returns special placeholders
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "probe",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        // Try to get local from the CLR frame (level 0)
+                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(1));
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return probe()");
+
+            // Level 0 at CLR boundary returns special placeholder locals
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            // The first placeholder is (*level)
+            await Assert.That(tuple[0].String).IsEqualTo("(*level)").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetLocalReturnsNilForInvalidIndexInClrFrame()
+        {
+            // Tests the CLR frame path with invalid index
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "probe",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        // Try to get local index 10 (doesn't exist) from CLR frame
+                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(10));
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return probe()");
+
+            // Invalid index returns nil
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetLocalFromClrFunctionReturnsPlaceholderName()
+        {
+            // Tests the CLR frame path in GetClrDebugLocalName for setlocal
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "probe",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        // Try to set local on the CLR frame (level 0)
+                        DynValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
+                        return ctx.Call(
+                            setlocal,
+                            DynValue.NewNumber(0),
+                            DynValue.NewNumber(1),
+                            DynValue.NewString("test")
+                        );
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return probe()");
+
+            // Level 0 setlocal returns the placeholder name
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("(*level)").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetLocalReturnsNilForInvalidIndexInClrFrame()
+        {
+            // Tests the CLR frame path with invalid index
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "probe",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        // Try to set local index 10 (doesn't exist) in CLR frame
+                        DynValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
+                        return ctx.Call(
+                            setlocal,
+                            DynValue.NewNumber(0),
+                            DynValue.NewNumber(10),
+                            DynValue.NewString("test")
+                        );
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return probe()");
+
+            // Invalid index returns nil
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetUpValueFromClrFunctionReturnsNil()
+        {
+            // Tests the CLR function path in getupvalue
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                return debug.getupvalue(print, 1)
+                "
+            );
+
+            // CLR functions have no upvalues
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetUpValueFromClrFunctionReturnsNil()
+        {
+            // Tests the CLR function path in setupvalue
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                return debug.setupvalue(print, 1, 'test')
+                "
+            );
+
+            // CLR functions have no upvalues
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetHookReturnsNilWhenNoHookIsSet()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local func, mask, count = debug.gethook()
+                return func == nil, mask == '', count == 0
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[2].CastToBool()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetHookClearsHookWhenNilPassed()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local called = false
+                debug.sethook(function() called = true end, 'l')
+                debug.sethook(nil)
+                local f, m, c = debug.gethook()
+                return f == nil, m == ''
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple[1].CastToBool()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetInfoWithEmptyWhatReturnsEmptyTable()
+        {
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local function sample() end
+                local info = debug.getinfo(sample, '')
+                local count = 0
+                for k, v in pairs(info) do count = count + 1 end
+                return count
+                "
+            );
+
+            // Empty 'what' string means no fields should be populated
+            await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetClrDebugLocalTupleReturnsIndexPlaceholder()
+        {
+            // Tests index 2 in GetClrDebugLocalTuple ((*index))
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "probe",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(2));
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return probe()");
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(tuple[0].String).IsEqualTo("(*index)").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetClrDebugLocalTupleReturnsValuePlaceholder()
+        {
+            // Tests index 3 in GetClrDebugLocalTuple ((*value))
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "probe",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(3));
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return probe()");
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(tuple[0].String).IsEqualTo("(*value)").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetClrDebugLocalReturnsIndexPlaceholderName()
+        {
+            // Tests index 2 in GetClrDebugLocalName (setlocal path)
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "probe",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        DynValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
+                        return ctx.Call(
+                            setlocal,
+                            DynValue.NewNumber(0),
+                            DynValue.NewNumber(2),
+                            DynValue.NewString("test")
+                        );
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return probe()");
+
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("(*index)").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SetClrDebugLocalReturnsValuePlaceholderName()
+        {
+            // Tests index 3 in GetClrDebugLocalName (setlocal path)
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "probe",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        DynValue setlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("setlocal");
+                        return ctx.Call(
+                            setlocal,
+                            DynValue.NewNumber(0),
+                            DynValue.NewNumber(3),
+                            DynValue.NewString("test")
+                        );
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return probe()");
+
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("(*value)").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetLocalFromFunctionReturnsUpValuePlaceholder()
+        {
+            // Tests GetLocalFromFunction with upvalues (function locals)
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue result = script.DoString(
+                @"
+                local x = 10
+                local function closure()
+                    return x
+                end
+                return debug.getlocal(closure, 1)
+                "
+            );
+
+            // For closures, getlocal returns upvalue placeholders
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            // Placeholder name like (*function-local 1)
+            await Assert.That(tuple[0].String).Contains("function-local").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetLocalFromFunctionReturnsNilForZeroOrNegativeIndex()
+        {
+            // Tests GetLocalFromFunction with index <= 0
+            Script script = new(CoreModules.PresetComplete);
+
+            DynValue zeroResult = script.DoString(
+                @"
+                local function sample() end
+                return debug.getlocal(sample, 0)
+                "
+            );
+
+            await Assert.That(zeroResult.IsNil()).IsTrue().ConfigureAwait(false);
+
+            DynValue negativeResult = script.DoString(
+                @"
+                local function sample() end
+                return debug.getlocal(sample, -1)
+                "
+            );
+
+            await Assert.That(negativeResult.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GetArgumentOrNilReturnsNilForOutOfBoundsIndex()
+        {
+            // Tests GetArgumentOrNil edge case through getlocal
+            Script script = new(CoreModules.PresetComplete);
+
+            script.Globals.Set(
+                "probe",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        // Pass only level, not index, to test arg bounds
+                        DynValue getlocal = ctx.CurrentGlobalEnv.Get("debug").Table.Get("getlocal");
+                        // getlocal(0, 3) asks for (*value) which should pull args[2] - check if nil
+                        return ctx.Call(getlocal, DynValue.NewNumber(0), DynValue.NewNumber(3));
+                    }
+                )
+            );
+
+            DynValue result = script.DoString("return probe()");
+
+            // The value for (*value) should be nil since no third arg was passed to callback
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(tuple[0].String).IsEqualTo("(*value)").ConfigureAwait(false);
+            await Assert.That(tuple[1].IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Performance",
             "CA1812:Avoid uninstantiated internal classes",
