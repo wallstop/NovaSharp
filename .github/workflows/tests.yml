@@ -446,7 +446,7 @@ jobs:
             --corpus-dir src/tests/NovaSharp.Interpreter.Tests/LuaFixtures \
             --lua-version ${{ matrix.lua-version }} \
             --output-file artifacts/lua-comparison-results/comparison-${{ matrix.lua-version }}.json \
-            || echo "comparison_failed=true" >> "$GITHUB_OUTPUT"
+            --enforce
         shell: bash
       - name: Publish comparison summary
         if: always()

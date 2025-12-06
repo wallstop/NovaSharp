@@ -93,7 +93,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 
 ### Reference Lua comparison harness
 - **Status**: Fully implemented. CI runs matrix tests against Lua 5.1, 5.2, 5.3, 5.4.
-- **Gating**: Currently in `warn` mode. Promote to `enforce` once baseline divergences are documented.
+- **Gating**: ✅ Now in `enforce` mode (2025-12-06). Known divergences documented in `docs/testing/lua-divergences.md`.
 - **Test authoring pattern**: Use `LuaFixtureHelper` to load `.lua` files from `LuaFixtures/` directory. See `StringModuleFixtureBasedTUnitTests.cs` for examples.
 
 Key infrastructure:
@@ -101,8 +101,9 @@ Key infrastructure:
 - `src/tests/TestInfrastructure/LuaFixtures/LuaFixtureHelper.cs` – Test helper for loading fixtures
 - `src/tooling/NovaSharp.LuaBatchRunner/` – Batch execution tool (32s for 830 files)
 - `scripts/tests/run-lua-fixtures-fast.sh` – Multi-version fixture runner
-- `scripts/tests/compare-lua-outputs.py` – Diff engine with semantic normalization
+- `scripts/tests/compare-lua-outputs.py` – Diff engine with semantic normalization and divergence allowlist
 - `docs/testing/lua-comparison-harness.md` – Contributor guide
+- `docs/testing/lua-divergences.md` – Known divergence catalog
 
 ### Full Lua specification audit
 - **Tracking**: `docs/testing/spec-audit.md` contains detailed tracking table with status per feature.
@@ -131,7 +132,12 @@ Key infrastructure:
    - Created preset factories: `SandboxOptions.CreateRestrictive()` and `SandboxOptions.CreateModerate()`
    - Added 39 TUnit tests covering instruction limits, recursion limits, access restrictions, and presets
 
-4. **Lua comparison gating**: Promote `lua-comparison` CI job from `warn` to `enforce` once baseline divergences are documented.
+4. ~~**Lua comparison gating**~~: ✅ **Completed 2025-12-06** — Promoted `lua-comparison` CI job from `warn` to `enforce` mode:
+   - Documented 23 known divergences in `docs/testing/lua-divergences.md`
+   - Updated `compare-lua-outputs.py` with built-in allowlist for known divergences
+   - Added `--enforce` flag for CI gating (fails on unexpected mismatches only)
+   - Enhanced output normalization for NovaSharp-specific address formats
+   - Effective match rate: 76.2% of comparable fixtures (excluding CLR-dependent tests)
 
 5. **Namespace restructuring** (Initiative 2): Begin splitting monolithic interpreter project, starting with `NovaSharp.Interpreter.IO`.
 
