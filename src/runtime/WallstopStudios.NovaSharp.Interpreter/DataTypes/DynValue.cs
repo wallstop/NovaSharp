@@ -281,7 +281,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </remarks>
         internal static DynValue NewConcatenatedString(string left, string right)
         {
-            return new DynValue() { _object = ZString.Concat(left, right), _type = DataType.String };
+            return new DynValue()
+            {
+                _object = ZString.Concat(left, right),
+                _type = DataType.String,
+            };
         }
 
         /// <summary>
