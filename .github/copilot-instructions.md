@@ -1,10 +1,24 @@
 # Copilot Instructions for NovaSharp
 
-> **Note**: This file provides GitHub Copilot with repository-specific guidance. Additional agent instructions exist in `AGENTS.md` and `CLAUDE.md` at the repository root; these files will be consolidated in a future pass.
+> **⚠️ This file is deprecated.** All AI assistant guidelines have been consolidated into [`CONTRIBUTING_AI.md`](../CONTRIBUTING_AI.md). This file is retained for backwards compatibility with GitHub Copilot.
 
-## Project Overview
+See [`CONTRIBUTING_AI.md`](../CONTRIBUTING_AI.md) for:
 
-NovaSharp is a complete Lua 5.4 interpreter written in C# for .NET Standard 2.1, Mono, Xamarin, and Unity3D (including IL2CPP/AOT). It is an actively maintained fork of MoonSharp targeting modern .NET (6/7/8+), full Lua 5.4.8 compatibility, and Unity-first ergonomics.
+- Project overview and repository structure
+- Build, test, and formatting commands
+- Architecture overview and key namespaces
+- Coding style and testing guidelines
+- Lint guards and commit style
+
+For human contributors, see [`docs/Contributing.md`](../docs/Contributing.md).
+
+______________________________________________________________________
+
+## Legacy Content (Preserved for Reference)
+
+### Project Overview
+
+NovaSharp is a multi-version Lua interpreter (supporting Lua 5.1, 5.2, 5.3, and 5.4) written in C# for .NET Standard 2.1, Mono, Xamarin, and Unity3D (including IL2CPP/AOT). It is an actively maintained fork of MoonSharp targeting modern .NET (6/7/8+), comprehensive Lua compatibility across all major versions, and Unity-first ergonomics.
 
 ## Repository Structure
 

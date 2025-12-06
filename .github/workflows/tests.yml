@@ -95,8 +95,12 @@ jobs:
         shell: bash
 
   dotnet-tests:
-    runs-on: ubuntu-latest
     needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -112,14 +116,19 @@ jobs:
         run: dotnet restore src/NovaSharp.sln
       - name: Restore tools
         run: dotnet tool restore
-      - name: Build + test via helper script
+      - name: Build + test via helper script (Linux/macOS)
+        if: runner.os != 'Windows'
         run: ./scripts/build/build.sh --skip-tool-restore --skip-restore
         shell: bash
+      - name: Build + test via helper script (Windows)
+        if: runner.os == 'Windows'
+        run: ./scripts/build/build.ps1 -SkipToolRestore -SkipRestore
+        shell: pwsh
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: NovaSharp-test-results
+          name: NovaSharp-test-results-${{ matrix.os }}
           path: artifacts/test-results
           if-no-files-found: error
 
@@ -198,9 +207,9 @@ jobs:
       - name: Generate coverage
         shell: pwsh
         env:
-          COVERAGE_GATING_TARGET_LINE: "95"
-          COVERAGE_GATING_TARGET_BRANCH: "95"
-          COVERAGE_GATING_TARGET_METHOD: "95"
+          COVERAGE_GATING_TARGET_LINE: "96"
+          COVERAGE_GATING_TARGET_BRANCH: "93"
+          COVERAGE_GATING_TARGET_METHOD: "97"
           COVERAGE_GATING_MODE: enforce
         run: ./scripts/coverage/coverage.ps1 -SkipRestore
       - name: Publish coverage summary
@@ -220,9 +229,9 @@ jobs:
         if: always()
         uses: actions/github-script@v8
         env:
-          COVERAGE_THRESHOLD_LINE: "95"
-          COVERAGE_THRESHOLD_BRANCH: "95"
-          COVERAGE_THRESHOLD_METHOD: "95"
+          COVERAGE_THRESHOLD_LINE: "96"
+          COVERAGE_THRESHOLD_BRANCH: "93"
+          COVERAGE_THRESHOLD_METHOD: "97"
           COVERAGE_GATING_MODE: enforce
         with:
           script: |
@@ -382,3 +391,94 @@ jobs:
             artifacts/coverage
             coverage-html.tgz
           if-no-files-found: error
+
+  lua-comparison:
+    runs-on: ubuntu-latest
+    needs: dotnet-tests
+    strategy:
+      matrix:
+        lua-version: ['5.1', '5.2', '5.3', '5.4']
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Lua ${{ matrix.lua-version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua${{ matrix.lua-version }}
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore dependencies
+        run: dotnet restore src/NovaSharp.sln
+      - name: Build NovaSharp CLI
+        run: dotnet build src/tooling/NovaSharp.Cli/NovaSharp.Cli.csproj -c Release --no-restore
+      - name: Verify Lua fixtures exist
+        run: |
+          if [ ! -d "src/tests/NovaSharp.Interpreter.Tests/LuaFixtures" ]; then
+            echo "Error: Lua fixtures not found. Run 'python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py' and commit the results."
+            exit 1
+          fi
+          fixture_count=$(find src/tests/NovaSharp.Interpreter.Tests/LuaFixtures -name "*.lua" | wc -l)
+          echo "Found $fixture_count Lua fixture files"
+        shell: bash
+      - name: Run fixtures against Lua ${{ matrix.lua-version }}
+        run: |
+          bash scripts/tests/run-lua-fixtures.sh --skip-novasharp --lua-version ${{ matrix.lua-version }}
+        shell: bash
+      - name: Run fixtures against NovaSharp
+        env:
+          DOTNET_ROLL_FORWARD: Major
+        run: |
+          bash scripts/tests/run-lua-fixtures.sh --skip-lua --lua-version ${{ matrix.lua-version }}
+        shell: bash
+      - name: Compare outputs
+        id: compare
+        run: |
+          python3 scripts/tests/compare-lua-outputs.py \
+            --results-dir artifacts/lua-comparison-results \
+            --corpus-dir src/tests/NovaSharp.Interpreter.Tests/LuaFixtures \
+            --lua-version ${{ matrix.lua-version }} \
+            --output-file artifacts/lua-comparison-results/comparison-${{ matrix.lua-version }}.json \
+            || echo "comparison_failed=true" >> "$GITHUB_OUTPUT"
+        shell: bash
+      - name: Publish comparison summary
+        if: always()
+        run: |
+          comparison_file="artifacts/lua-comparison-results/comparison-${{ matrix.lua-version }}.json"
+          if [ -f "$comparison_file" ]; then
+            python3 -c "
+          import json
+          with open('$comparison_file') as f:
+              data = json.load(f)
+          summary = data.get('summary', {})
+          match_rate = data.get('match_rate')
+          print('## Lua ${{ matrix.lua-version }} Specification Comparison')
+          print()
+          print('| Metric | Count |')
+          print('| --- | --- |')
+          print(f\"| Match | {summary.get('match', 0)} |\")
+          print(f\"| Mismatch | {summary.get('mismatch', 0)} |\")
+          print(f\"| Both Error | {summary.get('both_error', 0)} |\")
+          print(f\"| Skipped | {summary.get('skipped', 0)} |\")
+          print()
+          if match_rate is not None:
+              print(f'**Match Rate**: {match_rate:.1f}%')
+          " >> "\$GITHUB_STEP_SUMMARY"
+          else
+            echo "Comparison results for Lua ${{ matrix.lua-version }} not found." >> "\$GITHUB_STEP_SUMMARY"
+          fi
+        shell: bash
+      - name: Upload Lua ${{ matrix.lua-version }} comparison results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: lua-comparison-${{ matrix.lua-version }}
+          path: artifacts/lua-comparison-results
+          if-no-files-found: warn

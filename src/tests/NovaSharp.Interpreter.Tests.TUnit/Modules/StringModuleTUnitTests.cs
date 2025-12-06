@@ -469,6 +469,412 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("AB").ConfigureAwait(false);
         }
 
+        // ========================================
+        // string.format - Octal format specifier tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatOctalBasic()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%o', 8)");
+
+            await Assert.That(result.String).IsEqualTo("10").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatOctalWithAlternateFlag()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%#o', 8)");
+
+            await Assert.That(result.String).IsEqualTo("010").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatOctalAlternateFlagWithZero()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%#o', 0)");
+
+            await Assert.That(result.String).IsEqualTo("0").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatOctalWithFieldWidth()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%8o', 8)");
+
+            await Assert.That(result.String).IsEqualTo("      10").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatOctalWithZeroPadding()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%08o', 8)");
+
+            await Assert.That(result.String).IsEqualTo("00000010").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatOctalWithLeftAlign()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%-8o', 8)");
+
+            await Assert.That(result.String).IsEqualTo("10      ").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatOctalWithLeftAlignAndAlternate()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%-#8o', 8)");
+
+            await Assert.That(result.String).IsEqualTo("010     ").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatOctalZeroPaddingWithAlternate()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%#08o', 8)");
+
+            await Assert.That(result.String).IsEqualTo("00000010").ConfigureAwait(false);
+        }
+
+        // ========================================
+        // string.format - Unsigned integer format specifier tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatUnsignedBasic()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%u', 42)");
+
+            await Assert.That(result.String).IsEqualTo("42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatUnsignedWithFieldWidth()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%8u', 42)");
+
+            await Assert.That(result.String).IsEqualTo("      42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatUnsignedWithZeroPadding()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%08u', 42)");
+
+            await Assert.That(result.String).IsEqualTo("00000042").ConfigureAwait(false);
+        }
+
+        // ========================================
+        // string.format - Hex format specifier tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexLowercaseBasic()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%x', 255)");
+
+            await Assert.That(result.String).IsEqualTo("ff").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexUppercaseBasic()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%X', 255)");
+
+            await Assert.That(result.String).IsEqualTo("FF").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexWithAlternateFlagLowercase()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%#x', 255)");
+
+            await Assert.That(result.String).IsEqualTo("0xff").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexWithAlternateFlagUppercase()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%#X', 255)");
+
+            await Assert.That(result.String).IsEqualTo("0XFF").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexWithFieldWidth()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%8x', 255)");
+
+            await Assert.That(result.String).IsEqualTo("      ff").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexWithZeroPadding()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%08x', 255)");
+
+            await Assert.That(result.String).IsEqualTo("000000ff").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexWithLeftAlign()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%-8x', 255)");
+
+            await Assert.That(result.String).IsEqualTo("ff      ").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexWithPrecision()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%.4x', 255)");
+
+            await Assert.That(result.String).IsEqualTo("00ff").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexZeroPaddingWithAlternateLowercase()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%#08x', 255)");
+
+            await Assert.That(result.String).IsEqualTo("0x0000ff").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexZeroPaddingWithAlternateUppercase()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%#08X', 255)");
+
+            await Assert.That(result.String).IsEqualTo("0X0000FF").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexLeftAlignWithAlternate()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%-#8x', 255)");
+
+            await Assert.That(result.String).IsEqualTo("0xff    ").ConfigureAwait(false);
+        }
+
+        // ========================================
+        // string.format - Integer format specifier tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatIntegerWithPositiveSign()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%+d', 42)");
+
+            await Assert.That(result.String).IsEqualTo("+42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatIntegerWithPositiveSpace()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('% d', 42)");
+
+            await Assert.That(result.String).IsEqualTo(" 42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatIntegerPositiveSignOverridesSpace()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%+ d', 42)");
+
+            await Assert.That(result.String).IsEqualTo("+42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatNegativeIntegerWithPositiveSign()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%+d', -42)");
+
+            await Assert.That(result.String).IsEqualTo("-42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatIntegerWithZeroPaddingAndPositiveSign()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%+08d', 42)");
+
+            await Assert.That(result.String).IsEqualTo("+0000042").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatNegativeIntegerWithZeroPadding()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%08d', -42)");
+
+            // Note: Lua counts the minus sign as part of the width
+            await Assert.That(result.String).IsEqualTo("-00000042").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatLeftAlignOverridesZeroPadding()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%-08d', 42)");
+
+            await Assert.That(result.String).IsEqualTo("42      ").ConfigureAwait(false);
+        }
+
+        // ========================================
+        // string.format - Float format specifier tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatFloatWithPositiveSign()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%+f', 3.14)");
+
+            await Assert.That(result.String).StartsWith("+3.14").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatFloatWithPositiveSpace()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('% f', 3.14)");
+
+            await Assert.That(result.String).StartsWith(" 3.14").ConfigureAwait(false);
+        }
+
+        // ========================================
+        // string.format - Exponent format specifier tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatExponentLowercase()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%e', 12345.6)");
+
+            await Assert.That(result.String).Contains("e").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatExponentUppercase()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%E', 12345.6)");
+
+            await Assert.That(result.String).Contains("E").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatGeneralLowercase()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%g', 0.0001234)");
+
+            await Assert.That(result.String).IsNotEmpty().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatGeneralUppercase()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%G', 0.0001234)");
+
+            await Assert.That(result.String).IsNotEmpty().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatExponentWithPositiveSign()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%+e', 12345.6)");
+
+            await Assert.That(result.String).StartsWith("+").ConfigureAwait(false);
+        }
+
+        // ========================================
+        // string.format - Character format specifier tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatCharFromNumber()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%c', 65)");
+
+            await Assert.That(result.String).IsEqualTo("A").ConfigureAwait(false);
+        }
+
+        // ========================================
+        // string.format - String format specifier tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatStringWithPrecision()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%.3s', 'Hello')");
+
+            await Assert.That(result.String).IsEqualTo("Hel").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatStringWithFieldWidth()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%10s', 'Hello')");
+
+            await Assert.That(result.String).IsEqualTo("     Hello").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatStringWithLeftAlign()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%-10s', 'Hello')");
+
+            await Assert.That(result.String).IsEqualTo("Hello     ").ConfigureAwait(false);
+        }
+
+        // ========================================
+        // string.format - Escape tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatPercentEscape()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('100%% complete')");
+
+            await Assert.That(result.String).IsEqualTo("100% complete").ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);

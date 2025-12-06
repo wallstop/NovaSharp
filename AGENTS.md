@@ -1,6 +1,21 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
+> **⚠️ This file is deprecated.** All AI assistant guidelines have been consolidated into [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md). This file is retained for backwards compatibility with tools that may reference it.
+
+See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
+- Project structure and module organization
+- Build, test, and development commands
+- Coding style and naming conventions
+- Testing guidelines and TUnit data-driven tests
+- Commit and pull request guidelines
+
+For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).
+
+---
+
+## Legacy Content (Preserved for Reference)
+
+### Project Structure & Module Organization
 - All runtime code lives under `src/runtime`, with the interpreter in `src/runtime/NovaSharp.Interpreter`.
 - Packaging and debugger wrappers reside in `src/tooling/NovaSharp.Cli`, `src/debuggers/NovaSharp.VsCodeDebugger`, and `src/debuggers/NovaSharp.RemoteDebugger`.
 - Tooling, samples, and utilities are grouped under `src/tooling`, `src/samples`, and `src/tests`.

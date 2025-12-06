@@ -259,7 +259,7 @@ namespace NovaSharp.Interpreter.Execution
                 {
                     DynValue v = GetMetamethod(func, "__call");
 
-                    if (v == null && v.IsNil())
+                    if (v == null || v.IsNil())
                     {
                         throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
                     }
@@ -270,6 +270,8 @@ namespace NovaSharp.Interpreter.Execution
                     {
                         return Call(func, args);
                     }
+
+                    maxloops--;
                 }
 
                 throw ScriptRuntimeException.LoopInCall();

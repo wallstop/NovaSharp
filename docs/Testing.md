@@ -71,29 +71,36 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour). Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when it isn’t already defined so .NET 9 runtimes can execute the net8.0 testhost; override the variable if you need different roll-forward behaviour.
 
-- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI now exports `COVERAGE_GATING_MODE=enforce` with **95 %** line/branch/method thresholds so coverage dips fail fast; set the mode to `monitor` locally if you need a warning-only rehearsal. To mirror the enforced gate (the default in CI), export the stricter settings before rerunning the script:
+- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI now exports `COVERAGE_GATING_MODE=enforce` with **96 % line / 93 % branch / 97 % method** thresholds so coverage dips fail fast; set the mode to `monitor` locally if you need a warning-only rehearsal. To mirror the enforced gate (the default in CI), export the stricter settings before rerunning the script:
 
   ```powershell
   $env:COVERAGE_GATING_MODE = "enforce"
-  $env:COVERAGE_GATING_TARGET_LINE = "95"
-  $env:COVERAGE_GATING_TARGET_BRANCH = "95"
-  $env:COVERAGE_GATING_TARGET_METHOD = "95"
+  $env:COVERAGE_GATING_TARGET_LINE = "96"
+  $env:COVERAGE_GATING_TARGET_BRANCH = "93"
+  $env:COVERAGE_GATING_TARGET_METHOD = "97"
   pwsh ./scripts/coverage/coverage.ps1 -SkipBuild
   ```
 
   ```bash
   COVERAGE_GATING_MODE=enforce \
-  COVERAGE_GATING_TARGET_LINE=95 \
-  COVERAGE_GATING_TARGET_BRANCH=95 \
-  COVERAGE_GATING_TARGET_METHOD=95 \
+  COVERAGE_GATING_TARGET_LINE=96 \
+  COVERAGE_GATING_TARGET_BRANCH=93 \
+  COVERAGE_GATING_TARGET_METHOD=97 \
   bash ./scripts/coverage/coverage.sh --skip-build
   ```
 
 ### Coverage in CI
 
 - `.github/workflows/tests.yml` now includes a `code-coverage` job that runs `pwsh ./scripts/coverage/coverage.ps1` after the primary test job (falling back to the Bash variant on runners without PowerShell).
-- The job now exports `COVERAGE_GATING_MODE=enforce` together with 95 % line/branch/method targets so coverage dips fail fast. The PowerShell coverage helper enforces the same gate, and the workflow’s `Evaluate coverage threshold` step double-checks all three metrics before publishing artefacts.
-- Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise. When the gate passes, the Action log includes a “Coverage Gate” summary showing both the current percentages and thresholds.
+- The job now exports `COVERAGE_GATING_MODE=enforce` together with **96 % line / 93 % branch / 97 % method** targets so coverage dips fail fast. The PowerShell coverage helper enforces the same gate, and the workflow's `Evaluate coverage threshold` step double-checks all three metrics before publishing artefacts.
+- Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise. When the gate passes, the Action log includes a "Coverage Gate" summary showing both the current percentages and thresholds.
+
+### Cross-Platform CI Matrix
+
+- The `dotnet-tests` job uses a matrix strategy running on `ubuntu-latest`, `windows-latest`, and `macos-latest` in parallel.
+- Linux and macOS use `scripts/build/build.sh`; Windows uses `scripts/build/build.ps1` (same parameters).
+- Test results upload as separate artifacts per platform (`NovaSharp-test-results-<os>`).
+- Coverage collection runs only on Ubuntu (post-`dotnet-tests`) to avoid redundant computation.
 
 ## Pass/Fail Policy
 
@@ -101,13 +108,13 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 
-- **Current baseline (Release via `scripts/coverage/coverage.ps1 -SkipBuild`, 2025-11-20 10:23 UTC)**: 96.98 % line / 95.13 % branch / 98.57 % method for `NovaSharp.Interpreter` across 2 547 Release tests (overall repository line coverage 87.5 %).
+- **Current baseline (Release via `scripts/coverage/coverage.ps1 -SkipBuild`, 2025-12-07 UTC)**: 96.2 % line / 93.69 % branch / 97.88 % method for `NovaSharp.Interpreter` across 3,235 Release tests.
 
 - **Fixtures**: ~45 `[TestFixture]` types, 2 731 active tests, 0 known failures (all Release suites are green; the only intentional skip is `TestMore/LanguageExtensions/310-debug.t` until the debug library ships).
 
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 
-- **Gaps**: Visual Studio Code/remote debugger integration still lacks automated smoke tests; CLI tooling and dev utilities remain manual.
+- **Gaps**: DAP protocol integration tests remain unimplemented.
 
 ## Naming & Conventions
 

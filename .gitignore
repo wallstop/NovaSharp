@@ -6,8 +6,6 @@
 *.user
 *.sln.docstates
 
-.devcontainer/**
-
 .vscode/**
 
 # Build results
@@ -25,6 +23,15 @@ node_modules/
 
 # VS2017 .vs directory
 src/.vs/
+
+log.txt
+new.txt
+old.txt
+virtual.txt
+{escapedPath}
+{path}
+temp_runner.ps1
+temp.lua
 
 
 # Remove generated docs

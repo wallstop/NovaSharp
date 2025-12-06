@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 32 undocumented public/internal type declarations.
+Found 49 undocumented public/internal type declarations.
 
 - src/runtime/NovaSharp.Interpreter/CoreLib/DebugModule.cs
   - line 1195: missing XML docs for `Function`
@@ -42,3 +42,21 @@ Found 32 undocumented public/internal type declarations.
   - line 1212: missing XML docs for `Dispose()`
 - src/tooling/NovaSharp.Cli/ArgumentValidation.cs
   - line 10: missing XML docs for `ThrowIfNull()`
+- src/tooling/NovaSharp.LuaBatchRunner/LuaBatchRunner.cs
+  - line 31: missing XML docs for `ExitCode`
+  - line 72: missing XML docs for `FilterSupportedCoreModules()`
+  - line 75: missing XML docs for `GetEnvironmentVariable()`
+  - line 78: missing XML docs for `IsRunningOnAOT()`
+  - line 80: missing XML docs for `GetPlatformName()`
+  - line 82: missing XML docs for `DefaultPrint()`
+  - line 84: missing XML docs for `DefaultInput()`
+  - line 86: missing XML docs for `OpenFile()`
+  - line 89: missing XML docs for `GetStandardStream()`
+  - line 91: missing XML docs for `GetTempFileName()`
+  - line 93: missing XML docs for `FileExists()`
+  - line 95: missing XML docs for `DeleteFile()`
+  - line 97: missing XML docs for `MoveFile()`
+  - line 99: missing XML docs for `ExecuteCommand()`
+  - line 101: missing XML docs for `ExitFast()`
+  - line 108: missing XML docs for `class Program`
+  - line 112: missing XML docs for `Main()`

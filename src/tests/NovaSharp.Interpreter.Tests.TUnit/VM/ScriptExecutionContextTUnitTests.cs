@@ -410,6 +410,67 @@ namespace NovaSharp.Interpreter.Tests.TUnit.VM
             await Assert.That(resumeResult.Boolean).IsTrue();
         }
 
+        [global::TUnit.Core.Test]
+        public async Task CallThrowsLoopInCallWhenCallMetamethodChainExceedsLimit()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            // Create a chain of tables where each __call metamethod returns another table
+            // with a __call metamethod, exceeding the 10-iteration limit
+            Table root = new(script);
+            Table current = root;
+            for (int i = 0; i < 15; i++)
+            {
+                Table next = new(script);
+                Table meta = new(script);
+                meta.Set("__call", DynValue.NewTable(next));
+                current.MetaTable = meta;
+                current = next;
+            }
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                context.Call(DynValue.NewTable(root))
+            );
+
+            await Assert.That(exception.Message).Contains("loop");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallThrowsAttemptToCallNonFuncWhenCallMetamethodIsNil()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            // A table without __call metamethod
+            Table target = new(script);
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                context.Call(DynValue.NewTable(target))
+            );
+
+            await Assert.That(exception.Message).Contains("attempt to call");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallThrowsAttemptToCallNonFuncWhenCallMetamethodReturnsNil()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            // A table with __call metamethod that returns nil
+            Table target = new(script);
+            Table meta = new(script);
+            meta.Set("__call", DynValue.Nil);
+            target.MetaTable = meta;
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                context.Call(DynValue.NewTable(target))
+            );
+
+            await Assert.That(exception.Message).Contains("attempt to call");
+        }
+
         private static TException ExpectException<TException>(Action action)
             where TException : Exception
         {

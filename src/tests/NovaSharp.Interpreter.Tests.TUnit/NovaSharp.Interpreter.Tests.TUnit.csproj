@@ -38,6 +38,10 @@
             Link="TestInfrastructure\Scopes\%(RecursiveDir)%(Filename)%(Extension)"
         />
         <Compile
+            Include="$(RepoRoot)src/tests/TestInfrastructure/LuaFixtures/**/*.cs"
+            Link="TestInfrastructure\LuaFixtures\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
             Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/Units/HardwireTestUtilities.cs"
             Link="Units\HardwireTestUtilities.cs"
         />
@@ -64,6 +68,11 @@
         <None
             Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/Fixtures/**/*"
             Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)"
+            CopyToOutputDirectory="PreserveNewest"
+        />
+        <None
+            Include="$(RepoRoot)src/tests/NovaSharp.Interpreter.Tests/LuaFixtures/**/*"
+            Link="LuaFixtures\%(RecursiveDir)%(Filename)%(Extension)"
             CopyToOutputDirectory="PreserveNewest"
         />
     </ItemGroup>

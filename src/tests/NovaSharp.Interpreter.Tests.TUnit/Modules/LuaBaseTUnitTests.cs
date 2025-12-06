@@ -424,6 +424,99 @@ namespace NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(new CharPtr(sprintfBuffer).ToString()).IsEqualTo("lua-42-FF");
         }
 
+        [global::TUnit.Core.Test]
+        public async Task StringFormatHandlesOctalSpecifier()
+        {
+            char[] buffer = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer), new CharPtr("%o"), 8);
+            await Assert.That(new CharPtr(buffer).ToString()).IsEqualTo("10");
+
+            char[] buffer2 = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer2), new CharPtr("%o"), 63);
+            await Assert.That(new CharPtr(buffer2).ToString()).IsEqualTo("77");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StringFormatHandlesUnsignedSpecifier()
+        {
+            char[] buffer = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer), new CharPtr("%u"), -1);
+            // When a negative int is treated as unsigned, it becomes a large positive number
+            await Assert.That(new CharPtr(buffer).ToString()).IsEqualTo("4294967295");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StringFormatHandlesLowercaseHexSpecifier()
+        {
+            char[] buffer = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer), new CharPtr("%x"), 255);
+            await Assert.That(new CharPtr(buffer).ToString()).IsEqualTo("ff");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StringFormatHandlesCharacterSpecifier()
+        {
+            char[] buffer = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer), new CharPtr("%c"), 65);
+            await Assert.That(new CharPtr(buffer).ToString()).IsEqualTo("A");
+
+            char[] buffer2 = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer2), new CharPtr("%c"), 'B');
+            await Assert.That(new CharPtr(buffer2).ToString()).IsEqualTo("B");
+
+            char[] buffer3 = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer3), new CharPtr("%c"), "Hello");
+            await Assert.That(new CharPtr(buffer3).ToString()).IsEqualTo("H");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StringFormatHandlesExponentSpecifiers()
+        {
+            char[] buffer = new char[30];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer), new CharPtr("%e"), 1234.5);
+            await Assert.That(new CharPtr(buffer).ToString()).Contains("e");
+
+            char[] buffer2 = new char[30];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer2), new CharPtr("%E"), 1234.5);
+            await Assert.That(new CharPtr(buffer2).ToString()).Contains("E");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StringFormatHandlesGeneralSpecifiers()
+        {
+            char[] buffer = new char[30];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer), new CharPtr("%g"), 0.00001234);
+            await Assert.That(new CharPtr(buffer).ToString().Length).IsGreaterThan(0);
+
+            char[] buffer2 = new char[30];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer2), new CharPtr("%G"), 0.00001234);
+            await Assert.That(new CharPtr(buffer2).ToString().Length).IsGreaterThan(0);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StringFormatHandlesLongModifier()
+        {
+            char[] buffer = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer), new CharPtr("%ld"), 123456);
+            await Assert.That(new CharPtr(buffer).ToString()).IsEqualTo("123456");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StringFormatHandlesShortModifier()
+        {
+            char[] buffer = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer), new CharPtr("%hd"), (short)32767);
+            await Assert.That(new CharPtr(buffer).ToString()).IsEqualTo("32767");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StringFormatHandlesPercentEscape()
+        {
+            char[] buffer = new char[20];
+            LuaBaseProxy.StringPrint(new CharPtr(buffer), new CharPtr("100%%"));
+            await Assert.That(new CharPtr(buffer).ToString()).IsEqualTo("100%");
+        }
+
         private static LuaState CreateLuaState(Script script, params DynValue[] args)
         {
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);

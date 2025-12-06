@@ -1,0 +1,11 @@
+-- @lua-versions: 5.3, 5.4
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:752
+-- @test: DebugModuleTUnitTests.SetHookClearsHookWhenNilPassed
+-- @compat-notes: Lua 5.3+: bitwise operators
+local called = false
+                debug.sethook(function() called = true end, 'l')
+                debug.sethook(nil)
+                local f, m, c = debug.gethook()
+                return f == nil, m == ''

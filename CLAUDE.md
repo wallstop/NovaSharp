@@ -1,10 +1,23 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **⚠️ This file is deprecated.** All AI assistant guidelines have been consolidated into [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md). This file is retained for backwards compatibility with Claude Code.
 
-## Project Overview
+See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
+- Project overview and architecture
+- Build, test, and development commands
+- Coding style and conventions
+- Testing guidelines
+- Implementation notes for VM, interop, tables, and opcodes
 
-NovaSharp is a complete Lua 5.2 interpreter written in C# for .NET, Mono, Xamarin, and Unity3D platforms. It provides 99% Lua compatibility with advanced features like debugging support, bytecode dumping/loading, and seamless CLR interop.
+For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).
+
+---
+
+## Legacy Content (Preserved for Reference)
+
+### Project Overview
+
+NovaSharp is a multi-version Lua interpreter (supporting Lua 5.1, 5.2, 5.3, and 5.4) written in C# for .NET, Mono, Xamarin, and Unity3D platforms. It provides comprehensive Lua compatibility across all major versions with advanced features like debugging support, bytecode dumping/loading, and seamless CLR interop.
 
 ## Build, Test, and Development Commands
 
