@@ -16,13 +16,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// Implements Lua standard math library (§6.7) including trigonometric helpers, random number
     /// generation, and integer utilities. This module backs the global `math` table.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "math")]
-    public class MathModule
+    public static class MathModule
     {
         [NovaSharpModuleConstant(Name = "pi")]
         public const double PI = Math.PI;

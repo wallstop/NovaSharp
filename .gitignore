@@ -6,6 +6,8 @@
 *.user
 *.sln.docstates
 
+.vscode/**
+
 # Build results
 
 [Dd]ebug/
@@ -21,6 +23,16 @@ node_modules/
 
 # VS2017 .vs directory
 src/.vs/
+
+log.txt
+new.txt
+old.txt
+virtual.txt
+{escapedPath}
+{path}
+temp_runner.ps1
+temp.lua
+.pytest_cache/**
 
 
 # Remove generated docs
@@ -182,3 +194,6 @@ docs/coverage/latest/
 !documentation_audit.log
 !spelling_audit.log
 !naming_audit.log
+
+# Local scratch experiments
+scratch/

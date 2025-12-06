@@ -221,5 +221,29 @@ namespace NovaSharp.Interpreter.Interop
                 _script2Clr[i].Clear();
             }
         }
+
+        /// <summary>
+        /// Creates a deep copy of the current converter registry so callers can mutate it independently.
+        /// </summary>
+        /// <returns>A new <see cref="CustomConverterRegistry"/> containing the same converter mappings.</returns>
+        internal CustomConverterRegistry Clone()
+        {
+            CustomConverterRegistry clone = new();
+
+            for (int i = 0; i < _script2Clr.Length; i++)
+            {
+                foreach (KeyValuePair<Type, Func<DynValue, object>> pair in _script2Clr[i])
+                {
+                    clone._script2Clr[i][pair.Key] = pair.Value;
+                }
+            }
+
+            foreach (KeyValuePair<Type, Func<Script, object, DynValue>> pair in _clr2Script)
+            {
+                clone._clr2Script[pair.Key] = pair.Value;
+            }
+
+            return clone;
+        }
     }
 }

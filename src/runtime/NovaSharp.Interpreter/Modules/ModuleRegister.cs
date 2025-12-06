@@ -45,7 +45,7 @@ namespace NovaSharp.Interpreter.Modules
 
             if (modules.Has(CoreModules.Basic))
             {
-                RegisterModuleType<BasicModule>(table);
+                RegisterModuleType(table, typeof(BasicModule));
 
                 if (!profile.SupportsWarnFunction)
                 {
@@ -70,7 +70,7 @@ namespace NovaSharp.Interpreter.Modules
 
             if (modules.Has(CoreModules.LoadMethods))
             {
-                RegisterModuleType<LoadModule>(table);
+                RegisterModuleType(table, typeof(LoadModule));
             }
 
             if (modules.Has(CoreModules.Table))
@@ -90,52 +90,52 @@ namespace NovaSharp.Interpreter.Modules
 
             if (modules.Has(CoreModules.ErrorHandling))
             {
-                RegisterModuleType<ErrorHandlingModule>(table);
+                RegisterModuleType(table, typeof(ErrorHandlingModule));
             }
 
             if (modules.Has(CoreModules.Math))
             {
-                RegisterModuleType<MathModule>(table);
+                RegisterModuleType(table, typeof(MathModule));
             }
 
             if (modules.Has(CoreModules.Coroutine))
             {
-                RegisterModuleType<CoroutineModule>(table);
+                RegisterModuleType(table, typeof(CoroutineModule));
             }
 
             if (modules.Has(CoreModules.Bit32) && profile.SupportsBit32Library)
             {
-                RegisterModuleType<Bit32Module>(table);
+                RegisterModuleType(table, typeof(Bit32Module));
             }
 
             if (modules.Has(CoreModules.Dynamic))
             {
-                RegisterModuleType<DynamicModule>(table);
+                RegisterModuleType(table, typeof(DynamicModule));
             }
 
             if (modules.Has(CoreModules.OsSystem))
             {
-                RegisterModuleType<OsSystemModule>(table);
+                RegisterModuleType(table, typeof(OsSystemModule));
             }
 
             if (modules.Has(CoreModules.OsTime))
             {
-                RegisterModuleType<OsTimeModule>(table);
+                RegisterModuleType(table, typeof(OsTimeModule));
             }
 
             if (modules.Has(CoreModules.Io))
             {
-                RegisterModuleType<IoModule>(table);
+                RegisterModuleType(table, typeof(IoModule));
             }
 
             if (modules.Has(CoreModules.Debug))
             {
-                RegisterModuleType<DebugModule>(table);
+                RegisterModuleType(table, typeof(DebugModule));
             }
 
             if (modules.Has(CoreModules.Json))
             {
-                RegisterModuleType<JsonModule>(table);
+                RegisterModuleType(table, typeof(JsonModule));
             }
 
             return table;

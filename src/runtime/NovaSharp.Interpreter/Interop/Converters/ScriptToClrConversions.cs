@@ -287,6 +287,28 @@ namespace NovaSharp.Interpreter.Interop.Converters
             throw ScriptRuntimeException.ConvertObjectFailed(value.Type, desiredType);
         }
 
+        internal static T DynValueToObjectOfType<T>(DynValue value, T defaultValue, bool isOptional)
+        {
+            object result = DynValueToObjectOfType(value, typeof(T), defaultValue, isOptional);
+
+            if (result == null)
+            {
+                return defaultValue;
+            }
+
+            return (T)result;
+        }
+
+        internal static T DynValueToObjectOfType<T>(DynValue value, bool isOptional)
+        {
+            return DynValueToObjectOfType(value, default(T), isOptional);
+        }
+
+        internal static T DynValueToObjectOfType<T>(DynValue value)
+        {
+            return DynValueToObjectOfType(value, default(T), false);
+        }
+
         /// <summary>
         /// Gets a relative weight of how much the conversion is matching the given types.
         /// Implementation must follow that of DynValueToObjectOfType.. it's not very DRY in that sense.

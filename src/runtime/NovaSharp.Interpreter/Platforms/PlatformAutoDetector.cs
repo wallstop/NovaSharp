@@ -1,8 +1,10 @@
 namespace NovaSharp.Interpreter.Platforms
 {
     using System;
+    using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
+    using System.Threading;
     using Loaders;
     using NovaSharp.Interpreter.Interop;
 
@@ -11,10 +13,19 @@ namespace NovaSharp.Interpreter.Platforms
     /// </summary>
     public static class PlatformAutoDetector
     {
+        private const int RunningOnAotUnknown = -1;
+        private const int RunningOnAotFalse = 0;
+        private const int RunningOnAotTrue = 1;
+
         /// <summary>
         /// Caches the result of the JIT detection probe so repeated calls avoid recompiling expressions.
         /// </summary>
-        private static bool? RunningOnAotCache;
+        private static int RunningOnAotState = RunningOnAotUnknown;
+
+        /// <summary>
+        /// Synchronizes concurrent AOT detection so we only probe once per process.
+        /// </summary>
+        private static readonly object RunningOnAotStateGate = new();
 
         /// <summary>
         /// Tracks whether the expensive detection logic already populated the platform flags.
@@ -63,26 +74,53 @@ namespace NovaSharp.Interpreter.Platforms
 #if UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || ENABLE_IL2CPP
                 return true;
 #else
-
-                if (!RunningOnAotCache.HasValue)
+                int cachedState = Volatile.Read(ref RunningOnAotState);
+                if (cachedState != RunningOnAotUnknown)
                 {
-                    try
-                    {
-                        Expression e = Expression.Constant(5, typeof(int));
-                        Expression<Func<int>> lambda = Expression.Lambda<Func<int>>(e);
-                        lambda.Compile();
-                        RunningOnAotCache = false;
-                    }
-                    catch (Exception ex) when (IsAotDetectionSuppressedException(ex))
-                    {
-                        RunningOnAotCache = true;
-                    }
+                    return cachedState == RunningOnAotTrue;
                 }
 
-                return RunningOnAotCache.Value;
+                lock (RunningOnAotStateGate)
+                {
+                    cachedState = Volatile.Read(ref RunningOnAotState);
+                    if (cachedState == RunningOnAotUnknown)
+                    {
+                        bool result = ProbeIsRunningOnAot();
+                        Volatile.Write(
+                            ref RunningOnAotState,
+                            result ? RunningOnAotTrue : RunningOnAotFalse
+                        );
+                        return result;
+                    }
+
+                    return cachedState == RunningOnAotTrue;
+                }
 #endif
             }
         }
+
+#if !(UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || ENABLE_IL2CPP)
+        private static bool ProbeIsRunningOnAot()
+        {
+            try
+            {
+                Func<bool> probeOverride = TestHooks.GetAotProbeOverride();
+                if (probeOverride != null)
+                {
+                    return probeOverride();
+                }
+
+                Expression e = Expression.Constant(5, typeof(int));
+                Expression<Func<int>> lambda = Expression.Lambda<Func<int>>(e);
+                lambda.Compile();
+                return false;
+            }
+            catch (Exception ex) when (IsAotDetectionSuppressedException(ex))
+            {
+                return true;
+            }
+        }
+#endif
 
         private static void AutoDetectPlatformFlags()
         {
@@ -90,53 +128,88 @@ namespace NovaSharp.Interpreter.Platforms
             {
                 return;
             }
+
+            try
+            {
+                bool? forcedUnity = TestHooks.GetUnityDetectionOverride();
+
+                if (forcedUnity.HasValue)
+                {
+                    IsRunningOnUnity = forcedUnity.Value;
+                    if (!forcedUnity.Value)
+                    {
+                        IsUnityNative = false;
+                        IsUnityIl2Cpp = false;
+                    }
+                }
+                else
+                {
 #if PCL
-            IsPortableFramework = true;
+                    IsPortableFramework = true;
 #if ENABLE_DOTNET
-            IsRunningOnUnity = true;
-            IsUnityNative = true;
+                    IsRunningOnUnity = true;
+                    IsUnityNative = true;
 #endif
 #else
 #if UNITY_5
-            IsRunningOnUnity = true;
-            IsUnityNative = true;
+                    IsRunningOnUnity = true;
+                    IsUnityNative = true;
 
 #if ENABLE_IL2CPP
-            IsUnityIL2CPP = true;
+                    IsUnityIL2CPP = true;
 #endif
 #elif !(NETFX_CORE)
-            Assembly[] loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-            bool unityTypeFound = false;
+                    Assembly[] assemblyOverride = TestHooks
+                        .GetAssemblyEnumerationOverride()
+                        ?.Invoke();
+                    Assembly[] loadedAssemblies =
+                        assemblyOverride?.Where(a => a != null).ToArray()
+                        ?? AppDomain.CurrentDomain.GetAssemblies();
+                    bool unityTypeFound = false;
 
-            for (
-                int asmIndex = 0;
-                asmIndex < loadedAssemblies.Length && !unityTypeFound;
-                asmIndex++
-            )
-            {
-                Type[] assemblyTypes = loadedAssemblies[asmIndex].SafeGetTypes();
-                for (int typeIndex = 0; typeIndex < assemblyTypes.Length; typeIndex++)
-                {
-                    if (
-                        assemblyTypes[typeIndex]
-                            .FullName.StartsWith("UnityEngine.", StringComparison.Ordinal)
+                    for (
+                        int asmIndex = 0;
+                        asmIndex < loadedAssemblies.Length && !unityTypeFound;
+                        asmIndex++
                     )
                     {
-                        unityTypeFound = true;
-                        break;
+                        Assembly assembly = loadedAssemblies[asmIndex];
+
+                        string assemblyName = assembly?.GetName().Name;
+                        if (
+                            assemblyName != null
+                            && assemblyName.StartsWith("UnityEngine.", StringComparison.Ordinal)
+                        )
+                        {
+                            unityTypeFound = true;
+                            break;
+                        }
+
+                        Type[] assemblyTypes = assembly.SafeGetTypes();
+                        for (int typeIndex = 0; typeIndex < assemblyTypes.Length; typeIndex++)
+                        {
+                            if (
+                                assemblyTypes[typeIndex]
+                                    .FullName.StartsWith("UnityEngine.", StringComparison.Ordinal)
+                            )
+                            {
+                                unityTypeFound = true;
+                                break;
+                            }
+                        }
                     }
+
+                    IsRunningOnUnity = unityTypeFound;
+#endif
+#endif
                 }
             }
-
-            IsRunningOnUnity = unityTypeFound;
-#endif
-#endif
-
-            IsRunningOnMono = (Type.GetType("Mono.Runtime") != null);
-
-            IsRunningOnClr4 = (Type.GetType("System.Lazy`1") != null);
-
-            AutoDetectionsDone = true;
+            finally
+            {
+                IsRunningOnMono = (Type.GetType("Mono.Runtime") != null);
+                IsRunningOnClr4 = (Type.GetType("System.Lazy`1") != null);
+                AutoDetectionsDone = true;
+            }
         }
 
         /// <summary>
@@ -198,7 +271,9 @@ namespace NovaSharp.Interpreter.Platforms
                 bool isUnityNative,
                 bool isUnityIl2Cpp,
                 bool? runningOnAotCache,
-                bool autoDetectionsDone
+                bool autoDetectionsDone,
+                Func<bool> aotProbeOverride,
+                bool? unityDetectionOverride
             )
             {
                 IsRunningOnMono = isRunningOnMono;
@@ -209,6 +284,8 @@ namespace NovaSharp.Interpreter.Platforms
                 IsUnityIl2Cpp = isUnityIl2Cpp;
                 RunningOnAotCache = runningOnAotCache;
                 AutoDetectionsDone = autoDetectionsDone;
+                AotProbeOverride = aotProbeOverride;
+                UnityDetectionOverride = unityDetectionOverride;
             }
 
             /// <summary>Gets the captured Mono detection flag.</summary>
@@ -234,6 +311,12 @@ namespace NovaSharp.Interpreter.Platforms
 
             /// <summary>Gets a value indicating whether auto-detection had already run.</summary>
             internal bool AutoDetectionsDone { get; }
+
+            /// <summary>Gets the captured AOT probe override delegate.</summary>
+            internal Func<bool> AotProbeOverride { get; }
+
+            /// <summary>Gets the captured Unity detection override flag.</summary>
+            internal bool? UnityDetectionOverride { get; }
         }
 
         /// <summary>
@@ -253,8 +336,10 @@ namespace NovaSharp.Interpreter.Platforms
                     IsPortableFramework,
                     IsUnityNative,
                     IsUnityIl2Cpp,
-                    RunningOnAotCache,
-                    AutoDetectionsDone
+                    ConvertStateToNullable(Volatile.Read(ref RunningOnAotState)),
+                    AutoDetectionsDone,
+                    AotProbeOverride,
+                    UnityDetectionOverride
                 );
             }
 
@@ -269,8 +354,10 @@ namespace NovaSharp.Interpreter.Platforms
                 IsPortableFramework = snapshot.IsPortableFramework;
                 IsUnityNative = snapshot.IsUnityNative;
                 IsUnityIl2Cpp = snapshot.IsUnityIl2Cpp;
-                RunningOnAotCache = snapshot.RunningOnAotCache;
+                SetRunningOnAot(snapshot.RunningOnAotCache);
                 AutoDetectionsDone = snapshot.AutoDetectionsDone;
+                AotProbeOverride = snapshot.AotProbeOverride;
+                UnityDetectionOverride = snapshot.UnityDetectionOverride;
             }
 
             /// <summary>
@@ -321,7 +408,7 @@ namespace NovaSharp.Interpreter.Platforms
             /// </summary>
             public static void SetRunningOnAot(bool? value)
             {
-                RunningOnAotCache = value;
+                Volatile.Write(ref RunningOnAotState, ConvertNullableToState(value));
             }
 
             /// <summary>
@@ -330,6 +417,61 @@ namespace NovaSharp.Interpreter.Platforms
             public static void SetAutoDetectionsDone(bool value)
             {
                 AutoDetectionsDone = value;
+            }
+
+            /// <summary>
+            /// Overrides the AOT probe logic; when set, <see cref="IsRunningOnAot"/> uses the supplied delegate.
+            /// </summary>
+            public static void SetAotProbeOverride(Func<bool> probe)
+            {
+                AotProbeOverride = probe;
+            }
+
+            /// <summary>
+            /// Returns the delegate currently overriding the default AOT probe, if any.
+            /// </summary>
+            internal static Func<bool> GetAotProbeOverride()
+            {
+                return AotProbeOverride;
+            }
+
+            /// <summary>
+            /// Overrides Unity detection results so tests can force Unity/non-Unity behaviour.
+            /// </summary>
+            /// <param name="value">Forced Unity flag; <c>null</c> removes the override.</param>
+            public static void SetUnityDetectionOverride(bool? value)
+            {
+                UnityDetectionOverride = value;
+            }
+
+            /// <summary>
+            /// Gets the currently applied Unity detection override, if any.
+            /// </summary>
+            internal static bool? GetUnityDetectionOverride()
+            {
+                return UnityDetectionOverride;
+            }
+
+            private static Func<bool> AotProbeOverride;
+
+            private static bool? UnityDetectionOverride;
+
+            private static Func<Assembly[]> AssemblyEnumerationOverride;
+
+            /// <summary>
+            /// Overrides the assembly enumeration used when probing for Unity types.
+            /// </summary>
+            public static void SetAssemblyEnumerationOverride(Func<Assembly[]> provider)
+            {
+                AssemblyEnumerationOverride = provider;
+            }
+
+            /// <summary>
+            /// Gets the currently configured assembly enumeration override, if any.
+            /// </summary>
+            internal static Func<Assembly[]> GetAssemblyEnumerationOverride()
+            {
+                return AssemblyEnumerationOverride;
             }
         }
 
@@ -341,6 +483,26 @@ namespace NovaSharp.Interpreter.Platforms
                 || ex is InvalidOperationException
                 || ex is TypeLoadException
                 || ex is System.Security.SecurityException;
+        }
+
+        private static bool? ConvertStateToNullable(int state)
+        {
+            return state switch
+            {
+                RunningOnAotTrue => true,
+                RunningOnAotFalse => false,
+                _ => null,
+            };
+        }
+
+        private static int ConvertNullableToState(bool? value)
+        {
+            if (!value.HasValue)
+            {
+                return RunningOnAotUnknown;
+            }
+
+            return value.Value ? RunningOnAotTrue : RunningOnAotFalse;
         }
     }
 }

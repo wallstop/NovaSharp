@@ -1,0 +1,18 @@
+{
+  "Success": true,
+  "Command": "scopes",
+  "Body": {
+    "Scopes": [
+      {
+        "Name": "Locals",
+        "VariablesReference": 65536,
+        "Expensive": false
+      },
+      {
+        "Name": "Self",
+        "VariablesReference": 65537,
+        "Expensive": false
+      }
+    ]
+  }
+}

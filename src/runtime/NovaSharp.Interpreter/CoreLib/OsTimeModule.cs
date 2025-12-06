@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Text;
     using NovaSharp.Interpreter.DataTypes;
@@ -15,13 +14,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing time related Lua functions from the 'os' module.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "os")]
-    public class OsTimeModule
+    public static class OsTimeModule
     {
         private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private static readonly DateTime GlobalStartTimeUtc = SystemTimeProvider
@@ -194,6 +188,7 @@ namespace NovaSharp.Interpreter.CoreLib
             DynValue vtime = args.AsType(1, "date", DataType.Number, true);
 
             string format = (vformat.IsNil()) ? "%c" : vformat.String;
+            bool forceUtc = executionContext.Script?.Options?.ForceUtcDateTime == true;
 
             if (vtime.IsNotNil())
             {
@@ -206,7 +201,7 @@ namespace NovaSharp.Interpreter.CoreLib
             {
                 format = format.Substring(1);
             }
-            else
+            else if (!forceUtc)
             {
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
 
@@ -362,18 +357,18 @@ namespace NovaSharp.Interpreter.CoreLib
                 }
                 else if (c == 'U')
                 {
-                    // Week number with the first Sunday as the first day of week one (00-53)
-                    sb.Append("??");
+                    int week = GetWeekNumberWithFirstDay(d, DayOfWeek.Sunday);
+                    sb.Append(week.ToString("00", CultureInfo.InvariantCulture));
                 }
                 else if (c == 'V')
                 {
-                    // ISO 8601 week number (00-53)
-                    sb.Append("??");
+                    int isoWeek = GetIso8601WeekNumber(d);
+                    sb.Append(isoWeek.ToString("00", CultureInfo.InvariantCulture));
                 }
                 else if (c == 'W')
                 {
-                    // Week number with the first Monday as the first day of week one (00-53)
-                    sb.Append("??");
+                    int week = GetWeekNumberWithFirstDay(d, DayOfWeek.Monday);
+                    sb.Append(week.ToString("00", CultureInfo.InvariantCulture));
                 }
                 else
                 {
@@ -394,5 +389,40 @@ namespace NovaSharp.Interpreter.CoreLib
 
         private static DateTime ResolveStartTimeUtc(ScriptExecutionContext context) =>
             context?.OwnerScript?.StartTimeUtc ?? GlobalStartTimeUtc;
+
+        private static int GetWeekNumberWithFirstDay(DateTime dateTime, DayOfWeek firstDayOfWeek)
+        {
+            DateTime date = dateTime.Date;
+            DateTime jan1 = new(date.Year, 1, 1);
+            int offset = ((int)firstDayOfWeek - (int)jan1.DayOfWeek + 7) % 7;
+            DateTime firstWeekStart = jan1.AddDays(offset);
+
+            if (firstWeekStart > date)
+            {
+                return 0;
+            }
+
+            double totalDays = (date - firstWeekStart).TotalDays;
+            int week = (int)(totalDays / 7) + 1;
+            return Math.Min(Math.Max(week, 0), 53);
+        }
+
+        private static int GetIso8601WeekNumber(DateTime dateTime)
+        {
+            DateTime date = dateTime.Date;
+            Calendar calendar = CultureInfo.InvariantCulture.Calendar;
+            DayOfWeek day = calendar.GetDayOfWeek(date);
+
+            if (day >= DayOfWeek.Monday && day <= DayOfWeek.Wednesday)
+            {
+                date = date.AddDays(3);
+            }
+
+            return calendar.GetWeekOfYear(
+                date,
+                CalendarWeekRule.FirstFourDayWeek,
+                DayOfWeek.Monday
+            );
+        }
     }
 }

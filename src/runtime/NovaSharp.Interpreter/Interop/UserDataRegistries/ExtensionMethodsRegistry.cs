@@ -4,6 +4,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     using System.Collections.Generic;
     using System.Reflection;
     using System.Runtime.CompilerServices;
+    using System.Threading;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataStructs;
     using NovaSharp.Interpreter.DataTypes;
@@ -16,25 +17,89 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
     /// </summary>
     internal class ExtensionMethodsRegistry
     {
-        private static readonly object SLock = new();
-        private static readonly MultiDictionary<string, IOverloadableMemberDescriptor> SRegistry =
-            new();
-        private static readonly MultiDictionary<
-            string,
-            UnresolvedGenericMethod
-        > SUnresolvedGenericsRegistry = new();
-        private static int ExtensionMethodChangeVersion;
+        private sealed class ExtensionRegistryState
+        {
+            public ExtensionRegistryState()
+            {
+                SyncRoot = new object();
+                Registry = new MultiDictionary<string, IOverloadableMemberDescriptor>(
+                    StringComparer.Ordinal
+                );
+                UnresolvedGenerics = new MultiDictionary<string, UnresolvedGenericMethod>(
+                    StringComparer.Ordinal
+                );
+                ChangeVersion = 0;
+            }
+
+            public ExtensionRegistryState(ExtensionRegistryState template)
+            {
+                SyncRoot = new object();
+                Registry = CloneRegistry(template.Registry);
+                UnresolvedGenerics = CloneGenericsRegistry(template.UnresolvedGenerics);
+                ChangeVersion = template.ChangeVersion;
+            }
+
+            public object SyncRoot { get; }
+
+            public MultiDictionary<string, IOverloadableMemberDescriptor> Registry { get; }
+
+            public MultiDictionary<string, UnresolvedGenericMethod> UnresolvedGenerics { get; }
+
+            public int ChangeVersion { get; set; }
+        }
+
+        private sealed class RegistryScope : IDisposable
+        {
+            private readonly RegistryScope _previous;
+
+            public RegistryScope(ExtensionRegistryState state, RegistryScope previous)
+            {
+                State = state ?? throw new ArgumentNullException(nameof(state));
+                _previous = previous;
+            }
+
+            public ExtensionRegistryState State { get; }
+
+            public void Dispose()
+            {
+                ScopedState.Value = _previous;
+            }
+        }
+
+        private static readonly ExtensionRegistryState GlobalState = new();
+        private static readonly AsyncLocal<RegistryScope> ScopedState = new();
+
+        private static ExtensionRegistryState CurrentState =>
+            ScopedState.Value?.State ?? GlobalState;
 
         private class UnresolvedGenericMethod
         {
+            /// <summary>
+            /// Gets the reflection method info for the unresolved generic extension method.
+            /// </summary>
             public MethodInfo Method { get; }
+
+            /// <summary>
+            /// Gets the access mode that should be used when the descriptor is materialized.
+            /// </summary>
             public InteropAccessMode AccessMode { get; }
+
+            /// <summary>
+            /// Tracks the generic types that have already been materialized to avoid duplicates.
+            /// </summary>
             public HashSet<Type> AlreadyAddedTypes { get; } = new();
 
             public UnresolvedGenericMethod(MethodInfo mi, InteropAccessMode mode)
             {
                 AccessMode = mode;
                 Method = mi;
+            }
+
+            public UnresolvedGenericMethod Clone()
+            {
+                UnresolvedGenericMethod copy = new(Method, AccessMode);
+                copy.AlreadyAddedTypes.UnionWith(AlreadyAddedTypes);
+                return copy;
             }
         }
 
@@ -48,7 +113,8 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             InteropAccessMode mode = InteropAccessMode.Default
         )
         {
-            lock (SLock)
+            ExtensionRegistryState state = CurrentState;
+            lock (state.SyncRoot)
             {
                 bool changesDone = false;
 
@@ -70,7 +136,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
                     if (mi.ContainsGenericParameters)
                     {
-                        SUnresolvedGenericsRegistry.Add(
+                        state.UnresolvedGenerics.Add(
                             mi.Name,
                             new UnresolvedGenericMethod(mi, mode)
                         );
@@ -85,13 +151,13 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
                     MethodMemberDescriptor desc = new(mi, mode);
 
-                    SRegistry.Add(mi.Name, desc);
+                    state.Registry.Add(mi.Name, desc);
                     changesDone = true;
                 }
 
                 if (changesDone)
                 {
-                    ++ExtensionMethodChangeVersion;
+                    ++state.ChangeVersion;
                 }
             }
         }
@@ -110,9 +176,10 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             string name
         )
         {
-            lock (SLock)
+            ExtensionRegistryState state = CurrentState;
+            lock (state.SyncRoot)
             {
-                return new List<IOverloadableMemberDescriptor>(SRegistry.Find(name));
+                return new List<IOverloadableMemberDescriptor>(state.Registry.Find(name));
             }
         }
 
@@ -123,7 +190,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
         /// <returns></returns>
         public static int GetExtensionMethodsChangeVersion()
         {
-            return ExtensionMethodChangeVersion;
+            return CurrentState.ChangeVersion;
         }
 
         /// <summary>
@@ -137,23 +204,14 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             Type extendedType
         )
         {
-            List<UnresolvedGenericMethod> unresolvedGenerics;
+            ExtensionRegistryState state = CurrentState;
+            List<UnresolvedGenericMethod> unresolvedGenerics = new();
 
-            lock (SLock)
+            lock (state.SyncRoot)
             {
-                IEnumerable<UnresolvedGenericMethod> found = SUnresolvedGenericsRegistry.Find(name);
-
-                if (found is List<UnresolvedGenericMethod> existing)
+                foreach (UnresolvedGenericMethod method in state.UnresolvedGenerics.Find(name))
                 {
-                    unresolvedGenerics = new List<UnresolvedGenericMethod>(existing);
-                }
-                else
-                {
-                    unresolvedGenerics = new List<UnresolvedGenericMethod>();
-                    foreach (UnresolvedGenericMethod method in found)
-                    {
-                        unresolvedGenerics.Add(method);
-                    }
+                    unresolvedGenerics.Add(method);
                 }
             }
 
@@ -188,8 +246,11 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
                             MethodMemberDescriptor desc = new(mi, ugm.AccessMode);
 
-                            SRegistry.Add(ugm.Method.Name, desc);
-                            ++ExtensionMethodChangeVersion;
+                            lock (state.SyncRoot)
+                            {
+                                state.Registry.Add(ugm.Method.Name, desc);
+                                ++state.ChangeVersion;
+                            }
                         }
                     }
                 }
@@ -197,7 +258,7 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
 
             List<IOverloadableMemberDescriptor> matches = new();
 
-            foreach (IOverloadableMemberDescriptor descriptor in SRegistry.Find(name))
+            foreach (IOverloadableMemberDescriptor descriptor in state.Registry.Find(name))
             {
                 Type extensionType = descriptor.ExtensionMethodType;
                 if (
@@ -249,6 +310,48 @@ namespace NovaSharp.Interpreter.Interop.UserDataRegistries
             }
 
             return null;
+        }
+
+        internal static IDisposable EnterIsolationScope()
+        {
+            ExtensionRegistryState clone = new(CurrentState);
+            RegistryScope scope = new(clone, ScopedState.Value);
+            ScopedState.Value = scope;
+            return scope;
+        }
+
+        private static MultiDictionary<string, IOverloadableMemberDescriptor> CloneRegistry(
+            MultiDictionary<string, IOverloadableMemberDescriptor> source
+        )
+        {
+            MultiDictionary<string, IOverloadableMemberDescriptor> clone = new(
+                StringComparer.Ordinal
+            );
+            foreach (string key in source.Keys)
+            {
+                foreach (IOverloadableMemberDescriptor value in source.Find(key))
+                {
+                    clone.Add(key, value);
+                }
+            }
+
+            return clone;
+        }
+
+        private static MultiDictionary<string, UnresolvedGenericMethod> CloneGenericsRegistry(
+            MultiDictionary<string, UnresolvedGenericMethod> source
+        )
+        {
+            MultiDictionary<string, UnresolvedGenericMethod> clone = new(StringComparer.Ordinal);
+            foreach (string key in source.Keys)
+            {
+                foreach (UnresolvedGenericMethod value in source.Find(key))
+                {
+                    clone.Add(key, value.Clone());
+                }
+            }
+
+            return clone;
         }
     }
 }

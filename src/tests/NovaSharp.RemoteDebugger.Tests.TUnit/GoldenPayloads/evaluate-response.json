@@ -1,0 +1,9 @@
+{
+  "Success": true,
+  "Command": "evaluate",
+  "Body": {
+    "Result": "42",
+    "Type": "number",
+    "VariablesReference": 0
+  }
+}

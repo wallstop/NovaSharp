@@ -1,0 +1,12 @@
+{
+  "Success": true,
+  "Command": "threads",
+  "Body": {
+    "Threads": [
+      {
+        "Id": 0,
+        "Name": "Main Thread"
+      }
+    ]
+  }
+}

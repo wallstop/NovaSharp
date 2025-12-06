@@ -1,5 +1,7 @@
 namespace NovaSharp.Benchmarks
 {
+    using System;
+    using System.Diagnostics.CodeAnalysis;
     using BenchmarkDotNet.Attributes;
     using NovaSharp.Interpreter;
     using NovaSharp.Interpreter.DataTypes;
@@ -9,9 +11,14 @@ namespace NovaSharp.Benchmarks
     /// BenchmarkDotNet suite that executes representative NovaSharp runtime scenarios.
     /// </summary>
     [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
     public class RuntimeBenchmarks
     {
-        private Script _script = null!;
+        private Script _script;
         private DynValue _compiledEntry = DynValue.Nil;
         private Func<double> _scenarioRunner;
         private BenchmarkHost _host = new();
@@ -20,12 +27,21 @@ namespace NovaSharp.Benchmarks
         /// Scenario that will be executed for the next benchmark iteration.
         /// </summary>
         [Params(
-            RuntimeScenario.NumericLoops,
-            RuntimeScenario.TableMutation,
-            RuntimeScenario.CoroutinePipeline,
-            RuntimeScenario.UserDataInterop
+            nameof(RuntimeScenario.NumericLoops),
+            nameof(RuntimeScenario.TableMutation),
+            nameof(RuntimeScenario.CoroutinePipeline),
+            nameof(RuntimeScenario.UserDataInterop)
         )]
-        public RuntimeScenario Scenario { get; set; }
+        public string ScenarioName { get; set; } = nameof(RuntimeScenario.NumericLoops);
+
+        private RuntimeScenario CurrentScenario
+        {
+            get
+            {
+                ArgumentException.ThrowIfNullOrEmpty(ScenarioName);
+                return Enum.Parse<RuntimeScenario>(ScenarioName, ignoreCase: false);
+            }
+        }
 
         [GlobalSetup]
         /// <summary>
@@ -33,14 +49,16 @@ namespace NovaSharp.Benchmarks
         /// </summary>
         public void Setup()
         {
+            RuntimeScenario scenario = CurrentScenario;
+
             _script = new Script(CoreModules.PresetComplete);
             _compiledEntry = _script.LoadString(
-                LuaRuntimeSuites.GetScript(Scenario),
+                LuaRuntimeSuites.GetScript(scenario),
                 null,
-                $"scenario_{Scenario}"
+                $"scenario_{scenario}"
             );
 
-            _scenarioRunner = Scenario switch
+            _scenarioRunner = scenario switch
             {
                 RuntimeScenario.NumericLoops => () => _script.Call(_compiledEntry).Number,
                 RuntimeScenario.TableMutation => RunTableScenario,
@@ -50,7 +68,7 @@ namespace NovaSharp.Benchmarks
             };
 
             if (
-                Scenario == RuntimeScenario.UserDataInterop
+                scenario == RuntimeScenario.UserDataInterop
                 && !UserData.IsTypeRegistered<BenchmarkHost>()
             )
             {
@@ -90,7 +108,7 @@ namespace NovaSharp.Benchmarks
     /// <summary>
     /// Host object exposed to Lua scripts for the userdata interop scenario.
     /// </summary>
-    public sealed class BenchmarkHost
+    internal sealed class BenchmarkHost
     {
         private double _store;
 

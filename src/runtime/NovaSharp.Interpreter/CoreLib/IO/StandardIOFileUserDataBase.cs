@@ -21,7 +21,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         public static StandardIoFileUserDataBase CreateInputStream(Stream stream)
         {
             StandardIoFileUserDataBase f = new();
-            f.Initialize(stream, new StreamReader(stream), null);
+            f.Initialize(stream, new StreamReader(stream), null, false);
             return f;
         }
 
@@ -33,7 +33,7 @@ namespace NovaSharp.Interpreter.CoreLib.IO
         public static StandardIoFileUserDataBase CreateOutputStream(Stream stream)
         {
             StandardIoFileUserDataBase f = new();
-            f.Initialize(stream, null, new StreamWriter(stream));
+            f.Initialize(stream, null, new StreamWriter(stream), false);
             return f;
         }
     }

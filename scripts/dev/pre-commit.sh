@@ -120,6 +120,28 @@ update_naming_audit_log() {
   fi
 }
 
+run_powershell_script() {
+  script="$1"
+  if command -v pwsh >/dev/null 2>&1; then
+    pwsh -NoLogo -NoProfile -File "$script"
+    return
+  fi
+
+  if command -v powershell >/dev/null 2>&1; then
+    powershell -NoLogo -NoProfile -File "$script"
+    return
+  fi
+
+  printf '%s\n' "[pre-commit] PowerShell is required to run $script. Install pwsh or Windows PowerShell to keep the fixture catalog in sync." >&2
+  exit 1
+}
+
+update_fixture_catalog() {
+  log "[pre-commit] Regenerating NUnit fixture catalog..."
+  run_powershell_script ./scripts/tests/update-fixture-catalog.ps1 >/dev/null
+  git add src/tests/NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs
+}
+
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || printf '')"
 if [ -z "$repo_root" ]; then
   printf '%s\n' "pre-commit hook must run inside the repo." >&2
@@ -138,5 +160,8 @@ format_all_csharp_files
 format_markdown_files
 update_documentation_audit_log
 update_naming_audit_log
+update_fixture_catalog
 
 log "[pre-commit] Completed successfully."
+
+

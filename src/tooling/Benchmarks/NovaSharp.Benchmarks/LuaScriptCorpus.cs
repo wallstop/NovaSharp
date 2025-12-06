@@ -6,7 +6,7 @@ namespace NovaSharp.Benchmarks
     /// <summary>
     /// Describes the relative size/complexity of scripts used when benchmarking compilation performance.
     /// </summary>
-    public enum ScriptComplexity
+    internal enum ScriptComplexity
     {
         [Obsolete("Use a specific ScriptComplexity.", false)]
         Unknown = 0,

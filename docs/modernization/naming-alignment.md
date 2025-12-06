@@ -39,7 +39,7 @@
    - For newly written code paths (e.g., `Utf8Module`), keep PascalCase even when mirroring Lua names and use the existing `NovaSharpModuleMethodAttribute(Name = "str_find")` to control the public Lua symbol instead of encoding the Lua name in the method identifier.
 1. **Analyzer enforcement**
    - ✅ (2025-11-20) Added `.editorconfig` rules that force PascalCase for every method (`methods_must_be_pascal`) and `_camelCase` for private fields, excluding only the `NovaSharp.Interpreter.LuaPort` namespace so the mirrored Lua sources remain untouched. IDE1006 now fires as an error outside the LuaPort folder, immediately surfacing snake_case regressions.
-   - ✅ (2025-11-20) CI now runs `dotnet format src/NovaSharp.sln --verify-no-changes --severity error` inside the lint job, so pull requests fail automatically when the editorconfig naming rules are violated.
+   - ✅ (2025-11-20) CI now runs `dotnet csharpier check .` inside the lint job (via `scripts/ci/check-csharpier.sh`), so pull requests fail automatically when the canonical formatter detects drift. Any residual `dotnet format` complaints are treated as configuration bugs to fix rather than formatting to change.
 1. **Audit automation**
    - ✅ (2025-11-22) Extended `tools/NamingAudit/naming_audit.py` with deterministic `--write-log`/`--verify-log` switches so the committed `naming_audit.log` always reflects the current analyzer output. The lint and dotnet-test workflows verify the log during every run, keeping the PLAN checkpoint honest without manual intervention.
 

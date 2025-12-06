@@ -1,10 +1,13 @@
 namespace NovaSharp.Interpreter
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
+    using System.Reflection;
     using System.Text;
+    using System.Threading;
     using CoreLib;
     using Debugging;
     using Diagnostics;
@@ -15,6 +18,7 @@ namespace NovaSharp.Interpreter
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Execution.VM;
     using NovaSharp.Interpreter.Infrastructure;
+    using NovaSharp.Interpreter.Loaders;
     using NovaSharp.Interpreter.Modules;
     using Platforms;
     using Tree.Expressions;
@@ -45,6 +49,12 @@ namespace NovaSharp.Interpreter
         private readonly ITimeProvider _timeProvider;
         private readonly DateTime _startTimeUtc;
         private bool _bit32CompatibilityWarningEmitted;
+        private static ScriptGlobalOptions GlobalOptionsSnapshot;
+        private static readonly AsyncLocal<GlobalOptionsScope> ScopedGlobalOptions = new();
+        private static readonly ConcurrentDictionary<
+            Type,
+            MethodInfo
+        > LegacyResolveFileNameMethods = new();
 
         /// <summary>
         /// Initializes the <see cref="Script"/> class.
@@ -128,7 +138,22 @@ namespace NovaSharp.Interpreter
         /// <summary>
         /// Gets the global options, that is options which cannot be customized per-script.
         /// </summary>
-        public static ScriptGlobalOptions GlobalOptions { get; private set; }
+        public static ScriptGlobalOptions GlobalOptions
+        {
+            get { return ScopedGlobalOptions.Value?.Options ?? GlobalOptionsSnapshot; }
+            internal set
+            {
+                if (ScopedGlobalOptions.Value != null)
+                {
+                    ScopedGlobalOptions.Value.Options =
+                        value ?? throw new ArgumentNullException(nameof(value));
+                }
+                else
+                {
+                    GlobalOptionsSnapshot = value ?? throw new ArgumentNullException(nameof(value));
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the effective Lua compatibility version for this script.
@@ -143,6 +168,22 @@ namespace NovaSharp.Interpreter
         /// </summary>
         public LuaCompatibilityProfile CompatibilityProfile =>
             LuaCompatibilityProfile.ForVersion(CompatibilityVersion);
+
+        /// <summary>
+        /// Captures the current global options and returns a scope that restores them when disposed.
+        /// </summary>
+        /// <returns>An <see cref="IDisposable"/> that reverts <see cref="GlobalOptions"/> to its previous value.</returns>
+        internal static IDisposable BeginGlobalOptionsScope()
+        {
+            GlobalOptionsScope scope = new(GlobalOptions.Clone(), ScopedGlobalOptions.Value);
+            ScopedGlobalOptions.Value = scope;
+            return scope;
+        }
+
+        internal static IDisposable BeginDefaultOptionsScope()
+        {
+            return new DefaultOptionsScope(DefaultOptions);
+        }
 
         /// <summary>
         /// Gets access to performance statistics.
@@ -246,6 +287,11 @@ namespace NovaSharp.Interpreter
         {
             return ExecuteWithCompatibilityGuard(() =>
             {
+                if (code == null)
+                {
+                    throw new ArgumentNullException(nameof(code));
+                }
+
                 this.CheckScriptOwnership(globalTable);
 
                 if (code.StartsWith(StringModule.Base64DumpHeader, StringComparison.Ordinal))
@@ -289,6 +335,11 @@ namespace NovaSharp.Interpreter
         {
             return ExecuteWithCompatibilityGuard(() =>
             {
+                if (stream == null)
+                {
+                    throw new ArgumentNullException(nameof(stream));
+                }
+
                 this.CheckScriptOwnership(globalTable);
 
                 Stream codeStream = new UndisposableStream(stream);
@@ -403,16 +454,18 @@ namespace NovaSharp.Interpreter
             string friendlyFilename = null
         )
         {
+            if (filename == null)
+            {
+                throw new ArgumentNullException(nameof(filename));
+            }
+
             this.CheckScriptOwnership(globalContext);
 
-#pragma warning disable 618
-            filename = Options.ScriptLoader.ResolveFileName(
-                filename,
-                globalContext ?? _globalTable
-            );
-#pragma warning restore 618
+            Table globals = globalContext ?? _globalTable;
 
-            object code = Options.ScriptLoader.LoadFile(filename, globalContext ?? _globalTable);
+            filename = ResolveFileNameWithLegacyFallback(Options.ScriptLoader, filename, globals);
+
+            object code = Options.ScriptLoader.LoadFile(filename, globals);
 
             if (code is string s)
             {
@@ -1070,5 +1123,119 @@ namespace NovaSharp.Interpreter
         /// Provides the owning script reference for <see cref="IScriptPrivateResource"/> consumers.
         /// </summary>
         public virtual Script OwnerScript => this;
+
+        private static string ResolveFileNameWithLegacyFallback(
+            IScriptLoader scriptLoader,
+            string filename,
+            Table globalContext
+        )
+        {
+            if (scriptLoader == null)
+            {
+                throw new ArgumentNullException(nameof(scriptLoader));
+            }
+
+            if (scriptLoader is ScriptLoaderBase scriptLoaderBase)
+            {
+                return scriptLoaderBase.ResolveFileName(filename, globalContext);
+            }
+
+            MethodInfo resolveFileName = LegacyResolveFileNameMethods.GetOrAdd(
+                scriptLoader.GetType(),
+                static type =>
+                {
+                    InterfaceMapping mapping = type.GetInterfaceMap(typeof(IScriptLoader));
+
+                    for (int i = 0; i < mapping.InterfaceMethods.Length; i++)
+                    {
+                        if (
+                            mapping.InterfaceMethods[i].Name
+                            == nameof(IScriptLoader.ResolveFileName)
+                        )
+                        {
+                            return mapping.TargetMethods[i];
+                        }
+                    }
+
+                    return null;
+                }
+            );
+
+            if (resolveFileName == null)
+            {
+                return filename;
+            }
+
+            return (string)
+                resolveFileName.Invoke(scriptLoader, new object[] { filename, globalContext });
+        }
+
+        private sealed class GlobalOptionsScope : IDisposable
+        {
+            public GlobalOptionsScope(ScriptGlobalOptions options, GlobalOptionsScope previousScope)
+            {
+                Options = options ?? throw new ArgumentNullException(nameof(options));
+                PreviousScope = previousScope;
+            }
+
+            /// <summary>
+            /// Gets or sets the options snapshot managed by this scope.
+            /// </summary>
+            public ScriptGlobalOptions Options { get; set; }
+
+            private GlobalOptionsScope PreviousScope { get; }
+
+            /// <summary>
+            /// Restores the previously active scope when the current scope is disposed.
+            /// </summary>
+            public void Dispose()
+            {
+                ScopedGlobalOptions.Value = PreviousScope;
+            }
+        }
+
+        private sealed class DefaultOptionsScope : IDisposable
+        {
+            private readonly ScriptOptions _snapshot;
+            private bool _disposed;
+
+            public DefaultOptionsScope(ScriptOptions defaults)
+            {
+                if (defaults == null)
+                {
+                    throw new ArgumentNullException(nameof(defaults));
+                }
+
+                _snapshot = new ScriptOptions(defaults);
+            }
+
+            public void Dispose()
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+
+                ScriptOptions defaultOptions = DefaultOptions;
+
+                defaultOptions.ScriptLoader = _snapshot.ScriptLoader;
+                defaultOptions.DebugPrint = _snapshot.DebugPrint;
+                defaultOptions.DebugInput = _snapshot.DebugInput;
+                defaultOptions.UseLuaErrorLocations = _snapshot.UseLuaErrorLocations;
+                defaultOptions.ColonOperatorClrCallbackBehaviour =
+                    _snapshot.ColonOperatorClrCallbackBehaviour;
+                defaultOptions.Stdin = _snapshot.Stdin;
+                defaultOptions.Stdout = _snapshot.Stdout;
+                defaultOptions.Stderr = _snapshot.Stderr;
+                defaultOptions.TailCallOptimizationThreshold =
+                    _snapshot.TailCallOptimizationThreshold;
+                defaultOptions.CheckThreadAccess = _snapshot.CheckThreadAccess;
+                defaultOptions.CompatibilityVersion = _snapshot.CompatibilityVersion;
+                defaultOptions.HighResolutionClock = _snapshot.HighResolutionClock;
+                defaultOptions.TimeProvider = _snapshot.TimeProvider;
+            }
+        }
     }
 }

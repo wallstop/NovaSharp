@@ -445,7 +445,12 @@ namespace NovaSharp.Interpreter.CoreLib.IO
                 string chunk = ReadBuffer(1);
                 if (chunk.Length == 0)
                 {
-                    break;
+                    if (Eof())
+                    {
+                        break;
+                    }
+
+                    continue;
                 }
 
                 if (canRewind)

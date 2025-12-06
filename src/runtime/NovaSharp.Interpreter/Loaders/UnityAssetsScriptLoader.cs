@@ -5,6 +5,7 @@ namespace NovaSharp.Interpreter.Loaders
     using System.Globalization;
     using System.IO;
     using System.Reflection;
+    using System.Runtime.ExceptionServices;
     using System.Security;
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
@@ -116,13 +117,27 @@ namespace NovaSharp.Interpreter.Loaders
                     _resources.Add(name, text);
                 }
             }
-            catch (Exception ex) when (IsRecoverableLoaderInitializationException(ex))
+            catch (Exception ex)
             {
-                string message = FormatLoaderInitializationError(ex);
+                Exception evaluationTarget = ex;
+                if (ex is TargetInvocationException tie && tie.InnerException != null)
+                {
+                    evaluationTarget = tie.InnerException;
+                }
+
+                if (IsRecoverableLoaderInitializationException(evaluationTarget))
+                {
+                    string message = FormatLoaderInitializationError(ex);
 #if !(PCL || ENABLE_DOTNET || NETFX_CORE)
-                Console.WriteLine(message);
+                    Console.WriteLine(message);
 #endif
-                System.Diagnostics.Debug.WriteLine(message);
+                    System.Diagnostics.Debug.WriteLine(message);
+                }
+                else
+                {
+                    ExceptionDispatchInfo.Capture(evaluationTarget).Throw();
+                    throw;
+                }
             }
         }
 #endif

@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -12,13 +11,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing error handling Lua functions (pcall and xpcall)
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule]
-    public class ErrorHandlingModule
+    public static class ErrorHandlingModule
     {
         /// <summary>
         /// Implements Lua's <c>pcall</c>, wrapping a function invocation in protected mode.

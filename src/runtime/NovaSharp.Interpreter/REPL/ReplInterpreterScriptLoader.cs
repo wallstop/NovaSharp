@@ -21,11 +21,24 @@ namespace NovaSharp.Interpreter.REPL
     /// </summary>
     public class ReplInterpreterScriptLoader : FileSystemScriptLoader
     {
+        private readonly Func<string, string> _environmentVariableProvider;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ReplInterpreterScriptLoader"/> class.
         /// </summary>
         public ReplInterpreterScriptLoader()
+            : this(Environment.GetEnvironmentVariable) { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ReplInterpreterScriptLoader"/> class using a custom environment provider.
+        /// </summary>
+        /// <param name="environmentVariableProvider">Delegate used to read environment variables (defaults to <see cref="Environment.GetEnvironmentVariable(string)"/>).</param>
+        protected ReplInterpreterScriptLoader(Func<string, string> environmentVariableProvider)
         {
+            _environmentVariableProvider =
+                environmentVariableProvider
+                ?? throw new ArgumentNullException(nameof(environmentVariableProvider));
+
             ModulePaths = TryLoadEnvironmentPaths(NovaSharpPathEnvironmentVariable);
 
             if (ModulePaths == null)
@@ -72,9 +85,9 @@ namespace NovaSharp.Interpreter.REPL
             }
         }
 
-        private static IReadOnlyList<string> TryLoadEnvironmentPaths(string variable)
+        private IReadOnlyList<string> TryLoadEnvironmentPaths(string variable)
         {
-            string env = Environment.GetEnvironmentVariable(variable);
+            string env = _environmentVariableProvider(variable);
             if (string.IsNullOrWhiteSpace(env))
             {
                 return null;

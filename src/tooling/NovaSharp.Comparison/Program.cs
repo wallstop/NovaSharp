@@ -20,6 +20,9 @@ namespace NovaSharp.Comparison
         {
             string[] effectiveArgs = args.Length > 0 ? args : new[] { "--filter", "*" };
 
+            // Touch the benchmark type so analyzer CA1812 can see a real instantiation outside BDN reflection.
+            using LuaPerformanceBenchmarks analyzerAnchor = new LuaPerformanceBenchmarks();
+
             IEnumerable<Summary> summaries = BenchmarkSwitcher
                 .FromAssembly(typeof(Program).Assembly)
                 .Run(effectiveArgs, BenchmarkConfig.Create());

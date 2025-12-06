@@ -5,7 +5,7 @@ using System;
 /// <summary>
 /// Benchmark scenarios used when comparing NovaSharp against NLua.
 /// </summary>
-public enum ScriptScenario
+internal enum ScriptScenario
 {
     [Obsolete("Use a specific ScriptScenario.", false)]
     Unknown = 0,

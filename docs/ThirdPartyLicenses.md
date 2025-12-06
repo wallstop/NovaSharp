@@ -6,13 +6,13 @@ This document summarises the third-party components bundled with NovaSharp and t
 
 ## Runtime / Tooling Dependencies
 
-| Component       | Version / Commit                   | License                  | Notes                                                                    |
-| --------------- | ---------------------------------- | ------------------------ | ------------------------------------------------------------------------ |
-| .NET SDK        | 9.0.x                              | MIT                      | Required for building/testing (listed in global.json if pinned).         |
-| NUnit           | 2.6.x                              | NUnit License (BSD-like) | Unit test framework used across `src/tests/NovaSharp.Interpreter.Tests`. |
-| Coverlet        | Refer to `dotnet tool list` output | MIT                      | Code coverage instrumentation.                                           |
-| ReportGenerator | Refer to `dotnet tool list` output | MIT                      | Coverage report generation.                                              |
-| BenchmarkDotNet | Refer to csproj                    | MIT                      | Used in benchmarking projects.                                           |
+| Component       | Version / Commit                   | License                  | Notes                                                                                                              |
+| --------------- | ---------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| .NET SDK        | 9.0.x                              | MIT                      | Required for building/testing (listed in global.json if pinned).                                                   |
+| NUnit           | 2.6.x                              | NUnit License (BSD-like) | Legacy assertion helpers (`CollectionAssert`, etc.) referenced from `src/tests/NovaSharp.Interpreter.Tests.TUnit`. |
+| Coverlet        | Refer to `dotnet tool list` output | MIT                      | Code coverage instrumentation.                                                                                     |
+| ReportGenerator | Refer to `dotnet tool list` output | MIT                      | Coverage report generation.                                                                                        |
+| BenchmarkDotNet | Refer to csproj                    | MIT                      | Used in benchmarking projects.                                                                                     |
 
 > For an authoritative list, run `dotnet list package --include-transitive` in each project and refresh this table with the license declared by the package authors.
 

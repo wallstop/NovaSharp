@@ -25,7 +25,7 @@ namespace NovaSharp.RemoteDebugger
     {
         private readonly List<DynamicExpression> _watches = new();
         private readonly HashSet<string> _watchesChanging = new();
-        private readonly Utf8TcpServer _server;
+        private readonly IDebuggerTransport _server;
         private readonly Script _script;
         private readonly string _appName;
         private readonly object _lock = new();
@@ -57,14 +57,26 @@ namespace NovaSharp.RemoteDebugger
             Utf8TcpServerOptions options,
             bool freeRunAfterAttach
         )
+            : this(appName, script, freeRunAfterAttach, CreateTransport(port, options)) { }
+
+        internal DebugServer(
+            string appName,
+            Script script,
+            bool freeRunAfterAttach,
+            IDebuggerTransport server
+        )
         {
             _appName = appName;
-
-            _server = new Utf8TcpServer(port, 1 << 20, '\0', options);
+            _server = server ?? throw new ArgumentNullException(nameof(server));
             _server.Start();
             _server.OnDataReceived += OnServerDataReceived;
             _script = script;
             _freeRunAfterAttach = freeRunAfterAttach;
+        }
+
+        private static Utf8TcpServer CreateTransport(int port, Utf8TcpServerOptions options)
+        {
+            return new Utf8TcpServer(port, 1 << 20, '\0', options);
         }
 
         public string AppName

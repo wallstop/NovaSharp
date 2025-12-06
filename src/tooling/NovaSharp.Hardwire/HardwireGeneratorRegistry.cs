@@ -12,6 +12,7 @@ namespace NovaSharp.Hardwire
     public static class HardwireGeneratorRegistry
     {
         private static readonly Dictionary<string, IHardwireGenerator> Generators = new();
+        private static readonly object SyncRoot = new();
 
         /// <summary>
         /// Registers a generator instance for its managed type.
@@ -31,7 +32,10 @@ namespace NovaSharp.Hardwire
                 );
             }
 
-            Generators[generator.ManagedType] = generator;
+            lock (SyncRoot)
+            {
+                Generators[generator.ManagedType] = generator;
+            }
         }
 
         /// <summary>
@@ -44,9 +48,12 @@ namespace NovaSharp.Hardwire
                 throw new ArgumentException("Type cannot be null or whitespace.", nameof(type));
             }
 
-            if (Generators.TryGetValue(type, out IHardwireGenerator generator))
+            lock (SyncRoot)
             {
-                return generator;
+                if (Generators.TryGetValue(type, out IHardwireGenerator generator))
+                {
+                    return generator;
+                }
             }
 
             return new NullGenerator(type);
@@ -85,6 +92,17 @@ namespace NovaSharp.Hardwire
                 }
 
                 Register(generator);
+            }
+        }
+
+        /// <summary>
+        /// Clears all registered generators. Intended for test isolation.
+        /// </summary>
+        internal static void Reset()
+        {
+            lock (SyncRoot)
+            {
+                Generators.Clear();
             }
         }
     }

@@ -23,7 +23,6 @@ CATEGORY_ROOTS = {"runtime", "tooling", "tests", "debuggers", "samples"}
 IGNORED_PARTS = {"properties", "tests", "testcases", "benchmarks", "tutorial", "processor"}
 PATH_ALLOWLIST = {
     Path("src/tests/NovaSharp.Interpreter.Tests/_Hardwired.cs"),
-    Path("src/tests/NovaSharp.Interpreter.Tests/EmbeddableNUnitWrapper.cs"),
     Path("src/debuggers/NovaSharp.VsCodeDebugger/SDK/IsExternalInit.cs"),
     Path("src/debuggers/NovaSharp.VsCodeDebugger/System/Runtime/CompilerServices/IsExternalInit.cs"),
     Path("src/runtime/NovaSharp.Interpreter/Compatibility/Attributes.cs"),

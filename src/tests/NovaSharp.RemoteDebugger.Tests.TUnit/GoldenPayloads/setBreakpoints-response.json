@@ -1,0 +1,16 @@
+{
+  "Success": true,
+  "Command": "setBreakpoints",
+  "Body": {
+    "Breakpoints": [
+      {
+        "Verified": true,
+        "Line": 1
+      },
+      {
+        "Verified": true,
+        "Line": 3
+      }
+    ]
+  }
+}

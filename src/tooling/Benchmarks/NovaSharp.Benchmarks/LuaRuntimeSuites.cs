@@ -5,7 +5,7 @@ namespace NovaSharp.Benchmarks
     /// <summary>
     /// High-level scenarios exercised by the NovaSharp runtime benchmarks.
     /// </summary>
-    public enum RuntimeScenario
+    internal enum RuntimeScenario
     {
         [Obsolete("Use a specific RuntimeScenario.", false)]
         Unknown = 0,

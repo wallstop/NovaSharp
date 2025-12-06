@@ -1,23 +1,19 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
-    using System.Diagnostics.CodeAnalysis;
+    using System.IO;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Sandboxing;
 
     /// <summary>
     /// Implements Lua's core loading APIs (load, loadfile, dofile, require) per Lua 5.4 §4.6 so
     /// NovaSharp scripts can compile chunks from strings, files, and reader callbacks.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule]
-    public class LoadModule
+    public static class LoadModule
     {
         /// <summary>
         /// Initializes the `package` table with platform-specific defaults (notably `package.config`)
@@ -51,6 +47,75 @@ namespace NovaSharp.Interpreter.CoreLib
 #endif
 
             package.Table.Set("config", DynValue.NewString(cfg));
+
+            DynValue loaded = package.Table.RawGet("loaded");
+
+            if (loaded == null || loaded.Type != DataType.Table)
+            {
+                loaded = DynValue.NewTable(globalTable.OwnerScript);
+                package.Table.Set("loaded", loaded);
+            }
+
+            Table registry = globalTable.OwnerScript?.Registry;
+            registry?.Set("_LOADED", loaded);
+        }
+
+        /// <summary>
+        /// Checks whether a function is restricted by the script's sandbox settings.
+        /// Throws <see cref="SandboxViolationException"/> if access is denied.
+        /// </summary>
+        /// <param name="script">Script whose sandbox settings should be checked.</param>
+        /// <param name="functionName">The function name to check.</param>
+        private static void CheckFunctionAccess(Script script, string functionName)
+        {
+            if (script == null)
+            {
+                return;
+            }
+
+            SandboxOptions sandbox = script.Options.Sandbox;
+            if (sandbox == null || !sandbox.IsFunctionRestricted(functionName))
+            {
+                return;
+            }
+
+            System.Func<Script, string, bool> callback = sandbox.OnFunctionAccessDenied;
+            if (callback == null || !callback(script, functionName))
+            {
+                throw new SandboxViolationException(
+                    SandboxViolationType.FunctionAccessDenied,
+                    functionName
+                );
+            }
+        }
+
+        /// <summary>
+        /// Checks whether a module is restricted by the script's sandbox settings.
+        /// Throws <see cref="SandboxViolationException"/> if access is denied.
+        /// </summary>
+        /// <param name="script">Script whose sandbox settings should be checked.</param>
+        /// <param name="moduleName">The module name to check.</param>
+        private static void CheckModuleAccess(Script script, string moduleName)
+        {
+            if (script == null)
+            {
+                return;
+            }
+
+            SandboxOptions sandbox = script.Options.Sandbox;
+            if (sandbox == null || !sandbox.IsModuleRestricted(moduleName))
+            {
+                return;
+            }
+
+            System.Func<Script, string, bool> callback = sandbox.OnModuleAccessDenied;
+            if (callback == null || !callback(script, moduleName))
+            {
+                throw new SandboxViolationException(
+                    SandboxViolationType.ModuleAccessDenied,
+                    moduleName
+                );
+            }
         }
 
         // load (ld [, source [, mode [, env]]])
@@ -87,6 +152,8 @@ namespace NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            CheckFunctionAccess(executionContext.Script, "load");
 
             return LoadCore(executionContext, args, null);
         }
@@ -215,6 +282,8 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            CheckFunctionAccess(executionContext.Script, "loadfile");
+
             return LoadFileImpl(executionContext, args, null);
         }
 
@@ -266,10 +335,16 @@ namespace NovaSharp.Interpreter.CoreLib
             try
             {
                 Script s = executionContext.Script;
-                DynValue filename = args.AsType(0, "loadfile", DataType.String, false);
                 DynValue env = args.AsType(2, "loadfile", DataType.Table, true);
+                Table resolvedEnv = env.IsNil() ? defaultEnv : env.Table;
 
-                DynValue fn = s.LoadFile(filename.String, env.IsNil() ? defaultEnv : env.Table);
+                if (args.Count == 0 || args[0].IsNil())
+                {
+                    return LoadFromStandardInput(s, resolvedEnv);
+                }
+
+                DynValue filename = args.AsType(0, "loadfile", DataType.String, false);
+                DynValue fn = s.LoadFile(filename.String, resolvedEnv);
 
                 return fn;
             }
@@ -343,13 +418,19 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            CheckFunctionAccess(executionContext.Script, "dofile");
+
             try
             {
-                Script s = executionContext.Script;
-                DynValue v = args.AsType(0, "dofile", DataType.String, false);
+                Script script = executionContext.Script;
+                if (args.Count == 0 || args[0].IsNil())
+                {
+                    DynValue stdinChunk = LoadFromStandardInput(script, null);
+                    return DynValue.NewTailCallReq(stdinChunk);
+                }
 
-                DynValue fn = s.LoadFile(v.String);
-
+                DynValue fileArgument = args.AsType(0, "dofile", DataType.String, false);
+                DynValue fn = script.LoadFile(fileArgument.String);
                 return DynValue.NewTailCallReq(fn); // tail call to dofile
             }
             catch (SyntaxErrorException ex)
@@ -402,9 +483,31 @@ namespace NovaSharp.Interpreter.CoreLib
             Script s = executionContext.Script;
             DynValue v = args.AsType(0, "__require_clr_impl", DataType.String, false);
 
+            // Check module access restrictions
+            CheckModuleAccess(s, v.String);
+
             DynValue fn = s.RequireModule(v.String);
 
             return fn; // tail call to dofile
+        }
+
+        private static DynValue LoadFromStandardInput(Script script, Table globalContext)
+        {
+            Stream stdin = script.Options.Stdin;
+
+            if (stdin == null)
+            {
+                stdin = Script.GlobalOptions.Platform.GetStandardStream(
+                    Platforms.StandardFileType.StdIn
+                );
+            }
+
+            if (stdin == null)
+            {
+                throw new ScriptRuntimeException("stdin stream is not available.");
+            }
+
+            return script.LoadStream(stdin, globalContext, "stdin");
         }
 
         /// <summary>

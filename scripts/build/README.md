@@ -4,14 +4,14 @@ The `scripts/build` folder contains cross-platform wrappers that build the NovaS
 
 ## Scripts
 
-- `build.ps1` — PowerShell entry point that restores local tools (unless skipped), builds `src/NovaSharp.sln`, and optionally executes `dotnet test` for `NovaSharp.Interpreter.Tests`.
+- `build.ps1` — PowerShell entry point that restores local tools (unless skipped), builds `src/NovaSharp.sln`, and optionally executes the interpreter TUnit suite.
 - `build.sh` — Bash equivalent for macOS/Linux hosts. Mirrors the PowerShell behaviour and arguments so CI and local workflows stay aligned.
 
 ## Common Arguments
 
 - `--configuration <Name>` / `-Configuration <Name>`: Build configuration (default `Release`).
 - `--solution <Path>` / `-Solution <Path>`: Solution or project to build (default `src/NovaSharp.sln`).
-- `--test-project <Path>` / `-TestProject <Path>`: Test project to execute after building (default `src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj`).
+- `--test-project <Path>` / `-TestProject <Path>`: Test project to execute after building (default `src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj`).
 - `--skip-tests` / `-SkipTests`: Build only; do not execute tests.
 - `--skip-tool-restore` / `-SkipToolRestore`: Assume `dotnet tool restore` already ran for this checkout.
 

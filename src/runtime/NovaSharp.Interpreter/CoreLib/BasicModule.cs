@@ -2,7 +2,6 @@ namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Text;
     using Debugging;
@@ -18,13 +17,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Class implementing basic Lua functions (print, type, tostring, etc) as a NovaSharp module.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule]
-    public class BasicModule
+    public static class BasicModule
     {
         /// <summary>
         /// Implements Lua's <c>type</c> function (§6.1), returning the textual Lua type name for the first argument.

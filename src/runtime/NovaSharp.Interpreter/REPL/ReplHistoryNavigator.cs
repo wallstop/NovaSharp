@@ -1,5 +1,6 @@
 namespace NovaSharp.Interpreter.REPL
 {
+    using System;
     using NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -19,6 +20,15 @@ namespace NovaSharp.Interpreter.REPL
         public ReplHistoryInterpreter(Script script, int historySize)
             : base(script)
         {
+            if (historySize <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(historySize),
+                    historySize,
+                    "History size must be greater than zero."
+                );
+            }
+
             _history = new string[historySize];
         }
 

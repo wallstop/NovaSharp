@@ -29,10 +29,7 @@ namespace NovaSharp.Cli.Commands.Implementations
         /// <inheritdoc />
         public void Execute(ShellContext context, string arguments)
         {
-            if (context == null)
-            {
-                throw new ArgumentNullException(nameof(context));
-            }
+            ArgumentValidation.ThrowIfNull(context, nameof(context));
 
             context.RequestExit();
         }

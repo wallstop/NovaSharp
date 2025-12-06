@@ -1,0 +1,1 @@
+Placeholder for the upcoming TUnit-specific test infrastructure (isolation attributes, fixture lifecycle helpers, TAP adapters). The initial TUnit project links this folder so new helpers can be dropped in without touching the project files.

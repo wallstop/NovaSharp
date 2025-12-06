@@ -69,7 +69,14 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// </summary>
     public class Request : ProtocolMessage
     {
+        /// <summary>
+        /// Gets the command identifier sent by VS Code.
+        /// </summary>
         public string Command { get; }
+
+        /// <summary>
+        /// Gets the raw argument table supplied with the request.
+        /// </summary>
         public Table Arguments { get; }
 
         public Request(int id, string cmd, Table arg)
@@ -160,7 +167,14 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// </summary>
     public class ProtocolEvent : ProtocolMessage
     {
+        /// <summary>
+        /// Gets the VS Code event name (e.g., "stopped", "continued").
+        /// </summary>
         public string @event { get; }
+
+        /// <summary>
+        /// Gets the serialized payload associated with the event.
+        /// </summary>
         public object Body { get; }
 
         public ProtocolEvent(string type, object bdy = null)
@@ -176,7 +190,14 @@ namespace NovaSharp.VsCodeDebugger.SDK
     /// </summary>
     public abstract class ProtocolServer
     {
+        /// <summary>
+        /// Gets or sets a value indicating whether incoming requests/events are traced to stderr.
+        /// </summary>
         public bool Trace { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether outgoing responses are traced to stderr.
+        /// </summary>
         public bool TraceResponse { get; set; }
 
         protected const int BufferSize = 4096;

@@ -3,7 +3,10 @@
 -- lua-TestMore : <http://fperrad.github.com/lua-TestMore/>
 --
 
-local debug = nil; -- require 'debug'
+local debug = nil
+pcall(function ()
+    debug = require 'debug'
+end)
 local io = nil; -- require 'io'
 local os = nil; -- require 'os'
 local error = error

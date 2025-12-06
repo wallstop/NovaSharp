@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Runtime.CompilerServices;
+    using System.Runtime.ExceptionServices;
     using System.Threading;
     using Diagnostics;
     using NovaSharp.Interpreter.Compatibility;
@@ -289,42 +290,54 @@ namespace NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDesc
                 Optimize();
             }
 
-            object[] pars = base.BuildArgumentList(
-                script,
-                obj,
-                context,
-                args,
-                out IList<int> outParams
-            );
-            object retv = null;
+            try
+            {
+                object[] pars = base.BuildArgumentList(
+                    script,
+                    obj,
+                    context,
+                    args,
+                    out IList<int> outParams
+                );
+                object retv = null;
 
-            if (_optimizedFunc != null)
-            {
-                retv = _optimizedFunc(obj, pars);
-            }
-            else if (_optimizedAction != null)
-            {
-                _optimizedAction(obj, pars);
-                retv = DynValue.Void;
-            }
-            else if (_isAction)
-            {
-                MethodInfo.Invoke(obj, pars);
-                retv = DynValue.Void;
-            }
-            else
-            {
-                if (IsConstructor)
+                if (_optimizedFunc != null)
                 {
-                    retv = ((ConstructorInfo)MethodInfo).Invoke(pars);
+                    retv = _optimizedFunc(obj, pars);
+                }
+                else if (_optimizedAction != null)
+                {
+                    _optimizedAction(obj, pars);
+                    retv = DynValue.Void;
+                }
+                else if (_isAction)
+                {
+                    MethodInfo.Invoke(obj, pars);
+                    retv = DynValue.Void;
                 }
                 else
                 {
-                    retv = MethodInfo.Invoke(obj, pars);
+                    if (IsConstructor)
+                    {
+                        retv = ((ConstructorInfo)MethodInfo).Invoke(pars);
+                    }
+                    else
+                    {
+                        retv = MethodInfo.Invoke(obj, pars);
+                    }
                 }
-            }
 
-            return BuildReturnValue(script, outParams, pars, retv);
+                return BuildReturnValue(script, outParams, pars, retv);
+            }
+            catch (TargetInvocationException invocationException)
+            {
+                if (invocationException.InnerException is InterpreterException interpreterException)
+                {
+                    ExceptionDispatchInfo.Capture(interpreterException).Throw();
+                }
+
+                throw;
+            }
         }
 
         /// <summary>

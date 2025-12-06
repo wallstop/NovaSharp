@@ -1,10 +1,13 @@
 namespace NovaSharp.Interpreter.Platforms
 {
 #if DOTNET_CORE
-    using NovaSharp.Interpreter.Modules;
     using System;
-    using System.Text;
+    using System.ComponentModel;
+    using System.Diagnostics;
     using System.IO;
+    using System.Runtime.InteropServices;
+    using System.Text;
+    using NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// Class providing the IPlatformAccessor interface for .NET Core builds
@@ -185,15 +188,27 @@ namespace NovaSharp.Interpreter.Platforms
         /// <returns></returns>
         public override int ExecuteCommand(string cmdline)
         {
-            // This is windows only!
-            throw new NotSupportedException("Not supported on .NET core");
+            if (string.IsNullOrWhiteSpace(cmdline))
+            {
+                return 0;
+            }
 
-            //ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", string.Format("/C {0}", cmdline));
-            //psi.ErrorDialog = false;
+            ProcessStartInfo startInfo = BuildShellProcessStartInfo(cmdline);
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
 
-            //Process proc = Process.Start(psi);
-            //proc.WaitForExit();
-            //return proc.ExitCode;
+            try
+            {
+                using Process process =
+                    Process.Start(startInfo)
+                    ?? throw new InvalidOperationException("Failed to start command process.");
+                process.WaitForExit();
+                return process.ExitCode;
+            }
+            catch (Win32Exception ex)
+            {
+                throw new InvalidOperationException(ex.Message, ex);
+            }
         }
 
         /// <summary>
@@ -216,6 +231,26 @@ namespace NovaSharp.Interpreter.Platforms
         public override string GetPlatformNamePrefix()
         {
             return "core";
+        }
+
+        private static ProcessStartInfo BuildShellProcessStartInfo(string cmdline)
+        {
+            ProcessStartInfo startInfo = new();
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                startInfo.FileName = "cmd.exe";
+                startInfo.ArgumentList.Add("/C");
+                startInfo.ArgumentList.Add(cmdline);
+            }
+            else
+            {
+                startInfo.FileName = "/bin/sh";
+                startInfo.ArgumentList.Add("-c");
+                startInfo.ArgumentList.Add(cmdline);
+            }
+
+            return startInfo;
         }
 
         private static string NormalizeMode(string mode)

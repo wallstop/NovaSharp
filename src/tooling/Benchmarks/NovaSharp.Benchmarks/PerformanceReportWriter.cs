@@ -18,8 +18,6 @@ namespace NovaSharp.Benchmarks
     using Microsoft.Win32;
     using Perfolizer.Models;
 
-#nullable enable
-
     /// <summary>
     /// Generates and updates the Markdown performance report under <c>docs/Performance.md</c>.
     /// </summary>
@@ -111,20 +109,20 @@ namespace NovaSharp.Benchmarks
 
             try
             {
-                using RegistryKey? currentVersion = Registry.LocalMachine.OpenSubKey(
+                using RegistryKey currentVersion = Registry.LocalMachine.OpenSubKey(
                     @"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
                 );
 
                 if (currentVersion != null)
                 {
-                    string? productName = currentVersion.GetValue("ProductName") as string;
-                    string? displayVersion = currentVersion.GetValue("DisplayVersion") as string;
-                    string? releaseId = currentVersion.GetValue("ReleaseId") as string;
-                    string? currentBuild = currentVersion.GetValue("CurrentBuild") as string;
-                    string? editionId = currentVersion.GetValue("EditionID") as string;
-                    object? ubrValue = currentVersion.GetValue("UBR");
+                    string productName = currentVersion.GetValue("ProductName") as string;
+                    string displayVersion = currentVersion.GetValue("DisplayVersion") as string;
+                    string releaseId = currentVersion.GetValue("ReleaseId") as string;
+                    string currentBuild = currentVersion.GetValue("CurrentBuild") as string;
+                    string editionId = currentVersion.GetValue("EditionID") as string;
+                    object ubrValue = currentVersion.GetValue("UBR");
 
-                    string? buildNumber = null;
+                    string buildNumber = null;
                     if (!string.IsNullOrWhiteSpace(currentBuild))
                     {
                         string revision = ubrValue switch
@@ -466,10 +464,10 @@ namespace NovaSharp.Benchmarks
         {
             List<DocumentSection> sections = new();
             StringBuilder builder = new();
-            string? currentHeader = null;
+            string currentHeader = null;
 
             using StringReader reader = new(normalizedContent);
-            string? line;
+            string line;
             while ((line = reader.ReadLine()) != null)
             {
                 if (line.StartsWith("## ", StringComparison.Ordinal))
@@ -624,9 +622,9 @@ namespace NovaSharp.Benchmarks
             string normalized = NormalizeLineEndings(baselineBlock);
             using StringReader reader = new(normalized);
 
-            string? line;
+            string line;
             string currentSummary = string.Empty;
-            string[]? header = null;
+            string[] header = null;
 
             while ((line = reader.ReadLine()) != null)
             {
@@ -811,7 +809,7 @@ namespace NovaSharp.Benchmarks
             return string.Join(", ", parts);
         }
 
-        private static string NormalizeParameterValue(object? value)
+        private static string NormalizeParameterValue(object value)
         {
             if (value == null)
             {
@@ -1033,9 +1031,9 @@ namespace NovaSharp.Benchmarks
             return string.Format(CultureInfo.InvariantCulture, "{0:+0.##;-0.##;0}%", percentage);
         }
 
-        private static string DeriveEditionLabel(string? productName, string? editionId)
+        private static string DeriveEditionLabel(string productName, string editionId)
         {
-            string? edition = null;
+            string edition = null;
 
             if (!string.IsNullOrWhiteSpace(productName))
             {
@@ -1166,6 +1164,6 @@ namespace NovaSharp.Benchmarks
                     : double.NaN;
         }
 
-        private sealed record DocumentSection(string? Header, string Content);
+        private sealed record DocumentSection(string Header, string Content);
     }
 }

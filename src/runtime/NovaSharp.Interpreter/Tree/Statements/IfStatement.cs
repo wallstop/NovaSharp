@@ -14,9 +14,24 @@ namespace NovaSharp.Interpreter.Tree.Statements
     {
         private class IfBlock
         {
+            /// <summary>
+            /// Gets or sets the expression that controls whether the block executes.
+            /// </summary>
             public Expression Condition { get; set; }
+
+            /// <summary>
+            /// Gets or sets the statements executed when the condition evaluates to true.
+            /// </summary>
             public CompositeStatement Body { get; set; }
+
+            /// <summary>
+            /// Gets or sets the runtime scope captured for the block.
+            /// </summary>
             public RuntimeScopeBlock StackFrame { get; set; }
+
+            /// <summary>
+            /// Gets or sets the source reference covering the block (for debugging).
+            /// </summary>
             public SourceRef Source { get; set; }
         }
 

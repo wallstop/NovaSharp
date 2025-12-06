@@ -1,7 +1,6 @@
 namespace NovaSharp.Interpreter.CoreLib
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Execution;
@@ -11,13 +10,8 @@ namespace NovaSharp.Interpreter.CoreLib
     /// <summary>
     /// Implements Lua 5.2's <c>bit32</c> standard library (§6.7) for compatibility profiles that expose it.
     /// </summary>
-    [SuppressMessage(
-        "Design",
-        "CA1052:Static holder types should be static or not inheritable",
-        Justification = "Module types participate in generic registration requiring instance types."
-    )]
     [NovaSharpModule(Namespace = "bit32")]
-    public class Bit32Module
+    public static class Bit32Module
     {
         private static readonly uint[] Masks =
         {
@@ -55,17 +49,53 @@ namespace NovaSharp.Interpreter.CoreLib
             0xFFFFFFFF,
         };
 
+        /// <summary>
+        /// The modulus used for 32-bit unsigned integer wrapping (2^32).
+        /// </summary>
+        private const double Mod32 = 4294967296.0; // 2^32
+
+        /// <summary>
+        /// Converts a Lua number to an unsigned 32-bit integer using Lua's conversion semantics.
+        /// Per Lua 5.2 bit32 spec, numbers are converted via floor(x) mod 2^32.
+        /// </summary>
+        /// <remarks>
+        /// This method correctly handles values greater than 2^31 (unlike IEEERemainder which
+        /// returns values in (-y/2, y/2] and can produce negative results that cast to 0).
+        /// </remarks>
         private static uint ToUInt32(DynValue v)
         {
-            double d = v.Number;
-            d = Math.IEEERemainder(d, Math.Pow(2.0, 32.0));
+            double d = Math.Floor(v.Number);
+
+            // Handle negative values: Lua's modulo always returns non-negative
+            d = d % Mod32;
+            if (d < 0)
+            {
+                d += Mod32;
+            }
+
             return (uint)d;
         }
 
+        /// <summary>
+        /// Converts a Lua number to a signed 32-bit integer using Lua's conversion semantics.
+        /// </summary>
         private static int ToInt32(DynValue v)
         {
-            double d = v.Number;
-            d = Math.IEEERemainder(d, Math.Pow(2.0, 32.0));
+            double d = Math.Floor(v.Number);
+
+            // Handle negative values: Lua's modulo always returns non-negative
+            d = d % Mod32;
+            if (d < 0)
+            {
+                d += Mod32;
+            }
+
+            // Convert to signed: values >= 2^31 become negative
+            if (d >= 2147483648.0) // 2^31
+            {
+                return (int)(d - Mod32);
+            }
+
             return (int)d;
         }
 
@@ -185,7 +215,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
             uint mask = NBitMask(width) << pos;
             v = v & (~mask);
-            u = u & (mask);
+            u = (u & NBitMask(width)) << pos;
             v = v | u;
 
             return DynValue.NewNumber(v);
@@ -193,7 +223,7 @@ namespace NovaSharp.Interpreter.CoreLib
 
         private static void ValidatePosWidth(string func, int argPos, int pos, int width)
         {
-            if (pos > 31 || (pos + width) > 31)
+            if (pos > 31 || (pos + width) > 32)
             {
                 throw new ScriptRuntimeException("trying to access non-existent bits");
             }
