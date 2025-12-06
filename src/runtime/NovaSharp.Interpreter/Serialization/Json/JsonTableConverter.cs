@@ -1,8 +1,11 @@
 namespace NovaSharp.Interpreter.Serialization.Json
 {
     using System;
+    using System.Collections;
     using System.Globalization;
+    using System.Reflection;
     using System.Text;
+    using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.DataTypes;
     using NovaSharp.Interpreter.Errors;
     using NovaSharp.Interpreter.Tree.Lexer;
@@ -92,16 +95,154 @@ namespace NovaSharp.Interpreter.Serialization.Json
         }
 
         /// <summary>
-        /// Converts a generic object to JSON
+        /// Converts a generic object to JSON, preserving array semantics for collections.
         /// </summary>
         public static string ObjectToJson(object obj)
         {
-            DynValue v = ObjectValueConverter.SerializeObjectToDynValue(
-                null,
-                obj,
-                JsonNull.Create()
-            );
-            return TableToJson(v.Table);
+            StringBuilder sb = new();
+            ObjectToJsonCore(sb, obj);
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Core JSON serialization that preserves collection/array semantics.
+        /// </summary>
+        private static void ObjectToJsonCore(StringBuilder sb, object obj)
+        {
+            if (obj == null)
+            {
+                sb.Append("null");
+                return;
+            }
+
+            // Handle primitives and simple types directly
+            switch (obj)
+            {
+                case bool b:
+                    sb.Append(b ? "true" : "false");
+                    return;
+                case string s:
+                    sb.Append(EscapeString(s));
+                    return;
+                case char c:
+                    sb.Append(EscapeString(c.ToString()));
+                    return;
+                case JsonNull:
+                    sb.Append("null");
+                    return;
+            }
+
+            // Handle numeric types
+            if (
+                obj
+                is sbyte
+                    or byte
+                    or short
+                    or ushort
+                    or int
+                    or uint
+                    or long
+                    or ulong
+                    or float
+                    or double
+                    or decimal
+            )
+            {
+                sb.Append(
+                    Convert
+                        .ToDouble(obj, CultureInfo.InvariantCulture)
+                        .ToString("r", CultureInfo.InvariantCulture)
+                );
+                return;
+            }
+
+            // Handle enums as numbers
+            if (obj is Enum)
+            {
+                sb.Append(
+                    Convert
+                        .ToDouble(obj, CultureInfo.InvariantCulture)
+                        .ToString("r", CultureInfo.InvariantCulture)
+                );
+                return;
+            }
+
+            // Handle DynValue
+            if (obj is DynValue dv)
+            {
+                ValueToJson(sb, dv);
+                return;
+            }
+
+            // Handle Table directly
+            if (obj is Table table)
+            {
+                TableToJson(sb, table);
+                return;
+            }
+
+            // Handle dictionaries as objects (before IEnumerable check since dictionaries are enumerable)
+            if (obj is IDictionary dict)
+            {
+                sb.Append('{');
+                bool first = true;
+                foreach (DictionaryEntry entry in dict)
+                {
+                    if (!first)
+                    {
+                        sb.Append(',');
+                    }
+                    sb.Append(EscapeString(entry.Key?.ToString() ?? string.Empty));
+                    sb.Append(':');
+                    ObjectToJsonCore(sb, entry.Value);
+                    first = false;
+                }
+                sb.Append('}');
+                return;
+            }
+
+            // Handle collections/arrays as JSON arrays (even when empty)
+            if (obj is IEnumerable enumerable)
+            {
+                sb.Append('[');
+                bool first = true;
+                foreach (object item in enumerable)
+                {
+                    if (!first)
+                    {
+                        sb.Append(',');
+                    }
+                    ObjectToJsonCore(sb, item);
+                    first = false;
+                }
+                sb.Append(']');
+                return;
+            }
+
+            // Handle other objects by serializing their properties
+            sb.Append('{');
+            bool firstProp = true;
+            Type type = obj.GetType();
+            foreach (PropertyInfo pi in Framework.Do.GetProperties(type))
+            {
+                MethodInfo getter = Framework.Do.GetGetMethod(pi);
+                if (getter == null)
+                {
+                    continue;
+                }
+                bool isStatic = getter.IsStatic;
+                object value = getter.Invoke(isStatic ? null : obj, null);
+
+                if (!firstProp)
+                {
+                    sb.Append(',');
+                }
+                sb.Append(EscapeString(pi.Name));
+                sb.Append(':');
+                ObjectToJsonCore(sb, value);
+                firstProp = false;
+            }
+            sb.Append('}');
         }
 
         private static void ValueToJson(StringBuilder sb, DynValue value)

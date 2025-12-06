@@ -102,6 +102,7 @@ Lua Source → [Lexer] → Tokens → [Parser] → AST → [Compiler] → Byteco
 - **Cleanup**: Use scope helpers (`TempFileScope`, `TempDirectoryScope`, `SemaphoreSlimScope`) instead of `try`/`finally`
 - **Console capture**: Use `ConsoleTestUtilities.WithConsoleCaptureAsync` / `WithConsoleRedirectionAsync`
 - **Spec alignment**: When tests fail, consult the Lua 5.4 manual; fix runtime code, not tests
+- **Production bug policy**: Never adjust tests to accommodate production bugs — fix production code to produce correct output
 
 ## Lint Guards (Run Before Pushing)
 

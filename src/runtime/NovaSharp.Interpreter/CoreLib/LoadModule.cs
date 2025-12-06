@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter.CoreLib
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop.Attributes;
     using NovaSharp.Interpreter.Modules;
+    using NovaSharp.Interpreter.Sandboxing;
 
     /// <summary>
     /// Implements Lua's core loading APIs (load, loadfile, dofile, require) per Lua 5.4 §4.6 so
@@ -59,6 +60,64 @@ namespace NovaSharp.Interpreter.CoreLib
             registry?.Set("_LOADED", loaded);
         }
 
+        /// <summary>
+        /// Checks whether a function is restricted by the script's sandbox settings.
+        /// Throws <see cref="SandboxViolationException"/> if access is denied.
+        /// </summary>
+        /// <param name="script">Script whose sandbox settings should be checked.</param>
+        /// <param name="functionName">The function name to check.</param>
+        private static void CheckFunctionAccess(Script script, string functionName)
+        {
+            if (script == null)
+            {
+                return;
+            }
+
+            SandboxOptions sandbox = script.Options.Sandbox;
+            if (sandbox == null || !sandbox.IsFunctionRestricted(functionName))
+            {
+                return;
+            }
+
+            System.Func<Script, string, bool> callback = sandbox.OnFunctionAccessDenied;
+            if (callback == null || !callback(script, functionName))
+            {
+                throw new SandboxViolationException(
+                    SandboxViolationType.FunctionAccessDenied,
+                    functionName
+                );
+            }
+        }
+
+        /// <summary>
+        /// Checks whether a module is restricted by the script's sandbox settings.
+        /// Throws <see cref="SandboxViolationException"/> if access is denied.
+        /// </summary>
+        /// <param name="script">Script whose sandbox settings should be checked.</param>
+        /// <param name="moduleName">The module name to check.</param>
+        private static void CheckModuleAccess(Script script, string moduleName)
+        {
+            if (script == null)
+            {
+                return;
+            }
+
+            SandboxOptions sandbox = script.Options.Sandbox;
+            if (sandbox == null || !sandbox.IsModuleRestricted(moduleName))
+            {
+                return;
+            }
+
+            System.Func<Script, string, bool> callback = sandbox.OnModuleAccessDenied;
+            if (callback == null || !callback(script, moduleName))
+            {
+                throw new SandboxViolationException(
+                    SandboxViolationType.ModuleAccessDenied,
+                    moduleName
+                );
+            }
+        }
+
         // load (ld [, source [, mode [, env]]])
         // ----------------------------------------------------------------
         // Loads a chunk.
@@ -93,6 +152,8 @@ namespace NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            CheckFunctionAccess(executionContext.Script, "load");
 
             return LoadCore(executionContext, args, null);
         }
@@ -220,6 +281,8 @@ namespace NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            CheckFunctionAccess(executionContext.Script, "loadfile");
 
             return LoadFileImpl(executionContext, args, null);
         }
@@ -355,6 +418,8 @@ namespace NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            CheckFunctionAccess(executionContext.Script, "dofile");
+
             try
             {
                 Script script = executionContext.Script;
@@ -417,6 +482,9 @@ namespace NovaSharp.Interpreter.CoreLib
 
             Script s = executionContext.Script;
             DynValue v = args.AsType(0, "__require_clr_impl", DataType.String, false);
+
+            // Check module access restrictions
+            CheckModuleAccess(s, v.String);
 
             DynValue fn = s.RequireModule(v.String);
 

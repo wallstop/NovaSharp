@@ -6,6 +6,7 @@ namespace NovaSharp.Interpreter
     using NovaSharp.Interpreter.Compatibility;
     using NovaSharp.Interpreter.Infrastructure;
     using NovaSharp.Interpreter.Options;
+    using NovaSharp.Interpreter.Sandboxing;
 
     /// <summary>
     /// This class contains options to customize behaviour of Script objects.
@@ -18,6 +19,7 @@ namespace NovaSharp.Interpreter
             HighResolutionClock = SystemHighResolutionClock.Instance;
             TimeProvider = SystemTimeProvider.Instance;
             ForceUtcDateTime = false;
+            Sandbox = SandboxOptions.Unrestricted;
         }
 
         public ScriptOptions(ScriptOptions defaults)
@@ -44,6 +46,10 @@ namespace NovaSharp.Interpreter
             HighResolutionClock = defaults.HighResolutionClock;
             TimeProvider = defaults.TimeProvider;
             ForceUtcDateTime = defaults.ForceUtcDateTime;
+            Sandbox =
+                defaults.Sandbox == SandboxOptions.Unrestricted
+                    ? SandboxOptions.Unrestricted
+                    : new SandboxOptions(defaults.Sandbox);
         }
 
         /// <summary>
@@ -132,5 +138,11 @@ namespace NovaSharp.Interpreter
         /// Gets or sets a value indicating whether Lua date/time helpers should treat all timestamps as UTC—even when the caller does not use the <c>!</c> format prefix.
         /// </summary>
         public bool ForceUtcDateTime { get; set; }
+
+        /// <summary>
+        /// Gets or sets the sandbox configuration for this script, controlling instruction limits,
+        /// recursion depth, and module/function access restrictions. Defaults to <see cref="SandboxOptions.Unrestricted"/>.
+        /// </summary>
+        public SandboxOptions Sandbox { get; set; }
     }
 }

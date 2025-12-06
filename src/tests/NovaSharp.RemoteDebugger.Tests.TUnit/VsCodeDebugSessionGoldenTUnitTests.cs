@@ -586,5 +586,389 @@ namespace NovaSharp.RemoteDebugger.Tests.TUnit
                 .Because("Boolean literals should evaluate to boolean type")
                 .ConfigureAwait(false);
         }
+
+        [global::TUnit.Core.Test]
+        public async Task ScopesResponseMatchesGoldenPayload()
+        {
+            using VsCodeDebugSessionFixture fixture = VsCodeDebugSessionFixture.Create(
+                "golden-scopes.lua",
+                "return 0"
+            );
+
+            fixture.QueueRequest(
+                "initialize",
+                new { adapterID = "novasharp", pathFormat = "path" }
+            );
+            fixture.QueueRequest("launch", new { noDebug = false });
+            fixture.QueueRequest("scopes", new { frameId = 0 });
+            fixture.QueueRequest("disconnect", new { restart = false });
+
+            DebugAdapterTranscript transcript = fixture.Execute();
+
+            JsonElement scopesResponse = transcript.RequireResponse("scopes");
+
+            using JsonDocument golden = GoldenPayloadHelper.LoadGoldenFile("scopes-response.json");
+            IReadOnlyList<string> differences = GoldenPayloadHelper.CompareJson(
+                golden.RootElement,
+                scopesResponse,
+                IgnoredProperties
+            );
+
+            await Assert
+                .That(differences.Count)
+                .IsEqualTo(0)
+                .Because(
+                    $"Response should match golden file. Differences: {string.Join("; ", differences)}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ScopesResponseContainsLocalsAndSelf()
+        {
+            using VsCodeDebugSessionFixture fixture = VsCodeDebugSessionFixture.Create(
+                "golden-scopes-structure.lua",
+                "return 0"
+            );
+
+            fixture.QueueRequest(
+                "initialize",
+                new { adapterID = "novasharp", pathFormat = "path" }
+            );
+            fixture.QueueRequest("launch", new { noDebug = false });
+            fixture.QueueRequest("scopes", new { frameId = 0 });
+            fixture.QueueRequest("disconnect", new { restart = false });
+
+            DebugAdapterTranscript transcript = fixture.Execute();
+
+            JsonElement scopesResponse = transcript.RequireResponse("scopes");
+            JsonElement body = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                scopesResponse,
+                "Body"
+            );
+            JsonElement scopes = DebugAdapterTranscript.GetPropertyCaseInsensitive(body, "Scopes");
+
+            await Assert
+                .That(scopes.GetArrayLength())
+                .IsEqualTo(2)
+                .Because("Scopes should contain Locals and Self")
+                .ConfigureAwait(false);
+
+            // Check that we have Locals and Self scopes
+            HashSet<string> scopeNames = new(StringComparer.OrdinalIgnoreCase);
+            foreach (JsonElement scope in scopes.EnumerateArray())
+            {
+                JsonElement name = DebugAdapterTranscript.GetPropertyCaseInsensitive(scope, "Name");
+                scopeNames.Add(name.GetString());
+            }
+
+            await Assert
+                .That(scopeNames.Contains("Locals"))
+                .IsTrue()
+                .Because("Locals scope should be present")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(scopeNames.Contains("Self"))
+                .IsTrue()
+                .Because("Self scope should be present")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StackTraceResponseIsSuccessful()
+        {
+            using VsCodeDebugSessionFixture fixture = VsCodeDebugSessionFixture.Create(
+                "golden-stacktrace.lua",
+                "return 0"
+            );
+
+            fixture.QueueRequest(
+                "initialize",
+                new { adapterID = "novasharp", pathFormat = "path" }
+            );
+            fixture.QueueRequest("launch", new { noDebug = false });
+            fixture.QueueRequest("stackTrace", new { threadId = 0, levels = 10 });
+            fixture.QueueRequest("disconnect", new { restart = false });
+
+            DebugAdapterTranscript transcript = fixture.Execute();
+
+            JsonElement stackTraceResponse = transcript.RequireResponse("stackTrace");
+
+            JsonElement success = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                stackTraceResponse,
+                "Success"
+            );
+            await Assert
+                .That(success.GetBoolean())
+                .IsTrue()
+                .Because("stackTrace request should succeed")
+                .ConfigureAwait(false);
+
+            JsonElement body = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                stackTraceResponse,
+                "Body"
+            );
+            JsonElement stackFrames = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                body,
+                "StackFrames"
+            );
+
+            // Stack frames should be present (may be empty if not at breakpoint)
+            await Assert
+                .That(stackFrames.ValueKind)
+                .IsEqualTo(JsonValueKind.Array)
+                .Because("StackFrames should be an array")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task StackTraceResponseContainsMainCoroutineFrame()
+        {
+            using VsCodeDebugSessionFixture fixture = VsCodeDebugSessionFixture.Create(
+                "golden-stacktrace-main.lua",
+                "return 0"
+            );
+
+            fixture.QueueRequest(
+                "initialize",
+                new { adapterID = "novasharp", pathFormat = "path" }
+            );
+            fixture.QueueRequest("launch", new { noDebug = false });
+            fixture.QueueRequest("stackTrace", new { threadId = 0, levels = 10 });
+            fixture.QueueRequest("disconnect", new { restart = false });
+
+            DebugAdapterTranscript transcript = fixture.Execute();
+
+            JsonElement stackTraceResponse = transcript.RequireResponse("stackTrace");
+            JsonElement body = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                stackTraceResponse,
+                "Body"
+            );
+            JsonElement stackFrames = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                body,
+                "StackFrames"
+            );
+
+            // Look for main coroutine or native frame in stack
+            bool hasMainOrNative = false;
+            foreach (JsonElement frame in stackFrames.EnumerateArray())
+            {
+                if (
+                    DebugAdapterTranscript.TryGetPropertyCaseInsensitive(
+                        frame,
+                        "Name",
+                        out JsonElement name
+                    )
+                )
+                {
+                    string frameName = name.GetString();
+                    if (
+                        frameName != null
+                        && (
+                            frameName.Contains("main", StringComparison.OrdinalIgnoreCase)
+                            || frameName.Contains("native", StringComparison.OrdinalIgnoreCase)
+                        )
+                    )
+                    {
+                        hasMainOrNative = true;
+                        break;
+                    }
+                }
+            }
+
+            await Assert
+                .That(hasMainOrNative)
+                .IsTrue()
+                .Because("Stack trace should contain main coroutine or native frame")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task VariablesResponseForLocalsIsSuccessful()
+        {
+            using VsCodeDebugSessionFixture fixture = VsCodeDebugSessionFixture.Create(
+                "golden-variables-locals.lua",
+                "return 0"
+            );
+
+            // ScopeLocals = 65536
+            int scopeLocals = 65536;
+
+            fixture.QueueRequest(
+                "initialize",
+                new { adapterID = "novasharp", pathFormat = "path" }
+            );
+            fixture.QueueRequest("launch", new { noDebug = false });
+            fixture.QueueRequest("variables", new { variablesReference = scopeLocals });
+            fixture.QueueRequest("disconnect", new { restart = false });
+
+            DebugAdapterTranscript transcript = fixture.Execute();
+
+            JsonElement variablesResponse = transcript.RequireResponse("variables");
+
+            JsonElement success = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                variablesResponse,
+                "Success"
+            );
+            await Assert
+                .That(success.GetBoolean())
+                .IsTrue()
+                .Because("variables request for Locals should succeed")
+                .ConfigureAwait(false);
+
+            JsonElement body = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                variablesResponse,
+                "Body"
+            );
+            JsonElement variables = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                body,
+                "Variables"
+            );
+
+            await Assert
+                .That(variables.ValueKind)
+                .IsEqualTo(JsonValueKind.Array)
+                .Because("Variables should be an array")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task VariablesResponseForSelfIsSuccessful()
+        {
+            using VsCodeDebugSessionFixture fixture = VsCodeDebugSessionFixture.Create(
+                "golden-variables-self.lua",
+                "return 0"
+            );
+
+            // ScopeSelf = 65537
+            int scopeSelf = 65537;
+
+            fixture.QueueRequest(
+                "initialize",
+                new { adapterID = "novasharp", pathFormat = "path" }
+            );
+            fixture.QueueRequest("launch", new { noDebug = false });
+            fixture.QueueRequest("variables", new { variablesReference = scopeSelf });
+            fixture.QueueRequest("disconnect", new { restart = false });
+
+            DebugAdapterTranscript transcript = fixture.Execute();
+
+            JsonElement variablesResponse = transcript.RequireResponse("variables");
+
+            JsonElement success = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                variablesResponse,
+                "Success"
+            );
+            await Assert
+                .That(success.GetBoolean())
+                .IsTrue()
+                .Because("variables request for Self should succeed")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task VariablesResponseForInvalidReferenceReturnsError()
+        {
+            using VsCodeDebugSessionFixture fixture = VsCodeDebugSessionFixture.Create(
+                "golden-variables-invalid.lua",
+                "return 0"
+            );
+
+            // Use an invalid reference that's not a scope and not a valid variable index
+            int invalidReference = 99999;
+
+            fixture.QueueRequest(
+                "initialize",
+                new { adapterID = "novasharp", pathFormat = "path" }
+            );
+            fixture.QueueRequest("launch", new { noDebug = false });
+            fixture.QueueRequest("variables", new { variablesReference = invalidReference });
+            fixture.QueueRequest("disconnect", new { restart = false });
+
+            DebugAdapterTranscript transcript = fixture.Execute();
+
+            JsonElement variablesResponse = transcript.RequireResponse("variables");
+            JsonElement body = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                variablesResponse,
+                "Body"
+            );
+            JsonElement variables = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                body,
+                "Variables"
+            );
+
+            // Should return array with error entry
+            await Assert
+                .That(variables.GetArrayLength())
+                .IsGreaterThanOrEqualTo(1)
+                .Because("Invalid reference should return error variable")
+                .ConfigureAwait(false);
+
+            JsonElement firstVar = variables[0];
+            JsonElement varName = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                firstVar,
+                "Name"
+            );
+
+            await Assert
+                .That(varName.GetString())
+                .Contains("error")
+                .Because("Invalid reference should return error indicator")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ScopesHaveCorrectVariablesReferences()
+        {
+            using VsCodeDebugSessionFixture fixture = VsCodeDebugSessionFixture.Create(
+                "golden-scopes-refs.lua",
+                "return 0"
+            );
+
+            fixture.QueueRequest(
+                "initialize",
+                new { adapterID = "novasharp", pathFormat = "path" }
+            );
+            fixture.QueueRequest("launch", new { noDebug = false });
+            fixture.QueueRequest("scopes", new { frameId = 0 });
+            fixture.QueueRequest("disconnect", new { restart = false });
+
+            DebugAdapterTranscript transcript = fixture.Execute();
+
+            JsonElement scopesResponse = transcript.RequireResponse("scopes");
+            JsonElement body = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                scopesResponse,
+                "Body"
+            );
+            JsonElement scopes = DebugAdapterTranscript.GetPropertyCaseInsensitive(body, "Scopes");
+
+            // Verify the variablesReference values match expected constants
+            // ScopeLocals = 65536, ScopeSelf = 65537
+            Dictionary<string, int> expectedRefs = new(StringComparer.OrdinalIgnoreCase)
+            {
+                { "Locals", 65536 },
+                { "Self", 65537 },
+            };
+
+            foreach (JsonElement scope in scopes.EnumerateArray())
+            {
+                JsonElement name = DebugAdapterTranscript.GetPropertyCaseInsensitive(scope, "Name");
+                JsonElement varRef = DebugAdapterTranscript.GetPropertyCaseInsensitive(
+                    scope,
+                    "VariablesReference"
+                );
+
+                string scopeName = name.GetString();
+                if (expectedRefs.TryGetValue(scopeName, out int expectedRef))
+                {
+                    await Assert
+                        .That(varRef.GetInt32())
+                        .IsEqualTo(expectedRef)
+                        .Because($"Scope '{scopeName}' should have correct variablesReference")
+                        .ConfigureAwait(false);
+                }
+            }
+        }
     }
 }

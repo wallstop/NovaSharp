@@ -116,6 +116,25 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - **Gaps**: DAP protocol integration tests remain unimplemented.
 
+## Production Bug Policy
+
+**CRITICAL**: Never adjust tests to accommodate production bugs. When a test fails or exposes incorrect behavior:
+
+1. **Assume production is wrong** until proven otherwise
+1. **Fix the production code** to produce correct output
+1. **Keep tests unchanged** unless they are demonstrably incorrect
+1. **Verify against specification** (Lua manual, DAP protocol spec, etc.)
+1. **Document the fix** in commit message and PR notes
+
+This applies to all bugs, including:
+
+- Serialization issues (e.g., JSON outputting `{}` instead of `[]` for empty arrays)
+- Protocol violations (e.g., DAP responses not matching spec)
+- Lua semantics diverging from the official interpreter
+- API contracts not being honored
+
+If you discover a production bug while writing tests, fix the production code first, then verify the test passes with correct behavior. Never work around bugs with test accommodations.
+
 ## Naming & Conventions
 
 - NUnit test methods (`[Test]`, `[TestCase]`, etc.) must use PascalCase without underscores. The solution-wide `.editorconfig` enforces this as an error, so stray underscore names will fail analyzers and builds.

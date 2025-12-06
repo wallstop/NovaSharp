@@ -6,6 +6,6 @@
     "SupportsFunctionBreakpoints": false,
     "SupportsConditionalBreakpoints": false,
     "SupportsEvaluateForHovers": false,
-    "ExceptionBreakpointFilters": {}
+    "ExceptionBreakpointFilters": []
   }
 }

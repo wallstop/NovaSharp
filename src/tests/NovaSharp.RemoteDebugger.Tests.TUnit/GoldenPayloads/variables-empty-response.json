@@ -1,0 +1,7 @@
+{
+  "Success": true,
+  "Command": "variables",
+  "Body": {
+    "Variables": []
+  }
+}

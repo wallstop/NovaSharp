@@ -167,6 +167,25 @@ Use scope helpers instead of `try`/`finally`:
 - Fix runtime code to match spec; don't weaken tests
 - Cite manual sections (e.g., "§6.4 String Manipulation") in tests/PR notes
 
+### Production Bug Policy
+
+**CRITICAL**: Never adjust tests to accommodate production bugs. When a test fails or exposes incorrect behavior:
+
+1. **Assume production is wrong** until proven otherwise
+1. **Fix the production code** to produce correct output
+1. **Keep tests unchanged** unless they are demonstrably incorrect
+1. **Verify against specification** (Lua manual, DAP protocol spec, etc.)
+1. **Document the fix** in commit message and PR notes
+
+This applies to all bugs, including:
+
+- Serialization issues (e.g., JSON outputting `{}` instead of `[]` for empty arrays)
+- Protocol violations (e.g., DAP responses not matching spec)
+- Lua semantics diverging from the official interpreter
+- API contracts not being honored
+
+If you discover a production bug while writing tests, fix the production code first, then verify the test passes with correct behavior. Never work around bugs with test accommodations.
+
 ## Lint Guards
 
 Run these before pushing:

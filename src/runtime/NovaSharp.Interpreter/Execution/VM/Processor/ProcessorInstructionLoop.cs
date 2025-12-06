@@ -10,6 +10,7 @@ namespace NovaSharp.Interpreter.Execution.VM
     using NovaSharp.Interpreter.Execution;
     using NovaSharp.Interpreter.Interop;
     using NovaSharp.Interpreter.Interop.PredefinedUserData;
+    using NovaSharp.Interpreter.Sandboxing;
 
     /// <content>
     /// Hosts the VM instruction loop and per-opcode execution helpers.
@@ -32,6 +33,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             bool canAutoYield =
                 (AutoYieldCounter > 0) && _canYield && (State != CoroutineState.Main);
             bool shouldYieldToCaller = false;
+            SandboxOptions sandbox = _script.Options.Sandbox;
+            bool hasSandboxInstructionLimit = sandbox.HasInstructionLimit;
+            long sandboxMaxInstructions = sandbox.MaxInstructions;
 
             repeat_execution:
 
@@ -53,6 +57,22 @@ namespace NovaSharp.Interpreter.Execution.VM
                     {
                         _savedInstructionPtr = instructionPtr;
                         return DynValue.NewForcedYieldReq();
+                    }
+
+                    // Check sandbox instruction limit
+                    if (hasSandboxInstructionLimit && executedInstructions > sandboxMaxInstructions)
+                    {
+                        Func<Script, long, bool> callback = sandbox.OnInstructionLimitExceeded;
+                        if (callback == null || !callback(_script, executedInstructions))
+                        {
+                            throw new SandboxViolationException(
+                                SandboxViolationType.InstructionLimitExceeded,
+                                sandboxMaxInstructions,
+                                executedInstructions
+                            );
+                        }
+                        // Callback allowed continuation - reset counter
+                        executedInstructions = 0;
                     }
 
                     ++instructionPtr;
@@ -1113,6 +1133,9 @@ namespace NovaSharp.Interpreter.Execution.VM
             DynValue unwindHandler = null
         )
         {
+            // Check sandbox call stack depth limit before making a call
+            CheckSandboxCallStackDepth();
+
             DynValue fn = _valueStack.Peek(argsCount);
             CallStackItemFlags Flags = (thisCall ? CallStackItemFlags.MethodCall : default);
 
@@ -2117,6 +2140,36 @@ namespace NovaSharp.Interpreter.Execution.VM
             }
 
             throw ScriptRuntimeException.LoopInIndex();
+        }
+
+        /// <summary>
+        /// Checks whether the current call stack depth exceeds the sandbox limit.
+        /// Throws <see cref="SandboxViolationException"/> if the limit is exceeded and
+        /// the callback does not allow continuation.
+        /// </summary>
+        private void CheckSandboxCallStackDepth()
+        {
+            SandboxOptions sandbox = _script.Options.Sandbox;
+            if (!sandbox.HasCallStackDepthLimit)
+            {
+                return;
+            }
+
+            int currentDepth = _executionStack.Count;
+            int maxDepth = sandbox.MaxCallStackDepth;
+
+            if (currentDepth >= maxDepth)
+            {
+                Func<Script, int, bool> callback = sandbox.OnRecursionLimitExceeded;
+                if (callback == null || !callback(_script, currentDepth))
+                {
+                    throw new SandboxViolationException(
+                        SandboxViolationType.RecursionLimitExceeded,
+                        maxDepth,
+                        currentDepth
+                    );
+                }
+            }
         }
     }
 }

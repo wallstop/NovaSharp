@@ -6,7 +6,7 @@ See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
 - Project overview and architecture
 - Build, test, and development commands
 - Coding style and conventions
-- Testing guidelines
+- Testing guidelines and **production bug policy** (never adjust tests to accommodate bugs)
 - Implementation notes for VM, interop, tables, and opcodes
 
 For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).
