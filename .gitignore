@@ -32,6 +32,7 @@ virtual.txt
 {path}
 temp_runner.ps1
 temp.lua
+.pytest_cache/**
 
 
 # Remove generated docs

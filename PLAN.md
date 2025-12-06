@@ -2,12 +2,21 @@
 
 ## Repository Snapshot — 2025-12-07 (UTC)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true>` enforced.
-- **Tests**: **3,235** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Tests**: **3,243** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
 - **Coverage**: Interpreter at **96.2% line / 93.69% branch / 97.88% method**. ✅ Branch coverage exceeds 93% target; `COVERAGE_GATING_MODE=enforce` can now be enabled.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
 - **Regions**: Runtime/tooling/tests remain region-free.
 
-### Recent Progress (2025-12-06)
+### Recent Progress (2025-12-07)
+- **Phase 5: Test Authoring Pattern implemented**: Created file-based test authoring infrastructure.
+  - New `LuaFixtureHelper` class in `src/tests/TestInfrastructure/LuaFixtures/` for loading Lua fixtures by test class/method name.
+  - `LuaFixtureMetadata` class parses `@lua-versions`, `@novasharp-only`, `@expects-error` headers from fixture files.
+  - Demonstration tests in `StringModuleFixtureBasedTUnitTests.cs` showing the new pattern.
+  - Test project updated to include `LuaFixtures/` directory with `CopyToOutputDirectory="PreserveNewest"`.
+- **Dev container updated**: Added `"additionalVersions": "8.0"` to `.devcontainer/devcontainer.json` to install .NET 8 alongside .NET 9.
+- **Test count increased**: 3,235 → 3,243 tests (+8 new fixture-based tests).
+
+### Previous Progress (2025-12-06)
 - **Agent documentation consolidated**: Created `CONTRIBUTING_AI.md` as unified source for all AI assistants. Deprecated `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md` with backwards-compatible stubs.
 - **CI expanded to Windows and macOS**: `.github/workflows/tests.yml` now runs `dotnet-tests` job on matrix of `[ubuntu-latest, windows-latest, macos-latest]`. Uses platform-appropriate build scripts (bash for Linux/macOS, PowerShell for Windows).
 - **CLI test coverage assessed**: 13 test files exist in `src/tests/NovaSharp.Interpreter.Tests.TUnit/Cli/` with comprehensive coverage of REPL, commands, stdin redirection. Golden file approach deemed unnecessary since tests use `CliMessages` constants.
@@ -215,17 +224,22 @@
    - Failures are expected: NovaSharp-only fixtures using interop features
    - Timeouts are scripts waiting for stdin (handled correctly)
 
-#### Phase 5: Test Authoring Pattern
+#### Phase 5: Test Authoring Pattern ✅ (2025-12-07)
 - **New pattern**: Write `.lua` files directly in `src/tests/NovaSharp.Interpreter.Tests/LuaFixtures/<Category>/`
 - C# test loads the file via `Script.DoFile(...)` and asserts expected return value
 - Same `.lua` file is automatically included in multi-version comparison
 - Add `@lua-versions` header to specify compatible Lua versions
 - Add `@novasharp-only: true` for tests using NovaSharp-specific features
-- **Status**: Not started. Existing tests still use inline `DoString()`.
+- **Status**: ✅ **Implemented**. Infrastructure in place with demonstration tests.
+  - `LuaFixtureHelper` class provides `GetFixturePath()`, `RunFixture()`, `LoadMetadata()` helpers
+  - `LuaFixtureMetadata` parses header comments for version compatibility and test expectations
+  - `StringModuleFixtureBasedTUnitTests.cs` demonstrates the pattern with 8 tests
+  - Existing tests still use inline `DoString()` but can be migrated incrementally
 
 #### Implementation Files
 - ✅ `tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py` – Enhanced extractor with version detection (855 snippets)
 - ✅ `src/tests/NovaSharp.Interpreter.Tests/LuaFixtures/` – Source-committed Lua fixtures with metadata headers
+- ✅ `src/tests/TestInfrastructure/LuaFixtures/LuaFixtureHelper.cs` – Helper class for loading fixtures in tests (Phase 5)
 - ✅ `scripts/tests/run-lua-fixtures.sh` – Multi-version fixture runner with compatibility filtering
 - ✅ `scripts/tests/run-lua-fixtures-fast.sh` – Optimized runner using batch tool
 - ✅ `src/tooling/NovaSharp.LuaBatchRunner/` – C# batch execution tool (32s for 830 files)
