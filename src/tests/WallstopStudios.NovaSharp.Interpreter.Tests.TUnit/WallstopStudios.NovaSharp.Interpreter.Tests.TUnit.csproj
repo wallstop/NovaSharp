@@ -1,0 +1,82 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>WallstopStudios.NovaSharp.Interpreter.Tests.TUnit</AssemblyName>
+        <IsTestProject>true</IsTestProject>
+        <LangVersion>12</LangVersion>
+        <Nullable>disable</Nullable>
+        <UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
+        <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.0.2" />
+        <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.0.2">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="TUnit" Version="1.2.11" />
+        <PackageReference Include="TUnit.Assertions" Version="1.2.11" />
+        <PackageReference Include="NUnit" Version="3.14.0">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="$(SrcRoot)runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(SrcRoot)runtime/WallstopStudios.NovaSharp.Interpreter.Infrastructure/WallstopStudios.NovaSharp.Interpreter.Infrastructure.csproj" />
+        <ProjectReference Include="$(SrcRoot)tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj" />
+        <ProjectReference Include="$(SrcRoot)tooling/WallstopStudios.NovaSharp.Hardwire/WallstopStudios.NovaSharp.Hardwire.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile
+            Include="$(RepoRoot)src/tests/TestInfrastructure/Scopes/**/*.cs"
+            Link="TestInfrastructure\Scopes\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
+            Include="$(RepoRoot)src/tests/TestInfrastructure/TUnit/**/*.cs"
+            Link="TestInfrastructure\TUnit\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
+            Include="$(RepoRoot)src/tests/TestInfrastructure/LuaFixtures/**/*.cs"
+            Link="TestInfrastructure\LuaFixtures\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
+            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/TestUtilities/**/*.cs"
+            Link="TestUtilities\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
+            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/Units/HardwireTestUtilities.cs"
+            Link="Units\HardwireTestUtilities.cs"
+        />
+        <Compile
+            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/Units/TestHelpers.cs"
+            Link="Units\TestHelpers.cs"
+        />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource
+            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/Resources/embedded.lua"
+            Link="Resources/embedded.lua"
+        />
+        <None
+            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/TestMore/**/*"
+            Link="TestMore\%(RecursiveDir)%(Filename)%(Extension)"
+            CopyToOutputDirectory="PreserveNewest"
+        />
+        <None
+            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/Fixtures/**/*"
+            Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)"
+            CopyToOutputDirectory="PreserveNewest"
+        />
+        <None
+            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/**/*"
+            Link="LuaFixtures\%(RecursiveDir)%(Filename)%(Extension)"
+            CopyToOutputDirectory="PreserveNewest"
+        />
+    </ItemGroup>
+</Project>

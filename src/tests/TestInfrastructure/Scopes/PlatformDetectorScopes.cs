@@ -1,8 +1,8 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
-    using NovaSharp.Interpreter;
-    using NovaSharp.Interpreter.Platforms;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Platforms;
 
     /// <summary>
     /// Provides disposable helpers for overriding platform detection flags in tests.

@@ -24,46 +24,54 @@ SRC_ROOT = ROOT / "src"
 PROPS_PATH = ROOT / "Directory.Build.props"
 EXCLUDED_DIRS = {"bin", "obj", "packages", ".vs", "legacy"}
 FILE_ALLOWLIST = {
-    Path("src/tests/NovaSharp.Interpreter.Tests/_Hardwired.cs"),
-    Path("src/runtime/NovaSharp.Interpreter/Compatibility/Attributes.cs"),
-    Path("src/runtime/NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
-    Path("src/runtime/NovaSharp.Interpreter/LuaPort/KopiLuaStringLib.cs"),
+    Path("src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/_Hardwired.cs"),
+    Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs"),
+    Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
+    Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/LuaPort/KopiLuaStringLib.cs"),
 }
 FIELD_ALLOWLIST: dict[Path, set[str]] = {
     # Lua-facing DTOs keep lowercase fields so script fixtures can reference the
     # legacy Lua-port surface without additional indirection.
     Path(
-        "src/tests/NovaSharp.Interpreter.Tests/EndToEnd/CollectionsBaseGenRegisteredTests.cs"
+        "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/EndToEnd/CollectionsBaseGenRegisteredTests.cs"
     ): {"value"},
     Path(
-        "src/tests/NovaSharp.Interpreter.Tests/EndToEnd/CollectionsBaseInterfGenRegisteredTests.cs"
+        "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/EndToEnd/CollectionsBaseInterfGenRegisteredTests.cs"
     ): {"value"},
     Path(
-        "src/tests/NovaSharp.Interpreter.Tests/EndToEnd/CollectionsRegisteredTests.cs"
+        "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/EndToEnd/CollectionsRegisteredTests.cs"
     ): {"value"},
-    Path("src/tests/NovaSharp.Interpreter.Tests/EndToEnd/UserDataFieldsTests.cs"): {
+    Path(
+        "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/EndToEnd/UserDataFieldsTests.cs"
+    ): {
         "intProp",
         "ConstIntProp",
         "roIntProp",
         "nIntProp",
         "objProp",
     },
-    Path("src/tests/NovaSharp.Interpreter.Tests/EndToEnd/VtUserDataFieldsTests.cs"): {
+    Path(
+        "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/EndToEnd/VtUserDataFieldsTests.cs"
+    ): {
         "intProp",
         "ConstIntProp",
         "nIntProp",
         "objProp",
     },
     Path(
-        "src/tests/NovaSharp.Interpreter.Tests/EndToEnd/StructAssignmentTechnique.cs"
+        "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/EndToEnd/StructAssignmentTechnique.cs"
     ): {"x", "y", "z", "position"},
     # Lua interop shims mirror the original KopiLua/KeraLua identifiers so
     # native parity (docs, tutorials, upstream diffs) stays intact.
-    Path("src/runtime/NovaSharp.Interpreter/LuaPort/LuaStateInterop/CharPtr.cs"): {
+    Path(
+        "src/runtime/WallstopStudios.NovaSharp.Interpreter/LuaPort/LuaStateInterop/CharPtr.cs"
+    ): {
         "chars",
         "index",
     },
-    Path("src/runtime/NovaSharp.Interpreter/LuaPort/LuaStateInterop/LuaBase.cs"): {
+    Path(
+        "src/runtime/WallstopStudios.NovaSharp.Interpreter/LuaPort/LuaStateInterop/LuaBase.cs"
+    ): {
         "LUA_TNONE",
         "LUA_TNIL",
         "LUA_TBOOLEAN",
@@ -97,8 +105,12 @@ MEMBER_ALLOWLIST = {
     "operator",
 }
 MEMBER_ALLOWLIST_BY_PATH: dict[Path, set[str]] = {
-    Path("src/runtime/NovaSharp.Interpreter/CoreLib/IoModule.cs"): {"__index_callback"},
-    Path("src/runtime/NovaSharp.Interpreter/LuaPort/LuaStateInterop/LuaBase.cs"): {"LUA_QL"},
+    Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IoModule.cs"): {
+        "__index_callback"
+    },
+    Path(
+        "src/runtime/WallstopStudios.NovaSharp.Interpreter/LuaPort/LuaStateInterop/LuaBase.cs"
+    ): {"LUA_QL"},
 }
 C_SHARP_KEYWORDS = {
     "abstract",

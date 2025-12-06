@@ -36,22 +36,22 @@ def run_batch(files_list: Path, output_dir: Path, fixtures_dir: Path, timeout: i
     fail_count = 0
     error_count = 0
     
-    # Find NovaSharp.Interpreter.dll
+    # Find WallstopStudios.NovaSharp.Interpreter.dll
     repo_root = Path(__file__).parent.parent.parent
-    interpreter_dll = repo_root / "src/runtime/NovaSharp.Interpreter/bin/Release/netstandard2.1/NovaSharp.Interpreter.dll"
+    interpreter_dll = repo_root / "src/runtime/WallstopStudios.NovaSharp.Interpreter/bin/Release/netstandard2.1/WallstopStudios.NovaSharp.Interpreter.dll"
     
     if not interpreter_dll.exists():
         # Try to build it
         print("Building NovaSharp.Interpreter...")
         subprocess.run(
             ["dotnet", "build", 
-             str(repo_root / "src/runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj"),
+             str(repo_root / "src/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj"),
              "-c", "Release", "-v", "q", "--nologo"],
             check=True
         )
     
     if not interpreter_dll.exists():
-        print(f"Error: NovaSharp.Interpreter.dll not found at {interpreter_dll}", file=sys.stderr)
+        print(f"Error: WallstopStudios.NovaSharp.Interpreter.dll not found at {interpreter_dll}", file=sys.stderr)
         sys.exit(1)
     
     # Process files using a simple Python wrapper that invokes the CLI once per file

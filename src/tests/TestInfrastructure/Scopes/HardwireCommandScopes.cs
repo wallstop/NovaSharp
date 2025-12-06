@@ -1,8 +1,8 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
-    using NovaSharp.Cli.Commands.Implementations;
-    using NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Cli.Commands.Implementations;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Provides a disposable wrapper for overriding <see cref="HardwireCommand.DumpLoader" />.

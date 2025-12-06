@@ -1,7 +1,7 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
-    using NovaSharp.Interpreter.Execution.VM;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
 
     /// <summary>
     /// Temporarily overrides <see cref="Processor.CanYield"/> and restores the previous value when disposed.

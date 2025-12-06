@@ -42,7 +42,7 @@ msbuild src\NovaSharp.sln /p:Configuration=Release
 ### Testing
 ```bash
 # Run all interpreter tests
-dotnet test src\tests\NovaSharp.Interpreter.Tests.TUnit\NovaSharp.Interpreter.Tests.TUnit.csproj -c Release
+dotnet test src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release
 
 # Generate coverage reports (Coverlet + ReportGenerator)
 pwsh ./scripts/coverage/coverage.ps1   # or bash ./scripts/coverage/coverage.sh on macOS/Linux
@@ -67,20 +67,20 @@ Entry point is the `Script` class, which coordinates the entire pipeline.
 
 ### 2. Core Subsystems
 
-**Tree (Parsing & AST)** - `src/runtime/NovaSharp.Interpreter/Tree/`
+**Tree (Parsing & AST)** - `src/runtime/WallstopStudios.NovaSharp.Interpreter/Tree/`
 - Converts source code to Abstract Syntax Tree
 - Each AST node implements its own `Compile(ByteCode)` method
 - Key classes: `Lexer`, `Parser`, `Statement`, `Expression`
 - Loader_Fast.cs orchestrates the parse-compile sequence
 
-**Execution/VM (Bytecode & Runtime)** - `src/runtime/NovaSharp.Interpreter/Execution/`
+**Execution/VM (Bytecode & Runtime)** - `src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/`
 - `Processor` class implements stack-based virtual machine
 - 52 opcodes (ADD, MUL, CALL, JF, etc.)
 - Uses `FastStack<T>` for value stack and execution stack
 - Each `Instruction` contains opcode, operands, and source location
 - Supports tail call optimization for Lua compatibility
 
-**Interop (C# ↔ Lua Bridge)** - `src/runtime/NovaSharp.Interpreter/Interop/`
+**Interop (C# ↔ Lua Bridge)** - `src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/`
 - Bidirectional conversion between C# objects and Lua values
 - Uses descriptor pattern via `IUserDataDescriptor`
 - Global `TypeDescriptorRegistry` caches type metadata
@@ -150,10 +150,10 @@ Script.DoString("return x + 1")
 
 ## Testing Guidelines
 
-- **Framework**: Interpreter and debugger suites run on TUnit (`global::TUnit.Core.Test` + async `Assert.That` APIs). Do not add new NUnit fixtures—`src/tests/NovaSharp.Interpreter.Tests` now stores shared Lua fixtures and helpers only.
+- **Framework**: Interpreter and debugger suites run on TUnit (`global::TUnit.Core.Test` + async `Assert.That` APIs). Do not add new NUnit fixtures—`src/tests/WallstopStudios.NovaSharp.Interpreter.Tests` now stores shared Lua fixtures and helpers only.
 - **Organization**: Keep fixtures in descriptive folders (`Units`, `EndToEnd`, feature-specific) with `<Feature>TUnitTests.cs` names; store Lua fixtures alongside the tests that consume them.
 - **Method Names**: Use PascalCase without underscores; rename legacy methods when touching them.
-- **Suite Maintenance**: Extend `src/tests/NovaSharp.Interpreter.Tests.TUnit` for interpreter behaviour changes. Shared helpers (e.g., TAP corpuses) still live under `src/tests/NovaSharp.Interpreter.Tests`.
+- **Suite Maintenance**: Extend `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit` for interpreter behaviour changes. Shared helpers (e.g., TAP corpuses) still live under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests`.
 - **Coverage Areas**: Add tests for new opcodes, metatables, debugger paths, and interop scenarios.
 - **Spec Alignment**: When tests fail, reread the official Lua manual (baseline: Lua 5.4.8 at `https://www.lua.org/manual/5.4/`), cite the consulted section in PR notes/tests, and update runtime + expectations together.
 
@@ -168,11 +168,11 @@ Script.DoString("return x + 1")
 
 ## Module Organization
 
-  - **Runtime Code**: All under `src/runtime/`, interpreter in `src/runtime/NovaSharp.Interpreter/`
+  - **Runtime Code**: All under `src/runtime/`, interpreter in `src/runtime/WallstopStudios.NovaSharp.Interpreter/`
   - **Debuggers**: `src/debuggers/NovaSharp.VsCodeDebugger/`, `src/debuggers/NovaSharp.RemoteDebugger/`, and `src/debuggers/vscode-extension/`
   - **Tooling**: `src/tooling/` for the CLI (`NovaSharp`), hardwire generator, benchmarks, and perf comparisons
   - **Samples**: `src/samples/` for tutorials and examples
-  - **Tests**: `src/tests/NovaSharp.Interpreter.Tests.TUnit/` (TUnit suite powering local + CI); shared Lua fixtures remain under `src/tests/NovaSharp.Interpreter.Tests/`
+  - **Tests**: `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/` (TUnit suite powering local + CI); shared Lua fixtures remain under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/`
   - **Legacy Assets**: Flash/Flex debugger, Lua52 binaries, and other historical scripts have been removed from `src/legacy`; see `docs/Modernization.md` for the deprecation summary.
 
 ## Important Implementation Notes

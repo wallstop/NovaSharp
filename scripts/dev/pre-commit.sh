@@ -139,7 +139,7 @@ run_powershell_script() {
 update_fixture_catalog() {
   log "[pre-commit] Regenerating NUnit fixture catalog..."
   run_powershell_script ./scripts/tests/update-fixture-catalog.ps1 >/dev/null
-  git add src/tests/NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs
+  git add src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs
 }
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || printf '')"

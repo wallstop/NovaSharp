@@ -1,0 +1,57 @@
+namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
+{
+    using Debugging;
+    using Execution.Scopes;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
+
+    /// <summary>
+    /// Represents a <c>do ... end</c> scope block.
+    /// </summary>
+    internal class ScopeBlockStatement : Statement
+    {
+        private readonly CompositeStatement _block;
+        private readonly RuntimeScopeBlock _stackFrame;
+
+        private readonly SourceRef _do;
+
+        private readonly SourceRef _end;
+
+        /// <summary>
+        /// Parses the block enclosed by a <c>do ... end</c> pair and captures its scope.
+        /// </summary>
+        public ScopeBlockStatement(ScriptLoadingContext lcontext)
+            : base(lcontext)
+        {
+            lcontext.Scope.PushBlock();
+
+            _do = CheckTokenType(lcontext, TokenType.Do).GetSourceRef();
+
+            _block = new CompositeStatement(lcontext);
+
+            _end = CheckTokenType(lcontext, TokenType.End).GetSourceRef();
+
+            _stackFrame = lcontext.Scope.PopBlock();
+            lcontext.Source.Refs.Add(_do);
+            lcontext.Source.Refs.Add(_end);
+        }
+
+        /// <summary>
+        /// Emits the scoped block, ensuring the runtime stack frame is entered and exited.
+        /// </summary>
+        public override void Compile(Execution.VM.ByteCode bc)
+        {
+            using (bc.EnterSource(_do))
+            {
+                bc.EmitEnter(_stackFrame);
+            }
+
+            _block.Compile(bc);
+
+            using (bc.EnterSource(_end))
+            {
+                bc.EmitLeave(_stackFrame);
+            }
+        }
+    }
+}

@@ -59,7 +59,7 @@
 
   ```powershell
   $tunit = @(
-      "--project", "src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj",
+      "--project", "src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj",
       "-c", "Release",
       "--no-build"
   )

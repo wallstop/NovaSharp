@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>WallstopStudios.NovaSharp.RemoteDebugger</AssemblyName>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="$(SrcRoot)runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\Main.html" />
+        <EmbeddedResource Include="Resources\Main.swf" />
+        <EmbeddedResource Include="Resources\playerProductInstall.swf" />
+        <EmbeddedResource Include="Resources\swfobject.js" />
+        <EmbeddedResource Include="Resources\bootstrap.min.css" />
+        <EmbeddedResource Include="Resources\JumpPage.html" />
+        <EmbeddedResource Include="Resources\NovaSharpdbg.png" />
+        <EmbeddedResource Include="Resources\theme.css" />
+        <EmbeddedResource Include="Resources\bootstrap.min.js" />
+        <EmbeddedResource Include="Resources\jquery.min.js" />
+    </ItemGroup>
+</Project>

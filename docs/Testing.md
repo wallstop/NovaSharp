@@ -11,7 +11,7 @@ NovaSharp ships with a comprehensive test suite that blends historical Lua fixtu
 ## Running the Tests Locally
 
 ```bash
-dotnet test --project src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx"
+dotnet test --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx"
 ```
 
 - Produces a standards-based TRX file under `TestResults/` (or the supplied `--results-directory`) so failures can be inspected with the test explorer of your choice.
@@ -26,7 +26,7 @@ dotnet test --project src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Inte
 ### TUnit-first policy
 
 - Interpreter and debugger suites now live entirely on TUnit. Use TUnit’s async assertions and data sources for every new test, and only introduce NUnit fixtures if a third-party dependency requires it (coordinate in `PLAN.md` before doing so).
-- Shared Lua fixtures, TAP corpuses, and helper infrastructure remain under `src/tests/NovaSharp.Interpreter.Tests`. Link the files you need into the TUnit project instead of reviving the deleted NUnit host.
+- Shared Lua fixtures, TAP corpuses, and helper infrastructure remain under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests`. Link the files you need into the TUnit project instead of reviving the deleted NUnit host.
 - The runtime/TAP blueprint in `docs/testing/tunit-migration-blueprint.md` is preserved for historical context. If you need to compare timing against the retired NUnit host, use `pwsh ./scripts/tests/compare-test-runtimes.ps1 -Name <scenario> -BaselineArguments @(...) -TUnitArguments @(...)` so the JSON artefact captures the delta.
 
 ### Build Helper Scripts
@@ -146,7 +146,7 @@ If you discover a production bug while writing tests, fix the production code fi
 
 1. Deepen unit coverage across parser error paths, metatable resolution, and CLI tooling to raise the interpreter namespace above 70 % line coverage.
 1. Introduce debugger protocol integration tests (attach, breakpoint, variable inspection) and capture golden transcripts for the CLI shell.
-1. Keep Lua fixtures under version control in `tests/NovaSharp.Interpreter.Tests` to avoid drift and simplify regeneration.
+1. Keep Lua fixtures under version control in `tests/WallstopStudios.NovaSharp.Interpreter.Tests` to avoid drift and simplify regeneration.
 1. Restore the skipped OS/IO TAP fixtures through conditional execution in trusted environments or provide managed equivalents.
 
 Track active goals and gaps in `PLAN.md`, and update this document as new harnesses or policies ship.
@@ -167,7 +167,7 @@ Track active goals and gaps in `PLAN.md`, and update this document as new harnes
 
 - `src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj` now also treats warnings as errors. Run `dotnet build src/tooling/NovaSharp.Hardwire/NovaSharp.Hardwire.csproj -c Release -nologo` before committing tooling changes, and keep analyzer suppressions documented.
 
-- `src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>` (2025‑11‑24). Before pushing debugger/network changes, run `dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo` (or the full solution build) to keep the analyzer set clean. Remote-debugger tests now live in `src/tests/NovaSharp.RemoteDebugger.Tests.TUnit`; add coverage there when touching RemoteDebugger code.
+- `src/debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj` now builds with `<TreatWarningsAsErrors>true>` (2025‑11‑24). Before pushing debugger/network changes, run `dotnet build src/debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj -c Release -nologo` (or the full solution build) to keep the analyzer set clean. Remote-debugger tests now live in `src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit`; add coverage there when touching RemoteDebugger code.
 
 - Record every analyzer command you run when filling out `.github/pull_request_template.md`. Reviewers expect to see the solution build plus any scoped project builds/tests for the areas you touched.
 
@@ -186,9 +186,9 @@ Both debugger stacks now rely on analyzers to catch regressions; any new warning
 Validation checklist:
 
 ```powershell
-dotnet build src/debuggers/NovaSharp.VsCodeDebugger/NovaSharp.VsCodeDebugger.csproj -c Release -nologo
-dotnet build src/debuggers/NovaSharp.RemoteDebugger/NovaSharp.RemoteDebugger.csproj -c Release -nologo
-dotnet test --project src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
+dotnet build src/debuggers/WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj -c Release -nologo
+dotnet build src/debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj -c Release -nologo
+dotnet test --project src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
 ```
 
 Document any new suppressions or analyzer exclusions in `PLAN.md` (with the CA rule, justification, and follow-up owner) before merging.

@@ -1,8 +1,8 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
-    using NovaSharp.Interpreter;
-    using NovaSharp.Interpreter.Interop;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Interop;
 
     /// <summary>
     /// Captures <see cref="Script.GlobalOptions.CustomConverters"/> and restores the original mappings on disposal.

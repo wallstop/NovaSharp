@@ -12,7 +12,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 TEST_ROOT = REPO_ROOT / "src" / "tests"
 
 INFRA_DIR = (
-    TEST_ROOT / "NovaSharp.Interpreter.Tests.TUnit" / "TestInfrastructure"
+    TEST_ROOT / "WallstopStudios.NovaSharp.Interpreter.Tests.TUnit" / "TestInfrastructure"
 ).resolve()
 ALLOWED_SCOPE_FILES = {
     INFRA_DIR / "ConsoleCaptureCoordinator.cs",

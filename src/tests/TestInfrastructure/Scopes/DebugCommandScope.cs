@@ -1,9 +1,9 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
     using System.Threading;
-    using NovaSharp.Cli.Commands.Implementations;
-    using NovaSharp.RemoteDebugger;
+    using WallstopStudios.NovaSharp.Cli.Commands.Implementations;
+    using WallstopStudios.NovaSharp.RemoteDebugger;
 
     /// <summary>
     /// Provides a disposable wrapper for overriding <see cref="DebugCommand"/> hooks.

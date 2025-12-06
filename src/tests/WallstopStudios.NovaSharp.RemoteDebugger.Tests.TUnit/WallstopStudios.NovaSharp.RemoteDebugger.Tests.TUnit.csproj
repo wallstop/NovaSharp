@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit</AssemblyName>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <IsTestProject>true</IsTestProject>
+        <LangVersion>12</LangVersion>
+        <UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="TUnit" Version="1.2.11" />
+        <PackageReference Include="TUnit.Assertions" Version="1.2.11" />
+        <ProjectReference Include="$(SrcRoot)debuggers/WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="$(SrcRoot)runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(SrcRoot)debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(SrcRoot)tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <Compile
+            Include="$(RepoRoot)src/tests/TestInfrastructure/Scopes/**/*.cs"
+            Link="TestInfrastructure\Scopes\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
+            Include="$(RepoRoot)src/tests/TestInfrastructure/TUnit/**/*.cs"
+            Link="TestInfrastructure\TUnit\%(RecursiveDir)%(Filename)%(Extension)"
+        />
+        <Compile
+            Include="..\WallstopStudios.NovaSharp.Interpreter.Tests\TestUtilities\RemoteDebuggerTestHarness.cs"
+            Link="TestUtilities\RemoteDebuggerTestHarness.cs"
+        />
+        <Compile
+            Include="..\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\TestInfrastructure\TUnitAssertionConfigureAwaitExtensions.cs"
+            Link="TestInfrastructure\TUnitAssertionConfigureAwaitExtensions.cs"
+        />
+        <Compile
+            Include="..\WallstopStudios.NovaSharp.Interpreter.Tests\TestUtilities\TestWaitHelpers.cs"
+            Link="TestUtilities\TestWaitHelpers.cs"
+        />
+        <Compile
+            Include="..\WallstopStudios.NovaSharp.Interpreter.Tests\TestUtilities\FakeTimeProvider.cs"
+            Link="TestUtilities\FakeTimeProvider.cs"
+        />
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="GoldenPayloads\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+</Project>

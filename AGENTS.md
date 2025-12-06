@@ -19,14 +19,14 @@ For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).
 - All runtime code lives under `src/runtime`, with the interpreter in `src/runtime/NovaSharp.Interpreter`.
 - Packaging and debugger wrappers reside in `src/tooling/NovaSharp.Cli`, `src/debuggers/NovaSharp.VsCodeDebugger`, and `src/debuggers/NovaSharp.RemoteDebugger`.
 - Tooling, samples, and utilities are grouped under `src/tooling`, `src/samples`, and `src/tests`.
-- Interpreter test assets (Lua TAP suites, fixtures, shared helpers) live under `src/tests/NovaSharp.Interpreter.Tests`, but the canonical interpreter test runner is the TUnit project at `src/tests/NovaSharp.Interpreter.Tests.TUnit`.
+- Interpreter test assets (Lua TAP suites, fixtures, shared helpers) live under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests`, but the canonical interpreter test runner is the TUnit project at `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit`.
 - When adding modules, mirror existing folder placement so docs, tests, and build scripts stay aligned.
 
 ## Build, Test, and Development Commands
 - Run `dotnet tool restore` once per checkout to install local CLI tools such as CSharpier.
 - Build all targets with `dotnet build src\NovaSharp.sln -c Release` for a full verification pass.
 - Legacy environments can use `msbuild src\NovaSharp.sln /p:Configuration=Release` when Visual Studio tooling is preferred.
-- Execute interpreter tests with `dotnet test src\tests\NovaSharp.Interpreter.Tests.TUnit\NovaSharp.Interpreter.Tests.TUnit.csproj -c Release`.
+- Execute interpreter tests with `dotnet test src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release`.
 - Iterate quickly on the interpreter via `dotnet build src\runtime\NovaSharp.Interpreter\NovaSharp.Interpreter.csproj`.
 - Generate coverage locally with `./scripts/coverage/coverage.ps1` (produces refreshed artefacts under `artifacts/coverage` and `docs/coverage/latest`). When running on macOS/Linux without PowerShell, detect the absence of `pwsh`/`powershell` and fall back to `bash ./scripts/coverage/coverage.sh` (supports the same flags).
 - Codex is allowed to run the coverage helpers (`./scripts/coverage/coverage.ps1` or `.sh`) without additional approval, so feel free to self-drive coverage refreshes while iterating.
@@ -51,7 +51,7 @@ For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).
 - Fixtures that mutate shared/static state (anything that calls `UserData.RegisterType`, tweaks the registration policy, etc.) must include `[UserDataIsolation]` so the registry is sandboxed per test. If a suite manipulates `Script.GlobalOptions` (custom converters, platform hooks, etc.), decorate it with `[ScriptGlobalOptionsIsolation]` and drive changes through the shared helpers (`ScriptGlobalOptionsScope`, `ScriptCustomConvertersScope`, `ScriptPlatformScope`, etc.) so those tweaks stay local.
 - Arrange new tests in the most descriptive folder (`Units`, `EndToEnd`, or feature-specific subfolders) and ensure class names follow `<Feature>Tests.cs` with colocated Lua fixtures where needed.
 - When adding Lua fixtures, provide a mix of small-scoped, mixed-mode, and highly complex scenarios; name the `.lua`/`.t` files descriptively so their focus is obvious at a glance.
-- Extend `tests/NovaSharp.Interpreter.Tests.TUnit` when interpreter behaviour changes; `src/tests/NovaSharp.Interpreter.Tests` now serves as a shared asset directory (Lua TAP suites, fixtures, helpers) rather than a standalone NUnit project.
+- Extend `tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit` when interpreter behaviour changes; `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests` now serves as a shared asset directory (Lua TAP suites, fixtures, helpers) rather than a standalone NUnit project.
 - If you add a new NUnit-based test project elsewhere in the repo, ensure its fixtures flow through the relevant catalog (run `pwsh ./scripts/tests/update-fixture-catalog.ps1` if you truly add NUnit fixtures). Interpreter tests no longer require the catalog—`FixtureCatalogGenerated.cs` now records an empty list to satisfy analyzers.
 - Run the detector/console-capture/userdata/try-finally lint guards (`python scripts/lint/check-platform-testhooks.py`, `python scripts/lint/check-console-capture-semaphore.py`, `python scripts/lint/check-userdata-scope-usage.py`, and `python scripts/lint/check-test-finally.py`) before pushing so new tests never reference `PlatformAutoDetector.TestHooks`, call `UserData.RegisterType` outside the approved suites, or reintroduce raw `finally` blocks. CI runs the same scripts via their `scripts/ci/*` wrappers.
 - TAP suites that need stdin input must write their temporary files into the suite’s working directory (the directory containing the `.t` script) and drive the scenario through `platform.stdin_helper.run(...)` rather than shelling out to `io.popen`. `TapStdinHelper` resolves relative paths by checking the suite directory, `AppContext.BaseDirectory`, and the current working directory—keep files in those locations so the helper can find them on every platform.
@@ -66,7 +66,7 @@ For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).
 - This policy applies to all bugs: serialization issues, protocol violations, Lua semantics divergences, and API contract violations. Never work around bugs with test accommodations.
 - Any failing test must trigger a pass through the official Lua manuals for every version we target (baseline: Lua 5.4.8 at `https://www.lua.org/manual/5.4/`). Document the consulted section/link in the test or PR notes, and update production code and expectations together so NovaSharp stays spec-faithful.
 - Spec-driven suites (e.g., string, math, table) must cite the relevant manual section (e.g., “§6.4 String Manipulation”) and assert behaviour matching the canonical Lua interpreter rather than legacy MoonSharp quirks.
-- Interpreter migration is complete—do not add new NUnit fixtures under `src/tests/NovaSharp.Interpreter.Tests`. All new coverage belongs in the TUnit project (or the remote-debugger TUnit host).
+- Interpreter migration is complete—do not add new NUnit fixtures under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests`. All new coverage belongs in the TUnit project (or the remote-debugger TUnit host).
 - When comparing legacy timing data (e.g., remote debugger NUnit → TUnit), use `pwsh ./scripts/tests/compare-test-runtimes.ps1 -Name <scenario> -BaselineArguments @(...) -TUnitArguments @(...)` so reviewers can see the before/after delta.
 
 ## TUnit Data-Driven Tests

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Description>Shared infrastructure primitives for NovaSharp Lua interpreter</Description>
+        <Copyright>(C) 2014-2016 Marco Mastropaolo</Copyright>
+        <AssemblyTitle>WallstopStudios.NovaSharp.Interpreter.Infrastructure</AssemblyTitle>
+        <VersionPrefix>2.0.0</VersionPrefix>
+        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+        <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
+        <AssemblyName>WallstopStudios.NovaSharp.Interpreter.Infrastructure</AssemblyName>
+        <PackageId>com.wallstop-studios.novasharp.Interpreter.Infrastructure</PackageId>
+        <LangVersion>latest</LangVersion>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+</Project>

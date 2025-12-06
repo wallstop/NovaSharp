@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>WallstopStudios.NovaSharp.Hardwire</AssemblyName>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="$(SrcRoot)runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Remove="$(MSBuildProjectDirectory)/keypair.snk" />
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="System.CodeDom" Version="9.0.10" />
+    </ItemGroup>
+</Project>

@@ -10,14 +10,14 @@ NovaSharp is a multi-version Lua interpreter (supporting Lua 5.1, 5.2, 5.3, and 
 
 ```
 src/
-  runtime/NovaSharp.Interpreter/        # Core interpreter (lexer, parser, compiler, VM)
+  runtime/WallstopStudios.NovaSharp.Interpreter/        # Core interpreter (lexer, parser, compiler, VM)
   tooling/NovaSharp.Cli/                # Command-line interface
   debuggers/
     NovaSharp.VsCodeDebugger/           # VS Code debugger adapter (DAP)
     NovaSharp.RemoteDebugger/           # Web-based remote debugger
   tests/
-    NovaSharp.Interpreter.Tests.TUnit/  # Canonical test runner (TUnit)
-    NovaSharp.Interpreter.Tests/        # Shared Lua fixtures and helpers
+    WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/  # Canonical test runner (TUnit)
+    WallstopStudios.NovaSharp.Interpreter.Tests/        # Shared Lua fixtures and helpers
 docs/                                   # Testing, contributing, and architecture guides
 scripts/                                # Build, coverage, and lint helpers
 tools/                                  # Python utilities (audits, extractors)
@@ -39,14 +39,14 @@ dotnet tool restore
 dotnet build src/NovaSharp.sln -c Release
 
 # Quick iteration on interpreter core
-dotnet build src/runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj
+dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/NovaSharp.Interpreter.csproj
 ```
 
 ### Testing
 
 ```bash
 # Run interpreter tests (TUnit, Microsoft.Testing.Platform)
-dotnet test --project src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj -c Release
+dotnet test --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release
 
 # Generate coverage reports
 pwsh ./scripts/coverage/coverage.ps1   # or bash ./scripts/coverage/coverage.sh on macOS/Linux

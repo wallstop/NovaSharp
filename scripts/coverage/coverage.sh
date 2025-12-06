@@ -124,12 +124,14 @@ run_coverlet() {
         dotnet tool run coverlet "$runner_output"
         --target "dotnet"
         --targetargs "$target_args"
+        --format "json"
         --format "lcov"
         --format "cobertura"
         --format "opencover"
         --output "$coverage_base"
-        --include "[NovaSharp.*]*"
-        --exclude "[NovaSharp.*Tests*]*"
+        --verbosity "minimal"
+        --include "[WallstopStudios.NovaSharp.*]*"
+        --exclude "[WallstopStudios.NovaSharp.*Tests*]*"
     )
 
     if [[ ${#extra_args[@]} -gt 0 ]]; then
@@ -154,6 +156,10 @@ if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
     log "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 runtimes can host net8 test runners."
 fi
 
+# Suppress TUnit ASCII banner and telemetry messages
+export TESTINGPLATFORM_NOBANNER=1
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
 log "Restoring local dotnet tools..."
 dotnet tool restore >/dev/null
 
@@ -165,8 +171,8 @@ fi
 coverage_root="$repo_root/artifacts/coverage"
 mkdir -p "$coverage_root"
 build_log_path="$coverage_root/build.log"
-tunit_runner_project="src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj"
-remote_runner_project="src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj"
+tunit_runner_project="src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj"
+remote_runner_project="src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj"
 
 if [[ "$skip_build" != true ]]; then
     log "Building solution (configuration: $configuration)..."
@@ -176,7 +182,8 @@ if [[ "$skip_build" != true ]]; then
         build_restore_flag=(--no-restore)
     fi
 
-    if ! dotnet build "src/NovaSharp.sln" -c "$configuration" -m "${build_restore_flag[@]}" 2>&1 | tee "$build_log_path"; then
+    # Build with maximum parallelism and node reuse for optimal performance
+    if ! dotnet build "src/NovaSharp.sln" -c "$configuration" --nologo -m /nodeReuse:true "${build_restore_flag[@]}" 2>&1 | tee "$build_log_path"; then
         echo ""
         echo "dotnet build failed, tailing $build_log_path:"
         tail -n 200 "$build_log_path"
@@ -192,7 +199,7 @@ tunit_results_dir="$test_results_dir/tunit"
 remote_results_dir="$test_results_dir/remote"
 mkdir -p "$tunit_results_dir" "$remote_results_dir"
 
-tunit_runner_output="$repo_root/src/tests/NovaSharp.Interpreter.Tests.TUnit/bin/$configuration/net8.0/NovaSharp.Interpreter.Tests.TUnit.dll"
+tunit_runner_output="$repo_root/src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/bin/$configuration/net8.0/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.dll"
 
 tunit_message_prefix="TUnit runner output not found at '$tunit_runner_output'."
 if [[ ! -f "$tunit_runner_output" ]]; then
@@ -209,7 +216,7 @@ if [[ ! -f "$tunit_runner_output" ]]; then
     error_exit "$message"
 fi
 
-remote_runner_output="$repo_root/src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/bin/$configuration/net8.0/NovaSharp.RemoteDebugger.Tests.TUnit.dll"
+remote_runner_output="$repo_root/src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/bin/$configuration/net8.0/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.dll"
 if [[ ! -f "$remote_runner_output" ]]; then
     message="Remote debugger runner output not found at '$remote_runner_output'."
     if [[ "$skip_build" == true ]]; then
@@ -226,7 +233,10 @@ fi
 coverage_base="$coverage_root/coverage"
 report_target="$repo_root/docs/coverage/latest"
 
-tunit_coverage_base="${coverage_base}.tunit"
+# TUnit coverage goes to a subdirectory
+tunit_coverage_dir="$coverage_root/tunit"
+mkdir -p "$tunit_coverage_dir"
+tunit_coverage_base="$tunit_coverage_dir/coverage"
 tunit_coverage_json="${tunit_coverage_base}.json"
 
 # Use 'run' instead of 'test' because Microsoft.Testing.Platform
@@ -266,7 +276,7 @@ dotnet tool run reportgenerator \
     "-reports:$cobertura_report" \
     "-targetdir:$report_target" \
     "-reporttypes:$report_types" \
-    "-assemblyfilters:+NovaSharp.*"
+    "-assemblyfilters:+WallstopStudios.NovaSharp.*"
 
 summary_path="$report_target/Summary.txt"
 if [[ -f "$summary_path" ]]; then
@@ -315,7 +325,7 @@ summary_path = sys.argv[1]
 data = json.loads(Path(summary_path).read_text(encoding="utf-8"))
 assemblies = data.get("coverage", {}).get("assemblies", [])
 for asm in assemblies:
-    if asm.get("name") == "NovaSharp.Interpreter":
+    if asm.get("name") == "WallstopStudios.NovaSharp.Interpreter":
         print(
             asm.get("coverage", 0),
             asm.get("branchcoverage", 0),

@@ -24,7 +24,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Defaults
-FIXTURES_DIR="${ROOT_DIR}/src/tests/NovaSharp.Interpreter.Tests/LuaFixtures"
+FIXTURES_DIR="${ROOT_DIR}/src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures"
 OUTPUT_DIR="${ROOT_DIR}/artifacts/lua-comparison-results"
 LUA_VERSION="5.4"
 JOBS=$(nproc 2>/dev/null || echo 4)

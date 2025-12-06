@@ -4,7 +4,7 @@ set -euo pipefail
 
 configuration="Release"
 solution="src/NovaSharp.sln"
-test_project="src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj"
+test_project="src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj"
 run_tests=1
 restore_tools=1
 restore_packages=1
@@ -85,6 +85,10 @@ if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
     export DOTNET_ROLL_FORWARD="Major"
     echo "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 hosts can run the net8 test runner."
 fi
+
+# Suppress TUnit ASCII banner and telemetry messages
+export TESTINGPLATFORM_NOBANNER=1
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 if (( run_tests )); then
     prepare_test_results_directory

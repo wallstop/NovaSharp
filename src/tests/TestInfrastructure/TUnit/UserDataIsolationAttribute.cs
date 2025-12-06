@@ -1,4 +1,4 @@
-namespace NovaSharp.Interpreter.Tests
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
 {
     using System;
 

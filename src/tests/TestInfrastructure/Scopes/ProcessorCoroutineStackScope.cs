@@ -1,8 +1,8 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
     using System.Collections.Generic;
-    using NovaSharp.Interpreter.Execution.VM;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
 
     /// <summary>
     /// Captures a processor's coroutine stack and restores it on disposal.

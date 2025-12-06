@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Description>http://www.NovaSharp.org</Description>
+        <Copyright>(C) 2014-2016 Marco Mastropaolo</Copyright>
+        <AssemblyTitle>WallstopStudios.NovaSharp.VsCodeDebugger</AssemblyTitle>
+        <VersionPrefix>2.0.0</VersionPrefix>
+        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+        <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
+        <AssemblyName>WallstopStudios.NovaSharp.VsCodeDebugger</AssemblyName>
+        <PackageId>com.wallstop-studios.novasharp.VsCodeDebugger</PackageId>
+        <LangVersion>latest</LangVersion>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Remove="$(MSBuildProjectDirectory)/keypair.snk" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="$(SrcRoot)runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+    </ItemGroup>
+</Project>

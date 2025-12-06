@@ -1,9 +1,9 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
     using System.Linq;
     using System.Reflection;
-    using NovaSharp.Interpreter.Platforms;
+    using WallstopStudios.NovaSharp.Interpreter.Platforms;
 
     /// <summary>
     /// Provides shared helpers for capturing and mutating platform detector state in tests.

@@ -10,6 +10,8 @@
 - **CI**: Tests run on matrix of `[ubuntu-latest, windows-latest, macos-latest]`.
 - **DAP golden tests**: 20 tests validating VS Code debugger protocol payloads (initialize, threads, breakpoints, events, evaluate, scopes, stackTrace, variables).
 - **Sandbox infrastructure**: `SandboxOptions` with instruction limits, recursion limits, module/function restrictions, callbacks, and presets.
+- **Benchmark CI**: `.github/workflows/benchmarks.yml` with BenchmarkDotNet, threshold-based regression alerting (115% = 15% regression), and historical tracking in `gh-pages`.
+- **Namespace rebrand**: ✅ **Completed 2025-12-06** — Full rebrand to `WallstopStudios.NovaSharp.*` namespaces across all projects.
 
 ## Baseline Controls (must stay green)
 - Re-run audits (`documentation_audit.py`, `NamingAudit`, `SpellingAudit`) when APIs or docs change.
@@ -29,11 +31,43 @@ Coverage has reached a practical ceiling. The remaining ~1.3% gap to 95% branch 
 No further coverage work planned unless these blockers are addressed.
 
 ### 2. Codebase organization & namespace hygiene
-- **Problem**: Monolithic layout mirrors legacy MoonSharp; contributors struggle to locate feature-specific code.
-- **Objectives**:
-  1. Split into feature-scoped projects (e.g., `NovaSharp.Interpreter.Core`, `NovaSharp.Interpreter.IO`).
-  2. Restructure test tree by domain (`Runtime/VM`, `Runtime/Modules`, `Tooling/Cli`).
-  3. Add guardrails so new code lands in correct folders with consistent namespaces.
+- ✅ **Completed (2025-12-06)**: Full namespace rebrand to `WallstopStudios.NovaSharp.*`.
+- **Scope**: 648 C# files across all projects rebranded.
+- **Changes made**:
+  - All namespace declarations changed from `NovaSharp.*` to `WallstopStudios.NovaSharp.*`
+  - All using statements updated
+  - All project directories renamed (e.g., `NovaSharp.Interpreter` → `WallstopStudios.NovaSharp.Interpreter`)
+  - All csproj files renamed
+  - All project references updated in csproj files
+  - Solution file updated with new project paths
+  - AssemblyInfo files updated for version references
+  - InternalsVisibleTo attributes updated
+  - Package IDs changed to `com.wallstop-studios.novasharp.*` format
+  - RootNamespace properties set in csproj files
+  - Hardwire generator ManagedType strings updated
+  - Test fixture paths updated
+  - Scripts and documentation updated
+  - **Fixed (2025-12-06)**: Embedded resource path in `DebugWebHost.cs` updated for namespace rebrand
+  - **Fixed (2025-12-06)**: Test project relative paths in `RemoteDebugger.Tests.TUnit.csproj` updated
+  - **Fixed (2025-12-06)**: Hardcoded assembly names in `RemoteDebuggerServiceTUnitTests.cs` and `TapRunnerTUnit.cs` updated
+  - **Fixed (2025-12-06)**: `GoldenPayloadHelper.cs` fallback path updated for new project names
+- **Projects renamed**:
+  - `WallstopStudios.NovaSharp.Interpreter` (runtime)
+  - `WallstopStudios.NovaSharp.Interpreter.Infrastructure` (runtime)
+  - `WallstopStudios.NovaSharp.RemoteDebugger` (debugger)
+  - `WallstopStudios.NovaSharp.VsCodeDebugger` (debugger)
+  - `WallstopStudios.NovaSharp.Cli` (tooling)
+  - `WallstopStudios.NovaSharp.Hardwire` (tooling)
+  - `WallstopStudios.NovaSharp.Benchmarks` (tooling)
+  - `WallstopStudios.NovaSharp.Comparison` (tooling)
+  - `WallstopStudios.NovaSharp.LuaBatchRunner` (tooling)
+  - `WallstopStudios.NovaSharp.Interpreter.Tests.TUnit` (tests)
+  - `WallstopStudios.NovaSharp.Interpreter.Tests` (test fixtures)
+  - `WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit` (tests)
+- **Remaining**:
+  - Consider splitting into feature-scoped projects if warranted (e.g., separate Interop, Debugging assemblies)
+  - Restructure test tree by domain (`Runtime/VM`, `Runtime/Modules`, `Tooling/Cli`)
+  - Add guardrails so new code lands in correct folders with consistent namespaces
 
 ### 3. Debugger DAP testing
 - **Current**: **72 TUnit tests** in `NovaSharp.RemoteDebugger.Tests.TUnit/` covering handshake, breakpoints, stepping, watches, expressions, VS Code server lifecycle, **and golden payload validation**.
@@ -75,8 +109,34 @@ No further coverage work planned unless these blockers are addressed.
 ### 5. Packaging and performance
 - Unity UPM/embedded packaging with IL2CPP/AOT documentation.
 - NuGet package pipeline with versioning/signatures.
-- Performance regression harness with BenchmarkDotNet in CI.
-- Interpreter hot-path optimization (zero-allocation strategies, pooling).
+- ✅ **Performance regression CI** (Completed 2025-12-06): BenchmarkDotNet runs in `.github/workflows/benchmarks.yml` with:
+  - Automatic runs on master pushes and PRs touching runtime/benchmark code
+  - Threshold-based alerting (115% = 15% regression by default)
+  - PR comments when regressions detected
+  - Historical tracking in `gh-pages` branch via `benchmark-action/github-action-benchmark`
+  - Bash (`run-benchmarks.sh`) and PowerShell (`run-benchmarks.ps1`) helper scripts
+- ✅ **Interpreter hot-path optimization - Phase 1** (Completed 2025-12-06): Zero-allocation strategies for DynValue:
+  - Added `DynValue.FromBoolean(bool)` - returns cached `True`/`False` instances instead of allocating
+  - Added `DynValue.FromNumber(double)` - returns cached instances for small integers (0-255)
+  - Added small integer cache (256 readonly DynValue instances for array indices)
+  - Updated VM hot paths to use cached values:
+    - `ToBool` opcode uses `FromBoolean`
+    - `ExecNot` and `ExecCNot` use `FromBoolean`
+    - Binary comparison operators use `FromBoolean`
+    - Unary `not` operator uses `FromBoolean`
+    - `GetStoreValue` uses `DynValue.Nil` instead of allocating
+    - `ExecArgs` uses `DynValue.Nil` instead of allocating
+  - Updated CoreLib modules to use cached values:
+    - `rawequal`, `math.ult`, `bit32.btest`, `json.isnull`, `coroutine.isyieldable`, `coroutine.running`, `pcall`/`xpcall` error handlers
+  - All 3,287 tests passing; BenchmarkDotNet validates no regressions
+- **Baseline captured (2025-12-06)**: Container baseline saved to `docs/performance-history/container-baseline-2025-12-06/`:
+  - ScriptLoadingBenchmarks: Tiny Execute = 148 ns (696 B), Large Execute = 987 ms (3.5 GB)
+  - RuntimeBenchmarks: NumericLoops = 195 ns, TableMutation = 5.24 µs, CoroutinePipeline = 278 ns, UserDataInterop = 374 ns
+  - Environment: Intel Core Ultra 9 285K, .NET 8.0.22, ShortRun job (10 iterations)
+- **Remaining optimization opportunities**:
+  - Object pooling for Closure, Table instances
+  - String interning for frequently used strings
+  - Span-based parsing to reduce string allocations
 
 ### 6. Tooling, docs, and contributor experience
 - Roslyn source generators/analyzers for NovaSharp descriptors.
@@ -97,7 +157,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 - **Test authoring pattern**: Use `LuaFixtureHelper` to load `.lua` files from `LuaFixtures/` directory. See `StringModuleFixtureBasedTUnitTests.cs` for examples.
 
 Key infrastructure:
-- `src/tests/NovaSharp.Interpreter.Tests/LuaFixtures/` – 855 Lua fixtures with metadata headers
+- `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/` – 855 Lua fixtures with metadata headers
 - `src/tests/TestInfrastructure/LuaFixtures/LuaFixtureHelper.cs` – Test helper for loading fixtures
 - `src/tooling/NovaSharp.LuaBatchRunner/` – Batch execution tool (32s for 830 files)
 - `scripts/tests/run-lua-fixtures-fast.sh` – Multi-version fixture runner
@@ -117,31 +177,77 @@ Key infrastructure:
 
 ## Recommended Next Steps (Priority Order)
 
-1. ~~**DAP golden payload tests**~~ (Initiative 3): ✅ **Completed 2025-12-06** — 12 initial golden payload tests added validating initialize, threads, breakpoints, events, and evaluate responses.
+### Completed Items
 
-2. ~~**Extend golden payload coverage**~~: ✅ **Completed 2025-12-06** — 8 additional tests for scopes, stackTrace, and variables DAP responses. Total: 20 golden payload tests. Also fixed JSON serialization bug (empty arrays as `{}`) in `JsonTableConverter.ObjectToJson`.
+1. ~~**DAP golden payload tests**~~ (Initiative 3): ✅ **Completed 2025-12-06** — 20 golden payload tests validating initialize, threads, breakpoints, events, evaluate, scopes, stackTrace, and variables responses.
 
-3. ~~**Runtime sandboxing profiles**~~ (Initiative 4): ✅ **Completed 2025-12-06** — Implemented comprehensive sandbox infrastructure:
-   - Created `SandboxOptions` class with instruction limits, call stack depth limits, and module/function restrictions
-   - Added `SandboxViolationException` and `SandboxViolationType` for typed violation reporting
-   - Integrated sandbox into `ScriptOptions` with copy-on-write semantics for the `Unrestricted` singleton
-   - Added instruction counting in VM `ProcessingLoop` with callback support for custom handling
-   - Added call stack depth checking in `InternalExecCall` before function invocations
-   - Added function access checks to `load`, `loadfile`, `dofile` in `LoadModule`
-   - Added module access checks to `require` via `__require_clr_impl`
-   - Created preset factories: `SandboxOptions.CreateRestrictive()` and `SandboxOptions.CreateModerate()`
-   - Added 39 TUnit tests covering instruction limits, recursion limits, access restrictions, and presets
+2. ~~**Runtime sandboxing profiles**~~ (Initiative 4): ✅ **Completed 2025-12-06** — Comprehensive sandbox infrastructure with instruction/recursion limits, module/function restrictions, presets, and 39 tests.
 
-4. ~~**Lua comparison gating**~~: ✅ **Completed 2025-12-06** — Promoted `lua-comparison` CI job from `warn` to `enforce` mode:
-   - Documented 23 known divergences in `docs/testing/lua-divergences.md`
-   - Updated `compare-lua-outputs.py` with built-in allowlist for known divergences
-   - Added `--enforce` flag for CI gating (fails on unexpected mismatches only)
-   - Enhanced output normalization for NovaSharp-specific address formats
-   - Effective match rate: 76.2% of comparable fixtures (excluding CLR-dependent tests)
+3. ~~**Lua comparison gating**~~: ✅ **Completed 2025-12-06** — CI now enforces Lua comparison with 23 documented divergences.
 
-5. **Namespace restructuring** (Initiative 2): Begin splitting monolithic interpreter project, starting with `NovaSharp.Interpreter.IO`.
+4. ~~**Namespace restructuring - Full rebrand**~~ (Initiative 2): ✅ **Completed 2025-12-06** — Full `WallstopStudios.NovaSharp.*` namespace rebrand:
+   - All 648 C# files updated
+   - All projects renamed and references updated
+   - Solution file updated
+   - Scripts and documentation updated
+   - All 3,287 tests passing
+   - **Improved (2025-12-06)**: Replaced hardcoded namespace strings with `typeof().FullName` in Hardwire generators for compile-time safety
 
-6. **Performance regression CI** (Initiative 5): Add BenchmarkDotNet runs to CI with threshold-based alerting.
+5. ~~**Performance regression CI**~~ (Initiative 5): ✅ **Completed 2025-12-06** — BenchmarkDotNet workflow with threshold-based alerting and historical tracking.
+
+6. ~~**Interpreter hot-path optimization - Phase 1**~~ (Initiative 5): ✅ **Completed 2025-12-06** — Zero-allocation DynValue caching:
+   - Added `FromBoolean` and `FromNumber` static helpers returning cached instances
+   - Small integer cache for 0-255 (common Lua array indices)
+   - Updated VM opcodes and CoreLib modules to use cached values
+   - Baseline captured to `docs/performance-history/container-baseline-2025-12-06/`
+   - All 3,287 tests passing
+
+7. ~~**Interpreter hot-path optimization - Phase 2**~~ (Initiative 5): ✅ **Completed 2025-12-06** — Allocation reduction infrastructure:
+   - Added `DynValueArrayPool` for pooling DynValue[] arrays (common in function calls)
+   - Added `StringBuilderPool` for pooling StringBuilder instances (used heavily in lexer)
+   - Removed LINQ `.Last()` calls in `BuildTimeScope` (replaced with cached `CurrentFrame` property)
+   - Removed LINQ `.Select()` + `string.Join()` in `DynValue.ToPrintString/ToString` (manual loop with pooled StringBuilder)
+   - Removed LINQ `.Skip().ToArray()` in `Coroutine.GetStackTrace` (manual array copy)
+   - Updated Lexer to use `StringBuilderPool` for all token building (ReadLongString, ReadNumberToken, ReadHashBang, ReadComment, ReadSimpleStringToken, ReadNameToken)
+   - Created comprehensive optimization opportunities document: `docs/performance/optimization-opportunities.md`
+   - All 3,278 tests passing
+
+8. ~~**Interpreter hot-path optimization - Phase 2.5**~~ (Initiative 5): ✅ **Completed 2025-12-06** — ZString integration and PooledResource pattern:
+   - Added Cysharp ZString 2.6.0 NuGet package for zero-allocation string operations
+   - Created `ZStringBuilder` wrapper utilities (`Create`, `CreateNested`, `CreateUtf8`, `Concat`, `Format`, `Join`)
+   - Created `PooledResource<T>` struct following Unity Helper's IDisposable pattern for automatic pool return
+   - Updated `DynValueArrayPool` with `Get(int, out T[])` method returning `PooledResource<T>`
+   - Updated `DynValue.JoinTupleStrings` to use ZString's `Utf16ValueStringBuilder`
+   - All 3,278 tests passing
+
+### Active/Upcoming Items
+
+9. **Advanced sandbox features** (Initiative 4):
+   - Memory tracking (per-allocation accounting)
+   - Deterministic execution mode for lockstep multiplayer/replays
+   - Per-mod isolation containers with load/reload/unload hooks
+   - Coroutine count limits
+
+10. **Packaging** (Initiative 5):
+    - Unity UPM/embedded packaging with IL2CPP/AOT documentation
+    - NuGet package pipeline with versioning/signatures
+
+11. **Tooling enhancements** (Initiative 6):
+    - Roslyn source generators/analyzers for NovaSharp descriptors
+    - DocFX (or similar) for API documentation
+    - CLI output golden tests
+
+12. **Interpreter hot-path optimization - Phase 3** (Initiative 5):
+    - Use `DynValueArrayPool` in `ProcessorUtilityFunctions` for `StackTopToArray` methods
+    - Use `DynValueArrayPool` in `ProcessorInstructionLoop` for function call arguments
+    - Expand ZString usage to Lexer (complex control flow with exceptions needs careful handling)
+    - Object pooling for Closure, Table instances
+    - String interning for frequently used strings
+
+13. **Concurrency improvements** (Initiative 7, optional):
+    - Consider `System.Threading.Lock` (.NET 9+) for cleaner lock semantics
+    - Split debugger locks for reduced contention
+    - Add timeout to `BlockingChannel`
 
 ---
 Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`.

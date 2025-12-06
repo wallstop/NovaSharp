@@ -1,8 +1,8 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
-    using NovaSharp.Interpreter;
-    using NovaSharp.Interpreter.Loaders;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Loaders;
 
     /// <summary>
     /// Captures <see cref="Script.DefaultOptions"/> and restores them on disposal.

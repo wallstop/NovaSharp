@@ -1,8 +1,8 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
-    using NovaSharp.Interpreter;
-    using NovaSharp.Interpreter.Options;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Options;
 
     /// <summary>
     /// Applies overrides to <see cref="Script.GlobalOptions"/> and restores the previous snapshot on disposal.

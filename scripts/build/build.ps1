@@ -2,7 +2,7 @@
 param(
     [string]$Configuration = "Release",
     [string]$Solution = "src/NovaSharp.sln",
-    [string]$TestProject = "src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj",
+    [string]$TestProject = "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj",
     [switch]$SkipTests,
     [switch]$SkipToolRestore,
     [switch]$SkipRestore
@@ -53,6 +53,10 @@ if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
     $env:DOTNET_ROLL_FORWARD = "Major"
     Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 hosts can run the net8 test runner."
 }
+
+# Suppress TUnit ASCII banner and telemetry messages
+$env:TESTINGPLATFORM_NOBANNER = "1"
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 
 Push-Location $repoRoot
 try {

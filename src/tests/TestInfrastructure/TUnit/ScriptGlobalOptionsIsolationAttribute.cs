@@ -1,11 +1,11 @@
-namespace NovaSharp.Interpreter.Tests
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
 {
     using System;
     using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Core.Enums;
     using global::TUnit.Core.Interfaces;
-    using NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter;
 
     [AttributeUsage(
         AttributeTargets.Class | AttributeTargets.Method,

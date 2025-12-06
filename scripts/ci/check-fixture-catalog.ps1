@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Runs ./scripts/tests/update-fixture-catalog.ps1 from the repo root and verifies that
-    src/tests/NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs is unchanged. CI should
+    src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs is unchanged. CI should
     invoke this script to guarantee contributors regenerate the catalog when fixtures move.
 
 .USAGE
@@ -13,7 +13,7 @@
 
 param(
     [string]$RepoRoot = (Resolve-Path "$PSScriptRoot/../..").Path,
-    [string]$FixtureCatalog = "src/tests/NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs",
+    [string]$FixtureCatalog = "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs",
     [string]$GeneratorScript = "scripts/tests/update-fixture-catalog.ps1"
 )
 

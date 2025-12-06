@@ -10,11 +10,11 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-TUNIT_ROOT = REPO_ROOT / "src/tests/NovaSharp.Interpreter.Tests.TUnit"
+TUNIT_ROOT = REPO_ROOT / "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit"
 ALLOW = {
-    "src/tests/NovaSharp.Interpreter.Tests.TUnit/Units/UserDataTUnitTests.cs",
-    "src/tests/NovaSharp.Interpreter.Tests.TUnit/Units/UserDataIsolationTUnitTests.cs",
-    "src/tests/NovaSharp.Interpreter.Tests.TUnit/Units/HardwireGeneratorTUnitTests.cs",
+    "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Interop/UserDataTUnitTests.cs",
+    "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Interop/UserDataIsolationTUnitTests.cs",
+    "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Tooling/HardwireGeneratorTUnitTests.cs",
 }
 PATTERN = re.compile(r"UserData\.(?:RegisterType|UnregisterType)\s*\(")
 

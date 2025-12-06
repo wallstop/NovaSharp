@@ -11,7 +11,7 @@ The `scripts/build` folder contains cross-platform wrappers that build the NovaS
 
 - `--configuration <Name>` / `-Configuration <Name>`: Build configuration (default `Release`).
 - `--solution <Path>` / `-Solution <Path>`: Solution or project to build (default `src/NovaSharp.sln`).
-- `--test-project <Path>` / `-TestProject <Path>`: Test project to execute after building (default `src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj`).
+- `--test-project <Path>` / `-TestProject <Path>`: Test project to execute after building (default `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj`).
 - `--skip-tests` / `-SkipTests`: Build only; do not execute tests.
 - `--skip-tool-restore` / `-SkipToolRestore`: Assume `dotnet tool restore` already ran for this checkout.
 

@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using global::TUnit.Core.Interfaces;
-using NovaSharp.Interpreter.DataTypes;
-using NovaSharp.Tests.TestInfrastructure.Scopes;
+using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
 
 [assembly: global::TUnit.Core.Executors.TestExecutor(
-    typeof(NovaSharp.Interpreter.Tests.UserDataIsolationExecutor)
+    typeof(WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit.UserDataIsolationExecutor)
 )]
 
-namespace NovaSharp.Interpreter.Tests
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
 {
     using System.Diagnostics.CodeAnalysis;
 

@@ -9,7 +9,7 @@
 #
 # Options:
 #   --fixtures-dir <path>  Directory containing Lua fixtures
-#                          (default: src/tests/NovaSharp.Interpreter.Tests/LuaFixtures)
+#                          (default: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures)
 #   --output-dir <path>    Directory for comparison results
 #                          (default: artifacts/lua-comparison-results)
 #   --lua-version <ver>    Lua version to test: 5.1, 5.2, 5.3, 5.4 (default: 5.4)
@@ -27,7 +27,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Defaults
-FIXTURES_DIR="${ROOT_DIR}/src/tests/NovaSharp.Interpreter.Tests/LuaFixtures"
+FIXTURES_DIR="${ROOT_DIR}/src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures"
 OUTPUT_DIR="${ROOT_DIR}/artifacts/lua-comparison-results"
 LUA_VERSION="5.4"
 LUA_CMD=""

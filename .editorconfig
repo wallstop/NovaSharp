@@ -231,4 +231,4 @@ dotnet_naming_rule.methods_must_be_pascal.severity = error
 dotnet_naming_symbols.methods_symbols.applicable_kinds = method
 # exclude LuaPort namespace so KopiLua mirrors stay snake_case
 dotnet_naming_symbols.methods_symbols.applicable_accessibilities = *
-dotnet_naming_symbols.methods_symbols.applicable_namespaces = -:NovaSharp.Interpreter.LuaPort
+dotnet_naming_symbols.methods_symbols.applicable_namespaces = -:WallstopStudios.NovaSharp.Interpreter.LuaPort

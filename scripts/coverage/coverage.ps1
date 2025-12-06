@@ -56,10 +56,12 @@ function Invoke-CoverletRun {
         "opencover",
         "--output",
         $CoverageBase,
+        "--verbosity",
+        "minimal",
         "--include",
-        "[NovaSharp.*]*",
+        "[WallstopStudios.NovaSharp.*]*",
         "--exclude",
-        "[NovaSharp.*Tests*]*"
+        "[WallstopStudios.NovaSharp.*Tests*]*"
     )
 
     if ($AdditionalArgs -and $AdditionalArgs.Count -gt 0) {
@@ -121,6 +123,10 @@ if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
     Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 runtimes can host net8 test runners."
 }
 
+# Suppress TUnit ASCII banner and telemetry messages
+$env:TESTINGPLATFORM_NOBANNER = "1"
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+
 Push-Location $repoRoot
 try {
     Write-Host "Restoring local tools..."
@@ -131,8 +137,8 @@ try {
     $buildLogPath = Join-Path $coverageRoot "build.log"
 
     $buildExecuted = $false
-    $tunitRunnerProject = "src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj"
-    $remoteDebuggerRunnerProject = "src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/NovaSharp.RemoteDebugger.Tests.TUnit.csproj"
+    $tunitRunnerProject = "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj"
+    $remoteDebuggerRunnerProject = "src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj"
 
     if (-not $SkipBuild) {
         Write-Host "Building solution (configuration: $Configuration)..."
@@ -145,7 +151,8 @@ try {
             $restoreArgs += "--no-restore"
         }
 
-        dotnet build "src/NovaSharp.sln" -c $Configuration /m @restoreArgs 2>&1 |
+        # Build with maximum parallelism and node reuse for optimal performance
+        dotnet build "src/NovaSharp.sln" -c $Configuration --nologo /m /nodeReuse:true @restoreArgs 2>&1 |
             Tee-Object -FilePath $buildLogPath | Out-Null
 
         $buildExecuted = $true
@@ -170,8 +177,8 @@ try {
     New-Item -ItemType Directory -Force -Path $tunitResultsDir | Out-Null
     New-Item -ItemType Directory -Force -Path $remoteDebuggerResultsDir | Out-Null
 
-    $tunitRunnerOutput = Join-Path $repoRoot "src/tests/NovaSharp.Interpreter.Tests.TUnit/bin/$Configuration/net8.0/NovaSharp.Interpreter.Tests.TUnit.dll"
-    $remoteDebuggerRunnerOutput = Join-Path $repoRoot "src/tests/NovaSharp.RemoteDebugger.Tests.TUnit/bin/$Configuration/net8.0/NovaSharp.RemoteDebugger.Tests.TUnit.dll"
+    $tunitRunnerOutput = Join-Path $repoRoot "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/bin/$Configuration/net8.0/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.dll"
+    $remoteDebuggerRunnerOutput = Join-Path $repoRoot "src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/bin/$Configuration/net8.0/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.dll"
     if (-not (Test-Path $tunitRunnerOutput)) {
         $message = "TUnit runner output not found at '$tunitRunnerOutput'."
         if ($SkipBuild) {
@@ -251,7 +258,7 @@ try {
         "-reports:$coberturaReport" `
         "-targetdir:$reportTarget" `
         "-reporttypes:$reportTypes" `
-        "-assemblyfilters:+NovaSharp.*"
+        "-assemblyfilters:+WallstopStudios.NovaSharp.*"
 
 function ShouldEmitFullCoverageSummary {
     # NOVASHARP_COVERAGE_SUMMARY can be set to 1/true/yes (emit) or 0/false/no (suppress).
@@ -340,7 +347,7 @@ if (Test-Path $summaryPath) {
     if (Test-Path $summaryJsonPath) {
         $summaryData = Get-Content $summaryJsonPath -Raw | ConvertFrom-Json
         $interpreterAssembly = $summaryData.coverage.assemblies |
-            Where-Object { $_.name -eq "NovaSharp.Interpreter" }
+            Where-Object { $_.name -eq "WallstopStudios.NovaSharp.Interpreter" }
 
         if ($null -eq $interpreterAssembly) {
             throw "Interpreter assembly not found in coverage summary. Verify reportgenerator configuration."

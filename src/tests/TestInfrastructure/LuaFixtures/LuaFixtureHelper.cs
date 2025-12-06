@@ -1,4 +1,4 @@
-namespace NovaSharp.Tests.TestInfrastructure.LuaFixtures
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.LuaFixtures
 {
     using System;
     using System.Collections.Generic;
@@ -7,8 +7,8 @@ namespace NovaSharp.Tests.TestInfrastructure.LuaFixtures
     using System.Runtime.CompilerServices;
     using System.Text;
     using System.Text.RegularExpressions;
-    using NovaSharp.Interpreter;
-    using NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Provides helper methods for loading and running Lua fixture files in tests.
@@ -53,7 +53,7 @@ namespace NovaSharp.Tests.TestInfrastructure.LuaFixtures
             {
                 string fixturesPath = Path.Combine(
                     directory.FullName,
-                    "NovaSharp.Interpreter.Tests",
+                    "WallstopStudios.NovaSharp.Interpreter.Tests",
                     "LuaFixtures"
                 );
                 if (Directory.Exists(fixturesPath))
@@ -63,7 +63,9 @@ namespace NovaSharp.Tests.TestInfrastructure.LuaFixtures
             }
 
             // Fallback: try relative from working directory
-            string fallbackPath = Path.GetFullPath("../NovaSharp.Interpreter.Tests/LuaFixtures");
+            string fallbackPath = Path.GetFullPath(
+                "../WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures"
+            );
             if (Directory.Exists(fallbackPath))
             {
                 return fallbackPath;
@@ -77,7 +79,7 @@ namespace NovaSharp.Tests.TestInfrastructure.LuaFixtures
                     repoRoot,
                     "src",
                     "tests",
-                    "NovaSharp.Interpreter.Tests",
+                    "WallstopStudios.NovaSharp.Interpreter.Tests",
                     "LuaFixtures"
                 );
                 if (Directory.Exists(devPath))

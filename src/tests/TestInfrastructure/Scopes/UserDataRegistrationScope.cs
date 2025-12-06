@@ -1,9 +1,9 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
     using System.Collections.Generic;
-    using NovaSharp.Interpreter.DataTypes;
-    using NovaSharp.Interpreter.Interop;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Interop;
 
     /// <summary>
     /// Tracks user-data registrations and guarantees they are unregistered when disposed.

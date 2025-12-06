@@ -1,8 +1,8 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
-    using NovaSharp.Interpreter.DataTypes;
-    using NovaSharp.Interpreter.Interop.RegistrationPolicies;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Interop.RegistrationPolicies;
 
     /// <summary>
     /// Temporarily overrides <see cref="UserData.RegistrationPolicy"/> and restores it on disposal.

@@ -1,7 +1,7 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
-    using NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Provides a disposable scope that isolates global UserData registrations per test.

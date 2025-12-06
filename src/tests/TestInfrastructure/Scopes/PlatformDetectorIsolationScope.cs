@@ -1,9 +1,9 @@
-namespace NovaSharp.Tests.TestInfrastructure.Scopes
+namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
     using System.Threading;
     using System.Threading.Tasks;
-    using NovaSharp.Interpreter.Platforms;
+    using WallstopStudios.NovaSharp.Interpreter.Platforms;
 
     /// <summary>
     /// Serializes tests that mutate <see cref="PlatformAutoDetector"/> state and restores the snapshot on disposal.

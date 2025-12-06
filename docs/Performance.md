@@ -175,9 +175,81 @@ ______________________________________________________________________
 
 ## Linux
 
-_No benchmark data recorded yet._
+### NovaSharp Latest (captured 2025-12-06 19:34:36 +00:00)
+
+**Environment**
+- OS: Debian GNU/Linux 12 (bookworm)
+- CPU: Intel(R) Core(TM) Ultra 9 285K
+- Logical cores: 24
+- Runtime: .NET 8.0.22 (8.0.22, 8.0.2225.52707)
+- Approx. RAM: 96,242 MB
+- Suite: NovaSharp Benchmarks
+
+#### WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks-20251206-193121
+
+```
+
+BenchmarkDotNet v0.15.6, Linux Debian GNU/Linux 12 (bookworm) (container)
+Intel Core Ultra 9 285K 3.69GHz, 1 CPU, 24 logical and 24 physical cores
+.NET SDK 9.0.308
+\[Host\]   : .NET 8.0.22 (8.0.22, 8.0.2225.52707), X64 RyuJIT x86-64-v3
+ShortRun : .NET 8.0.22 (8.0.22, 8.0.2225.52707), X64 RyuJIT x86-64-v3
+
+Job=ShortRun  IterationCount=10  LaunchCount=1\
+WarmupCount=2
+
+```
+| Method               | ScenarioName      | Mean       | Error     | StdDev    | P95        | Rank | Gen0   | Gen1   | Allocated |
+|--------------------- |------------------ |-----------:|----------:|----------:|-----------:|-----:|-------:|-------:|----------:|
+| **&#39;Scenario Execution&#39;** | **CoroutinePipeline** |   **277.7 ns** |  **38.70 ns** |  **25.60 ns** |   **310.9 ns** |    **2** | **0.0663** |      **-** |    **1248 B** |
+| **&#39;Scenario Execution&#39;** | **NumericLoops**      |   **194.9 ns** |  **16.26 ns** |  **10.76 ns** |   **208.7 ns** |    **1** | **0.0491** |      **-** |     **928 B** |
+| **&#39;Scenario Execution&#39;** | **TableMutation**     | **5,239.8 ns** | **693.16 ns** | **458.49 ns** | **5,764.3 ns** |    **4** | **1.6479** | **0.1450** |   **31088 B** |
+| **&#39;Scenario Execution&#39;** | **UserDataInterop**   |   **374.0 ns** |  **43.33 ns** |  **28.66 ns** |   **417.3 ns** |    **3** | **0.0782** |      **-** |    **1480 B** |
 
 
+#### WallstopStudios.NovaSharp.Benchmarks.ScriptLoadingBenchmarks-20251206-193204
+
+```
+
+BenchmarkDotNet v0.15.6, Linux Debian GNU/Linux 12 (bookworm) (container)
+Intel Core Ultra 9 285K 3.69GHz, 1 CPU, 24 logical and 24 physical cores
+.NET SDK 9.0.308
+\[Host\]   : .NET 8.0.22 (8.0.22, 8.0.2225.52707), X64 RyuJIT x86-64-v3
+ShortRun : .NET 8.0.22 (8.0.22, 8.0.2225.52707), X64 RyuJIT x86-64-v3
+
+Job=ShortRun  IterationCount=10  LaunchCount=1\
+WarmupCount=2
+
+```
+| Method                | ComplexityName | Mean               | Error             | StdDev           | P95                | Rank | Gen0        | Gen1      | Gen2     | Allocated    |
+|---------------------- |--------------- |-------------------:|------------------:|-----------------:|-------------------:|-----:|------------:|----------:|---------:|-------------:|
+| **&#39;Compile + Execute&#39;**   | **Large**          | **1,024,153,311.3 ns** | **110,176,057.59 ns** | **72,874,640.45 ns** | **1,137,543,655.1 ns** |    **6** | **187000.0000** | **1000.0000** |        **-** | **3532982768 B** |
+| &#39;Compile Only&#39;        | Large          |     1,953,213.6 ns |     223,703.34 ns |    147,965.91 ns |     2,132,841.5 ns |    4 |    253.9063 |  242.1875 | 203.1250 |    3179074 B |
+| &#39;Execute Precompiled&#39; | Large          |   987,036,668.7 ns | 111,311,952.49 ns | 73,625,964.59 ns | 1,093,436,941.3 ns |    6 | 187000.0000 |         - |        - | 3529692336 B |
+| **&#39;Compile + Execute&#39;**   | **Medium**         |    **54,029,001.0 ns** |  **11,986,145.24 ns** |  **7,928,092.94 ns** |    **65,512,399.5 ns** |    **5** |   **9400.0000** |  **900.0000** | **400.0000** |  **172909012 B** |
+| &#39;Compile Only&#39;        | Medium         |     1,247,361.4 ns |     325,784.59 ns |    215,486.34 ns |     1,560,943.0 ns |    3 |    179.6875 |  175.7813 | 148.4375 |    2838276 B |
+| &#39;Execute Precompiled&#39; | Medium         |    50,039,455.4 ns |   4,931,683.66 ns |  3,262,003.39 ns |    54,027,675.1 ns |    5 |   9000.0000 |         - |        - |  169958320 B |
+| **&#39;Compile + Execute&#39;**   | **Small**          |     **1,276,020.7 ns** |     **175,983.10 ns** |    **104,724.72 ns** |     **1,427,881.3 ns** |    **3** |    **251.9531** |  **246.0938** | **226.5625** |    **2716566 B** |
+| &#39;Compile Only&#39;        | Small          |     1,356,709.0 ns |     178,000.80 ns |    105,925.42 ns |     1,521,229.7 ns |    3 |    255.8594 |  253.9063 | 232.4219 |    2695629 B |
+| &#39;Execute Precompiled&#39; | Small          |         8,386.4 ns |         619.95 ns |        410.06 ns |         9,025.3 ns |    2 |      1.1292 |         - |        - |      21536 B |
+| **&#39;Compile + Execute&#39;**   | **Tiny**           |     **1,384,707.5 ns** |     **251,218.18 ns** |    **166,165.27 ns** |     **1,645,590.7 ns** |    **3** |    **248.0469** |  **236.3281** | **224.6094** |    **2686812 B** |
+| &#39;Compile Only&#39;        | Tiny           |     1,375,096.3 ns |     236,234.63 ns |    156,254.58 ns |     1,607,305.6 ns |    3 |    269.5313 |  257.8125 | 246.0938 |    2688411 B |
+| &#39;Execute Precompiled&#39; | Tiny           |           148.0 ns |          26.74 ns |         17.69 ns |           172.7 ns |    1 |      0.0370 |         - |        - |        696 B |
+
+To refresh this section, run:
+
+```
+
+dotnet run -c Release --project src/tooling/Benchmarks/NovaSharp.Benchmarks/NovaSharp.Benchmarks.csproj
+dotnet run -c Release --framework net8.0 --project src/tooling/NovaSharp.Comparison/NovaSharp.Comparison.csproj
+
+```
+
+Then replace everything under `### NovaSharp Latest` with the new results.
+
+---
+
+_No MoonSharp baseline recorded yet._
 
 ## macOS
 
