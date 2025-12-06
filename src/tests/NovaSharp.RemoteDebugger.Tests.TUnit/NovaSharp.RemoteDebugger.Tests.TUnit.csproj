@@ -44,4 +44,9 @@
             Link="TestUtilities\FakeTimeProvider.cs"
         />
     </ItemGroup>
+    <ItemGroup>
+        <Content Include="GoldenPayloads\*.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
 </Project>
