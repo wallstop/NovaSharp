@@ -23,14 +23,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             string code =
                 @"
-                r, msg = pcall(assert, false, 'catched')
+                r, msg = pcall(assert, false, 'caught')
                 return r, msg;
             ";
 
             DynValue result = Script.RunString(code);
-            await EndToEndDynValueAssert
-                .ExpectAsync(result, false, "catched")
-                .ConfigureAwait(false);
+            await EndToEndDynValueAssert.ExpectAsync(result, false, "caught").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

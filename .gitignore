@@ -120,6 +120,8 @@ DocProject/Help/*.hhp
 DocProject/Help/Html2
 DocProject/Help/html
 
+.claude/**
+
 # Click-Once directory
 publish/
 
