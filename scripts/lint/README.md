@@ -57,6 +57,26 @@ Verifies that all `.sh` files in the repository have the executable bit set in g
 python scripts/lint/check-shell-executable.py
 ```
 
+### check-shell-python-invocation.py
+
+Ensures shell scripts invoke Python scripts using the explicit `python` interpreter rather than executing them directly. Direct execution (e.g., `./script.py` or `script.py`) requires the Python file to have executable permissions in git, which is fragile across platforms and CI environments.
+
+Correct pattern:
+
+```bash
+python "${REPO_ROOT}/scripts/lint/check-foo.py"
+```
+
+Incorrect pattern:
+
+```bash
+"${REPO_ROOT}/scripts/lint/check-foo.py"  # May fail with "permission denied"
+```
+
+```bash
+python scripts/lint/check-shell-python-invocation.py
+```
+
 ## Adding New Lint Scripts
 
 1. Create a Python script following the existing patterns (use `rg` for searching, return exit code 0 on success, 1 on violation).

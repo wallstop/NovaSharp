@@ -98,6 +98,10 @@ jobs:
         run: ./scripts/ci/check-shell-executable.sh
         shell: bash
 
+      - name: Enforce Python invocation pattern in shell scripts
+        run: ./scripts/ci/check-shell-python-invocation.sh
+        shell: bash
+
   dotnet-tests:
     needs: lint
     strategy:

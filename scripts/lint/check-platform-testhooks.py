@@ -15,9 +15,13 @@ from typing import Iterable, Set
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 ALLOWED_PATHS: Set[pathlib.Path] = {
+    pathlib.Path("AGENTS.md"),
+    pathlib.Path("docs/Testing.md"),
     pathlib.Path("PLAN.md"),
     pathlib.Path("scripts/ci/README.md"),
     pathlib.Path("scripts/lint/check-platform-testhooks.py"),
+    pathlib.Path("scripts/lint/README.md"),
+    pathlib.Path("src/tests/TestInfrastructure/Scopes/PlatformDetectorIsolationScope.cs"),
     pathlib.Path("src/tests/TestInfrastructure/Scopes/PlatformDetectorScopes.cs"),
     pathlib.Path("src/tests/TestInfrastructure/Scopes/PlatformDetectorScope.cs"),
     pathlib.Path("src/tests/TestInfrastructure/TUnit/PlatformDetectorIsolationAttribute.cs"),

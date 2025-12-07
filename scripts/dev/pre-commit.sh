@@ -9,6 +9,38 @@ warn() {
   printf '%s\n' "[pre-commit] WARNING: $1" >&2
 }
 
+# Runs git add with retry logic to handle index.lock contention.
+# Usage: git_add_with_retry [file ...]
+git_add_with_retry() {
+  max_retries=5
+  retry_delay=1
+  attempt=0
+
+  while [ "$attempt" -lt "$max_retries" ]; do
+    if git add -- "$@" 2>/dev/null; then
+      return 0
+    fi
+
+    # Check if the failure was due to index.lock
+    if [ -f ".git/index.lock" ]; then
+      attempt=$((attempt + 1))
+      if [ "$attempt" -lt "$max_retries" ]; then
+        warn "git index.lock contention detected, retrying in ${retry_delay}s (attempt $attempt/$max_retries)..."
+        sleep "$retry_delay"
+        # Exponential backoff with jitter
+        retry_delay=$((retry_delay * 2))
+      fi
+    else
+      # Some other error occurred, fail immediately
+      git add -- "$@"
+      return $?
+    fi
+  done
+
+  # Final attempt - let it fail with the actual error message
+  git add -- "$@"
+}
+
 ensure_tool_on_path() {
   tool_name="$1"
   friendly_name="$2"
@@ -102,7 +134,7 @@ format_all_csharp_files() {
     shift
     IFS=$old_ifs
 
-    git add -- "$@"
+    git_add_with_retry "$@"
   )
 }
 
@@ -136,7 +168,7 @@ format_markdown_files() {
     run_python scripts/ci/check_markdown_links.py --files "$@"
 
     log "[pre-commit] Restaging formatted Markdown files..."
-    git add -- "$@"
+    git_add_with_retry "$@"
   )
 }
 
@@ -144,7 +176,7 @@ update_documentation_audit_log() {
   log "[pre-commit] Refreshing documentation audit log..."
   run_python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
   if [ -f documentation_audit.log ]; then
-    git add documentation_audit.log
+    git_add_with_retry documentation_audit.log
   fi
 }
 
@@ -152,7 +184,7 @@ update_naming_audit_log() {
   log "[pre-commit] Refreshing naming audit log..."
   run_python tools/NamingAudit/naming_audit.py --write-log naming_audit.log
   if [ -f naming_audit.log ]; then
-    git add naming_audit.log
+    git_add_with_retry naming_audit.log
   fi
 }
 
@@ -175,14 +207,14 @@ run_powershell_script() {
 update_fixture_catalog() {
   log "[pre-commit] Regenerating NUnit fixture catalog..."
   run_powershell_script ./scripts/tests/update-fixture-catalog.ps1 >/dev/null
-  git add src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs
+  git_add_with_retry src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs
 }
 
 update_spelling_audit_log() {
   log "[pre-commit] Refreshing spelling audit log..."
   if run_python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log 2>/dev/null; then
     if [ -f spelling_audit.log ]; then
-      git add spelling_audit.log
+      git_add_with_retry spelling_audit.log
     fi
   else
     warn "Spelling audit failed (codespell may not be installed). Run 'pip install -r requirements.tooling.txt' to enable."
@@ -245,6 +277,14 @@ check_shell_executable() {
   log "[pre-commit] Checking shell script permissions..."
   if ! run_python scripts/lint/check-shell-executable.py 2>/dev/null; then
     printf '%s\n' "[pre-commit] ERROR: Shell scripts missing executable bit. See message above for fix." >&2
+    exit 1
+  fi
+}
+
+check_shell_python_invocation() {
+  log "[pre-commit] Checking shell script Python invocation patterns..."
+  if ! run_python scripts/lint/check-shell-python-invocation.py 2>/dev/null; then
+    printf '%s\n' "[pre-commit] ERROR: Shell scripts must use explicit 'python' to invoke .py files. See message above." >&2
     exit 1
   fi
 }
@@ -319,6 +359,7 @@ update_fixture_catalog
 check_branding
 check_namespace_alignment
 check_shell_executable
+check_shell_python_invocation
 check_test_lint
 
 log "[pre-commit] Completed successfully."
