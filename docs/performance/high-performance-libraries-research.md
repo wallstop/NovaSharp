@@ -265,12 +265,12 @@ private static readonly ArrayPool<DynValue> _valuePool =
 
 ### Applicability to NovaSharp
 
-| Use Case             | Benefit                    | Priority     |
-| -------------------- | -------------------------- | ------------ |
-| VM stack arrays      | Pool execution stacks      | **Critical** |
-| Function arguments   | Pool argument arrays       | **Critical** |
-| Table backing arrays | Pool table storage         | High         |
-| String buffers       | Pool char\[\] for building | High         |
+| Use Case             | Benefit                  | Priority     |
+| -------------------- | ------------------------ | ------------ |
+| VM stack arrays      | Pool execution stacks    | **Critical** |
+| Function arguments   | Pool argument arrays     | **Critical** |
+| Table backing arrays | Pool table storage       | High         |
+| String buffers       | Pool char[] for building | High         |
 
 ______________________________________________________________________
 
@@ -457,7 +457,7 @@ ______________________________________________________________________
 - All recommended packages work with Unity 2022.3+
 - SIMD features in ZLinq don't apply to Unity (netstandard2.1)
 - CommunityToolkit.HighPerformance fully supports Unity/IL2CPP
-- Avoid `ref struct` types in Unity \< 2022.3 (limited support)
+- Avoid `ref struct` types in Unity < 2022.3 (limited support)
 
 ______________________________________________________________________
 

@@ -20,7 +20,7 @@ ______________________________________________________________________
 
 These optimizations target the instruction execution loop and have the highest impact on runtime performance.
 
-### 1.1 ArrayPool for DynValue\[\] Allocations
+### 1.1 ArrayPool for DynValue[] Allocations
 
 **Files affected:**
 

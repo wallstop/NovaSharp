@@ -51,6 +51,27 @@ run_python() {
   exit 1
 }
 
+check_mdformat_version() {
+  # Expected version from requirements.tooling.txt
+  expected_version="1.0.0"
+
+  # Get installed version (returns empty if not installed)
+  installed_version="$(run_python -c "import mdformat; print(mdformat.__version__)" 2>/dev/null || printf '')"
+
+  if [ -z "$installed_version" ]; then
+    warn "mdformat is not installed. Run 'python -m pip install -r requirements.tooling.txt' to install."
+    return 1
+  fi
+
+  if [ "$installed_version" != "$expected_version" ]; then
+    warn "mdformat version mismatch: installed $installed_version, expected $expected_version"
+    warn "Run 'python -m pip install -r requirements.tooling.txt' to update."
+    warn "Continuing with installed version (may cause CI failures)..."
+  fi
+
+  return 0
+}
+
 staged_files_for_pattern() {
   pattern="$1"
   git diff --cached --name-only --diff-filter=ACM -- "$pattern"
@@ -91,6 +112,9 @@ format_markdown_files() {
     log "[pre-commit] No staged Markdown files detected; skipping Markdown checks."
     return
   fi
+
+  # Warn if mdformat version doesn't match requirements
+  check_mdformat_version || true
 
   (
     set -f

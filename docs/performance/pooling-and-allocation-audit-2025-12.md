@@ -28,8 +28,8 @@ ______________________________________________________________________
 
 ### Already Implemented ✅
 
-- `DynValueArrayPool` - Thread-local pooling for DynValue\[\] arrays (≤8 elements fast path)
-- `ObjectArrayPool` - Thread-local pooling for object\[\] arrays (reflection invocation)
+- `DynValueArrayPool` - Thread-local pooling for DynValue[] arrays (≤8 elements fast path)
+- `ObjectArrayPool` - Thread-local pooling for object[] arrays (reflection invocation)
 - `PooledResource<T>` - RAII pattern for automatic pool return
 - `ZStringBuilder` - Wrapper utilities for ZString
 - `DynValue.NewConcatenatedString()` - ZString-based string concatenation (2, 3, 4-arg variants)
