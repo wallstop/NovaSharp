@@ -241,6 +241,14 @@ check_namespace_alignment() {
   fi
 }
 
+check_shell_executable() {
+  log "[pre-commit] Checking shell script permissions..."
+  if ! run_python scripts/lint/check-shell-executable.py 2>/dev/null; then
+    printf '%s\n' "[pre-commit] ERROR: Shell scripts missing executable bit. See message above for fix." >&2
+    exit 1
+  fi
+}
+
 check_test_lint() {
   # Only run test linting if test files are staged
   test_files="$(git diff --cached --name-only --diff-filter=ACM -- 'src/tests/*.cs' || printf '')"
@@ -310,6 +318,7 @@ update_fixture_catalog
 
 check_branding
 check_namespace_alignment
+check_shell_executable
 check_test_lint
 
 log "[pre-commit] Completed successfully."

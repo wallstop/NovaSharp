@@ -16,6 +16,7 @@ Scripts in this folder run before the main build/test stages (either locally or 
 - `check-userdata-scope.sh` — Runs `scripts/lint/check-userdata-scope-usage.py`, failing when tests call `UserData.RegisterType`/`UserData.UnregisterType` directly outside the approved isolation suites; use `UserDataRegistrationScope` instead.
 - `check-test-finally.sh` — Runs `scripts/lint/check-test-finally.py` to ensure tests continue using the shared cleanup scopes instead of reintroducing manual `try`/`finally` blocks.
 - `check-temp-path-usage.sh` — Runs `scripts/lint/check-temp-path-usage.py`, which flags any new references to `Path.GetTempPath()` inside the test tree so contributors keep using `TempFileScope`/`TempDirectoryScope` for cleanup.
+- `check-shell-executable.sh` — Runs `scripts/lint/check-shell-executable.py`, which fails when any `.sh` file in the repository is missing the executable bit in git. This prevents CI failures from permission denied errors on Linux/macOS runners.
 
 ## Usage
 

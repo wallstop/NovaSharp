@@ -49,6 +49,14 @@ Ensures tests use `UserDataRegistrationScope` rather than calling `UserData.Regi
 python scripts/lint/check-userdata-scope-usage.py
 ```
 
+### check-shell-executable.py
+
+Verifies that all `.sh` files in the repository have the executable bit set in git. Scripts without executable permissions cause "permission denied" errors on Linux/macOS CI runners. The fix is `git update-index --chmod=+x <script.sh>`.
+
+```bash
+python scripts/lint/check-shell-executable.py
+```
+
 ## Adding New Lint Scripts
 
 1. Create a Python script following the existing patterns (use `rg` for searching, return exit code 0 on success, 1 on violation).
