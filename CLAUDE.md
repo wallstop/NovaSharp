@@ -2,6 +2,8 @@
 
 > **⚠️ This file is deprecated.** All AI assistant guidelines have been consolidated into [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md). This file is retained for backwards compatibility with Claude Code.
 
+> **🚫 CRITICAL: NEVER perform `git add` or `git commit` operations.** Leave all version control to the human developer.
+
 See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
 - Project overview and architecture
 - Build, test, and development commands
