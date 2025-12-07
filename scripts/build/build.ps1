@@ -81,9 +81,19 @@ try {
 
     if (-not $SkipTests) {
         $resultsDir = Join-Path $repoRoot "artifacts/test-results"
-        if (-not (Test-Path $resultsDir)) {
-            New-Item -ItemType Directory -Force -Path $resultsDir | Out-Null
+        $placeholderPath = Join-Path $resultsDir ".placeholder"
+
+        # Clear and recreate the results directory
+        if (Test-Path $resultsDir) {
+            Remove-Item -Recurse -Force $resultsDir
         }
+        New-Item -ItemType Directory -Force -Path $resultsDir | Out-Null
+
+        # Create placeholder file to ensure artifact upload succeeds even if tests fail before emitting TRX
+        $placeholderContent = @"
+NovaSharp test results were not generated. This placeholder file ensures CI artifact uploads succeed even when the test runner fails before emitting TRX output. Inspect the workflow logs for the full dotnet test failure details.
+"@
+        Set-Content -Path $placeholderPath -Value $placeholderContent
 
         Write-Host "Running tests for $TestProject..."
         dotnet test $TestProject -c $Configuration --no-build `
@@ -91,6 +101,11 @@ try {
             --results-directory $resultsDir
         if ($LASTEXITCODE -ne 0) {
             throw "dotnet test $TestProject failed with exit code $LASTEXITCODE."
+        }
+
+        # Remove placeholder after successful test run
+        if (Test-Path $placeholderPath) {
+            Remove-Item -Force $placeholderPath
         }
     }
 

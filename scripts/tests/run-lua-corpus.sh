@@ -111,7 +111,7 @@ fi
 # Build NovaSharp CLI if needed
 if [[ "$SKIP_NOVASHARP" != "true" ]]; then
     if [[ -z "$NOVA_CMD" ]]; then
-        CLI_PROJECT="${ROOT_DIR}/src/tooling/NovaSharp.Cli/NovaSharp.Cli.csproj"
+        CLI_PROJECT="${ROOT_DIR}/src/tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj"
         if [[ ! -f "$CLI_PROJECT" ]]; then
             echo "Error: NovaSharp CLI project not found: $CLI_PROJECT" >&2
             exit 1

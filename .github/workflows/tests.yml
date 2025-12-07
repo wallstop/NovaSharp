@@ -120,6 +120,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
           cache: true
+          cache-dependency-path: 'src/**/packages.lock.json'
       - name: Restore dependencies
         run: dotnet restore src/NovaSharp.sln --locked-mode
       - name: Restore tools
@@ -426,14 +427,14 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore src/NovaSharp.sln --locked-mode
       - name: Build NovaSharp CLI
-        run: dotnet build src/tooling/NovaSharp.Cli/NovaSharp.Cli.csproj -c Release --no-restore
+        run: dotnet build src/tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj -c Release --no-restore
       - name: Verify Lua fixtures exist
         run: |
-          if [ ! -d "src/tests/NovaSharp.Interpreter.Tests/LuaFixtures" ]; then
+          if [ ! -d "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures" ]; then
             echo "Error: Lua fixtures not found. Run 'python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py' and commit the results."
             exit 1
           fi
-          fixture_count=$(find src/tests/NovaSharp.Interpreter.Tests/LuaFixtures -name "*.lua" | wc -l)
+          fixture_count=$(find src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures -name "*.lua" | wc -l)
           echo "Found $fixture_count Lua fixture files"
         shell: bash
       - name: Run fixtures against Lua ${{ matrix.lua-version }}
@@ -451,7 +452,7 @@ jobs:
         run: |
           python3 scripts/tests/compare-lua-outputs.py \
             --results-dir artifacts/lua-comparison-results \
-            --corpus-dir src/tests/NovaSharp.Interpreter.Tests/LuaFixtures \
+            --corpus-dir src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures \
             --lua-version ${{ matrix.lua-version }} \
             --output-file artifacts/lua-comparison-results/comparison-${{ matrix.lua-version }}.json \
             --enforce

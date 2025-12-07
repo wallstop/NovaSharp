@@ -57,12 +57,12 @@ def run_batch(files_list: Path, output_dir: Path, fixtures_dir: Path, timeout: i
     # Process files using a simple Python wrapper that invokes the CLI once per file
     # but with subprocess reuse where possible
     
-    cli_dll = repo_root / "src/tooling/NovaSharp.Cli/bin/Release/net8.0/NovaSharp.Cli.dll"
+    cli_dll = repo_root / "src/tooling/WallstopStudios.NovaSharp.Cli/bin/Release/net8.0/WallstopStudios.NovaSharp.Cli.dll"
     if not cli_dll.exists():
         print("Building NovaSharp CLI...")
         subprocess.run(
             ["dotnet", "build",
-             str(repo_root / "src/tooling/NovaSharp.Cli/NovaSharp.Cli.csproj"),
+             str(repo_root / "src/tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj"),
              "-c", "Release", "-v", "q", "--nologo"],
             check=True
         )

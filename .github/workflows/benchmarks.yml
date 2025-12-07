@@ -235,7 +235,7 @@ jobs:
 
       - name: Run comparison benchmarks
         run: |
-          dotnet run --project src/tooling/NovaSharp.Comparison/NovaSharp.Comparison.csproj \
+          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
             -c Release --no-build -- \
             --filter "*" \
             --exporters json
