@@ -2,12 +2,12 @@
 
 ## 🎯 Current Priority: Dual Numeric Type System (§8.24 — HIGH PRIORITY)
 
-**Status**: 🚧 **IN PROGRESS** — Phase 2 Core Integration complete, Phase 3-5 remaining.
+**Status**: 🚧 **IN PROGRESS** — Phase 3 Standard Library complete, Phase 4-5 remaining.
 
 **Progress (2025-12-07)**:
 - ✅ **Phase 1 Complete**: `LuaNumber` struct with 83 tests
 - ✅ **Phase 2 Complete**: DynValue integration, VM arithmetic opcodes, `math.type()` correct, bitwise operations preserve precision
-- 🔲 **Phase 3 Pending**: StringModule format specifiers
+- ✅ **Phase 3 Complete**: StringModule format specifiers, math.floor/ceil integer promotion
 - 🔲 **Phase 4 Pending**: Interop & serialization
 - 🔲 **Phase 5 Pending**: Numeric value caching & performance validation
 
@@ -17,17 +17,19 @@
 - Integer arithmetic wraps correctly (two's complement)
 - Integer `//` and `%` by zero throw errors; float versions return IEEE 754 values
 - Bitwise operations preserve full 64-bit integer precision
-- All 3,811 tests passing
+- `string.format('%d', math.maxinteger)` outputs exact "9223372036854775807" (no precision loss)
+- `math.floor(3.7)` and `math.ceil(3.2)` return integer subtypes
+- All 3,841 tests passing
 
 See **Section 8.24** for the complete implementation plan.
 
-**Next actionable item**: Phase 3 — Update `StringModule` for integer vs float format handling (`%d`, `%i`, `%o`, `%x`).
+**Next actionable item**: Phase 4 — Update interop converters (`FromObject`/`ToObject`) for integer preservation.
 
 ---
 
 ## Repository Snapshot — 2025-12-07 (UTC)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true` enforced.
-- **Tests**: **3,811** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Tests**: **3,841** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
 - **Coverage**: Interpreter at **96.2% line / 93.69% branch / 97.88% method**.
 - **Coverage gating**: `COVERAGE_GATING_MODE=enforce` enabled with 96% line / 93% branch / 97% method thresholds.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
@@ -43,7 +45,28 @@ See **Section 8.24** for the complete implementation plan.
 - **Out/Ref param tests**: ✅ **Completed 2025-12-07** — 10 exhaustive tests for CLR interop out/ref parameter handling.
 - **Script constructor consistency**: ✅ **Completed 2025-12-07** — 16 tests verifying initialization order and behavior (§8.2).
 - **Numeric edge cases**: ✅ **Completed 2025-12-07** — `math.maxinteger`/`mininteger`, right shift fix, NaN comparison fix (§8.3).
-- **Dual numeric type system**: 🚧 **In Progress** — `LuaNumber` struct with integer/float discrimination (§8.24, HIGH PRIORITY). Phase 2 complete, all tests passing.
+- **Dual numeric type system**: 🚧 **In Progress** — `LuaNumber` struct with integer/float discrimination (§8.24, HIGH PRIORITY). Phase 3 complete, all tests passing.
+
+## 🔴 NEW Critical Initiatives (2025-12-07)
+
+### Initiative 9: Version-Aware Lua Standard Library Parity 🔴 **CRITICAL**
+**Goal**: ALL Lua functions must behave according to their version specification (5.1, 5.2, 5.3, 5.4).
+**Scope**: Math, String, Table, Basic, Coroutine, OS, IO, UTF-8, Debug modules + metamethod behaviors.
+**Status**: Comprehensive audit required. See **Section 9** for detailed tracking.
+**Effort**: 4-6 weeks
+
+### Initiative 10: KopiLua Performance Hyper-Optimization 🎯 **HIGH**
+**Goal**: Zero-allocation string pattern matching. Replace legacy KopiLua allocations with modern .NET patterns.
+**Scope**: `CharPtr` → `ref struct`, `MatchState` pooling, `ArrayPool<char>`, `ZString` integration.
+**Target**: <50 bytes/match, <400ns latency for simple patterns.
+**Status**: Planned. See **Section 10** for detailed implementation plan.
+**Effort**: 6-8 weeks
+
+### Initiative 11: Comprehensive Helper Performance Audit 🎯
+**Goal**: Audit and optimize ALL helper methods called from interpreter hot paths.
+**Scope**: `Helpers/`, `DataTypes/`, `Execution/VM/`, `CoreLib/`, `Interop/`.
+**Status**: Planned. See **Section 11** for scope.
+**Effort**: 2-3 weeks audit + ongoing optimization
 
 ## Baseline Controls (must stay green)
 - Re-run audits (`documentation_audit.py`, `NamingAudit`, `SpellingAudit`) when APIs or docs change.
@@ -231,6 +254,8 @@ Ensure NovaSharp produces identical output to reference Lua interpreters across 
 
 - **os.time/os.date Semantics**: Timezone handling, epoch values
 
+- **Version-Aware Standard Library**: 🔴 **NEW — See Initiative 9** — ALL Lua functions must behave per version spec
+
 - **Lua 5.4 Breaking Changes** (newly catalogued from official docs):
   - String-to-number coercion removed from core (moved to string library metamethods)
   - `print` no longer calls global `tostring` (uses `__tostring` directly)
@@ -256,6 +281,20 @@ Ensure NovaSharp produces identical output to reference Lua interpreters across 
   - `math.log10` deprecated (use `math.log(x, 10)`)
 
 See **Section 8** in "Lua Specification Parity" below for detailed tracking (22 subsections covering all version-specific behaviors).
+See **Section 9** (Initiative 9) for comprehensive version-aware standard library audit.
+
+### 9. Performance Hyper-Optimization 🎯 **HIGH PRIORITY**
+
+- **KopiLua Optimization**: 🔴 **NEW — See Initiative 10** — Zero-allocation string pattern matching
+  - Replace `CharPtr` class with `ref struct CharSpan`
+  - Pool `MatchState` objects instead of allocating per match
+  - Use `ArrayPool<char>` for format buffers
+  - Integrate `ZString` for error messages
+  - Target: <50 bytes/match, <400ns latency
+  
+- **Comprehensive Helper Audit**: 🔴 **NEW — See Initiative 11** — All hot-path helpers
+  - `Helpers/`, `DataTypes/`, `Execution/VM/`, `CoreLib/`, `Interop/`
+  - Consolidates with Initiative 5 Phase 4
 
 ## Lua Specification Parity
 
@@ -865,11 +904,18 @@ This is a **major architectural change** touching:
 - [x] `math.type()` returns correct subtype
 - [x] `math.maxinteger`/`math.mininteger` as integer subtype
 
-**Phase 3: Standard Library** (3-4 days)
+**Phase 3: Standard Library** (3-4 days) ✅ **COMPLETE**
 - [x] Update `MathModule` (`math.type()`, floor division error handling)
-- [ ] Update `StringModule` (format specifier handling for `%d`, `%i`, `%o`, `%x`)
+- [x] Update `StringModule` (format specifier handling for `%d`, `%i`, `%o`, `%x`, `%X`, `%u`)
+  - Added `LuaLCheckLuaNumber()` to `LuaBase.cs` for preserving integer/float subtype
+  - Updated `str_format` to use integer values directly (no double conversion) for format specifiers
+  - 15 new tests verifying `math.maxinteger` formats correctly (no precision loss)
 - [x] Update bitwise operations integration
-- [ ] Update comparison operators (integer vs float promotion)
+- [x] Update `math.floor`/`math.ceil` to return integer subtypes when result fits in range
+  - Integer inputs return unchanged
+  - Float inputs return integer subtype if result fits in `long` range
+  - Infinity/NaN return float subtype
+  - 20 new tests verifying integer promotion behavior
 
 **Phase 4: Interop & Serialization** (3-4 days)
 - [ ] Update `FromObject()` / `ToObject()` for integer preservation
@@ -885,7 +931,7 @@ This is a **major architectural change** touching:
   - [ ] Audit VM arithmetic result paths to use `From*` cache methods instead of `New*` where readonly is acceptable
   - [ ] Add negative integer cache (-256 to -1) for common negative indices/counters
   - [ ] Consider `LuaNumber` struct-level caching for frequently-created values
-- [x] Run full test suite (3,811 tests passing)
+- [x] Run full test suite (3,841 tests passing)
 - [ ] Run Lua comparison harness against reference Lua 5.3/5.4
 - [ ] Performance benchmarking (ensure no significant regression)
 - [ ] Memory allocation profiling (verify caching reduces allocations)
@@ -896,7 +942,10 @@ This is a **major architectural change** touching:
 - [x] `math.type(1)` returns `"integer"`, `math.type(1.0)` returns `"float"`
 - [x] `3 // 0` throws error, `3.0 // 0` returns `inf`
 - [x] `math.maxinteger & 1` returns `1` (not overflow)
-- [x] All 3,811 existing tests pass
+- [x] `string.format('%d', math.maxinteger)` returns "9223372036854775807" (exact)
+- [x] `math.floor(3.7)` returns integer subtype (value 3)
+- [x] `math.ceil(3.2)` returns integer subtype (value 4)
+- [x] All 3,841 existing tests pass
 - [ ] Lua comparison harness shows improved parity percentage
 - [ ] No performance regression > 5% on benchmarks
 - [ ] Numeric caching reduces hot-path allocations (verified via BenchmarkDotNet memory diagnostics)
@@ -906,7 +955,7 @@ This is a **major architectural change** touching:
 
 **Owner**: Interpreter team
 **Priority**: 🔴 HIGH — Required for full Lua 5.3+ specification compliance
-**Tracking**: Phase 2 complete (2025-12-07), continuing with Phase 3-5
+**Tracking**: Phase 3 complete (2025-12-07), continuing with Phase 4-5
 
 ## Long-horizon Ideas
 - Property and fuzz testing for lexer, parser, VM.
@@ -2184,3 +2233,604 @@ Created `MathNumericEdgeCasesTUnitTests.cs` with 50+ tests covering:
 ### Test Results
 
 All **3,727** tests pass (Release configuration) — 50+ new tests added.
+
+---
+
+## Initiative 9: Version-Aware Lua Standard Library Parity 🔴 **CRITICAL**
+
+**Status**: 🚧 **IN PROGRESS** — Comprehensive audit required to ensure ALL Lua functions behave correctly per version.
+
+**Priority**: CRITICAL — Core interpreter correctness for production use.
+
+**Goal**: Every Lua function and language feature must behave according to the specification for the configured `LuaCompatibilityVersion`. This is not just about API surface (whether a function exists) but about behavioral semantics that differ between versions.
+
+### 9.1 Math Module Version Parity
+
+| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|----------|-----|-----|-----|-----|------------------|-------|
+| `math.random()` | LCG | LCG | LCG | xoshiro256** | ✅ Completed | Version-specific RNG |
+| `math.randomseed(x)` | 1 arg, nil return | 1 arg, nil return | 1 arg, nil return | 0-2 args, returns (x,y) | ✅ Completed | Version-aware behavior |
+| `math.type(x)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | Returns "integer"/"float" |
+| `math.tointeger(x)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | Integer conversion |
+| `math.ult(m, n)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | Unsigned comparison |
+| `math.maxinteger` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | 2^63-1 |
+| `math.mininteger` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | -2^63 |
+| `math.log(x [,base])` | 1 arg only | 1-2 args | 1-2 args | 1-2 args | 🔲 Verify | Check 5.1 signature |
+| `math.log10(x)` | ✅ | ⚠️ Deprecated | ⚠️ Deprecated | ⚠️ Deprecated | 🔲 Verify | Warn in 5.2+ |
+| `math.ldexp(m, e)` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | 🔲 Verify | Version gate |
+| `math.frexp(x)` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | 🔲 Verify | Version gate |
+| `math.pow(x, y)` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | 🔲 Verify | Use `x^y` in 5.3+ |
+| `math.mod(x, y)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `x%y` in 5.1+ |
+| `math.fmod(x, y)` | ✅ | ✅ | ✅ | ✅ | ✅ Available | Float modulo |
+| `math.modf(x)` | Float parts | Float parts | Int+Float parts | Int+Float parts | 🔲 Verify | Integer promotion in 5.3+ |
+| `math.floor(x)` | Float | Float | Integer if fits | Integer if fits | ✅ Completed | Integer promotion |
+| `math.ceil(x)` | Float | Float | Integer if fits | Integer if fits | ✅ Completed | Integer promotion |
+
+**Tasks**:
+- [ ] Audit all `math` functions for version-specific behavior
+- [ ] Implement `[LuaCompatibility]` gating for deprecated/removed functions
+- [ ] Add version-specific tests for each function
+- [ ] Implement deprecation warnings for 5.2+ deprecated functions
+- [ ] Verify `math.modf` returns integer+float in 5.3+
+
+### 9.2 String Module Version Parity
+
+| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|----------|-----|-----|-----|-----|------------------|-------|
+| `string.pack(fmt, ...)` | ❌ N/A | ❌ N/A | ✅ | ✅ | 🚧 Partial | Extended options missing |
+| `string.unpack(fmt, s [,pos])` | ❌ N/A | ❌ N/A | ✅ | ✅ | 🚧 Partial | Extended options missing |
+| `string.packsize(fmt)` | ❌ N/A | ❌ N/A | ✅ | ✅ | 🚧 Partial | Extended options missing |
+| `string.format('%a', x)` | ❌ N/A | ❌ N/A | ✅ | ✅ | 🔲 Verify | Hex float format |
+| `string.format('%d', maxint)` | Double precision | Double precision | Integer precision | Integer precision | ✅ Completed | LuaNumber precision |
+| `string.gmatch(s, pattern [,init])` | No init | No init | No init | ✅ init arg | 🔲 Verify | 5.4 added init parameter |
+| Pattern `%g` (graphical) | ❌ N/A | ✅ | ✅ | ✅ | 🔲 Verify | Added in 5.2 |
+| Frontier pattern `%f[]` | ✅ | ✅ | ✅ | ✅ | ✅ Available | All versions |
+
+**Tasks**:
+- [ ] Complete `string.pack`/`unpack` extended format options (`c`, `z`, alignment)
+- [ ] Implement `string.format('%a')` hex float format specifier
+- [ ] Add `init` parameter to `string.gmatch` for Lua 5.4
+- [ ] Verify `%g` character class availability per version
+- [ ] Document string pattern differences between versions
+
+### 9.3 Table Module Version Parity
+
+| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|----------|-----|-----|-----|-----|------------------|-------|
+| `table.pack(...)` | ❌ N/A | ✅ | ✅ | ✅ | ✅ Available | Sets `n` field |
+| `table.unpack(list [,i [,j]])` | ❌ N/A | ✅ | ✅ | ✅ | ✅ Available | Replaces global `unpack` |
+| `table.move(a1, f, e, t [,a2])` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | Metamethod-aware |
+| `table.maxn(table)` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | 🔲 Verify | Version gate |
+| `table.getn(table)` | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `#table` |
+| `table.setn(table, n)` | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Removed |
+| `table.foreachi(t, f)` | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `ipairs` |
+| `table.foreach(t, f)` | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `pairs` |
+
+**Tasks**:
+- [ ] Implement `[LuaCompatibility]` gating for deprecated/removed table functions
+- [ ] Add global `unpack` alias for Lua 5.1 mode
+- [ ] Verify `table.maxn` available only in 5.1-5.2
+
+### 9.4 Basic Functions Version Parity
+
+| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|----------|-----|-----|-----|-----|------------------|-------|
+| `setfenv(f, table)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Implement | 5.1 only |
+| `getfenv(f)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Implement | 5.1 only |
+| `unpack(list [,i [,j]])` | ✅ Global | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Implement | Moved to `table.unpack` |
+| `module(name [,...])` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | 🔲 Verify | 5.1 module system |
+| `loadstring(string [,chunkname])` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `load(string)` |
+| `load(chunk [,chunkname [,mode [,env]]])` | 2-3 args | 4 args | 4 args | 4 args | 🔲 Verify | Signature change |
+| `loadfile(filename [,mode [,env]])` | 1 arg | 3 args | 3 args | 3 args | 🔲 Verify | Signature change |
+| `rawlen(v)` | ❌ N/A | ✅ | ✅ | ✅ | ✅ Available | Added in 5.2 |
+| `xpcall(f, msgh [,...])` | 2 args | Extra args | Extra args | Extra args | 🔲 Verify | 5.2+ passes args to f |
+| `print(...)` behavior | Calls tostring | Calls tostring | Calls tostring | Uses __tostring | 🔲 Implement | 5.4 change |
+| String-to-number coercion | Implicit | Implicit | Implicit | Metamethod | 🔲 Implement | 5.4 breaking change |
+
+**Tasks**:
+- [ ] Implement `setfenv`/`getfenv` for Lua 5.1 compatibility mode
+- [ ] Add global `unpack` for Lua 5.1 mode
+- [ ] Implement `print` behavior change for Lua 5.4 (`__tostring` directly)
+- [ ] Implement string-to-number coercion via metamethods for Lua 5.4
+- [ ] Verify `xpcall` argument passing per version
+- [ ] Verify `load`/`loadfile` signature per version
+
+### 9.5 Coroutine Module Version Parity
+
+| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|----------|-----|-----|-----|-----|------------------|-------|
+| `coroutine.isyieldable()` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | Added in 5.3 |
+| `coroutine.close(co)` | ❌ N/A | ❌ N/A | ❌ N/A | ✅ | ✅ Available | Added in 5.4 |
+| `coroutine.running()` | Returns co only | Returns co, bool | Returns co, bool | Returns co, bool | 🔲 Verify | Return shape |
+
+**Tasks**:
+- [ ] Verify `coroutine.running()` return value per version
+
+### 9.6 OS Module Version Parity
+
+| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|----------|-----|-----|-----|-----|------------------|-------|
+| `os.execute(command)` | Returns status | Returns (ok, signal, code) | Returns tuple | Returns tuple | ✅ Available | |
+| `os.exit(code [,close])` | 1 arg | 2 args | 2 args | 2 args | 🔲 Verify | `close` param |
+
+**Tasks**:
+- [ ] Verify `os.execute` return value per version
+- [ ] Verify `os.exit` `close` parameter support
+
+### 9.7 IO Module Version Parity
+
+| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|----------|-----|-----|-----|-----|------------------|-------|
+| `io.lines(filename, ...)` | Returns iterator | Returns iterator | Returns iterator | Returns 4 values | 🔲 Implement | 5.4 breaking change |
+| `io.read("*n")` | Number | Number | Number | Number | ✅ Available | Hex parsing in 5.3+ |
+| `file:setvbuf(mode [,size])` | ✅ | ✅ | ✅ | ✅ | 🔲 Verify | Buffer modes |
+
+**Tasks**:
+- [ ] Implement `io.lines` 4-return-value for Lua 5.4
+- [ ] Verify `io.read("*n")` hex parsing per version
+
+### 9.8 UTF-8 Module Version Parity
+
+| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|----------|-----|-----|-----|-----|------------------|-------|
+| `utf8.char(...)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
+| `utf8.codes(s [,lax])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | 🔲 Verify | `lax` mode in 5.4 |
+| `utf8.codepoint(s [,i [,j [,lax]]])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | 🔲 Verify | `lax` mode in 5.4 |
+| `utf8.len(s [,i [,j [,lax]]])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | 🔲 Verify | `lax` mode in 5.4 |
+| `utf8.offset(s, n [,i])` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
+| Surrogate rejection | ❌ N/A | ❌ N/A | By default | By default | 🔲 Verify | 5.4 `lax` accepts |
+
+**Tasks**:
+- [ ] Implement `lax` mode parameter for UTF-8 functions in Lua 5.4
+- [ ] Verify surrogate handling per version
+
+### 9.9 Debug Module Version Parity
+
+| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|----------|-----|-----|-----|-----|------------------|-------|
+| `debug.setcstacklimit(limit)` | ❌ N/A | ❌ N/A | ❌ N/A | ✅ | 🔲 Implement | 5.4 only |
+| `debug.setmetatable(value, table)` | 1st return | 1st return | 1st return | boolean | 🔲 Verify | Return type change |
+| `debug.getuservalue(u [,n])` | ❌ N/A | ✅ (1 value) | ✅ (1 value) | ✅ (n-th value) | 🔲 Implement | 5.4 multi-user-values |
+| `debug.setuservalue(u, value [,n])` | ❌ N/A | ✅ | ✅ | ✅ (n-th value) | 🔲 Implement | 5.4 multi-user-values |
+
+**Tasks**:
+- [ ] Implement `debug.setcstacklimit` for Lua 5.4
+- [ ] Verify `debug.setmetatable` return value per version
+- [ ] Implement multi-user-value support for 5.4
+
+### 9.10 Bitwise Operations Version Parity
+
+| Feature | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|---------|-----|-----|-----|-----|------------------|-------|
+| `bit32` library | ❌ N/A | ✅ | ⚠️ Deprecated | ❌ Removed | ✅ Available | Version-gated |
+| Native `&`, `|`, `~` operators | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
+| `~` unary (bitwise NOT) | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
+| `<<`, `>>` operators | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
+| 32-bit operations (bit32) | ❌ N/A | ✅ | ⚠️ | ❌ | ✅ Available | |
+| 64-bit operations (native) | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
+
+**Tasks**:
+- [ ] Emit deprecation warning when `bit32` used in 5.3 mode
+- [ ] Verify `bit32` unavailable in 5.4 mode
+
+### 9.11 Metamethod Behavior Version Parity
+
+| Metamethod | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
+|------------|-----|-----|-----|-----|------------------|-------|
+| `__lt` emulates `__le` | ✅ | ✅ | ✅ | ❌ No | 🔲 Implement | 5.4 breaking change |
+| `__gc` non-function error | Silent | Silent | Silent | Error | 🔲 Implement | 5.4 breaking change |
+| `__pairs`/`__ipairs` | ❌ N/A | ✅ | ✅ (no __ipairs) | ✅ (no __ipairs) | 🔲 Verify | `__ipairs` deprecated 5.3 |
+| `__close` | ❌ N/A | ❌ N/A | ❌ N/A | ✅ | ✅ Available | |
+
+**Tasks**:
+- [ ] Implement `__lt` emulation removal for Lua 5.4
+- [ ] Implement `__gc` validation for Lua 5.4
+- [ ] Verify `__ipairs` behavior per version
+
+### 9.12 Testing Infrastructure
+
+**Tasks**:
+- [ ] Create comprehensive version matrix tests for all modules
+- [ ] Create `LuaFixtures/VersionParity/` test directory with per-function fixtures
+- [ ] Add CI jobs that run test suite with each `LuaCompatibilityVersion`
+- [ ] Create version migration guide (`docs/LuaVersionMigration.md`)
+- [ ] Document all version-specific behaviors in `docs/LuaCompatibility.md`
+
+**Success Criteria**:
+- All Lua standard library functions behave according to their version specification
+- Version-gated functions raise appropriate errors or deprecation warnings
+- CI validates all behaviors against reference Lua interpreters (5.1, 5.2, 5.3, 5.4)
+- Documentation clearly explains behavior differences per version
+
+**Owner**: Interpreter team
+**Effort Estimate**: 4-6 weeks comprehensive audit and implementation
+**Tracking**: Part of Lua Specification Parity initiative
+
+---
+
+## Initiative 10: KopiLua Performance Hyper-Optimization 🎯 **HIGH PRIORITY**
+
+**Status**: 🔲 **PLANNED** — Critical for interpreter hot-path performance.
+
+**Priority**: HIGH — KopiLua code is called from string pattern matching hot paths.
+
+**Goal**: Dramatically reduce allocations and improve performance of all KopiLua-derived code and any helpers called from the interpreter hot paths. Target: zero-allocation in steady state, match or exceed native Lua performance.
+
+### 10.1 KopiLua String Library Analysis
+
+**Current State**:
+The `KopiLuaStringLib.cs` file (1274 lines) implements Lua's string pattern matching and formatting. It was ported from KopiLua and retains legacy C-style coding patterns that are inefficient in .NET.
+
+**Key Performance Issues Identified**:
+
+| Issue | Location | Impact | Fix Strategy |
+|-------|----------|--------|--------------|
+| `CharPtr` class allocations | Throughout | HIGH | Convert to `ref struct` or `ReadOnlySpan<char>` |
+| `MatchState` class allocations | Every pattern match | HIGH | Object pooling or struct conversion |
+| `new char[]` allocations | `Scanformat`, `str_format` | MEDIUM | Use `ArrayPool<char>` or stack allocation |
+| String concatenation | `LuaLError` calls, error messages | MEDIUM | Use `ZString` |
+| `Capture[]` array allocation | `MatchState` constructor | HIGH | Pre-allocate static pool |
+| `LuaLBuffer` allocations | `str_gsub`, `str_format` | HIGH | Pool or `StringBuilder` replacement |
+| `StringFormat` calls | `str_format` | MEDIUM | Direct formatting with `Span<char>` |
+| `StringCopy`/`MemoryCompare` | Pattern matching | LOW | Use `Span<T>` methods |
+
+### 10.2 CharPtr Modernization
+
+**Current Implementation**:
+```csharp
+// KopiLua pattern - allocates on every operation
+public class CharPtr {
+    public char[] chars;
+    public int index;
+    public CharPtr Next() => new CharPtr(chars, index + 1); // Allocation!
+}
+```
+
+**Proposed Zero-Allocation Alternative**:
+```csharp
+// Modern .NET pattern - zero allocations
+public ref struct CharSpan {
+    private readonly ReadOnlySpan<char> _span;
+    private int _index;
+    
+    public CharSpan(string s) { _span = s.AsSpan(); _index = 0; }
+    public CharSpan(ReadOnlySpan<char> span, int index) { _span = span; _index = index; }
+    
+    public char this[int offset] => _index + offset < _span.Length ? _span[_index + offset] : '\0';
+    public CharSpan Next() => new CharSpan(_span, _index + 1); // No allocation!
+    public static CharSpan operator +(CharSpan ptr, int offset) => new(_span, ptr._index + offset);
+    public int Length => _span.Length - _index;
+    public ReadOnlySpan<char> Slice(int length) => _span.Slice(_index, Math.Min(length, Length));
+}
+```
+
+**Tasks**:
+- [ ] Create `CharSpan` ref struct as zero-allocation `CharPtr` replacement
+- [ ] Update all `CharPtr` usages to `CharSpan` incrementally
+- [ ] Benchmark before/after for pattern matching operations
+- [ ] Ensure netstandard2.0 compatibility (may need polyfill for `ReadOnlySpan<char>`)
+
+### 10.3 MatchState Pooling
+
+**Current Implementation**:
+```csharp
+public class MatchState {
+    public MatchState() {
+        for (int i = 0; i < LuaPatternMaxCaptures; i++)
+            capture[i] = new Capture(); // 32 allocations!
+    }
+    public Capture[] capture = new Capture[LuaPatternMaxCaptures];
+}
+```
+
+**Proposed Pooled Implementation**:
+```csharp
+internal sealed class MatchState : IDisposable {
+    private static readonly ObjectPool<MatchState> Pool = 
+        new DefaultObjectPool<MatchState>(new MatchStatePoolPolicy(), 64);
+    
+    public static MatchState Rent() => Pool.Get();
+    public void Return() { Reset(); Pool.Return(this); }
+    public void Dispose() => Return();
+    
+    private void Reset() {
+        matchdepth = MAXCCALLS;
+        level = 0;
+        // Clear captures without deallocating
+        for (int i = 0; i < level; i++) capture[i].len = 0;
+    }
+}
+
+// Usage:
+using var ms = MatchState.Rent();
+// ... pattern matching ...
+// Automatic return via IDisposable
+```
+
+**Tasks**:
+- [ ] Create `MatchStatePool` using `Microsoft.Extensions.ObjectPool`
+- [ ] Add `Rent()`/`Return()` lifecycle methods
+- [ ] Update all call sites to use pooled instances
+- [ ] Add pool statistics for monitoring
+
+### 10.4 Buffer and Array Pooling
+
+**Current Allocations**:
+```csharp
+// Every str_format call allocates:
+CharPtr form = new char[MaxFormat];  // 520 bytes
+CharPtr buff = new char[MAX_ITEM];   // 512 bytes
+```
+
+**Proposed Solution**:
+```csharp
+// Use ArrayPool for buffers
+private static readonly ArrayPool<char> CharPool = ArrayPool<char>.Shared;
+
+public static int str_format(LuaState l) {
+    char[] formBuffer = CharPool.Rent(MaxFormat);
+    char[] itemBuffer = CharPool.Rent(MAX_ITEM);
+    try {
+        // ... formatting logic using rented buffers ...
+    } finally {
+        CharPool.Return(formBuffer);
+        CharPool.Return(itemBuffer);
+    }
+}
+```
+
+**Tasks**:
+- [ ] Replace all `new char[]` with `ArrayPool<char>.Rent()`
+- [ ] Add proper cleanup in finally blocks
+- [ ] Create `CharArrayScope` helper for automatic return
+- [ ] Benchmark memory allocation reduction
+
+### 10.5 ZString Integration for Error Messages
+
+**Current Pattern**:
+```csharp
+LuaLError(ms.l, "malformed pattern (ends with " + LuaQuoteLiteral("%") + ")");
+```
+
+**Proposed Zero-Allocation Pattern**:
+```csharp
+// Pre-computed error messages
+private static readonly string MalformedPatternEnds = 
+    $"malformed pattern (ends with {LuaQuoteLiteral("%")})";
+
+// Or use ZString for dynamic messages
+using var sb = ZString.CreateStringBuilder();
+sb.Append("invalid capture index ");
+sb.Append(l + 1);
+LuaLError(ms.l, sb.ToString());
+```
+
+**Tasks**:
+- [ ] Catalog all error message strings in KopiLuaStringLib
+- [ ] Convert static messages to pre-computed `const` or `static readonly`
+- [ ] Use `ZString` for dynamic messages requiring formatting
+- [ ] Add `LuaLError` overload accepting `Utf16ValueStringBuilder`
+
+### 10.6 LuaLBuffer Modernization
+
+**Current State**: `LuaLBuffer` is a wrapper around string building operations.
+
+**Proposed Improvements**:
+- [ ] Replace internal storage with `StringBuilderPool` or `ZString.Utf16ValueStringBuilder`
+- [ ] Add `Span<char>` append overloads to avoid string allocations
+- [ ] Implement `IDisposable` for automatic pool return
+- [ ] Add capacity hints based on expected output size
+
+### 10.7 Pattern Matching Optimization
+
+**Current Hot Paths**:
+1. `Match()` - Recursive function, allocates `CharPtr` on each call
+2. `Singlematch()` - Called per character, multiple branches
+3. `match_class()` - Character classification
+
+**Proposed Optimizations**:
+```csharp
+// Use switch expression for character class matching (faster than if-else chain)
+private static bool MatchClass(char c, char cl) => char.ToLowerInvariant(cl) switch {
+    'a' => char.IsLetter(c),
+    'd' => char.IsDigit(c),
+    'l' => char.IsLower(c),
+    'u' => char.IsUpper(c),
+    's' => char.IsWhiteSpace(c),
+    'w' => char.IsLetterOrDigit(c),
+    'x' => IsHexDigit(c),
+    'c' => char.IsControl(c),
+    'p' => char.IsPunctuation(c),
+    'g' => !char.IsWhiteSpace(c) && !char.IsControl(c),
+    'z' => c == '\0',
+    _ => cl == c
+};
+
+// Inline small methods
+[MethodImpl(MethodImplOptions.AggressiveInlining)]
+private static bool IsHexDigit(char c) => 
+    (uint)(c - '0') <= 9 || (uint)((c | 0x20) - 'a') <= 5;
+```
+
+**Tasks**:
+- [ ] Convert `match_class` to switch expression
+- [ ] Add `[MethodImpl(AggressiveInlining)]` to small hot-path methods
+- [ ] Convert `Match()` from recursive to iterative where possible
+- [ ] Profile and identify remaining hot spots with BenchmarkDotNet
+
+### 10.8 LuaState Interop Optimization
+
+**Current State**: `LuaStateInterop/` contains bridge code between KopiLua and NovaSharp.
+
+**Proposed Improvements**:
+- [ ] Audit `LuaBase.cs` for allocation hot spots
+- [ ] Replace `LuaPushString` string allocations with interned strings
+- [ ] Use `LuaStringPool` for common Lua strings
+- [ ] Add `Span<char>` overloads for string operations
+
+### 10.9 Benchmarking Infrastructure
+
+**Required Benchmarks**:
+```csharp
+[MemoryDiagnoser]
+[DisassemblyDiagnoser]
+public class KopiLuaStringBenchmarks
+{
+    [Benchmark]
+    public string PatternMatch_Simple() => 
+        script.DoString("return string.match('hello world', 'world')").String;
+    
+    [Benchmark]
+    public string PatternMatch_Complex() =>
+        script.DoString("return string.gsub('hello world', '(%w+)', '%1!')").String;
+    
+    [Benchmark]
+    public string StringFormat_Mixed() =>
+        script.DoString("return string.format('%s %d %.2f', 'test', 42, 3.14)").String;
+    
+    [Benchmark]
+    public int GsubReplace_100Iterations() {
+        int count = 0;
+        for (int i = 0; i < 100; i++)
+            count += (int)script.DoString("return select(2, string.gsub('aaa', 'a', 'b'))").Number;
+        return count;
+    }
+}
+```
+
+**Tasks**:
+- [ ] Create `KopiLuaStringBenchmarks.cs` in benchmark project
+- [ ] Establish baseline measurements before optimization
+- [ ] Add allocation tracking to identify worst offenders
+- [ ] Set performance targets (e.g., <100 bytes/match, <500ns for simple patterns)
+
+### 10.10 Netstandard2.0 Compatibility
+
+**Constraints**:
+- `ref struct` available in C# 7.2+ (netstandard2.0 compatible with appropriate compiler)
+- `Span<T>` requires `System.Memory` NuGet package for netstandard2.0
+- `ArrayPool<T>` requires `System.Buffers` NuGet package for netstandard2.0
+
+**Tasks**:
+- [ ] Verify `System.Memory` package is referenced
+- [ ] Verify `System.Buffers` package is referenced
+- [ ] Test on Mono runtime (Unity target)
+- [ ] Test on IL2CPP (AOT compilation)
+- [ ] Document any platform-specific limitations
+
+### 10.11 Success Metrics
+
+| Metric | Current (Estimated) | Target | Measurement |
+|--------|---------------------|--------|-------------|
+| Allocations per `string.match` | ~500 bytes | <50 bytes | BenchmarkDotNet MemoryDiagnoser |
+| Allocations per `string.gsub` | ~2000 bytes | <200 bytes | BenchmarkDotNet MemoryDiagnoser |
+| Allocations per `string.format` | ~1500 bytes | <100 bytes | BenchmarkDotNet MemoryDiagnoser |
+| `string.match` latency (simple) | ~800 ns | <400 ns | BenchmarkDotNet |
+| `string.gsub` latency (complex) | ~5 µs | <2 µs | BenchmarkDotNet |
+| GC Gen0 collections/1000 ops | ~50 | <5 | dotnet-counters |
+
+### 10.12 Implementation Phases
+
+**Phase 1: Infrastructure (1 week)**
+- [ ] Add benchmarking infrastructure for KopiLua operations
+- [ ] Establish baseline measurements
+- [ ] Document current allocation patterns
+- [ ] Create tracking issue for each optimization area
+
+**Phase 2: Critical Path Optimization (2 weeks)**
+- [ ] Implement `CharSpan` ref struct replacement
+- [ ] Implement `MatchState` pooling
+- [ ] Replace `new char[]` with `ArrayPool<char>`
+- [ ] Verify no regressions in test suite
+
+**Phase 3: Comprehensive Optimization (2 weeks)**
+- [ ] Modernize `LuaLBuffer`
+- [ ] Integrate `ZString` for error messages
+- [ ] Optimize character classification methods
+- [ ] Add inline hints to hot-path methods
+
+**Phase 4: Validation (1 week)**
+- [ ] Run full benchmark suite
+- [ ] Verify allocation targets met
+- [ ] Test on all target platforms (netstandard2.0, Mono, IL2CPP)
+- [ ] Update documentation with performance characteristics
+
+**Owner**: Interpreter team
+**Effort Estimate**: 6-8 weeks total
+**Dependencies**: Initiative 5 (Hot-Path Optimization) provides foundation
+**Tracking**: New tracking issue to be created
+
+---
+
+## Initiative 11: Comprehensive Helper Performance Audit 🎯
+
+**Status**: 🔲 **PLANNED**
+
+**Priority**: HIGH — All interpreter hot-path helpers need audit.
+
+**Goal**: Identify and optimize ALL helper methods called from interpreter hot paths, not just KopiLua.
+
+### 11.1 Scope
+
+All code in these namespaces/directories that is called from VM execution:
+- `LuaPort/` (KopiLua-derived, covered by Initiative 10)
+- `Helpers/` (LuaIntegerHelper, LuaStringHelper, etc.)
+- `DataTypes/` (DynValue, Table, Closure operations)
+- `Execution/VM/` (Processor instruction handlers)
+- `CoreLib/` (Standard library module implementations)
+- `Interop/` (CLR bridging, type conversion)
+
+### 11.2 Helpers Directory Audit
+
+**Files to Audit**:
+- [ ] `LuaIntegerHelper.cs` — Integer conversion, shift operations
+- [ ] `LuaTableHelper.cs` — Table manipulation
+- [ ] `LuaTypeHelper.cs` — Type checking and conversion
+- [ ] `StringHelper.cs` — String operations
+- [ ] Any other helpers in the Helpers directory
+
+**Optimization Patterns to Apply**:
+- Use `[MethodImpl(AggressiveInlining)]` for small methods
+- Replace LINQ with manual loops in hot paths
+- Use `Span<T>` for buffer operations
+- Pool any allocated objects
+- Cache computed values where safe
+
+### 11.3 DataTypes Performance Audit
+
+**DynValue Operations**:
+- [ ] Audit `DynValue.FromObject()` allocation patterns
+- [ ] Audit `DynValue.ToObject()` allocation patterns
+- [ ] Audit tuple creation/manipulation
+- [ ] Verify caching is used for common values
+
+**Table Operations**:
+- [ ] Audit `Table.Get()/Set()` allocation patterns
+- [ ] Audit iteration methods (`pairs`, `ipairs`)
+- [ ] Verify metamethod lookup is optimized
+- [ ] Profile `LinkedListIndex` operations
+
+**Closure Operations**:
+- [ ] Audit upvalue capture allocation
+- [ ] Verify closure call overhead is minimal
+
+### 11.4 CoreLib Module Audit
+
+**For Each Module** (MathModule, StringModule, TableModule, etc.):
+- [ ] Profile allocation patterns
+- [ ] Identify argument validation overhead
+- [ ] Optimize `CallbackArguments` handling
+- [ ] Replace string allocations with caching/pooling
+
+### 11.5 Integration with Existing Initiatives
+
+This initiative consolidates and coordinates with:
+- **Initiative 5** (Hot-Path Optimization): VM instruction loop, DynValue caching
+- **Initiative 10** (KopiLua Optimization): String pattern matching
+- **Section 4.7** (Interpreter hyper-optimization): Comprehensive performance plan
+
+**Deliverable**: Single unified performance tracking document at `docs/performance/hot-path-audit.md`
+
+**Owner**: Interpreter team
+**Effort Estimate**: 2-3 weeks for comprehensive audit + ongoing optimization work
+**Tracking**: Consolidates with Initiative 5 Phase 4

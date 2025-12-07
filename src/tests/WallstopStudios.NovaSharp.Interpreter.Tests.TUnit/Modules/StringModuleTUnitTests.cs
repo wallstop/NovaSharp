@@ -875,6 +875,151 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("100% complete").ConfigureAwait(false);
         }
 
+        // ========================================
+        // string.format - Integer precision tests (Lua 5.3+ dual numeric type system)
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FormatDecimalPreservesMathMaxinteger()
+        {
+            // math.maxinteger = 9223372036854775807 (2^63 - 1)
+            // This value cannot be exactly represented as a double (loses precision)
+            // With LuaNumber integer subtype, %d should preserve the exact value
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%d', math.maxinteger)");
+
+            await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatDecimalPreservesMathMininteger()
+        {
+            // math.mininteger = -9223372036854775808 (-2^63)
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%d', math.mininteger)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("-9223372036854775808")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatIntegerSpecifierPreservesMathMaxinteger()
+        {
+            // %i is equivalent to %d
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%i', math.maxinteger)");
+
+            await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexPreservesLargeIntegers()
+        {
+            // math.maxinteger in hex should be 7fffffffffffffff
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%x', math.maxinteger)");
+
+            await Assert.That(result.String).IsEqualTo("7fffffffffffffff").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexUppercasePreservesLargeIntegers()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%X', math.maxinteger)");
+
+            await Assert.That(result.String).IsEqualTo("7FFFFFFFFFFFFFFF").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatOctalPreservesLargeIntegers()
+        {
+            // math.maxinteger in octal
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%o', math.maxinteger)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("777777777777777777777")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatDecimalWithIntegerLiteral()
+        {
+            // Large integer literals should preserve precision
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%d', 9223372036854775807)");
+
+            await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatDecimalWithFloatFallsBackToConversion()
+        {
+            // Float values should be converted to integer (may lose precision for large values)
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%d', 123.456)");
+
+            await Assert.That(result.String).IsEqualTo("123").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexWithNegativeInteger()
+        {
+            // -1 as unsigned 64-bit integer is all 1s
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%x', -1)");
+
+            await Assert.That(result.String).IsEqualTo("ffffffffffffffff").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatHexWithMathMininteger()
+        {
+            // math.mininteger = -2^63 = 0x8000000000000000
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%x', math.mininteger)");
+
+            await Assert.That(result.String).IsEqualTo("8000000000000000").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatDecimalWithBitwiseResult()
+        {
+            // Bitwise operations produce integer results - verify precision preserved through formatting
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                "return string.format('%d', math.maxinteger & math.maxinteger)"
+            );
+
+            await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatDecimalWithMathTointeger()
+        {
+            // math.tointeger returns integer subtype - verify precision preserved
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                "return string.format('%d', math.tointeger(9223372036854775807))"
+            );
+
+            await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FormatUnsignedWithMathMaxinteger()
+        {
+            // %u format specifier with large positive integer
+            Script script = CreateScript();
+            DynValue result = script.DoString("return string.format('%u', math.maxinteger)");
+
+            await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);

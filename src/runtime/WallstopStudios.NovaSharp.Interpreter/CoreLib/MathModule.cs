@@ -323,17 +323,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `math.ceil`, rounding a number toward positive infinity (§6.7).
         /// </summary>
+        /// <remarks>
+        /// Per Lua 5.3+ specification, if the input is already an integer subtype,
+        /// or if the result fits within the integer range, the result is returned as an integer.
+        /// For Lua 5.1/5.2, always returns a float.
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments with the number to round.</param>
-        /// <returns>The rounded value.</returns>
+        /// <returns>The rounded value (integer subtype when result fits in integer range, Lua 5.3+ only).</returns>
         [NovaSharpModuleMethod(Name = "ceil")]
         public static DynValue Ceil(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            ModuleArgumentValidation.RequireExecutionContext(
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec1(args, "ceil", d => Math.Ceiling(d));
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg = args.AsType(0, "ceil", DataType.Number, false);
+
+            // Check version for integer promotion behavior
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool supportsIntegerSubtype = version >= LuaCompatibilityVersion.Lua53;
+
+            // Lua 5.1/5.2: always return float
+            if (!supportsIntegerSubtype)
+            {
+                return DynValue.NewNumber(Math.Ceiling(arg.Number));
+            }
+
+            // Lua 5.3+: If input is already an integer, return it unchanged
+            if (arg.IsInteger)
+            {
+                return arg;
+            }
+
+            double result = Math.Ceiling(arg.Number);
+
+            // Return integer subtype if result fits in integer range
+            if (result >= long.MinValue && result <= long.MaxValue && result == Math.Floor(result))
+            {
+                return DynValue.NewInteger((long)result);
+            }
+
+            return DynValue.NewFloat(result);
         }
 
         /// <summary>
@@ -401,22 +436,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         /// <summary>
-        /// Implements Lua `math.floor`, rounding a number toward negative/pluss? (downwards) (§6.7).
+        /// Implements Lua `math.floor`, rounding a number toward negative infinity (§6.7).
         /// </summary>
+        /// <remarks>
+        /// Per Lua 5.3+ specification, if the input is already an integer subtype,
+        /// or if the result fits within the integer range, the result is returned as an integer.
+        /// For Lua 5.1/5.2, always returns a float.
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments with the value to round.</param>
-        /// <returns>The rounded value.</returns>
+        /// <returns>The rounded value (integer subtype when result fits in integer range, Lua 5.3+ only).</returns>
         [NovaSharpModuleMethod(Name = "floor")]
         public static DynValue Floor(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            ModuleArgumentValidation.RequireExecutionContext(
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec1(args, "floor", d => Math.Floor(d));
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg = args.AsType(0, "floor", DataType.Number, false);
+
+            // Check version for integer promotion behavior
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool supportsIntegerSubtype = version >= LuaCompatibilityVersion.Lua53;
+
+            // Lua 5.1/5.2: always return float
+            if (!supportsIntegerSubtype)
+            {
+                return DynValue.NewNumber(Math.Floor(arg.Number));
+            }
+
+            // Lua 5.3+: If input is already an integer, return it unchanged
+            if (arg.IsInteger)
+            {
+                return arg;
+            }
+
+            double result = Math.Floor(arg.Number);
+
+            // Return integer subtype if result fits in integer range
+            if (result >= long.MinValue && result <= long.MaxValue && result == Math.Floor(result))
+            {
+                return DynValue.NewInteger((long)result);
+            }
+
+            return DynValue.NewFloat(result);
         }
 
         /// <summary>

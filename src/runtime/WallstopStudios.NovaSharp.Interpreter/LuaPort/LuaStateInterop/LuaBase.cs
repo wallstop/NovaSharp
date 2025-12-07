@@ -316,6 +316,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return v.Number;
         }
 
+        /// <summary>
+        /// Checks that the argument at position <paramref name="pos"/> is a number and returns
+        /// its <see cref="LuaNumber"/> value, preserving the integer/float subtype.
+        /// </summary>
+        /// <remarks>
+        /// This is critical for <c>string.format</c> with <c>%d</c>, <c>%i</c>, <c>%o</c>, <c>%x</c>, <c>%X</c>
+        /// specifiers where integer precision must be preserved (e.g., <c>math.maxinteger</c>).
+        /// </remarks>
+        internal static LuaNumber LuaLCheckLuaNumber(LuaState l, lua_Integer pos)
+        {
+            DynValue v = ArgAsType(l, pos, DataType.Number, false);
+            return v.LuaNumber;
+        }
+
         internal static void LuaPushValue(LuaState l, lua_Integer arg)
         {
             EnsureState(l, nameof(l));

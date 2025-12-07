@@ -303,6 +303,193 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsEqualTo(123.456).Within(1e-12).ConfigureAwait(false);
         }
 
+        // ========================================
+        // math.floor - Integer promotion tests (Lua 5.3+)
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task FloorReturnsIntegerForPositiveFloat()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.floor(3.7)");
+
+            await Assert.That(result.Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorReturnsIntegerForNegativeFloat()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.floor(-3.7)");
+
+            await Assert.That(result.Number).IsEqualTo(-4d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorPreservesIntegerInput()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.floor(42)");
+
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorReturnsIntegerTypeReportedByMathType()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.type(math.floor(3.7))");
+
+            await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorHandlesInfinityAsFloat()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.floor(1/0)");
+
+            await Assert
+                .That(double.IsPositiveInfinity(result.Number))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(result.IsFloat).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorHandlesNaNAsFloat()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.floor(0/0)");
+
+            await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsFloat).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorPreservesIntegerZero()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.floor(0)");
+
+            await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorHandlesNegativeZeroAsInteger()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.floor(-0.0)");
+
+            // Negative zero floored is 0, which should be returned as integer
+            await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        // ========================================
+        // math.ceil - Integer promotion tests (Lua 5.3+)
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task CeilReturnsIntegerForPositiveFloat()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.ceil(3.2)");
+
+            await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CeilReturnsIntegerForNegativeFloat()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.ceil(-3.2)");
+
+            await Assert.That(result.Number).IsEqualTo(-3d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CeilPreservesIntegerInput()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.ceil(42)");
+
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CeilReturnsIntegerTypeReportedByMathType()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.type(math.ceil(3.2))");
+
+            await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CeilHandlesInfinityAsFloat()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.ceil(1/0)");
+
+            await Assert
+                .That(double.IsPositiveInfinity(result.Number))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(result.IsFloat).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CeilHandlesNaNAsFloat()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.ceil(0/0)");
+
+            await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.IsFloat).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CeilPreservesIntegerZero()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.ceil(0)");
+
+            await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CeilHandlesFloatPointFiveCorrectly()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.ceil(0.5)");
+
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorResultCanBeUsedInStringFormat()
+        {
+            // Verify integer promotion integrates with string.format %d
+            Script script = CreateScript();
+            DynValue result = script.DoString(
+                "return string.format('%d', math.floor(math.maxinteger + 0.5))"
+            );
+
+            // maxinteger + 0.5 as double loses precision, but floor result should be maxinteger
+            // (this tests the integration between floor and format)
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);

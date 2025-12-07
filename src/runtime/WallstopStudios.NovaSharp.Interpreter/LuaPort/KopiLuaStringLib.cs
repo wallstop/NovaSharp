@@ -55,6 +55,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
 
     using System;
     using LuaPort.LuaStateInterop;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using static NovaSharp.Interpreter.LuaPort.LuaStateInterop.LuaBase;
@@ -1125,6 +1126,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             CharPtr strfrmtEnd = strfrmt + sfl;
             LuaLBuffer b = new(l);
             LuaLBuffInit(l, b);
+
+            // Check Lua version for integer precision behavior (Lua 5.3+ supports integer subtype)
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                l.ExecutionContext.Script.CompatibilityVersion
+            );
+            bool supportsIntegerPrecision = version >= LuaCompatibilityVersion.Lua53;
+
             while (strfrmt < strfrmtEnd)
             {
                 if (strfrmt[0] != L_ESC)
@@ -1161,7 +1169,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         case 'i':
                         {
                             Addintlen(form);
-                            StringFormat(buff, form, (LUA_INTFRM_T)LuaLCheckNumber(l, arg));
+                            // Lua 5.3+: preserve integer precision for large values (e.g., math.maxinteger)
+                            // Lua 5.1/5.2: use double conversion (no integer subtype existed)
+                            if (supportsIntegerPrecision)
+                            {
+                                LuaNumber num = LuaLCheckLuaNumber(l, arg);
+                                StringFormat(
+                                    buff,
+                                    form,
+                                    num.IsInteger ? num.AsInteger : (LUA_INTFRM_T)num.ToDouble
+                                );
+                            }
+                            else
+                            {
+                                StringFormat(buff, form, (LUA_INTFRM_T)LuaLCheckNumber(l, arg));
+                            }
                             break;
                         }
                         case 'o':
@@ -1170,11 +1192,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         case 'X':
                         {
                             Addintlen(form);
-                            StringFormat(
-                                buff,
-                                form,
-                                (UNSIGNED_LUA_INTFRM_T)LuaLCheckNumber(l, arg)
-                            );
+                            // Lua 5.3+: preserve integer precision for large values
+                            // Lua 5.1/5.2: use double conversion (no integer subtype existed)
+                            if (supportsIntegerPrecision)
+                            {
+                                LuaNumber num = LuaLCheckLuaNumber(l, arg);
+                                StringFormat(
+                                    buff,
+                                    form,
+                                    num.IsInteger
+                                        ? (UNSIGNED_LUA_INTFRM_T)(ulong)num.AsInteger
+                                        : (UNSIGNED_LUA_INTFRM_T)num.ToDouble
+                                );
+                            }
+                            else
+                            {
+                                StringFormat(
+                                    buff,
+                                    form,
+                                    (UNSIGNED_LUA_INTFRM_T)LuaLCheckNumber(l, arg)
+                                );
+                            }
                             break;
                         }
                         case 'e':
