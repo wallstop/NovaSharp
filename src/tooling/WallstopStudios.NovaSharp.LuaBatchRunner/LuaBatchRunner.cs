@@ -8,7 +8,7 @@
 //   - <output-dir>/<relative-path>.nova.err (stderr)
 //   - <output-dir>/<relative-path>.nova.rc (return code: 0=success, 1=runtime error, 2=parse error, 4=timeout)
 
-namespace WallstopStudios.NovaSharp.Tools.LuaBatchRunner
+namespace WallstopStudios.NovaSharp.LuaBatchRunner
 {
     using System;
     using System.Collections.Generic;

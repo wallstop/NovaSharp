@@ -22,11 +22,13 @@ EXCLUDED_DIRS = {"bin", "obj", "packages", ".vs"}
 CATEGORY_ROOTS = {"runtime", "tooling", "tests", "debuggers", "samples"}
 IGNORED_PARTS = {"properties", "tests", "testcases", "benchmarks", "tutorial", "processor"}
 PATH_ALLOWLIST = {
-    Path("src/tests/NovaSharp.Interpreter.Tests/_Hardwired.cs"),
-    Path("src/debuggers/NovaSharp.VsCodeDebugger/SDK/IsExternalInit.cs"),
-    Path("src/debuggers/NovaSharp.VsCodeDebugger/System/Runtime/CompilerServices/IsExternalInit.cs"),
-    Path("src/runtime/NovaSharp.Interpreter/Compatibility/Attributes.cs"),
-    Path("src/runtime/NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
+    Path("src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/_Hardwired.cs"),
+    Path("src/debuggers/WallstopStudios.NovaSharp.VsCodeDebugger/SDK/IsExternalInit.cs"),
+    Path(
+        "src/debuggers/WallstopStudios.NovaSharp.VsCodeDebugger/System/Runtime/CompilerServices/IsExternalInit.cs"
+    ),
+    Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs"),
+    Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
 }
 NAMESPACE_PATTERN = re.compile(r"^\s*namespace\s+([A-Za-z0-9_.]+)")
 
@@ -72,6 +74,17 @@ def expected_namespace(path: Path) -> str | None:
         parts = parts[1:]
         if not parts:
             return None
+
+    # Shared test infrastructure is branded under WallstopStudios.NovaSharp.Tests even though the
+    # folder path does not include the namespace prefix. Normalize that here so the audit enforces
+    # the branded namespace instead of the raw folder name.
+    if parts and parts[0] == "TestInfrastructure":
+        filtered = [p for p in parts if p.lower() not in IGNORED_PARTS]
+        if not filtered:
+            filtered = parts
+        return "WallstopStudios.NovaSharp.Tests." + ".".join(
+            p.replace(" ", "") for p in filtered
+        )
 
     # Remove folder tokens that are not part of the namespace (e.g., Properties)
     filtered = [p for p in parts if p.lower() not in IGNORED_PARTS]

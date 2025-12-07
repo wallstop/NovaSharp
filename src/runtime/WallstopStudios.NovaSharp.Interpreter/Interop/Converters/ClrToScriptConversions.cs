@@ -45,6 +45,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             if (NumericConversions.NumericTypes.Contains(t))
             {
+                // Preserve integer/float subtype distinction for Lua 5.3+ compliance
+                if (NumericConversions.IsIntegerType(t))
+                {
+                    return DynValue.NewInteger(NumericConversions.TypeToLong(t, obj));
+                }
                 return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
             }
 
@@ -102,6 +107,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             if (NumericConversions.NumericTypes.Contains(t))
             {
+                // Preserve integer/float subtype distinction for Lua 5.3+ compliance
+                if (NumericConversions.IsIntegerType(t))
+                {
+                    return DynValue.NewInteger(NumericConversions.TypeToLong(t, obj));
+                }
                 return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
             }
 

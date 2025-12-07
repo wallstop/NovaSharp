@@ -62,6 +62,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 case DataType.Boolean:
                     return value.Boolean;
                 case DataType.Number:
+                    // Preserve integer/float subtype distinction for Lua 5.3+ compliance
+                    if (value.IsInteger)
+                    {
+                        return value.LuaNumber.AsInteger;
+                    }
                     return value.Number;
                 case DataType.String:
                     return value.String;
@@ -191,10 +196,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                     if (Framework.Do.IsEnum(desiredType))
                     { // number to enum conv
                         Type underType = Enum.GetUnderlyingType(desiredType);
+                        // Use integer value for better precision with large enums
+                        if (value.IsInteger && NumericConversions.IsIntegerType(underType))
+                        {
+                            return LuaNumberToIntegerType(underType, value.LuaNumber);
+                        }
                         return NumericConversions.DoubleToType(underType, value.Number);
                     }
                     if (NumericConversions.NumericTypes.Contains(desiredType))
                     {
+                        // For integer types, preserve precision by using integer value when available
+                        if (value.IsInteger && NumericConversions.IsIntegerType(desiredType))
+                        {
+                            object intResult = LuaNumberToIntegerType(desiredType, value.LuaNumber);
+                            if (intResult != null && intResult.GetType() == desiredType)
+                            {
+                                return intResult;
+                            }
+                        }
+
                         object d = NumericConversions.DoubleToType(desiredType, value.Number);
                         if (d.GetType() == desiredType)
                         {
@@ -505,6 +525,73 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             {
                 return WeightNumberDowncast;
             }
+        }
+
+        /// <summary>
+        /// Converts a LuaNumber (that is known to be an integer subtype) to a CLR integer type.
+        /// This preserves full 64-bit integer precision that would be lost via double conversion.
+        /// </summary>
+        /// <param name="type">The target CLR integer type.</param>
+        /// <param name="number">The LuaNumber value.</param>
+        /// <returns>The converted value, or null if conversion fails.</returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Performance",
+            "CA1859:Use concrete types when possible for improved performance",
+            Justification = "Method must return different numeric types (long, int, short, etc.) based on runtime type parameter; boxing is unavoidable."
+        )]
+        private static object LuaNumberToIntegerType(Type type, LuaNumber number)
+        {
+            type = Nullable.GetUnderlyingType(type) ?? type;
+            long value = number.AsInteger;
+
+            try
+            {
+                if (type == typeof(long))
+                {
+                    return value;
+                }
+
+                if (type == typeof(int))
+                {
+                    return checked((int)value);
+                }
+
+                if (type == typeof(short))
+                {
+                    return checked((short)value);
+                }
+
+                if (type == typeof(sbyte))
+                {
+                    return checked((sbyte)value);
+                }
+
+                if (type == typeof(ulong))
+                {
+                    return checked((ulong)value);
+                }
+
+                if (type == typeof(uint))
+                {
+                    return checked((uint)value);
+                }
+
+                if (type == typeof(ushort))
+                {
+                    return checked((ushort)value);
+                }
+
+                if (type == typeof(byte))
+                {
+                    return checked((byte)value);
+                }
+            }
+            catch (OverflowException)
+            {
+                // Value doesn't fit in the target type; fall back to double conversion.
+            }
+
+            return null;
         }
     }
 }
