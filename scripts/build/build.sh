@@ -117,7 +117,7 @@ if (( run_tests )); then
     if (( ! restore_packages )); then
         test_restore_flag=(--no-restore)
     fi
-    dotnet test "$test_project" -c "$configuration" --no-build \
+    dotnet test --project "$test_project" -c "$configuration" --no-build \
         "${test_restore_flag[@]}" \
         --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx" \
         --results-directory "$test_results_dir"
