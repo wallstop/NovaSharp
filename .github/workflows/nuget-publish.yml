@@ -67,7 +67,7 @@ jobs:
             --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj \
             -c Release \
             --no-build \
-            --logger "trx;LogFileName=test-results.trx"
+            --report-trx --report-trx-filename "test-results.trx"
 
       - name: Pack NuGet packages
         run: |

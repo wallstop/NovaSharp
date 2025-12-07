@@ -119,7 +119,7 @@ if (( run_tests )); then
     fi
     dotnet test --project "$test_project" -c "$configuration" --no-build \
         "${test_restore_flag[@]}" \
-        --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx" \
+        --report-trx --report-trx-filename "NovaSharpInterpreterTUnit.trx" \
         --results-directory "$test_results_dir"
     rm -f "$test_results_placeholder"
 fi
