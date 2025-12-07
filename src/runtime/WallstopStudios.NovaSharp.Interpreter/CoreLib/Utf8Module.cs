@@ -19,6 +19,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     {
         private const string InvalidUtf8CodeMessage = "invalid UTF-8 code";
 
+        // Cached callback to avoid allocation on every utf8.codes call
+        private static readonly DynValue CachedCodesIteratorCallback = DynValue.NewCallback(
+            CodesIterator
+        );
+
         [NovaSharpModuleConstant(Name = "charpattern")]
         public const string CharPattern = "[\0-\x7F\xC2-\xF4][\x80-\xBF]*";
 
@@ -58,34 +63,63 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 endDefaultsToStart: true
             );
 
-            List<DynValue> numbers = new();
-            int index = startIndex;
-
-            while (index < endExclusive)
-            {
-                if (
-                    !TryDecodeScalarWithinRange(
-                        value.String,
-                        index,
-                        endExclusive,
-                        out int codePoint,
-                        out int width
-                    )
-                )
-                {
-                    throw new ScriptRuntimeException(InvalidUtf8CodeMessage);
-                }
-
-                numbers.Add(DynValue.NewNumber(codePoint));
-                index += width;
-            }
-
-            if (numbers.Count == 0)
+            // Fast path: empty range
+            if (startIndex >= endExclusive)
             {
                 return DynValue.Void;
             }
 
-            return DynValue.NewTuple(numbers.ToArray());
+            // Fast path: single character (very common case)
+            if (
+                TryDecodeScalarWithinRange(
+                    value.String,
+                    startIndex,
+                    endExclusive,
+                    out int firstCodePoint,
+                    out int firstWidth
+                )
+            )
+            {
+                // Check if this is the only character
+                if (startIndex + firstWidth >= endExclusive)
+                {
+                    return DynValue.FromNumber(firstCodePoint);
+                }
+            }
+            else
+            {
+                throw new ScriptRuntimeException(InvalidUtf8CodeMessage);
+            }
+
+            // Multi-character path: estimate capacity based on remaining bytes
+            int remainingBytes = endExclusive - startIndex;
+            // Use pooled list for common case (most strings have < 64 codepoints)
+            using (ListPool<DynValue>.Get(Math.Min(remainingBytes, 64), out List<DynValue> numbers))
+            {
+                numbers.Add(DynValue.FromNumber(firstCodePoint));
+
+                int index = startIndex + firstWidth;
+                while (index < endExclusive)
+                {
+                    if (
+                        !TryDecodeScalarWithinRange(
+                            value.String,
+                            index,
+                            endExclusive,
+                            out int codePoint,
+                            out int width
+                        )
+                    )
+                    {
+                        throw new ScriptRuntimeException(InvalidUtf8CodeMessage);
+                    }
+
+                    numbers.Add(DynValue.FromNumber(codePoint));
+                    index += width;
+                }
+
+                return DynValue.NewTuple(ListPool<DynValue>.ToExactArray(numbers));
+            }
         }
 
         /// <summary>
@@ -128,11 +162,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             DynValue value = args.AsType(0, "utf8.codes", DataType.String, false);
 
-            return DynValue.NewTuple(
-                DynValue.NewCallback(CodesIterator),
-                value,
-                DynValue.NewNumber(0)
-            );
+            return DynValue.NewTuple(CachedCodesIteratorCallback, value, DynValue.FromNumber(0));
         }
 
         /// <summary>
@@ -156,7 +186,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
                 int containing = FindRuneStartContainingBoundary(value.String, boundary);
 
-                return containing >= 0 ? DynValue.NewNumber(containing + 1) : DynValue.Nil;
+                return containing >= 0 ? DynValue.FromNumber(containing + 1) : DynValue.Nil;
             }
 
             int initial = indexArg.IsNil()
@@ -193,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                     if (remaining == 0)
                     {
-                        return DynValue.NewNumber(index + 1);
+                        return DynValue.FromNumber(index + 1);
                     }
 
                     index += width;
@@ -217,7 +247,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                     if (remaining == 0)
                     {
-                        return DynValue.NewNumber(index + 1);
+                        return DynValue.FromNumber(index + 1);
                     }
                 }
             }
@@ -254,7 +284,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw new ScriptRuntimeException(InvalidUtf8CodeMessage);
             }
 
-            return DynValue.NewTuple(DynValue.NewNumber(index + 1), DynValue.NewNumber(codePoint));
+            return DynValue.NewTuple(
+                DynValue.FromNumber(index + 1),
+                DynValue.FromNumber(codePoint)
+            );
         }
 
         private static DynValue CountRunesOrError(string value, int startIndex, int endExclusive)
@@ -274,14 +307,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     )
                 )
                 {
-                    return DynValue.NewTuple(DynValue.Nil, DynValue.NewNumber(index + 1));
+                    return DynValue.NewTuple(DynValue.Nil, DynValue.FromNumber(index + 1));
                 }
 
                 count++;
                 index += width;
             }
 
-            return DynValue.NewNumber(count);
+            return DynValue.FromNumber(count);
         }
 
         private static (int StartIndex, int EndExclusive) NormalizeRange(

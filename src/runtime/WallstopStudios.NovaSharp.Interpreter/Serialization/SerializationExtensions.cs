@@ -81,7 +81,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
 
             builder.AppendLine("{");
 
-            foreach (TablePair tp in table.Pairs)
+            foreach (TablePair tp in table.GetPairsEnumerator())
             {
                 builder.Append(tabString);
                 builder.Append('\t');
@@ -188,23 +188,82 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
 
         private static string EscapeString(string input)
         {
-            string s = input ?? string.Empty;
-            s = ReplaceOrdinal(s, @"\", @"\\");
-            s = ReplaceOrdinal(s, "\n", @"\n");
-            s = ReplaceOrdinal(s, "\r", @"\r");
-            s = ReplaceOrdinal(s, "\t", @"\t");
-            s = ReplaceOrdinal(s, "\a", @"\a");
-            s = ReplaceOrdinal(s, "\f", @"\f");
-            s = ReplaceOrdinal(s, "\b", @"\b");
-            s = ReplaceOrdinal(s, "\v", @"\v");
-            s = ReplaceOrdinal(s, "\"", "\\\"");
-            s = ReplaceOrdinal(s, "\'", @"\'");
-            return "\"" + s + "\"";
-        }
+            if (string.IsNullOrEmpty(input))
+            {
+                return "\"\"";
+            }
 
-        private static string ReplaceOrdinal(string text, string oldValue, string newValue)
-        {
-            return text.Replace(oldValue, newValue, StringComparison.Ordinal);
+            // Fast path: check if any escaping is needed
+            bool needsEscape = false;
+            foreach (char c in input)
+            {
+                if (
+                    c == '\\'
+                    || c == '\n'
+                    || c == '\r'
+                    || c == '\t'
+                    || c == '\a'
+                    || c == '\f'
+                    || c == '\b'
+                    || c == '\v'
+                    || c == '"'
+                    || c == '\''
+                )
+                {
+                    needsEscape = true;
+                    break;
+                }
+            }
+
+            if (!needsEscape)
+            {
+                return ZString.Concat("\"", input, "\"");
+            }
+
+            // Slow path: build escaped string character by character
+            using Utf16ValueStringBuilder sb = ZStringBuilder.CreateNested();
+            sb.Append('"');
+            foreach (char c in input)
+            {
+                switch (c)
+                {
+                    case '\\':
+                        sb.Append(@"\\");
+                        break;
+                    case '\n':
+                        sb.Append(@"\n");
+                        break;
+                    case '\r':
+                        sb.Append(@"\r");
+                        break;
+                    case '\t':
+                        sb.Append(@"\t");
+                        break;
+                    case '\a':
+                        sb.Append(@"\a");
+                        break;
+                    case '\f':
+                        sb.Append(@"\f");
+                        break;
+                    case '\b':
+                        sb.Append(@"\b");
+                        break;
+                    case '\v':
+                        sb.Append(@"\v");
+                        break;
+                    case '"':
+                        sb.Append("\\\"");
+                        break;
+                    case '\'':
+                        sb.Append(@"\'");
+                        break;
+                    default:
+                        sb.Append(c);
+                        break;
+                }
+            }
+            sb.Append('"');
+            return sb.ToString();
         }
     }
 }

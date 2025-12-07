@@ -62,7 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue t = GetUnixTime(now, ResolveStartTimeUtc(executionContext));
             if (t.IsNil())
             {
-                return DynValue.NewNumber(0.0);
+                return DynValue.FromNumber(0);
             }
 
             return t;
@@ -223,14 +223,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 Table t = new(executionContext.Script);
 
-                t.Set("year", DynValue.NewNumber(reference.Year));
-                t.Set("month", DynValue.NewNumber(reference.Month));
-                t.Set("day", DynValue.NewNumber(reference.Day));
-                t.Set("hour", DynValue.NewNumber(reference.Hour));
-                t.Set("min", DynValue.NewNumber(reference.Minute));
-                t.Set("sec", DynValue.NewNumber(reference.Second));
-                t.Set("wday", DynValue.NewNumber(((int)reference.DayOfWeek) + 1));
-                t.Set("yday", DynValue.NewNumber(reference.DayOfYear));
+                t.Set("year", DynValue.FromNumber(reference.Year));
+                t.Set("month", DynValue.FromNumber(reference.Month));
+                t.Set("day", DynValue.FromNumber(reference.Day));
+                t.Set("hour", DynValue.FromNumber(reference.Hour));
+                t.Set("min", DynValue.FromNumber(reference.Minute));
+                t.Set("sec", DynValue.FromNumber(reference.Second));
+                t.Set("wday", DynValue.FromNumber(((int)reference.DayOfWeek) + 1));
+                t.Set("yday", DynValue.FromNumber(reference.DayOfYear));
                 t.Set("isdst", DynValue.NewBoolean(isDst));
 
                 return DynValue.NewTable(t);

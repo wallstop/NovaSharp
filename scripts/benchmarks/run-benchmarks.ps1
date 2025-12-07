@@ -1,8 +1,8 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [string]$RuntimeBenchmarkProject = "src/tooling/Benchmarks/NovaSharp.Benchmarks/NovaSharp.Benchmarks.csproj",
-    [string]$ComparisonBenchmarkProject = "src/tooling/NovaSharp.Comparison/NovaSharp.Comparison.csproj",
+    [string]$RuntimeBenchmarkProject = "src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj",
+    [string]$ComparisonBenchmarkProject = "src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj",
     [switch]$SkipComparison
 )
 

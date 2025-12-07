@@ -162,7 +162,7 @@ namespace WallstopStudios.NovaSharp.Hardwire
                 throw new ArgumentNullException(nameof(members));
             }
 
-            foreach (TablePair pair in table.Pairs)
+            foreach (TablePair pair in table.GetPairsEnumerator())
             {
                 DynValue key = pair.Key;
                 DynValue value = pair.Value;

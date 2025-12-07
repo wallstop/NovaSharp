@@ -23,7 +23,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             Processor p = new(this);
 
             // Put the closure as first value on the stack, for future reference
-            p._valueStack.Push(DynValue.NewClosure(closure));
+            // Use FromClosure to avoid allocation when the closure already has a cached DynValue
+            p._valueStack.Push(DynValue.FromClosure(closure));
 
             // Return the coroutine handle
             return DynValue.NewCoroutine(new Coroutine(p));
@@ -42,7 +43,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             Processor p = new(mainProcessor, this);
 
             // Put the closure as first value on the stack, for future reference
-            p._valueStack.Push(DynValue.NewClosure(closure));
+            // Use FromClosure to avoid allocation when the closure already has a cached DynValue
+            p._valueStack.Push(DynValue.FromClosure(closure));
 
             // Return the coroutine handle
             return DynValue.NewCoroutine(new Coroutine(p));

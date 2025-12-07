@@ -678,7 +678,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return DynValue.NewTuple(
                     DynValue.Nil,
                     DynValue.NewString(string.Empty),
-                    DynValue.NewNumber(0)
+                    DynValue.FromNumber(0)
                 );
             }
 
@@ -845,8 +845,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 int upvalues =
                     function.Type == DataType.Function ? function.Function.UpValuesCount : 0;
-                info.Set("nups", DynValue.NewNumber(upvalues));
-                info.Set("nparams", DynValue.NewNumber(0));
+                info.Set("nups", DynValue.FromNumber(upvalues));
+                info.Set("nparams", DynValue.FromNumber(0));
                 info.Set("isvararg", DynValue.False);
             }
 
@@ -899,8 +899,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (ContainsWhatFlag(what, 'u'))
             {
-                info.Set("nups", DynValue.NewNumber(0));
-                info.Set("nparams", DynValue.NewNumber(0));
+                info.Set("nups", DynValue.FromNumber(0));
+                info.Set("nparams", DynValue.FromNumber(0));
                 info.Set("isvararg", DynValue.False);
             }
 

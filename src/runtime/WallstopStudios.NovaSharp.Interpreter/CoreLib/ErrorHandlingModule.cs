@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -203,14 +204,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            List<DynValue> a = new();
-
-            for (int i = 0; i < args.Count; i++)
+            DynValue[] a;
+            using (ListPool<DynValue>.Get(out List<DynValue> tempList))
             {
-                if (i != 1)
+                for (int i = 0; i < args.Count; i++)
                 {
-                    a.Add(args[i]);
+                    if (i != 1)
+                    {
+                        tempList.Add(args[i]);
+                    }
                 }
+                a = ListPool<DynValue>.ToExactArray(tempList);
             }
 
             DynValue handler = null;

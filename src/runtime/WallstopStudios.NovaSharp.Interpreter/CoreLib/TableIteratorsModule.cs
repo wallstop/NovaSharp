@@ -12,6 +12,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public static class TableIteratorsModule
     {
+        // Cached callback DynValues to avoid allocation on every ipairs/pairs call
+        private static readonly DynValue CachedNextArrayCallback = DynValue.NewCallback(NextArray);
+        private static readonly DynValue CachedNextCallback = DynValue.NewCallback(Next);
+
         // ipairs (t)
         // -------------------------------------------------------------------------------------------------------------------
         // If t has a metamethod __ipairs, calls it with t as argument and returns the first three results from the call.
@@ -41,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
 
             return meta
-                ?? DynValue.NewTuple(DynValue.NewCallback(NextArray), table, DynValue.NewNumber(0));
+                ?? DynValue.NewTuple(CachedNextArrayCallback, table, DynValue.FromNumber(0));
         }
 
         // pairs (t)
@@ -73,7 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 args.GetArray()
             );
 
-            return meta ?? DynValue.NewTuple(DynValue.NewCallback(Next), table);
+            return meta ?? DynValue.NewTuple(CachedNextCallback, table);
         }
 
         // next (table [, index])
@@ -137,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (val.Type != DataType.Nil)
             {
-                return DynValue.NewTuple(DynValue.NewNumber(idx), val);
+                return DynValue.NewTuple(DynValue.FromNumber(idx), val);
             }
             else
             {

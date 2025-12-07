@@ -21,8 +21,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Hard
         {
             this.CheckAccess(MemberDescriptorAccess.CanExecute, obj);
 
-            IList<int> outParams = null;
-            object[] pars = base.BuildArgumentList(script, obj, context, args, out outParams);
+            // Note: We don't use pooled arrays here because the pars array is passed to
+            // user-defined Invoke methods which may store references to it. For backward
+            // compatibility, we use the non-pooled version.
+            object[] pars = base.BuildArgumentList(
+                script,
+                obj,
+                context,
+                args,
+                out IList<int> outParams
+            );
             object retv = Invoke(script, obj, pars, CalcArgsCount(pars));
 
             return DynValue.FromObject(script, retv);

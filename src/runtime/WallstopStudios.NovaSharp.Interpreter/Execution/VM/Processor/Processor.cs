@@ -173,7 +173,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _valueStack.Push(args[i]);
             }
 
-            _valueStack.Push(DynValue.NewNumber(args.Length)); // func args count
+            _valueStack.Push(DynValue.FromNumber(args.Length)); // func args count
 
             _executionStack.Push(
                 new CallStackItem()

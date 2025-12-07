@@ -100,7 +100,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
                         )
                     );
 
-                    foreach (TablePair p in v.Table.Pairs)
+                    foreach (TablePair p in v.Table.GetPairsEnumerator())
                     {
                         variables.Add(
                             new Variable(

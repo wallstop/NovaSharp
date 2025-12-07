@@ -157,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (level.IsNil())
             {
-                level = DynValue.NewNumber(1); // Default
+                level = DynValue.FromNumber(1); // Default
             }
 
             if (level.Number > 0 && level.Number < stacktrace.Length)
@@ -270,38 +270,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 if (args[^1].Type == DataType.Tuple)
                 {
-                    return DynValue.NewNumber(args.Count - 1 + args[^1].Tuple.Length);
+                    return DynValue.FromNumber(args.Count - 1 + args[^1].Tuple.Length);
                 }
                 else
                 {
-                    return DynValue.NewNumber(args.Count - 1);
+                    return DynValue.FromNumber(args.Count - 1);
                 }
             }
 
             DynValue vNum = args.AsType(0, "select", DataType.Number, false);
             int num = (int)vNum.Number;
 
-            List<DynValue> values = new();
-
+            int startIndex;
             if (num > 0)
             {
-                for (int i = num; i < args.Count; i++)
-                {
-                    values.Add(args[i]);
-                }
+                startIndex = num;
             }
             else if (num < 0)
             {
-                num = args.Count + num;
+                startIndex = args.Count + num;
 
-                if (num < 1)
+                if (startIndex < 1)
                 {
                     throw ScriptRuntimeException.BadArgumentIndexOutOfRange("select", 0);
-                }
-
-                for (int i = num; i < args.Count; i++)
-                {
-                    values.Add(args[i]);
                 }
             }
             else
@@ -309,7 +300,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgumentIndexOutOfRange("select", 0);
             }
 
-            return DynValue.NewTupleNested(values.ToArray());
+            int resultCount = args.Count - startIndex;
+
+            // Fast path for empty result
+            if (resultCount <= 0)
+            {
+                return DynValue.Void;
+            }
+
+            // Fast path for single element
+            if (resultCount == 1)
+            {
+                return DynValue.NewTupleNested(args[startIndex]);
+            }
+
+            // General case - use pooled list for tuple flattening
+            using (ListPool<DynValue>.Get(resultCount, out List<DynValue> values))
+            {
+                for (int i = startIndex; i < args.Count; i++)
+                {
+                    values.Add(args[i]);
+                }
+
+                return DynValue.NewTupleNested(ListPool<DynValue>.ToExactArray(values));
+            }
         }
 
         /// <summary>

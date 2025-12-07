@@ -30,6 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
         private readonly Action<T> _onDispose;
         private bool _disposed;
+        private bool _suppressed;
 
         /// <summary>
         /// Creates a new <see cref="PooledResource{T}"/> wrapping the specified resource.
@@ -41,6 +42,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             Resource = resource;
             _onDispose = onDispose;
             _disposed = false;
+            _suppressed = false;
+        }
+
+        /// <summary>
+        /// Prevents the resource from being returned to the pool on dispose.
+        /// Use this when transferring ownership of the resource to the caller.
+        /// </summary>
+        public void SuppressReturn()
+        {
+            _suppressed = true;
         }
 
         /// <summary>
@@ -48,7 +59,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// </summary>
         public void Dispose()
         {
-            if (_disposed)
+            if (_disposed || _suppressed)
             {
                 return;
             }

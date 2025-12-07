@@ -40,8 +40,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             int ij = vj.IsNil() ? GetTableLength(executionContext, s) : (int)vj.Number;
 
             Table t = s.Table;
+            int count = ij - ii + 1;
 
-            DynValue[] v = new DynValue[ij - ii + 1];
+            // Fast path for empty range
+            if (count <= 0)
+            {
+                return DynValue.Void;
+            }
+
+            // Fast path for single element - avoid array allocation
+            if (count == 1)
+            {
+                return t.Get(ii);
+            }
+
+            DynValue[] v = new DynValue[count];
 
             int tidx = 0;
             for (int i = ii; i <= ij; i++)
@@ -72,7 +85,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 t.Set(i + 1, args[i]);
             }
 
-            t.Set("n", DynValue.NewNumber(args.Count));
+            t.Set("n", DynValue.FromNumber(args.Count));
 
             return v;
         }
@@ -99,31 +112,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             int end = GetTableLength(executionContext, vlist);
 
-            List<DynValue> values = new();
-
-            for (int i = 1; i <= end; i++)
+            using (ListPool<DynValue>.Get(end, out List<DynValue> values))
             {
-                values.Add(vlist.Table.Get(i));
-            }
-
-            try
-            {
-                values.Sort((a, b) => SortComparer(executionContext, a, b, lt));
-            }
-            catch (InvalidOperationException ex)
-            {
-                if (ex.InnerException is ScriptRuntimeException)
+                for (int i = 1; i <= end; i++)
                 {
-                    throw ex.InnerException;
+                    values.Add(vlist.Table.Get(i));
                 }
-            }
 
-            for (int i = 0; i < values.Count; i++)
-            {
-                vlist.Table.Set(i + 1, values[i]);
-            }
+                try
+                {
+                    values.Sort((a, b) => SortComparer(executionContext, a, b, lt));
+                }
+                catch (InvalidOperationException ex)
+                {
+                    if (ex.InnerException is ScriptRuntimeException)
+                    {
+                        throw ex.InnerException;
+                    }
+                }
 
-            return vlist;
+                for (int i = 0; i < values.Count; i++)
+                {
+                    vlist.Table.Set(i + 1, values[i]);
+                }
+
+                return vlist;
+            }
         }
 
         private static int SortComparer(
@@ -221,7 +235,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (vvalue.IsNil())
             {
                 vvalue = vpos;
-                vpos = DynValue.NewNumber(len + 1);
+                vpos = DynValue.FromNumber(len + 1);
             }
 
             if (vpos.Type != DataType.Number)

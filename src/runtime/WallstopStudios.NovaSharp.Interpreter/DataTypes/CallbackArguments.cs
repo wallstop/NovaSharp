@@ -268,5 +268,119 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return this;
             }
         }
+
+        /// <summary>
+        /// Tries to get a read-only span of the arguments when the backing storage is contiguous.
+        /// </summary>
+        /// <param name="span">When successful, contains the arguments as a span.</param>
+        /// <returns><c>true</c> if the span could be obtained; <c>false</c> if the backing is not contiguous or contains tuple expansion.</returns>
+        /// <remarks>
+        /// This method only succeeds when the arguments are stored in a contiguous array or list
+        /// and there is no tuple expansion at the end. Use this in hot paths where avoiding
+        /// allocation is critical.
+        /// </remarks>
+        public bool TryGetSpan(out ReadOnlySpan<DynValue> span)
+        {
+            // Cannot return span if last argument is a tuple (would need to expand it)
+            if (_lastIsTuple)
+            {
+                span = default;
+                return false;
+            }
+
+            // Try to get span from different backing types
+            if (_args is DynValue[] array)
+            {
+                span = new ReadOnlySpan<DynValue>(array, 0, _count);
+                return true;
+            }
+
+            if (_args is List<DynValue> list)
+            {
+                // List<T> doesn't directly expose its array, but we can use CollectionsMarshal in .NET 5+
+                // For now, fall back to false for lists
+                span = default;
+                return false;
+            }
+
+            span = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Copies the arguments to a destination span.
+        /// </summary>
+        /// <param name="destination">The span to copy arguments into.</param>
+        /// <returns>The number of arguments copied.</returns>
+        /// <remarks>
+        /// This method handles tuple expansion correctly and is suitable when <see cref="TryGetSpan"/>
+        /// returns <c>false</c>. It does not allocate.
+        /// </remarks>
+        public int CopyTo(Span<DynValue> destination)
+        {
+            int toCopy = Math.Min(_count, destination.Length);
+            for (int i = 0; i < toCopy; i++)
+            {
+                destination[i] = this[i];
+            }
+            return toCopy;
+        }
+
+        /// <summary>
+        /// Copies the arguments to a destination span, starting from the specified index.
+        /// </summary>
+        /// <param name="destination">The span to copy arguments into.</param>
+        /// <param name="skip">The number of leading arguments to skip.</param>
+        /// <returns>The number of arguments copied.</returns>
+        public int CopyTo(Span<DynValue> destination, int skip)
+        {
+            if (skip >= _count)
+            {
+                return 0;
+            }
+
+            int toCopy = Math.Min(_count - skip, destination.Length);
+            for (int i = 0; i < toCopy; i++)
+            {
+                destination[i] = this[i + skip];
+            }
+            return toCopy;
+        }
+
+        /// <summary>
+        /// Gets a pooled array containing the arguments.
+        /// </summary>
+        /// <param name="array">The array containing the arguments.</param>
+        /// <param name="skip">The number of leading arguments to skip.</param>
+        /// <returns>A <see cref="PooledResource{T}"/> that must be disposed to return the array to the pool.</returns>
+        /// <remarks>
+        /// Use this method when you need to pass arguments to methods that require an array,
+        /// but want to avoid allocating a new array for each call.
+        /// <code>
+        /// using (PooledResource&lt;DynValue[]&gt; pooled = args.GetPooledArray(out DynValue[] array))
+        /// {
+        ///     // Use array...
+        /// }
+        /// </code>
+        /// </remarks>
+        internal DataStructs.PooledResource<DynValue[]> GetPooledArray(
+            out DynValue[] array,
+            int skip = 0
+        )
+        {
+            int count = _count - skip;
+            if (count <= 0)
+            {
+                array = Array.Empty<DynValue>();
+                return new DataStructs.PooledResource<DynValue[]>(array, _ => { });
+            }
+
+            DataStructs.PooledResource<DynValue[]> pooled = DataStructs.DynValueArrayPool.Get(
+                count,
+                out array
+            );
+            CopyTo(new Span<DynValue>(array, 0, count), skip);
+            return pooled;
+        }
     }
 }

@@ -278,7 +278,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 );
             }
 
-            foreach (TablePair pair in data.Pairs)
+            foreach (TablePair pair in data.GetPairsEnumerator())
             {
                 if (pair.Key.Type != DataType.String)
                 {

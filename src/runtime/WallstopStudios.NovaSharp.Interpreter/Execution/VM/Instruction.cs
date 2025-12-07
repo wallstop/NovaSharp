@@ -144,7 +144,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return "";
             }
 
-            return value.ToString().Replace('\n', ' ').Replace('\r', ' ');
+            string str = value.ToString();
+
+            // Short-circuit: check if any replacement is needed
+            if (
+                str.IndexOf('\n', StringComparison.Ordinal) < 0
+                && str.IndexOf('\r', StringComparison.Ordinal) < 0
+            )
+            {
+                return str;
+            }
+
+            // Use ZString for single-pass replacement
+            using Utf16ValueStringBuilder sb = ZStringBuilder.CreateNested();
+            foreach (char c in str)
+            {
+                sb.Append(c == '\n' || c == '\r' ? ' ' : c);
+            }
+            return sb.ToString();
         }
 
         /// <summary>

@@ -192,7 +192,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             System.Collections.IDictionary dic = (System.Collections.IDictionary)
                 Activator.CreateInstance(dictionaryType);
 
-            foreach (TablePair kvp in table.Pairs)
+            foreach (TablePair kvp in table.GetPairsEnumerator())
             {
                 object key = ScriptToClrConversions.DynValueToObjectOfType(
                     kvp.Key,
@@ -298,7 +298,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         {
             Dictionary<TK, TV> dict = new();
 
-            foreach (TablePair kvp in table.Pairs)
+            foreach (TablePair kvp in table.GetPairsEnumerator())
             {
                 TK key = keyconverter(kvp.Key);
                 TV val = valconverter(kvp.Value);

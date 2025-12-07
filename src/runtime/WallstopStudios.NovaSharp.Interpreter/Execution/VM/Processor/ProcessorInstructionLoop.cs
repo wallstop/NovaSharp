@@ -763,15 +763,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private void ExecClosure(Instruction i)
         {
-            List<DynValue> resolvedSymbols = new(i.SymbolList.Length);
-            foreach (SymbolRef symbol in i.SymbolList)
+            using (ListPool<DynValue>.Get(i.SymbolList.Length, out List<DynValue> resolvedSymbols))
             {
-                resolvedSymbols.Add(GetUpValueSymbol(symbol));
+                foreach (SymbolRef symbol in i.SymbolList)
+                {
+                    resolvedSymbols.Add(GetUpValueSymbol(symbol));
+                }
+
+                Closure c = new(_script, i.NumVal, i.SymbolList, resolvedSymbols);
+
+                _valueStack.Push(DynValue.NewClosure(c));
             }
-
-            Closure c = new(_script, i.NumVal, i.SymbolList, resolvedSymbols);
-
-            _valueStack.Push(DynValue.NewClosure(c));
         }
 
         private DynValue GetUpValueSymbol(SymbolRef s)
@@ -1218,7 +1220,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else if (fn.Type == DataType.Function)
             {
-                _valueStack.Push(DynValue.NewNumber(argsCount));
+                _valueStack.Push(DynValue.FromNumber(argsCount));
                 _executionStack.Push(
                     new CallStackItem()
                     {
@@ -1859,7 +1861,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (r.Type == DataType.String)
             {
-                _valueStack.Push(DynValue.NewNumber(r.String.Length));
+                _valueStack.Push(DynValue.FromNumber(r.String.Length));
             }
             else
             {
@@ -1870,7 +1872,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else if (r.Type == DataType.Table)
                 {
-                    _valueStack.Push(DynValue.NewNumber(r.Table.Length));
+                    _valueStack.Push(DynValue.FromNumber(r.Table.Length));
                 }
                 else
                 {

@@ -18,11 +18,11 @@ readarray -t allowlist <<'EOF'
 :(exclude)README.md
 :(exclude)src/samples/Tutorial/Tutorials/readme.md
 :(exclude)moonsharp_DescriptorHelpers.cs
-:(exclude)src/tooling/Benchmarks/NovaSharp.Benchmarks/PerformanceReportWriter.cs
+:(exclude)src/tooling/WallstopStudios.NovaSharp.Benchmarks/PerformanceReportWriter.cs
 :(exclude)scripts/branding/ensure-novasharp-branding.sh
 :(exclude)AGENTS.md
-:(exclude)src/tooling/NovaSharp.Comparison
-:(exclude)src/tooling/NovaSharp.Comparison/**
+:(exclude)src/tooling/WallstopStudios.NovaSharp.Comparison
+:(exclude)src/tooling/WallstopStudios.NovaSharp.Comparison/**
 :(exclude)PLAN.md
 EOF
 

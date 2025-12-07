@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
     using System.Security;
     using System.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -63,12 +64,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                     return DynValue.Nil;
                 }
 
-                str = str.TrimEnd('\n', '\r');
+                str = TrimLineEnding(str);
                 return DynValue.NewString(str);
             }
             else
             {
-                List<DynValue> rets = new();
+                using PooledResource<List<DynValue>> pooled = ListPool<DynValue>.Get(
+                    args.Count,
+                    out List<DynValue> rets
+                );
 
                 for (int i = 0; i < args.Count; i++)
                 {
@@ -117,14 +121,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                         else if (opt.StartsWith("*l", StringComparison.Ordinal))
                         {
                             string str = ReadLine();
-                            str = str.TrimEnd('\n', '\r');
+                            str = TrimLineEnding(str);
                             v = DynValue.NewString(str);
                         }
                         else if (opt.StartsWith("*L", StringComparison.Ordinal))
                         {
                             string str = ReadLine();
 
-                            str = str.TrimEnd('\n', '\r');
+                            str = TrimLineEnding(str);
                             str += "\n";
 
                             v = DynValue.NewString(str);
@@ -138,8 +142,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
                     rets.Add(v);
                 }
 
-                return DynValue.NewTuple(rets.ToArray());
+                // Fast path for single result - avoid array allocation
+                if (rets.Count == 1)
+                {
+                    return rets[0];
+                }
+
+                return DynValue.NewTuple(ListPool<DynValue>.ToExactArray(rets));
             }
+        }
+
+        /// <summary>
+        /// Trims trailing newline characters from a string.
+        /// Short-circuits if no trimming is needed to avoid allocation.
+        /// </summary>
+        private static string TrimLineEnding(string str)
+        {
+            if (string.IsNullOrEmpty(str))
+            {
+                return str;
+            }
+
+            char lastChar = str[str.Length - 1];
+            if (lastChar != '\n' && lastChar != '\r')
+            {
+                return str;
+            }
+
+            return str.TrimEnd('\n', '\r');
         }
 
         /// <summary>

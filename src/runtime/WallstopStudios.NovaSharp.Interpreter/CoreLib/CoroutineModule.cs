@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -89,31 +90,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 DynValue ret = handle.Coroutine.Resume(args.GetArray(1));
 
-                List<DynValue> retval = new();
-                retval.Add(DynValue.True);
-
-                if (ret.Type == DataType.Tuple)
+                using (ListPool<DynValue>.Get(out List<DynValue> retval))
                 {
-                    for (int i = 0; i < ret.Tuple.Length; i++)
-                    {
-                        DynValue v = ret.Tuple[i];
+                    retval.Add(DynValue.True);
 
-                        if ((i == ret.Tuple.Length - 1) && (v.Type == DataType.Tuple))
+                    if (ret.Type == DataType.Tuple)
+                    {
+                        for (int i = 0; i < ret.Tuple.Length; i++)
                         {
-                            retval.AddRange(v.Tuple);
-                        }
-                        else
-                        {
-                            retval.Add(v);
+                            DynValue v = ret.Tuple[i];
+
+                            if ((i == ret.Tuple.Length - 1) && (v.Type == DataType.Tuple))
+                            {
+                                retval.AddRange(v.Tuple);
+                            }
+                            else
+                            {
+                                retval.Add(v);
+                            }
                         }
                     }
-                }
-                else
-                {
-                    retval.Add(ret);
-                }
+                    else
+                    {
+                        retval.Add(ret);
+                    }
 
-                return DynValue.NewTuple(retval.ToArray());
+                    return DynValue.NewTuple(ListPool<DynValue>.ToExactArray(retval));
+                }
             }
             catch (ScriptRuntimeException ex)
             {

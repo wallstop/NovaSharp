@@ -583,16 +583,32 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Creates a closure from a bytecode address.
+        /// Executes an action with compatibility guard - wraps exceptions with compatibility context.
         /// </summary>
-        /// <param name="address">The address.</param>
-        /// <param name="envTable">The env table to create a 0-upvalue</param>
-        /// <returns></returns>
         private T ExecuteWithCompatibilityGuard<T>(Func<T> action)
         {
             try
             {
                 return action();
+            }
+            catch (InterpreterException ex)
+            {
+                ex.AppendCompatibilityContext(this);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Executes an action with compatibility guard and state - avoids closure allocation.
+        /// </summary>
+        private TResult ExecuteWithCompatibilityGuard<TState, TResult>(
+            TState state,
+            Func<TState, TResult> action
+        )
+        {
+            try
+            {
+                return action(state);
             }
             catch (InterpreterException ex)
             {
@@ -674,6 +690,51 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Calls the specified function with one argument.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue function, DynValue arg)
+        {
+            return Call(function, new DynValue[] { arg });
+        }
+
+        /// <summary>
+        /// Calls the specified function with two arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue function, DynValue arg1, DynValue arg2)
+        {
+            return Call(function, new DynValue[] { arg1, arg2 });
+        }
+
+        /// <summary>
+        /// Calls the specified function with three arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue function, DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            return Call(function, new DynValue[] { arg1, arg2, arg3 });
+        }
+
+        /// <summary>
         /// Calls the specified function.
         /// </summary>
         /// <param name="function">The Lua/NovaSharp function to be called</param>
@@ -728,7 +789,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 );
             }
 
-            return ExecuteWithCompatibilityGuard(() => _mainProcessor.Call(function, args));
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, args),
+                static state => state._mainProcessor.Call(state.function, state.args)
+            );
         }
 
         /// <summary>

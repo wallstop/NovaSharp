@@ -43,6 +43,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public Script OwnerScript { get; private set; }
 
         /// <summary>
+        /// Gets or sets a cached <see cref="DynValue"/> wrapping this closure.
+        /// Used by <see cref="DynValue.FromClosure"/> to avoid repeated allocations.
+        /// </summary>
+        internal DynValue CachedDynValue { get; set; }
+
+        /// <summary>
         /// Shortcut for an empty closure
         /// </summary>
         private static readonly ClosureContext EmptyClosure = new();
@@ -58,6 +64,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public IReadOnlyList<DynValue> Context
         {
             get { return ClosureContext; }
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Closure"/> class from a list of resolved locals.
+        /// This overload avoids enumerator allocation by using the list directly.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <param name="idx">The bytecode entry point index.</param>
+        /// <param name="symbols">The symbol references for upvalues.</param>
+        /// <param name="resolvedLocals">The resolved local values.</param>
+        internal Closure(Script script, int idx, SymbolRef[] symbols, List<DynValue> resolvedLocals)
+        {
+            OwnerScript = script;
+            EntryPointByteCodeLocation = idx;
+
+            if (symbols.Length > 0)
+            {
+                ClosureContext = new ClosureContext(symbols, resolvedLocals);
+            }
+            else
+            {
+                ClosureContext = EmptyClosure;
+            }
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Closure"/> class from an array of resolved locals.
+        /// This overload avoids enumerator allocation entirely.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <param name="idx">The bytecode entry point index.</param>
+        /// <param name="symbols">The symbol references for upvalues.</param>
+        /// <param name="resolvedLocals">The resolved local values.</param>
+        internal Closure(Script script, int idx, SymbolRef[] symbols, DynValue[] resolvedLocals)
+        {
+            OwnerScript = script;
+            EntryPointByteCodeLocation = idx;
+
+            if (symbols.Length > 0)
+            {
+                ClosureContext = new ClosureContext(symbols, resolvedLocals);
+            }
+            else
+            {
+                ClosureContext = EmptyClosure;
+            }
         }
 
         /// <summary>

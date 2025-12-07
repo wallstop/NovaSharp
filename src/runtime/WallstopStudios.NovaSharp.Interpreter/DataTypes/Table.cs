@@ -168,7 +168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             PerformTableSet(
                 _arrayMap,
                 Length + 1,
-                DynValue.NewNumber(Length + 1),
+                DynValue.FromNumber(Length + 1),
                 value,
                 true,
                 Length + 1
@@ -265,7 +265,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             this.CheckScriptOwnership(value);
-            PerformTableSet(_arrayMap, key, DynValue.NewNumber(key), value, true, -1);
+            PerformTableSet(_arrayMap, key, DynValue.FromNumber(key), value, true, -1);
         }
 
         /// <summary>
@@ -803,5 +803,201 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 yield return node.Value.Value;
             }
         }
+
+        /// <summary>
+        /// Gets a struct-based enumerator for iterating over key/value pairs without heap allocation.
+        /// </summary>
+        /// <returns>A <see cref="TablePairsEnumerator"/> that can be used in foreach loops.</returns>
+        /// <remarks>
+        /// Use this method in hot paths where avoiding allocations is important.
+        /// For general use, the <see cref="Pairs"/> property is more convenient.
+        /// </remarks>
+        [SuppressMessage(
+            "Design",
+            "CA1024:Use properties where appropriate",
+            Justification = "Method returns a new struct enumerator instance each call for foreach pattern."
+        )]
+        public TablePairsEnumerator GetPairsEnumerator()
+        {
+            return new TablePairsEnumerator(_values);
+        }
+
+        /// <summary>
+        /// Gets a struct-based enumerator for iterating over keys without heap allocation.
+        /// </summary>
+        /// <returns>A <see cref="TableKeysEnumerator"/> that can be used in foreach loops.</returns>
+        [SuppressMessage(
+            "Design",
+            "CA1024:Use properties where appropriate",
+            Justification = "Method returns a new struct enumerator instance each call for foreach pattern."
+        )]
+        public TableKeysEnumerator GetKeysEnumerator()
+        {
+            return new TableKeysEnumerator(_values);
+        }
+
+        /// <summary>
+        /// Gets a struct-based enumerator for iterating over values without heap allocation.
+        /// </summary>
+        /// <returns>A <see cref="TableValuesEnumerator"/> that can be used in foreach loops.</returns>
+        [SuppressMessage(
+            "Design",
+            "CA1024:Use properties where appropriate",
+            Justification = "Method returns a new struct enumerator instance each call for foreach pattern."
+        )]
+        public TableValuesEnumerator GetValuesEnumerator()
+        {
+            return new TableValuesEnumerator(_values);
+        }
+
+        /// <summary>
+        /// Gets a struct-based enumerator for iterating over non-nil key/value pairs without heap allocation.
+        /// </summary>
+        /// <returns>A <see cref="TableNonNilPairsEnumerator"/> that can be used in foreach loops.</returns>
+        [SuppressMessage(
+            "Design",
+            "CA1024:Use properties where appropriate",
+            Justification = "Method returns a new struct enumerator instance each call for foreach pattern."
+        )]
+        public TableNonNilPairsEnumerator GetNonNilPairsEnumerator()
+        {
+            return new TableNonNilPairsEnumerator(_values);
+        }
+
+        /// <summary>
+        /// Fills the destination span with key/value pairs from the table.
+        /// </summary>
+        /// <param name="destination">The span to fill.</param>
+        /// <returns>The number of pairs written to the span.</returns>
+        /// <remarks>
+        /// This method does not allocate and is suitable for hot paths.
+        /// If the destination is smaller than the table, only the first entries are copied.
+        /// </remarks>
+        public int FillPairs(Span<TablePair> destination)
+        {
+            int index = 0;
+            for (
+                LinkedListNode<TablePair> node = _values.First;
+                node != null && index < destination.Length;
+                node = node.Next
+            )
+            {
+                destination[index++] = node.Value;
+            }
+            return index;
+        }
+
+        /// <summary>
+        /// Fills the destination span with keys from the table.
+        /// </summary>
+        /// <param name="destination">The span to fill.</param>
+        /// <returns>The number of keys written to the span.</returns>
+        public int FillKeys(Span<DynValue> destination)
+        {
+            int index = 0;
+            for (
+                LinkedListNode<TablePair> node = _values.First;
+                node != null && index < destination.Length;
+                node = node.Next
+            )
+            {
+                destination[index++] = node.Value.Key;
+            }
+            return index;
+        }
+
+        /// <summary>
+        /// Fills the destination span with values from the table.
+        /// </summary>
+        /// <param name="destination">The span to fill.</param>
+        /// <returns>The number of values written to the span.</returns>
+        public int FillValues(Span<DynValue> destination)
+        {
+            int index = 0;
+            for (
+                LinkedListNode<TablePair> node = _values.First;
+                node != null && index < destination.Length;
+                node = node.Next
+            )
+            {
+                destination[index++] = node.Value.Value;
+            }
+            return index;
+        }
+
+        /// <summary>
+        /// Fills the destination collection with key/value pairs, clearing it first.
+        /// </summary>
+        /// <typeparam name="TCollection">The type of the collection.</typeparam>
+        /// <param name="destination">The collection to fill.</param>
+        /// <returns>The collection for fluent chaining.</returns>
+        public TCollection FillPairs<TCollection>(TCollection destination)
+            where TCollection : ICollection<TablePair>
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            destination.Clear();
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                destination.Add(node.Value);
+            }
+            return destination;
+        }
+
+        /// <summary>
+        /// Fills the destination collection with keys, clearing it first.
+        /// </summary>
+        /// <typeparam name="TCollection">The type of the collection.</typeparam>
+        /// <param name="destination">The collection to fill.</param>
+        /// <returns>The collection for fluent chaining.</returns>
+        public TCollection FillKeys<TCollection>(TCollection destination)
+            where TCollection : ICollection<DynValue>
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            destination.Clear();
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                destination.Add(node.Value.Key);
+            }
+            return destination;
+        }
+
+        /// <summary>
+        /// Fills the destination collection with values, clearing it first.
+        /// </summary>
+        /// <typeparam name="TCollection">The type of the collection.</typeparam>
+        /// <param name="destination">The collection to fill.</param>
+        /// <returns>The collection for fluent chaining.</returns>
+        public TCollection FillValues<TCollection>(TCollection destination)
+            where TCollection : ICollection<DynValue>
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            destination.Clear();
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                destination.Add(node.Value.Value);
+            }
+            return destination;
+        }
+
+        /// <summary>
+        /// Gets the total number of entries in the table, including nil entries.
+        /// </summary>
+        /// <remarks>
+        /// This count includes entries where the value has been set to nil.
+        /// For the "array length" (consecutive non-nil integer keys starting at 1), use <see cref="Length"/>.
+        /// </remarks>
+        public int Count => _values.Count;
     }
 }

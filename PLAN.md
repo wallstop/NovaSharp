@@ -220,31 +220,44 @@ Key infrastructure:
    - Updated `DynValue.JoinTupleStrings` to use ZString's `Utf16ValueStringBuilder`
    - All 3,278 tests passing
 
+9. ~~**Interpreter hot-path optimization - Phase 2.6**~~ (Initiative 5): ✅ **Completed 2025-12-07** — Pooled collections and string optimizations:
+   - Added `GenericPool<T>` thread-safe pool following Unity Helpers pattern
+   - Added `ListPool<T>`, `HashSetPool<T>`, `DictionaryPool<TK,TV>`, `StackPool<T>`, `QueuePool<T>`
+   - Updated `FileUserDataBase.Read()` to use `ListPool<DynValue>` with `ToExactArray()` helper
+   - Updated `DynValue.ToString()` to use `ZString.Concat()` for string quoting
+   - Updated `SerializationExtensions.EscapeString()` with fast-path check and single-pass ZString builder
+   - Updated `Instruction.PurifyFromNewLines()` with short-circuit check and ZString builder
+   - Added `TrimLineEnding()` helper with short-circuit to avoid TrimEnd allocations
+   - Created comprehensive audit document: `docs/performance/pooling-and-allocation-audit-2025-12.md`
+   - All 3,325 tests passing
+
 ### Active/Upcoming Items
 
-9. **Advanced sandbox features** (Initiative 4):
+10. **Advanced sandbox features** (Initiative 4):
    - Memory tracking (per-allocation accounting)
    - Deterministic execution mode for lockstep multiplayer/replays
    - Per-mod isolation containers with load/reload/unload hooks
    - Coroutine count limits
 
-10. **Packaging** (Initiative 5):
+11. **Packaging** (Initiative 5):
     - Unity UPM/embedded packaging with IL2CPP/AOT documentation
     - NuGet package pipeline with versioning/signatures
 
-11. **Tooling enhancements** (Initiative 6):
+12. **Tooling enhancements** (Initiative 6):
     - Roslyn source generators/analyzers for NovaSharp descriptors
     - DocFX (or similar) for API documentation
     - CLI output golden tests
 
-12. **Interpreter hot-path optimization - Phase 3** (Initiative 5):
+13. **Interpreter hot-path optimization - Phase 3** (Initiative 5):
     - Use `DynValueArrayPool` in `ProcessorUtilityFunctions` for `StackTopToArray` methods
     - Use `DynValueArrayPool` in `ProcessorInstructionLoop` for function call arguments
+    - Pool `CallStackItem` collections (`BlocksToClose`, `ToBeClosedIndices`)
+    - Pool `BuildTimeScopeBlock` collections during parsing
     - Expand ZString usage to Lexer (complex control flow with exceptions needs careful handling)
     - Object pooling for Closure, Table instances
     - String interning for frequently used strings
 
-13. **Concurrency improvements** (Initiative 7, optional):
+14. **Concurrency improvements** (Initiative 7, optional):
     - Consider `System.Threading.Lock` (.NET 9+) for cleaner lock semantics
     - Split debugger locks for reduced contention
     - Add timeout to `BlockingChannel`

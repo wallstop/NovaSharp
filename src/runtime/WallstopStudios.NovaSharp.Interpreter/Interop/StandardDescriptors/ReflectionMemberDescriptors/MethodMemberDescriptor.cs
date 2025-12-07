@@ -10,6 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
     using System.Threading;
     using Diagnostics;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -292,12 +293,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
 
             try
             {
-                object[] pars = base.BuildArgumentList(
+                using PooledResource<object[]> pooled = base.BuildArgumentListPooled(
                     script,
                     obj,
                     context,
                     args,
-                    out IList<int> outParams
+                    out IList<int> outParams,
+                    out object[] pars
                 );
                 object retv = null;
 

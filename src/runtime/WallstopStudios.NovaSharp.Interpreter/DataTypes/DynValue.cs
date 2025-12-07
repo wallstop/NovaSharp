@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Globalization;
     using System.Text;
     using Cysharp.Text;
+    using DataStructs;
     using Errors;
     using Execution;
 
@@ -358,6 +359,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Returns a DynValue wrapping the specified closure. This is an optimized path
+        /// that reuses a DynValue if the closure already has one cached.
+        /// </summary>
+        /// <param name="closure">The closure to wrap.</param>
+        /// <returns>A <see cref="DynValue"/> representing the closure.</returns>
+        /// <remarks>
+        /// This method checks if the closure has a cached DynValue and returns it if available,
+        /// avoiding allocation in hot paths like coroutine creation.
+        /// </remarks>
+        internal static DynValue FromClosure(Closure closure)
+        {
+            if (closure == null)
+            {
+                return Nil;
+            }
+
+            DynValue cached = closure.CachedDynValue;
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            DynValue newValue = NewClosure(closure);
+            closure.CachedDynValue = newValue;
+            return newValue;
+        }
+
+        /// <summary>
         /// Creates a new writable value initialized to the specified CLR callback.
         /// </summary>
         public static DynValue NewCallback(
@@ -413,6 +442,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public static DynValue NewTable(Script script, params DynValue[] arrayValues)
         {
             return NewTable(new Table(script, arrayValues));
+        }
+
+        /// <summary>
+        /// Creates a new request for a tail call with no arguments.
+        /// </summary>
+        /// <param name="tailFn">The function to be called.</param>
+        /// <returns></returns>
+        public static DynValue NewTailCallReq(DynValue tailFn)
+        {
+            return new DynValue()
+            {
+                _object = new TailCallData() { Args = Array.Empty<DynValue>(), Function = tailFn },
+                _type = DataType.TailCallRequest,
+            };
         }
 
         /// <summary>
@@ -477,6 +520,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Creates a new tuple initialized to a single value.
+        /// This is an optimized overload that returns the value directly (no array allocation).
+        /// </summary>
+        public static DynValue NewTuple(DynValue value)
+        {
+            return value;
+        }
+
+        /// <summary>
+        /// Creates a new tuple initialized to two values.
+        /// This is an optimized overload that avoids params array allocation.
+        /// </summary>
+        public static DynValue NewTuple(DynValue value1, DynValue value2)
+        {
+            return new DynValue() { _object = new[] { value1, value2 }, _type = DataType.Tuple };
+        }
+
+        /// <summary>
+        /// Creates a new tuple initialized to three values.
+        /// This is an optimized overload that avoids params array allocation.
+        /// </summary>
+        public static DynValue NewTuple(DynValue value1, DynValue value2, DynValue value3)
+        {
+            return new DynValue()
+            {
+                _object = new[] { value1, value2, value3 },
+                _type = DataType.Tuple,
+            };
+        }
+
+        /// <summary>
         /// Creates a new tuple initialized to the specified values.
         /// </summary>
         public static DynValue NewTuple(params DynValue[] values)
@@ -500,6 +574,147 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Creates a new tuple initialized to a single value - which can be potentially a tuple.
+        /// Returns the value directly (tuple flattening).
+        /// </summary>
+        public static DynValue NewTupleNested(DynValue value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Creates a new tuple initialized to two values - which can be potentially other tuples.
+        /// This is an optimized overload that avoids params array allocation.
+        /// </summary>
+        public static DynValue NewTupleNested(DynValue value1, DynValue value2)
+        {
+            if (value1 == null)
+            {
+                throw new ArgumentNullException(nameof(value1));
+            }
+
+            if (value2 == null)
+            {
+                throw new ArgumentNullException(nameof(value2));
+            }
+
+            // Fast path: neither is a tuple
+            if (value1.Type != DataType.Tuple && value2.Type != DataType.Tuple)
+            {
+                return NewTuple(value1, value2);
+            }
+
+            // Slow path: flatten tuples
+            int capacity =
+                (value1.Type == DataType.Tuple ? value1.Tuple.Length : 1)
+                + (value2.Type == DataType.Tuple ? value2.Tuple.Length : 1);
+            using (ListPool<DynValue>.Get(capacity, out List<DynValue> vals))
+            {
+                if (value1.Type == DataType.Tuple)
+                {
+                    vals.AddRange(value1.Tuple);
+                }
+                else
+                {
+                    vals.Add(value1);
+                }
+
+                if (value2.Type == DataType.Tuple)
+                {
+                    vals.AddRange(value2.Tuple);
+                }
+                else
+                {
+                    vals.Add(value2);
+                }
+
+                return new DynValue()
+                {
+                    _object = ListPool<DynValue>.ToExactArray(vals),
+                    _type = DataType.Tuple,
+                };
+            }
+        }
+
+        /// <summary>
+        /// Creates a new tuple initialized to three values - which can be potentially other tuples.
+        /// This is an optimized overload that avoids params array allocation.
+        /// </summary>
+        public static DynValue NewTupleNested(DynValue value1, DynValue value2, DynValue value3)
+        {
+            if (value1 == null)
+            {
+                throw new ArgumentNullException(nameof(value1));
+            }
+
+            if (value2 == null)
+            {
+                throw new ArgumentNullException(nameof(value2));
+            }
+
+            if (value3 == null)
+            {
+                throw new ArgumentNullException(nameof(value3));
+            }
+
+            // Fast path: none are tuples
+            if (
+                value1.Type != DataType.Tuple
+                && value2.Type != DataType.Tuple
+                && value3.Type != DataType.Tuple
+            )
+            {
+                return NewTuple(value1, value2, value3);
+            }
+
+            // Slow path: flatten tuples
+            int capacity =
+                (value1.Type == DataType.Tuple ? value1.Tuple.Length : 1)
+                + (value2.Type == DataType.Tuple ? value2.Tuple.Length : 1)
+                + (value3.Type == DataType.Tuple ? value3.Tuple.Length : 1);
+            using (ListPool<DynValue>.Get(capacity, out List<DynValue> vals))
+            {
+                if (value1.Type == DataType.Tuple)
+                {
+                    vals.AddRange(value1.Tuple);
+                }
+                else
+                {
+                    vals.Add(value1);
+                }
+
+                if (value2.Type == DataType.Tuple)
+                {
+                    vals.AddRange(value2.Tuple);
+                }
+                else
+                {
+                    vals.Add(value2);
+                }
+
+                if (value3.Type == DataType.Tuple)
+                {
+                    vals.AddRange(value3.Tuple);
+                }
+                else
+                {
+                    vals.Add(value3);
+                }
+
+                return new DynValue()
+                {
+                    _object = ListPool<DynValue>.ToExactArray(vals),
+                    _type = DataType.Tuple,
+                };
+            }
+        }
+
+        /// <summary>
         /// Creates a new tuple initialized to the specified values - which can be potentially other tuples
         /// </summary>
         public static DynValue NewTupleNested(params DynValue[] values)
@@ -509,9 +724,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(values));
             }
 
-            if (!Array.Exists(values, v => v.Type == DataType.Tuple))
+            if (values.Length == 0)
             {
-                return NewTuple(values);
+                return Nil;
             }
 
             if (values.Length == 1)
@@ -519,21 +734,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return values[0];
             }
 
-            List<DynValue> vals = new();
-
-            foreach (DynValue v in values)
+            if (!Array.Exists(values, v => v.Type == DataType.Tuple))
             {
-                if (v.Type == DataType.Tuple)
-                {
-                    vals.AddRange(v.Tuple);
-                }
-                else
-                {
-                    vals.Add(v);
-                }
+                return NewTuple(values);
             }
 
-            return new DynValue() { _object = vals.ToArray(), _type = DataType.Tuple };
+            // Calculate capacity for the flattened list
+            int capacity = 0;
+            foreach (DynValue v in values)
+            {
+                capacity += v.Type == DataType.Tuple ? v.Tuple.Length : 1;
+            }
+
+            using (ListPool<DynValue>.Get(capacity, out List<DynValue> vals))
+            {
+                foreach (DynValue v in values)
+                {
+                    if (v.Type == DataType.Tuple)
+                    {
+                        vals.AddRange(v.Tuple);
+                    }
+                    else
+                    {
+                        vals.Add(v);
+                    }
+                }
+
+                return new DynValue()
+                {
+                    _object = ListPool<DynValue>.ToExactArray(vals),
+                    _type = DataType.Tuple,
+                };
+            }
         }
 
         /// <summary>
@@ -615,12 +847,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue False { get; private set; }
 
+        /// <summary>
+        /// A preinitialized, readonly instance, equaling an empty string
+        /// </summary>
+        public static DynValue EmptyString { get; private set; }
+
         static DynValue()
         {
             Nil = new DynValue() { _type = DataType.Nil }.AsReadOnly();
             Void = new DynValue() { _type = DataType.Void }.AsReadOnly();
             True = NewBoolean(true).AsReadOnly();
             False = NewBoolean(false).AsReadOnly();
+            EmptyString = NewString(string.Empty).AsReadOnly();
         }
 
         /// <summary>
@@ -712,9 +950,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.Number:
                     return Number.ToString(CultureInfo.InvariantCulture);
                 case DataType.String:
-                    // Use simple string concat to avoid ZString nesting issues
-                    // when this is called recursively from tuple ToString
-                    return "\"" + String + "\"";
+                    // Use ZString.Concat for zero-allocation string building.
+                    // JoinTupleStrings already uses notNested: false so recursive calls are safe.
+                    return ZString.Concat("\"", String, "\"");
                 case DataType.Function:
                     return ZString.Format("(Function {0:X8})", Function.EntryPointByteCodeLocation);
                 case DataType.ClrFunction:
@@ -724,7 +962,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.Tuple:
                     return JoinTupleStrings(Tuple, ", ", v => v.ToString());
                 case DataType.TailCallRequest:
-                    return "Tail:(" + JoinTupleStrings(Tuple, ", ", v => v.ToString()) + ")";
+                {
+                    string tupleStr = JoinTupleStrings(Tuple, ", ", v => v.ToString());
+                    return ZString.Concat("Tail:(", tupleStr, ")");
+                }
                 case DataType.UserData:
                     return "(UserData)";
                 case DataType.Thread:

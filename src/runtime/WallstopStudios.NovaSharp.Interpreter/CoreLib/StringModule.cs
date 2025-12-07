@@ -177,12 +177,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             string s = range.ApplyToString(vs.String);
 
             int length = s.Length;
-            DynValue[] rets = new DynValue[length];
 
             if (length == 0)
             {
                 return DynValue.Void;
             }
+
+            // Fast path for single character - avoid array allocation
+            if (length == 1)
+            {
+                return DynValue.NewNumber(filter((int)s[0]));
+            }
+
+            DynValue[] rets = new DynValue[length];
 
             for (int i = 0; i < length; ++i)
             {
@@ -260,7 +267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue vs = args.AsType(0, "len", DataType.String, false);
-            return DynValue.NewNumber(vs.String.Length);
+            return DynValue.FromNumber(vs.String.Length);
         }
 
         /// <summary>
@@ -378,7 +385,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (String.IsNullOrEmpty(argS.String) || (argN.Number < 1))
             {
-                return DynValue.NewString("");
+                return DynValue.EmptyString;
             }
 
             string sep = (argSep.IsNotNil()) ? argSep.String : null;
@@ -434,7 +441,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (String.IsNullOrEmpty(argS.String))
             {
-                return DynValue.NewString("");
+                return DynValue.EmptyString;
             }
 
             char[] elements = argS.String.ToCharArray();

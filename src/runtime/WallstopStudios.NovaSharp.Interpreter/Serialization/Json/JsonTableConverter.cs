@@ -62,7 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
             if (table.Length == 0)
             {
                 sb.Append('{');
-                foreach (TablePair pair in table.Pairs)
+                foreach (TablePair pair in table.GetPairsEnumerator())
                 {
                     if (pair.Key.Type == DataType.String && IsValueJsonCompatible(pair.Value))
                     {

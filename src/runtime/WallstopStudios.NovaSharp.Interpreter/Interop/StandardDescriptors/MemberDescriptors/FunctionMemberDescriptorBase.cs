@@ -181,6 +181,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
             out IList<int> outParams
         )
         {
+            PooledResource<object[]> pooled = BuildArgumentListPooled(
+                script,
+                obj,
+                context,
+                args,
+                out outParams,
+                out object[] pars
+            );
+            // Dispose the pooled resource immediately - the array is not returned to pool
+            // because we're returning it to the caller for backwards compatibility
+            pooled.SuppressReturn();
+            return pars;
+        }
+
+        /// <summary>
+        /// Builds the argument list using a pooled array for reduced allocations.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <param name="obj">The object.</param>
+        /// <param name="context">The context.</param>
+        /// <param name="args">The arguments.</param>
+        /// <param name="outParams">Output: A list containing the indices of all "out" parameters, or null if no out parameters are specified.</param>
+        /// <param name="pars">Output: The pooled argument array.</param>
+        /// <returns>A <see cref="PooledResource{T}"/> that must be disposed to return the array to the pool.</returns>
+        /// <remarks>
+        /// Use this method instead of <see cref="BuildArgumentList"/> when you can ensure the array
+        /// is returned to the pool after use. The returned <see cref="PooledResource{T}"/> must be
+        /// disposed when done with the array.
+        /// </remarks>
+        internal virtual PooledResource<object[]> BuildArgumentListPooled(
+            Script script,
+            object obj,
+            ScriptExecutionContext context,
+            CallbackArguments args,
+            out IList<int> outParams,
+            out object[] pars
+        )
+        {
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
@@ -188,13 +226,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
 
             ParameterDescriptor[] parameters = _parameters;
 
-            object[] pars = new object[parameters.Length];
+            PooledResource<object[]> pooled = ObjectArrayPool.Get(parameters.Length, out pars);
 
             int j = args.IsMethodCall ? 1 : 0;
 
             outParams = null;
 
-            for (int i = 0; i < pars.Length; i++)
+            for (int i = 0; i < parameters.Length; i++)
             {
                 // keep track of out and ref params
                 if (parameters[i].Type.IsByRef)
@@ -303,7 +341,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                 }
             }
 
-            return pars;
+            return pooled;
         }
 
         /// <summary>

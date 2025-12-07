@@ -538,10 +538,10 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             sectionBuilder.AppendLine();
             sectionBuilder.AppendLine("```");
             sectionBuilder.AppendLine(
-                "dotnet run -c Release --project src/tooling/Benchmarks/NovaSharp.Benchmarks/NovaSharp.Benchmarks.csproj"
+                "dotnet run -c Release --project src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj"
             );
             sectionBuilder.AppendLine(
-                "dotnet run -c Release --framework net8.0 --project src/tooling/NovaSharp.Comparison/NovaSharp.Comparison.csproj"
+                "dotnet run -c Release --framework net8.0 --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj"
             );
             sectionBuilder.AppendLine("```");
             sectionBuilder.AppendLine();
@@ -709,6 +709,11 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             string normalized = NormalizeCell(value);
             normalized = Regex.Replace(normalized, "-\\d{8}-\\d{6}$", string.Empty);
 
+            if (normalized.StartsWith("WallstopStudios.", StringComparison.Ordinal))
+            {
+                normalized = normalized["WallstopStudios.".Length..];
+            }
+
             if (normalized.StartsWith("MoonSharp", StringComparison.Ordinal))
             {
                 normalized = "NovaSharp" + normalized["MoonSharp".Length..];
@@ -747,6 +752,17 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             return decoded;
         }
 
+        private static string NormalizeParameterName(string name)
+        {
+            string normalized = NormalizeCell(name);
+            return normalized switch
+            {
+                "ScenarioName" => "Scenario",
+                "ComplexityName" => "Complexity",
+                _ => normalized,
+            };
+        }
+
         private static string BuildParameterSignature(
             string[] header,
             List<string> cells,
@@ -763,7 +779,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
 
             for (int i = methodIndex + 1; i < meanIndex; i++)
             {
-                string name = NormalizeCell(header[i]);
+                string name = NormalizeParameterName(header[i]);
                 if (string.IsNullOrWhiteSpace(name))
                 {
                     continue;
@@ -790,7 +806,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
 
             IEnumerable<string> parts = benchmarkCase
                 .Parameters.Items.OrderBy(static p => p.Definition.Name, StringComparer.Ordinal)
-                .Select(static p => $"{p.Definition.Name}:{NormalizeParameterValue(p.Value)}");
+                .Select(static p =>
+                    $"{NormalizeParameterName(p.Definition.Name)}:{NormalizeParameterValue(p.Value)}"
+                );
 
             return string.Join("|", parts);
         }
@@ -804,7 +822,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
 
             IEnumerable<string> parts = benchmarkCase
                 .Parameters.Items.OrderBy(static p => p.Definition.Name, StringComparer.Ordinal)
-                .Select(static p => $"{p.Definition.Name}={NormalizeParameterValue(p.Value)}");
+                .Select(static p =>
+                    $"{NormalizeParameterName(p.Definition.Name)}={NormalizeParameterValue(p.Value)}"
+                );
 
             return string.Join(", ", parts);
         }

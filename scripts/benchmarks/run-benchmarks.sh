@@ -56,10 +56,10 @@ run_benchmark() {
     echo "$description benchmarks complete."
 }
 
-run_benchmark "src/tooling/Benchmarks/NovaSharp.Benchmarks/NovaSharp.Benchmarks.csproj" "NovaSharp runtime"
+run_benchmark "src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj" "NovaSharp runtime"
 
 if [[ "$SKIP_COMPARISON" == "false" ]]; then
-    run_benchmark "src/tooling/NovaSharp.Comparison/NovaSharp.Comparison.csproj" "comparison"
+    run_benchmark "src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj" "comparison"
 else
     echo ""
     echo "Skipping comparison benchmarks (per --skip-comparison)."

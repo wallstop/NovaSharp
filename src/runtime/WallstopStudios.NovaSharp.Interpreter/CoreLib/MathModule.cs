@@ -497,7 +497,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (mantissa == 0)
             {
-                return DynValue.NewTuple(DynValue.NewNumber(0), DynValue.NewNumber(0));
+                return DynValue.NewTuple(DynValue.FromNumber(0), DynValue.FromNumber(0));
             }
 
             /* Normalize */

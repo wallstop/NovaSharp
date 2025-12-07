@@ -6,6 +6,77 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     using System.Text;
 
     /// <summary>
+    /// A struct-based enumerator for <see cref="Slice{T}"/> to avoid heap allocation during foreach iteration.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the slice.</typeparam>
+    public struct SliceEnumerator<T> : IEquatable<SliceEnumerator<T>>
+    {
+        private readonly Slice<T> _slice;
+        private int _index;
+
+        internal SliceEnumerator(Slice<T> slice)
+        {
+            _slice = slice;
+            _index = -1;
+        }
+
+        /// <summary>
+        /// Gets the current element.
+        /// </summary>
+        public T Current => _slice[_index];
+
+        /// <summary>
+        /// Advances the enumerator to the next element.
+        /// </summary>
+        /// <returns>True if there is another element; false otherwise.</returns>
+        public bool MoveNext()
+        {
+            _index++;
+            return _index < _slice.Count;
+        }
+
+        /// <inheritdoc />
+        public override bool Equals(object obj)
+        {
+            return obj is SliceEnumerator<T> other && Equals(other);
+        }
+
+        /// <inheritdoc />
+        public bool Equals(SliceEnumerator<T> other)
+        {
+            return ReferenceEquals(_slice, other._slice) && _index == other._index;
+        }
+
+        /// <inheritdoc />
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = (hash * 31) + (_slice?.GetHashCode() ?? 0);
+                hash = (hash * 31) + _index;
+                return hash;
+            }
+        }
+
+        /// <summary>
+        /// Equality operator.
+        /// </summary>
+        public static bool operator ==(SliceEnumerator<T> left, SliceEnumerator<T> right)
+        {
+            return left.Equals(right);
+        }
+
+        /// <summary>
+        /// Inequality operator.
+        /// </summary>
+        public static bool operator !=(SliceEnumerator<T> left, SliceEnumerator<T> right)
+        {
+            return !left.Equals(right);
+        }
+    }
+
+    /// <summary>
     /// Provides facility to create a "sliced" view over an existing IList<typeparamref name="T"/>
     /// </summary>
     /// <typeparam name="T">The type of the items contained in the collection</typeparam>
@@ -94,12 +165,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         }
 
         /// <summary>
+        /// Returns a struct-based enumerator that iterates through the collection without heap allocation.
+        /// This method is preferred by the C# compiler for foreach loops due to duck typing.
+        /// </summary>
+        /// <returns>A <see cref="SliceEnumerator{T}"/> struct enumerator.</returns>
+        public SliceEnumerator<T> GetEnumerator()
+        {
+            return new SliceEnumerator<T>(this);
+        }
+
+        /// <summary>
         /// Returns an enumerator that iterates through the collection.
+        /// This explicit interface implementation boxes the struct enumerator for interface compatibility.
         /// </summary>
         /// <returns>
         /// A <see cref="T:System.Collections.Generic.IEnumerator`1" /> that can be used to iterate through the collection.
         /// </returns>
-        public IEnumerator<T> GetEnumerator()
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             for (int i = 0; i < _length; i++)
             {
