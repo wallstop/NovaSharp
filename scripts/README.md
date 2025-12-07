@@ -10,6 +10,7 @@ Helper scripts live under this directory so contributors can find tooling withou
 - `tests/` — NUnit-specific utilities, currently `update-fixture-catalog.ps1`, which regenerates `FixtureCatalogGenerated.cs` so analyzers keep seeing every `[TestFixture]`.
 - `dev/` — Local developer utilities, including the shared pre-commit hook installer/driver that auto-fixes formatting issues before commits.
 - `branding/` — Guardrail scripts (e.g., `ensure-novasharp-branding.sh`) that prevent regressions to the legacy brand.
+- `lint/` — Static analysis helpers that enforce test isolation patterns (console capture coordination, platform hooks, temp path usage, userdata scoping) and prevent manual `finally` blocks in tests.
 - `modernization/` — One-off helpers such as `generate-moonsharp-audit.ps1` used during the modernization campaign.
 - Additional folders (e.g., `build/`, `dev/`, `ci/`) should follow the same pattern: descriptive folder name, script-specific README, and cross-platform shims when practical.
 
