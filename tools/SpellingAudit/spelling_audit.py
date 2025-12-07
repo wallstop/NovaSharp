@@ -23,12 +23,35 @@ TOP_LEVEL_EXCLUDES = {".git", ".vs", "artifacts"}
 
 
 def discover_default_paths() -> tuple[str, ...]:
-    entries: list[str] = []
-    for child in sorted(ROOT.iterdir(), key=lambda p: p.name.lower()):
-        if child.name in TOP_LEVEL_EXCLUDES:
-            continue
-        entries.append(child.name)
-    return tuple(entries)
+    """Discover scan targets from git-tracked files for deterministic output.
+
+    Uses `git ls-tree` to get a consistent list of root-level entries that are
+    tracked in version control. This ensures the scan targets are identical
+    across different environments (local dev, CI) regardless of untracked files.
+
+    Falls back to filesystem discovery if git is unavailable.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "ls-tree", "--name-only", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=ROOT,
+            check=True,
+        )
+        entries = sorted(
+            (line.strip() for line in proc.stdout.splitlines() if line.strip()),
+            key=str.lower,
+        )
+        return tuple(e for e in entries if e not in TOP_LEVEL_EXCLUDES)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Fallback: scan filesystem if git is unavailable
+        entries = []
+        for child in sorted(ROOT.iterdir(), key=lambda p: p.name.lower()):
+            if child.name in TOP_LEVEL_EXCLUDES:
+                continue
+            entries.append(child.name)
+        return tuple(entries)
 
 
 DEFAULT_PATHS = discover_default_paths()
