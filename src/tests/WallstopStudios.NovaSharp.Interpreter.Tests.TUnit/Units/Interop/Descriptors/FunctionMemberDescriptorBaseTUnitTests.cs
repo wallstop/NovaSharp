@@ -317,6 +317,242 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             await Assert.That(descriptor.ExtensionMethodType).IsNull().ConfigureAwait(false);
         }
 
+        // ========================================
+        // Out/Ref Parameter Edge Case Tests
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithOutParamsCalledMultipleTimes()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            // Call multiple times to test array pool reuse
+            for (int i = 1; i <= 10; i++)
+            {
+                int expectedSum = i;
+                int expectedProduct = i * 2;
+
+                DynValue result = script.DoString(
+                    $@"
+                    local nil_val, out1, out2 = obj.VoidWithOut({i}, {i * 2})
+                    return tostring(nil_val) .. '|' .. out1 .. '|' .. out2
+                "
+                );
+
+                await Assert
+                    .That(result.String)
+                    .IsEqualTo($"nil|{expectedSum}|{expectedProduct}")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithRefParamsCalledMultipleTimes()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            // Call multiple times to test array pool reuse
+            for (int i = 1; i <= 10; i++)
+            {
+                string input = $"Test{i}";
+                string refValue = $"Suffix{i}";
+                string expectedUpper = input.ToUpperInvariant();
+                string expectedConcat = input + refValue;
+                string expectedLower = InvariantString.ToLowerInvariantIfNeeded(input);
+
+                DynValue result = script.DoString(
+                    $@"
+                    local upper, concat, lower = obj.ManipulateString('{input}', '{refValue}')
+                    return upper .. '|' .. concat .. '|' .. lower
+                "
+                );
+
+                await Assert
+                    .That(result.String)
+                    .IsEqualTo($"{expectedUpper}|{expectedConcat}|{expectedLower}")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithOutParamsZeroValues()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            DynValue result = script.DoString(
+                @"
+                local nil_val, out1, out2 = obj.VoidWithOut(0, 0)
+                return tostring(nil_val) .. '|' .. out1 .. '|' .. out2
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("nil|0|0").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithOutParamsNegativeValues()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            DynValue result = script.DoString(
+                @"
+                local nil_val, out1, out2 = obj.VoidWithOut(-100, -200)
+                return tostring(nil_val) .. '|' .. out1 .. '|' .. out2
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("nil|-100|-200").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithOutParamsLargeValues()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            DynValue result = script.DoString(
+                @"
+                local nil_val, out1, out2 = obj.VoidWithOut(2147483647, -2147483648)
+                return tostring(nil_val) .. '|' .. out1 .. '|' .. out2
+            "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("nil|2147483647|-2147483648")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithOnlyOutParamsNoInput()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            DynValue result = script.DoString(
+                @"
+                local nil_val, out1, out2, out3 = obj.GetMultipleOutValues()
+                return tostring(nil_val) .. '|' .. out1 .. '|' .. out2 .. '|' .. tostring(out3)
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("nil|42|hello|true").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithMixedRefOutAndReturnValue()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            DynValue result = script.DoString(
+                @"
+                local ret, ref_out, pure_out = obj.ComplexRefOutMethod(10, 5)
+                return ret .. '|' .. ref_out .. '|' .. pure_out
+            "
+            );
+
+            // Method returns a + b = 15, ref is multiplied by 2 = 10, out is a * b = 50
+            await Assert.That(result.String).IsEqualTo("15|10|50").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithSingleOutParam()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            DynValue result = script.DoString(
+                @"
+                local ret, parsed = obj.TryParseInt('42')
+                return tostring(ret) .. '|' .. parsed
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("true|42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithSingleOutParamFailedParse()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            DynValue result = script.DoString(
+                @"
+                local ret, parsed = obj.TryParseInt('not_a_number')
+                return tostring(ret) .. '|' .. parsed
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("false|0").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MethodWithOutParamsInterleavedWithDifferentMethods()
+        {
+            UserData.RegisterType<SampleClass>();
+
+            Script script = new();
+            script.Globals["obj"] = new SampleClass();
+
+            // Interleave calls to different methods to stress test pool
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                
+                -- First: void with out
+                local nil1, a, b = obj.VoidWithOut(1, 2)
+                table.insert(results, tostring(nil1) .. '|' .. a .. '|' .. b)
+                
+                -- Second: regular method
+                local sum = obj.AddNumbers(3, 4)
+                table.insert(results, tostring(sum))
+                
+                -- Third: void with out again
+                local nil2, c, d = obj.VoidWithOut(5, 6)
+                table.insert(results, tostring(nil2) .. '|' .. c .. '|' .. d)
+                
+                -- Fourth: ref/out combo
+                local upper, concat, lower = obj.ManipulateString('X', 'Y')
+                table.insert(results, upper .. '|' .. concat .. '|' .. lower)
+                
+                -- Fifth: void with out again
+                local nil3, e, f = obj.VoidWithOut(7, 8)
+                table.insert(results, tostring(nil3) .. '|' .. e .. '|' .. f)
+                
+                return table.concat(results, ';')
+            "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("nil|1|2;7;nil|5|6;X|XY|x;nil|7|8")
+                .ConfigureAwait(false);
+        }
+
         internal sealed class SampleClass
         {
             public int Multiplier { get; set; } = 1;
@@ -365,6 +601,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 _callCount++;
                 sum = a;
                 product = b;
+            }
+
+            public void GetMultipleOutValues(out int number, out string text, out bool flag)
+            {
+                _callCount++;
+                number = 42;
+                text = "hello";
+                flag = true;
+            }
+
+            public int ComplexRefOutMethod(int a, ref int b, out int c)
+            {
+                _callCount++;
+                int result = a + b;
+                b = b * 2;
+                c = a * b / 2; // After doubling b, so c = a * (b * 2) / 2 = a * b
+                return result;
+            }
+
+            public bool TryParseInt(string input, out int result)
+            {
+                _callCount++;
+                return int.TryParse(input, out result);
             }
         }
     }

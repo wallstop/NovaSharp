@@ -1458,12 +1458,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            double? rn = r.CastToNumber();
-            double? ln = l.CastToNumber();
+            LuaNumber? rn = r.CastToLuaNumber();
+            LuaNumber? ln = l.CastToLuaNumber();
 
             if (ln.HasValue && rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(ln.Value + rn.Value));
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Add(ln.Value, rn.Value)));
                 return instructionPtr;
             }
             else
@@ -1485,12 +1485,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            double? rn = r.CastToNumber();
-            double? ln = l.CastToNumber();
+            LuaNumber? rn = r.CastToLuaNumber();
+            LuaNumber? ln = l.CastToLuaNumber();
 
             if (ln.HasValue && rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(ln.Value - rn.Value));
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Subtract(ln.Value, rn.Value)));
                 return instructionPtr;
             }
             else
@@ -1512,12 +1512,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            double? rn = r.CastToNumber();
-            double? ln = l.CastToNumber();
+            LuaNumber? rn = r.CastToLuaNumber();
+            LuaNumber? ln = l.CastToLuaNumber();
 
             if (ln.HasValue && rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(ln.Value * rn.Value));
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Multiply(ln.Value, rn.Value)));
                 return instructionPtr;
             }
             else
@@ -1539,18 +1539,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            double? rn = r.CastToNumber();
-            double? ln = l.CastToNumber();
+            LuaNumber? rn = r.CastToLuaNumber();
+            LuaNumber? ln = l.CastToLuaNumber();
 
             if (ln.HasValue && rn.HasValue)
             {
-                double mod = Math.IEEERemainder(ln.Value, rn.Value);
-                if (mod < 0)
-                {
-                    mod += rn.Value;
-                }
-
-                _valueStack.Push(DynValue.NewNumber(mod));
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Modulo(ln.Value, rn.Value)));
                 return instructionPtr;
             }
             else
@@ -1572,12 +1566,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            double? rn = r.CastToNumber();
-            double? ln = l.CastToNumber();
+            LuaNumber? rn = r.CastToLuaNumber();
+            LuaNumber? ln = l.CastToLuaNumber();
 
             if (ln.HasValue && rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(ln.Value / rn.Value));
+                // Regular division always returns float per Lua spec
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Divide(ln.Value, rn.Value)));
                 return instructionPtr;
             }
             else
@@ -1599,12 +1594,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            double? rn = r.CastToNumber();
-            double? ln = l.CastToNumber();
+            LuaNumber? rn = r.CastToLuaNumber();
+            LuaNumber? ln = l.CastToLuaNumber();
 
             if (ln.HasValue && rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(Math.Floor(ln.Value / rn.Value)));
+                // LuaNumber.FloorDivide handles Lua 5.3+ semantics:
+                // - Integer // integer with div-by-zero throws error
+                // - Float // float with div-by-zero returns inf/-inf
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.FloorDivide(ln.Value, rn.Value)));
                 return instructionPtr;
             }
             else
@@ -1626,12 +1624,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            double? rn = r.CastToNumber();
-            double? ln = l.CastToNumber();
+            LuaNumber? rn = r.CastToLuaNumber();
+            LuaNumber? ln = l.CastToLuaNumber();
 
             if (ln.HasValue && rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(Math.Pow(ln.Value, rn.Value)));
+                // Power always returns float per Lua spec
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Power(ln.Value, rn.Value)));
                 return instructionPtr;
             }
             else
@@ -1701,7 +1700,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (LuaIntegerHelper.TryGetInteger(value, out long operand))
             {
-                _valueStack.Push(DynValue.NewNumber(~operand));
+                _valueStack.Push(DynValue.NewInteger(~operand));
                 return instructionPtr;
             }
 
@@ -1727,7 +1726,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (leftOk && rightOk)
             {
-                _valueStack.Push(DynValue.NewNumber(operation(left, right)));
+                _valueStack.Push(DynValue.NewInteger(operation(left, right)));
                 return instructionPtr;
             }
 
@@ -1744,11 +1743,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private int ExecNeg(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
-            double? rn = r.CastToNumber();
+            LuaNumber? rn = r.CastToLuaNumber();
 
             if (rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(-rn.Value));
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Negate(rn.Value)));
                 return instructionPtr;
             }
             else

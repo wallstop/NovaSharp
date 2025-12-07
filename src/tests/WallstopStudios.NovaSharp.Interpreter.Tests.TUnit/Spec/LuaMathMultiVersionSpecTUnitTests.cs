@@ -45,7 +45,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 
                 await Assert.That(tuple.Tuple[0].String).IsEqualTo("integer");
                 await Assert.That(tuple.Tuple[1].String).IsEqualTo("float");
-                await Assert.That(tuple.Tuple[2].String).IsEqualTo("integer");
+                // Per Lua 5.3+ spec: 1.0 is a float literal, so math.type returns "float"
+                await Assert.That(tuple.Tuple[2].String).IsEqualTo("float");
             }
         }
 

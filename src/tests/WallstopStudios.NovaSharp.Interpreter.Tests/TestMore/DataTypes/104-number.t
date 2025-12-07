@@ -24,7 +24,7 @@
 
 require 'Test.More'
 
-plan(54)
+plan(55)
 
 is(-1, -(1), "-1")
 
@@ -46,7 +46,13 @@ type_ok(1 / 0, 'number', "1 / 0")
 
 is(-25 % 3, 2, "-25 % 3")
 
-type_ok(1 % 0, 'number', "1 % 0")
+-- In Lua 5.3+, integer % 0 throws an error (not NaN like Lua 5.2)
+error_like(function () return 1 % 0 end,
+           "^[^:]+:%d+: attempt to perform 'n%%0'",
+           "1 % 0 throws error")
+
+-- Float modulo by zero still returns NaN per IEEE 754
+type_ok(1.0 % 0.0, 'number', "1.0 % 0.0")
 
 error_like(function () return 10 + true end,
            "^[^:]+:%d+: attempt to perform arithmetic on a boolean value",

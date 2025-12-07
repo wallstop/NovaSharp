@@ -69,12 +69,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task ShiftOperatorsFollowLuaSemantics()
         {
+            // Per Lua 5.3+ spec (§3.4.2): right shift is logical (unsigned), not arithmetic.
+            // (-8) >> 2 = 0xFFFFFFFFFFFFFFF8 >> 2 = 0x3FFFFFFFFFFFFFFE = 4611686018427387902
+            // (-1) >> 70 = 0 (shift by >= 64 returns 0 per spec)
             DynValue result = Script.RunString("return 1 << 3, (-8) >> 2, 1 << 64, (-1) >> 70");
 
             await Assert.That(result.Tuple[0].Number).IsEqualTo(8d).ConfigureAwait(false);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(-2d).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(4611686018427387902d)
+                .ConfigureAwait(false);
             await Assert.That(result.Tuple[2].Number).IsEqualTo(0d).ConfigureAwait(false);
-            await Assert.That(result.Tuple[3].Number).IsEqualTo(-1d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(0d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

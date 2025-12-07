@@ -34,7 +34,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 case TokenType.Number:
                 case TokenType.NumberHex:
                 case TokenType.NumberHexFloat:
-                    _value = DynValue.NewNumber(t.GetNumberValue()).AsReadOnly();
+                    // For Lua 5.3+ compliance: integer literals become integers,
+                    // float literals (with decimal point or exponent) become floats
+                    if (t.IsFloatLiteralSyntax())
+                    {
+                        // Float literal syntax (contains . or e/E) - always create float subtype
+                        _value = DynValue.NewFloat(t.GetNumberValue()).AsReadOnly();
+                    }
+                    else if (t.TryGetIntegerValue(out long intVal))
+                    {
+                        // Successfully parsed as integer directly (without double intermediate)
+                        _value = DynValue.NewInteger(intVal).AsReadOnly();
+                    }
+                    else
+                    {
+                        // Integer syntax but too large for long - use float
+                        _value = DynValue.NewFloat(t.GetNumberValue()).AsReadOnly();
+                    }
                     break;
                 case TokenType.String:
                 case TokenType.StringLong:

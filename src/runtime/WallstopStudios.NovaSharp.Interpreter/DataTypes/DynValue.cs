@@ -21,7 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private int _hashCode = -1;
 
         private bool _readOnly;
-        private double _number;
+        private LuaNumber _number;
         private object _object;
         private DataType _type;
 
@@ -50,11 +50,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Gets the numeric value (valid only if the <see cref="Type"/> is <see cref="DataType.Number"/>)
+        /// Gets the numeric value as a double (valid only if the <see cref="Type"/> is <see cref="DataType.Number"/>).
+        /// For Lua 5.3+ integer/float distinction, use <see cref="LuaNumber"/>, <see cref="IsInteger"/>, and <see cref="IsFloat"/>.
         /// </summary>
         public double Number
         {
+            get { return _number.ToDouble; }
+        }
+
+        /// <summary>
+        /// Gets the underlying <see cref="LuaNumber"/> value (valid only if the <see cref="Type"/> is <see cref="DataType.Number"/>).
+        /// This provides access to the Lua 5.3+ integer/float subtype discrimination.
+        /// </summary>
+        public LuaNumber LuaNumber
+        {
             get { return _number; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this number is a Lua integer subtype.
+        /// Valid only if <see cref="Type"/> is <see cref="DataType.Number"/>.
+        /// </summary>
+        public bool IsInteger
+        {
+            get { return _type == DataType.Number && _number.IsInteger; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this number is a Lua float subtype.
+        /// Valid only if <see cref="Type"/> is <see cref="DataType.Number"/>.
+        /// </summary>
+        public bool IsFloat
+        {
+            get { return _type == DataType.Number && _number.IsFloat; }
         }
 
         /// <summary>
@@ -161,7 +189,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewBoolean(bool v)
         {
-            return new DynValue() { _number = v ? 1 : 0, _type = DataType.Boolean };
+            return new DynValue()
+            {
+                _number = LuaNumber.FromInteger(v ? 1L : 0L),
+                _type = DataType.Boolean,
+            };
         }
 
         /// <summary>
@@ -187,7 +219,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 cache[i] = new DynValue()
                 {
-                    _number = i,
+                    _number = LuaNumber.FromInteger(i),
                     _type = DataType.Number,
                     _readOnly = true,
                 };
@@ -196,9 +228,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified number.
+        /// Creates a new writable value initialized to the specified number as a float subtype.
         /// </summary>
         public static DynValue NewNumber(double num)
+        {
+            return new DynValue()
+            {
+                _number = LuaNumber.FromDouble(num),
+                _type = DataType.Number,
+                _hashCode = -1,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new writable value initialized to the specified number with explicit float subtype.
+        /// Unlike <see cref="NewNumber(double)"/>, this method preserves the float subtype even for
+        /// whole numbers like 3.0, which is required for Lua 5.3+ compliance with numeric literals.
+        /// </summary>
+        public static DynValue NewFloat(double num)
+        {
+            return new DynValue()
+            {
+                _number = LuaNumber.FromFloat(num),
+                _type = DataType.Number,
+                _hashCode = -1,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new writable value initialized to the specified integer.
+        /// The resulting value will have the Lua "integer" subtype.
+        /// </summary>
+        public static DynValue NewInteger(long num)
+        {
+            return new DynValue()
+            {
+                _number = LuaNumber.FromInteger(num),
+                _type = DataType.Number,
+                _hashCode = -1,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new writable value initialized to the specified <see cref="LuaNumber"/>.
+        /// </summary>
+        public static DynValue NewNumber(LuaNumber num)
         {
             return new DynValue()
             {
@@ -210,7 +284,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Returns a cached readonly number value for small non-negative integers (0-255).
-        /// Falls back to <see cref="NewNumber"/> for values outside the cache range.
+        /// Falls back to <see cref="NewNumber(double)"/> for values outside the cache range.
         /// Use this in hot paths where readonly values are acceptable.
         /// </summary>
         /// <param name="num">The number value.</param>
@@ -224,6 +298,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return SmallIntegerCache[intVal];
             }
             return NewNumber(num);
+        }
+
+        /// <summary>
+        /// Returns a cached readonly number value for small non-negative integers (0-255).
+        /// Falls back to <see cref="NewInteger(long)"/> for values outside the cache range.
+        /// Use this in hot paths where readonly values are acceptable.
+        /// The resulting value will have the Lua "integer" subtype.
+        /// </summary>
+        /// <param name="num">The integer value.</param>
+        /// <returns>A cached or new <see cref="DynValue"/> representing the integer.</returns>
+        public static DynValue FromInteger(long num)
+        {
+            // Check if the number is a small non-negative integer in cache range
+            if (num >= 0 && num < SmallIntegerCacheSize)
+            {
+                return SmallIntegerCache[num];
+            }
+            return NewInteger(num);
         }
 
         /// <summary>
@@ -1187,6 +1279,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Casts this DynValue to a <see cref="LuaNumber"/>, preserving integer/float subtyping.
+        /// Uses coercion if the type is string.
+        /// </summary>
+        /// <returns>The LuaNumber value, or null if not number, not string or non-convertible-string.</returns>
+        public LuaNumber? CastToLuaNumber()
+        {
+            DynValue rv = ToScalar();
+            if (rv.Type == DataType.Number)
+            {
+                return rv.LuaNumber;
+            }
+            else if (rv.Type == DataType.String)
+            {
+                if (LuaNumber.TryParse(rv.String, out LuaNumber result))
+                {
+                    return result;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Casts this DynValue to a bool
         /// </summary>
         /// <returns>False if value is false or nil, true otherwise.</returns>
@@ -1319,6 +1433,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Changes the numeric value of a number DynValue.
         /// </summary>
         internal void AssignNumber(double num)
+        {
+            if (ReadOnly)
+            {
+                throw new InternalErrorException(null, "Writing on r-value");
+            }
+
+            if (Type != DataType.Number)
+            {
+                throw new InternalErrorException("Can't assign number to type {0}", Type);
+            }
+
+            _number = LuaNumber.FromDouble(num);
+        }
+
+        /// <summary>
+        /// Changes the numeric value of a number DynValue using a <see cref="LuaNumber"/>.
+        /// </summary>
+        internal void AssignNumber(LuaNumber num)
         {
             if (ReadOnly)
             {

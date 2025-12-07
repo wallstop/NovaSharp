@@ -346,10 +346,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             {
                 constant = DynValue.NewNumber((double)fi.GetValue(o));
             }
+            else if (fi.FieldType == typeof(long))
+            {
+                // Lua 5.3+ integer constants (math.maxinteger, math.mininteger)
+                constant = DynValue.NewInteger((long)fi.GetValue(o));
+            }
             else
             {
                 throw new ArgumentException(
-                    $"Field {name} does not have the right type - it must be string or double."
+                    $"Field {name} does not have the right type - it must be string, double, or long."
                 );
             }
 

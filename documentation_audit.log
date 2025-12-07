@@ -41,8 +41,8 @@ Found 51 undocumented public/internal type declarations.
   - line 98: missing XML docs for `Clone()`
   - line 315: missing XML docs for `EnterIsolationScope()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
-  - line 184: missing XML docs for `BeginDefaultOptionsScope()`
-  - line 1277: missing XML docs for `Dispose()`
+  - line 216: missing XML docs for `BeginDefaultOptionsScope()`
+  - line 1360: missing XML docs for `Dispose()`
 - src/tooling/WallstopStudios.NovaSharp.Cli/ArgumentValidation.cs
   - line 10: missing XML docs for `ThrowIfNull()`
 - src/tooling/WallstopStudios.NovaSharp.LuaBatchRunner/LuaBatchRunner.cs

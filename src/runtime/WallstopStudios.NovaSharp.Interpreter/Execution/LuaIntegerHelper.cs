@@ -47,7 +47,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (scalar.Type == DataType.Number)
             {
-                return TryGetInteger(scalar.Number, out integer);
+                // Use the underlying LuaNumber to preserve integer precision
+                LuaNumber num = scalar.LuaNumber;
+                if (num.IsInteger)
+                {
+                    integer = num.AsInteger;
+                    return true;
+                }
+
+                // Float case - check if convertible to integer
+                return TryGetInteger(num.ToDouble, out integer);
             }
 
             if (
@@ -87,8 +96,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
-        /// Performs a Lua-style arithmetic right shift, clamping large shifts to sign.
+        /// Performs a Lua-style logical right shift, clamping large shifts to zero.
         /// </summary>
+        /// <remarks>
+        /// Per Lua 5.3/5.4 specification (§3.4.2), right shifts are logical (unsigned),
+        /// not arithmetic. Shifts by >= 64 bits always return 0.
+        /// </remarks>
         public static long ShiftRight(long value, long shift)
         {
             if (shift < 0)
@@ -98,10 +111,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (shift >= IntegerBitCount)
             {
-                return value < 0 ? -1 : 0;
+                return 0;
             }
 
-            return value >> (int)shift;
+            // Logical (unsigned) right shift per Lua spec
+            return (long)((ulong)value >> (int)shift);
         }
     }
 }

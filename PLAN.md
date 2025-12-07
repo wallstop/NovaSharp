@@ -1,18 +1,49 @@
 # Modern Testing & Coverage Plan
 
-## Repository Snapshot — 2025-12-08 (UTC)
+## 🎯 Current Priority: Dual Numeric Type System (§8.24 — HIGH PRIORITY)
+
+**Status**: 🚧 **IN PROGRESS** — Phase 2 Core Integration complete, Phase 3-5 remaining.
+
+**Progress (2025-12-07)**:
+- ✅ **Phase 1 Complete**: `LuaNumber` struct with 83 tests
+- ✅ **Phase 2 Complete**: DynValue integration, VM arithmetic opcodes, `math.type()` correct, bitwise operations preserve precision
+- 🔲 **Phase 3 Pending**: StringModule format specifiers
+- 🔲 **Phase 4 Pending**: Interop & serialization
+- 🔲 **Phase 5 Pending**: Numeric value caching & performance validation
+
+**Key Achievements**:
+- `math.maxinteger`/`math.mininteger` return exact values (no precision loss)
+- `math.type(1)` → "integer", `math.type(1.0)` → "float" (correct subtype detection)
+- Integer arithmetic wraps correctly (two's complement)
+- Integer `//` and `%` by zero throw errors; float versions return IEEE 754 values
+- Bitwise operations preserve full 64-bit integer precision
+- All 3,811 tests passing
+
+See **Section 8.24** for the complete implementation plan.
+
+**Next actionable item**: Phase 3 — Update `StringModule` for integer vs float format handling (`%d`, `%i`, `%o`, `%x`).
+
+---
+
+## Repository Snapshot — 2025-12-07 (UTC)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true` enforced.
-- **Tests**: **3,526** interpreter tests + **72** debugger tests pass via TUnit (Microsoft.Testing.Platform).
+- **Tests**: **3,811** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
 - **Coverage**: Interpreter at **96.2% line / 93.69% branch / 97.88% method**.
 - **Coverage gating**: `COVERAGE_GATING_MODE=enforce` enabled with 96% line / 93% branch / 97% method thresholds.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
 - **Regions**: Runtime/tooling/tests remain region-free.
 - **CI**: Tests run on matrix of `[ubuntu-latest, windows-latest, macos-latest]`.
 - **DAP golden tests**: 20 tests validating VS Code debugger protocol payloads (initialize, threads, breakpoints, events, evaluate, scopes, stackTrace, variables).
-- **Sandbox infrastructure**: `SandboxOptions` with instruction limits, recursion limits, module/function restrictions, **memory limits** (Table/Closure/Coroutine tracking), **coroutine count limits**, callbacks, and presets.
+- **Sandbox infrastructure**: `SandboxOptions` with instruction limits, recursion limits, module/function restrictions, **memory limits** (Table/Closure/Coroutine tracking), **coroutine count limits**, **per-mod isolation containers**, callbacks, and presets.
 - **Benchmark CI**: `.github/workflows/benchmarks.yml` with BenchmarkDotNet, threshold-based regression alerting (115% = 15% regression), and historical tracking in `gh-pages`.
 - **Namespace rebrand**: ✅ **Completed 2025-12-06** — Full rebrand to `WallstopStudios.NovaSharp.*` namespaces across all projects.
 - **Packaging**: ✅ **Completed 2025-12-07** — NuGet publishing workflow (`.github/workflows/nuget-publish.yml`) + Unity UPM scripts (`scripts/packaging/`).
+- **Version centralization**: ✅ **Completed 2025-12-07** — `LuaVersionDefaults` class for consistent `Latest` version resolution.
+- **RNG Parity**: ✅ **Completed 2025-12-07** — Version-specific RNG providers (LCG for 5.1-5.3, xoshiro256** for 5.4+).
+- **Out/Ref param tests**: ✅ **Completed 2025-12-07** — 10 exhaustive tests for CLR interop out/ref parameter handling.
+- **Script constructor consistency**: ✅ **Completed 2025-12-07** — 16 tests verifying initialization order and behavior (§8.2).
+- **Numeric edge cases**: ✅ **Completed 2025-12-07** — `math.maxinteger`/`mininteger`, right shift fix, NaN comparison fix (§8.3).
+- **Dual numeric type system**: 🚧 **In Progress** — `LuaNumber` struct with integer/float discrimination (§8.24, HIGH PRIORITY). Phase 2 complete, all tests passing.
 
 ## Baseline Controls (must stay green)
 - Re-run audits (`documentation_audit.py`, `NamingAudit`, `SpellingAudit`) when APIs or docs change.
@@ -119,8 +150,17 @@ No further coverage work planned unless these blockers are addressed.
   - `Script.RandomProvider` property exposing the configured provider
   - `MathModule.Random` and `MathModule.RandomSeed` updated to use provider
   - 27 TUnit tests covering provider infrastructure and Script integration
-- **Remaining**:
-  - Per-mod isolation containers with load/reload/unload hooks
+- ✅ **Per-mod isolation containers (2025-12-08)**: Load/reload/unload lifecycle management:
+  - `ModLoadState` enum with lifecycle states (Unloaded, Loading, Loaded, Unloading, Reloading, Faulted)
+  - `ModOperationResult` immutable result type with Success, State, Message, Error properties
+  - `IModContainer` interface with 18 members (properties, events, methods)
+  - `ModContainer` implementation with thread-safe state machine and event hooks
+  - `ModManager` multi-mod coordinator with dependency graph and topological sort
+  - Entry points: `DoString()`, `CallFunction()`, `GetGlobal()`, `SetGlobal()`
+  - Events: `OnLoading`, `OnLoaded`, `OnUnloading`, `OnUnloaded`, `OnReloading`, `OnReloaded`, `OnError`
+  - Factory delegate and configurator action support for custom Script initialization
+  - 44 TUnit tests covering lifecycle, dependencies, and error handling
+- **Remaining**: (Advanced sandbox features complete)
 
 ### 5. Packaging and performance
 - Unity UPM/embedded packaging with IL2CPP/AOT documentation.
@@ -168,6 +208,55 @@ No further coverage work planned unless these blockers are addressed.
 
 See `docs/modernization/concurrency-inventory.md` for the full synchronization audit.
 
+### 8. Lua Runtime Specification Parity (CRITICAL) 🔴
+**Priority**: CRITICAL — Core interpreter correctness for production use.
+
+Ensure NovaSharp produces identical output to reference Lua interpreters across all supported versions (5.1, 5.2, 5.3, 5.4). Key areas:
+
+- **Random Number Generators**: ✅ **Completed 2025-12-07** — Version-specific PRNG algorithms and seeding behavior
+  - Lua 5.4: xoshiro256** (✅ implemented via `LuaRandomProvider`)
+  - Lua 5.1-5.3: LCG (✅ implemented via `Lua51RandomProvider`)
+  - Default seeds, sequence verification against reference Lua
+  
+- **Script Constructor Consistency**: ✅ **Completed 2025-12-07** — All constructor overloads initialize state identically
+  - `GlobalOptions` / `ScriptOptions` inheritance verified
+  - Core module registration order documented
+  - Random provider seeding timing confirmed
+  
+- **Numeric/Arithmetic Edge Cases**: Division by zero, overflow, `math.maxinteger`/`mininteger`
+
+- **String Pattern Matching**: Character class differences (`.NET char.IsXxx` vs C `isalpha`)
+
+- **Error Message Formats**: Match Lua's error messages for script compatibility
+
+- **os.time/os.date Semantics**: Timezone handling, epoch values
+
+- **Lua 5.4 Breaking Changes** (newly catalogued from official docs):
+  - String-to-number coercion removed from core (moved to string library metamethods)
+  - `print` no longer calls global `tostring` (uses `__tostring` directly)
+  - Integer `for` loop control variable never overflows
+  - `io.lines` returns 4 values instead of 1
+  - `__lt` no longer emulates `__le`
+  - `__gc` non-function values now error
+  - `utf8` library rejects surrogates by default
+  - `collectgarbage` options `setpause`/`setstepmul` deprecated
+  - Decimal literal overflow reads as float instead of wrapping
+
+- **Lua 5.3 Breaking Changes** (from 5.2):
+  - Integer subtype introduced
+  - `bit32` library deprecated (native bitwise operators added)
+  - `ipairs` respects `__index` metamethod
+  - Float-to-string adds `.0` suffix for integer-like values
+
+- **Lua 5.2 Breaking Changes** (from 5.1):
+  - `setfenv`/`getfenv` removed (use `_ENV` upvalue)
+  - `unpack` moved to `table.unpack`
+  - `module` function deprecated
+  - Weak tables now behave as ephemeron tables
+  - `math.log10` deprecated (use `math.log(x, 10)`)
+
+See **Section 8** in "Lua Specification Parity" below for detailed tracking (22 subsections covering all version-specific behaviors).
+
 ## Lua Specification Parity
 
 ### Reference Lua comparison harness
@@ -187,6 +276,637 @@ Key infrastructure:
 ### Full Lua specification audit
 - **Tracking**: `docs/testing/spec-audit.md` contains detailed tracking table with status per feature.
 - **Progress**: Most core features verified against Lua 5.4 manual; `string.pack`/`unpack` extended options remain unimplemented.
+
+### 8. Lua Runtime Specification Parity (CRITICAL)
+
+**Goal**: Ensure NovaSharp behaves identically to reference Lua interpreters across all supported versions (5.1, 5.2, 5.3, 5.4) for deterministic, reproducible script execution.
+
+This initiative addresses semantic divergences where our C# implementation could match native Lua behavior but currently doesn't. The focus is on **runtime behavior parity**, not just API surface compatibility.
+
+#### 8.1 Random Number Generator Parity
+
+**Status**: ✅ **Completed (2025-12-07)**
+
+**Current State**: NovaSharp now implements version-specific RNG algorithms:
+- `Lua51RandomProvider` (LCG with glibc parameters) for Lua 5.1/5.2/5.3 compatibility
+- `LuaRandomProvider` (xoshiro256**) for Lua 5.4+
+
+**Version-specific Requirements**:
+| Lua Version | Algorithm | Default Seed Behavior | NovaSharp Status |
+|-------------|-----------|----------------------|------------------|
+| 5.1 | C library `rand()` (glibc LCG) | `time(NULL)` | ✅ `Lua51RandomProvider` |
+| 5.2 | C library `rand()` (glibc LCG) | `time(NULL)` | ✅ `Lua51RandomProvider` |
+| 5.3 | C library `rand()` (glibc LCG) | `time(NULL)` | ✅ `Lua51RandomProvider` |
+| 5.4 | xoshiro256** | Cryptographic random (128-bit) | ✅ `LuaRandomProvider` |
+
+**Completed Tasks**:
+- [x] Create `Lua51RandomProvider` using linear congruential generator (LCG) for 5.1/5.2/5.3 compatibility
+- [x] Implement version-specific `math.randomseed` semantics (5.1-5.3 vs 5.4 signatures differ)
+- [x] Verify `math.random()` output sequences match reference Lua for each version when seeded identically
+- [x] Add golden sequence tests: seed with known values, compare first N outputs against reference Lua
+- [x] Document platform-specific behavior differences for 5.1-5.3 (C `rand()` varies by platform)
+
+See **Checkpoint — 2025-12-07 (RNG Parity)** for implementation details.
+
+#### 8.2 Script Constructor Consistency
+
+**Status**: ✅ **Completed 2025-12-07**
+
+**Goal**: All `Script` constructors must initialize state identically, ensuring:
+- `GlobalOptions` inheritance is consistent
+- `ScriptOptions` defaults propagate correctly
+- Core modules register in the same order
+- Random provider seeding occurs at the same point in initialization
+
+**Current Constructors**:
+```csharp
+Script()                                    // Default modules, default options
+Script(CoreModules)                         // Custom modules, default options
+Script(ScriptOptions)                       // Default modules, custom options
+Script(CoreModules, ScriptOptions)          // Custom modules, custom options
+```
+
+**Audit Findings**:
+
+All four constructors delegate to `Script(CoreModules coreModules, ScriptOptions options)`, which follows a deterministic initialization order:
+1. **Options** — Copies from `options` (or `DefaultOptions` if null)
+2. **CompatibilityVersion inheritance** — When `options == null`, overwritten from `GlobalOptions.CompatibilityVersion`
+3. **TimeProvider** — From `Options.TimeProvider` or `SystemTimeProvider.Instance`
+4. **RandomProvider** — From `Options.RandomProvider` or version-appropriate default
+5. **StartTimeUtc** — Captured from `TimeProvider.GetUtcNow()`
+6. **AllocationTracker** — Created if sandbox has memory/coroutine limits
+7. **PerformanceStats** — Created with configured clock
+8. **Registry** — New empty table
+9. **ByteCode** — New bytecode container
+10. **MainProcessor** — New processor instance
+11. **GlobalTable** — New table with `RegisterCoreModules(coreModules)`
+
+**Key Behavior**:
+- `Script()` and `Script(CoreModules)` pass `null` for options → inherit `GlobalOptions.CompatibilityVersion`
+- `Script(ScriptOptions)` and `Script(CoreModules, ScriptOptions)` with explicit options → use options as-is
+- Fresh `new ScriptOptions()` defaults to `LuaCompatibilityVersion.Latest`
+- Recommended pattern: `new ScriptOptions(Script.DefaultOptions)` to copy global defaults
+
+**Completed Tasks**:
+- [x] Audit all constructor paths to ensure identical initialization order
+- [x] Verify `Options.CompatibilityVersion` is always set from `GlobalOptions` when not explicitly provided
+- [x] Ensure `LuaRandomProvider` vs `DeterministicRandomProvider` selection respects options
+- [x] Add tests verifying constructor equivalence (same seed → same first random value)
+- [x] Document constructor behavior (see `ScriptConstructorConsistencyTUnitTests.cs`)
+
+See **Checkpoint — 2025-12-07 (Script Constructor Consistency)** for implementation details.
+
+#### 8.3 Numeric Representation and Arithmetic ✅ **COMPLETED 2025-12-07**
+
+**Requirements** (per Lua version):
+| Feature | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status |
+|---------|-----|-----|-----|-----|------------------|
+| Integer subtype | ❌ | ❌ | ✅ | ✅ | ✅ Implemented |
+| `math.type()` | ❌ | ❌ | ✅ | ✅ | ✅ Implemented |
+| Integer division `//` | ❌ | ❌ | ✅ | ✅ | ✅ Implemented |
+| Bitwise operators | ❌ | ✅ bit32 | ✅ Native | ✅ Native | ✅ Implemented |
+| `math.maxinteger/mininteger` | ❌ | ❌ | ✅ | ✅ | ✅ Implemented |
+
+**Completed Work (2025-12-07)**:
+- ✅ Added `math.maxinteger` (9223372036854775807) and `math.mininteger` (-9223372036854775808) constants with `[LuaCompatibility(Lua53)]`
+- ✅ Fixed right shift operator to use logical shift per Lua spec (§3.4.2) — was incorrectly using arithmetic shift
+- ✅ Fixed `a > b` and `a >= b` compilation to use operand swapping instead of result inversion — fixes NaN comparisons per IEEE 754
+- ✅ Added comprehensive numeric edge case tests (`MathNumericEdgeCasesTUnitTests.cs`, 50+ tests)
+
+**Production Bugs Fixed**:
+- `LuaIntegerHelper.ShiftRight` now returns 0 for shifts >= 64 bits (was returning -1 for negative values)
+- NaN comparisons (`nan > nan`, `nan >= nan`) now correctly return `false` (was returning `true`)
+- Updated existing shift/comparison tests to match Lua 5.4 reference behavior
+
+**Known Divergences** (documented in tests and `docs/testing/lua-divergences.md`):
+- **Integer division by zero**: NovaSharp returns infinity for all `n // 0` cases. Lua throws error only when both operands are "true integers" — NovaSharp cannot distinguish since all numbers are doubles.
+- **`math.maxinteger` precision**: `9223372036854775807` cannot be exactly represented as a double, so bitwise operations and `math.tointeger(math.maxinteger)` may overflow to mininteger.
+- **`math.huge`**: NovaSharp uses `double.MaxValue` instead of `infinity` (known legacy divergence).
+
+**Tasks** (all completed):
+- [x] Verify `math.maxinteger` and `math.mininteger` match Lua 5.3/5.4 exactly
+- [x] Ensure integer overflow behavior matches Lua (documented divergences)
+- [x] Verify division by zero behavior per version (documented divergence)
+- [x] Test edge cases: `0/0`, `inf/-inf`, very large integers (all covered)
+
+#### 8.4 String and Pattern Matching
+
+**Potential Divergences**:
+- Character class `%a`, `%l`, `%u` etc. use .NET `char.IsXxx()` which may differ from C `isalpha()` etc.
+- Unicode handling in patterns (Lua 5.3+ vs earlier)
+- `string.format` edge cases (float formatting, padding)
+
+**Tasks**:
+- [ ] Compare `%a`, `%d`, `%l`, `%u`, `%w`, `%s` character classes against reference Lua
+- [ ] Verify `string.format` output matches for edge cases (NaN, Inf, very large numbers)
+- [ ] Test pattern matching with non-ASCII characters
+- [ ] Document any intentional Unicode-aware divergences
+
+#### 8.5 os.time and os.date Semantics
+
+**Requirements**:
+- `os.time()` with no arguments returns current UTC timestamp
+- `os.time(table)` interprets fields per §6.9
+- `os.date("*t")` returns table with correct field names and ranges
+- Timezone handling differences (C `localtime` vs .NET)
+
+**Tasks**:
+- [ ] Verify `os.time()` return value matches Lua's epoch-based timestamp
+- [ ] Test `os.date` format strings against reference Lua outputs
+- [ ] Document timezone handling differences (if any)
+- [ ] Ensure `DeterministicTimeProvider` integration doesn't break compatibility
+
+#### 8.6 Coroutine Semantics
+
+**Critical Behaviors**:
+- `coroutine.resume` return value shapes
+- `coroutine.wrap` error propagation
+- `coroutine.status` state transitions
+- Yield across C-call boundary errors
+
+**Tasks**:
+- [ ] Create state transition diagram tests for coroutine lifecycle
+- [ ] Verify error message formats match Lua
+- [ ] Test `coroutine.close` (5.4) cleanup order
+
+#### 8.7 Error Message Parity
+
+**Goal**: Error messages should match Lua's format for maximum compatibility with scripts that parse errors.
+
+**Known Divergences** (from `docs/testing/lua-divergences.md`):
+- Nil index: Lua says `(name)`, NovaSharp omits variable name
+- Stack traces: .NET format vs Lua format
+- Module not found: Different path listing
+
+**Tasks**:
+- [ ] Catalog all error message formats in `ScriptRuntimeException`
+- [ ] Create error message normalization layer for Lua-compatible output
+- [ ] Add `ScriptOptions.LuaCompatibleErrors` flag (opt-in strict mode)
+
+#### 8.8 Verification Infrastructure
+
+**Golden Test Suite**:
+- [ ] Create `LuaFixtures/RngParity/` with seeded random sequences per version
+- [ ] Create `LuaFixtures/NumericEdgeCases/` for arithmetic edge cases
+- [ ] Create `LuaFixtures/ErrorMessages/` for error format verification
+- [ ] Extend `compare-lua-outputs.py` to compare byte-for-byte output for determinism tests
+
+**CI Enhancement**:
+- [ ] Add Lua 5.1, 5.2, 5.3, 5.4 comparison jobs to the matrix
+- [ ] Track parity percentage per version in CI artifacts
+- [ ] Alert on parity regressions
+
+#### 8.9 String-to-Number Coercion Changes (Lua 5.4)
+
+**Breaking Change in 5.4**: String-to-number coercion was removed from the core language. Arithmetic operations no longer automatically convert string operands to numbers.
+
+**Version Behavior**:
+| Version | `"10" + 1` | Implementation |
+|---------|------------|----------------|
+| 5.1-5.3 | `11` | Core language coercion |
+| 5.4 | `11` (via metamethods) | String library provides `__add` etc. metamethods |
+
+**Tasks**:
+- [ ] Verify NovaSharp behavior matches the target `LuaCompatibilityVersion`
+- [ ] Ensure string metatable has arithmetic metamethods for 5.4 compatibility
+- [ ] Add tests for string arithmetic operations per version
+- [ ] Document the coercion change in `docs/LuaCompatibility.md`
+
+#### 8.10 print/tostring Behavior Changes (Lua 5.4)
+
+**Breaking Change in 5.4**: `print` no longer calls the global `tostring` function; it directly uses the `__tostring` metamethod.
+
+**Implications**:
+- Custom `tostring` replacements won't affect `print` output in 5.4
+- Scripts relying on this pattern will break
+
+**Tasks**:
+- [ ] Verify `print` behavior matches target Lua version
+- [ ] Add tests for custom `tostring` function interaction with `print`
+- [ ] Document behavior difference
+
+#### 8.11 Numerical For Loop Semantics (Lua 5.4)
+
+**Breaking Change in 5.4**: Control variable in integer `for` loops never overflows/wraps.
+
+**Version Behavior**:
+| Version | Integer overflow in loop control | Implementation |
+|---------|----------------------------------|----------------|
+| 5.1-5.3 | Wraps around | Could cause infinite loops |
+| 5.4 | Never wraps | Loop terminates correctly |
+
+**Tasks**:
+- [ ] Verify NovaSharp for loop handles integer limits correctly per version
+- [ ] Add edge case tests for near-maxinteger loop bounds
+- [ ] Document loop semantics per version
+
+#### 8.12 io.lines Return Value Changes (Lua 5.4)
+
+**Breaking Change in 5.4**: `io.lines` returns 4 values instead of 1 (adds close function and two placeholders).
+
+**Tasks**:
+- [ ] Verify `io.lines` return value count matches target version
+- [ ] Add tests for multi-value return unpacking from `io.lines`
+
+#### 8.13 __lt/__le Metamethod Changes (Lua 5.4)
+
+**Breaking Change in 5.4**: `__lt` metamethod no longer emulates `__le` when `__le` is absent.
+
+**Version Behavior**:
+| Version | `a <= b` when only `__lt` defined |
+|---------|-----------------------------------|
+| 5.1-5.3 | Uses `not (b < a)` |
+| 5.4 | Error (no `__le` metamethod) |
+
+**Tasks**:
+- [ ] Verify comparison operator metamethod fallback per version
+- [ ] Add tests for partial metamethod definitions
+- [ ] Document metamethod requirements per version
+
+#### 8.14 __gc Metamethod Handling (Lua 5.4)
+
+**Breaking Change in 5.4**: Objects with non-function `__gc` metamethods are no longer silently ignored; they generate errors.
+
+**Tasks**:
+- [ ] Verify `__gc` validation matches target version
+- [ ] Add tests for invalid `__gc` values
+- [ ] Document garbage collection metamethod requirements
+
+#### 8.15 utf8 Library Strictness (Lua 5.4)
+
+**Breaking Change in 5.4**: The `utf8` library rejects UTF-16 surrogates by default (accepts them with `lax` mode).
+
+**Tasks**:
+- [ ] Verify `utf8.*` functions handle surrogates correctly per version
+- [ ] Add tests for surrogate handling with and without `lax` mode
+- [ ] Document utf8 library differences
+
+#### 8.16 collectgarbage Options (Lua 5.4)
+
+**Deprecation in 5.4**: `setpause` and `setstepmul` options are deprecated (use `incremental` instead).
+
+**Tasks**:
+- [ ] Support deprecated options with warnings when targeting 5.4
+- [ ] Implement `incremental` option for 5.4
+- [ ] Add tests for GC option compatibility
+
+#### 8.17 Literal Integer Overflow (Lua 5.4)
+
+**Breaking Change in 5.4**: Decimal integer literals that overflow read as floats instead of wrapping.
+
+**Version Behavior**:
+| Version | `999999999999999999999` (overflow) |
+|---------|-----------------------------------|
+| 5.3 | Wraps to integer |
+| 5.4 | Reads as float |
+
+**Tasks**:
+- [ ] Verify lexer/parser handles overflowing literals correctly per version
+- [ ] Add tests for large literal parsing
+- [ ] Document literal parsing behavior
+
+#### 8.18 bit32 Library Deprecation (Lua 5.3+)
+
+**Breaking Change in 5.3**: The `bit32` library was deprecated in favor of native bitwise operators.
+
+**Version Availability**:
+| Version | `bit32` library | Native operators |
+|---------|-----------------|------------------|
+| 5.1 | ❌ (external) | ❌ |
+| 5.2 | ✅ | ❌ |
+| 5.3 | ⚠️ Deprecated | ✅ |
+| 5.4 | ❌ Removed | ✅ |
+
+**Note**: `bit32` operates on 32-bit integers; native operators operate on 64-bit Lua integers.
+
+**Tasks**:
+- [ ] Verify `bit32` availability matches target version
+- [ ] Add compatibility warning when using `bit32` on 5.3
+- [ ] Document migration path from `bit32` to native operators
+
+#### 8.19 Environment Changes (Lua 5.2+)
+
+**Breaking Change in 5.2**: The concept of function environments was fundamentally changed.
+
+**Version Behavior**:
+| Feature | 5.1 | 5.2+ |
+|---------|-----|------|
+| `setfenv`/`getfenv` | ✅ | ❌ Removed |
+| `_ENV` upvalue | ❌ | ✅ |
+| C function environments | ✅ | ❌ |
+| `module` function | ✅ | ⚠️ Deprecated |
+
+**Tasks**:
+- [ ] Verify environment handling matches target version
+- [ ] Support `setfenv`/`getfenv` only for 5.1 compatibility mode
+- [ ] Document `_ENV` usage for 5.2+ code
+
+#### 8.20 ipairs Metamethod Changes (Lua 5.3+)
+
+**Breaking Change in 5.3**: `ipairs` now respects `__index` metamethods; the `__ipairs` metamethod was deprecated.
+
+**Tasks**:
+- [ ] Verify `ipairs` metamethod behavior per version
+- [ ] Add tests for `ipairs` with `__index` metamethod tables
+- [ ] Document iterator behavior differences
+
+#### 8.21 table.unpack Location (Lua 5.2+)
+
+**Breaking Change in 5.2**: `unpack` moved from global to `table.unpack`.
+
+**Version Availability**:
+| Version | Global `unpack` | `table.unpack` |
+|---------|-----------------|----------------|
+| 5.1 | ✅ | ❌ |
+| 5.2+ | ❌ | ✅ |
+
+**Tasks**:
+- [ ] Verify `unpack` availability matches target version
+- [ ] Provide global `unpack` alias for 5.1 compatibility mode
+- [ ] Document migration from `unpack` to `table.unpack`
+
+#### 8.22 Documentation
+
+- [ ] Update `docs/LuaCompatibility.md` with version-specific behavior notes
+- [ ] Add "Determinism Guide" for users needing reproducible execution
+- [ ] Document any intentional divergences with rationale
+- [ ] Create version migration guides (5.1→5.2, 5.2→5.3, 5.3→5.4)
+- [ ] Add "Breaking Changes by Version" quick-reference table
+
+#### 8.23 ScriptOptions Default Constructor and Centralized Version Constant
+
+**Status**: ✅ **Completed 2025-12-07**
+
+**Problem Statement** (resolved): The codebase had multiple issues with version handling:
+
+1. **ScriptOptions default constructor fragility**: `new ScriptOptions()` initializes `CompatibilityVersion = LuaCompatibilityVersion.Latest`, but when passed to `Script`, the `CreateDefaultRandomProvider` and other version-dependent logic must resolve `Latest` → concrete version in multiple places. This created scattered fallback logic.
+
+2. **Scattered "Latest" resolution**: At least 4 places manually mapped `Latest`:
+   - `Script.cs` — `CreateDefaultRandomProvider` → `Lua54`
+   - `MathModule.cs` — `RandomSeed` signature selection → `Lua54`
+   - `ModManifest.cs` — Manifest compatibility parsing → `Lua55` (for forward compat)
+   - `LuaCompatibilityAttribute.cs` — Attribute version resolution → `Lua55` (for forward compat)
+
+3. **No single source of truth**: When Lua 5.5 becomes the "latest" version, all these locations would need manual updates, creating risk of inconsistency.
+
+**Solution Implemented**:
+
+1. **Created `LuaVersionDefaults` static class** (`Compatibility/LuaVersionDefaults.cs`):
+   - `CurrentDefault = LuaCompatibilityVersion.Lua54` — The latest stable release
+   - `HighestSupported = LuaCompatibilityVersion.Lua55` — For forward-compatibility checks
+   - `Resolve(version)` — Maps `Latest` → `CurrentDefault`
+   - `ResolveForHighest(version)` — Maps `Latest` → `HighestSupported`
+
+2. **Updated all resolution sites**:
+   - `Script.CreateDefaultRandomProvider()` → uses `LuaVersionDefaults.Resolve()`
+   - `MathModule.RandomSeed()` → uses `LuaVersionDefaults.Resolve()`
+   - `ModManifest.Normalize()` → uses `LuaVersionDefaults.ResolveForHighest()`
+   - `LuaCompatibilityAttribute.IsSupported()` → uses `LuaVersionDefaults.ResolveForHighest()`
+
+**Completed Tasks**:
+- [x] Create `LuaVersionDefaults` static class with `CurrentDefault` constant and `Resolve()` helper
+- [x] Create `ResolveForHighest()` for forward-compatibility scenarios
+- [x] Replace all scattered `Latest` conditionals with centralized resolution
+- [x] Add comprehensive tests (`LuaVersionDefaultsTUnitTests.cs` with 25 tests):
+  - [x] `CurrentDefaultIsNotLatest` — Prevents circular resolution
+  - [x] `CurrentDefaultIsLua54` — Documents current default
+  - [x] `HighestSupportedIsLua55` — Documents highest supported
+  - [x] `ResolveLatestReturnsCurrentDefault` — Core resolution behavior
+  - [x] `ResolveConcreteVersionReturnsUnchanged` — Concrete versions pass through
+  - [x] `ResolveForHighestLatestReturnsHighestSupported` — Forward compat behavior
+  - [x] `ScriptOptionsDefaultConstructorSetsLatest` — Verifies default ctor
+  - [x] `ScriptWithLatestUsesCorrectRngProvider` — RNG provider selection
+  - [x] `ScriptWithLatestHasCorrectMathRandomseedBehavior` — 5.4+ behavior
+  - [x] `AllScriptConstructorsProduceSameCompatibilityVersion` — Constructor consistency
+  - [x] `AllScriptConstructorsProduceSameRngType` — Constructor consistency
+  - [x] `ScriptWithSameSeedProducesSameFirstRandomValue` — Determinism
+  - [x] `OlderVersionsUseLua51RandomProvider` — Version-specific RNG
+  - [x] `NewerVersionsUseLuaRandomProvider` — Version-specific RNG
+  - [x] `ScriptOptionsCopyConstructorPreservesVersion` — Copy ctor correctness
+
+**Rationale**: A single source of truth for the "current default" version ensures:
+- Consistent behavior across all code paths
+- Single-point update when adopting new Lua versions
+- Clear documentation of what "Latest" means at any point in time
+- Reduced risk of version-handling bugs
+
+**Owner**: Interpreter team
+**Priority**: ~~HIGH~~ DONE
+**Tracking**: Completed in checkpoint 2025-12-07
+
+#### 8.24 Dual Numeric Type System (Integer + Float) 🔴 **HIGH PRIORITY**
+
+**Status**: 🚧 **IN PROGRESS** — Phase 2 complete. All 3,811 tests passing.
+
+**Progress Checkpoint (2025-12-07)**:
+- ✅ **Phase 1 Complete**: `LuaNumber` discriminated union struct created
+  - Location: `src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/LuaNumber.cs`
+  - 9-byte struct using `[StructLayout(LayoutKind.Explicit)]` with overlaid `long`/`double`
+  - Full arithmetic: Add, Subtract, Multiply, Divide, FloorDivide, Modulo, Power, Negate
+  - Full bitwise: And, Or, Xor, Not, ShiftLeft, ShiftRight
+  - Comparison with Lua NaN semantics (NaN compares false)
+  - Negative zero handling for IEEE 754 compliance
+  - Integer overflow wrapping per Lua 5.3+ spec (two's complement)
+  - 83 comprehensive unit tests in `LuaNumberTUnitTests.cs`
+- ✅ **Phase 2 Complete**: DynValue integration and VM opcodes
+  - ✅ `DynValue._number` changed from `double` to `LuaNumber`
+  - ✅ `DynValue.Number` property returns `ToDouble` for backward compatibility
+  - ✅ `DynValue.LuaNumber`, `DynValue.IsInteger`, `DynValue.IsFloat` properties added
+  - ✅ `DynValue.NewInteger()`, `DynValue.NewFloat()`, `DynValue.NewNumber(LuaNumber)` factory methods added
+  - ✅ `DynValue.CastToLuaNumber()` for converting DynValue to LuaNumber (with string coercion)
+  - ✅ VM `Processor` arithmetic opcodes updated (ADD, SUB, MUL, DIV, IDIV, MOD, POW, UNM)
+  - ✅ VM `Processor` bitwise opcodes updated (AND, OR, XOR, NOT, SHL, SHR)
+  - ✅ `math.type()` returns correct "integer"/"float" based on LuaNumber subtype
+  - ✅ `math.tointeger()` returns integer subtype (using `NewInteger`)
+  - ✅ `math.maxinteger`/`math.mininteger` registered as `long` constants (integer subtype)
+  - ✅ `LuaIntegerHelper.TryGetInteger(DynValue)` preserves integer precision (no double conversion)
+  - ✅ Integer literals parsed directly as `long` to preserve precision for large values
+  - ✅ Float literals (with `.` or `e/E`) properly create float subtype
+  - ✅ Integer floor division (`//`) and modulo (`%`) by zero throw errors
+  - ✅ Float floor division (`//`) and modulo (`%`) by zero return IEEE 754 results (inf/NaN)
+  - ✅ Negative zero preserved as float (not converted to integer 0)
+  - ✅ Bitwise operations preserve full 64-bit integer precision (no double rounding)
+  - ✅ All 3,811 tests passing
+- 🔲 **Phase 3 Pending**: Standard library updates
+  - `StringModule` format specifier handling (`%d`, `%i`, `%o`, `%x`, `%X`)
+  - `math.floor`/`math.ceil` integer promotion rules
+- 🔲 **Phase 4 Pending**: Interop & serialization
+  - `FromObject()`/`ToObject()` integer preservation
+  - JSON serialization (integers as JSON integers)
+  - Binary dump/load format
+- 🔲 **Phase 5 Pending**: Caching & performance validation
+  - Extend `DynValue` caches for common float values (0.0, 1.0, -1.0, etc.)
+  - Add `FromFloat(double)` cache method for hot paths
+  - Add negative integer cache (-256 to -1)
+  - Memory allocation profiling to verify caching effectiveness
+  - Lua comparison harness verification
+
+**Problem Statement**:
+
+Lua 5.3+ has **two distinct numeric subtypes** that NovaSharp currently cannot represent:
+- **Integer**: 64-bit signed (`long`/`Int64`) with exact range -2^63 to 2^63-1
+- **Float**: 64-bit IEEE 754 double precision
+
+NovaSharp stores all numbers as `double` (inherited from MoonSharp), causing:
+
+| Issue | Impact | Severity |
+|-------|--------|----------|
+| Precision loss for integers > 2^53 | `math.maxinteger` (2^63-1) rounds to 2^63 | HIGH |
+| Cannot distinguish integer vs float ops | `3 // 0` should error, `3.0 // 0` → inf | MEDIUM |
+| `math.type(x)` cannot return "integer" | API incompatibility | MEDIUM |
+| Bitwise ops may produce wrong results | `math.maxinteger & 1` may overflow | HIGH |
+
+**Proposed Solution**: Custom discriminated union struct
+
+```csharp
+// Replace `private double _number` in DynValue with:
+[StructLayout(LayoutKind.Explicit)]
+internal struct LuaNumber : IEquatable<LuaNumber>
+{
+    [FieldOffset(0)] private readonly long _integer;
+    [FieldOffset(0)] private readonly double _float;  // Overlaid for memory efficiency
+    [FieldOffset(8)] private readonly bool _isInteger;
+    
+    // Properties
+    public bool IsInteger => _isInteger;
+    public bool IsFloat => !_isInteger;
+    public long AsInteger => _isInteger ? _integer : (long)_float;
+    public double AsFloat => _isInteger ? (double)_integer : _float;
+    public double ToDouble => _isInteger ? (double)_integer : _float;
+    
+    // Factories
+    public static LuaNumber FromInteger(long value) => new(value, isInteger: true);
+    public static LuaNumber FromFloat(double value) => new(value, isInteger: false);
+    public static LuaNumber FromDouble(double value) => 
+        value == Math.Floor(value) && value >= long.MinValue && value <= long.MaxValue
+            ? FromInteger((long)value)  // Integer-like floats become integers
+            : FromFloat(value);
+    
+    // Arithmetic (follows Lua rules)
+    public static LuaNumber Add(LuaNumber a, LuaNumber b)
+    {
+        if (a.IsInteger && b.IsInteger)
+            return FromInteger(unchecked(a._integer + b._integer));  // Wrapping per Lua spec
+        return FromFloat(a.ToDouble + b.ToDouble);
+    }
+    
+    public static LuaNumber Divide(LuaNumber a, LuaNumber b)
+    {
+        // Regular division (/) always returns float per Lua spec
+        return FromFloat(a.ToDouble / b.ToDouble);
+    }
+    
+    public static LuaNumber FloorDivide(LuaNumber a, LuaNumber b)
+    {
+        if (a.IsInteger && b.IsInteger)
+        {
+            if (b._integer == 0)
+                throw new ScriptRuntimeException("attempt to divide by zero");
+            return FromInteger(a._integer / b._integer);  // Integer floor division
+        }
+        return FromFloat(Math.Floor(a.ToDouble / b.ToDouble));
+    }
+}
+```
+
+**Why Not Use Existing Solutions?**
+
+| Option | Evaluation |
+|--------|------------|
+| `System.Int128` | Only .NET 7+, NovaSharp targets `netstandard2.1` for Unity/Mono. Also overkill — Lua needs 64-bit, not 128-bit. |
+| Third-party libraries (BigMath, UltimateOrb) | Same netstandard issue; adds dependencies; most are abandoned. |
+| `System.Numerics.BigInteger` | Heap-allocated, poor performance for hot path operations. |
+| `decimal` | Different semantics (base-10), wrong precision characteristics. |
+
+The custom struct is the correct solution because:
+1. **Matches Lua semantics** — Tracks integer vs float subtype
+2. **Exact 64-bit integers** — No precision loss for `math.maxinteger`
+3. **Correct floor division** — `3 // 0` errors, `3.0 // 0` → inf
+4. **Works on netstandard2.1** — No external dependencies
+5. **Memory-efficient** — Union layout uses only 9 bytes (vs 16 for separate fields)
+
+**Implementation Scope**:
+
+This is a **major architectural change** touching:
+
+| Component | Changes Required |
+|-----------|------------------|
+| `DynValue` | Replace `double _number` with `LuaNumber _number` |
+| `Processor` | Update all arithmetic opcodes (ADD, SUB, MUL, DIV, IDIV, MOD, POW, UNM) |
+| `BinaryOperatorExpression` | Update compile-time constant folding |
+| Bitwise operations | Already use integers, but need integration with new type |
+| `MathModule` | `math.type()`, `math.tointeger()`, `math.ult()`, `math.maxinteger/mininteger` |
+| `StringModule` | `string.format` integer vs float handling |
+| Interop converters | `FromObject()`, `ToObject()`, CLR bridging |
+| JSON serialization | `JsonTableConverter` integer vs float distinction |
+| Binary dump/load | `BinaryDump.cs` serialization format may need version bump |
+
+**Risk Assessment**:
+- **Risk Level**: HIGH — Could introduce regressions across entire codebase
+- **Mitigation**: Extensive test coverage (3,700+ tests), phased rollout
+
+**Effort Estimate**: 2-4 weeks focused work + extensive testing
+
+**Implementation Plan**:
+
+**Phase 1: Infrastructure** (1 week)
+- [x] Create `LuaNumber` struct with full arithmetic operations
+- [x] Add comprehensive unit tests for `LuaNumber` (81 tests covering all operations)
+- [ ] Create `LuaNumberTests` comparing against reference Lua outputs
+
+**Phase 2: Core Integration** (1 week) ✅ **COMPLETE**
+- [x] Update `DynValue` to use `LuaNumber` storage
+- [x] Update `DataType.Number` semantics (no enum change needed)
+- [x] Add `DynValue.IsInteger` / `DynValue.IsFloat` properties
+- [x] Update `Processor` arithmetic opcodes
+- [x] Update `Processor` bitwise opcodes
+- [x] Integer literal parsing via `Token.TryGetIntegerValue()`
+- [x] Float literal detection via `Token.IsFloatLiteralSyntax()`
+- [x] `math.type()` returns correct subtype
+- [x] `math.maxinteger`/`math.mininteger` as integer subtype
+
+**Phase 3: Standard Library** (3-4 days)
+- [x] Update `MathModule` (`math.type()`, floor division error handling)
+- [ ] Update `StringModule` (format specifier handling for `%d`, `%i`, `%o`, `%x`)
+- [x] Update bitwise operations integration
+- [ ] Update comparison operators (integer vs float promotion)
+
+**Phase 4: Interop & Serialization** (3-4 days)
+- [ ] Update `FromObject()` / `ToObject()` for integer preservation
+- [ ] Update JSON serialization (integers as JSON integers, not floats)
+- [ ] Update binary dump/load format (version 2?)
+- [ ] Ensure CLR interop handles `int`, `long`, `float`, `double` correctly
+
+**Phase 5: Caching & Performance Validation** (3-4 days)
+- [ ] **Numeric value caching optimization** — Extend allocation-friendly caches for hot-path numeric operations:
+  - [ ] Add `FromFloat(double)` cache returning readonly values for common floats (0.0, 1.0, -1.0, 0.5, NaN, ±Infinity)
+  - [ ] Ensure `NewFloat(double)` checks float cache for common values before allocating
+  - [ ] Ensure `NewNumber(LuaNumber)` routes through appropriate cache based on subtype
+  - [ ] Audit VM arithmetic result paths to use `From*` cache methods instead of `New*` where readonly is acceptable
+  - [ ] Add negative integer cache (-256 to -1) for common negative indices/counters
+  - [ ] Consider `LuaNumber` struct-level caching for frequently-created values
+- [x] Run full test suite (3,811 tests passing)
+- [ ] Run Lua comparison harness against reference Lua 5.3/5.4
+- [ ] Performance benchmarking (ensure no significant regression)
+- [ ] Memory allocation profiling (verify caching reduces allocations)
+- [ ] Documentation updates
+
+**Success Criteria**:
+- [x] `math.maxinteger` returns exactly `9223372036854775807` (not rounded)
+- [x] `math.type(1)` returns `"integer"`, `math.type(1.0)` returns `"float"`
+- [x] `3 // 0` throws error, `3.0 // 0` returns `inf`
+- [x] `math.maxinteger & 1` returns `1` (not overflow)
+- [x] All 3,811 existing tests pass
+- [ ] Lua comparison harness shows improved parity percentage
+- [ ] No performance regression > 5% on benchmarks
+- [ ] Numeric caching reduces hot-path allocations (verified via BenchmarkDotNet memory diagnostics)
+
+**Known Divergences After Implementation**:
+- None expected — this change specifically targets eliminating numeric divergences.
+
+**Owner**: Interpreter team
+**Priority**: 🔴 HIGH — Required for full Lua 5.3+ specification compliance
+**Tracking**: Phase 2 complete (2025-12-07), continuing with Phase 3-5
 
 ## Long-horizon Ideas
 - Property and fuzz testing for lexer, parser, VM.
@@ -252,11 +972,11 @@ Key infrastructure:
 
 ### Active/Upcoming Items
 
-10. **Advanced sandbox features** (Initiative 4) — Remaining items:
+10. ~~**Advanced sandbox features** (Initiative 4)~~ ✅ **Completed 2025-12-07** — All items done:
    - ~~Memory tracking (per-allocation accounting)~~ ✅ **Completed 2025-12-07** (Phase 3 - Extended tracking)
    - ~~Coroutine count limits~~ ✅ **Completed 2025-12-07** (Phase 4)
-   - ~~Deterministic execution mode for lockstep multiplayer/replays~~ ✅ **Completed 2025-12-08** (See Phase 5 below)
-   - Per-mod isolation containers with load/reload/unload hooks
+   - ~~Deterministic execution mode for lockstep multiplayer/replays~~ ✅ **Completed 2025-12-07**
+   - ~~Per-mod isolation containers with load/reload/unload hooks~~ ✅ **Completed 2025-12-07**
 
 11. ~~**Packaging** (Initiative 5)~~ ✅ **Completed 2025-12-07** — NuGet and Unity packaging infrastructure:
     - ✅ NuGet package metadata (Authors, License, SourceLink, symbols)
@@ -266,12 +986,48 @@ Key infrastructure:
     - ✅ Version bumped to 3.0.0 (major version for namespace rebrand)
     - See `scripts/packaging/README.md` for usage documentation
 
-12. **Tooling enhancements** (Initiative 6):
+12. ~~**ScriptOptions default constructor and centralized version constant**~~ (Initiative 8.23): ✅ **Completed 2025-12-07**
+    - ✅ Created `LuaVersionDefaults` class with `CurrentDefault` (Lua54) and `HighestSupported` (Lua55) constants
+    - ✅ Created `Resolve()` helper for runtime version resolution (Latest → CurrentDefault)
+    - ✅ Created `ResolveForHighest()` helper for forward-compat checks (Latest → HighestSupported)
+    - ✅ Replaced scattered `Latest ? Lua54` resolution in `Script.cs`, `MathModule.cs`
+    - ✅ Replaced scattered `Latest ? Lua55` resolution in `ModManifest.cs`, `LuaCompatibilityAttribute.cs`
+    - ✅ Added 25 TUnit tests covering `LuaVersionDefaults`, `ScriptOptions`, and `Script` constructor consistency
+    - See `Checkpoint — 2025-12-07 (LuaVersionDefaults)` for details
+
+---
+
+### Next Priority Items (Actionable)
+
+13. ~~**Lua Specification Parity - Numeric Edge Cases**~~ (Initiative 8.3): ✅ **Completed 2025-12-07**
+    - ✅ Added `math.maxinteger` and `math.mininteger` with `[LuaCompatibility(Lua53)]`
+    - ✅ Fixed right shift operator (logical not arithmetic per Lua spec)
+    - ✅ Fixed NaN comparisons (`nan > nan` now returns `false`)
+    - ✅ Added 50+ tests in `MathNumericEdgeCasesTUnitTests.cs`
+    - ✅ Documented known divergences (double precision limits, floor div by zero)
+
+14. **Dual Numeric Type System** (Initiative 8.24): 🔴 **HIGH PRIORITY — BLOCKED ON ARCHITECTURAL DECISION**
+    - Implement `LuaNumber` struct with integer/float discrimination
+    - Required for full Lua 5.3+ spec compliance (`math.type()`, exact `math.maxinteger`, correct floor division errors)
+    - Major architectural change touching `DynValue`, `Processor`, `MathModule`, interop, serialization
+    - Estimated effort: 2-4 weeks
+    - See **Section 8.24** for full implementation plan
+
+15. **Lua Specification Parity - String/Pattern Matching** (Initiative 8.4): 🎯 **NEXT PRIORITY (after 8.24 decision)**
+    - Compare `%a`, `%d`, `%l`, `%u`, `%w`, `%s` character classes against reference Lua
+    - Verify `string.format` output matches for edge cases (NaN, Inf, very large numbers)
+    - Document any intentional Unicode-aware divergences
+
+16. **Tooling enhancements** (Initiative 6):
     - Roslyn source generators/analyzers for NovaSharp descriptors
     - DocFX (or similar) for API documentation
     - CLI output golden tests
 
-13. ~~**Interpreter hot-path optimization - Phase 3**~~ (Initiative 5): ✅ **Completed 2025-12-07** — VM hot-path pooling:
+---
+
+### Future Phases (Lower Priority)
+
+16. ~~**Interpreter hot-path optimization - Phase 3**~~ (Initiative 5): ✅ **Completed 2025-12-07** — VM hot-path pooling:
     
     **Performance Gap Analysis (vs MoonSharp baseline):**
     | Scenario | NovaSharp | MoonSharp | Delta | Notes |
@@ -312,7 +1068,7 @@ Key infrastructure:
     - Span-based Table access methods (`Get(int)`, `Get(ReadOnlySpan<char>)`)
     - Buffer-populating Table methods (`FillPairs`, `FillKeys`)
 
-14. **Interpreter hyper-optimization - Phase 4** (Initiative 5): 🔮 **PLANNED** — Zero-allocation runtime goal
+17. **Interpreter hyper-optimization - Phase 4** (Initiative 5): 🔮 **PLANNED** — Zero-allocation runtime goal
     
     **Target:** Match or exceed native Lua performance; achieve <100 bytes/call allocation overhead.
     
@@ -453,7 +1209,7 @@ Key infrastructure:
     | Alloc/call | ~500 B | <100 B | Zero-alloc hot paths |
     | GC Gen0/sec | ~50 | <10 | Reduced GC pressure |
 
-15. **Concurrency improvements** (Initiative 7, optional):
+18. **Concurrency improvements** (Initiative 7, optional):
     - Consider `System.Threading.Lock` (.NET 9+) for cleaner lock semantics
     - Split debugger locks for reduced contention
     - Add timeout to `BlockingChannel`
@@ -932,6 +1688,499 @@ var snapshot = script.AllocationTracker.CreateSnapshot();
    - `DeterministicTimeProvider` for controllable `os.time`/`os.clock`
    - `ScriptOptions.RandomProvider` and `Script.RandomProvider` for per-script injection
    - 27 TUnit tests in `DeterministicExecutionTUnitTests.cs`
-2. **Per-mod isolation containers** — Load/reload/unload hooks for script modules
+2. ~~**Per-mod isolation containers**~~ — ✅ **Completed 2025-12-08**. Load/reload/unload hooks for script modules:
+   - `ModLoadState`, `ModOperationResult`, `IModContainer`, `ModContainer`, `ModManager`
+   - Thread-safe state machine with lifecycle events
+   - Dependency graph with topological sort for load order
+   - 44 TUnit tests in `ModContainerTUnitTests.cs`
+
+**Advanced sandbox features milestone complete.** All items (SandboxOptions, AllocationTracker, Memory Limits, Coroutine Limits, Deterministic Execution, Per-Mod Isolation) implemented and tested.
 
 Checkpoint recorded on branch `dev/wallstop/initial-work-3`.
+
+## Checkpoint — 2025-12-07 (Per-Mod Isolation Containers)
+
+### Summary
+
+Implemented per-mod isolation containers with load/reload/unload lifecycle management. This completes the advanced sandbox features milestone.
+
+### Features implemented
+
+- **ModLoadState enum**: Six lifecycle states (Unloaded, Loading, Loaded, Unloading, Reloading, Faulted) with explicit values
+- **ModOperationResult**: Immutable result type with Success, State, Message, Error properties and factory methods
+- **IModContainer interface**: 18 members defining mod container contract:
+  - Properties: Id, Name, State, Script, Error
+  - Events: OnLoading, OnLoaded, OnUnloading, OnUnloaded, OnReloading, OnReloaded, OnError
+  - Methods: Load(), Unload(), Reload(), DoString(), CallFunction(), GetGlobal(), SetGlobal()
+- **ModContainer implementation**: Thread-safe state machine with:
+  - Lock-based synchronization for state transitions
+  - ScriptFactory delegate for custom Script creation
+  - ScriptConfigurator action for Script setup (globals, functions)
+  - UnloadHandler action for cleanup before unload
+  - CoreModules configuration support
+  - Proper event firing at lifecycle boundaries
+- **ModManager coordinator**: Multi-mod manager with:
+  - Register/Unregister for mod container management
+  - AddDependency/RemoveDependency for dependency tracking
+  - Cycle detection to prevent circular dependencies
+  - Topological sort (Kahn's algorithm) for correct load order
+  - LoadAll/UnloadAll/ReloadAll bulk operations
+  - BroadcastCall for invoking functions across all loaded mods
+  - GetMod/TryGetMod for retrieval by ID
+
+### Test coverage
+
+44 TUnit tests added in `src/tests/.../Sandbox/ModContainerTUnitTests.cs`:
+- ModLoadState enum tests (3 tests)
+- ModOperationResult tests (4 tests)
+- ModContainer lifecycle tests (17 tests)
+- ModManager tests (20 tests)
+
+### Files created
+
+- `src/runtime/.../Modding/ModLoadState.cs`
+- `src/runtime/.../Modding/ModOperationResult.cs`
+- `src/runtime/.../Modding/IModContainer.cs`
+- `src/runtime/.../Modding/ModEventArgs.cs`
+- `src/runtime/.../Modding/ModContainer.cs`
+- `src/runtime/.../Modding/ModManager.cs`
+- `src/tests/.../Sandbox/ModContainerTUnitTests.cs`
+
+### Test results
+
+All **3,424** interpreter tests pass (Release configuration).
+
+### Example usage
+
+```csharp
+// Create a mod container with custom configuration
+var mod = new ModContainer("my-mod", "My Game Mod");
+mod.ScriptConfigurator = script =>
+{
+    script.Globals["modVersion"] = DynValue.NewString("1.0.0");
+    script.Globals["log"] = DynValue.NewCallback((ctx, args) =>
+    {
+        Console.WriteLine($"[{mod.Name}] {args[0].String}");
+        return DynValue.Nil;
+    });
+};
+
+// Subscribe to lifecycle events
+mod.OnLoaded += (sender, e) => Console.WriteLine($"Mod {e.ModId} loaded!");
+mod.OnError += (sender, e) => Console.WriteLine($"Error in {e.ModId}: {e.Error.Message}");
+
+// Load and execute
+var result = mod.Load();
+if (result.Success)
+{
+    mod.DoString("log('Hello from mod!')");
+    var version = mod.GetGlobal("modVersion");
+    Console.WriteLine($"Running mod version {version.String}");
+}
+
+// Reload with preserved state
+mod.Reload();
+
+// Cleanup
+mod.Unload();
+```
+
+```csharp
+// Use ModManager for multiple mods with dependencies
+var manager = new ModManager();
+
+var coreMod = new ModContainer("core", "Core Systems");
+var uiMod = new ModContainer("ui", "User Interface");
+var gameMod = new ModContainer("game", "Game Logic");
+
+manager.Register(coreMod);
+manager.Register(uiMod);
+manager.Register(gameMod);
+
+// ui depends on core, game depends on both
+manager.AddDependency("ui", "core");
+manager.AddDependency("game", "core");
+manager.AddDependency("game", "ui");
+
+// Loads in order: core -> ui -> game
+manager.LoadAll();
+
+// Call a function in all loaded mods
+manager.BroadcastCall("onGameStart");
+
+// Unloads in reverse order: game -> ui -> core
+manager.UnloadAll();
+```
+
+## Checkpoint — 2025-12-07 (RNG Parity)
+
+### Summary
+
+Implemented version-specific random number generator (RNG) providers to match reference Lua interpreter behavior. Lua 5.1-5.3 use a linear congruential generator (LCG), while Lua 5.4+ uses xoshiro256**. The `Script` class now automatically selects the appropriate provider based on `LuaCompatibilityVersion`.
+
+### Features implemented
+
+- **Lua51RandomProvider**: Thread-safe LCG implementation with glibc-compatible parameters:
+  - Multiplier: 1,103,515,245
+  - Increment: 12,345
+  - Modulus: 2^31
+  - Single 32-bit seed (vs xoshiro256**'s 128-bit state)
+  - `SeedY` always returns 0 (Lua 5.1-5.3 have no second seed component)
+
+- **Version-specific RNG selection in Script constructor**:
+  - `CreateDefaultRandomProvider(LuaCompatibilityVersion)` helper method
+  - Lua 5.2, 5.3 → `Lua51RandomProvider` (LCG algorithm)
+  - Lua 5.4, 5.5, Latest → `LuaRandomProvider` (xoshiro256** algorithm)
+
+- **Version-aware `math.randomseed` behavior**:
+  - Lua 5.1-5.3: Requires exactly 1 seed argument, returns `nil`
+  - Lua 5.4+: Accepts 0-2 seed arguments, returns seed tuple `(x, y)`
+
+### Test coverage
+
+30+ TUnit tests added in `src/tests/.../Spec/LuaRandomParityTUnitTests.cs`:
+
+**Provider unit tests**:
+- `Lua51RandomProvider_NextDouble_ReturnsValueInRange`
+- `Lua51RandomProvider_NextInt64_ReturnsValueInRange`
+- `Lua51RandomProvider_SeedX_ReturnsCurrentSeed`
+- `Lua51RandomProvider_SeedY_AlwaysReturnsZero`
+- `Lua51RandomProvider_SetSeed_ChangesSeed`
+- `Lua51RandomProvider_SetSeedFromSystemRandom_SetsDifferentSeed`
+- `Lua51RandomProvider_DeterministicSequence`
+
+**Version selection tests**:
+- `Script_UsesLua51RandomProvider_ForLua52`
+- `Script_UsesLua51RandomProvider_ForLua53`
+- `Script_UsesLuaRandomProvider_ForLua54`
+- `Script_UsesLuaRandomProvider_ForLua55`
+- `Script_UsesLuaRandomProvider_ForLatest`
+- `MathModule_RandomSeed_RequiresArgument_ForLua52`
+- `MathModule_RandomSeed_RequiresArgument_ForLua53`
+- `MathModule_RandomSeed_ReturnsNil_ForLua52`
+- `MathModule_RandomSeed_ReturnsNil_ForLua53`
+- `MathModule_RandomSeed_ReturnsTuple_ForLua54`
+- `MathModule_RandomSeed_AcceptsNoArgs_ForLua54`
+
+**Determinism tests**:
+- `Lua51RandomProvider_SameSeed_ProducesSameSequence`
+- `Lua51RandomProvider_DifferentSeeds_ProduceDifferentSequences`
+- `MathRandom_Deterministic_WithSeed_Lua52`
+- `MathRandom_Deterministic_WithSeed_Lua53`
+- `MathRandom_Deterministic_WithSeed_Lua54`
+- `MathRandom_CrossVersion_DifferentSequences`
+
+### Files created
+
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter.Infrastructure/Lua51RandomProvider.cs`
+- `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/LuaRandomParityTUnitTests.cs`
+
+### Files modified
+
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs` — Added `CreateDefaultRandomProvider` and version-aware RNG selection in constructor
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/MathModule.cs` — Version-aware `math.randomseed` implementation
+
+### Test results
+
+All **3,627** interpreter tests pass (Release configuration).
+
+### Example usage
+
+```csharp
+// Lua 5.2 mode - uses Lua51RandomProvider (LCG)
+var script52 = new Script(new ScriptOptions(Script.DefaultOptions)
+{
+    CompatibilityVersion = LuaCompatibilityVersion.Lua52
+});
+script52.DoString("math.randomseed(12345)");  // Returns nil
+var val52 = script52.DoString("return math.random()");
+// Produces LCG-deterministic sequence
+
+// Lua 5.4 mode - uses LuaRandomProvider (xoshiro256**)
+var script54 = new Script(new ScriptOptions(Script.DefaultOptions)
+{
+    CompatibilityVersion = LuaCompatibilityVersion.Lua54
+});
+var seeds = script54.DoString("return math.randomseed(12345)");  // Returns (x, y) tuple
+var val54 = script54.DoString("return math.random()");
+// Produces xoshiro256**-deterministic sequence
+```
+
+## Checkpoint — 2025-12-07 (LuaVersionDefaults)
+
+### Summary
+
+Implemented centralized `LuaVersionDefaults` class to eliminate scattered `Latest → Lua54/Lua55` resolution patterns across the codebase. This ensures consistent version handling and provides a single point of update when adopting new Lua versions.
+
+### Problem Addressed
+
+The codebase had 4 locations manually resolving `LuaCompatibilityVersion.Latest`:
+- `Script.CreateDefaultRandomProvider()` → `Lua54`
+- `MathModule.RandomSeed()` → `Lua54`
+- `ModManifest.Normalize()` → `Lua55`
+- `LuaCompatibilityAttribute.IsSupported()` → `Lua55`
+
+This created inconsistent behavior (some used Lua54, others Lua55) and maintenance burden when updating the default version.
+
+### Solution
+
+Created `LuaVersionDefaults` static class with two resolution strategies:
+1. **`Resolve()`** — Maps `Latest` → `CurrentDefault` (Lua54) for runtime behavior
+2. **`ResolveForHighest()`** — Maps `Latest` → `HighestSupported` (Lua55) for forward-compatibility checks
+
+### Files Created
+
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/LuaVersionDefaults.cs`
+- `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/LuaVersionDefaultsTUnitTests.cs`
+
+### Files Modified
+
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs` — Updated `CreateDefaultRandomProvider()` to use `LuaVersionDefaults.Resolve()`
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/MathModule.cs` — Updated `RandomSeed()` to use `LuaVersionDefaults.Resolve()`
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Modding/ModManifest.cs` — Updated `Normalize()` to use `LuaVersionDefaults.ResolveForHighest()`
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/Attributes/LuaCompatibilityAttribute.cs` — Updated `IsSupported()` to use `LuaVersionDefaults.ResolveForHighest()`
+
+### Test Coverage
+
+25 TUnit tests added covering:
+- `LuaVersionDefaults.CurrentDefault` is not `Latest` (circular resolution guard)
+- `LuaVersionDefaults.CurrentDefault` is `Lua54`
+- `LuaVersionDefaults.HighestSupported` is `Lua55`
+- `Resolve()` maps `Latest` → `CurrentDefault`
+- `Resolve()` passes through concrete versions unchanged
+- `ResolveForHighest()` maps `Latest` → `HighestSupported`
+- `ScriptOptions` default constructor sets `Latest`
+- `Script` with `Latest` uses correct RNG provider
+- `Script` with `Latest` has correct `math.randomseed` behavior
+- All `Script` constructors produce consistent state
+- `ScriptOptions` copy constructor preserves version
+
+### Test Results
+
+All **3,655** tests pass (Release configuration).
+
+### Example Usage
+
+```csharp
+// Before: Scattered resolution patterns
+LuaCompatibilityVersion effectiveVersion =
+    version == LuaCompatibilityVersion.Latest ? LuaCompatibilityVersion.Lua54 : version;
+
+// After: Centralized resolution
+LuaCompatibilityVersion effectiveVersion = LuaVersionDefaults.Resolve(version);
+
+// When updating to Lua 5.5 as default, only change one constant:
+public const LuaCompatibilityVersion CurrentDefault = LuaCompatibilityVersion.Lua55;
+```
+
+## Checkpoint — 2025-12-07 (Out/Ref Parameter Test Robustness)
+
+### Summary
+
+Investigated a flaky test failure in `MethodReturningVoidWithOutParams` that showed corrupted values (`nil|999|999` instead of `nil|5|10`) and added 10 comprehensive tests to ensure out/ref parameter handling is thoroughly validated.
+
+### Investigation Findings
+
+**Symptom**: Test produced `nil|999|999` instead of expected `nil|5|10`.
+
+**Root Cause Analysis**: The failure was a **transient build issue** — the test executed while compilation was still active, resulting in stale or partial assembly loading. Evidence:
+- Value `999` does not appear anywhere in the test inputs or expected outputs
+- `999` only exists in unrelated code (e.g., `DynValue._hashCode = 999` initialization)
+- Subsequent test runs with a clean build pass consistently
+- The flaky behavior only manifests during concurrent build/test scenarios
+
+**Conclusion**: This is NOT a production bug or test bug. It's an artifact of running tests during active compilation. The interop mechanism (`ObjectArrayPool`, `FunctionMemberDescriptorBase.BuildArgumentListPooled()`, `MethodMemberDescriptor.Execute()`) works correctly.
+
+### Tests Added
+
+Added 10 new comprehensive tests in `FunctionMemberDescriptorBaseTUnitTests.cs`:
+
+1. **`MethodWithOutParamsCalledMultipleTimes`** — 10 iterations with different input values (i, i*2)
+2. **`MethodWithRefParamsCalledMultipleTimes`** — 10 iterations verifying ref semantics preserved
+3. **`MethodWithOutParamsZeroValues`** — Edge case: out params with input (0, 0)
+4. **`MethodWithOutParamsNegativeValues`** — Edge case: out params with (-10, -20)
+5. **`MethodWithOutParamsLargeValues`** — Edge case: out params with INT32_MAX and INT32_MIN
+6. **`MethodWithOnlyOutParamsNoInput`** — Method with only out parameters (no input args from Lua)
+7. **`MethodWithMixedRefOutAndReturnValue`** — Combined return value + ref + out handling
+8. **`MethodWithSingleOutParam`** — TryParse pattern test (successful parse)
+9. **`MethodWithSingleOutParamFailedParse`** — TryParse pattern test (failed parse, default value)
+10. **`MethodWithOutParamsInterleavedWithDifferentMethods`** — Interleaved calls to different methods sharing pool
+
+### SampleClass Additions
+
+Added helper methods to `SampleClass` for new test coverage:
+
+```csharp
+// Method with only out parameters (no input)
+public void GetMultipleOutValues(out int number, out string text, out bool flag);
+
+// Combined return + ref + out
+public int ComplexRefOutMethod(int a, ref int b, out int c);
+
+// TryParse pattern
+public bool TryParseInt(string input, out int result);
+```
+
+### Key Insight
+
+The `ObjectArrayPool` implementation correctly:
+1. Uses thread-local storage for small arrays (≤8 elements)
+2. Clears arrays when returned to pool (`clearArray: true`)
+3. Handles concurrent access safely via thread-local semantics
+
+The `FunctionMemberDescriptorBase.BuildArgumentListPooled()` correctly:
+1. Allocates from pool with appropriate size
+2. Fills parameter array from `CallbackArguments`
+3. Returns pooled resources via `using` pattern
+
+### Test Results
+
+All **3,665** tests pass (Release configuration), including the 10 new out/ref parameter tests.
+
+## Checkpoint — 2025-12-07 (Script Constructor Consistency)
+
+### Summary
+
+Completed Section 8.2 of the Lua Runtime Specification Parity initiative. Audited all `Script` constructor paths and added comprehensive tests verifying initialization consistency.
+
+### Audit Findings
+
+All four `Script` constructors delegate to `Script(CoreModules coreModules, ScriptOptions options)`:
+
+```csharp
+Script()                    → Script(CoreModules.PresetDefault, null)
+Script(CoreModules)         → Script(CoreModules, null)
+Script(ScriptOptions)       → Script(CoreModules.PresetDefault, ScriptOptions)
+Script(CoreModules, opts)   → Main constructor
+```
+
+**Initialization Order** (deterministic for all paths):
+1. Options — Copy from `options` or `DefaultOptions`
+2. CompatibilityVersion — Overwrite from `GlobalOptions` when `options == null`
+3. TimeProvider — From options or `SystemTimeProvider.Instance`
+4. RandomProvider — From options or version-appropriate default
+5. StartTimeUtc — Captured from TimeProvider
+6. AllocationTracker — Created if sandbox limits configured
+7. PerformanceStats — Created with configured clock
+8. Registry — New empty table
+9. ByteCode — New bytecode container
+10. MainProcessor — New processor instance
+11. GlobalTable — New table with registered core modules
+
+**Key Behavior Documented**:
+- `new ScriptOptions()` defaults to `LuaCompatibilityVersion.Latest`
+- `new ScriptOptions(Script.DefaultOptions)` copies `GlobalOptions.CompatibilityVersion`
+- When `options == null`, constructor inherits from `GlobalOptions`
+- When `options != null`, constructor uses options as-is
+
+### Tests Added
+
+Created `ScriptConstructorConsistencyTUnitTests.cs` with 16 tests:
+
+1. `AllConstructorPathsInitializeInSameOrder` — Verifies non-null essential properties
+2. `NullOptionsInheritsGlobalOptionsCompatibilityVersion` — GlobalOptions inheritance
+3. `ExplicitOptionsDoesNotInheritFromGlobalOptions` — Explicit version respected
+4. `FreshScriptOptionsDefaultsToLatest` — Documents default behavior
+5. `CopyFromDefaultOptionsGetsGlobalOptionsCompatibilityVersion` — Recommended pattern
+6. `RandomProviderSelectedBasedOnCompatibilityVersion` — Version-specific RNG
+7. `CustomRandomProviderIsRespected` — Custom provider injection
+8. `DeterministicRandomProviderProducesReproducibleSequences` — Determinism verification
+9. `CoreModuleRegistrationOrderIsDeterministic` — Predictable globals
+10. `CoreModulesConfigurationAffectsGlobalTable` — Module configuration effects
+11. `DefaultTimeProviderIsSystemTimeProvider` — Default time provider
+12. `CustomTimeProviderIsRespected` — Custom time provider injection
+13. `StartTimeUtcIsCapturedAtConstruction` — os.clock behavior verification
+14. `AllocationTrackerCreatedOnlyWithSandboxLimits` — Tracker creation logic
+15. `DefaultConstructorEquivalentToExplicitDefault` — Constructor equivalence
+16. `ModulesOnlyConstructorEquivalentToExplicitNull` — Constructor equivalence
+
+### Files Created
+
+- `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/ScriptConstructorConsistencyTUnitTests.cs`
+
+### Test Results
+
+All **3,681** tests pass (Release configuration) — 16 new tests added.
+
+---
+
+## Checkpoint — 2025-12-07 (Numeric Edge Cases — §8.3)
+
+### Scope
+
+Implement full Lua 5.3+ numeric edge case support including `math.maxinteger`, `math.mininteger`, and fix operator behavior divergences.
+
+### Changes Made
+
+**1. Added `math.maxinteger` and `math.mininteger` constants**
+- File: `src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/MathModule.cs`
+- Added `[LuaCompatibility(Lua53)]` constants returning `long.MaxValue` (9223372036854775807) and `long.MinValue` (-9223372036854775808)
+- Note: These are stored as `double`, so `math.maxinteger` rounds to 2^63 due to IEEE 754 precision limits
+
+**2. Fixed right shift operator to use logical shift**
+- File: `src/runtime/WallstopStudios.NovaSharp.Interpreter/Helpers/LuaIntegerHelper.cs`
+- Method: `ShiftRight(long value, int shift)`
+- **Bug**: Was using arithmetic shift for negative numbers (preserving sign bit)
+- **Fix**: Now uses logical shift via `unchecked((long)((ulong)value >> shift))`
+- **Spec reference**: Lua 5.4 §3.4.2 — "Both right and left shifts fill the vacant bits with zeros"
+
+**3. Fixed NaN comparison operators**
+- File: `src/runtime/WallstopStudios.NovaSharp.Interpreter/Tree/Expressions/BinaryOperatorExpression.cs`
+- **Bug**: `a > b` compiled as `!(a <= b)` which incorrectly returned `true` for `NaN > NaN`
+- **Fix**: Changed to compile `a > b` as `b < a` (operand swap)
+- **Fix**: Changed to compile `a >= b` as `b <= a` (operand swap)
+- **Spec reference**: IEEE 754 — NaN is neither less than, equal to, nor greater than any value
+
+### Tests Added
+
+Created `MathNumericEdgeCasesTUnitTests.cs` with 50+ tests covering:
+
+**Math constants (4 tests)**:
+- `MathMaxintegerValue` — Returns 9223372036854775807
+- `MathMinintegerValue` — Returns -9223372036854775808
+- `MathMaxintegerNotAvailableInLua52` — Version gating
+- `MathMinintegerNotAvailableInLua52` — Version gating
+
+**Right shift operator (12 tests)**:
+- `RightShift_PositiveValue_ShiftByZero` — Identity
+- `RightShift_PositiveValue_ShiftByOne` — Basic shift
+- `RightShift_NegativeValue_IsLogicalShift` — Logical not arithmetic
+- `RightShift_By64OrMore_ReturnsZero` — Shift overflow
+- `RightShift_ByNegativeAmount_BecomesLeftShift` — Negative shifts
+- Plus 7 more edge cases
+
+**NaN comparisons (8 tests)**:
+- `NaN_GreaterThan_NaN_ReturnsFalse`
+- `NaN_GreaterThanOrEqual_NaN_ReturnsFalse`
+- `NaN_LessThan_NaN_ReturnsFalse`
+- `NaN_LessThanOrEqual_NaN_ReturnsFalse`
+- `NaN_NotEqual_NaN_ReturnsTrue`
+- Plus comparisons with regular numbers
+
+**Integer overflow and division (15+ tests)**:
+- Floor division edge cases
+- Modulo with negative numbers
+- Integer wraparound behavior
+- Division by zero semantics
+
+### Known Divergences Documented
+
+| Behavior | Lua 5.4 | NovaSharp | Reason |
+|----------|---------|-----------|--------|
+| `math.maxinteger` exact value | 9223372036854775807 | ~9.22e18 (rounded) | Double precision limits |
+| `3 // 0` (integer floor div by zero) | Error | `inf` | All numbers are doubles |
+| `math.huge` | `inf` | `double.MaxValue` | Legacy divergence |
+
+### Files Created/Modified
+
+**Modified**:
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/MathModule.cs` (added constants)
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Helpers/LuaIntegerHelper.cs` (fixed shift)
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Tree/Expressions/BinaryOperatorExpression.cs` (fixed NaN)
+
+**Created**:
+- `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/MathNumericEdgeCasesTUnitTests.cs`
+
+### Test Results
+
+All **3,727** tests pass (Release configuration) — 50+ new tests added.

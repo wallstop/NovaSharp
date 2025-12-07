@@ -74,6 +74,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         }
 
         /// <summary>
+        /// Attempts to parse a hexadecimal integer token directly as a 64-bit signed integer.
+        /// This avoids the precision loss that occurs when parsing large values through double.
+        /// </summary>
+        /// <param name="t">The token to parse.</param>
+        /// <param name="value">When successful, contains the parsed value.</param>
+        /// <returns>true if the value fits in a signed 64-bit integer; false otherwise.</returns>
+        public static bool TryParseHexIntegerAsLong(Token t, out long value)
+        {
+            string txt = t.Text;
+            if (txt.Length < 2 || txt[0] != '0' || (txt[1] != 'x' && txt[1] != 'X'))
+            {
+                value = 0;
+                return false;
+            }
+
+            ReadOnlySpan<char> digits = txt.AsSpan(2);
+
+            // Try to parse as ulong first (handles the full 64-bit range)
+            if (
+                !ulong.TryParse(
+                    digits,
+                    NumberStyles.HexNumber,
+                    CultureInfo.InvariantCulture,
+                    out ulong res
+                )
+            )
+            {
+                value = 0;
+                return false;
+            }
+
+            // Check if it fits in signed long range or can be interpreted as negative via two's complement
+            // Values 0x8000000000000000 through 0xFFFFFFFFFFFFFFFF are interpreted as negative
+            value = unchecked((long)res);
+            return true;
+        }
+
+        /// <summary>
         /// Iterates over the hexadecimal digits at the start of <paramref name="s" />, updating the
         /// supplied accumulator and returning the remaining substring.
         /// </summary>

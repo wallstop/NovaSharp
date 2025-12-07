@@ -115,7 +115,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             _timeProvider = Options.TimeProvider ?? SystemTimeProvider.Instance;
-            _randomProvider = Options.RandomProvider ?? new LuaRandomProvider();
+            _randomProvider =
+                Options.RandomProvider ?? CreateDefaultRandomProvider(Options.CompatibilityVersion);
             _startTimeUtc = _timeProvider.GetUtcNow().UtcDateTime;
 
             // Initialize allocation tracker if memory or coroutine limits are configured
@@ -132,6 +133,28 @@ namespace WallstopStudios.NovaSharp.Interpreter
             _byteCode = new ByteCode(this);
             _mainProcessor = new Processor(this, _globalTable, _byteCode);
             _globalTable = new Table(this).RegisterCoreModules(coreModules);
+        }
+
+        /// <summary>
+        /// Creates the default random provider based on the Lua compatibility version.
+        /// Lua 5.4+ uses xoshiro256** (via <see cref="LuaRandomProvider"/>),
+        /// while Lua 5.1-5.3 use a Linear Congruential Generator (via <see cref="Lua51RandomProvider"/>).
+        /// </summary>
+        /// <param name="version">The Lua compatibility version.</param>
+        /// <returns>The appropriate random provider for the version.</returns>
+        private static IRandomProvider CreateDefaultRandomProvider(LuaCompatibilityVersion version)
+        {
+            // Resolve Latest to the current default version
+            LuaCompatibilityVersion effectiveVersion = LuaVersionDefaults.Resolve(version);
+
+            // Lua 5.4+ uses xoshiro256** (our LuaRandomProvider)
+            // Lua 5.1-5.3 used C library rand() which we emulate with LCG (Lua51RandomProvider)
+            if (effectiveVersion >= LuaCompatibilityVersion.Lua54)
+            {
+                return new LuaRandomProvider();
+            }
+
+            return new Lua51RandomProvider();
         }
 
         /// <summary>

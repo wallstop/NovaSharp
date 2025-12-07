@@ -33,20 +33,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Attributes
         /// </summary>
         internal bool IsSupported(LuaCompatibilityVersion version)
         {
-            LuaCompatibilityVersion normalizedVersion = Normalize(version);
-            LuaCompatibilityVersion normalizedMin = Normalize(MinVersion);
-            LuaCompatibilityVersion normalizedMax = Normalize(MaxVersion);
+            LuaCompatibilityVersion normalizedVersion = LuaVersionDefaults.ResolveForHighest(
+                version
+            );
+            LuaCompatibilityVersion normalizedMin = LuaVersionDefaults.ResolveForHighest(
+                MinVersion
+            );
+            LuaCompatibilityVersion normalizedMax = LuaVersionDefaults.ResolveForHighest(
+                MaxVersion
+            );
 
             int value = GetComparableValue(normalizedVersion);
             return value >= GetComparableValue(normalizedMin)
                 && value <= GetComparableValue(normalizedMax);
-        }
-
-        private static LuaCompatibilityVersion Normalize(LuaCompatibilityVersion version)
-        {
-            return version == LuaCompatibilityVersion.Latest
-                ? LuaCompatibilityVersion.Lua55
-                : version;
         }
 
         private static int GetComparableValue(LuaCompatibilityVersion version)

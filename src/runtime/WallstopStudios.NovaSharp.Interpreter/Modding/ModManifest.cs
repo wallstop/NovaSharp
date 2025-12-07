@@ -199,12 +199,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
 
         private static LuaCompatibilityVersion Normalize(LuaCompatibilityVersion version)
         {
-            if (version == LuaCompatibilityVersion.Latest)
-            {
-                return LuaCompatibilityVersion.Lua55;
-            }
-
-            return version;
+            // Use ResolveForHighest for forward-compatibility checks in manifests
+            return LuaVersionDefaults.ResolveForHighest(version);
         }
 
         private static bool IsNewerThan(

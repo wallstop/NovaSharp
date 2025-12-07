@@ -466,32 +466,63 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <inheritdoc />
         public override void Compile(ByteCode bc)
         {
-            _exp1.Compile(bc);
+            // For > and >= operators, swap operands to use < and <= respectively.
+            // This ensures correct NaN handling per IEEE 754: nan > nan = false.
+            // The transformation a > b ≡ b < a preserves NaN semantics, whereas
+            // NOT (a <= b) does not (since nan <= nan = false, NOT false = true).
+            bool swapOperands =
+                _operator == Operator.Greater || _operator == Operator.GreaterOrEqual;
 
-            if (_operator == Operator.Or)
-            {
-                Instruction i = bc.EmitJump(OpCode.JtOrPop, -1);
-                _exp2.Compile(bc);
-                i.NumVal = bc.GetJumpPointForNextInstruction();
-                return;
-            }
-
-            if (_operator == Operator.And)
-            {
-                Instruction i = bc.EmitJump(OpCode.JfOrPop, -1);
-                _exp2.Compile(bc);
-                i.NumVal = bc.GetJumpPointForNextInstruction();
-                return;
-            }
-
-            if (_exp2 != null)
+            if (swapOperands)
             {
                 _exp2.Compile(bc);
+                _exp1.Compile(bc);
+            }
+            else
+            {
+                _exp1.Compile(bc);
+
+                if (_operator == Operator.Or)
+                {
+                    Instruction i = bc.EmitJump(OpCode.JtOrPop, -1);
+                    _exp2.Compile(bc);
+                    i.NumVal = bc.GetJumpPointForNextInstruction();
+                    return;
+                }
+
+                if (_operator == Operator.And)
+                {
+                    Instruction i = bc.EmitJump(OpCode.JfOrPop, -1);
+                    _exp2.Compile(bc);
+                    i.NumVal = bc.GetJumpPointForNextInstruction();
+                    return;
+                }
+
+                if (_exp2 != null)
+                {
+                    _exp2.Compile(bc);
+                }
             }
 
-            bc.EmitOperator(OperatorToOpCode(_operator));
+            // Map > to < and >= to <= (with swapped operands above)
+            OpCode opcode;
+            if (_operator == Operator.Greater)
+            {
+                opcode = OpCode.Less;
+            }
+            else if (_operator == Operator.GreaterOrEqual)
+            {
+                opcode = OpCode.LessEq;
+            }
+            else
+            {
+                opcode = OperatorToOpCode(_operator);
+            }
 
-            if (ShouldInvertBoolean(_operator))
+            bc.EmitOperator(opcode);
+
+            // Only NotEqual still needs inversion (== with not)
+            if (_operator == Operator.NotEqual)
             {
                 bc.EmitOperator(OpCode.Not);
             }
@@ -597,6 +628,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 );
             }
 
+            // NOTE: Lua 5.3+ throws "attempt to divide by zero" when both operands are
+            // true integers. NovaSharp cannot distinguish integer vs float number types
+            // at runtime (all numbers are doubles), so we follow IEEE 754 semantics
+            // (returns inf/-inf) for all floor division by zero.
             return Math.Floor(nd1.Value / nd2.Value);
         }
 

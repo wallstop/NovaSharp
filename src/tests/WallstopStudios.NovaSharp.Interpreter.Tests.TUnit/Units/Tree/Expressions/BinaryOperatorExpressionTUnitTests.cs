@@ -856,8 +856,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileGreaterThanInvertsComparisonResult()
+        public async Task CompileGreaterThanSwapsOperandsAndUsesLess()
         {
+            // Per Lua spec: a > b is compiled as b < a (swap operands, use Less).
+            // This preserves correct NaN handling: nan > nan = false.
             Script script = new Script();
 
             Expression expr = BuildBinaryExpression(
@@ -873,12 +875,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             Instruction[] instructions = byteCode.Code.ToArray();
 
+            // Operands are swapped: second operand (3) is pushed first, then first operand (5)
             await Assert
-                .That(instructions[2].OpCode)
-                .IsEqualTo(OpCode.LessEq)
+                .That(instructions[0].OpCode)
+                .IsEqualTo(OpCode.Literal)
                 .ConfigureAwait(false);
-            await Assert.That(instructions[3].OpCode).IsEqualTo(OpCode.CNot).ConfigureAwait(false);
-            await Assert.That(instructions[^1].OpCode).IsEqualTo(OpCode.Not).ConfigureAwait(false);
+            await Assert
+                .That(instructions[1].OpCode)
+                .IsEqualTo(OpCode.Literal)
+                .ConfigureAwait(false);
+            // Uses Less opcode (not LessEq)
+            await Assert.That(instructions[2].OpCode).IsEqualTo(OpCode.Less).ConfigureAwait(false);
+            // ToBool follows Less per EmitOperator
+            await Assert
+                .That(instructions[3].OpCode)
+                .IsEqualTo(OpCode.ToBool)
+                .ConfigureAwait(false);
+            // No Not opcode at the end
+            await Assert.That(instructions.Length).IsEqualTo(4).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

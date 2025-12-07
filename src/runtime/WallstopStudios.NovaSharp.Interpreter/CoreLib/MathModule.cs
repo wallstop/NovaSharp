@@ -23,6 +23,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleConstant]
         public const double HUGE = double.MaxValue;
 
+        /// <summary>
+        /// The maximum value for an integer in Lua 5.3+ (2^63 - 1).
+        /// </summary>
+        /// <remarks>
+        /// Corresponds to Lua 5.3/5.4 <c>math.maxinteger</c> (§6.7).
+        /// </remarks>
+        [NovaSharpModuleConstant(Name = "maxinteger")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        public const long MAXINTEGER = long.MaxValue;
+
+        /// <summary>
+        /// The minimum value for an integer in Lua 5.3+ (-2^63).
+        /// </summary>
+        /// <remarks>
+        /// Corresponds to Lua 5.3/5.4 <c>math.mininteger</c> (§6.7).
+        /// </remarks>
+        [NovaSharpModuleConstant(Name = "mininteger")]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
+        public const long MININTEGER = long.MinValue;
+
         private static bool TryGetIntegerFromDouble(double number, out long value) =>
             LuaIntegerHelper.TryGetInteger(number, out value);
 
@@ -145,9 +165,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue value = args.AsType(0, "type", DataType.Number, false);
-            return DynValue.NewString(
-                TryGetIntegerFromDouble(value.Number, out _) ? "integer" : "float"
-            );
+            // Use the LuaNumber's subtype information to determine integer vs float
+            return DynValue.NewString(value.LuaNumber.LuaTypeName);
         }
 
         /// <summary>
@@ -189,7 +208,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (TryGetIntegerFromDynValue(value, out long integer))
             {
-                return DynValue.NewNumber(integer);
+                return DynValue.NewInteger(integer);
             }
 
             return DynValue.Nil;
@@ -688,30 +707,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (mValue > nValue)
             {
-                throw new ScriptRuntimeException(
-                    "bad argument #2 to 'random' (interval is empty)"
-                );
+                throw new ScriptRuntimeException("bad argument #2 to 'random' (interval is empty)");
             }
 
             return DynValue.NewNumber(r.NextLong(mValue, nValue));
         }
 
         /// <summary>
-        /// Implements Lua `math.randomseed`, reinitializing the pseudo-random generator (§6.7).
+        /// Implements Lua `math.randomseed`, reinitializing the pseudo-random generator.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">
         /// <para>
+        /// <b>Lua 5.4+ (§6.7):</b>
         /// When called with at least one argument, the integers x and y are joined into a 128-bit seed
-        /// that is used to reinitialize the pseudo-random generator.
+        /// that is used to reinitialize the pseudo-random generator. When called with no arguments,
+        /// Lua generates a seed with a weak attempt for randomness. Returns the two seed components.
         /// </para>
         /// <para>
-        /// When called with no arguments, Lua generates a seed with a weak attempt for randomness.
+        /// <b>Lua 5.1-5.3:</b>
+        /// Requires exactly one numeric argument to seed the generator. Returns nothing.
         /// </para>
         /// </param>
         /// <returns>
-        /// Returns the two seed components that were effectively used (Lua 5.4),
-        /// so that setting them again repeats the sequence.
+        /// Lua 5.4+: Returns the two seed components that were effectively used.
+        /// Lua 5.1-5.3: Returns <see cref="DynValue.Nil"/> (no return value).
         /// </returns>
         [NovaSharpModuleMethod(Name = "randomseed")]
         [SuppressMessage(
@@ -730,10 +750,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            IRandomProvider r = executionContext.Script.RandomProvider;
+            Script script = executionContext.Script;
+            IRandomProvider r = script.RandomProvider;
+            LuaCompatibilityVersion version = script.CompatibilityVersion;
+
+            // Resolve Latest to current default version
+            LuaCompatibilityVersion effectiveVersion = LuaVersionDefaults.Resolve(version);
+
+            bool isLua54OrLater = effectiveVersion >= LuaCompatibilityVersion.Lua54;
+
             DynValue x = args.AsType(0, "randomseed", DataType.Number, true);
             DynValue y = args.AsType(1, "randomseed", DataType.Number, true);
 
+            // Lua 5.1-5.3: require exactly one argument, return nothing
+            if (!isLua54OrLater)
+            {
+                if (x.IsNil())
+                {
+                    throw ScriptRuntimeException.BadArgumentNoValue(
+                        0,
+                        "randomseed",
+                        DataType.Number
+                    );
+                }
+
+                r.SetSeed((int)x.Number);
+                return DynValue.Nil;
+            }
+
+            // Lua 5.4+: 0-2 arguments, return seed tuple
             (long seedX, long seedY) result;
 
             if (x.IsNil())

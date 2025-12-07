@@ -78,12 +78,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         {
             // Negative shift should delegate to ShiftLeft.
             long negativeShift = LuaIntegerHelper.ShiftRight(1, -1);
-            // Shifting beyond width keeps the sign bit.
+            // Per Lua spec: shifting by >= 64 bits always returns 0 (logical shift, not arithmetic).
             long negativeOverflow = LuaIntegerHelper.ShiftRight(-1, 64);
             long positiveOverflow = LuaIntegerHelper.ShiftRight(1, 64);
 
             await Assert.That(negativeShift).IsEqualTo(2L);
-            await Assert.That(negativeOverflow).IsEqualTo(-1L);
+            await Assert.That(negativeOverflow).IsEqualTo(0L);
             await Assert.That(positiveOverflow).IsEqualTo(0L);
         }
     }

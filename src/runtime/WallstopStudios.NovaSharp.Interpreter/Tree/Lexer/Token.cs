@@ -233,6 +233,76 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         }
 
         /// <summary>
+        /// Attempts to parse the numeric literal as a 64-bit signed integer without intermediate double conversion.
+        /// This is required for exact representation of large integers like long.MaxValue which cannot be
+        /// exactly represented in IEEE 754 double precision.
+        /// </summary>
+        /// <param name="value">When successful, contains the parsed integer value.</param>
+        /// <returns>true if the token represents an integer in the long.MinValue to long.MaxValue range; false otherwise.</returns>
+        /// <exception cref="NotSupportedException">
+        /// Thrown when the token is not numeric.
+        /// </exception>
+        public bool TryGetIntegerValue(out long value)
+        {
+            if (Type == TokenType.NumberHex)
+            {
+                return LexerUtils.TryParseHexIntegerAsLong(this, out value);
+            }
+            else if (Type == TokenType.Number && !IsFloatLiteralSyntax())
+            {
+                return long.TryParse(
+                    Text,
+                    System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out value
+                );
+            }
+            else
+            {
+                value = 0;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the numeric token uses float syntax (contains decimal point or exponent).
+        /// For Lua 5.3+ compliance, literals like "1.0" or "1e5" should be floats,
+        /// while literals like "1" or "0x10" should be integers.
+        /// </summary>
+        /// <returns>
+        /// <c>true</c> if the token contains a decimal point or exponent;
+        /// <c>false</c> for pure integer syntax (decimal or hex).
+        /// </returns>
+        /// <exception cref="NotSupportedException">
+        /// Thrown when the token is not numeric.
+        /// </exception>
+        public bool IsFloatLiteralSyntax()
+        {
+            if (Type == TokenType.NumberHexFloat)
+            {
+                return true;
+            }
+            else if (Type == TokenType.NumberHex)
+            {
+                return false;
+            }
+            else if (Type == TokenType.Number)
+            {
+                // Check if the text contains a decimal point or exponent indicator
+                // Examples: "1.0" -> true, "1e5" -> true, "1" -> false, "123" -> false
+                return Text.Contains('.', StringComparison.Ordinal)
+                    || Text.Contains('e', StringComparison.OrdinalIgnoreCase)
+                    || Text.Contains('E', StringComparison.Ordinal);
+            }
+            else
+            {
+                throw new NotSupportedException(
+                    "IsFloatLiteralSyntax is supported only on numeric tokens"
+                );
+            }
+        }
+
+        /// <summary>
         /// Determines whether the token closes the current block during parsing.
         /// </summary>
         /// <returns><c>true</c> when the token is a block terminator.</returns>
