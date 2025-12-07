@@ -36,6 +36,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             SandboxOptions sandbox = _script.Options.Sandbox;
             bool hasSandboxInstructionLimit = sandbox.HasInstructionLimit;
             long sandboxMaxInstructions = sandbox.MaxInstructions;
+            bool hasSandboxMemoryLimit = sandbox.HasMemoryLimit;
+            long sandboxMaxMemoryBytes = sandbox.MaxMemoryBytes;
+            AllocationTracker allocationTracker = _script.AllocationTracker;
+            const int MemoryCheckInterval = 1024;
 
             repeat_execution:
 
@@ -73,6 +77,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         }
                         // Callback allowed continuation - reset counter
                         executedInstructions = 0;
+                    }
+
+                    // Check sandbox memory limit (less frequently to reduce overhead)
+                    if (
+                        hasSandboxMemoryLimit
+                        && (executedInstructions & (MemoryCheckInterval - 1)) == 0
+                    )
+                    {
+                        long currentMemory = allocationTracker.CurrentBytes;
+                        if (currentMemory > sandboxMaxMemoryBytes)
+                        {
+                            Func<Script, long, bool> callback = sandbox.OnMemoryLimitExceeded;
+                            if (callback == null || !callback(_script, currentMemory))
+                            {
+                                throw new SandboxViolationException(
+                                    SandboxViolationType.MemoryLimitExceeded,
+                                    sandboxMaxMemoryBytes,
+                                    currentMemory
+                                );
+                            }
+                        }
                     }
 
                     ++instructionPtr;
@@ -433,21 +458,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             _valueStack.RemoveLast(argscnt + 1);
                         }
 
-                        DynValue[] cbargs = new DynValue[]
+                        // Use pooled array for error handler invocation
+                        using (
+                            PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                                1,
+                                out DynValue[] cbargs
+                            )
+                        )
                         {
-                            DynValue.NewString(exception.DecoratedMessage),
-                        };
+                            cbargs[0] = DynValue.NewString(exception.DecoratedMessage);
 
-                        DynValue handled = csi.ErrorHandler.Invoke(
-                            new ScriptExecutionContext(
-                                this,
-                                csi.ErrorHandler,
-                                GetCurrentSourceRef(instructionPtr)
-                            ),
-                            cbargs
-                        );
+                            DynValue handled = csi.ErrorHandler.Invoke(
+                                new ScriptExecutionContext(
+                                    this,
+                                    csi.ErrorHandler,
+                                    GetCurrentSourceRef(instructionPtr)
+                                ),
+                                cbargs
+                            );
 
-                        _valueStack.Push(handled);
+                            _valueStack.Push(handled);
+                        }
 
                         goto repeat_execution;
                     }
@@ -481,27 +512,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             try
             {
-                DynValue[] args = new DynValue[] { DynValue.NewString(decoratedMessage) };
-                DynValue ret = DynValue.Nil;
+                // Use pooled array for message handler invocation
+                using (
+                    PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                        1,
+                        out DynValue[] args
+                    )
+                )
+                {
+                    args[0] = DynValue.NewString(decoratedMessage);
+                    DynValue ret = DynValue.Nil;
 
-                if (messageHandler.Type == DataType.Function)
-                {
-                    ret = Call(messageHandler, args);
-                }
-                else if (messageHandler.Type == DataType.ClrFunction)
-                {
-                    ScriptExecutionContext ctx = new(this, messageHandler.Callback, sourceRef);
-                    ret = messageHandler.Callback.Invoke(ctx, args);
-                }
-                else
-                {
-                    throw new ScriptRuntimeException("error handler not set to a function");
-                }
+                    if (messageHandler.Type == DataType.Function)
+                    {
+                        ret = Call(messageHandler, args);
+                    }
+                    else if (messageHandler.Type == DataType.ClrFunction)
+                    {
+                        ScriptExecutionContext ctx = new(this, messageHandler.Callback, sourceRef);
+                        ret = messageHandler.Callback.Invoke(ctx, args);
+                    }
+                    else
+                    {
+                        throw new ScriptRuntimeException("error handler not set to a function");
+                    }
 
-                string newmsg = ret.ToPrintString();
-                if (newmsg != null)
-                {
-                    return newmsg;
+                    string newmsg = ret.ToPrintString();
+                    if (newmsg != null)
+                    {
+                        return newmsg;
+                    }
                 }
             }
             catch (ScriptRuntimeException innerEx)
@@ -1059,7 +1099,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (lastParam.Type == DataType.Tuple && lastParam.Tuple.Length > 1)
             {
-                List<DynValue> values = new();
+                // Note: We can't use ListPool here because the caller needs the list
+                // to persist until ExecArgs completes. The list is short-lived but
+                // escapes this method's scope.
+                List<DynValue> values = new(numargs - 1 + lastParam.Tuple.Length);
 
                 for (int idx = 0; idx < numargs - 1; idx++)
                 {
@@ -1243,7 +1286,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (m != null && m.IsNotNil())
             {
-                DynValue[] tmp = new DynValue[argsCount + 1];
+                // Use pooled array for __call metamethod invocation
+                using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                    argsCount + 1,
+                    out DynValue[] tmp
+                );
+
                 for (int i = 0; i < argsCount + 1; i++)
                 {
                     tmp[i] = _valueStack.Pop();
@@ -1264,7 +1312,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private int PerformTco(int instructionPtr, int argsCount)
         {
-            DynValue[] args = new DynValue[argsCount + 1];
+            // Use pooled array for tail call optimization
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                argsCount + 1,
+                out DynValue[] args
+            );
 
             // Remove all cur args and func ptr
             for (int i = 0; i <= argsCount; i++)

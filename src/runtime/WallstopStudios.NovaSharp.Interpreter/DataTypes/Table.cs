@@ -5,12 +5,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Diagnostics.CodeAnalysis;
     using DataStructs;
     using Errors;
+    using Sandboxing;
 
     /// <summary>
     /// A class representing a Lua table.
     /// </summary>
     public class Table : RefIdObject, IScriptPrivateResource
     {
+        // Estimated base memory overhead for an empty Table (LinkedList, three indexes, metadata).
+        // This is a conservative estimate: 4 object headers + 3 dictionary overheads + misc.
+        private const int BaseTableOverhead = 256;
+
+        // Estimated overhead per entry (LinkedListNode, TablePair struct, dictionary entry overhead).
+        private const int PerEntryOverhead = 64;
+
         private readonly LinkedList<TablePair> _values;
         private readonly LinkedListIndex<DynValue, TablePair> _valueMap;
         private readonly LinkedListIndex<string, TablePair> _stringMap;
@@ -20,6 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private int _initArray;
         private int _cachedLength = -1;
         private bool _containsNilEntries;
+        private int _trackedEntryCount;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Table"/> class.
@@ -32,6 +41,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _arrayMap = new LinkedListIndex<int, TablePair>(_values);
             _valueMap = new LinkedListIndex<DynValue, TablePair>(_values);
             _owner = owner;
+
+            // Track initial allocation if memory tracking is enabled
+            AllocationTracker tracker = owner?.AllocationTracker;
+            if (tracker != null)
+            {
+                tracker.RecordAllocation(BaseTableOverhead);
+            }
         }
 
         /// <summary>
@@ -185,6 +201,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             TablePair prev = listIndex.Set(key, new TablePair(keyDynValue, value));
+
+            // Track entry additions/removals for memory accounting
+            AllocationTracker tracker = _owner?.AllocationTracker;
+            if (tracker != null)
+            {
+                bool wasEmpty = prev.Value == null || prev.Value.IsNil();
+                bool isNowEmpty = value.IsNil();
+
+                if (wasEmpty && !isNowEmpty)
+                {
+                    // New entry added
+                    tracker.RecordAllocation(PerEntryOverhead);
+                    _trackedEntryCount++;
+                }
+                else if (!wasEmpty && isNowEmpty)
+                {
+                    // Entry removed (set to nil)
+                    tracker.RecordDeallocation(PerEntryOverhead);
+                    _trackedEntryCount--;
+                }
+            }
 
             // If this is an insert, we can invalidate all iterators and collect dead keys
             if (

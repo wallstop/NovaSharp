@@ -23,58 +23,58 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="$(SrcRoot)runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
-        <ProjectReference Include="$(SrcRoot)runtime/WallstopStudios.NovaSharp.Interpreter.Infrastructure/WallstopStudios.NovaSharp.Interpreter.Infrastructure.csproj" />
-        <ProjectReference Include="$(SrcRoot)tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj" />
-        <ProjectReference Include="$(SrcRoot)tooling/WallstopStudios.NovaSharp.Hardwire/WallstopStudios.NovaSharp.Hardwire.csproj" />
-        <ProjectReference Include="$(SrcRoot)debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj" />
-        <ProjectReference Include="$(SrcRoot)debuggers/WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj" />
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter.Infrastructure/WallstopStudios.NovaSharp.Interpreter.Infrastructure.csproj" />
+        <ProjectReference Include="$(ToolingRoot)WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj" />
+        <ProjectReference Include="$(ToolingRoot)WallstopStudios.NovaSharp.Hardwire/WallstopStudios.NovaSharp.Hardwire.csproj" />
+        <ProjectReference Include="$(DebuggersRoot)WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(DebuggersRoot)WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
 
     <ItemGroup>
         <Compile
-            Include="$(RepoRoot)src/tests/TestInfrastructure/Scopes/**/*.cs"
+            Include="$(TestsRoot)TestInfrastructure/Scopes/**/*.cs"
             Link="TestInfrastructure\Scopes\%(RecursiveDir)%(Filename)%(Extension)"
         />
         <Compile
-            Include="$(RepoRoot)src/tests/TestInfrastructure/TUnit/**/*.cs"
+            Include="$(TestsRoot)TestInfrastructure/TUnit/**/*.cs"
             Link="TestInfrastructure\TUnit\%(RecursiveDir)%(Filename)%(Extension)"
         />
         <Compile
-            Include="$(RepoRoot)src/tests/TestInfrastructure/LuaFixtures/**/*.cs"
+            Include="$(TestsRoot)TestInfrastructure/LuaFixtures/**/*.cs"
             Link="TestInfrastructure\LuaFixtures\%(RecursiveDir)%(Filename)%(Extension)"
         />
         <Compile
-            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/TestUtilities/**/*.cs"
+            Include="$(TestsRoot)WallstopStudios.NovaSharp.Interpreter.Tests/TestUtilities/**/*.cs"
             Link="TestUtilities\%(RecursiveDir)%(Filename)%(Extension)"
         />
         <Compile
-            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/Units/HardwireTestUtilities.cs"
+            Include="$(TestsRoot)WallstopStudios.NovaSharp.Interpreter.Tests/Units/HardwireTestUtilities.cs"
             Link="Units\HardwireTestUtilities.cs"
         />
         <Compile
-            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/Units/TestHelpers.cs"
+            Include="$(TestsRoot)WallstopStudios.NovaSharp.Interpreter.Tests/Units/TestHelpers.cs"
             Link="Units\TestHelpers.cs"
         />
     </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource
-            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/Resources/embedded.lua"
+            Include="$(TestsRoot)WallstopStudios.NovaSharp.Interpreter.Tests/Resources/embedded.lua"
             Link="Resources/embedded.lua"
         />
         <None
-            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/TestMore/**/*"
+            Include="$(TestsRoot)WallstopStudios.NovaSharp.Interpreter.Tests/TestMore/**/*"
             Link="TestMore\%(RecursiveDir)%(Filename)%(Extension)"
             CopyToOutputDirectory="PreserveNewest"
         />
         <None
-            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/Fixtures/**/*"
+            Include="$(TestsRoot)WallstopStudios.NovaSharp.Interpreter.Tests/Fixtures/**/*"
             Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)"
             CopyToOutputDirectory="PreserveNewest"
         />
         <None
-            Include="$(RepoRoot)src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/**/*"
+            Include="$(TestsRoot)WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/**/*"
             Link="LuaFixtures\%(RecursiveDir)%(Filename)%(Extension)"
             CopyToOutputDirectory="PreserveNewest"
         />

@@ -16,6 +16,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
 
         private long _maxInstructions;
         private int _maxCallStackDepth;
+        private long _maxMemoryBytes;
+        private int _maxCoroutines;
         private HashSet<string> _restrictedModules;
         private HashSet<string> _restrictedFunctions;
 
@@ -26,6 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
         {
             _maxInstructions = 0; // 0 means unlimited
             _maxCallStackDepth = 0; // 0 means unlimited
+            _maxCoroutines = 0; // 0 means unlimited
         }
 
         /// <summary>
@@ -41,8 +44,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
 
             _maxInstructions = defaults._maxInstructions;
             _maxCallStackDepth = defaults._maxCallStackDepth;
+            _maxMemoryBytes = defaults._maxMemoryBytes;
+            _maxCoroutines = defaults._maxCoroutines;
             OnInstructionLimitExceeded = defaults.OnInstructionLimitExceeded;
             OnRecursionLimitExceeded = defaults.OnRecursionLimitExceeded;
+            OnMemoryLimitExceeded = defaults.OnMemoryLimitExceeded;
+            OnCoroutineLimitExceeded = defaults.OnCoroutineLimitExceeded;
             OnModuleAccessDenied = defaults.OnModuleAccessDenied;
             OnFunctionAccessDenied = defaults.OnFunctionAccessDenied;
 
@@ -84,6 +91,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
         }
 
         /// <summary>
+        /// Gets or sets the maximum memory (in bytes) that may be allocated by a
+        /// script while running under this sandbox. Set to 0 for unlimited.
+        /// </summary>
+        public long MaxMemoryBytes
+        {
+            get => _maxMemoryBytes;
+            set => _maxMemoryBytes = value < 0 ? 0 : value;
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum number of concurrent coroutines that may exist
+        /// before raising <see cref="SandboxViolationException"/>. Set to 0 for unlimited.
+        /// </summary>
+        public int MaxCoroutines
+        {
+            get => _maxCoroutines;
+            set => _maxCoroutines = value < 0 ? 0 : value;
+        }
+
+        /// <summary>
         /// Gets a value indicating whether instruction limiting is enabled.
         /// </summary>
         public bool HasInstructionLimit => _maxInstructions > 0;
@@ -106,6 +133,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
             _restrictedFunctions != null && _restrictedFunctions.Count > 0;
 
         /// <summary>
+        /// Gets a value indicating whether memory limiting is enabled.
+        /// </summary>
+        public bool HasMemoryLimit => _maxMemoryBytes > 0;
+
+        /// <summary>
+        /// Gets a value indicating whether coroutine limiting is enabled.
+        /// </summary>
+        public bool HasCoroutineLimit => _maxCoroutines > 0;
+
+        /// <summary>
         /// Gets or sets a callback invoked when the instruction limit is about to be exceeded.
         /// Return <c>true</c> to allow continued execution (e.g., after resetting counters),
         /// or <c>false</c> to throw <see cref="SandboxViolationException"/>.
@@ -117,6 +154,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
         /// Return <c>true</c> to allow the call, or <c>false</c> to throw <see cref="SandboxViolationException"/>.
         /// </summary>
         public Func<Script, int, bool> OnRecursionLimitExceeded { get; set; }
+
+        /// <summary>
+        /// Gets or sets a callback invoked when the memory limit is about to be exceeded.
+        /// The callback receives the current `Script` and the current memory usage in bytes.
+        /// Return <c>true</c> to allow continued execution (for example after trimming or
+        /// clearing caches), or <c>false</c> to throw <see cref="SandboxViolationException"/>.
+        /// </summary>
+        public Func<Script, long, bool> OnMemoryLimitExceeded { get; set; }
+
+        /// <summary>
+        /// Gets or sets a callback invoked when the coroutine limit is about to be exceeded.
+        /// The callback receives the current `Script` and the current coroutine count.
+        /// Return <c>true</c> to allow creating the coroutine (e.g., after cleaning up dead coroutines),
+        /// or <c>false</c> to throw <see cref="SandboxViolationException"/>.
+        /// </summary>
+        public Func<Script, int, bool> OnCoroutineLimitExceeded { get; set; }
 
         /// <summary>
         /// Gets or sets a callback invoked when a restricted module is accessed.

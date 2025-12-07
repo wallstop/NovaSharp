@@ -79,5 +79,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Indices of locals that must be closed when unwinding.
         /// </summary>
         public HashSet<int> ToBeClosedIndices { get; set; }
+
+        /// <summary>
+        /// Resets all fields to their default values for pooling reuse.
+        /// </summary>
+        internal void Reset()
+        {
+            DebugEntryPoint = 0;
+            DebugSymbols = null;
+            CallingSourceRef = default;
+            ClrFunction = null;
+            Continuation = null;
+            ErrorHandler = null;
+            ErrorHandlerBeforeUnwind = null;
+            BasePointer = 0;
+            ReturnAddress = 0;
+            LocalScope = null;
+            ClosureScope = null;
+            Flags = default;
+            BlocksToClose?.Clear();
+            ToBeClosedIndices?.Clear();
+        }
     }
 }

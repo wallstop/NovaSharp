@@ -2,14 +2,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
-    using System.Security.Cryptography;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Interop;
+    using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -24,23 +22,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         [NovaSharpModuleConstant]
         public const double HUGE = double.MaxValue;
-
-        private static Random GetRandom(Script s)
-        {
-            DynValue rr = s.Registry.Get("F61E3AA7247D4D1EB7A45430B0C8C9BB_MATH_RANDOM");
-            return (rr.UserData.Object as AnonWrapper<Random>).Value;
-        }
-
-        private static void SetRandom(Script s, Random random)
-        {
-            DynValue rr = UserData.Create(new AnonWrapper<Random>(random));
-            s.Registry.Set("F61E3AA7247D4D1EB7A45430B0C8C9BB_MATH_RANDOM", rr);
-        }
-
-        private static Random CreateRandom()
-        {
-            return new Random(RandomNumberGenerator.GetInt32(int.MaxValue));
-        }
 
         private static bool TryGetIntegerFromDouble(double number, out long value) =>
             LuaIntegerHelper.TryGetInteger(number, out value);
@@ -71,18 +52,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             return integer;
-        }
-
-        /// <summary>
-        /// Initializes the math module by seeding the per-script random generator and ensuring the
-        /// host-provided globals are valid.
-        /// </summary>
-        /// <param name="globalTable">Script global table.</param>
-        /// <param name="ioTable">Unused placeholder required by the module bootstrapper.</param>
-        public static void NovaSharpInit(Table globalTable, Table ioTable)
-        {
-            globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
-            SetRandom(globalTable.OwnerScript, CreateRandom());
         }
 
         private static DynValue Exec1(
@@ -650,7 +619,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">
-        /// Optional bounds: zero args produces [0,1), one arg produces [1, m], two args produce [m, n].
+        /// <para>
+        /// When called without arguments, returns a pseudo-random float with uniform distribution in [0, 1).
+        /// </para>
+        /// <para>
+        /// When called with an integer argument <c>m</c>, returns a pseudo-random integer in [1, m].
+        /// The value m-1 must be representable as an integer, so <c>m</c> cannot be 0.
+        /// </para>
+        /// <para>
+        /// When called with two integer arguments <c>m</c> and <c>n</c>, returns a pseudo-random integer in [m, n].
+        /// </para>
+        /// <para>
+        /// When called with 0 as the only argument, returns an integer with all bits pseudo-random (Lua 5.4).
+        /// </para>
         /// </param>
         /// <returns>The generated random number.</returns>
         [NovaSharpModuleMethod(Name = "random")]
@@ -671,37 +652,67 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue m = args.AsType(0, "random", DataType.Number, true);
             DynValue n = args.AsType(1, "random", DataType.Number, true);
-            Random r = GetRandom(executionContext.Script);
-            double d;
+            IRandomProvider r = executionContext.Script.RandomProvider;
 
+            // No arguments: return float in [0, 1)
             if (m.IsNil() && n.IsNil())
             {
-                d = r.NextDouble();
+                return DynValue.NewNumber(r.NextDouble());
             }
-            else
+
+            // One argument
+            if (n.IsNil())
             {
-                int a = n.IsNil() ? 1 : (int)n.Number;
-                int b = (int)m.Number;
+                long mVal = (long)m.Number;
 
-                if (a < b)
+                // math.random(0): return integer with all bits pseudo-random (Lua 5.4 §6.7)
+                if (mVal == 0)
                 {
-                    d = r.Next(a, b + 1);
+                    return DynValue.NewNumber(r.NextInt64());
                 }
-                else
+
+                // math.random(m): return integer in [1, m]
+                if (mVal < 1)
                 {
-                    d = r.Next(b, a + 1);
+                    throw new ScriptRuntimeException(
+                        "bad argument #1 to 'random' (interval is empty)"
+                    );
                 }
+
+                return DynValue.NewNumber(r.NextLong(1, mVal));
             }
 
-            return DynValue.NewNumber(d);
+            // Two arguments: math.random(m, n) returns integer in [m, n]
+            long mValue = (long)m.Number;
+            long nValue = (long)n.Number;
+
+            if (mValue > nValue)
+            {
+                throw new ScriptRuntimeException(
+                    "bad argument #2 to 'random' (interval is empty)"
+                );
+            }
+
+            return DynValue.NewNumber(r.NextLong(mValue, nValue));
         }
 
         /// <summary>
         /// Implements Lua `math.randomseed`, reinitializing the pseudo-random generator (§6.7).
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
-        /// <param name="args">Arguments containing the integer seed.</param>
-        /// <returns><see cref="DynValue.Nil"/> per Lua semantics.</returns>
+        /// <param name="args">
+        /// <para>
+        /// When called with at least one argument, the integers x and y are joined into a 128-bit seed
+        /// that is used to reinitialize the pseudo-random generator.
+        /// </para>
+        /// <para>
+        /// When called with no arguments, Lua generates a seed with a weak attempt for randomness.
+        /// </para>
+        /// </param>
+        /// <returns>
+        /// Returns the two seed components that were effectively used (Lua 5.4),
+        /// so that setting them again repeats the sequence.
+        /// </returns>
         [NovaSharpModuleMethod(Name = "randomseed")]
         [SuppressMessage(
             "Security",
@@ -718,10 +729,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue arg = args.AsType(0, "randomseed", DataType.Number, false);
-            Script script = executionContext.Script;
-            SetRandom(script, new Random((int)arg.Number));
-            return DynValue.Nil;
+
+            IRandomProvider r = executionContext.Script.RandomProvider;
+            DynValue x = args.AsType(0, "randomseed", DataType.Number, true);
+            DynValue y = args.AsType(1, "randomseed", DataType.Number, true);
+
+            (long seedX, long seedY) result;
+
+            if (x.IsNil())
+            {
+                // No arguments: use system randomness
+                result = r.SetSeedFromSystemRandom();
+            }
+            else if (y.IsNil())
+            {
+                // One argument: convert to 128-bit seed
+                result = r.SetSeed((int)x.Number);
+            }
+            else
+            {
+                // Two arguments: full 128-bit seed
+                result = r.SetSeed((long)x.Number, (long)y.Number);
+            }
+
+            // Return the two seed components (Lua 5.4 behavior)
+            return DynValue.NewTuple(
+                DynValue.NewNumber(result.seedX),
+                DynValue.NewNumber(result.seedY)
+            );
         }
 
         /// <summary>

@@ -1,14 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <Description>http://www.NovaSharp.org</Description>
-        <Copyright>(C) 2014-2016 Marco Mastropaolo</Copyright>
+        <Description>NovaSharp is a multi-version Lua interpreter (5.1, 5.2, 5.3, 5.4) for .NET, Mono, Xamarin, and Unity3D (including IL2CPP/AOT). Features comprehensive Lua compatibility, debugging support, bytecode dump/load, and seamless CLR interop.</Description>
+        <Copyright>Copyright (c) 2024-2025 Wallstop Studios. Originally based on MoonSharp (c) 2014-2016 Marco Mastropaolo.</Copyright>
         <AssemblyTitle>WallstopStudios.NovaSharp.Interpreter</AssemblyTitle>
-        <VersionPrefix>2.0.0</VersionPrefix>
+        <VersionPrefix>3.0.0</VersionPrefix>
         <TargetFrameworks>netstandard2.1</TargetFrameworks>
         <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
         <AssemblyName>WallstopStudios.NovaSharp.Interpreter</AssemblyName>
-        <PackageId>com.wallstop-studios.novasharp.Interpreter.netcore</PackageId>
+        <PackageId>WallstopStudios.NovaSharp.Interpreter</PackageId>
+        <RootNamespace>WallstopStudios.NovaSharp.Interpreter</RootNamespace>
         <LangVersion>latest</LangVersion>
+        <IsPackable>true</IsPackable>
+        <!-- TODO: Enable GenerateDocumentationFile after fixing all XML comment issues -->
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
         <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
         <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
         <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
@@ -16,11 +20,17 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <None Include="$(RepoRoot)README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
+        <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.0" />
         <PackageReference Include="System.Text.Json" Version="8.0.6" />
         <PackageReference Include="ZString" Version="2.6.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../WallstopStudios.NovaSharp.Interpreter.Infrastructure/WallstopStudios.NovaSharp.Interpreter.Infrastructure.csproj" />
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter.Infrastructure/WallstopStudios.NovaSharp.Interpreter.Infrastructure.csproj" />
     </ItemGroup>
 </Project>

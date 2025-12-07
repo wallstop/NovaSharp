@@ -9,6 +9,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\runtime\NovaSharp.Interpreter\WallstopStudios.NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
     </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 <Project>
     <PropertyGroup>
+        <!-- Analyzer settings -->
         <EnableNETAnalyzers>true</EnableNETAnalyzers>
         <AnalysisLevel Condition="'$(AnalysisLevel)' == ''">latest-all</AnalysisLevel>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
@@ -11,6 +12,12 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepoRoot>
         <SrcRoot>$(RepoRoot)src/</SrcRoot>
+        <RuntimeRoot>$(SrcRoot)runtime/</RuntimeRoot>
+        <DebuggersRoot>$(SrcRoot)debuggers/</DebuggersRoot>
+        <ToolingRoot>$(SrcRoot)tooling/</ToolingRoot>
+        <TestsRoot>$(SrcRoot)tests/</TestsRoot>
+
+        <!-- Namespace prefix enforcement -->
         <LegacyNamespacePrefix>NovaSharp</LegacyNamespacePrefix>
         <TargetNamespacePrefix>WallstopStudios.NovaSharp</TargetNamespacePrefix>
         <NamespacePrefixExcludedNamespaces>NovaSharp.Interpreter.LuaPort</NamespacePrefixExcludedNamespaces>
@@ -23,5 +30,39 @@
         <EnableNamespacePrefixRule Condition="'$(EnableNamespacePrefixRule)' == ''"
             >true</EnableNamespacePrefixRule
         >
+
+        <!-- NuGet package metadata (shared across all packable projects) -->
+        <Authors>Wallstop Studios</Authors>
+        <Company>Wallstop Studios</Company>
+        <Product>NovaSharp</Product>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/wallstop/NovaSharp</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/wallstop/NovaSharp.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>lua;interpreter;scripting;unity;mono;netstandard;moonsharp</PackageTags>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageReleaseNotes>See https://github.com/wallstop/NovaSharp/releases for release notes.</PackageReleaseNotes>
+
+        <!-- Enable deterministic builds for reproducible packages -->
+        <Deterministic>true</Deterministic>
+        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+        <!-- Enable SourceLink for debuggable NuGet packages -->
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+        <!-- Default version (can be overridden by CI) -->
+        <Version Condition="'$(Version)' == ''">3.0.0</Version>
     </PropertyGroup>
+
+    <!-- SourceLink package for GitHub -->
+    <ItemGroup Condition="'$(IsPackable)' != 'false'">
+        <PackageReference
+            Include="Microsoft.SourceLink.GitHub"
+            Version="8.0.0"
+            PrivateAssets="All"
+        />
+    </ItemGroup>
 </Project>

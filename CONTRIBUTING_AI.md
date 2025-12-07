@@ -125,6 +125,16 @@ Script.DoString("return x + 1")
 - **Internals access**: Prefer `internal` + `InternalsVisibleTo` over reflection hacks
 - **Reflection policy**: Review `docs/modernization/reflection-audit.md` before adding reflection
 
+### Enum Conventions
+
+- **Explicit values**: All enum members must have explicit integer values assigned
+- **Default sentinel value**: Enums that do **not** require Lua interop must have a default obsolete sentinel value at position 0:
+  - Use `[Obsolete("Use a specific <EnumName>.", false)]` attribute (warning, not error)
+  - Name it `Unknown = 0` or `None = 0` (use `None` for `[Flags]` enums where "no flags" is a valid state)
+- **Exceptions for Lua interop**: Enums like `DataType` where `Nil = 0` is a valid Lua type should **not** have an obsolete sentinel
+- **Stable ordering**: Never reorder or renumber existing enum values—add new values at the end with the next available number
+- **Flags enums**: Use powers of two (`1 << 0`, `1 << 1`, etc.) and include `None = 0` as a non-obsolete default when "no flags" is semantically valid
+
 ## Testing Guidelines
 
 ### Framework

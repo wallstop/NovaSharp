@@ -1,7 +1,8 @@
-NovaSharp — [GitHub Repository](https://github.com/wallstop/NovaSharp) *(NuGet package not published; build from source)*
+NovaSharp — [GitHub Repository](https://github.com/wallstop/NovaSharp)
 =========
-https://www.moonsharp.org   
 
+[![NuGet](https://img.shields.io/nuget/v/WallstopStudios.NovaSharp.Interpreter.svg)](https://www.nuget.org/packages/WallstopStudios.NovaSharp.Interpreter)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 # Overview
 
@@ -16,6 +17,16 @@ This project is a port of [MoonSharp](https://www.moonsharp.org). MoonSharp has 
 - Fix all outstanding bugs
 - Significantly increase performance
 - Unity/Mono/IL2CPP-first
+
+## Installation
+
+**NuGet (.NET):**
+```bash
+dotnet add package WallstopStudios.NovaSharp.Interpreter
+```
+
+**Unity Package Manager:**
+See `docs/UnityIntegration.md` for detailed instructions, or add the package from disk using `scripts/packaging/build-unity-package.sh`.
 
 ## AI Warning
 

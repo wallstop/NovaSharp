@@ -48,7 +48,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private IDebugger _debugger;
         private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MaxMetaTypes];
         private readonly ITimeProvider _timeProvider;
+        private readonly IRandomProvider _randomProvider;
         private readonly DateTime _startTimeUtc;
+        private readonly Sandboxing.AllocationTracker _allocationTracker;
         private bool _bit32CompatibilityWarningEmitted;
         private static ScriptGlobalOptions GlobalOptionsSnapshot;
         private static readonly AsyncLocal<GlobalOptionsScope> ScopedGlobalOptions = new();
@@ -113,7 +115,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             _timeProvider = Options.TimeProvider ?? SystemTimeProvider.Instance;
+            _randomProvider = Options.RandomProvider ?? new LuaRandomProvider();
             _startTimeUtc = _timeProvider.GetUtcNow().UtcDateTime;
+
+            // Initialize allocation tracker if memory or coroutine limits are configured
+            if (Options.Sandbox.HasMemoryLimit || Options.Sandbox.HasCoroutineLimit)
+            {
+                _allocationTracker = new Sandboxing.AllocationTracker();
+            }
 
             PerformanceStats = new PerformanceStatistics(
                 Options.HighResolutionClock ?? SystemHighResolutionClock.Instance
@@ -192,9 +201,21 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public PerformanceStatistics PerformanceStats { get; internal set; }
 
         /// <summary>
+        /// Gets the allocation tracker for this script, or <c>null</c> if memory tracking is not enabled.
+        /// Memory tracking is enabled when <see cref="ScriptOptions.Sandbox"/> has a non-zero <see cref="Sandboxing.SandboxOptions.MaxMemoryBytes"/>.
+        /// </summary>
+        public Sandboxing.AllocationTracker AllocationTracker => _allocationTracker;
+
+        /// <summary>
         /// Gets the time provider associated with this script.
         /// </summary>
         public ITimeProvider TimeProvider => _timeProvider;
+
+        /// <summary>
+        /// Gets the random number provider associated with this script.
+        /// Used by <c>math.random</c> and <c>math.randomseed</c>.
+        /// </summary>
+        public IRandomProvider RandomProvider => _randomProvider;
 
         /// <summary>
         /// Gets the UTC timestamp captured from <see cref="TimeProvider"/> when the script was constructed.
@@ -866,6 +887,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             this.CheckScriptOwnership(function);
 
+            // Check coroutine limit before creating
+            CheckCoroutineLimit();
+
             if (function.Type == DataType.Function)
             {
                 return _mainProcessor.CreateCoroutine(function.Function);
@@ -878,6 +902,42 @@ namespace WallstopStudios.NovaSharp.Interpreter
             {
                 throw new ArgumentException(
                     "function is not of DataType.Function or DataType.ClrFunction"
+                );
+            }
+        }
+
+        /// <summary>
+        /// Checks whether creating a new coroutine would exceed the configured coroutine limit.
+        /// If the limit is exceeded and no callback allows continuation, throws <see cref="Sandboxing.SandboxViolationException"/>.
+        /// </summary>
+        private void CheckCoroutineLimit()
+        {
+            Sandboxing.SandboxOptions sandbox = Options.Sandbox;
+            if (!sandbox.HasCoroutineLimit || _allocationTracker == null)
+            {
+                return;
+            }
+
+            // Check if we would exceed the limit (current >= max means the next one exceeds)
+            if (_allocationTracker.ExceedsCoroutineLimit(sandbox))
+            {
+                int currentCount = _allocationTracker.CurrentCoroutines;
+                int maxCoroutines = sandbox.MaxCoroutines;
+
+                // Invoke callback if set
+                Func<Script, int, bool> callback = sandbox.OnCoroutineLimitExceeded;
+                if (callback != null && callback(this, currentCount))
+                {
+                    // Callback returned true - allow continuation
+                    return;
+                }
+
+                // Throw violation exception
+                throw new Sandboxing.SandboxViolationException(
+                    Sandboxing.SandboxViolationDetails.CoroutineLimit(
+                        maxCoroutines,
+                        currentCount + 1
+                    )
                 );
             }
         }

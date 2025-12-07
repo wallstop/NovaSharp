@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <content>
@@ -134,7 +135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private DynValue[] StackTopToArray(int items, bool pop)
         {
-            DynValue[] values = new DynValue[items];
+            DynValue[] values = DynValueArrayPool.Rent(items);
 
             if (pop)
             {
@@ -155,11 +156,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
+        /// Copies or pops the top <paramref name="items"/> entries from the value stack,
+        /// returning a pooled array that must be returned via <see cref="DynValueArrayPool.Return"/>.
+        /// </summary>
+        /// <param name="items">Number of items to copy/pop.</param>
+        /// <param name="pop">If true, pops items from stack; otherwise copies without removing.</param>
+        /// <param name="values">The pooled array containing the values.</param>
+        /// <returns>A pooled resource that automatically returns the array when disposed.</returns>
+        private PooledResource<DynValue[]> StackTopToArrayPooled(
+            int items,
+            bool pop,
+            out DynValue[] values
+        )
+        {
+            PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(items, out values);
+
+            if (pop)
+            {
+                for (int i = 0; i < items; i++)
+                {
+                    values[i] = _valueStack.Pop();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < items; i++)
+                {
+                    values[i] = _valueStack[_valueStack.Count - 1 - i];
+                }
+            }
+
+            return pooled;
+        }
+
+        /// <summary>
         /// Copies or pops the top <paramref name="items"/> entries from the value stack in reverse order.
         /// </summary>
         private DynValue[] StackTopToArrayReverse(int items, bool pop)
         {
-            DynValue[] values = new DynValue[items];
+            DynValue[] values = DynValueArrayPool.Rent(items);
 
             if (pop)
             {
@@ -177,6 +212,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             return values;
+        }
+
+        /// <summary>
+        /// Copies or pops the top <paramref name="items"/> entries from the value stack in reverse order,
+        /// returning a pooled array that must be returned via <see cref="DynValueArrayPool.Return"/>.
+        /// </summary>
+        /// <param name="items">Number of items to copy/pop.</param>
+        /// <param name="pop">If true, pops items from stack; otherwise copies without removing.</param>
+        /// <param name="values">The pooled array containing the values.</param>
+        /// <returns>A pooled resource that automatically returns the array when disposed.</returns>
+        private PooledResource<DynValue[]> StackTopToArrayReversePooled(
+            int items,
+            bool pop,
+            out DynValue[] values
+        )
+        {
+            PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(items, out values);
+
+            if (pop)
+            {
+                for (int i = 0; i < items; i++)
+                {
+                    values[items - 1 - i] = _valueStack.Pop();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < items; i++)
+                {
+                    values[items - 1 - i] = _valueStack[_valueStack.Count - 1 - i];
+                }
+            }
+
+            return pooled;
         }
     }
 }

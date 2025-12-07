@@ -18,6 +18,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             CompatibilityVersion = LuaCompatibilityVersion.Latest;
             HighResolutionClock = SystemHighResolutionClock.Instance;
             TimeProvider = SystemTimeProvider.Instance;
+            RandomProvider = null; // null means create a new SystemRandomProvider per script
             ForceUtcDateTime = false;
             Sandbox = SandboxOptions.Unrestricted;
         }
@@ -45,6 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             CompatibilityVersion = defaults.CompatibilityVersion;
             HighResolutionClock = defaults.HighResolutionClock;
             TimeProvider = defaults.TimeProvider;
+            RandomProvider = defaults.RandomProvider;
             ForceUtcDateTime = defaults.ForceUtcDateTime;
             Sandbox =
                 defaults.Sandbox == SandboxOptions.Unrestricted
@@ -133,6 +135,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Gets or sets the wall-clock provider used by modules that need UTC timestamps (defaults to <see cref="SystemTimeProvider.Instance"/>).
         /// </summary>
         public ITimeProvider TimeProvider { get; set; }
+
+        /// <summary>
+        /// Gets or sets the random number provider used by <c>math.random</c> and <c>math.randomseed</c>.
+        /// When <c>null</c> (the default), each script creates its own <see cref="SystemRandomProvider"/>
+        /// with a cryptographically secure seed. Set to a <see cref="DeterministicRandomProvider"/> to
+        /// enable repeatable random sequences for lockstep multiplayer, replays, or testing.
+        /// </summary>
+        public IRandomProvider RandomProvider { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether Lua date/time helpers should treat all timestamps as UTC—even when the caller does not use the <c>!</c> format prefix.

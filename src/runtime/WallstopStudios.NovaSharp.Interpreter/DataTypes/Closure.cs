@@ -4,12 +4,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
+    using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
     /// <summary>
     /// A class representing a script function
     /// </summary>
     public class Closure : RefIdObject, IScriptPrivateResource
     {
+        // Estimated base memory overhead for an empty Closure (object header, fields, ClosureContext reference).
+        // Conservative estimate: object header (16-24 bytes) + fields (int + refs) + ClosureContext overhead.
+        private const int BaseClosureOverhead = 128;
+
+        // Estimated overhead per captured upvalue in the ClosureContext.
+        private const int PerUpValueOverhead = 16;
+
         /// <summary>
         /// Type of closure based on upvalues
         /// </summary>
@@ -87,6 +95,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 ClosureContext = EmptyClosure;
             }
+
+            TrackAllocation(script, symbols.Length);
         }
 
         /// <summary>
@@ -110,6 +120,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 ClosureContext = EmptyClosure;
             }
+
+            TrackAllocation(script, symbols.Length);
         }
 
         /// <summary>
@@ -138,6 +150,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 ClosureContext = EmptyClosure;
             }
+
+            TrackAllocation(script, symbols.Length);
         }
 
         /// <summary>
@@ -240,6 +254,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 {
                     return UpValuesType.Closure;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Records allocation with the owning script's tracker if memory tracking is enabled.
+        /// </summary>
+        private static void TrackAllocation(Script script, int upValueCount)
+        {
+            AllocationTracker tracker = script?.AllocationTracker;
+            if (tracker != null)
+            {
+                long totalBytes = BaseClosureOverhead + (upValueCount * PerUpValueOverhead);
+                tracker.RecordAllocation(totalBytes);
             }
         }
     }

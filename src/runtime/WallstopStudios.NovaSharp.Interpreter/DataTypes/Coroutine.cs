@@ -6,12 +6,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
+    using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
     /// <summary>
     /// A class representing a script coroutine
     /// </summary>
     public class Coroutine : RefIdObject, IScriptPrivateResource
     {
+        // Estimated base memory overhead for a Coroutine (object header, fields, Processor reference).
+        // Conservative estimate: object header (16-24 bytes) + fields + Processor with stacks.
+        // Processor contains value stack, execution stack, and various state.
+        private const int BaseCoroutineOverhead = 512;
+
         /// <summary>
         /// Possible types of coroutine
         /// </summary>
@@ -65,6 +71,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _processor = proc;
             _processor.AssociatedCoroutine = this;
             OwnerScript = proc.GetScript();
+
+            // Only track user-created coroutines, not the main processor's pseudo-coroutine
+            if (proc.State != CoroutineState.Main)
+            {
+                TrackAllocation(OwnerScript);
+            }
         }
 
         /// <summary>
@@ -430,6 +442,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             _processor.ForceStateForTests(state);
+        }
+
+        /// <summary>
+        /// Records allocation with the owning script's tracker if memory tracking is enabled.
+        /// Also records coroutine creation count.
+        /// </summary>
+        private static void TrackAllocation(Script script)
+        {
+            AllocationTracker tracker = script?.AllocationTracker;
+            if (tracker != null)
+            {
+                tracker.RecordAllocation(BaseCoroutineOverhead);
+                tracker.RecordCoroutineCreated();
+            }
         }
     }
 }

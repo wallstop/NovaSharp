@@ -8,10 +8,10 @@
         <LangVersion>9</LangVersion>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="$(SrcRoot)tooling/WallstopStudios.NovaSharp.Hardwire/WallstopStudios.NovaSharp.Hardwire.csproj" />
-        <ProjectReference Include="$(SrcRoot)runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
-        <ProjectReference Include="$(SrcRoot)debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj" />
-        <ProjectReference Include="$(SrcRoot)debuggers/WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj" />
+        <ProjectReference Include="$(ToolingRoot)WallstopStudios.NovaSharp.Hardwire/WallstopStudios.NovaSharp.Hardwire.csproj" />
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(DebuggersRoot)WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(DebuggersRoot)WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>
         <None Remove="$(MSBuildProjectDirectory)/moonsharp.ico" />

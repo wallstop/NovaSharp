@@ -36,6 +36,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
             : base(message, innerException) { }
 
         /// <summary>
+        /// Initializes a new <see cref="SandboxViolationException"/> with structured violation details.
+        /// This is the preferred constructor for programmatic exception creation.
+        /// </summary>
+        /// <param name="details">The structured violation details.</param>
+        public SandboxViolationException(SandboxViolationDetails details)
+            : base(details.FormatMessage())
+        {
+            Details = details;
+        }
+
+        /// <summary>
         /// Initializes a new <see cref="SandboxViolationException"/> with violation type and details.
         /// </summary>
         /// <param name="violationType">The type of sandbox limit exceeded.</param>
@@ -48,9 +59,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
         )
             : base(FormatViolationMessage(violationType, limit, current))
         {
-            ViolationType = violationType;
-            ConfiguredLimit = limit;
-            ActualValue = current;
+            Details = CreateLimitDetails(violationType, limit, current);
         }
 
         /// <summary>
@@ -61,8 +70,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
         public SandboxViolationException(SandboxViolationType violationType, string accessedName)
             : base(FormatAccessDenialMessage(violationType, accessedName))
         {
-            ViolationType = violationType;
-            DeniedAccessName = accessedName;
+            Details = CreateAccessDetails(violationType, accessedName);
         }
 
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
@@ -76,24 +84,72 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
 #endif
 
         /// <summary>
+        /// Gets the structured details of this sandbox violation.
+        /// This property provides type-safe access to violation-specific information.
+        /// </summary>
+        public SandboxViolationDetails Details { get; }
+
+        /// <summary>
         /// Gets the type of sandbox violation that occurred.
         /// </summary>
-        public SandboxViolationType ViolationType { get; }
+        public SandboxViolationType ViolationType => Details.Kind;
 
         /// <summary>
         /// Gets the configured limit that was exceeded, if applicable.
+        /// Only valid when <see cref="Details"/>.<see cref="SandboxViolationDetails.IsLimitViolation"/> is <c>true</c>.
         /// </summary>
-        public long ConfiguredLimit { get; }
+        public long ConfiguredLimit => Details.LimitValue;
 
         /// <summary>
         /// Gets the actual value when the limit was exceeded, if applicable.
+        /// Only valid when <see cref="Details"/>.<see cref="SandboxViolationDetails.IsLimitViolation"/> is <c>true</c>.
         /// </summary>
-        public long ActualValue { get; }
+        public long ActualValue => Details.ActualValue;
 
         /// <summary>
         /// Gets the name of the module or function that was denied access, if applicable.
+        /// Only valid when <see cref="Details"/>.<see cref="SandboxViolationDetails.IsAccessDenial"/> is <c>true</c>.
         /// </summary>
-        public string DeniedAccessName { get; }
+        public string DeniedAccessName => Details.AccessName;
+
+        private static SandboxViolationDetails CreateLimitDetails(
+            SandboxViolationType violationType,
+            long limit,
+            long current
+        )
+        {
+            switch (violationType)
+            {
+                case SandboxViolationType.InstructionLimitExceeded:
+                    return SandboxViolationDetails.InstructionLimit(limit, current);
+                case SandboxViolationType.RecursionLimitExceeded:
+                    return SandboxViolationDetails.RecursionLimit((int)limit, (int)current);
+                case SandboxViolationType.MemoryLimitExceeded:
+                    return SandboxViolationDetails.MemoryLimit(limit, current);
+                case SandboxViolationType.CoroutineLimitExceeded:
+                    return SandboxViolationDetails.CoroutineLimit((int)limit, (int)current);
+                default:
+                    // Fallback for unknown types - use instruction limit format
+                    return SandboxViolationDetails.InstructionLimit(limit, current);
+            }
+        }
+
+        private static SandboxViolationDetails CreateAccessDetails(
+            SandboxViolationType violationType,
+            string accessedName
+        )
+        {
+            switch (violationType)
+            {
+                case SandboxViolationType.ModuleAccessDenied:
+                    return SandboxViolationDetails.ModuleAccessDenied(accessedName);
+                case SandboxViolationType.FunctionAccessDenied:
+                    return SandboxViolationDetails.FunctionAccessDenied(accessedName);
+                default:
+                    // Fallback for unknown types - use module access format
+                    return SandboxViolationDetails.ModuleAccessDenied(accessedName);
+            }
+        }
 
         private static string FormatViolationMessage(
             SandboxViolationType violationType,
@@ -114,6 +170,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
                     return string.Format(
                         System.Globalization.CultureInfo.InvariantCulture,
                         "Sandbox violation: recursion limit exceeded (limit: {0}, depth: {1})",
+                        limit,
+                        current
+                    );
+                case SandboxViolationType.MemoryLimitExceeded:
+                    return string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        "Sandbox violation: memory limit exceeded (limit: {0} bytes, used: {1} bytes)",
+                        limit,
+                        current
+                    );
+                case SandboxViolationType.CoroutineLimitExceeded:
+                    return string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        "Sandbox violation: coroutine limit exceeded (limit: {0}, count: {1})",
                         limit,
                         current
                     );

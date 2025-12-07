@@ -26,6 +26,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Infrastructure.IO
             _stream = stream;
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
