@@ -18,7 +18,7 @@ ______________________________________________________________________
 
 ### Project Overview
 
-NovaSharp is a multi-version Lua interpreter (supporting Lua 5.1, 5.2, 5.3, and 5.4) written in C# for .NET Standard 2.1, Mono, Xamarin, and Unity3D (including IL2CPP/AOT). It is an actively maintained fork of MoonSharp targeting modern .NET (6/7/8+), comprehensive Lua compatibility across all major versions, and Unity-first ergonomics.
+NovaSharp is a multi-version Lua interpreter (supporting Lua 5.1, 5.2, 5.3, and 5.4) written in C# for .NET Standard 2.1, Mono, Xamarin, and Unity3D (including IL2CPP/AOT). It is an actively maintained continuation of the original interpreter by Marco Mastropaolo targeting modern .NET (6/7/8+), comprehensive Lua compatibility across all major versions, and Unity-first ergonomics.
 
 ## Repository Structure
 

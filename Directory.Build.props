@@ -46,6 +46,8 @@
         <!-- Enable deterministic builds for reproducible packages -->
         <Deterministic>true</Deterministic>
         <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+        <!-- Opt into NuGet lock files so setup-dotnet cache keys stay deterministic -->
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 
         <!-- Enable SourceLink for debuggable NuGet packages -->
         <PublishRepositoryUrl>true</PublishRepositoryUrl>

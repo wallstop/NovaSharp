@@ -113,7 +113,7 @@ jobs:
           dotnet-version: '8.0.x'
           cache: true
       - name: Restore dependencies
-        run: dotnet restore src/NovaSharp.sln
+        run: dotnet restore src/NovaSharp.sln --locked-mode
       - name: Restore tools
         run: dotnet tool restore
       - name: Build + test via helper script (Linux/macOS)
@@ -201,7 +201,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: Restore dependencies
-        run: dotnet restore src/NovaSharp.sln
+        run: dotnet restore src/NovaSharp.sln --locked-mode
       - name: Restore tools
         run: dotnet tool restore
       - name: Generate coverage
@@ -416,7 +416,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: Restore dependencies
-        run: dotnet restore src/NovaSharp.sln
+        run: dotnet restore src/NovaSharp.sln --locked-mode
       - name: Build NovaSharp CLI
         run: dotnet build src/tooling/NovaSharp.Cli/NovaSharp.Cli.csproj -c Release --no-restore
       - name: Verify Lua fixtures exist

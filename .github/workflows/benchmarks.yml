@@ -6,7 +6,7 @@ on:
   pull_request:
     paths:
       - 'src/runtime/**'
-      - 'src/tooling/Benchmarks/**'
+      - 'src/tooling/WallstopStudios.NovaSharp.Benchmarks/**'
       - '.github/workflows/benchmarks.yml'
   workflow_dispatch:
     inputs:
@@ -37,7 +37,7 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore src/NovaSharp.sln
+        run: dotnet restore src/NovaSharp.sln --locked-mode
 
       - name: Restore tools
         run: dotnet tool restore
@@ -48,7 +48,7 @@ jobs:
       - name: Run benchmarks
         id: run_benchmarks
         run: |
-          dotnet run --project src/tooling/Benchmarks/NovaSharp.Benchmarks/NovaSharp.Benchmarks.csproj \
+          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj \
             -c Release --no-build -- \
             --filter "*RuntimeBenchmarks*" \
             --exporters json

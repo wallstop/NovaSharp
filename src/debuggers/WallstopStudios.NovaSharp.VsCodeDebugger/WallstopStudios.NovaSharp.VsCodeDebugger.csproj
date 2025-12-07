@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Description>VS Code Debug Adapter Protocol (DAP) implementation for NovaSharp. Enables full debugging experience including breakpoints, stepping, variable inspection, and watch expressions in Visual Studio Code.</Description>
-        <Copyright>Copyright (c) 2024-2025 Wallstop Studios. Originally based on MoonSharp (c) 2014-2016 Marco Mastropaolo.</Copyright>
+        <Copyright>Copyright (c) 2024-2025 Wallstop Studios. Derived from work by Marco Mastropaolo (c) 2014-2016.</Copyright>
         <AssemblyTitle>WallstopStudios.NovaSharp.VsCodeDebugger</AssemblyTitle>
         <VersionPrefix>3.0.0</VersionPrefix>
         <TargetFrameworks>netstandard2.1</TargetFrameworks>
