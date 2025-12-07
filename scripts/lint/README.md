@@ -5,7 +5,6 @@ Static analysis helpers that enforce codebase conventions. These scripts run in 
 ## Prerequisites
 
 - Python 3.10+
-- [ripgrep](https://github.com/BurntSushi/ripgrep) (`rg`) for pattern matching
 
 ## Scripts
 
@@ -79,7 +78,7 @@ python scripts/lint/check-shell-python-invocation.py
 
 ## Adding New Lint Scripts
 
-1. Create a Python script following the existing patterns (use `rg` for searching, return exit code 0 on success, 1 on violation).
+1. Create a Python script following the existing patterns (use `pathlib.rglob()` for searching, return exit code 0 on success, 1 on violation).
 1. Document the script in this README.
 1. Wire it into CI via `.github/workflows/tests.yml` or the appropriate `scripts/ci/*.sh` helper.
 1. Update `scripts/README.md` if the script introduces a new category of checks.

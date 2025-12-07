@@ -50,14 +50,6 @@ ensure_tool_on_path() {
   fi
 }
 
-check_optional_tool() {
-  tool_name="$1"
-  if command -v "$tool_name" >/dev/null 2>&1; then
-    return 0
-  fi
-  return 1
-}
-
 run_python() {
   if [ -n "${PYTHON:-}" ]; then
     "$PYTHON" "$@"
@@ -309,18 +301,14 @@ check_test_lint() {
     lint_failed=1
   fi
 
-  # Check for console capture violations (requires ripgrep)
-  if check_optional_tool "rg"; then
-    if ! run_python scripts/lint/check-console-capture-semaphore.py 2>/dev/null; then
-      lint_failed=1
-    fi
+  # Check for console capture violations
+  if ! run_python scripts/lint/check-console-capture-semaphore.py 2>/dev/null; then
+    lint_failed=1
+  fi
 
-    # Check for finally block violations
-    if ! run_python scripts/lint/check-test-finally.py 2>/dev/null; then
-      lint_failed=1
-    fi
-  else
-    warn "ripgrep (rg) not found; skipping console-capture and finally-block checks."
+  # Check for finally block violations
+  if ! run_python scripts/lint/check-test-finally.py 2>/dev/null; then
+    lint_failed=1
   fi
 
   if [ "$lint_failed" -eq 1 ]; then

@@ -8,7 +8,7 @@ pattern tracked in PLAN.md.
 from __future__ import annotations
 
 import pathlib
-import subprocess
+import re
 import sys
 from typing import Iterable, Set
 
@@ -27,35 +27,31 @@ ALLOWED_PATHS: Set[pathlib.Path] = {
     pathlib.Path("src/tests/TestInfrastructure/TUnit/PlatformDetectorIsolationAttribute.cs"),
 }
 
+# File extensions to search
+SEARCH_EXTENSIONS = {".cs", ".md", ".py", ".sh"}
+
+# Pattern to match
+PATTERN = re.compile(r"PlatformAutoDetector\.TestHooks")
+
 
 def get_matches() -> Iterable[tuple[pathlib.Path, str]]:
-    """Yields (path, line) tuples for raw TestHooks usage."""
-    try:
-        result = subprocess.run(
-            [
-                "rg",
-                "--with-filename",
-                "--line-number",
-                r"PlatformAutoDetector\.TestHooks",
-            ],
-            cwd=REPO_ROOT,
-            check=False,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError as exc:  # pragma: no cover
-        raise SystemExit("rg (ripgrep) is required to run this check.") from exc
+    """Yields (relative_path, line_info) tuples for raw TestHooks usage."""
+    for ext in SEARCH_EXTENSIONS:
+        for filepath in REPO_ROOT.rglob(f"*{ext}"):
+            # Skip hidden directories and common non-source directories
+            parts = filepath.relative_to(REPO_ROOT).parts
+            if any(p.startswith(".") or p in ("bin", "obj", "node_modules") for p in parts):
+                continue
 
-    if result.returncode not in (0, 1):
-        print(result.stdout)
-        print(result.stderr, file=sys.stderr)
-        raise SystemExit(result.returncode)
+            try:
+                content = filepath.read_text(encoding="utf-8", errors="ignore")
+            except (OSError, UnicodeDecodeError):
+                continue
 
-    for line in result.stdout.strip().splitlines():
-        if not line:
-            continue
-        path_str, rest = line.split(":", 1)
-        yield pathlib.Path(path_str), rest
+            for line_num, line in enumerate(content.splitlines(), start=1):
+                if PATTERN.search(line):
+                    rel_path = filepath.relative_to(REPO_ROOT)
+                    yield rel_path, f"{line_num}:{line.strip()}"
 
 
 def main() -> int:

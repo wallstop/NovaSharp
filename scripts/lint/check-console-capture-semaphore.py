@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import pathlib
-import subprocess
+import re
 import sys
 from typing import Iterable, Tuple
 
@@ -22,42 +22,30 @@ ALLOWED_SCOPE_FILES = {
 }
 
 
-def run_rg(pattern: str) -> Iterable[Tuple[pathlib.Path, str]]:
-    try:
-        result = subprocess.run(
-            [
-                "rg",
-                "--with-filename",
-                "--line-number",
-                "--glob",
-                "*.cs",
-                pattern,
-                str(TEST_ROOT),
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except FileNotFoundError as exc:  # pragma: no cover - tooling dependency
-        raise SystemExit("rg (ripgrep) is required to run this check.") from exc
-
-    if result.returncode not in (0, 1):
-        print(result.stdout)
-        print(result.stderr, file=sys.stderr)
-        raise SystemExit(result.returncode)
-
-    for line in result.stdout.strip().splitlines():
-        if not line:
+def search_pattern(pattern: str) -> Iterable[Tuple[pathlib.Path, str]]:
+    """Search for pattern in .cs files under TEST_ROOT using pure Python."""
+    compiled = re.compile(pattern)
+    for filepath in TEST_ROOT.rglob("*.cs"):
+        # Skip hidden directories and build output
+        parts = filepath.relative_to(REPO_ROOT).parts
+        if any(p.startswith(".") or p in ("bin", "obj") for p in parts):
             continue
-        path_str, rest = line.split(":", 1)
-        yield pathlib.Path(path_str), rest
+
+        try:
+            content = filepath.read_text(encoding="utf-8", errors="ignore")
+        except (OSError, UnicodeDecodeError):
+            continue
+
+        for line_num, line in enumerate(content.splitlines(), start=1):
+            if compiled.search(line):
+                yield filepath, f"{line_num}:{line.strip()}"
 
 
 def main() -> int:
     violations: list[Tuple[pathlib.Path, str, str]] = []
 
     semaphore_pattern = r"ConsoleCaptureCoordinator\.Semaphore"
-    for path, line in run_rg(semaphore_pattern):
+    for path, line in search_pattern(semaphore_pattern):
         if path.resolve() in ALLOWED_SCOPE_FILES:
             continue
         violations.append(
@@ -72,7 +60,7 @@ def main() -> int:
         )
 
     scope_pattern = r"new\s+Console(?:Capture|Redirection)Scope"
-    for path, line in run_rg(scope_pattern):
+    for path, line in search_pattern(scope_pattern):
         resolved = path.resolve()
         if resolved in ALLOWED_SCOPE_FILES:
             continue
