@@ -149,6 +149,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                     return doubleValue == Value;
                 }
 
+                if (obj is long longValue)
+                {
+                    return longValue == Value;
+                }
+
+                if (obj is int intValue)
+                {
+                    return intValue == Value;
+                }
+
                 ArithmOperatorsTestClass other = obj as ArithmOperatorsTestClass;
                 return other != null && Value == other.Value;
             }
@@ -163,6 +173,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 if (obj is double doubleValue)
                 {
                     return Value.CompareTo((int)doubleValue);
+                }
+
+                if (obj is long longValue)
+                {
+                    return Value.CompareTo((int)longValue);
+                }
+
+                if (obj is int intValue)
+                {
+                    return Value.CompareTo(intValue);
                 }
 
                 ArithmOperatorsTestClass other = obj as ArithmOperatorsTestClass;

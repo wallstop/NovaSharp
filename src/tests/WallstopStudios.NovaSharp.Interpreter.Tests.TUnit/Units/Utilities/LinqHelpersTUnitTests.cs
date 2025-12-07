@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -60,7 +61,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
 
             List<object> objects = new(values.AsObjects());
 
-            await Assert.That(objects[0]).IsEqualTo(5d).ConfigureAwait(false);
+            // Numeric values may come back as long (integer) or double depending on representation
+            await Assert
+                .That(Convert.ToDouble(objects[0], CultureInfo.InvariantCulture))
+                .IsEqualTo(5d)
+                .ConfigureAwait(false);
             await Assert.That(objects[1]).IsEqualTo("value").ConfigureAwait(false);
         }
 

@@ -1,6 +1,8 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 {
+    using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -118,7 +120,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             ScriptFunctionCallback<int> typed = closure.GetDelegate<int>();
             int typedResult = typed(5, 7);
 
-            await Assert.That(genericResult).IsEqualTo(3d).ConfigureAwait(false);
+            // genericResult may be long or double depending on internal Lua number representation
+            await Assert
+                .That(Convert.ToDouble(genericResult, CultureInfo.InvariantCulture))
+                .IsEqualTo(3d)
+                .ConfigureAwait(false);
             await Assert.That(typedResult).IsEqualTo(12).ConfigureAwait(false);
         }
 

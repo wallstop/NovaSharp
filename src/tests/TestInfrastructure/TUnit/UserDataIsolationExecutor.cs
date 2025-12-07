@@ -7,7 +7,7 @@ using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
 
 [assembly: global::TUnit.Core.Executors.TestExecutor(
-    typeof(TestInfrastructure.TUnit.UserDataIsolationExecutor)
+    typeof(WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit.UserDataIsolationExecutor)
 )]
 
 namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit

@@ -507,7 +507,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(keys.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(keys.Contains("alpha")).IsTrue().ConfigureAwait(false);
-            await Assert.That(keys.Contains(2d)).IsTrue().ConfigureAwait(false);
+            // Numeric key may come back as long (integer) or double depending on representation
+            await Assert
+                .That(keys.Any(k => k is long l && l == 2 || k is double d && d == 2d))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
     }
 }

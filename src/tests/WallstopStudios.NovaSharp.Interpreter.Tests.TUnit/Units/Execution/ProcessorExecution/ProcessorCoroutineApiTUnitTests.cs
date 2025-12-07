@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
@@ -80,7 +81,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             List<object> results = coroutine.Coroutine.AsEnumerable().ToList();
 
-            await Assert.That(results.SequenceEqual(new object[] { 10d, 20d, 30d })).IsTrue();
+            // Numeric values may come back as long (integer) or double depending on representation
+            await Assert.That(results.Count).IsEqualTo(3);
+            await Assert
+                .That(Convert.ToDouble(results[0], CultureInfo.InvariantCulture))
+                .IsEqualTo(10d);
+            await Assert
+                .That(Convert.ToDouble(results[1], CultureInfo.InvariantCulture))
+                .IsEqualTo(20d);
+            await Assert
+                .That(Convert.ToDouble(results[2], CultureInfo.InvariantCulture))
+                .IsEqualTo(30d);
         }
 
         [global::TUnit.Core.Test]

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -13,7 +14,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     {
         private static readonly int[] ListIntExpectation = { 3, 4 };
         private static readonly int[] EnumerableIntExpectation = { 5, 6 };
-        private static readonly object[] ObjectArrayExpectation = { 1d, "two" };
         private static readonly int[] GenericArrayExpectation = { 1, 2, 3 };
 
         [global::TUnit.Core.Test]
@@ -121,7 +121,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(result).IsTypeOf<Dictionary<object, object>>().ConfigureAwait(false);
             Dictionary<object, object> dictionary = (Dictionary<object, object>)result;
-            await Assert.That(dictionary["one"]).IsEqualTo(1d).ConfigureAwait(false);
+            // Numeric values may come back as long or double depending on internal representation
+            await Assert
+                .That(Convert.ToDouble(dictionary["one"], CultureInfo.InvariantCulture))
+                .IsEqualTo(1d)
+                .ConfigureAwait(false);
             await Assert.That(dictionary["two"]).IsEqualTo("second").ConfigureAwait(false);
         }
 
@@ -157,7 +161,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(result).IsTypeOf<List<object>>().ConfigureAwait(false);
             List<object> list = (List<object>)result;
-            await AssertSequenceEqual(list, new object[] { 10d, "value" }).ConfigureAwait(false);
+            await Assert.That(list.Count).IsEqualTo(2).ConfigureAwait(false);
+            // Numeric values may come back as long or double depending on internal representation
+            await Assert
+                .That(Convert.ToDouble(list[0], CultureInfo.InvariantCulture))
+                .IsEqualTo(10d)
+                .ConfigureAwait(false);
+            await Assert.That(list[1]).IsEqualTo("value").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -181,7 +191,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             object[] array = (object[])TableConversions.ConvertTableToType(table, typeof(object[]));
 
-            await AssertSequenceEqual(array, ObjectArrayExpectation).ConfigureAwait(false);
+            await Assert.That(array.Length).IsEqualTo(2).ConfigureAwait(false);
+            // Numeric values may come back as long or double depending on internal representation
+            await Assert
+                .That(Convert.ToDouble(array[0], CultureInfo.InvariantCulture))
+                .IsEqualTo(1d)
+                .ConfigureAwait(false);
+            await Assert.That(array[1]).IsEqualTo("two").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -280,13 +296,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(result).IsNull().ConfigureAwait(false);
         }
 
-        private static async Task AssertSequenceEqual<T>(
-            IReadOnlyList<T> actual,
-            IReadOnlyList<T> expected
-        )
+        private static async Task AssertSequenceEqual<T>(IReadOnlyList<T> actual, T[] expected)
         {
-            await Assert.That(actual.Count).IsEqualTo(expected.Count).ConfigureAwait(false);
-            for (int i = 0; i < expected.Count; i++)
+            await Assert.That(actual.Count).IsEqualTo(expected.Length).ConfigureAwait(false);
+            for (int i = 0; i < expected.Length; i++)
             {
                 await Assert.That(actual[i]).IsEqualTo(expected[i]).ConfigureAwait(false);
             }

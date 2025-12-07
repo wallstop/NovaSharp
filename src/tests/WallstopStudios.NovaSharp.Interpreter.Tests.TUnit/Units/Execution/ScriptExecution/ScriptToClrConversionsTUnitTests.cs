@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Text;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
@@ -241,7 +242,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 );
 
             object invocationResult = result(Array.Empty<object>());
-            await Assert.That(invocationResult).IsEqualTo(42d);
+            // Result may be long or double depending on internal Lua number representation
+            await Assert
+                .That(Convert.ToDouble(invocationResult, CultureInfo.InvariantCulture))
+                .IsEqualTo(42d);
         }
 
         [global::TUnit.Core.Test]
@@ -354,8 +358,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 Dictionary<object, object>
             >(tableValue, defaultValue: null, isOptional: false);
 
-            await Assert.That(result["alpha"]).IsEqualTo(1.0);
-            await Assert.That(result[2.0]).IsEqualTo("beta");
+            // Numeric values may be long or double depending on internal representation
+            await Assert
+                .That(Convert.ToDouble(result["alpha"], CultureInfo.InvariantCulture))
+                .IsEqualTo(1.0);
+            // Numeric key may be stored as long, so try both
+            object betaValue = result.TryGetValue(2L, out object longKeyValue)
+                ? longKeyValue
+                : result[2.0];
+            await Assert.That(betaValue).IsEqualTo("beta");
         }
 
         [global::TUnit.Core.Test]
@@ -623,6 +634,76 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             );
 
             await Assert.That(weight).IsEqualTo(ScriptToClrConversions.WeightExactMatch);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectReturnsLongForIntegerValues()
+        {
+            // Lua 5.3+ integer subtype compliance: integer values should convert to long
+            DynValue integerValue = DynValue.NewNumber(42);
+
+            object result = ScriptToClrConversions.DynValueToObject(integerValue);
+
+            // Value should be numerically correct
+            await Assert
+                .That(Convert.ToDouble(result, CultureInfo.InvariantCulture))
+                .IsEqualTo(42d);
+            // For integer literals, result should be long (not double)
+            await Assert.That(result is long).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectReturnsDoubleForFloatValues()
+        {
+            // Float values should convert to double
+            DynValue floatValue = DynValue.NewNumber(3.14);
+
+            object result = ScriptToClrConversions.DynValueToObject(floatValue);
+
+            await Assert.That(result).IsEqualTo(3.14);
+            await Assert.That(result is double).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(0)]
+        [global::TUnit.Core.Arguments(-1)]
+        [global::TUnit.Core.Arguments(100)]
+        [global::TUnit.Core.Arguments(int.MaxValue)]
+        [global::TUnit.Core.Arguments(int.MinValue)]
+        public async Task DynValueToObjectReturnsLongForVariousIntegerLiterals(int expectedValue)
+        {
+            DynValue integerValue = DynValue.NewNumber(expectedValue);
+
+            object result = ScriptToClrConversions.DynValueToObject(integerValue);
+
+            await Assert
+                .That(Convert.ToInt64(result, CultureInfo.InvariantCulture))
+                .IsEqualTo((long)expectedValue);
+            await Assert.That(result is long).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0.0)]
+        [global::TUnit.Core.Arguments(1.5)]
+        [global::TUnit.Core.Arguments(-3.14159)]
+        [global::TUnit.Core.Arguments(double.MaxValue)]
+        [global::TUnit.Core.Arguments(double.MinValue)]
+        [global::TUnit.Core.Arguments(double.Epsilon)]
+        public async Task DynValueToObjectReturnsDoubleForVariousFloatLiterals(double expectedValue)
+        {
+            DynValue floatValue = DynValue.NewNumber(expectedValue);
+
+            object result = ScriptToClrConversions.DynValueToObject(floatValue);
+
+            await Assert
+                .That(Convert.ToDouble(result, CultureInfo.InvariantCulture))
+                .IsEqualTo(expectedValue);
+            // Non-integer values should remain as double
+            if (expectedValue != Math.Floor(expectedValue))
+            {
+                await Assert.That(result is double).IsTrue();
+            }
         }
 
         private static DynValue CreateConstantClosure(string code)
