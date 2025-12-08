@@ -9,7 +9,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
     using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
+    using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
@@ -116,44 +118,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
         }
 
         [global::TUnit.Core.Test]
-        public async Task IsRunningOnAotUsesCachedValueAfterProbe()
+        public async Task IsRunningOnAotUsesProbeOverrideWithoutAffectingGlobalCache()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+
+            // Pre-populate the global cache with false (JIT available).
+            PlatformDetectorScope.SetAotValue(false);
             string stateBeforeOverride = PlatformDetectorScope.DescribeCurrentState();
             Console.WriteLine($"State before override: {stateBeforeOverride}");
 
-            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => true);
-            string stateAfterOverride = PlatformDetectorScope.DescribeCurrentState();
-            Console.WriteLine($"State after override: {stateAfterOverride}");
+            using (IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => true))
+            {
+                string stateAfterOverride = PlatformDetectorScope.DescribeCurrentState();
+                Console.WriteLine($"State after override: {stateAfterOverride}");
 
-            // Verify the override was registered before accessing IsRunningOnAot.
-            // This helps diagnose race conditions where the override might not be visible.
-            PlatformAutoDetector.PlatformDetectorSnapshot verificationSnapshot =
-                PlatformDetectorScope.CaptureSnapshot();
-            await Assert
-                .That(verificationSnapshot.AotProbeOverride is not null)
-                .IsTrue()
-                .Because("AOT probe override should be set after OverrideAotProbe call");
-            await Assert
-                .That(verificationSnapshot.RunningOnAotCache.HasValue)
-                .IsFalse()
-                .Because("AOT cache should be reset to null (unknown) after setting override");
+                // Verify the override was registered in the current async flow.
+                PlatformAutoDetector.PlatformDetectorSnapshot verificationSnapshot =
+                    PlatformDetectorScope.CaptureSnapshot();
+                await Assert
+                    .That(verificationSnapshot.AotProbeOverride is not null)
+                    .IsTrue()
+                    .Because("AOT probe override should be set after OverrideAotProbe call");
 
-            bool initialProbe = PlatformAutoDetector.IsRunningOnAot;
-            string stateAfterInitialProbe = PlatformDetectorScope.DescribeCurrentState();
-            Console.WriteLine(
-                $"Initial probe result: {initialProbe}, state: {stateAfterInitialProbe}"
-            );
-            await Assert.That(initialProbe).IsTrue();
+                // Global cache should NOT be affected by setting a flow-local probe override.
+                await Assert
+                    .That(verificationSnapshot.RunningOnAotCache)
+                    .IsEqualTo(false)
+                    .Because(
+                        "Global AOT cache should remain unchanged when setting flow-local probe override"
+                    );
 
-            probe.Dispose();
+                // When probe override is active, it bypasses the cache and returns probe result.
+                bool probeResult = PlatformAutoDetector.IsRunningOnAot;
+                string stateAfterProbe = PlatformDetectorScope.DescribeCurrentState();
+                Console.WriteLine($"Probe result: {probeResult}, state: {stateAfterProbe}");
+                await Assert
+                    .That(probeResult)
+                    .IsTrue()
+                    .Because("Probe override should return true, bypassing the cached false value");
+
+                // Global cache should still be unchanged (false) because probe overrides are isolated.
+                PlatformAutoDetector.PlatformDetectorSnapshot afterProbeSnapshot =
+                    PlatformDetectorScope.CaptureSnapshot();
+                await Assert
+                    .That(afterProbeSnapshot.RunningOnAotCache)
+                    .IsEqualTo(false)
+                    .Because("Global cache should remain false even after probe returned true");
+            }
+
+            // After disposing probe, reads should use the global cache.
             string stateAfterDispose = PlatformDetectorScope.DescribeCurrentState();
             Console.WriteLine($"State after dispose: {stateAfterDispose}");
 
             bool cachedValue = PlatformAutoDetector.IsRunningOnAot;
             string stateAfterCachedRead = PlatformDetectorScope.DescribeCurrentState();
             Console.WriteLine($"Cached value result: {cachedValue}, state: {stateAfterCachedRead}");
-            await Assert.That(cachedValue).IsTrue();
+            await Assert
+                .That(cachedValue)
+                .IsFalse()
+                .Because("After probe is disposed, global cache (false) should be used");
         }
 
         [global::TUnit.Core.Test]
@@ -344,61 +367,145 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
         }
 
         [global::TUnit.Core.Test]
-        public async Task IsRunningOnAotProbeOverrideIsAtomicWithStateReset()
+        public async Task IsRunningOnAotProbeOverrideIsIsolatedPerAsyncFlow()
         {
-            // This test verifies that setting a probe override atomically resets the cached state,
-            // preventing a race where another thread probing without an override could cache a
-            // false value before the test's override takes effect.
+            // This test verifies that AOT probe overrides are isolated per async flow using AsyncLocal.
+            // Setting a probe override in one thread does NOT affect reads in concurrent threads.
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
 
+            // Pre-populate the global cache with false (JIT available).
+            PlatformDetectorScope.SetAotValue(false);
+
             const int iterations = 50;
-            int successCount = 0;
-            int failureCount = 0;
+            int readsSawFalse = 0;
+            int readsSawTrue = 0;
 
             for (int iteration = 0; iteration < iterations; iteration++)
             {
-                // Reset to false to simulate a cached "JIT available" state
-                PlatformDetectorScope.SetAotValue(false);
-
-                // Simulate the race: one thread sets the override, another reads the value
+                // One thread sets an override that returns true.
                 Task setOverrideTask = Task.Run(() =>
                 {
-                    // Set probe override that returns true
                     PlatformDetectorScope.SetAotProbeOverrideDirect(() => true);
+                    // Read within the same flow should see the override.
+                    bool result = PlatformAutoDetector.IsRunningOnAot;
+                    if (!result)
+                    {
+                        throw new InvalidOperationException(
+                            "Probe override should return true in the same async flow"
+                        );
+                    }
+
+                    PlatformDetectorScope.SetAotProbeOverrideDirect(null);
                 });
 
+                // A concurrent thread reads without setting an override.
+                // Due to AsyncLocal isolation, it should NOT see the override from the other thread.
                 Task<bool> readTask = Task.Run(() => PlatformAutoDetector.IsRunningOnAot);
 
                 await Task.WhenAll(setOverrideTask, readTask).ConfigureAwait(false);
                 bool readResult = await readTask.ConfigureAwait(false);
 
-                // With the fix, the read should either:
-                // 1. See the old cached false value (if it read before the override was set), OR
-                // 2. See true (if the override was set before/during the read and triggered a re-probe)
-                // The bug was when the read would probe WITHOUT the override but AFTER the
-                // state was reset, caching false when true was intended.
-
-                // Since timing is non-deterministic, we just track the results
+                // The read should see the global cached value (false), not the other thread's override.
                 if (readResult)
                 {
-                    Interlocked.Increment(ref successCount);
+                    Interlocked.Increment(ref readsSawTrue);
                 }
                 else
                 {
-                    Interlocked.Increment(ref failureCount);
+                    Interlocked.Increment(ref readsSawFalse);
                 }
-
-                // Clear for next iteration
-                PlatformDetectorScope.SetAotProbeOverrideDirect(null);
             }
 
             Console.WriteLine(
-                $"Atomic probe override test: {successCount} successes (true), {failureCount} failures (false)"
+                $"Async flow isolation test: {readsSawFalse} reads saw false (expected), {readsSawTrue} saw true (unexpected)"
             );
 
-            // Note: We don't assert a specific ratio here because timing varies.
-            // The purpose is to verify no crashes or hangs under concurrent access.
-            await Assert.That(successCount + failureCount).IsEqualTo(iterations);
+            // With AsyncLocal isolation, concurrent reads should ALWAYS see the global cache (false),
+            // never the override from the other flow.
+            await Assert
+                .That(readsSawFalse)
+                .IsEqualTo(iterations)
+                .Because(
+                    "Reads in a separate async flow should not see another flow's probe override"
+                );
+        }
+
+        [global::TUnit.Core.Test]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1031:Do not catch general exception types",
+            Justification = "Testing that Script creation does not throw; any exception is a failure"
+        )]
+        public async Task ExceptionThrowingProbeDoesNotAffectConcurrentScriptCreation()
+        {
+            // This test reproduces the original bug where a test setting an exception-throwing
+            // probe would leak to other tests creating Script instances concurrently.
+            // With AsyncLocal isolation, this should no longer happen.
+
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+
+            // Pre-populate the global cache so concurrent Script creation succeeds.
+            PlatformDetectorScope.SetAotValue(false);
+
+            const int iterations = 20;
+            int scriptCreationsSucceeded = 0;
+            int scriptCreationsFailed = 0;
+
+            for (int iteration = 0; iteration < iterations; iteration++)
+            {
+                // One task sets an exception-throwing probe override.
+                Task exceptionProbeTask = Task.Run(() =>
+                {
+                    PlatformDetectorScope.SetAotProbeOverrideDirect(() =>
+                    {
+                        throw new ArgumentException("Simulated AOT probe failure");
+                    });
+                    using (
+                        DeferredActionScope.Run(() =>
+                            PlatformDetectorScope.SetAotProbeOverrideDirect(null)
+                        )
+                    )
+                    {
+                        try
+                        {
+                            // Access IsRunningOnAot to trigger the exception within this flow.
+                            _ = PlatformAutoDetector.IsRunningOnAot;
+                        }
+                        catch (ArgumentException)
+                        {
+                            // Expected in this flow.
+                        }
+                    }
+                });
+
+                // A concurrent task creates a Script, which triggers AOT detection.
+                Task scriptCreationTask = Task.Run(() =>
+                {
+                    try
+                    {
+                        Script script = new Script(CoreModules.PresetHardSandbox);
+                        Interlocked.Increment(ref scriptCreationsSucceeded);
+                    }
+                    catch (Exception)
+                    {
+                        Interlocked.Increment(ref scriptCreationsFailed);
+                    }
+                });
+
+                await Task.WhenAll(exceptionProbeTask, scriptCreationTask).ConfigureAwait(false);
+            }
+
+            Console.WriteLine(
+                $"Script creation: {scriptCreationsSucceeded} succeeded, {scriptCreationsFailed} failed"
+            );
+
+            // With proper AsyncLocal isolation, all Script creations should succeed.
+            await Assert
+                .That(scriptCreationsSucceeded)
+                .IsEqualTo(iterations)
+                .Because(
+                    "Exception-throwing probe in one async flow should not affect Script creation in another flow"
+                );
         }
 
         [global::TUnit.Core.Test]

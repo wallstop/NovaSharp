@@ -74,6 +74,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
 #if UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || ENABLE_IL2CPP
                 return true;
 #else
+                // If a test probe override is active in this async flow, always invoke it
+                // without checking or affecting the global cache. This ensures test isolation.
+                if (TestHooks.GetAotProbeOverride() != null)
+                {
+                    return ProbeIsRunningOnAot();
+                }
+
                 int cachedState = Volatile.Read(ref RunningOnAotState);
                 if (cachedState != RunningOnAotUnknown)
                 {
@@ -423,25 +430,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
             /// Overrides the AOT probe logic; when set, <see cref="IsRunningOnAot"/> uses the supplied delegate.
             /// </summary>
             /// <remarks>
-            /// When setting a non-null probe override, this method acquires <see cref="RunningOnAotStateGate"/>
-            /// to atomically set the override and invalidate any in-flight probes that may have started
-            /// without the override. When clearing the override (null), the cached state is preserved
-            /// to allow tests to verify caching behavior.
+            /// The probe override is scoped to the current async execution flow using <see cref="AsyncLocal{T}"/>,
+            /// so it only affects the test that set it. When clearing the override (null), the value is simply
+            /// reset in the current async flow.
             /// </remarks>
             public static void SetAotProbeOverride(Func<bool> probe)
             {
-                if (probe != null)
-                {
-                    lock (RunningOnAotStateGate)
-                    {
-                        AotProbeOverride = probe;
-                        Volatile.Write(ref RunningOnAotState, RunningOnAotUnknown);
-                    }
-                }
-                else
-                {
-                    AotProbeOverride = null;
-                }
+                AotProbeOverride = probe;
             }
 
             /// <summary>
@@ -470,13 +465,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
             }
 
             /// <summary>
-            /// Must be volatile to ensure visibility across threads when probe overrides are
-            /// set for testing. The delegate is read inside the <see cref="RunningOnAotStateGate"/>
-            /// lock by <see cref="ProbeIsRunningOnAot"/>, but written atomically with the cache
-            /// reset by <see cref="SetAotProbeOverride"/>. Using volatile ensures the read
-            /// inside the lock sees the latest write.
+            /// Scoped to the current async execution flow to avoid leaking test overrides
+            /// to concurrently running tests. Using <see cref="AsyncLocal{T}"/> ensures each
+            /// test's probe override is isolated to its own execution context.
             /// </summary>
-            private static volatile Func<bool> AotProbeOverride;
+            private static readonly AsyncLocal<Func<bool>> AotProbeOverrideLocal = new();
+
+            /// <summary>
+            /// Gets or sets the AOT probe override for the current execution context.
+            /// </summary>
+            private static Func<bool> AotProbeOverride
+            {
+                get => AotProbeOverrideLocal.Value;
+                set => AotProbeOverrideLocal.Value = value;
+            }
 
             private static bool? UnityDetectionOverride;
 
