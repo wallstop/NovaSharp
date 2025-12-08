@@ -9,6 +9,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
 
     /// <summary>
@@ -330,15 +331,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task RunFileCreatesScriptAndExecutes()
         {
+            // Ensure we're using a file system loader since other tests may modify DefaultOptions.ScriptLoader
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
+
             // This requires a real file, so we'll use a temp file
             using TempFileScope tempFile = TempFileScope.CreateWithText(
                 "return 42",
                 extension: ".lua"
             );
 
+            // Capture diagnostic info before running for better debugging on failure
+            string loaderType =
+                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "null (no loader)";
+            string diagnosticContext =
+                $"FilePath: {tempFile.FilePath}, LoaderType: {loaderType}, "
+                + $"FileExists: {System.IO.File.Exists(tempFile.FilePath)}";
+
             DynValue result = Script.RunFile(tempFile.FilePath);
 
-            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(42d)
+                .Because($"Expected return value of 42. {diagnosticContext}")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -347,6 +363,108 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue result = Script.RunString("return 'hello'");
 
             await Assert.That(result.String).IsEqualTo("hello").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for <see cref="Script.RunFile"/> with various return values.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [Arguments("return 42", DataType.Number, 42.0, null)]
+        [Arguments("return 'test'", DataType.String, null, "test")]
+        [Arguments("return true", DataType.Boolean, null, null)]
+        [Arguments("return nil", DataType.Nil, null, null)]
+        [Arguments("return 1 + 2 * 3", DataType.Number, 7.0, null)]
+        public async Task RunFileReturnsExpectedValueDataDriven(
+            string code,
+            DataType expectedType,
+            double? expectedNumber,
+            string expectedString
+        )
+        {
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using TempFileScope tempFile = TempFileScope.CreateWithText(code, extension: ".lua");
+
+            DynValue result = Script.RunFile(tempFile.FilePath);
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(expectedType)
+                .Because($"Code: {code}")
+                .ConfigureAwait(false);
+
+            if (expectedNumber.HasValue)
+            {
+                await Assert
+                    .That(result.Number)
+                    .IsEqualTo(expectedNumber.Value)
+                    .ConfigureAwait(false);
+            }
+
+            if (expectedString != null)
+            {
+                await Assert.That(result.String).IsEqualTo(expectedString).ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// Data-driven test for <see cref="Script.RunString"/> with various return values.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [Arguments("return 42", DataType.Number, 42.0, null)]
+        [Arguments("return 'hello'", DataType.String, null, "hello")]
+        [Arguments("return true", DataType.Boolean, null, null)]
+        [Arguments("return false", DataType.Boolean, null, null)]
+        [Arguments("return nil", DataType.Nil, null, null)]
+        [Arguments("return 'foo' .. 'bar'", DataType.String, null, "foobar")]
+        [Arguments("return 10 / 2", DataType.Number, 5.0, null)]
+        public async Task RunStringReturnsExpectedValueDataDriven(
+            string code,
+            DataType expectedType,
+            double? expectedNumber,
+            string expectedString
+        )
+        {
+            DynValue result = Script.RunString(code);
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(expectedType)
+                .Because($"Code: {code}")
+                .ConfigureAwait(false);
+
+            if (expectedNumber.HasValue)
+            {
+                await Assert
+                    .That(result.Number)
+                    .IsEqualTo(expectedNumber.Value)
+                    .ConfigureAwait(false);
+            }
+
+            if (expectedString != null)
+            {
+                await Assert.That(result.String).IsEqualTo(expectedString).ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// Verifies that Script.RunString works regardless of DefaultOptions.ScriptLoader type.
+        /// RunString doesn't load files, so it should work with any loader.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task RunStringWorksIndependentOfScriptLoaderType()
+        {
+            // Capture current loader type for diagnostics
+            string loaderType =
+                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "null (no loader)";
+
+            DynValue result = Script.RunString("return 123");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(123d)
+                .Because($"RunString should work regardless of loader type ({loaderType})")
+                .ConfigureAwait(false);
         }
 
         // Helper classes

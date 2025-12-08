@@ -35,8 +35,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         public async Task LoadStringReportsFriendlyChunkName()
         {
             Script script = new();
-            ScriptLoaderBase loader = (ScriptLoaderBase)script.Options.ScriptLoader;
-            loader.IgnoreLuaPathGlobal = true;
+
+            // Optionally set IgnoreLuaPathGlobal if the loader supports it
+            // This is not required for the test but can help avoid path resolution issues
+            if (script.Options.ScriptLoader is ScriptLoaderBase loader)
+            {
+                loader.IgnoreLuaPathGlobal = true;
+            }
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.LoadString("local = 1", null, "tests/parser/chunk")
@@ -93,6 +98,80 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
             await Assert
                 .That(exception.DecoratedMessage)
                 .Contains("decimal escape too large")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for chunk names appearing in error messages.
+        /// Verifies that user-provided chunk names are preserved in syntax error messages.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [Arguments("local = 1", "my_chunk", "my_chunk")]
+        [Arguments("local = 1", "tests/parser/chunk", "tests/parser/chunk")]
+        [Arguments("local = 1", "file.lua", "file.lua")]
+        [Arguments("local = 1", "nested/path/script.lua", "nested/path/script.lua")]
+        public async Task LoadStringReportsFriendlyChunkNameDataDriven(
+            string invalidCode,
+            string chunkName,
+            string expectedInMessage
+        )
+        {
+            Script script = new();
+
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.LoadString(invalidCode, null, chunkName)
+            )!;
+
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains(expectedInMessage)
+                .Because(
+                    $"Chunk name '{chunkName}' should appear in error message: {exception.DecoratedMessage}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that when no chunk name is provided, a default one is used.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task LoadStringUsesDefaultChunkNameWhenNotProvided()
+        {
+            Script script = new();
+
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.LoadString("local = 1")
+            )!;
+
+            // Default chunk name should be something like "chunk_0" or similar
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Matches(@".*chunk.*")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that the script loader type doesn't affect error message generation.
+        /// This test is designed to work regardless of what type of loader is configured.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task SyntaxErrorsWorkWithAnyScriptLoaderType()
+        {
+            Script script = new();
+
+            // Capture loader type for diagnostic purposes
+            string loaderTypeName = script.Options.ScriptLoader?.GetType().Name ?? "null";
+
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
+                script.LoadString("local = 1", null, "test_chunk")
+            )!;
+
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("test_chunk")
+                .Because(
+                    $"Error message should contain chunk name regardless of loader type ({loaderTypeName})"
+                )
                 .ConfigureAwait(false);
         }
     }
