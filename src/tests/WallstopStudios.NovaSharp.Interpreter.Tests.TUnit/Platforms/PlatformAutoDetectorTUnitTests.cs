@@ -129,7 +129,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
             // Verify the override was registered before accessing IsRunningOnAot.
             // This helps diagnose race conditions where the override might not be visible.
             PlatformAutoDetector.PlatformDetectorSnapshot verificationSnapshot =
-                PlatformAutoDetector.TestHooks.CaptureState();
+                PlatformDetectorScope.CaptureSnapshot();
             await Assert
                 .That(verificationSnapshot.AotProbeOverride is not null)
                 .IsTrue()
@@ -177,43 +177,121 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
         }
 
         [global::TUnit.Core.Test]
-        public async Task IsRunningOnAotUsesProbeOverride()
+        [global::TUnit.Core.Arguments(true)]
+        [global::TUnit.Core.Arguments(false)]
+        public async Task IsRunningOnAotUsesProbeOverride(bool expectedValue)
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
-            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => true);
+            string initialState = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"Initial state: {initialState}");
 
-            await Assert.That(PlatformAutoDetector.IsRunningOnAot).IsTrue();
+            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => expectedValue);
+            string stateAfterOverride = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"State after override: {stateAfterOverride}");
+
+            bool actualValue = PlatformAutoDetector.IsRunningOnAot;
+            string finalState = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine(
+                $"Expected={expectedValue}, Actual={actualValue}, Final state: {finalState}"
+            );
+
+            await Assert
+                .That(actualValue)
+                .IsEqualTo(expectedValue)
+                .Because($"Probe returned {expectedValue}, so IsRunningOnAot should match");
         }
 
         [global::TUnit.Core.Test]
-        public async Task IsRunningOnAotTreatsProbeExceptionsAsAotHosts()
+        [global::TUnit.Core.Arguments(typeof(PlatformNotSupportedException))]
+        [global::TUnit.Core.Arguments(typeof(MemberAccessException))]
+        [global::TUnit.Core.Arguments(typeof(NotSupportedException))]
+        [global::TUnit.Core.Arguments(typeof(InvalidOperationException))]
+        [global::TUnit.Core.Arguments(typeof(TypeLoadException))]
+        [global::TUnit.Core.Arguments(typeof(SecurityException))]
+        public async Task IsRunningOnAotTreatsProbeExceptionsAsAotHosts(Type exceptionType)
         {
-            IReadOnlyList<(Type Type, string Name)> exceptionTypes = new[]
-            {
-                (typeof(PlatformNotSupportedException), nameof(PlatformNotSupportedException)),
-                (typeof(MemberAccessException), nameof(MemberAccessException)),
-                (typeof(NotSupportedException), nameof(NotSupportedException)),
-                (typeof(InvalidOperationException), nameof(InvalidOperationException)),
-                (typeof(TypeLoadException), nameof(TypeLoadException)),
-                (typeof(SecurityException), nameof(SecurityException)),
-            };
+            ArgumentNullException.ThrowIfNull(exceptionType);
 
-            foreach ((Type exceptionType, string exceptionName) in exceptionTypes)
-            {
-                using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
-                using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() =>
-                {
-                    Exception instance = (Exception)Activator.CreateInstance(exceptionType);
-                    throw instance;
-                });
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+            string initialState = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"Initial state: {initialState}");
 
-                bool isRunningOnAot = PlatformAutoDetector.IsRunningOnAot;
-                string state = PlatformDetectorScope.DescribeCurrentState();
-                Console.WriteLine(
-                    $"Exception {exceptionName} -> IsRunningOnAot={isRunningOnAot}, State: {state}"
+            Type capturedExceptionType = exceptionType;
+            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() =>
+            {
+                Exception instance = (Exception)Activator.CreateInstance(capturedExceptionType);
+                throw instance;
+            });
+            string stateAfterOverride = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"State after setting probe override: {stateAfterOverride}");
+
+            bool isRunningOnAot = PlatformAutoDetector.IsRunningOnAot;
+            string finalState = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine(
+                $"Exception {exceptionType.Name} -> IsRunningOnAot={isRunningOnAot}, Final state: {finalState}"
+            );
+
+            await Assert
+                .That(isRunningOnAot)
+                .IsTrue()
+                .Because(
+                    $"When AOT probe throws {exceptionType.Name}, the platform should be treated as AOT"
                 );
-                await Assert.That(isRunningOnAot).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(typeof(ArgumentException))]
+        [global::TUnit.Core.Arguments(typeof(OutOfMemoryException))]
+        [global::TUnit.Core.Arguments(typeof(NullReferenceException))]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1031:Do not catch general exception types",
+            Justification = "Testing that exceptions propagate; we must catch all to verify which type was thrown"
+        )]
+        public async Task IsRunningOnAotPropagatesUnexpectedExceptions(Type exceptionType)
+        {
+            ArgumentNullException.ThrowIfNull(exceptionType);
+
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+            string initialState = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"Initial state: {initialState}");
+
+            Type capturedExceptionType = exceptionType;
+            using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() =>
+            {
+                Exception instance = (Exception)Activator.CreateInstance(capturedExceptionType);
+                throw instance;
+            });
+            string stateAfterOverride = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"State after setting probe override: {stateAfterOverride}");
+
+            Exception caught = null;
+            try
+            {
+                _ = PlatformAutoDetector.IsRunningOnAot;
             }
+            catch (Exception ex)
+            {
+                caught = ex;
+            }
+
+            string finalState = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine(
+                $"Exception {exceptionType.Name} -> Caught: {caught?.GetType().Name ?? "none"}, Final state: {finalState}"
+            );
+
+            await Assert
+                .That(caught)
+                .IsNotNull()
+                .Because(
+                    $"When AOT probe throws unexpected {exceptionType.Name}, it should propagate"
+                );
+            await Assert
+                .That(caught!.GetType())
+                .IsEqualTo(exceptionType)
+                .Because(
+                    $"The propagated exception should be of the same type ({exceptionType.Name})"
+                );
         }
 
         [global::TUnit.Core.Test]
@@ -286,7 +364,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
                 Task setOverrideTask = Task.Run(() =>
                 {
                     // Set probe override that returns true
-                    PlatformAutoDetector.TestHooks.SetAotProbeOverride(() => true);
+                    PlatformDetectorScope.SetAotProbeOverrideDirect(() => true);
                 });
 
                 Task<bool> readTask = Task.Run(() => PlatformAutoDetector.IsRunningOnAot);
@@ -311,7 +389,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
                 }
 
                 // Clear for next iteration
-                PlatformAutoDetector.TestHooks.SetAotProbeOverride(null);
+                PlatformDetectorScope.SetAotProbeOverrideDirect(null);
             }
 
             Console.WriteLine(

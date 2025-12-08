@@ -113,6 +113,24 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
             return $"Unity={snapshot.IsRunningOnUnity}, UnityNative={snapshot.IsUnityNative}, UnityIl2Cpp={snapshot.IsUnityIl2Cpp}, Mono={snapshot.IsRunningOnMono}, Clr4={snapshot.IsRunningOnClr4}, Portable={snapshot.IsPortableFramework}, AutoDone={snapshot.AutoDetectionsDone}, AotCached={snapshot.RunningOnAotCache?.ToString() ?? "null"}, AotOverride={aotOverrideDesc}, UnityOverride={snapshot.UnityDetectionOverride?.ToString() ?? "null"}";
         }
 
+        /// <summary>
+        /// Captures the current detector state for diagnostic or verification purposes.
+        /// </summary>
+        public static PlatformAutoDetector.PlatformDetectorSnapshot CaptureSnapshot()
+        {
+            return PlatformAutoDetector.TestHooks.CaptureState();
+        }
+
+        /// <summary>
+        /// Sets the AOT probe override directly. This is intended for low-level
+        /// concurrency tests that cannot use the disposable <see cref="OverrideAotProbe"/> pattern.
+        /// For typical tests, prefer <see cref="OverrideAotProbe"/> instead.
+        /// </summary>
+        public static void SetAotProbeOverrideDirect(Func<bool> probe)
+        {
+            PlatformAutoDetector.TestHooks.SetAotProbeOverride(probe);
+        }
+
         public static string DescribeAssemblyEnumerationOverride()
         {
             Func<Assembly[]> provider =
