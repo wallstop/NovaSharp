@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 {
     using System;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
 
     /// <summary>
@@ -43,14 +44,26 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 
         /// <summary>
         /// Forces the detector to use the desktop file system loader rather than Unity paths.
+        /// Also sets <see cref="Script.DefaultOptions"/>.<see cref="ScriptOptions.ScriptLoader"/>
+        /// to a <see cref="FileSystemScriptLoader"/> so that static methods like
+        /// <see cref="Script.RunFile(string)"/> will use the file system loader.
         /// </summary>
         public static PlatformDetectorOverrideScope ForceFileSystemLoader()
         {
-            return Apply(() =>
-            {
-                PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(false);
-                PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(false);
-            });
+            IDisposable defaultOptionsScope = null;
+            return Apply(
+                () =>
+                {
+                    PlatformAutoDetector.TestHooks.SetUnityDetectionOverride(false);
+                    PlatformAutoDetector.TestHooks.SetAutoDetectionsDone(false);
+                    defaultOptionsScope = Script.BeginDefaultOptionsScope();
+                    Script.DefaultOptions.ScriptLoader = new FileSystemScriptLoader();
+                },
+                () =>
+                {
+                    defaultOptionsScope?.Dispose();
+                }
+            );
         }
 
         /// <summary>
