@@ -1111,7 +1111,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return _hashCode;
             }
 
-            int baseValue = ((int)(Type)) << 27;
+            DeterministicHashBuilder hash = default;
+            hash.AddInt((int)Type);
 
             switch (Type)
             {
@@ -1120,26 +1121,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     _hashCode = 0;
                     break;
                 case DataType.Boolean:
-                    _hashCode = Boolean ? 1 : 2;
+                    hash.AddInt(Boolean ? 1 : 0);
+                    _hashCode = hash.ToHashCode();
                     break;
                 case DataType.Number:
-                    _hashCode = baseValue ^ Number.GetHashCode();
+                    // Use LuaNumber's hash code to ensure equal numbers have equal hashes
+                    hash.AddInt(LuaNumber.GetHashCode());
+                    _hashCode = hash.ToHashCode();
                     break;
                 case DataType.String:
-                    _hashCode = baseValue ^ StringComparer.Ordinal.GetHashCode(String);
+                    hash.Add(String);
+                    _hashCode = hash.ToHashCode();
                     break;
                 case DataType.Function:
-                    _hashCode = baseValue ^ Function.GetHashCode();
+                    hash.Add(Function);
+                    _hashCode = hash.ToHashCode();
                     break;
                 case DataType.ClrFunction:
-                    _hashCode = baseValue ^ Callback.GetHashCode();
+                    hash.Add(Callback);
+                    _hashCode = hash.ToHashCode();
                     break;
                 case DataType.Table:
-                    _hashCode = baseValue ^ Table.GetHashCode();
+                    hash.Add(Table);
+                    _hashCode = hash.ToHashCode();
                     break;
                 case DataType.Tuple:
                 case DataType.TailCallRequest:
-                    _hashCode = baseValue ^ Tuple.GetHashCode();
+                    hash.Add(Tuple);
+                    _hashCode = hash.ToHashCode();
                     break;
                 case DataType.UserData:
                 case DataType.Thread:
@@ -1186,7 +1195,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.Boolean:
                     return Boolean == other.Boolean;
                 case DataType.Number:
-                    return Number == other.Number;
+                    // Use LuaNumber comparison to preserve integer precision at boundaries
+                    return LuaNumber.Equal(LuaNumber, other.LuaNumber);
                 case DataType.String:
                     return String == other.String;
                 case DataType.Function:

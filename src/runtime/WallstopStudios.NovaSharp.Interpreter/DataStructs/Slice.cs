@@ -50,13 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <inheritdoc />
         public override int GetHashCode()
         {
-            unchecked
-            {
-                int hash = 17;
-                hash = (hash * 31) + (_slice?.GetHashCode() ?? 0);
-                hash = (hash * 31) + _index;
-                return hash;
-            }
+            return HashCodeHelper.HashCode(_slice, _index);
         }
 
         /// <summary>

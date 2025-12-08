@@ -60,7 +60,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue value = args.AsType(index, funcName, DataType.Number, false);
 
-            if (!TryGetIntegerFromDouble(value.Number, out long integer))
+            // Use TryGetIntegerFromDynValue to preserve integer precision when the
+            // underlying LuaNumber is already an integer (avoids double conversion loss)
+            if (!TryGetIntegerFromDynValue(value, out long integer))
             {
                 throw ScriptRuntimeException.BadArgument(
                     index,

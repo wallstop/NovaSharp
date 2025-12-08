@@ -800,10 +800,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         public async Task GetHashCodeHandlesBooleanValues()
         {
             int trueHash = DynValue.True.GetHashCode();
+            int trueHash2 = DynValue.True.GetHashCode();
             int falseHash = DynValue.False.GetHashCode();
+            int falseHash2 = DynValue.False.GetHashCode();
 
-            await Assert.That(trueHash).IsEqualTo(1).ConfigureAwait(false);
-            await Assert.That(falseHash).IsEqualTo(2).ConfigureAwait(false);
+            // Same value should produce consistent hash code
+            await Assert.That(trueHash).IsEqualTo(trueHash2).ConfigureAwait(false);
+            await Assert.That(falseHash).IsEqualTo(falseHash2).ConfigureAwait(false);
+
+            // Different boolean values should have different hash codes
+            await Assert.That(trueHash).IsNotEqualTo(falseHash).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

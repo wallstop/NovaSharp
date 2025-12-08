@@ -1,5 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
+    using DataStructs;
+
     /// <summary>
     /// A class representing a key/value pair for Table use
     /// </summary>
@@ -56,13 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            unchecked
-            {
-                int hash = 17;
-                hash = (hash * 31) + (_key?.GetHashCode() ?? 0);
-                hash = (hash * 31) + (_value?.GetHashCode() ?? 0);
-                return hash;
-            }
+            return HashCodeHelper.HashCode(_key, _value);
         }
 
         /// <summary>

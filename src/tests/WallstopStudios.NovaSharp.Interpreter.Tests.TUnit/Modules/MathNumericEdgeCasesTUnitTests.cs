@@ -1,6 +1,5 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
-    using System;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
@@ -481,17 +480,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task TointegerOfOverflowValueReturnsMininteger()
+        public async Task TointegerOfOverflowValueReturnsNil()
         {
-            // KNOWN DIVERGENCE: 2^63 overflows when cast to long, wrapping to mininteger.
-            // Lua returns nil because it can track that the value is out of integer range.
-            // NovaSharp cannot distinguish this since all numbers are doubles.
+            // Per Lua 5.3/5.4 spec: math.tointeger returns nil for values outside integer range.
+            // 2^63 is exactly one beyond maxinteger and should return nil.
+            // Note: Due to IEEE 754 precision, 2^63 as a double equals (double)long.MaxValue,
+            // but we explicitly check for this boundary case.
             Script script = CreateScript(LuaCompatibilityVersion.Lua54);
-            // 2^63 is one beyond maxinteger
             DynValue result = script.DoString("return math.tointeger(2^63)");
 
-            // NovaSharp returns mininteger (overflow wraps) instead of nil
-            await Assert.That(result.Number).IsEqualTo(-9223372036854775808d).ConfigureAwait(false);
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         #endregion
@@ -499,16 +497,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         #region math.ult Edge Cases
 
         [Test]
-        public async Task UltWithMaxintegerAndMinintegerDivergence()
+        public async Task UltWithMaxintegerAndMinintegerBehavior()
         {
-            // KNOWN DIVERGENCE: Due to double precision loss with math.maxinteger,
-            // both operands end up as mininteger after conversion to long, so the
-            // unsigned comparison returns false (equal) instead of true (less than).
+            // math.maxinteger and math.mininteger are now stored as native integers in LuaNumber,
+            // so precision is preserved. The unsigned comparison should work correctly:
+            // maxinteger (0x7FFFFFFFFFFFFFFF) < mininteger (0x8000000000000000) as unsigned = true
+            // because mininteger's unsigned value is larger.
             Script script = CreateScript(LuaCompatibilityVersion.Lua54);
             DynValue result = script.DoString("return math.ult(math.maxinteger, math.mininteger)");
 
-            // NovaSharp returns false due to both being converted to mininteger
-            await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
+            // With native integer storage, this should now return true (correct Lua behavior)
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [Test]

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
 {
     using System;
+    using DataStructs;
 
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     [Serializable]
@@ -242,17 +243,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            unchecked
-            {
-                int hash = 17;
-                hash = (hash * 31) + Kind.GetHashCode();
-                hash = (hash * 31) + LimitValue.GetHashCode();
-                hash = (hash * 31) + ActualValue.GetHashCode();
-                hash =
-                    (hash * 31)
-                    + (AccessName != null ? AccessName.GetHashCode(StringComparison.Ordinal) : 0);
-                return hash;
-            }
+            return HashCodeHelper.HashCode(Kind, LimitValue, ActualValue, AccessName);
         }
 
         /// <summary>

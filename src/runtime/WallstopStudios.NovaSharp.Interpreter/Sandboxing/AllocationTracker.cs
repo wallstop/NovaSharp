@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
 {
     using System;
     using System.Threading;
+    using DataStructs;
 
     /// <summary>
     /// Tracks memory allocations for sandbox enforcement.
@@ -357,18 +358,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Sandboxing
         /// <inheritdoc/>
         public override int GetHashCode()
         {
-            unchecked
-            {
-                int hash = 17;
-                hash = (hash * 31) + CurrentBytes.GetHashCode();
-                hash = (hash * 31) + PeakBytes.GetHashCode();
-                hash = (hash * 31) + TotalAllocated.GetHashCode();
-                hash = (hash * 31) + TotalFreed.GetHashCode();
-                hash = (hash * 31) + CurrentCoroutines.GetHashCode();
-                hash = (hash * 31) + PeakCoroutines.GetHashCode();
-                hash = (hash * 31) + TotalCoroutinesCreated.GetHashCode();
-                return hash;
-            }
+            return HashCodeHelper.HashCode(
+                CurrentBytes,
+                PeakBytes,
+                TotalAllocated,
+                TotalFreed,
+                CurrentCoroutines,
+                PeakCoroutines,
+                TotalCoroutinesCreated
+            );
         }
 
         /// <summary>

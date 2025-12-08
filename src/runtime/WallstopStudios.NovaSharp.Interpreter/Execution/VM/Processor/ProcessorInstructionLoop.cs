@@ -1830,7 +1830,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (l.Type == DataType.Number && r.Type == DataType.Number)
             {
-                _valueStack.Push(DynValue.NewBoolean(l.Number < r.Number));
+                // Use LuaNumber comparison to preserve integer precision at boundaries
+                _valueStack.Push(DynValue.NewBoolean(LuaNumber.LessThan(l.LuaNumber, r.LuaNumber)));
             }
             else if (l.Type == DataType.String && r.Type == DataType.String)
             {
@@ -1861,7 +1862,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             if (l.Type == DataType.Number && r.Type == DataType.Number)
             {
                 _valueStack.Push(DynValue.False);
-                _valueStack.Push(DynValue.NewBoolean(l.Number <= r.Number));
+                // Use LuaNumber comparison to preserve integer precision at boundaries
+                _valueStack.Push(
+                    DynValue.NewBoolean(LuaNumber.LessThanOrEqual(l.LuaNumber, r.LuaNumber))
+                );
             }
             else if (l.Type == DataType.String && r.Type == DataType.String)
             {

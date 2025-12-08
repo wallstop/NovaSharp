@@ -64,16 +64,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task RentReturnsArrayOfRequestedLength()
         {
-            DynValue[] array = DynValueArrayPool.Rent(3);
-            try
-            {
-                await Assert.That(array).IsNotNull().ConfigureAwait(false);
-                await Assert.That(array.Length).IsEqualTo(3).ConfigureAwait(false);
-            }
-            finally
-            {
-                DynValueArrayPool.Return(array);
-            }
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                3,
+                out DynValue[] array
+            );
+
+            await Assert.That(array).IsNotNull().ConfigureAwait(false);
+            await Assert.That(array.Length).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [Test]

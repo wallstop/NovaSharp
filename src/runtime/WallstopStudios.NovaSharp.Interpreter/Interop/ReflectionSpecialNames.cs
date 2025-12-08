@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop
 {
     using System;
+    using DataStructs;
 
     /// <summary>
     /// Helps identifying a reflection special name
@@ -223,15 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <inheritdoc />
         public override int GetHashCode()
         {
-            unchecked
-            {
-                int hash = 17;
-                hash = (hash * 31) + Type.GetHashCode();
-                hash =
-                    (hash * 31)
-                    + (Argument != null ? Argument.GetHashCode(StringComparison.Ordinal) : 0);
-                return hash;
-            }
+            return HashCodeHelper.HashCode(Type, Argument);
         }
 
         /// <summary>

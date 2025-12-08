@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Runtime.InteropServices;
+    using DataStructs;
 
     /// <summary>
     /// Represents a Lua number that can be either an integer (64-bit signed) or a float (64-bit IEEE 754 double).
@@ -744,19 +745,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <inheritdoc />
         public override int GetHashCode()
         {
+            DeterministicHashBuilder hash = default;
+
             if (IsInteger)
             {
-                return _integer.GetHashCode();
+                hash.AddLong(_integer);
+                return hash.ToHashCode();
             }
 
             // For floats that represent integers, use the same hash as the integer
             // This ensures Equal values have equal hash codes
             if (TryConvertToInteger(_float, out long intValue))
             {
-                return intValue.GetHashCode();
+                hash.AddLong(intValue);
+                return hash.ToHashCode();
             }
 
-            return _float.GetHashCode();
+            hash.AddDouble(_float);
+            return hash.ToHashCode();
         }
 
         /// <summary>
