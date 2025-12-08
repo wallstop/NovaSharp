@@ -242,9 +242,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `math.abs`, returning the absolute value of the provided number (§6.7).
         /// </summary>
+        /// <remarks>
+        /// Per Lua 5.3+ specification, if the input is an integer subtype, the result is also
+        /// an integer. For the special case of <c>math.mininteger</c>, the negation overflows
+        /// and wraps back to <c>mininteger</c> due to two's complement arithmetic.
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments where index 0 supplies the number to process.</param>
-        /// <returns>Absolute value as a number.</returns>
+        /// <returns>Absolute value as a number (integer subtype preserved when applicable).</returns>
         [NovaSharpModuleMethod(Name = "abs")]
         public static DynValue Abs(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -252,7 +257,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec1(args, "abs", d => Math.Abs(d));
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg = args.AsType(0, "abs", DataType.Number, false);
+
+            // For integer subtypes, preserve integer semantics per Lua 5.3+ spec
+            // Use unsigned arithmetic to handle mininteger overflow correctly:
+            // 0u - (ulong)mininteger wraps back to mininteger (two's complement behavior)
+            if (arg.IsInteger)
+            {
+                long n = arg.LuaNumber.AsInteger;
+                if (n < 0)
+                {
+                    // Use unsigned negation to match Lua's behavior:
+                    // For mininteger, this wraps back to mininteger
+                    n = (long)(0UL - (ulong)n);
+                }
+                return DynValue.NewInteger(n);
+            }
+
+            return DynValue.NewNumber(Math.Abs(arg.Number));
         }
 
         /// <summary>

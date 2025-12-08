@@ -89,8 +89,8 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 
         public static IDisposable OverrideAotProbe(Func<bool> probe)
         {
+            // SetAotProbeOverride atomically sets the probe and resets the cached state
             PlatformAutoDetector.TestHooks.SetAotProbeOverride(probe);
-            PlatformAutoDetector.TestHooks.SetRunningOnAot(null);
             return new AotProbeOverrideHandle();
         }
 
@@ -109,7 +109,8 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
         {
             PlatformAutoDetector.PlatformDetectorSnapshot snapshot =
                 PlatformAutoDetector.TestHooks.CaptureState();
-            return $"Unity={snapshot.IsRunningOnUnity}, UnityNative={snapshot.IsUnityNative}, UnityIl2Cpp={snapshot.IsUnityIl2Cpp}, Mono={snapshot.IsRunningOnMono}, Clr4={snapshot.IsRunningOnClr4}, Portable={snapshot.IsPortableFramework}, AutoDone={snapshot.AutoDetectionsDone}, AotCached={snapshot.RunningOnAotCache?.ToString() ?? "null"}, UnityOverride={snapshot.UnityDetectionOverride?.ToString() ?? "null"}";
+            string aotOverrideDesc = snapshot.AotProbeOverride is null ? "null" : "set";
+            return $"Unity={snapshot.IsRunningOnUnity}, UnityNative={snapshot.IsUnityNative}, UnityIl2Cpp={snapshot.IsUnityIl2Cpp}, Mono={snapshot.IsRunningOnMono}, Clr4={snapshot.IsRunningOnClr4}, Portable={snapshot.IsPortableFramework}, AutoDone={snapshot.AutoDetectionsDone}, AotCached={snapshot.RunningOnAotCache?.ToString() ?? "null"}, AotOverride={aotOverrideDesc}, UnityOverride={snapshot.UnityDetectionOverride?.ToString() ?? "null"}";
         }
 
         public static string DescribeAssemblyEnumerationOverride()

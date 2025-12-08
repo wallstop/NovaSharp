@@ -15,7 +15,7 @@ This folder hosts the canonical documentation set for NovaSharp. Use the index b
 | Project structure blueprint    | `docs/ProjectStructureBlueprint.md`                             | Current vs. proposed directory/solution layout with migration phases.                                               |
 | Performance benchmarks         | `docs/Performance.md`, `docs/performance-history/`              | Benchmark harness guidance and historical runs.                                                                     |
 | Unity integration              | `docs/UnityIntegration.md`                                      | Unity-specific packaging, IL2CPP guidance, and sample workflows.                                                    |
-| Proposals                      | `docs/proposals/`                                               | Roslyn hardwire generator, namespace rules, and upcoming feature designs.                                           |
+| Proposals                      | `docs/proposals/`                                               | Roslyn hardwire generator, namespace rules, VM correctness, and upcoming feature designs.                           |
 | Script tooling                 | `scripts/README.md`, `scripts/coverage/README.md`               | Entry point for helper scripts (build, coverage, branding guards, etc.).                                            |
 | Naming audit helper            | `tools/NamingAudit/README.md`                                   | Python-based checker that enforces PascalCase file/type names per `.editorconfig`.                                  |
 

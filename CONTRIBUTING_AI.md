@@ -184,8 +184,22 @@ Use scope helpers instead of `try`/`finally`:
 
 ### Spec Alignment
 
-- When tests fail, consult the Lua 5.4 manual at https://www.lua.org/manual/5.4/
+**Local Lua Specification References** — Use these for all Lua compatibility work:
+
+- [`docs/lua-spec/lua-5.1-spec.md`](docs/lua-spec/lua-5.1-spec.md) — Lua 5.1 Reference
+
+- [`docs/lua-spec/lua-5.2-spec.md`](docs/lua-spec/lua-5.2-spec.md) — Lua 5.2 Reference
+
+- [`docs/lua-spec/lua-5.3-spec.md`](docs/lua-spec/lua-5.3-spec.md) — Lua 5.3 Reference
+
+- [`docs/lua-spec/lua-5.4-spec.md`](docs/lua-spec/lua-5.4-spec.md) — Lua 5.4 Reference (primary target)
+
+- [`docs/lua-spec/lua-5.5-spec.md`](docs/lua-spec/lua-5.5-spec.md) — Lua 5.5 (Work in Progress)
+
+- When tests fail, first consult the local specs above, then verify against https://www.lua.org/manual/5.4/ if needed
+
 - Fix runtime code to match spec; don't weaken tests
+
 - Cite manual sections (e.g., "§6.4 String Manipulation") in tests/PR notes
 
 ### Production Bug Policy
@@ -259,4 +273,5 @@ python scripts/lint/check-temp-path-usage.py
 - [docs/Testing.md](docs/Testing.md) — Testing infrastructure details
 - [docs/Modernization.md](docs/Modernization.md) — Modernization roadmap
 - [PLAN.md](PLAN.md) — Current testing and coverage plan
-- [Lua 5.4 Manual](https://www.lua.org/manual/5.4/) — Canonical spec reference
+- [docs/lua-spec/](docs/lua-spec/) — **Local Lua specifications (5.1, 5.2, 5.3, 5.4, 5.5)** — Use for all compatibility work
+- [Lua 5.4 Manual](https://www.lua.org/manual/5.4/) — Online canonical spec reference (backup)

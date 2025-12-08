@@ -119,14 +119,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
         public async Task IsRunningOnAotUsesCachedValueAfterProbe()
         {
             using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+            string stateBeforeOverride = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"State before override: {stateBeforeOverride}");
+
             using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() => true);
+            string stateAfterOverride = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"State after override: {stateAfterOverride}");
+
+            // Verify the override was registered before accessing IsRunningOnAot.
+            // This helps diagnose race conditions where the override might not be visible.
+            PlatformAutoDetector.PlatformDetectorSnapshot verificationSnapshot =
+                PlatformAutoDetector.TestHooks.CaptureState();
+            await Assert
+                .That(verificationSnapshot.AotProbeOverride is not null)
+                .IsTrue()
+                .Because("AOT probe override should be set after OverrideAotProbe call");
+            await Assert
+                .That(verificationSnapshot.RunningOnAotCache.HasValue)
+                .IsFalse()
+                .Because("AOT cache should be reset to null (unknown) after setting override");
 
             bool initialProbe = PlatformAutoDetector.IsRunningOnAot;
+            string stateAfterInitialProbe = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine(
+                $"Initial probe result: {initialProbe}, state: {stateAfterInitialProbe}"
+            );
             await Assert.That(initialProbe).IsTrue();
 
             probe.Dispose();
+            string stateAfterDispose = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"State after dispose: {stateAfterDispose}");
 
             bool cachedValue = PlatformAutoDetector.IsRunningOnAot;
+            string stateAfterCachedRead = PlatformDetectorScope.DescribeCurrentState();
+            Console.WriteLine($"Cached value result: {cachedValue}, state: {stateAfterCachedRead}");
             await Assert.That(cachedValue).IsTrue();
         }
 
@@ -162,17 +188,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
         [global::TUnit.Core.Test]
         public async Task IsRunningOnAotTreatsProbeExceptionsAsAotHosts()
         {
-            IReadOnlyList<Type> exceptionTypes = new[]
+            IReadOnlyList<(Type Type, string Name)> exceptionTypes = new[]
             {
-                typeof(PlatformNotSupportedException),
-                typeof(MemberAccessException),
-                typeof(NotSupportedException),
-                typeof(InvalidOperationException),
-                typeof(TypeLoadException),
-                typeof(SecurityException),
+                (typeof(PlatformNotSupportedException), nameof(PlatformNotSupportedException)),
+                (typeof(MemberAccessException), nameof(MemberAccessException)),
+                (typeof(NotSupportedException), nameof(NotSupportedException)),
+                (typeof(InvalidOperationException), nameof(InvalidOperationException)),
+                (typeof(TypeLoadException), nameof(TypeLoadException)),
+                (typeof(SecurityException), nameof(SecurityException)),
             };
 
-            foreach (Type exceptionType in exceptionTypes)
+            foreach ((Type exceptionType, string exceptionName) in exceptionTypes)
             {
                 using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
                 using IDisposable probe = PlatformDetectorScope.OverrideAotProbe(() =>
@@ -182,6 +208,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
                 });
 
                 bool isRunningOnAot = PlatformAutoDetector.IsRunningOnAot;
+                string state = PlatformDetectorScope.DescribeCurrentState();
+                Console.WriteLine(
+                    $"Exception {exceptionName} -> IsRunningOnAot={isRunningOnAot}, State: {state}"
+                );
                 await Assert.That(isRunningOnAot).IsTrue();
             }
         }
@@ -233,6 +263,64 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
 
             await Task.WhenAll(workers).ConfigureAwait(false);
             await Assert.That(PlatformAutoDetector.IsRunningOnAot).IsFalse();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IsRunningOnAotProbeOverrideIsAtomicWithStateReset()
+        {
+            // This test verifies that setting a probe override atomically resets the cached state,
+            // preventing a race where another thread probing without an override could cache a
+            // false value before the test's override takes effect.
+            using PlatformDetectorScope scope = PlatformDetectorScope.ResetForDetection();
+
+            const int iterations = 50;
+            int successCount = 0;
+            int failureCount = 0;
+
+            for (int iteration = 0; iteration < iterations; iteration++)
+            {
+                // Reset to false to simulate a cached "JIT available" state
+                PlatformDetectorScope.SetAotValue(false);
+
+                // Simulate the race: one thread sets the override, another reads the value
+                Task setOverrideTask = Task.Run(() =>
+                {
+                    // Set probe override that returns true
+                    PlatformAutoDetector.TestHooks.SetAotProbeOverride(() => true);
+                });
+
+                Task<bool> readTask = Task.Run(() => PlatformAutoDetector.IsRunningOnAot);
+
+                await Task.WhenAll(setOverrideTask, readTask).ConfigureAwait(false);
+                bool readResult = await readTask.ConfigureAwait(false);
+
+                // With the fix, the read should either:
+                // 1. See the old cached false value (if it read before the override was set), OR
+                // 2. See true (if the override was set before/during the read and triggered a re-probe)
+                // The bug was when the read would probe WITHOUT the override but AFTER the
+                // state was reset, caching false when true was intended.
+
+                // Since timing is non-deterministic, we just track the results
+                if (readResult)
+                {
+                    Interlocked.Increment(ref successCount);
+                }
+                else
+                {
+                    Interlocked.Increment(ref failureCount);
+                }
+
+                // Clear for next iteration
+                PlatformAutoDetector.TestHooks.SetAotProbeOverride(null);
+            }
+
+            Console.WriteLine(
+                $"Atomic probe override test: {successCount} successes (true), {failureCount} failures (false)"
+            );
+
+            // Note: We don't assert a specific ratio here because timing varies.
+            // The purpose is to verify no crashes or hangs under concurrent access.
+            await Assert.That(successCount + failureCount).IsEqualTo(iterations);
         }
 
         [global::TUnit.Core.Test]

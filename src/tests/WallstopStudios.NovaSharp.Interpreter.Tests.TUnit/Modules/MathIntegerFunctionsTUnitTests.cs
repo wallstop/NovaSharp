@@ -18,7 +18,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         #region math.abs with Integer Boundaries
 
         /// <summary>
-        /// Tests math.abs with boundary integer values.
+        /// Tests math.abs with integer arguments preserves integer subtype (Lua 5.3+).
+        /// Per Lua 5.4 §6.7, math.abs returns an integer when given an integer argument.
         /// </summary>
         [Test]
         [Arguments("math.maxinteger", 9223372036854775807L, "maxinteger")]
@@ -26,6 +27,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments("1", 1L, "one")]
         [Arguments("-1", 1L, "negative one")]
         [Arguments("-math.maxinteger", 9223372036854775807L, "negative maxinteger")]
+        [Arguments("100", 100L, "positive integer")]
+        [Arguments("-100", 100L, "negative integer")]
+        [Arguments("math.maxinteger - 1", 9223372036854775806L, "maxinteger - 1")]
+        [Arguments("-(math.maxinteger - 1)", 9223372036854775806L, "negative (maxinteger - 1)")]
         public async Task MathAbsIntegerBoundaries(
             string expression,
             long expected,
@@ -35,15 +40,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString($"return math.abs({expression})");
 
+            // Verify the value is correct
             await Assert
-                .That(result.Number)
-                .IsEqualTo((double)expected)
+                .That(result.LuaNumber.AsInteger)
+                .IsEqualTo(expected)
                 .Because($"math.abs({expression}) [{description}] should equal {expected}");
+
+            // Verify integer subtype is preserved (Lua 5.3+)
+            await Assert
+                .That(result.IsInteger)
+                .IsTrue()
+                .Because($"math.abs({expression}) [{description}] should return integer subtype");
         }
 
         /// <summary>
         /// Tests math.abs(mininteger) - a special case because |mininteger| > maxinteger.
-        /// In Lua, this wraps back to mininteger for integer mode.
+        /// Per Lua 5.4 §6.7 and two's complement arithmetic rules, this wraps back to mininteger.
         /// </summary>
         [Test]
         public async Task MathAbsMinintegerWraps()
@@ -51,12 +63,129 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Script script = CreateScript();
             DynValue result = script.DoString("return math.abs(math.mininteger)");
 
+            // Diagnostic: output the actual value for debugging
+            long actualValue = result.LuaNumber.AsInteger;
+            string actualType = result.LuaNumber.LuaTypeName;
+
             // |mininteger| = 2^63 which overflows, wrapping back to mininteger
-            // (same behavior as -mininteger)
+            // (same behavior as -mininteger in two's complement)
+            await Assert
+                .That(actualValue)
+                .IsEqualTo(long.MinValue)
+                .Because(
+                    $"math.abs(mininteger) should wrap to mininteger (overflow). "
+                        + $"Got {actualValue} (0x{actualValue:X16}), type: {actualType}"
+                );
+
+            // Verify it returns integer subtype
+            await Assert
+                .That(result.IsInteger)
+                .IsTrue()
+                .Because("math.abs(mininteger) should return integer subtype");
+        }
+
+        /// <summary>
+        /// Tests math.abs with float arguments returns float subtype and correct value.
+        /// </summary>
+        [Test]
+        [Arguments("1.5", 1.5, "positive float")]
+        [Arguments("-1.5", 1.5, "negative float")]
+        [Arguments("0.0", 0.0, "float zero")]
+        [Arguments("-0.0", 0.0, "negative float zero")]
+        [Arguments("1e10", 1e10, "scientific notation")]
+        [Arguments("-1e10", 1e10, "negative scientific notation")]
+        [Arguments("math.huge", double.MaxValue, "huge positive")]
+        [Arguments("-math.huge", double.MaxValue, "huge negative")]
+        public async Task MathAbsFloatSubtype(
+            string expression,
+            double expected,
+            string description
+        )
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString($"return math.abs({expression})");
+
+            // Verify the value is correct
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(expected)
+                .Because($"math.abs({expression}) [{description}] should equal {expected}");
+        }
+
+        /// <summary>
+        /// Tests that math.abs preserves float subtype for fractional values.
+        /// </summary>
+        [Test]
+        [Arguments("1.5", "positive float")]
+        [Arguments("-1.5", "negative float")]
+        [Arguments("-3.14159", "negative pi")]
+        public async Task MathAbsPreservesFloatSubtype(string expression, string description)
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString($"return math.abs({expression})");
+
+            await Assert
+                .That(result.IsFloat)
+                .IsTrue()
+                .Because($"math.abs({expression}) [{description}] should return float subtype");
+        }
+
+        /// <summary>
+        /// Tests that math.abs(mininteger) behaves consistently with -mininteger.
+        /// Both should wrap to mininteger due to two's complement overflow.
+        /// </summary>
+        [Test]
+        public async Task MathAbsMinintegerConsistentWithNegation()
+        {
+            Script script = CreateScript();
+
+            // Execute both operations
+            DynValue absResult = script.DoString("return math.abs(math.mininteger)");
+            DynValue negResult = script.DoString("return -math.mininteger");
+
+            // Both should produce the same value (mininteger wraps to itself)
+            await Assert
+                .That(absResult.LuaNumber.AsInteger)
+                .IsEqualTo(negResult.LuaNumber.AsInteger)
+                .Because("math.abs(mininteger) should equal -mininteger (both wrap to mininteger)");
+
+            // Both values should equal mininteger
+            await Assert
+                .That(absResult.LuaNumber.AsInteger)
+                .IsEqualTo(long.MinValue)
+                .Because("Both should wrap to mininteger");
+        }
+
+        /// <summary>
+        /// Tests math.abs with values near integer boundaries to ensure no precision loss.
+        /// </summary>
+        [Test]
+        [Arguments("math.maxinteger - 10", 9223372036854775797L, "maxinteger - 10")]
+        [Arguments("-(math.maxinteger - 10)", 9223372036854775797L, "negative (maxinteger - 10)")]
+        [Arguments("math.mininteger + 10", 9223372036854775798L, "mininteger + 10")]
+        [Arguments(
+            "math.mininteger + 1",
+            9223372036854775807L,
+            "mininteger + 1 (equals maxinteger)"
+        )]
+        public async Task MathAbsNearBoundaries(
+            string expression,
+            long expected,
+            string description
+        )
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString($"return math.abs({expression})");
+
             await Assert
                 .That(result.LuaNumber.AsInteger)
-                .IsEqualTo(long.MinValue)
-                .Because("math.abs(mininteger) should wrap to mininteger (overflow)");
+                .IsEqualTo(expected)
+                .Because($"math.abs({expression}) [{description}] should equal {expected}");
+
+            await Assert
+                .That(result.IsInteger)
+                .IsTrue()
+                .Because($"math.abs({expression}) [{description}] should preserve integer subtype");
         }
 
         #endregion

@@ -422,9 +422,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
             /// <summary>
             /// Overrides the AOT probe logic; when set, <see cref="IsRunningOnAot"/> uses the supplied delegate.
             /// </summary>
+            /// <remarks>
+            /// When setting a non-null probe override, this method acquires <see cref="RunningOnAotStateGate"/>
+            /// to atomically set the override and invalidate any in-flight probes that may have started
+            /// without the override. When clearing the override (null), the cached state is preserved
+            /// to allow tests to verify caching behavior.
+            /// </remarks>
             public static void SetAotProbeOverride(Func<bool> probe)
             {
-                AotProbeOverride = probe;
+                if (probe != null)
+                {
+                    lock (RunningOnAotStateGate)
+                    {
+                        AotProbeOverride = probe;
+                        Volatile.Write(ref RunningOnAotState, RunningOnAotUnknown);
+                    }
+                }
+                else
+                {
+                    AotProbeOverride = null;
+                }
             }
 
             /// <summary>
@@ -452,7 +469,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
                 return UnityDetectionOverride;
             }
 
-            private static Func<bool> AotProbeOverride;
+            /// <summary>
+            /// Must be volatile to ensure visibility across threads when probe overrides are
+            /// set for testing. The delegate is read inside the <see cref="RunningOnAotStateGate"/>
+            /// lock by <see cref="ProbeIsRunningOnAot"/>, but written atomically with the cache
+            /// reset by <see cref="SetAotProbeOverride"/>. Using volatile ensures the read
+            /// inside the lock sees the latest write.
+            /// </summary>
+            private static volatile Func<bool> AotProbeOverride;
 
             private static bool? UnityDetectionOverride;
 

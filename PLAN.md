@@ -19,7 +19,7 @@
 - Bitwise operations preserve full 64-bit integer precision
 - `string.format('%d', math.maxinteger)` outputs exact "9223372036854775807" (no precision loss)
 - `math.floor(3.7)` and `math.ceil(3.2)` return integer subtypes
-- All 3,841 tests passing
+- All **4,069** tests passing
 
 See **Section 8.24** for the complete implementation plan.
 
@@ -29,7 +29,7 @@ See **Section 8.24** for the complete implementation plan.
 
 ## Repository Snapshot — 2025-12-07 (UTC)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true` enforced.
-- **Tests**: **3,841** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Tests**: **4,069** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
 - **Coverage**: Interpreter at **96.2% line / 93.69% branch / 97.88% method**.
 - **Coverage gating**: `COVERAGE_GATING_MODE=enforce` enabled with 96% line / 93% branch / 97% method thresholds.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
@@ -40,7 +40,29 @@ See **Section 8.24** for the complete implementation plan.
 - **Benchmark CI**: `.github/workflows/benchmarks.yml` with BenchmarkDotNet, threshold-based regression alerting.
 - **Packaging**: NuGet publishing workflow + Unity UPM scripts in `scripts/packaging/`.
 
+### Recent Improvements (2025-12-07)
+- **Platform detection thread safety**: Fixed race condition in `PlatformAutoDetector.AotProbeOverride` by making it volatile
+- **Test diagnostics**: Enhanced `PlatformDetectorScope.DescribeCurrentState()` to include AOT override status
+- **New test infrastructure**: Added verification assertions for AOT probe override registration
+
 ## Critical Initiatives
+
+### Initiative 12: VM Correctness and State Protection 🔴 **CRITICAL**
+**Goal**: Make the VM bulletproof against external state corruption while maintaining full Lua compatibility.
+**Scope**: `DynValue` mutability controls, public API audit, table key safety, closure upvalue protection.
+**Status**: Analysis complete. See [`docs/proposals/vm-correctness.md`](docs/proposals/vm-correctness.md) for detailed findings.
+**Effort**: 1-2 weeks implementation + comprehensive testing
+
+**Key Changes Required**:
+1. Make `DynValue.Assign()` internal (prevents external corruption)
+2. Fix `Closure.GetUpValue()` to return readonly; add `SetUpValue()` method
+3. Ensure table keys are readonly in `_valueMap` (prevents hash corruption)
+4. Fix UserData/Thread hash codes (performance)
+5. **Full public API audit**: Review all public methods returning `DynValue` for potential corruption vectors
+
+**API Breaking Changes**: Acceptable if required for VM correctness and Lua compatibility.
+
+**Follow-up Task**: Comprehensive audit of all public APIs on VM types (`Script`, `Table`, `Closure`, `Coroutine`, `DynValue`, `UserData`, `CallbackArguments`, etc.) to identify any additional vectors where external code could corrupt or cause unexpected VM state.
 
 ### Initiative 9: Version-Aware Lua Standard Library Parity 🔴 **CRITICAL**
 **Goal**: ALL Lua functions must behave according to their version specification (5.1, 5.2, 5.3, 5.4).
@@ -83,6 +105,15 @@ No further coverage work planned unless these blockers are addressed.
 - Restructure test tree by domain (`Runtime/VM`, `Runtime/Modules`, `Tooling/Cli`)
 - Add guardrails so new code lands in correct folders with consistent namespaces
 
+### 2.5. Test modernization: TUnit data-driven attributes (future)
+- Migrate loop-based parameterized tests to TUnit `[Arguments]` attributes where compile-time constants allow
+- Use `[MethodDataSource]` or `[ClassDataSource]` for runtime data (e.g., `Type` parameters, complex objects)
+- Benefits: Better test discovery/reporting in IDEs, clearer test naming per parameter set
+- Candidate tests:
+  - `IsRunningOnAotTreatsProbeExceptionsAsAotHosts` (exception types)
+  - Tests using inline `foreach` loops over test cases
+- Reference: [TUnit Data-Driven Tests](https://tunit.dev/)
+
 ### 3. Tooling, docs, and contributor experience
 - Roslyn source generators/analyzers for NovaSharp descriptors.
 - DocFX (or similar) for API documentation.
@@ -95,6 +126,30 @@ No further coverage work planned unless these blockers are addressed.
 See `docs/modernization/concurrency-inventory.md` for the full synchronization audit.
 
 ## Lua Specification Parity
+
+### Official Lua Specifications (Local Reference)
+
+**IMPORTANT**: For all Lua compatibility work, consult the local specification documents first:
+- [`docs/lua-spec/lua-5.1-spec.md`](docs/lua-spec/lua-5.1-spec.md) — Lua 5.1 Reference Manual
+- [`docs/lua-spec/lua-5.2-spec.md`](docs/lua-spec/lua-5.2-spec.md) — Lua 5.2 Reference Manual
+- [`docs/lua-spec/lua-5.3-spec.md`](docs/lua-spec/lua-5.3-spec.md) — Lua 5.3 Reference Manual
+- [`docs/lua-spec/lua-5.4-spec.md`](docs/lua-spec/lua-5.4-spec.md) — Lua 5.4 Reference Manual (primary target)
+- [`docs/lua-spec/lua-5.5-spec.md`](docs/lua-spec/lua-5.5-spec.md) — Lua 5.5 (Work in Progress)
+
+These documents contain comprehensive details on:
+- Language syntax and semantics
+- Type system (nil, boolean, number, string, table, function, userdata, thread)
+- Standard library functions with exact signatures and behaviors
+- Metamethods and metatable behavior
+- Error handling and message formats
+- Version-specific changes and breaking changes
+
+**Use these specs** when:
+- Implementing or auditing standard library functions
+- Verifying VM behavior against spec
+- Understanding version-specific differences
+- Writing tests for Lua compatibility
+- Debugging divergences from reference Lua
 
 ### Reference Lua comparison harness
 - **Status**: Fully implemented. CI runs matrix tests against Lua 5.1, 5.2, 5.3, 5.4.
@@ -303,7 +358,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 
 #### 8.24 Dual Numeric Type System (Integer + Float) 🔴 **HIGH PRIORITY**
 
-**Status**: 🚧 **IN PROGRESS** — Phase 3 complete. All 3,841 tests passing.
+**Status**: 🚧 **IN PROGRESS** — Phase 3 complete. All 4,069 tests passing.
 
 **Problem Statement**:
 
@@ -336,7 +391,7 @@ The `LuaNumber` struct has been implemented to track integer vs float subtype.
 - [x] `string.format('%d', math.maxinteger)` returns "9223372036854775807" (exact)
 - [x] `math.floor(3.7)` returns integer subtype (value 3)
 - [x] `math.ceil(3.2)` returns integer subtype (value 4)
-- [x] All 3,841 existing tests pass
+- [x] All 4,069 existing tests pass
 - [ ] Lua comparison harness shows improved parity percentage
 - [ ] No performance regression > 5% on benchmarks
 - [ ] Numeric caching reduces hot-path allocations
