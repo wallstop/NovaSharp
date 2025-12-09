@@ -2,6 +2,79 @@
 
 This document provides comprehensive guidance for AI assistants (GitHub Copilot, Claude, and others) working with the NovaSharp codebase. It consolidates information previously spread across `AGENTS.md`, `CLAUDE.md`, and `.github/copilot-instructions.md`.
 
+## 🔴 HIGHEST PRIORITY: Lua Spec Compliance
+
+**NovaSharp's PRIMARY GOAL is to be a faithful Lua interpreter that matches the official Lua reference implementation as closely as possible.**
+
+When working on any code that affects Lua semantics:
+
+1. **ASSUME NOVASHARP IS WRONG** when behavior differs from reference Lua
+1. **FIX THE PRODUCTION CODE** to match Lua behavior — never adjust tests to accommodate bugs
+1. **VERIFY AGAINST REAL LUA** by running the same code against `lua5.1`, `lua5.3`, `lua5.4`, etc.
+1. **ADD REGRESSION TESTS** with standalone `.lua` fixtures runnable against real Lua interpreters
+1. **CITE THE LUA MANUAL** (e.g., "§6.4 String Manipulation") when documenting fixes
+
+### 🚫 What NOT to Do When a Spec Mismatch is Found
+
+**NEVER** do any of the following to "fix" a test failure caused by NovaSharp diverging from Lua:
+
+- ❌ Mark fixture as `@novasharp-only: true` (unless it's testing an intentional NovaSharp extension)
+- ❌ Change `@expects-error: true` to `@expects-error: false` to match NovaSharp's incorrect behavior
+- ❌ Modify test expectations to match NovaSharp's buggy output
+- ❌ Skip or disable the test
+- ❌ Add the mismatch to a "known divergences" list
+
+### ✅ What TO Do When a Spec Mismatch is Found
+
+1. **Verify against real Lua** to confirm NovaSharp is wrong:
+
+   ```bash
+   lua5.1 -e "print(your_test_code_here)"
+   lua5.2 -e "print(your_test_code_here)"
+   lua5.3 -e "print(your_test_code_here)"
+   lua5.4 -e "print(your_test_code_here)"
+   lua5.5 -e "print(your_test_code_here)"
+   ```
+
+1. **Find the production code** that implements the incorrect behavior (usually in `CoreLib/*.cs`, `Execution/VM/*.cs`, etc.)
+
+1. **Fix the production code** to match Lua's behavior
+
+1. **Run the test suite** to verify the fix doesn't break other tests
+
+1. **Update PLAN.md** to document the fix
+
+### Exceptions: When `@novasharp-only: true` IS Appropriate
+
+Only mark a fixture as NovaSharp-only when it tests:
+
+- **Intentional NovaSharp extensions** (e.g., prime table syntax `${ }`, compatibility warning system)
+- **Platform-dependent behavior** where both NovaSharp and Lua are "correct" but produce different output (e.g., `_VERSION` string, `os.date` with locale-specific formatters where the underlying C library differs)
+- **Output format differences** where the semantic result is identical but string representation differs (e.g., number formatting edge cases like `-0` vs `0`)
+
+If you're unsure whether something is an intentional extension or a bug, **assume it's a bug and fix it**.
+
+**Verification Commands**:
+
+```bash
+# Test behavior against reference Lua
+lua5.1 -e "print(string.byte('hello', 1))"
+lua5.3 -e "print(string.byte('hello', 1))"
+lua5.4 -e "print(string.byte('hello', 1))"
+
+# Run comprehensive fixture comparison
+python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.3 -j 8 --output-dir artifacts/lua-comparison-5.3
+python3 scripts/tests/compare-lua-outputs.py --lua-version 5.3 --results-dir artifacts/lua-comparison-5.3
+```
+
+**When fixture comparisons reveal behavioral differences**:
+
+- These are **production bugs in NovaSharp**, not test issues
+- Track all findings in `PLAN.md` §8.38 (Lua Spec Compliance)
+- Fix the production code, add regression fixtures, verify against real Lua
+
+See `PLAN.md` §8.38 for the current list of known spec violations and their status.
+
 ## Critical Restrictions
 
 **NEVER perform `git add` or `git commit` operations.** Leave all version control operations to the human developer. You may:
@@ -262,20 +335,34 @@ Use scope helpers instead of `try`/`finally`:
 
 ### Production Bug Policy
 
-**CRITICAL**: Never adjust tests to accommodate production bugs. When a test fails or exposes incorrect behavior:
+**CRITICAL**: When NovaSharp's behavior differs from the official Lua interpreter, this is a **production bug in NovaSharp** that must be fixed. Never adjust tests to accommodate bugs.
 
-1. **Assume production is wrong** until proven otherwise
+**The Golden Rule**: If `lua5.X` produces output A and NovaSharp produces output B for the same input, **NovaSharp is wrong and must be fixed** (unless it's platform-dependent behavior like locale-specific date formatting or `_VERSION` strings).
+
+When a test fails or fixture comparison reveals incorrect behavior:
+
+1. **Assume NovaSharp is wrong** until proven otherwise
+1. **Verify against real Lua** — run the same code against `lua5.1`, `lua5.3`, `lua5.4`
 1. **Fix the production code** to produce correct output
 1. **Keep tests unchanged** unless they are demonstrably incorrect
-1. **Verify against specification** (Lua manual, DAP protocol spec, etc.)
-1. **Document the fix** in commit message and PR notes
+1. **Document the fix** in commit message, PR notes, and `PLAN.md`
 
-This applies to all bugs, including:
+**Examples of bugs that MUST be fixed in production code**:
 
-- Serialization issues (e.g., JSON outputting `{}` instead of `[]` for empty arrays)
-- Protocol violations (e.g., DAP responses not matching spec)
-- Lua semantics diverging from the official interpreter
-- API contracts not being honored
+- NovaSharp throws an error where Lua returns `nil` → Fix NovaSharp to return `nil`
+- NovaSharp returns a different value than Lua → Fix NovaSharp to return the correct value
+- NovaSharp hangs/times out where Lua completes → Fix the infinite loop/performance bug
+- NovaSharp crashes where Lua runs successfully → Fix the crash
+- NovaSharp silently succeeds where Lua throws an error → Fix NovaSharp to throw
+
+**Lua Fixture Comparison Findings**: When `compare-lua-outputs.py` reveals behavioral differences between NovaSharp and real Lua:
+
+1. **These are production bugs** — NovaSharp is not matching the Lua spec
+1. **Do NOT mark fixtures as `@novasharp-only: true`** unless the difference is an intentional NovaSharp extension
+1. **Do NOT change `@expects-error`** to match NovaSharp's incorrect behavior
+1. **Fix the production code** in `CoreLib/*.cs` or other runtime files
+1. **Add regression test fixtures** that verify the fix matches real Lua
+1. **Track findings in `PLAN.md` §8.38** (Lua Spec Compliance)
 
 If you discover a production bug while writing tests, fix the production code first, then verify the test passes with correct behavior. Never work around bugs with test accommodations.
 

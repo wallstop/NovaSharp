@@ -411,22 +411,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         /// <summary>
-        /// Tests that mininteger // -1 throws (this is an edge case in two's complement).
-        /// In Lua it would wrap to mininteger, but NovaSharp throws OverflowException.
+        /// Tests that mininteger // -1 wraps to mininteger (two's complement behavior).
+        /// In two's complement, -mininteger overflows back to mininteger.
         /// </summary>
         [Test]
-        public async Task IntegerDivisionMinintegerByNegativeOneThrows()
+        public async Task IntegerDivisionMinintegerByNegativeOneWraps()
         {
             Script script = CreateScript();
 
-            // |mininteger| = 2^63 which overflows
-            // In Lua this would wrap to mininteger, but NovaSharp throws
+            // mininteger // -1 = mininteger due to two's complement wrapping
+            // |mininteger| would be 2^63 which can't be represented, so it wraps back
+            DynValue result = script.DoString("return math.mininteger // -1");
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+
             await Assert
-                .That(() => script.DoString("return math.mininteger // -1"))
-                .Throws<System.OverflowException>()
-                .Because(
-                    "mininteger // -1 throws because |mininteger| > maxinteger (TODO: should wrap like Lua)"
-                );
+                .That(result.IsInteger)
+                .IsTrue()
+                .Because("floor division of integers should return integer")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(result.LuaNumber.AsInteger)
+                .IsEqualTo(long.MinValue)
+                .Because("mininteger // -1 wraps to mininteger per Lua spec")
+                .ConfigureAwait(false);
         }
 
         /// <summary>

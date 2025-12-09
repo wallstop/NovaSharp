@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxRecursionLimitTUnitTests.cs:22
 -- @test: SandboxRecursionLimitTUnitTests.RecursionLimitExceededThrowsSandboxViolationException
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Test class 'SandboxRecursionLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 function recurse(n)
                     if n <= 0 then
                         return 0

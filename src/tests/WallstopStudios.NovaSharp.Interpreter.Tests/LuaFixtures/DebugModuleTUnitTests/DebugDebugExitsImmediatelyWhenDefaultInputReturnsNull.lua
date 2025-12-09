@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:490
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:504
 -- @test: DebugModuleTUnitTests.DebugDebugExitsImmediatelyWhenDefaultInputReturnsNull
+-- @compat-notes: NovaSharp: debug.debug() is interactive/platform-dependent
 return debug.debug()

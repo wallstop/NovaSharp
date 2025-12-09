@@ -183,17 +183,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToIntegerThrowsWhenTypeUnsupported()
+        public async Task ToIntegerReturnsNilForUnsupportedType()
         {
+            // Per Lua 5.3+ spec, math.tointeger returns nil for non-number/non-string types
+            // (boolean, table, function, userdata, etc.) - it does NOT throw an error.
+            // Reference: Lua 5.3 Manual §6.7
             Script script = CreateScript();
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString("return math.tointeger(true)")
-            );
+            DynValue result = script.DoString("return math.tointeger(true)");
 
-            await Assert
-                .That(exception.Message.IndexOf("boolean", StringComparison.OrdinalIgnoreCase))
-                .IsGreaterThanOrEqualTo(0);
+            await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToIntegerReturnsNilForTable()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.tointeger({})");
+            await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToIntegerReturnsNilForFunction()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.tointeger(function() end)");
+            await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToIntegerReturnsNilForNil()
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString("return math.tointeger(nil)");
+            await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

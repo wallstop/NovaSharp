@@ -68,17 +68,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task MathToIntegerErrorsOnUnsupportedTypesAcrossLua53PlusVersions()
+        public async Task MathToIntegerReturnsNilForUnsupportedTypesAcrossLua53PlusVersions()
+        {
+            // Per Lua 5.3+ spec, math.tointeger returns nil for non-number/non-string types
+            // (boolean, table, function, userdata, etc.) - it does NOT throw an error.
+            // Reference: Lua 5.3 Manual §6.7
+            foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
+            {
+                Script script = CreateScript(version, CoreModules.PresetComplete);
+                DynValue result = script.DoString("return math.tointeger({})");
+
+                await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MathToIntegerReturnsNilForBooleanAcrossLua53PlusVersions()
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
                 Script script = CreateScript(version, CoreModules.PresetComplete);
-                DynValue tuple = script.DoString(
-                    "local ok, err = pcall(math.tointeger, {}) return ok, err"
-                );
+                DynValue result = script.DoString("return math.tointeger(true)");
 
-                await Assert.That(tuple.Tuple[0].Boolean).IsFalse();
-                await Assert.That(tuple.Tuple[1].String).Contains("table");
+                await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MathToIntegerReturnsNilForFunctionAcrossLua53PlusVersions()
+        {
+            foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
+            {
+                Script script = CreateScript(version, CoreModules.PresetComplete);
+                DynValue result = script.DoString("return math.tointeger(function() end)");
+
+                await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
             }
         }
 

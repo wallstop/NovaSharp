@@ -6,7 +6,10 @@
 
 > **🚫 CRITICAL: NEVER use absolute paths to local development machines.** All file paths must be relative to the repository root. Never reference paths like `D:/Code`, `C:/Users`, `/Users/username`, `/home/username`, or any machine-specific path in committed files.
 
+> **🔴 HIGHEST PRIORITY: Lua Spec Compliance** — NovaSharp's primary goal is to faithfully match the official Lua reference implementation. When fixture comparisons reveal behavioral differences, these are **production bugs in NovaSharp that must be fixed**. **NEVER adjust tests or fixture expectations to match NovaSharp's incorrect behavior** — always fix the production code instead. See `PLAN.md` §8.38 for known spec violations and `CONTRIBUTING_AI.md` for the full policy.
+
 See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
+- **🔴 Lua Spec Compliance Policy** (highest priority)
 - Project structure and module organization
 - Build, test, and development commands
 - Coding style and naming conventions

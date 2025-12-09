@@ -1,8 +1,8 @@
--- @lua-versions: 5.3, 5.4, 5.5
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:472
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:486
 -- @test: DebugModuleTUnitTests.DebugDebugThrowsWhenDebugInputIsNull
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: NovaSharp: debug.debug() is interactive/platform-dependent
 local ok, err = pcall(function() debug.debug() end)
                 return ok, err

@@ -1,7 +1,7 @@
--- @lua-versions: 5.3, 5.4, 5.5
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxMemoryLimitTUnitTests.cs:542
 -- @test: SandboxMemoryLimitTUnitTests.ScriptAllocationTrackerRecordsTableEntries
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 for i = 1, 10 do t[i] = i end

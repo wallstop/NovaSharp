@@ -178,20 +178,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveRejectsExtraArguments()
+        public async Task RemoveIgnoresExtraArguments()
         {
+            // Per Lua behavior across all versions, table.remove silently ignores extra arguments.
+            // This is consistent with Lua 5.1, 5.2, 5.3, and 5.4.
+            // Reference: Lua manual §6.6 (table.remove) - no argument count validation mentioned.
             Script script = CreateScript();
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString(
-                    @"
-                    local values = { 1, 2, 3 }
-                    table.remove(values, 1, 2)
-                    "
-                )
+            DynValue result = script.DoString(
+                @"
+                local values = { 1, 2, 3, 4, 5 }
+                local removed = table.remove(values, 1, 'extra', 'args', 999)
+                return removed, #values, values[1]
+                "
             );
 
-            await Assert.That(exception.Message).Contains("wrong number of arguments to 'remove'");
+            // Verify table.remove worked normally, ignoring extra arguments
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

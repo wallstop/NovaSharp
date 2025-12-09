@@ -57,8 +57,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         private static DynValue GetUnixTime(DateTime dateTime, DateTime? epoch = null)
         {
             double time = (dateTime - (epoch ?? Epoch)).TotalSeconds;
+            // Negative times (before epoch) are valid in Lua
+            return DynValue.NewNumber(time);
+        }
 
-            return time < 0.0 ? DynValue.Nil : DynValue.NewNumber(time);
+        /// <summary>
+        /// Computes elapsed time since a start point, clamping to 0 for backward time movement.
+        /// Used by os.clock() which should never return negative values.
+        /// </summary>
+        private static DynValue GetElapsedTime(DateTime dateTime, DateTime startTime)
+        {
+            double time = (dateTime - startTime).TotalSeconds;
+            // Elapsed time should never be negative
+            return time < 0.0 ? DynValue.NewNumber(0.0) : DynValue.NewNumber(time);
         }
 
         private static DateTime FromUnixTime(double unixtime)
@@ -85,17 +96,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime now = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
-            DynValue t = GetUnixTime(now, ResolveStartTimeUtc(executionContext));
-            if (t.IsNil())
-            {
-                return DynValue.FromNumber(0);
-            }
-
-            return t;
+            // os.clock() returns elapsed time since script start, clamped to 0
+            return GetElapsedTime(now, ResolveStartTimeUtc(executionContext));
         }
 
         /// <summary>
         /// Implements Lua `os.difftime`, subtracting two time values (t2 - t1) in seconds (§6.9).
+        /// In Lua 5.1/5.2, the second argument is optional (defaults to 0).
+        /// In Lua 5.3+, the second argument is required.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments providing the timestamps.</param>
@@ -113,9 +121,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+            LuaCompatibilityVersion resolvedVersion = LuaVersionDefaults.Resolve(version);
 
             DynValue t2 = args.AsType(0, "difftime", DataType.Number, false);
-            DynValue t1 = args.AsType(1, "difftime", DataType.Number, true);
+
+            // Lua 5.3+: second argument is required
+            // Lua 5.1/5.2: second argument is optional (defaults to implicit 0 behavior)
+            bool t1Optional = resolvedVersion < LuaCompatibilityVersion.Lua53;
+            DynValue t1 = args.AsType(1, "difftime", DataType.Number, t1Optional);
 
             // Lua 5.3+: time arguments must have integer representation
             LuaNumberHelpers.ValidateIntegerArgument(version, t2, "difftime", 1);
@@ -124,6 +137,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Use LuaNumber for proper value extraction
             if (t1.IsNil())
             {
+                // Only reachable in Lua 5.1/5.2 mode where t1 is optional
                 LuaNumber t2Num = t2.LuaNumber;
                 double t2Value = t2Num.IsInteger ? t2Num.AsInteger : t2Num.AsFloat;
                 return DynValue.NewNumber(t2Value);
@@ -153,26 +167,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DateTime date = ResolveTimeProvider(executionContext).GetUtcNow().UtcDateTime;
 
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+
             if (args.Count > 0)
             {
                 DynValue vt = args.AsType(0, "time", DataType.Table, true);
                 if (vt.Type == DataType.Table)
                 {
-                    date = ParseTimeTable(vt.Table);
+                    date = ParseTimeTable(vt.Table, version);
                 }
             }
 
             return GetUnixTime(date);
         }
 
-        private static DateTime ParseTimeTable(Table t)
+        private static DateTime ParseTimeTable(Table t, LuaCompatibilityVersion version)
         {
-            int sec = GetTimeTableField(t, "sec") ?? 0;
-            int min = GetTimeTableField(t, "min") ?? 0;
-            int hour = GetTimeTableField(t, "hour") ?? 12;
-            int? day = GetTimeTableField(t, "day");
-            int? month = GetTimeTableField(t, "month");
-            int? year = GetTimeTableField(t, "year");
+            int sec = GetTimeTableField(t, "sec", version) ?? 0;
+            int min = GetTimeTableField(t, "min", version) ?? 0;
+            int hour = GetTimeTableField(t, "hour", version) ?? 12;
+            int? day = GetTimeTableField(t, "day", version);
+            int? month = GetTimeTableField(t, "month", version);
+            int? year = GetTimeTableField(t, "year", version);
 
             if (day == null)
             {
@@ -192,9 +208,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return new DateTime(year.Value, month.Value, day.Value, hour, min, sec);
         }
 
-        private static int? GetTimeTableField(Table t, string key)
+        private static int? GetTimeTableField(Table t, string key, LuaCompatibilityVersion version)
         {
             DynValue v = t.Get(key);
+
+            // In Lua 5.3+, fields must be integers (not strings or other types)
+            LuaCompatibilityVersion resolvedVersion = LuaVersionDefaults.Resolve(version);
+            if (resolvedVersion >= LuaCompatibilityVersion.Lua53)
+            {
+                if (v.IsNil())
+                {
+                    return null;
+                }
+
+                if (v.Type != DataType.Number)
+                {
+                    throw new ScriptRuntimeException($"field '{key}' is not an integer");
+                }
+
+                // Check if it's a valid integer
+                LuaNumber num = v.LuaNumber;
+                if (num.IsInteger)
+                {
+                    return (int)num.AsInteger;
+                }
+
+                // Float with integer value is OK
+                double floatVal = num.AsFloat;
+                double floored = Math.Floor(floatVal);
+                if (floored == floatVal && !double.IsNaN(floatVal) && !double.IsInfinity(floatVal))
+                {
+                    return (int)floored;
+                }
+
+                throw new ScriptRuntimeException($"field '{key}' is not an integer");
+            }
+
+            // Lua 5.1/5.2: use CastToNumber which accepts strings
             double? d = v.CastToNumber();
 
             if (d.HasValue)

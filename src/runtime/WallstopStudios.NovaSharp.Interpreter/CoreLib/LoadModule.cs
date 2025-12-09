@@ -354,6 +354,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     DynValue.NewString(GetSyntaxErrorMessage(ex))
                 );
             }
+            catch (System.IO.FileNotFoundException ex)
+            {
+                // Per Lua spec: loadfile returns (nil, error_message) when file cannot be opened
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(
+                        ex.FileName != null
+                            ? $"cannot open {ex.FileName}: No such file or directory"
+                            : ex.Message
+                    )
+                );
+            }
+            catch (System.IO.IOException ex)
+            {
+                // Per Lua spec: loadfile returns (nil, error_message) for IO errors
+                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
+            }
+            catch (System.UnauthorizedAccessException ex)
+            {
+                // Per Lua spec: loadfile returns (nil, error_message) for permission errors
+                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
+            }
         }
 
         /// <summary>

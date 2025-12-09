@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxMemoryLimitTUnitTests.cs:798
 -- @test: SandboxMemoryLimitTUnitTests.ScriptAllocationTrackerRecordsMultipleCoroutines
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 function gen()
                     coroutine.yield(1)
                 end

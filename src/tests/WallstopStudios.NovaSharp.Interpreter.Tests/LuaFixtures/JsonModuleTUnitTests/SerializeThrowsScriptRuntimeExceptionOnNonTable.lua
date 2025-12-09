@@ -3,5 +3,5 @@
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/JsonModuleTUnitTests.cs:77
 -- @test: JsonModuleTUnitTests.SerializeThrowsScriptRuntimeExceptionOnNonTable
--- @compat-notes: NovaSharp: NovaSharp json module
+-- @compat-notes: Test class 'JsonModuleTUnitTests' uses NovaSharp-specific JsonModule functionality
 return require('json')

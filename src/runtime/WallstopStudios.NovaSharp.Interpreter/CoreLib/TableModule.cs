@@ -297,10 +297,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue vpos = args.AsType(1, "table.remove", DataType.Number, true);
             DynValue ret = DynValue.Nil;
 
-            if (args.Count > 2)
-            {
-                throw new ScriptRuntimeException("wrong number of arguments to 'remove'");
-            }
+            // Note: Lua silently ignores extra arguments (does NOT throw an error)
+            // This behavior is consistent across Lua 5.1, 5.2, 5.3, and 5.4
 
             int len = GetTableLength(executionContext, vlist);
             Table list = vlist.Table;

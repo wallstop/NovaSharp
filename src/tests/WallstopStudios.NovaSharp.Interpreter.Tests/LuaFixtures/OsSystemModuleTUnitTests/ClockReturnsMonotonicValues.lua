@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsSystemModuleTUnitTests.cs:392
 -- @test: OsSystemModuleTUnitTests.ClockReturnsMonotonicValues
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
+-- @compat-notes: Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
 local values = {{}}
                 for i = 1, {sampleCount} do
                     values[i] = os.clock()

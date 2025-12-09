@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1015
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1029
 -- @test: DebugModuleTUnitTests.SetHookAndGetHookWithCoroutineTarget
 -- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: r
 local function hookfn() end

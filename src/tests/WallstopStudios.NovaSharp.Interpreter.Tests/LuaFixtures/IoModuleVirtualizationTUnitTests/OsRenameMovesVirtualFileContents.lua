@@ -1,7 +1,7 @@
--- @lua-versions: 5.3, 5.4, 5.5
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleVirtualizationTUnitTests.cs:115
 -- @test: IoModuleVirtualizationTUnitTests.OsRenameMovesVirtualFileContents
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Test class 'IoModuleVirtualizationTUnitTests' uses NovaSharp-specific IoModuleVirtualization functionality
 local f = io.open('old.txt', 'w'); f:write('payload'); f:close()

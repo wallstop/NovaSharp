@@ -401,6 +401,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 {
                     throw new Errors.ScriptRuntimeException("attempt to divide by zero");
                 }
+                // Special case: mininteger // -1 wraps to mininteger in Lua
+                // In C#, this would throw OverflowException, but Lua uses two's complement wrapping
+                if (a._integer == long.MinValue && b._integer == -1)
+                {
+                    return FromInteger(long.MinValue);
+                }
                 // Integer floor division - use C# integer division which truncates toward zero,
                 // then adjust for Lua's floor semantics (toward negative infinity)
                 long quotient = a._integer / b._integer;

@@ -102,6 +102,16 @@ LUA_52_FEATURES = [
     (r'debug\.upvaluejoin\s*\(', 'debug.upvaluejoin (5.2+)'),
     (r'debug\.getuservalue\s*\(', 'debug.getuservalue (5.2+)'),
     (r'debug\.setuservalue\s*\(', 'debug.setuservalue (5.2+)'),
+    # debug.getlocal with function reference: matches func keyword or common var names (not just digits)
+    (r'debug\.getlocal\s*\(\s*function', 'debug.getlocal with function arg (5.2+)'),
+    (r'debug\.getlocal\s*\(\s*[a-zA-Z_][a-zA-Z0-9_]*\s*,', 'debug.getlocal with function var (5.2+)'),
+    # debug.traceback with nil level: Lua 5.1 errors, 5.2+ accepts nil as default
+    (r'debug\.traceback\s*\([^)]*,\s*nil\s*\)', 'debug.traceback with nil level (5.2+)'),
+    # load with string argument: In Lua 5.1, load only accepts a reader function, not a string
+    # Use loadstring in 5.1, or load(string) in 5.2+
+    (r"\bload\s*\(\s*'", "load with string arg (5.2+)"),
+    (r'\bload\s*\(\s*"', "load with string arg (5.2+)"),
+    (r'\bload\s*\(\s*\[\[', "load with string arg (5.2+)"),
     (r'0[xX][0-9a-fA-F]*\.[0-9a-fA-F]', 'hex float literal (5.2+)'),
     (r'0[xX][0-9a-fA-F]+[pP]', 'hex float with exponent (5.2+)'),
 ]
@@ -122,6 +132,17 @@ LUA_51_INCOMPATIBLE = [
     (r'table\.pack\s*\(', 'table.pack (5.2+)'),
     (r'table\.unpack\s*\(', 'table.unpack (5.2+)'),
     (r'rawlen\s*\(', 'rawlen (5.2+)'),
+    (r'debug\.getlocal\s*\(\s*function', 'debug.getlocal with function arg (5.2+)'),
+    (r'debug\.getlocal\s*\(\s*[a-zA-Z_][a-zA-Z0-9_]*\s*,', 'debug.getlocal with function var (5.2+)'),
+    (r'debug\.upvalueid\s*\(', 'debug.upvalueid (5.2+)'),
+    (r'debug\.upvaluejoin\s*\(', 'debug.upvaluejoin (5.2+)'),
+    (r'debug\.getuservalue\s*\(', 'debug.getuservalue (5.2+)'),
+    (r'debug\.setuservalue\s*\(', 'debug.setuservalue (5.2+)'),
+    (r'debug\.traceback\s*\([^)]*,\s*nil\s*\)', 'debug.traceback with nil level (5.2+)'),
+    # load with string argument: In Lua 5.1, load only accepts a reader function
+    (r"\bload\s*\(\s*'", "load with string arg (5.2+)"),
+    (r'\bload\s*\(\s*"', "load with string arg (5.2+)"),
+    (r'\bload\s*\(\s*\[\[', "load with string arg (5.2+)"),
     (r'0[xX][0-9a-fA-F]*\.[0-9a-fA-F]', 'hex float literal (5.2+)'),
     (r'0[xX][0-9a-fA-F]+[pP]', 'hex float with exponent (5.2+)'),
 ]
@@ -156,6 +177,7 @@ NOVASHARP_SPECIFIC_PATTERNS = [
     (r'string\.unicode\s*\(', 'NovaSharp string extension'),
     (r'Script\.GlobalOptions', 'NovaSharp Script.GlobalOptions'),
     (r'sandbox', 'potential NovaSharp sandbox'),
+    (r'debug\.debug\s*\(\s*\)', 'debug.debug() is interactive/platform-dependent'),
 ]
 
 # Patterns indicating the test expects an error
@@ -335,9 +357,26 @@ def count_lines_before(content: str, position: int) -> int:
     return content[:position].count('\n') + 1
 
 
-def analyze_version_compatibility(lua_code: str, surrounding_context: str) -> LuaVersionCompatibility:
+# Test class prefixes that indicate NovaSharp-only tests
+NOVASHARP_ONLY_TEST_CLASS_PREFIXES = [
+    'Sandbox',  # All sandbox tests use NovaSharp-specific sandbox functionality
+    'DynamicUserData',  # Dynamic CLR interop
+    'JsonModule',  # NovaSharp JSON module
+    'IoModuleVirtualization',  # NovaSharp IO stream virtualization
+    'OsSystemModule',  # os.execute behavior differs from standard Lua
+]
+
+
+def analyze_version_compatibility(lua_code: str, surrounding_context: str, test_class: str = "") -> LuaVersionCompatibility:
     """Analyze Lua code to determine version compatibility."""
     compat = LuaVersionCompatibility()
+    
+    # Check if test class indicates NovaSharp-only functionality
+    for prefix in NOVASHARP_ONLY_TEST_CLASS_PREFIXES:
+        if test_class.startswith(prefix):
+            compat.novasharp_only = True
+            compat.reasons.append(f"Test class '{test_class}' uses NovaSharp-specific {prefix} functionality")
+            return compat  # No need to check further - it's definitely NovaSharp-only
     
     # Check for NovaSharp-specific patterns
     for pattern, reason in NOVASHARP_SPECIFIC_PATTERNS:
@@ -412,6 +451,8 @@ def analyze_version_compatibility(lua_code: str, surrounding_context: str) -> Lu
         'stream', 'file',              # IO types
         'sb', 'builder',               # StringBuilder types
         's', 'r',                      # Short variable names from tests
+        'throw_reader_helper',         # LoadModule test helpers
+        'reader_helper',               # LoadModule test helpers
     ]
     for var in interop_vars:
         if re.search(rf'\b{var}\b', lua_code) and f'{var} =' not in lua_code and f'local {var}' not in lua_code:
@@ -460,7 +501,7 @@ def extract_snippets_from_file(file_path: Path) -> Iterator[LuaSnippet]:
         end_ctx = min(len(content), position + len(lua_code) + 500)
         surrounding = content[start_ctx:end_ctx]
         
-        compatibility = analyze_version_compatibility(lua_code, surrounding)
+        compatibility = analyze_version_compatibility(lua_code, surrounding, test_class)
         expects_error = check_expects_error(surrounding)
         
         key = f"{test_class}.{test_method}"

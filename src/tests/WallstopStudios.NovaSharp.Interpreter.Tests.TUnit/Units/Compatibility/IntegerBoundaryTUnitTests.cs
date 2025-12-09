@@ -500,24 +500,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         }
 
         /// <summary>
-        /// Tests that mininteger // -1 throws OverflowException.
-        /// This is a known edge case where |mininteger| > maxinteger.
-        /// In Lua, this would wrap to mininteger, but NovaSharp currently throws.
-        /// TODO: Consider implementing Lua-compatible wrapping behavior.
+        /// Tests that mininteger // -1 wraps to mininteger (two's complement behavior).
+        /// In two's complement arithmetic: -mininteger = mininteger because the positive value
+        /// would overflow. Lua correctly preserves this wrapping behavior.
         /// </summary>
         [Test]
-        public async Task MinintegerDividedByNegativeOneThrowsOverflow()
+        public async Task MinintegerDividedByNegativeOneWrapsToMininteger()
         {
             Script script = CreateScript();
 
-            // Currently throws OverflowException - this documents current behavior
-            // Lua would return mininteger (wrapping)
+            // Per Lua 5.3/5.4 spec: mininteger // -1 = mininteger (wraps due to two's complement)
+            DynValue result = script.DoString("return math.mininteger // -1");
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+
             await Assert
-                .That(() => script.DoString("return math.mininteger // -1"))
-                .Throws<System.OverflowException>()
-                .Because(
-                    "mininteger // -1 throws because |mininteger| > maxinteger (TODO: should wrap)"
-                );
+                .That(result.IsInteger)
+                .IsTrue()
+                .Because("floor division of integers should return integer")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(result.LuaNumber.AsInteger)
+                .IsEqualTo(long.MinValue)
+                .Because("mininteger // -1 wraps to mininteger")
+                .ConfigureAwait(false);
         }
 
         #endregion

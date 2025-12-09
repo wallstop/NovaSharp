@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleVirtualizationTUnitTests.cs:90
 -- @test: IoModuleVirtualizationTUnitTests.OsTmpNameGeneratesUniqueVirtualNames
+-- @compat-notes: Test class 'IoModuleVirtualizationTUnitTests' uses NovaSharp-specific IoModuleVirtualization functionality
 return os.tmpname()

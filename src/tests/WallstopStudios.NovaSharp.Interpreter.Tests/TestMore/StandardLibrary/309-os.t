@@ -31,7 +31,7 @@ See "Programming in Lua", section 22 "The Operating System Library".
 
 require 'Test.More'
 
-plan(54)
+plan(55)
 
 local lua = "lua"
 
@@ -178,7 +178,9 @@ if platform and platform.intsize == 8 then
     -- os.time returns nil when C mktime returns < 0
     -- this test needs a out of range value on any platform
 end
-is(os.time({
+-- On 64-bit platforms, os.time can represent dates from year 1000
+-- This returns a large negative number representing seconds before Unix epoch
+t = os.time({
     sec = 0,
     min = 0,
     hour = 0,
@@ -186,7 +188,9 @@ is(os.time({
     month = 1,
     year = 1000,
     isdst = 0,
-}), nil, "function time -> nil")
+})
+type_ok(t, 'number', "function time (ancient date)")
+ok(t < 0, "ancient date is negative")
 
 error_like(function () os.time{} end,
            "^[^:]+:%d+: field 'day' missing in date table",

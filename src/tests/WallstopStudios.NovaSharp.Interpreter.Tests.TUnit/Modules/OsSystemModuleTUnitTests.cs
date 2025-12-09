@@ -309,14 +309,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DifftimeSingleArgumentReturnsValue()
+        public async Task DifftimeSingleArgumentReturnsValueInLua52()
         {
             StubPlatformAccessor stub = new();
-            using ScriptContext context = CreateScriptContext(stub);
+            using ScriptContext context = CreateScriptContext(
+                stub,
+                Compatibility.LuaCompatibilityVersion.Lua52
+            );
             Script script = context.Script;
             DynValue result = script.DoString("return os.difftime(1234)");
 
             await Assert.That(result.Number).IsEqualTo(1234d);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DifftimeSingleArgumentThrowsInLua53()
+        {
+            StubPlatformAccessor stub = new();
+            using ScriptContext context = CreateScriptContext(
+                stub,
+                Compatibility.LuaCompatibilityVersion.Lua53
+            );
+            Script script = context.Script;
+
+            ScriptRuntimeException exception = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(() =>
+                    Task.FromResult(script.DoString("return os.difftime(1234)"))
+                )
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(exception.Message)
+                .Contains("bad argument #2 to 'difftime'")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -497,12 +522,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("n/a");
         }
 
-        private static ScriptContext CreateScriptContext(StubPlatformAccessor stub)
+        private static ScriptContext CreateScriptContext(
+            StubPlatformAccessor stub,
+            Compatibility.LuaCompatibilityVersion? version = null
+        )
         {
             ArgumentNullException.ThrowIfNull(stub);
 
             ScriptPlatformScope globalScope = ScriptPlatformScope.Override(stub);
             Script script = new Script(CoreModules.PresetComplete);
+            if (version.HasValue)
+            {
+                script.Options.CompatibilityVersion = version.Value;
+            }
             script.Options.DebugPrint = _ => { };
             return new ScriptContext(script, globalScope);
         }

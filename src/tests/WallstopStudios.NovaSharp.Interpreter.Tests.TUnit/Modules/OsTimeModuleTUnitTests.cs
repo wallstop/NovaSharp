@@ -92,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeReturnsNilForDatesBeforeEpoch()
+        public async Task TimeReturnsNegativeForDatesBeforeEpoch()
         {
             Script script = CreateScript();
             DynValue result = script.DoString(
@@ -108,7 +108,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 "
             );
 
-            await Assert.That(result.IsNil()).IsTrue();
+            // Dates before Unix epoch (Jan 1, 1970) return negative values
+            // December 31, 1969 23:59:59 UTC is -1 second from epoch
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsLessThan(0);
         }
 
         [global::TUnit.Core.Test]
@@ -133,13 +136,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DiffTimeHandlesOptionalStartArgument()
+        public async Task DiffTimeHandlesTwoArguments()
         {
             Script script = CreateScript();
             DynValue diff = script.DoString("return os.difftime(200, 150)");
-            DynValue diffFromZero = script.DoString("return os.difftime(200)");
 
             await Assert.That(diff.Number).IsEqualTo(50);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DiffTimeOptionalSecondArgumentInLua52()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
+            DynValue diffFromZero = script.DoString("return os.difftime(200)");
+
+            // In Lua 5.1/5.2, second argument is optional and defaults to 0
             await Assert.That(diffFromZero.Number).IsEqualTo(200);
         }
 
@@ -346,14 +357,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeIgnoresNonNumericOptionalFields()
+        public async Task TimeIgnoresNonNumericOptionalFieldsInLua52()
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString(
                 "return os.time({ year = 1970, month = 1, day = 1, hour = 'ignored' })"
             );
 
+            // In Lua 5.1/5.2, non-numeric strings in optional fields are ignored,
+            // and the default value (12 for hour) is used
             await Assert.That(result.Number).IsEqualTo(12 * 60 * 60);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TimeThrowsForNonNumericFieldsInLua53()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua53);
+
+            ScriptRuntimeException exception = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(() =>
+                    Task.FromResult(
+                        script.DoString(
+                            "return os.time({ year = 1970, month = 1, day = 1, hour = 'ignored' })"
+                        )
+                    )
+                )
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(exception.Message)
+                .Contains("field 'hour' is not an integer")
+                .ConfigureAwait(false);
         }
 
         private static Script CreateScript()

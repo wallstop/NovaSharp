@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/JsonModuleTUnitTests.cs:18
 -- @test: JsonModuleTUnitTests.EncodeProducesCanonicalObject
--- @compat-notes: NovaSharp: NovaSharp json module
+-- @compat-notes: Test class 'JsonModuleTUnitTests' uses NovaSharp-specific JsonModule functionality
 local m = require('json'); json = { encode = m.serialize, decode = m.parse };

@@ -1,5 +1,98 @@
 # Modern Testing & Coverage Plan
 
+## 🔴🔴 HIGHEST PRIORITY: Lua Spec Compliance — Fix All Behavioral Divergences (§8.38)
+
+**Status**: 🚧 **IN PROGRESS** — Systematic identification and fixing of all Lua spec violations.
+
+**Core Principle**:
+NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches the official Lua reference implementation as closely as possible. When fixture comparisons reveal behavioral differences:
+
+1. **ASSUME NOVASHARP IS WRONG** until proven otherwise
+2. **FIX THE PRODUCTION CODE** to match Lua behavior
+3. **ADD REGRESSION TESTS** with standalone `.lua` fixtures runnable against real Lua
+4. **NEVER adjust tests to accommodate bugs** — fix the runtime instead
+
+### ✅ RECENTLY FIXED PRODUCTION BUGS (2025-12-09)
+
+| Fixture | Issue | Fix | Verified |
+|---------|-------|-----|----------|
+| `BandAcceptsIntegralFloatLua52.lua` | Was timing out/hanging | Already fixed in previous work (see PLAN.md history) | ✅ `bit32.band(5.0, 3.0)` returns `1` correctly |
+| `MinintegerDividedByNegativeOneThrowsOverflow.lua` | Threw `OverflowException` instead of wrapping | Added special case in `LuaNumber.FloorDivide` for `mininteger // -1` | ✅ Now wraps to `mininteger` like Lua |
+| `IntegerDivisionMinintegerByNegativeOneThrows.lua` | Same as above | Same fix | ✅ Tests renamed to `*Wraps` and updated |
+
+**Fix Details (mininteger // -1)**:
+- **Root Cause**: C# throws `OverflowException` when dividing `long.MinValue` by `-1` because the result would overflow `long.MaxValue`
+- **Lua Behavior**: Returns `mininteger` (two's complement wrapping)
+- **Fix Location**: `LuaNumber.FloorDivide()` in `src/runtime/.../DataTypes/LuaNumber.cs`
+- **Fix**: Added early detection `if (a._integer == long.MinValue && b._integer == -1) return FromInteger(long.MinValue);`
+
+### 🔴 PRODUCTION BUGS TO FIX (NovaSharp diverges from Lua spec)
+
+| Priority | Fixture | NovaSharp Behavior | Expected (Lua) Behavior | Fix Location |
+|----------|---------|-------------------|------------------------|--------------|
+| 🔴 HIGH | `FloorResultCanBeUsedInStringFormat.lua` | Overflow wraps to negative | Throws "number has no integer representation" | `StringModule.cs` |
+| 🟡 MED | `FormatDecimalWithFloatFallsBackToConversion.lua` | ? | ? | Needs investigation |
+| 🟡 MED | `UpvalueIdReturnsUserDataHandles.lua` | ? | ? | Needs investigation |
+| 🟡 MED | `UpvalueJoinSharesState.lua` | ? | ? | Needs investigation |
+
+### Additional Tests Needed (For Previously Fixed Items)
+
+**`loadfile()` error handling**:
+- [ ] `LoadFileReturnsNilAndErrorForNonexistentFile.lua`
+- [ ] `LoadFileReturnsNilAndErrorForPermissionDenied.lua`
+- [ ] `LoadFileReturnsNilAndErrorForDirectoryPath.lua`
+- [ ] `LoadFileReturnsNilAndErrorForInvalidPath.lua`
+
+**`debug.upvalueid()` validation**:
+- [ ] `UpvalueIdThrowsForZeroIndex.lua`
+- [ ] `UpvalueIdThrowsForNegativeIndex.lua`
+- [ ] `UpvalueIdThrowsForIndexBeyondUpvalueCount.lua`
+- [ ] `UpvalueIdThrowsForClrFunction.lua`
+- [ ] `UpvalueIdReturnsValidIdForValidUpvalue.lua`
+
+### Systematic Compliance Verification Process
+
+For each discovered violation:
+
+1. **Run against reference Lua**:
+   ```bash
+   lua5.1 fixture.lua 2>&1
+   lua5.3 fixture.lua 2>&1
+   lua5.4 fixture.lua 2>&1
+   ```
+
+2. **Document expected behavior** with Lua manual references
+
+3. **Fix NovaSharp production code** to match
+
+4. **Create regression test fixtures**:
+   - One fixture per behavior variant
+   - Include success cases, error cases, edge cases
+   - Add `@expects-error: true` for error-expecting tests
+
+5. **Verify fix**:
+   ```bash
+   python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.X -j 8 --output-dir artifacts/lua-comparison-5.X
+   python3 scripts/tests/compare-lua-outputs.py --lua-version 5.X --results-dir artifacts/lua-comparison-5.X
+   ```
+
+6. **Run full test suite** to ensure no regressions
+
+### Commands
+
+```bash
+# Run comprehensive comparison for a Lua version
+rm -rf artifacts/lua-comparison-5.X
+python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.X -j 8 --output-dir artifacts/lua-comparison-5.X
+python3 scripts/tests/compare-lua-outputs.py --lua-version 5.X --results-dir artifacts/lua-comparison-5.X
+
+# Investigate a specific fixture
+lua5.3 src/tests/.../LuaFixtures/Module/Fixture.lua
+dotnet run --project src/tooling/WallstopStudios.NovaSharp.Cli -- --lua-version 5.3 src/tests/.../LuaFixtures/Module/Fixture.lua
+```
+
+---
+
 ## 📋 Lua Fixture Verification Policy
 
 **REQUIRED**: When fixing any Lua semantic issue or discovering a behavioral discrepancy, create a comprehensive suite of standalone Lua files that can be run against both NovaSharp and the official Lua interpreter to verify correctness and prevent regressions.
@@ -223,65 +316,6 @@ internal static long ToIntegerStrict(Script script, double value, string funcNam
 
 ---
 
-## 🔴 CRITICAL Priority: CI Test Failure Analysis — Additional Findings (§8.35)
-
-**Status**: 📋 **DOCUMENTED** — Findings from lua-comparison-5.3.zip analysis.
-
-**Problem Statement (2025-12-09)**:
-Analysis of `lua-comparison-5.3.zip` CI test failures revealed multiple categories of issues beyond `string.byte`/`string.char`. This section tracks all findings for systematic resolution.
-
-### Category 1: String Module Index Handling
-
-**Files Affected**: Multiple `StringModuleTUnitTests` fixtures
-
-| Test | Issue | Root Cause | Fix Required |
-|------|-------|------------|--------------|
-| `ByteWithFractionalIndex.lua` | Index truncation | Verify floor semantics | Audit + test |
-| `CharErrorsOnNaN53Plus.lua` | NaN handling | Version-aware | §8.33 covers |
-
-### Category 2: Math Module Edge Cases
-
-**Potential Issues** (to be verified):
-- `math.random()` with fractional bounds
-- `math.floor`/`math.ceil` return type (should be integer in 5.3+)
-- Bitwise operation argument validation
-
-### Category 3: Table Module Integer Requirements
-
-**Potential Issues** (to be verified):
-- `table.insert` with fractional position
-- `table.remove` with fractional position  
-- `table.concat` with fractional indices
-- `table.move` (5.3+ only) argument validation
-
-### Category 4: I/O Module Differences
-
-**Known from §8.30**:
-- `io.open` invalid mode handling (version-aware, fixed)
-- `io.lines` return value count (5.4 change, separate from 5.3)
-
-### Next Steps
-
-1. **Extract full failure list** from `lua-comparison-5.3.zip`
-2. **Categorize each failure** by module and root cause
-3. **Prioritize fixes** based on frequency and severity
-4. **Create tracking table** with status for each issue
-5. **Run focused tests** after each fix to verify resolution
-
-### Commands for Investigation
-```bash
-# Extract and analyze test results
-unzip lua-comparison-5.3.zip -d artifacts/lua-comparison-5.3/
-cat artifacts/lua-comparison-5.3/*/results.json | jq '.failures[]'
-
-# Run specific module comparison
-LUA_VERSION=5.3 bash scripts/tests/run-lua-fixtures.sh --filter "StringModule"
-LUA_VERSION=5.3 bash scripts/tests/run-lua-fixtures.sh --filter "MathModule"
-LUA_VERSION=5.3 bash scripts/tests/run-lua-fixtures.sh --filter "TableModule"
-```
-
----
-
 ## 🔴 CRITICAL Priority: Comprehensive Numeric Edge-Case Audit & Spec Compliance Verification (§8.36)
 
 **Status**: 📋 **INVESTIGATION REQUIRED** — Systematic audit needed for all Lua versions.
@@ -454,10 +488,8 @@ done
 ```
 
 ### Related Sections
-- §8.32: `string.char` out-of-range behavior (✅ Complete)
 - §8.33: `string.byte`/`string.sub`/`string.rep` version-aware validation (✅ Complete)
 - §8.34: Lua 5.3+ integer representation errors (📋 Documented)
-- §8.35: CI test failure analysis (📋 Documented)
 - §8.24: Dual numeric type system (`LuaNumber` struct) (🚧 In Progress)
 
 ### Priority: 🔴 HIGH
@@ -467,201 +499,6 @@ This investigation is critical because:
 2. **Security**: Integer overflow/underflow can cause unexpected behavior
 3. **Spec compliance**: NovaSharp claims Lua compatibility — must match reference implementations
 4. **Trust**: Users rely on consistent behavior across Lua versions
-
----
-
-## 🔴 CRITICAL Priority: Lua Fixture Comparison Infrastructure & Mismatch Resolution (§8.37)
-
-**Status**: ✅ **INFRASTRUCTURE COMPLETE** — Corpus regenerated, 16 mismatches documented for Lua 5.1, ready for resolution phase.
-
-**Problem Statement (2025-12-09)**:
-Comprehensive Lua fixture comparison testing revealed infrastructure bugs in the corpus extractor and parallel runner, plus 16 remaining behavioral mismatches between NovaSharp and Lua 5.1 that require resolution.
-
-### Infrastructure Improvements Completed
-
-#### 1. Corpus Extractor Fixes (`tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`)
-
-| Issue | Fix Applied |
-|-------|-------------|
-| Test method pattern didn't match `[Test]` alone | Updated regex to match `[Test]`, `[TUnit.Core.Test]`, and `[global::TUnit.Core.Test]` |
-| Path prefixes missing `WallstopStudios.` | Fixed default paths to use correct namespace prefix |
-| Interop variable detection incomplete | Added `arr`, `array`, `list`, `o3`, `o4`, `o5`, `callback`, `func`, `cls`, `vec`, `stream`, `sb`, `s`, `r` |
-| C# interpolation placeholders not detected | Added pattern to detect `{variable}` and mark as novasharp-only |
-| NovaSharp-specific modules not detected | Added patterns for `json` module, string extensions, sandbox |
-| Hex float literals not detected | Added patterns for `0x...p...` (Lua 5.2+) |
-| Version-specific math functions missing | Added `math.tointeger`, `math.type`, `math.ult`, `string.pack/unpack` |
-
-#### 2. Parallel Fixture Runner (`scripts/tests/run-lua-fixtures-parallel.py`)
-
-- **Created**: New Python-based parallel runner using `ProcessPoolExecutor`
-- **Performance**: ~27 fixtures/second vs ~1/second sequential (27x faster)
-- **Features**:
-  - Parallel execution with configurable worker count (`-j N`)
-  - Proper `@expects-error` handling (non-zero exit = pass for error tests)
-  - Version-aware fixture filtering from metadata
-  - Per-fixture output files with stdout/stderr/return code
-  - JSON summary with timing metrics
-
-#### 3. Regenerated Corpus Statistics
-
-| Metric | Count |
-|--------|-------|
-| Total fixtures extracted | 1,170 |
-| NovaSharp-only fixtures | 230 |
-| Comparable with real Lua | 940 |
-| Compatible with Lua 5.1 | 485 |
-| Compatible with Lua 5.2 | 474 |
-| Compatible with Lua 5.3 | 827 |
-| Compatible with Lua 5.4 | 907 |
-
-### Remaining Lua 5.1 Mismatches (16 total)
-
-Full comparison run against Lua 5.1 with 500 compatible fixtures:
-- **Lua 5.1 pass**: 371
-- **Lua 5.1 fail**: 129 (expected errors)
-- **NovaSharp pass**: 373
-- **NovaSharp fail**: 127 (expected errors)
-- **Mismatches**: 16 (Lua and NovaSharp disagree)
-
-#### Category 1: Debug Module — Features Added in Lua 5.2+ (4 issues)
-
-| Test File | Issue | Root Cause |
-|-----------|-------|------------|
-| `DebugDebugExitsImmediatelyWhenDefaultInputReturnsNull.lua` | lua=fail, nova=pass | NovaSharp implements 5.2+ behavior |
-| `GetLocalFromFunctionReturnsNilForZeroOrNegativeIndex.lua` | lua=fail, nova=pass | `debug.getlocal(function, index)` syntax is 5.2+ only |
-| `GetLocalFromFunctionReturnsNilForZeroOrNegativeIndex_1.lua` | lua=fail, nova=pass | Same as above |
-| `TracebackWithNilLevelUsesDefault.lua` | lua=fail, nova=pass | `debug.traceback` nil level handling differs |
-
-**Resolution**: Mark fixtures as `@lua-versions: 5.2+` since they test features not in Lua 5.1.
-
-#### Category 2: IO Module — Behavior Differences (3 issues)
-
-| Test File | Issue | Root Cause |
-|-----------|-------|------------|
-| `TypeReturnsNilForNonFileUserData.lua` | lua=pass, nova=fail (expects error) | `io.type()` error handling differs |
-| `TypeReturnsNilForNonUserData.lua` | lua=fail, nova=pass | NovaSharp returns nil, Lua errors |
-| `TypeReturnsNilForNonUserDataArguments.lua` | lua=fail, nova=pass | Same as above |
-
-**Resolution**: Investigate `io.type()` implementation - may need version-aware handling or fixture metadata update.
-
-#### Category 3: Load Module — Error Message Format Differences (4 issues)
-
-| Test File | Issue | Root Cause |
-|-----------|-------|------------|
-| `LoadFileReturnsTupleWithSyntaxErrorMessage.lua` | lua=pass, nova=fail | Error message format differs |
-| `LoadFileUsesRawMessageWhenScriptLoaderThrowsSyntaxErrorWithoutDecoration.lua` | lua=pass, nova=fail | Same |
-| `LoadPropagatesDecoratedMessageWhenReaderThrowsSyntaxError.lua` | lua=pass, nova=fail | Same |
-| `LoadReturnsTupleWithSyntaxErrorWhenStringIsInvalid.lua` | lua=pass, nova=fail (expects error) | Same |
-
-**Resolution**: These may be acceptable divergences (error message format) or may require updating fixture expectations. Need investigation.
-
-#### Category 4: Math Module — Modulo by Zero ✅ **FIXED**
-
-| Test File | Issue | Root Cause | Status |
-|-----------|-------|------------|--------|
-| `ModuloByZeroThrows.lua` | lua=pass, nova=fail | Version-dependent behavior | ✅ Fixed |
-
-**Fix Applied**: `LuaNumber.Modulo()` now accepts version parameter. Lua 5.1/5.2 returns `nan`, Lua 5.3+ throws error.
-
-#### Category 5: Sandbox Module — NovaSharp-Specific (4 issues)
-
-| Test File | Issue | Root Cause |
-|-----------|-------|------------|
-| `FunctionAccessCallbackCanAllowAccess.lua` | lua=fail, nova=pass | Sandbox is NovaSharp-only |
-| `RestrictedFunctionLoadThrowsSandboxViolationException.lua` | lua=fail, nova=pass | Same |
-| `RestrictedFunctionLoadfileThrowsSandboxViolationException.lua` | lua=pass, nova=fail | Same |
-| `UnrestrictedFunctionExecutesNormally.lua` | lua=fail, nova=pass | Same |
-
-**Resolution**: Mark all Sandbox fixtures as `@novasharp-only: true` — sandbox is a NovaSharp extension.
-
-### Next Steps — Priority Order
-
-1. **🔴 HIGH: Run Lua Comparison CI Suite**
-   - Execute `compare-lua-outputs.py` against Lua 5.1, 5.2, 5.3, 5.4
-   - Document all mismatches in structured format
-   - Triage into: production bugs, fixture metadata fixes, acceptable divergences
-
-2. **🟡 MEDIUM: Fix Fixture Metadata**
-   - Mark Debug module fixtures as `5.2+`
-   - Mark Sandbox fixtures as `novasharp-only`
-   - Update corpus extractor patterns if needed
-
-3. **🟡 MEDIUM: Investigate IO Module Behavior**
-   - Compare `io.type()` behavior across Lua versions
-   - Determine if NovaSharp or fixtures are incorrect
-   - Add version-aware handling if needed
-
-4. **🟢 LOW: Document Load Module Differences**
-   - Error message format differences may be acceptable
-   - Document in `docs/testing/lua-divergences.md`
-   - Consider if any require production fixes
-
-5. **🟢 LOW: CLI Batch Mode Enhancement**
-   - Consider adding `--batch` mode to NovaSharp CLI for running multiple files efficiently
-   - Would eliminate process startup overhead for large fixture runs
-   - Alternative to GNU parallel approach
-
-### CLI Enhancement Proposal
-
-**Problem**: The parallel Python runner still spawns a new `dotnet` process per fixture, which has ~200ms startup overhead.
-
-**Proposed Solution**: Add batch execution mode to NovaSharp CLI:
-
-```bash
-# Current (slow - one process per file)
-nova --lua-version 5.1 file1.lua
-nova --lua-version 5.1 file2.lua
-nova --lua-version 5.1 file3.lua
-
-# Proposed batch mode (single process)
-nova --lua-version 5.1 --batch file1.lua file2.lua file3.lua
-
-# Or with stdin list
-find fixtures/ -name "*.lua" | nova --lua-version 5.1 --batch-stdin
-
-# Output format options
-nova --batch --output-format json file1.lua file2.lua  # JSON per-file results
-nova --batch --output-format tap file1.lua file2.lua   # TAP output
-```
-
-**Benefits**:
-- Eliminates ~200ms startup per file
-- Single .NET runtime initialization
-- Could achieve 100+ fixtures/second
-- Native support without external tools
-
-### Testing Commands
-
-```bash
-# Run parallel comparison against Lua 5.1
-python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.1 -j 8 --output-dir artifacts/lua-comparison-5.1
-
-# View mismatch summary
-cat artifacts/lua-comparison-5.1/results.json | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-mismatches = [r for r in data['results'] 
-              if r.get('skipped_reason') is None 
-              and r.get('lua_status') != r.get('nova_status')]
-print(f'Mismatches: {len(mismatches)}')
-for m in mismatches:
-    print(f\"  {m['file']}: lua={m['lua_status']} nova={m['nova_status']}\")
-"
-
-# Regenerate corpus after extractor changes
-python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
-
-# Run comparison against all Lua versions
-for v in 5.1 5.2 5.3 5.4; do
-  python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version $v -j 8 --output-dir artifacts/lua-comparison-$v
-done
-```
-
-### Related Sections
-- §8.30: Lua 5.1 compatibility (✅ Complete — xpcall, io.open, os.date)
-- §8.31: CLI version propagation (🚧 In Progress)
-- §8.33: LuaNumber compliance sweep (🚧 In Progress)
-- §8.36: Numeric edge-case audit (📋 Investigation Required)
 
 ---
 
@@ -685,7 +522,6 @@ done
 - Bitwise operations preserve full 64-bit integer precision
 - `string.format('%d', math.maxinteger)` outputs exact "9223372036854775807" (no precision loss)
 - `math.floor(3.7)` and `math.ceil(3.2)` return integer subtypes
-- All **4,389** tests passing (updated 2025-12-09)
 
 See **Section 8.24** for the complete implementation plan.
 
@@ -693,11 +529,11 @@ See **Section 8.24** for the complete implementation plan.
 
 ---
 
-## Repository Snapshot — 2025-12-09 (UTC)
+## Repository Snapshot
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true` enforced.
-- **Tests**: **4,389** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
-- **Coverage**: Interpreter at **96.2% line / 93.69% branch / 97.88% method**.
-- **Coverage gating**: `COVERAGE_GATING_MODE=enforce` enabled with 96% line / 93% branch / 97% method thresholds.
+- **Tests**: **4,409** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Coverage**: ~87.7% line / ~86.7% branch (per latest coverage run).
+- **Coverage gating**: `COVERAGE_GATING_MODE=enforce` enabled with 90% thresholds.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
 - **Regions**: Runtime/tooling/tests remain region-free.
 - **CI**: Tests run on matrix of `[ubuntu-latest, windows-latest, macos-latest]`.
@@ -706,22 +542,7 @@ See **Section 8.24** for the complete implementation plan.
 - **Benchmark CI**: `.github/workflows/benchmarks.yml` with BenchmarkDotNet, threshold-based regression alerting.
 - **Packaging**: NuGet publishing workflow + Unity UPM scripts in `scripts/packaging/`.
 - **Lua Version Comparison**: CI runs matrix tests against Lua 5.1, 5.2, 5.3, 5.4 reference interpreters.
-- **Lua Fixture Corpus**: 1,170 fixtures extracted from C# tests, 940 comparable with real Lua, parallel runner operational.
-
-### Completed Work (Since 2025-12-08)
-
-**Lua 5.1/5.2/5.3+ Compatibility Fixes**:
-- ✅ `string.char` out-of-range behavior (§8.32)
-- ✅ Lua 5.1 compatibility: xpcall, io.open, os.date version-aware (§8.30)
-- ✅ `string.byte`/`string.sub`/`string.rep` integer representation validation (§8.33)
-- ✅ Modulo by zero version-aware behavior (§8.37)
-- ✅ CoreLib module audit: MathModule, TableModule, BasicModule, Bit32Module, DebugModule, OsTimeModule
-
-**Infrastructure**:
-- ✅ Lua fixture corpus generation (1,170 fixtures)
-- ✅ Parallel fixture runner (`scripts/tests/run-lua-fixtures-parallel.py`)
-- ✅ Version-specific fixture metadata support
-- ✅ `LuaNumberHelpers` utility class for version-aware integer validation
+- **Lua Fixture Corpus**: ~1,234 fixtures extracted from C# tests, parallel runner operational.
 
 ## Critical Initiatives
 
@@ -1071,7 +892,7 @@ These documents contain comprehensive details on:
 
 #### 8.24 Dual Numeric Type System (Integer + Float) 🔴 **HIGH PRIORITY**
 
-**Status**: 🚧 **IN PROGRESS** — Phase 3 complete. All 4,069 tests passing.
+**Status**: 🚧 **IN PROGRESS** — Phase 3 complete. All 4,404 tests passing.
 
 **Problem Statement**:
 
@@ -1104,7 +925,7 @@ The `LuaNumber` struct has been implemented to track integer vs float subtype.
 - [x] `string.format('%d', math.maxinteger)` returns "9223372036854775807" (exact)
 - [x] `math.floor(3.7)` returns integer subtype (value 3)
 - [x] `math.ceil(3.2)` returns integer subtype (value 4)
-- [x] All 4,069 existing tests pass
+- [x] All 4,404 existing tests pass
 - [ ] Lua comparison harness shows improved parity percentage
 - [ ] No performance regression > 5% on benchmarks
 - [ ] Numeric caching reduces hot-path allocations

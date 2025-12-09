@@ -197,15 +197,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             DynValue value = args[0];
 
+            // Per Lua 5.3+ spec, math.tointeger returns nil for non-convertible types
+            // (including boolean, table, function, userdata, etc.) - it does NOT throw an error.
             if (value.Type != DataType.Number && value.Type != DataType.String)
             {
-                throw ScriptRuntimeException.BadArgument(
-                    0,
-                    "tointeger",
-                    DataType.Number,
-                    value.Type,
-                    false
-                );
+                return DynValue.Nil;
             }
 
             if (TryGetIntegerFromDynValue(value, out long integer))

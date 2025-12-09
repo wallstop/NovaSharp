@@ -418,7 +418,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (args[0].Type == DataType.ClrFunction)
             {
-                return DynValue.Nil;
+                // CLR functions have no accessible upvalues - error per Lua spec
+                throw new ScriptRuntimeException(
+                    "bad argument #2 to 'upvalueid' (invalid upvalue index)"
+                );
             }
 
             Closure fn = args.AsType(0, "upvalueid", DataType.Function, false).Function;
@@ -427,14 +430,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (index < 0 || index >= closure.Count)
             {
-                return DynValue.Nil;
+                // Invalid index - error per Lua spec
+                throw new ScriptRuntimeException(
+                    "bad argument #2 to 'upvalueid' (invalid upvalue index)"
+                );
             }
 
             DynValue slot = closure[index];
 
             if (slot == null)
             {
-                return DynValue.Nil;
+                // Null slot is also invalid
+                throw new ScriptRuntimeException(
+                    "bad argument #2 to 'upvalueid' (invalid upvalue index)"
+                );
             }
 
             return GetUpvalueIdentifier(slot);
