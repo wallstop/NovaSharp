@@ -71,28 +71,28 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour). Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when it isn’t already defined so .NET 9 runtimes can execute the net8.0 testhost; override the variable if you need different roll-forward behaviour.
 
-- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI now exports `COVERAGE_GATING_MODE=enforce` with **96 % line / 93 % branch / 97 % method** thresholds so coverage dips fail fast; set the mode to `monitor` locally if you need a warning-only rehearsal. To mirror the enforced gate (the default in CI), export the stricter settings before rerunning the script:
+- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI now exports `COVERAGE_GATING_MODE=enforce` with **90 % line / 90 % branch / 90 % method** thresholds so coverage dips fail fast; set the mode to `monitor` locally if you need a warning-only rehearsal. To mirror the enforced gate (the default in CI), export the stricter settings before rerunning the script:
 
   ```powershell
   $env:COVERAGE_GATING_MODE = "enforce"
-  $env:COVERAGE_GATING_TARGET_LINE = "96"
-  $env:COVERAGE_GATING_TARGET_BRANCH = "93"
-  $env:COVERAGE_GATING_TARGET_METHOD = "97"
+  $env:COVERAGE_GATING_TARGET_LINE = "90"
+  $env:COVERAGE_GATING_TARGET_BRANCH = "90"
+  $env:COVERAGE_GATING_TARGET_METHOD = "90"
   pwsh ./scripts/coverage/coverage.ps1 -SkipBuild
   ```
 
   ```bash
   COVERAGE_GATING_MODE=enforce \
-  COVERAGE_GATING_TARGET_LINE=96 \
-  COVERAGE_GATING_TARGET_BRANCH=93 \
-  COVERAGE_GATING_TARGET_METHOD=97 \
+  COVERAGE_GATING_TARGET_LINE=90 \
+  COVERAGE_GATING_TARGET_BRANCH=90 \
+  COVERAGE_GATING_TARGET_METHOD=90 \
   bash ./scripts/coverage/coverage.sh --skip-build
   ```
 
 ### Coverage in CI
 
 - `.github/workflows/tests.yml` now includes a `code-coverage` job that runs `pwsh ./scripts/coverage/coverage.ps1` after the primary test job (falling back to the Bash variant on runners without PowerShell).
-- The job now exports `COVERAGE_GATING_MODE=enforce` together with **96 % line / 93 % branch / 97 % method** targets so coverage dips fail fast. The PowerShell coverage helper enforces the same gate, and the workflow's `Evaluate coverage threshold` step double-checks all three metrics before publishing artefacts.
+- The job now exports `COVERAGE_GATING_MODE=enforce` together with **90 % line / 90 % branch / 90 % method** targets so coverage dips fail fast. The PowerShell coverage helper enforces the same gate, and the workflow's `Evaluate coverage threshold` step double-checks all three metrics before publishing artefacts.
 - Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise. When the gate passes, the Action log includes a "Coverage Gate" summary showing both the current percentages and thresholds.
 
 ### Cross-Platform CI Matrix

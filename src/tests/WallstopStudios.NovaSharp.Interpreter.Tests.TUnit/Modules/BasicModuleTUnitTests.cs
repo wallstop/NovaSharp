@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -425,6 +426,92 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue result = BasicModule.ToNumber(context, args);
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelectErrorsOnNonIntegerIndexLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            // select(1.5, 'a', 'b') should error in Lua 5.3+
+            await Assert
+                .That(() => script.DoString("return select(1.5, 'a', 'b', 'c')"))
+                .Throws<ScriptRuntimeException>()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task SelectTruncatesNonIntegerIndexLua51And52(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            // select(1.5, 'a', 'b', 'c') should truncate to 1 and return all elements
+            DynValue result = script.DoString("return select(1.5, 'a', 'b', 'c')");
+
+            // 1.5 floors to 1, so returns all 3 arguments
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelectAcceptsIntegralFloatLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            // select(2.0, 'a', 'b', 'c') should work since 2.0 has integer representation
+            DynValue result = script.DoString("return select(2.0, 'a', 'b', 'c')");
+
+            // 2.0 is treated as integer 2, so returns 'b' and 'c'
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].String).IsEqualTo("b").ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("c").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ErrorLevelErrorsOnNonIntegerLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            // error('msg', 1.5) should error about level in Lua 5.3+
+            await Assert
+                .That(() => script.DoString("error('test', 1.5)"))
+                .Throws<ScriptRuntimeException>()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task ErrorLevelTruncatesNonIntegerLua51And52(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            // error('msg', 1.5) should truncate level to 1 and throw the error message
+            await Assert
+                .That(() => script.DoString("error('test message', 1.5)"))
+                .Throws<ScriptRuntimeException>()
+                .ConfigureAwait(false);
+        }
+
+        private static Script CreateScript(
+            LuaCompatibilityVersion version = LuaCompatibilityVersion.Lua54
+        )
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            return new Script(CoreModules.PresetComplete, options);
         }
     }
 }

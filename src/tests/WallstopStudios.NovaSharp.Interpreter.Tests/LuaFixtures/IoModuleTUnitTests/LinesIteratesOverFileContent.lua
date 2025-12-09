@@ -1,8 +1,8 @@
--- @lua-versions: 5.3, 5.4
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:668
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:688
 -- @test: IoModuleTUnitTests.LinesIteratesOverFileContent
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
 local iter = io.lines('{escapedPath}')
                     return iter(), iter(), iter(), iter()

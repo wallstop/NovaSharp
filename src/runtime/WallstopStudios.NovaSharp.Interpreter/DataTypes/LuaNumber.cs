@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Runtime.InteropServices;
+    using Compatibility;
     using DataStructs;
 
     /// <summary>
@@ -432,10 +433,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static LuaNumber Modulo(LuaNumber a, LuaNumber b)
         {
+            // Default to Lua 5.3+ behavior (throws error on integer modulo by zero)
+            return Modulo(a, b, LuaVersionDefaults.CurrentDefault);
+        }
+
+        /// <summary>
+        /// Modulo operation (%) following Lua semantics with version-aware behavior.
+        /// Integer % Integer = Integer (following floor division semantics).
+        /// Otherwise, result is Float.
+        /// </summary>
+        /// <param name="a">The dividend.</param>
+        /// <param name="b">The divisor.</param>
+        /// <param name="version">The Lua compatibility version to use for error handling.</param>
+        /// <returns>The modulo result.</returns>
+        /// <remarks>
+        /// In Lua 5.1/5.2, integer modulo by zero returns nan (promotes to float semantics).
+        /// In Lua 5.3+, integer modulo by zero throws "attempt to perform 'n%0'".
+        /// Float modulo by zero always returns nan in all versions.
+        /// </remarks>
+        public static LuaNumber Modulo(LuaNumber a, LuaNumber b, LuaCompatibilityVersion version)
+        {
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
+
             if (a.IsInteger && b.IsInteger)
             {
                 if (b._integer == 0)
                 {
+                    // In Lua 5.1/5.2, integer modulo by zero returns nan (float semantics)
+                    // In Lua 5.3+, integer modulo by zero throws an error
+                    if (resolved < LuaCompatibilityVersion.Lua53)
+                    {
+                        // Fall through to float logic which returns nan
+                        double ad = a.ToDouble;
+                        double bd = b.ToDouble;
+                        return FromFloat(ad - Math.Floor(ad / bd) * bd);
+                    }
                     throw new Errors.ScriptRuntimeException("attempt to perform 'n%0'");
                 }
                 // Lua modulo follows floor division: a % b == a - floor(a/b) * b
@@ -447,9 +479,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 }
                 return FromInteger(remainder);
             }
-            double ad = a.ToDouble;
-            double bd = b.ToDouble;
-            return FromFloat(ad - Math.Floor(ad / bd) * bd);
+            double aDouble = a.ToDouble;
+            double bDouble = b.ToDouble;
+            return FromFloat(aDouble - Math.Floor(aDouble / bDouble) * bDouble);
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:32
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:33
 -- @test: IoModuleTUnitTests.OpenReturnsNilTupleWhenFileDoesNotExist
+-- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
 return io.open('{path}', 'r')

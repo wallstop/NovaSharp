@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/EndToEnd/BinaryDumpTUnitTests.cs:202
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/BinaryDumpTUnitTests.cs:202
 -- @test: BinaryDumpTUnitTests.LoadChangeEnvWithDebugSetUpValue
--- @compat-notes: Lua 5.3+: bitwise operators; Lua 5.2+: _ENV variable
+-- @compat-notes: NovaSharp: potential NovaSharp sandbox
 function print_env()
                     print(_ENV)
                 end

@@ -227,10 +227,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task IntegerModuloByZeroReturnsNaNInLua51And52(LuaCompatibilityVersion version)
+        {
+            // Per Lua 5.1/5.2 behavior: integer modulo by zero returns nan (promotes to float)
+            // Verified with: lua5.1 -e "print(1 % 0)"  -> -nan
+            //                lua5.2 -e "print(1 % 0)"  -> -nan
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return 5 % 0");
+
+            await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task IntegerModuloByZeroThrowsErrorInLua53Plus(LuaCompatibilityVersion version)
+        {
+            // Per Lua 5.3+ spec: integer modulo by zero throws "attempt to perform 'n%0'"
+            // Verified with: lua5.3 -e "print(1 % 0)"  -> error
+            //                lua5.4 -e "print(1 % 0)"  -> error
+            Script script = CreateScript(version);
+
+            await Assert
+                .That(() => script.DoString("return 5 % 0"))
+                .Throws<ScriptRuntimeException>()
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task FloatModuloByZeroReturnsNaN()
         {
             // Per Lua 5.3+ spec: float modulo by zero returns NaN (IEEE 754)
             Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            DynValue result = script.DoString("return 5.0 % 0.0");
+
+            await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task FloatModuloByZeroReturnsNaNAllVersions(LuaCompatibilityVersion version)
+        {
+            // Float modulo by zero returns NaN in all Lua versions (IEEE 754)
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return 5.0 % 0.0");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);

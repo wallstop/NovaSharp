@@ -13,6 +13,7 @@ See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
 - **LuaNumber usage for Lua math operations**
 - Testing guidelines and **production bug policy** (never adjust tests to accommodate bugs)
 - **Lua fixture verification policy** (create cross-interpreter test fixtures for all bug fixes)
+- **Lua corpus regeneration** (regenerate fixtures after test changes via `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`)
 - Implementation notes for VM, interop, tables, and opcodes
 
 For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).

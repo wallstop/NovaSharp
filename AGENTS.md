@@ -13,6 +13,7 @@ See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
 - **LuaNumber usage for Lua math operations**
 - Testing guidelines and TUnit data-driven tests
 - **Lua fixture verification policy** (create cross-interpreter test fixtures for all bug fixes)
+- **Lua corpus regeneration** (regenerate fixtures after test changes via `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`)
 - Commit and pull request guidelines
 
 For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).

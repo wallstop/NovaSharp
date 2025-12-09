@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:233
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:253
 -- @test: IoModuleTUnitTests.ReadZeroBytesDoesNotAdvanceStream
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
 local f = assert(io.open('{escapedPath}', 'r'))
                     local zero = f:read(0)
                     local chunk = f:read(3)

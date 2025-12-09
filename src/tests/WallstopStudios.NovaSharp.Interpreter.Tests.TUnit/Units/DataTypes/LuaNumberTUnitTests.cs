@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes;
 using System;
 using System.Threading.Tasks;
 using global::TUnit.Core;
+using WallstopStudios.NovaSharp.Interpreter.Compatibility;
 using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -316,11 +317,43 @@ public sealed class LuaNumberTUnitTests
     [Test]
     public async Task ModuloByZeroThrowsError()
     {
+        // Default Modulo (no version) uses Lua 5.4 behavior: throws error
         LuaNumber a = LuaNumber.FromInteger(10);
         LuaNumber b = LuaNumber.FromInteger(0);
 
         await Assert
             .That(() => LuaNumber.Modulo(a, b))
+            .Throws<ScriptRuntimeException>()
+            .ConfigureAwait(false);
+    }
+
+    [Test]
+    [Arguments(LuaCompatibilityVersion.Lua51)]
+    [Arguments(LuaCompatibilityVersion.Lua52)]
+    public async Task ModuloByZeroReturnsNaNInLua51And52(LuaCompatibilityVersion version)
+    {
+        // In Lua 5.1/5.2, integer modulo by zero returns nan (promotes to float)
+        LuaNumber a = LuaNumber.FromInteger(10);
+        LuaNumber b = LuaNumber.FromInteger(0);
+        LuaNumber result = LuaNumber.Modulo(a, b, version);
+
+        await Assert.That(result.IsFloat).IsTrue().ConfigureAwait(false);
+        await Assert.That(double.IsNaN(result.AsFloat)).IsTrue().ConfigureAwait(false);
+    }
+
+    [Test]
+    [Arguments(LuaCompatibilityVersion.Lua53)]
+    [Arguments(LuaCompatibilityVersion.Lua54)]
+    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [Arguments(LuaCompatibilityVersion.Latest)]
+    public async Task ModuloByZeroThrowsErrorInLua53Plus(LuaCompatibilityVersion version)
+    {
+        // In Lua 5.3+, integer modulo by zero throws error
+        LuaNumber a = LuaNumber.FromInteger(10);
+        LuaNumber b = LuaNumber.FromInteger(0);
+
+        await Assert
+            .That(() => LuaNumber.Modulo(a, b, version))
             .Throws<ScriptRuntimeException>()
             .ConfigureAwait(false);
     }

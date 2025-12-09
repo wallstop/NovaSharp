@@ -1,8 +1,7 @@
--- @lua-versions: 5.2+
+-- @lua-versions: 5.2, 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/LuaBasicMultiVersionSpecTUnitTests.cs
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/LuaBasicMultiVersionSpecTUnitTests.cs:243
 -- @test: LuaBasicMultiVersionSpecTUnitTests.ToNumberParsesHexFloatWithPositiveExponentSign
--- 0x1p+2 = 1 * 2^2 = 4
--- Note: Hex float literals were introduced in Lua 5.2
+-- @compat-notes: Lua 5.2+: hex float with exponent (5.2+)
 return tonumber('0x1p+2')

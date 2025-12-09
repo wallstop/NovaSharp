@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:815
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:835
 -- @test: IoModuleTUnitTests.OpenSupportsExplicitEncoding
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
 local f = assert(io.open('{escapedPath}', 'w', 'utf-16'))
                 f:write('hello')
                 f:close()

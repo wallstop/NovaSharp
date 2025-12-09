@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:1054
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:1054
 -- @test: StreamFileUserDataBaseTUnitTests.LinesEnumeratorTerminatesAtNil
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: file
 local f = file
                 local output = {}
                 for line in f:lines() do

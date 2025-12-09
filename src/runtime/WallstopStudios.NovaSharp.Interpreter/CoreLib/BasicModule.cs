@@ -149,22 +149,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue message = args.AsType(0, "error", DataType.String, false);
             DynValue level = args.AsType(1, "error", DataType.Number, true);
 
+            // Lua 5.3+: level must have integer representation
+            LuaNumberHelpers.ValidateIntegerArgument(
+                executionContext.Script.CompatibilityVersion,
+                level,
+                "error",
+                2
+            );
+
             Coroutine cor = executionContext.CallingCoroutine;
 
             WatchItem[] stacktrace = cor.GetStackTrace(0, executionContext.CallingLocation);
 
             ScriptRuntimeException e = new(message.String);
 
+            long levelValue;
             if (level.IsNil())
             {
-                level = DynValue.FromNumber(1); // Default
+                levelValue = 1; // Default
+            }
+            else
+            {
+                // Use LuaNumber for proper integer extraction
+                LuaNumber levelNum = level.LuaNumber;
+                levelValue = levelNum.IsInteger
+                    ? levelNum.AsInteger
+                    : (long)Math.Floor(levelNum.AsFloat);
             }
 
-            if (level.Number > 0 && level.Number < stacktrace.Length)
+            if (levelValue > 0 && levelValue < stacktrace.Length)
             {
                 // Lua allows levels up to max. value of a double, while this has to be cast to int
                 // Probably never will be a problem, just leaving this note here
-                WatchItem wi = stacktrace[(int)level.Number];
+                WatchItem wi = stacktrace[(int)levelValue];
 
                 e.DecorateMessage(executionContext.Script, wi.Location);
             }
@@ -266,6 +283,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            // Handle "#" case first - doesn't need executionContext
             if (args[0].Type == DataType.String && args[0].String == "#")
             {
                 if (args[^1].Type == DataType.Tuple)
@@ -278,8 +296,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
             }
 
+            // Numeric index path needs executionContext for version check
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+
             DynValue vNum = args.AsType(0, "select", DataType.Number, false);
-            int num = (int)vNum.Number;
+
+            // Lua 5.3+: index must have integer representation
+            LuaNumberHelpers.ValidateIntegerArgument(
+                executionContext.Script.CompatibilityVersion,
+                vNum,
+                "select",
+                1
+            );
+
+            // Use LuaNumber for proper integer extraction
+            LuaNumber luaNum = vNum.LuaNumber;
+            int num = luaNum.IsInteger ? (int)luaNum.AsInteger : (int)Math.Floor(luaNum.AsFloat);
 
             int startIndex;
             if (num > 0)

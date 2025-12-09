@@ -14,6 +14,7 @@ See [`CONTRIBUTING_AI.md`](../CONTRIBUTING_AI.md) for:
 - Coding style and testing guidelines
 - **LuaNumber usage for Lua math operations**
 - **Lua fixture verification policy** (create cross-interpreter test fixtures for all bug fixes)
+- **Lua corpus regeneration** (regenerate fixtures after test changes via `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`)
 - Lint guards and commit style
 
 For human contributors, see [`docs/Contributing.md`](../docs/Contributing.md).

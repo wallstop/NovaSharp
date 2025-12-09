@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4
+-- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1248
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1248
 -- @test: DebugModuleTUnitTests.UpvalueIdReturnsUserDataForValidUpvalue
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Lua 5.3+: bitwise operators; Lua 5.2+: debug.upvalueid (5.2+)
 local x = 10
                 local function f()
                     return x

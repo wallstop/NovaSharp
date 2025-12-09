@@ -1,7 +1,7 @@
--- @lua-versions: 5.3, 5.4
+-- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:419
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:439
 -- @test: IoModuleTUnitTests.LinesWithoutArgumentsReadFromDefaultInput
 -- @compat-notes: Lua 5.3+: bitwise operators
 local results = {}

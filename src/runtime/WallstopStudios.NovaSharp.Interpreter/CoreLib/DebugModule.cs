@@ -349,7 +349,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            int index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
+            DynValue indexArg = args.AsType(1, "getupvalue", DataType.Number, false);
+
+            // Lua 5.3+: index must have integer representation
+            LuaNumberHelpers.ValidateIntegerArgument(
+                executionContext.Script.CompatibilityVersion,
+                indexArg,
+                "getupvalue",
+                2
+            );
+
+            // Use LuaNumber for proper integer extraction
+            LuaNumber indexNum = indexArg.LuaNumber;
+            int index =
+                (indexNum.IsInteger ? (int)indexNum.AsInteger : (int)Math.Floor(indexNum.AsFloat))
+                - 1;
 
             if (args[0].Type == DataType.ClrFunction)
             {
@@ -386,14 +400,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            int index = (int)args.AsType(1, "getupvalue", DataType.Number, false).Number - 1;
+            DynValue indexArg = args.AsType(1, "upvalueid", DataType.Number, false);
+
+            // Lua 5.3+: index must have integer representation
+            LuaNumberHelpers.ValidateIntegerArgument(
+                executionContext.Script.CompatibilityVersion,
+                indexArg,
+                "upvalueid",
+                2
+            );
+
+            // Use LuaNumber for proper integer extraction
+            LuaNumber indexNum = indexArg.LuaNumber;
+            int index =
+                (indexNum.IsInteger ? (int)indexNum.AsInteger : (int)Math.Floor(indexNum.AsFloat))
+                - 1;
 
             if (args[0].Type == DataType.ClrFunction)
             {
                 return DynValue.Nil;
             }
 
-            Closure fn = args.AsType(0, "getupvalue", DataType.Function, false).Function;
+            Closure fn = args.AsType(0, "upvalueid", DataType.Function, false).Function;
 
             ClosureContext closure = fn.ClosureContext;
 
@@ -430,7 +458,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            int index = (int)args.AsType(1, "setupvalue", DataType.Number, false).Number - 1;
+            DynValue indexArg = args.AsType(1, "setupvalue", DataType.Number, false);
+
+            // Lua 5.3+: index must have integer representation
+            LuaNumberHelpers.ValidateIntegerArgument(
+                executionContext.Script.CompatibilityVersion,
+                indexArg,
+                "setupvalue",
+                2
+            );
+
+            // Use LuaNumber for proper integer extraction
+            LuaNumber indexNum = indexArg.LuaNumber;
+            int index =
+                (indexNum.IsInteger ? (int)indexNum.AsInteger : (int)Math.Floor(indexNum.AsFloat))
+                - 1;
 
             if (args[0].Type == DataType.ClrFunction)
             {

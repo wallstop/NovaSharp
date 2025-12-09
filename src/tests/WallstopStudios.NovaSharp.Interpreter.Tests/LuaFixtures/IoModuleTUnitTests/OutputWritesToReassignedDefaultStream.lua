@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:133
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:153
 -- @test: IoModuleTUnitTests.OutputWritesToReassignedDefaultStream
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
 local f = io.open('{path}', 'w')
                 io.output(f)
                 io.write('abc', '123')

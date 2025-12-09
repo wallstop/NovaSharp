@@ -468,17 +468,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         /// <summary>
-        /// Tests modulo by zero throws appropriate error.
+        /// Tests modulo by zero throws appropriate error in Lua 5.3+ (default).
         /// </summary>
         [Test]
         public async Task ModuloByZeroThrows()
         {
+            // Default CreateScript uses Lua 5.4 which throws error
             Script script = CreateScript();
 
             await Assert
                 .That(() => script.DoString("return 1 % 0"))
                 .Throws<ScriptRuntimeException>()
-                .Because("modulo by zero should throw");
+                .Because("modulo by zero should throw in Lua 5.3+");
         }
 
         #endregion

@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4
--- @novasharp-only: false
--- @expects-error: true
--- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:96
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
+-- @expects-error: false
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:116
 -- @test: IoModuleTUnitTests.TypeReportsClosedFileAfterClose
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.1
 local f = io.open('{path}', 'w')
                 local openType = io.Type(f)
                 f:close()

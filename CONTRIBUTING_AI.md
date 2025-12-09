@@ -167,6 +167,43 @@ Script.DoString("return x + 1")
 - **Validation helpers**: Use `LuaNumberHelpers.RequireIntegerRepresentation()` for functions requiring integer arguments
 - **Exception**: Only extract to raw C# types (`double`, `long`) after you have verified the appropriate numeric subtype via `LuaNumber` properties
 
+### Magic String Consolidation
+
+- **No duplicate string literals**: Consolidate all "magic strings" (repeated string literals, error messages, format strings, identifiers) into named constants to ensure a single source of truth
+- **Use `const` or `static readonly`**: Define string constants at the class or module level using `const string` for compile-time constants or `static readonly string` when runtime initialization is needed
+- **Prefer `nameof()` expressions**: When referencing member names (parameters, properties, methods, types), always use `nameof()` instead of string literals to ensure refactoring safety
+- **Organize by domain**: Group related constants in dedicated static classes (e.g., `ErrorMessages`, `LuaKeywords`, `MetamethodNames`) when strings are shared across multiple files
+- **Error message consistency**: Error messages should reference a single constant so formatting changes apply everywhere
+
+**Examples**:
+
+```csharp
+// CORRECT: Named constants
+public static class MetamethodNames
+{
+    public const string Index = "__index";
+    public const string NewIndex = "__newindex";
+    public const string Call = "__call";
+}
+
+// CORRECT: Use nameof for member references
+throw new ArgumentNullException(nameof(script));
+throw new ArgumentException($"Invalid value for {nameof(options)}", nameof(options));
+
+// CORRECT: Centralized error messages
+public static class ErrorMessages
+{
+    public const string NumberHasNoIntegerRepresentation = "number has no integer representation";
+}
+
+// WRONG: Duplicated magic strings
+if (key == "__index") { }  // Use MetamethodNames.Index
+if (key == "__index") { }  // Duplicated!
+
+// WRONG: String literal for parameter name
+throw new ArgumentNullException("script");  // Use nameof(script)
+```
+
 ## Testing Guidelines
 
 ### Framework
@@ -288,6 +325,42 @@ end
 - `CharAcceptsBoundaryValue255.lua` — tests success on `string.char(255)`
 
 This policy ensures every behavioral fix has cross-interpreter verification and guards against future regressions.
+
+### Lua Corpus Regeneration
+
+**REQUIRED**: After adding, updating, or modifying any tests that contain embedded Lua code (via `DoString(...)` calls), regenerate the Lua corpus so the extracted fixtures stay in sync with the test suite.
+
+**Regeneration Commands**:
+
+```bash
+# Extract Lua snippets from C# test files to LuaFixtures/
+python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
+
+# Dry-run to preview changes without writing files
+python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py --dry-run
+```
+
+**Verification Commands** (run after regeneration to ensure parity with reference Lua):
+
+```bash
+# Run fixtures against Lua 5.4 (primary target) with parallel execution
+python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.4
+
+# Run against specific Lua version
+python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.1
+
+# Compare outputs between NovaSharp and reference Lua
+python3 scripts/tests/compare-lua-outputs.py --lua-version 5.4 --results-dir artifacts/lua-comparison-results
+```
+
+**When to Regenerate**:
+
+- After adding new `[Test]` methods with `DoString(...)` calls
+- After modifying Lua code in existing test methods
+- After fixing Lua semantic issues that change expected behavior
+- After adding new Lua fixtures directly to `LuaFixtures/`
+
+The corpus extractor automatically generates version compatibility headers (`@lua-versions`) and source traceability metadata (`@source`, `@test`) for each extracted fixture.
 
 ## Lint Guards
 

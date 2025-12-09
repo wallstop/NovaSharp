@@ -30,10 +30,10 @@ from pathlib import Path
 from typing import Iterator
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_OUTPUT_DIR = ROOT / "src" / "tests" / "NovaSharp.Interpreter.Tests" / "LuaFixtures"
+DEFAULT_OUTPUT_DIR = ROOT / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests" / "LuaFixtures"
 DEFAULT_TEST_DIRS = [
-    ROOT / "src" / "tests" / "NovaSharp.Interpreter.Tests.TUnit",
-    ROOT / "src" / "tests" / "NovaSharp.Interpreter.Tests",
+    ROOT / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests.TUnit",
+    ROOT / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests",
 ]
 
 # Pattern to match DoString calls with various string literal forms
@@ -51,8 +51,9 @@ DOSTRING_CALL_PATTERN = re.compile(
 )
 
 # Pattern to match test method declarations
+# Matches [Test], [TUnit.Core.Test], [global::TUnit.Core.Test]
 TEST_METHOD_PATTERN = re.compile(
-    r'\[(?:global::)?TUnit\.Core\.Test\].*?'
+    r'\[(?:global::)?(?:TUnit\.Core\.)?Test\].*?'
     r'(?:public\s+)?(?:async\s+)?(?:Task|void)\s+(\w+)\s*\(',
     re.DOTALL
 )
@@ -80,6 +81,14 @@ LUA_53_FEATURES = [
     (r'<<|>>', 'bit shift'),
     (r'utf8\.', 'utf8 library'),
     (r'table\.move\s*\(', 'table.move'),
+    (r'math\.tointeger\s*\(', 'math.tointeger (5.3+)'),
+    (r'math\.type\s*\(', 'math.type (5.3+)'),
+    (r'math\.ult\s*\(', 'math.ult (5.3+)'),
+    (r'math\.maxinteger\b', 'math.maxinteger (5.3+)'),
+    (r'math\.mininteger\b', 'math.mininteger (5.3+)'),
+    (r'string\.pack\s*\(', 'string.pack (5.3+)'),
+    (r'string\.unpack\s*\(', 'string.unpack (5.3+)'),
+    (r'string\.packsize\s*\(', 'string.packsize (5.3+)'),
 ]
 
 LUA_52_FEATURES = [
@@ -87,6 +96,14 @@ LUA_52_FEATURES = [
     (r'_ENV\b', '_ENV variable'),
     (r'package\.searchpath', 'package.searchpath'),
     (r'rawlen\s*\(', 'rawlen function'),
+    (r'table\.pack\s*\(', 'table.pack (5.2+)'),
+    (r'table\.unpack\s*\(', 'table.unpack (5.2+)'),
+    (r'debug\.upvalueid\s*\(', 'debug.upvalueid (5.2+)'),
+    (r'debug\.upvaluejoin\s*\(', 'debug.upvaluejoin (5.2+)'),
+    (r'debug\.getuservalue\s*\(', 'debug.getuservalue (5.2+)'),
+    (r'debug\.setuservalue\s*\(', 'debug.setuservalue (5.2+)'),
+    (r'0[xX][0-9a-fA-F]*\.[0-9a-fA-F]', 'hex float literal (5.2+)'),
+    (r'0[xX][0-9a-fA-F]+[pP]', 'hex float with exponent (5.2+)'),
 ]
 
 LUA_51_INCOMPATIBLE = [
@@ -97,6 +114,27 @@ LUA_51_INCOMPATIBLE = [
     (r'goto\s+\w+', 'goto'),
     (r'<const>', 'const attribute'),
     (r'<close>', 'close attribute'),
+    (r'math\.tointeger\s*\(', 'math.tointeger (5.3+)'),
+    (r'math\.type\s*\(', 'math.type (5.3+)'),
+    (r'math\.ult\s*\(', 'math.ult (5.3+)'),
+    (r'utf8\.', 'utf8 library'),
+    (r'table\.move\s*\(', 'table.move (5.3+)'),
+    (r'table\.pack\s*\(', 'table.pack (5.2+)'),
+    (r'table\.unpack\s*\(', 'table.unpack (5.2+)'),
+    (r'rawlen\s*\(', 'rawlen (5.2+)'),
+    (r'0[xX][0-9a-fA-F]*\.[0-9a-fA-F]', 'hex float literal (5.2+)'),
+    (r'0[xX][0-9a-fA-F]+[pP]', 'hex float with exponent (5.2+)'),
+]
+
+# Functions deprecated or changed between Lua versions
+LUA_51_ONLY_FEATURES = [
+    # These exist in 5.1 but were removed or changed in later versions
+    (r'table\.getn\s*\(', 'table.getn (5.1 only, deprecated)'),
+    (r'table\.setn\s*\(', 'table.setn (5.1 only, deprecated)'),
+    (r'math\.mod\s*\(', 'math.mod (5.1 only, use math.fmod)'),
+    (r'string\.gfind\s*\(', 'string.gfind (5.1 only, use string.gmatch)'),
+    (r'table\.foreach\s*\(', 'table.foreach (5.1 only, deprecated)'),
+    (r'table\.foreachi\s*\(', 'table.foreachi (5.1 only, deprecated)'),
 ]
 
 NOVASHARP_SPECIFIC_PATTERNS = [
@@ -106,6 +144,18 @@ NOVASHARP_SPECIFIC_PATTERNS = [
     (r'import\s*\(', 'NovaSharp import'),
     (r'dynamic\.', 'dynamic access'),
     (r'using\s+', 'using statement (non-Lua)'),
+    (r'\{[a-zA-Z_][a-zA-Z0-9_]*\}', 'unresolved C# interpolation placeholder'),
+    (r'json\.parse\s*\(', 'NovaSharp json module'),
+    (r'json\.serialize\s*\(', 'NovaSharp json module'),
+    (r'json\.isnull\s*\(', 'NovaSharp json module'),
+    (r'json\.null\b', 'NovaSharp json module'),
+    (r"require\s*\(\s*['\"]json['\"]\s*\)", 'NovaSharp json module'),
+    (r'string\.startswith\s*\(', 'NovaSharp string extension'),
+    (r'string\.endswith\s*\(', 'NovaSharp string extension'),
+    (r'string\.contains\s*\(', 'NovaSharp string extension'),
+    (r'string\.unicode\s*\(', 'NovaSharp string extension'),
+    (r'Script\.GlobalOptions', 'NovaSharp Script.GlobalOptions'),
+    (r'sandbox', 'potential NovaSharp sandbox'),
 ]
 
 # Patterns indicating the test expects an error
@@ -347,8 +397,22 @@ def analyze_version_compatibility(lua_code: str, surrounding_context: str) -> Lu
                 compat.reasons.append(f"Not Lua 5.1: {reason}")
     
     # Check if test uses undefined globals (likely interop tests)
-    # Common interop variable names
-    interop_vars = ['o1', 'o2', 'obj', 'myobj', 'instance', 'static', 'testObj', 'userdata']
+    # Common interop variable names - variables typically injected by C# test code
+    # Extended list based on common patterns found in the test codebase
+    interop_vars = [
+        'o1', 'o2', 'o3', 'o4', 'o5',  # Generic object placeholders
+        'obj', 'myobj', 'testObj',     # Object references
+        'instance', 'static',          # Instance/static references
+        'userdata',                    # UserData wrapper
+        'arr', 'array',                # Array types
+        'list', 'dict', 'map',         # Collection types
+        'callback', 'func',            # Function references
+        'cls', 'clsInstance',          # Class references
+        'vec', 'v3',                   # Vector types (Unity common)
+        'stream', 'file',              # IO types
+        'sb', 'builder',               # StringBuilder types
+        's', 'r',                      # Short variable names from tests
+    ]
     for var in interop_vars:
         if re.search(rf'\b{var}\b', lua_code) and f'{var} =' not in lua_code and f'local {var}' not in lua_code:
             # Variable used but not defined - likely injected by C# test

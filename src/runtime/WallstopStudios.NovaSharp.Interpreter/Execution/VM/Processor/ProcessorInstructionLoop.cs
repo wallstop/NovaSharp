@@ -1542,7 +1542,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (ln.HasValue && rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(LuaNumber.Modulo(ln.Value, rn.Value)));
+                _valueStack.Push(
+                    DynValue.NewNumber(
+                        LuaNumber.Modulo(ln.Value, rn.Value, _script.Options.CompatibilityVersion)
+                    )
+                );
                 return instructionPtr;
             }
             else

@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -106,7 +107,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task BitwiseThrowsWhenArgumentsNull()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                Bit32Module.Bitwise("band", null, (uint _, uint _) => 0u)
+                Bit32Module.Bitwise(
+                    LuaCompatibilityVersion.Lua52,
+                    "band",
+                    null,
+                    (uint _, uint _) => 0u
+                )
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("args");
@@ -116,7 +122,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task BitwiseThrowsWhenAccumulatorNull()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                Bit32Module.Bitwise("band", CreateNumberArgs(1), null)
+                Bit32Module.Bitwise(
+                    LuaCompatibilityVersion.Lua52,
+                    "band",
+                    CreateNumberArgs(1),
+                    null
+                )
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("accumFunc");
@@ -663,6 +674,89 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 BindingFlags.NonPublic | BindingFlags.Static
             );
             return (uint)method.Invoke(null, new object[] { bits })!;
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BandErrorsOnNonIntegerArgumentLua52WithIntegerValidation()
+        {
+            // Note: bit32 is only available in Lua 5.2, but we need to test integer validation
+            // For Lua 5.2, non-integer values should truncate, not error
+            // This test documents the Lua 5.2 truncation behavior
+            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+
+            // bit32.band(5.7, 3) should truncate 5.7 to 5 and return 5 & 3 = 1
+            DynValue result = script.DoString("return bit32.band(5.7, 3)");
+
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BandTruncatesNonIntegerArgumentLua52()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+
+            // bit32.band(5.7, 3) should truncate 5.7 to 5 and return 5 & 3 = 1
+            DynValue result = script.DoString("return bit32.band(5.7, 3)");
+
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BandAcceptsIntegralFloatLua52()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+
+            // bit32.band(5.0, 3.0) should work since 5.0 and 3.0 have integer representation
+            DynValue result = script.DoString("return bit32.band(5.0, 3.0)");
+
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LshiftErrorsOnNonIntegerShiftAmountLua52WithIntegerValidation()
+        {
+            // Note: bit32 is only available in Lua 5.2, where non-integer values truncate
+            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+
+            // bit32.lshift(1, 2.5) should truncate 2.5 to 2 and return 1 << 2 = 4
+            DynValue result = script.DoString("return bit32.lshift(1, 2.5)");
+
+            await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LshiftTruncatesNonIntegerShiftAmountLua52()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+
+            // bit32.lshift(1, 2.5) should truncate 2.5 to 2 and return 1 << 2 = 4
+            DynValue result = script.DoString("return bit32.lshift(1, 2.5)");
+
+            await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ExtractErrorsOnNonIntegerPositionLua52WithIntegerValidation()
+        {
+            // Note: bit32 is only available in Lua 5.2, where non-integer values truncate
+            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+
+            // bit32.extract(0xFF, 1.5) in Lua 5.2 truncates 1.5 to 1 (default width=1)
+            // Extract bit 1 from 0xFF (11111111) = 1
+            DynValue result = script.DoString("return bit32.extract(0xFF, 1.5)");
+
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        private static Script CreateScript(
+            LuaCompatibilityVersion version = LuaCompatibilityVersion.Lua52
+        )
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            return new Script(CoreModules.PresetComplete, options);
         }
     }
 }
