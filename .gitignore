@@ -118,6 +118,11 @@ DocProject/Help/*.hhp
 DocProject/Help/Html2
 DocProject/Help/html
 
+src/.vscode/**
+src/.idea/**
+.vscode/**
+.idea/**
+
 .claude/**
 
 # Click-Once directory
