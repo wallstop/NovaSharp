@@ -5,6 +5,6 @@
 -- @test: IoModuleTUnitTests.TypeReportsClosedFileAfterClose
 -- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.1
 local f = io.open('{path}', 'w')
-                local openType = io.Type(f)
+                local openType = io.type(f)
                 f:close()
-                return openType, io.Type(f)
+                return openType, io.type(f)

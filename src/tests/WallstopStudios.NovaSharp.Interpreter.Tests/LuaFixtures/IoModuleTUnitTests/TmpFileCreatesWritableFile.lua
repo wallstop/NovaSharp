@@ -6,4 +6,4 @@
 -- @compat-notes: Lua 5.3+: bitwise operators
 local f = io.tmpfile()
                 f:write('temp-data')
-                return io.Type(f)
+                return io.type(f)

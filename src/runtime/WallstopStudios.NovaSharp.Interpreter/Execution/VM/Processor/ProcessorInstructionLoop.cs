@@ -542,9 +542,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     }
                 }
             }
-            catch (ScriptRuntimeException innerEx)
+            catch (ScriptRuntimeException)
             {
-                return innerEx.Message + "." + decoratedMessage;
+                // When the error handler fails for any reason (including when it's not callable
+                // in Lua 5.1/5.2, or when it throws an error in any version), the result is
+                // always "error in error handling" per the Lua specification.
+                return "error in error handling";
             }
 
             return decoratedMessage;

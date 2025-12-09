@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:281
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:329
 -- @test: MathNumericEdgeCasesTUnitTests.NaNNotEqualToItself
 -- @compat-notes: Lua 5.3+: bitwise operators
 local nan = 0/0; return nan == nan

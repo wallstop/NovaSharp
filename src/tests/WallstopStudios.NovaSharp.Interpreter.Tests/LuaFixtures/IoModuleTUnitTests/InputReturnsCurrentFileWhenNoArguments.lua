@@ -7,4 +7,4 @@
 local f = assert(io.open('{escapedPath}', 'r'))
                     io.input(f)
                     local current = io.input()
-                    return io.Type(current), io.Type(f)
+                    return io.type(current), io.type(f)

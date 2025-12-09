@@ -101,6 +101,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task PerformMessageDecorationBeforeUnwindThrowsWhenHandlerIsNotFunction()
         {
+            // Per Lua spec: when error handler fails (including when not callable),
+            // the result is "error in error handling"
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
             DynValue handler = DynValue.NewNumber(42);
@@ -111,12 +113,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 SourceRef.GetClrLocation()
             );
 
-            await Assert.That(result).IsEqualTo("error handler not set to a function.boom");
+            await Assert.That(result).IsEqualTo("error in error handling").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task PerformMessageDecorationBeforeUnwindAppendsInnerExceptionMessage()
         {
+            // Per Lua spec: when error handler throws an error, the result is "error in error handling"
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
 
@@ -133,7 +136,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 SourceRef.GetClrLocation()
             );
 
-            await Assert.That(decorated).IsEqualTo("decorator failure.boom");
+            await Assert.That(decorated).IsEqualTo("error in error handling").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

@@ -9,4 +9,4 @@ local f = assert(io.open('{escapedPath}', 'r'))
                     for line in f:lines() do
                         out[#out + 1] = line
                     end
-                    return out[1], out[2], out[3], io.Type(f)
+                    return out[1], out[2], out[3], io.type(f)

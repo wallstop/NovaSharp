@@ -258,9 +258,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     false
                 );
             }
-            // For Lua 5.1/5.2 with non-function values (including nil), handler remains null.
-            // If no error occurs, handler is never invoked. If an error occurs,
-            // a secondary error about the non-callable handler may be reported.
+            else
+            {
+                // For Lua 5.1/5.2 with non-function values (including nil), we still pass
+                // the handler argument so that when an error occurs, we can attempt to call it
+                // and produce "error in error handling" if it fails.
+                handler = handlerArg;
+            }
 
             return SetErrorHandlerStrategy(
                 "xpcall",

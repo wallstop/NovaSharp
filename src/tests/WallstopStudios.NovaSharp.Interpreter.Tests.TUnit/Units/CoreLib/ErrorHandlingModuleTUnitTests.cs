@@ -292,7 +292,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(tuple.Tuple[1].String).Contains("boom").ConfigureAwait(false);
         }
 
-        // Lua 5.1/5.2 allow nil handlers (behaves like no handler)
+        // Lua 5.1/5.2 allow nil handlers - when an error occurs and handler is nil,
+        // the result is "error in error handling" per Lua spec
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
@@ -302,12 +303,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
             DynValue tuple = script.DoString(
                 @"
-                return xpcall(function() error('nil-handler') end, nil)
+                return xpcall(function() error('test error') end, nil)
                 "
             );
 
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
-            await Assert.That(tuple.Tuple[1].String).Contains("nil-handler").ConfigureAwait(false);
+            // Per Lua spec: when handler fails (including nil), result is "error in error handling"
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .IsEqualTo("error in error handling")
+                .ConfigureAwait(false);
         }
 
         // Lua 5.3+ validates the handler type upfront, including nil
@@ -357,6 +362,109 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             DynValue result = script.DoString("return xpcall(function() end, 123)");
 
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        // In Lua 5.1/5.2, if an error occurs and the handler is not callable,
+        // the error message becomes "error in error handling"
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task XpcallReturnsErrorInErrorHandlingWhenHandlerNotCallableLua51And52(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            // When main function errors and handler isn't callable, returns "error in error handling"
+            DynValue result = script.DoString("return xpcall(function() error('test') end, 123)");
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .Contains("error in error handling")
+                .ConfigureAwait(false);
+        }
+
+        // In Lua 5.1/5.2, xpcall with string handler also produces "error in error handling" when called
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task XpcallStringHandlerProducesErrorInErrorHandlingLua51And52(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                "return xpcall(function() error('test') end, 'not-a-function')"
+            );
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .Contains("error in error handling")
+                .ConfigureAwait(false);
+        }
+
+        // In Lua 5.1/5.2, xpcall with table handler (no __call) produces "error in error handling"
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task XpcallTableHandlerWithoutCallProducesErrorInErrorHandlingLua51And52(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString("return xpcall(function() error('test') end, {})");
+
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .Contains("error in error handling")
+                .ConfigureAwait(false);
+        }
+
+        // Test all Lua 5.3+ versions reject non-function handlers
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task XpcallRejectsNonFunctionHandlerInAllLua53PlusVersions(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return xpcall(function() end, 123)")
+            )!;
+
+            await Assert
+                .That(exception.Message)
+                .Contains("bad argument #2 to 'xpcall'")
+                .ConfigureAwait(false);
+        }
+
+        // Test all Lua 5.3+ versions reject nil handlers
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task XpcallRejectsNilHandlerInAllLua53PlusVersions(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return xpcall(function() end, nil)")
+            )!;
+
+            await Assert
+                .That(exception.Message)
+                .Contains("bad argument #2 to 'xpcall'")
+                .ConfigureAwait(false);
         }
 
         private static Script CreateScript()

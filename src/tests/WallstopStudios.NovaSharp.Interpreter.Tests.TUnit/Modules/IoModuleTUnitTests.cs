@@ -116,9 +116,9 @@ end
             DynValue tuple = script.DoString(
                 $@"
                 local f = io.open('{path}', 'w')
-                local openType = io.Type(f)
+                local openType = io.type(f)
                 f:close()
-                return openType, io.Type(f)
+                return openType, io.type(f)
                 "
             );
 
@@ -172,7 +172,7 @@ end
                 @"
                 local f = io.tmpfile()
                 f:write('temp-data')
-                return io.Type(f)
+                return io.type(f)
                 "
             );
 
@@ -527,7 +527,7 @@ end
         {
             Script script = CreateScript();
 
-            DynValue result = script.DoString("return io.Type(123)");
+            DynValue result = script.DoString("return io.type(123)");
 
             await Assert.That(result.IsNil()).IsTrue();
         }
@@ -536,7 +536,7 @@ end
         public async Task TypeReturnsNilForNonUserDataArguments()
         {
             Script script = CreateScript();
-            DynValue tuple = script.DoString("return io.Type(42), io.Type({})");
+            DynValue tuple = script.DoString("return io.type(42), io.type({})");
 
             await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
             await Assert.That(tuple.Tuple[1].IsNil()).IsTrue();
@@ -548,7 +548,7 @@ end
             Script script = CreateScript();
             script.Globals["sampleUserData"] = UserData.Create(new SampleUserData());
 
-            DynValue result = script.DoString("return io.Type(sampleUserData)");
+            DynValue result = script.DoString("return io.type(sampleUserData)");
 
             await Assert.That(result.IsNil()).IsTrue();
         }
@@ -609,7 +609,7 @@ end
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
                     local result = io.close(f)
-                    return result, io.Type(f)
+                    return result, io.type(f)
                     "
             );
 
@@ -629,7 +629,7 @@ end
                     local f = assert(io.open('{escapedPath}', 'w'))
                     io.output(f)
                     local closed = io.close()
-                    return closed, io.Type(f)
+                    return closed, io.type(f)
                     "
             );
 
@@ -670,7 +670,7 @@ end
                     local f = assert(io.open('{escapedPath}', 'r'))
                     io.input(f)
                     local current = io.input()
-                    return io.Type(current), io.Type(f)
+                    return io.type(current), io.type(f)
                     "
             );
 
@@ -874,9 +874,9 @@ end
                 local f = io.tmpfile()
                 f:write('temp data')
                 f:seek('set')
-                local t_open = io.Type(f)
+                local t_open = io.type(f)
                 f:close()
-                local t_closed = io.Type(f)
+                local t_closed = io.type(f)
                 return t_open, t_closed
                 "
             );
@@ -990,7 +990,7 @@ end
                     for line in f:lines() do
                         out[#out + 1] = line
                     end
-                    return out[1], out[2], out[3], io.Type(f)
+                    return out[1], out[2], out[3], io.type(f)
                     "
             );
 

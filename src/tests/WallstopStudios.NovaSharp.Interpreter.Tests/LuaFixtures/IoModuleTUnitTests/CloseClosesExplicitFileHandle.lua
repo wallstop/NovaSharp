@@ -6,4 +6,4 @@
 -- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
 local f = assert(io.open('{escapedPath}', 'w'))
                     local result = io.close(f)
-                    return result, io.Type(f)
+                    return result, io.type(f)

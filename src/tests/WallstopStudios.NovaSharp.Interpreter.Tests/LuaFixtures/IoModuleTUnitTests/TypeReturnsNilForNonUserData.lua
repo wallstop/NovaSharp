@@ -3,4 +3,4 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:530
 -- @test: IoModuleTUnitTests.TypeReturnsNilForNonUserData
-return io.Type(123)
+return io.type(123)
