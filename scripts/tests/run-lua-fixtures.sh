@@ -104,7 +104,7 @@ is_compatible() {
     
     # Read @lua-versions line from file
     local versions_line
-    versions_line=$(head -1 "$lua_file" | grep "@lua-versions:" || echo "")
+    versions_line=$(head -5 "$lua_file" | grep "@lua-versions:" || echo "")
     
     if [[ -z "$versions_line" ]]; then
         # No version info, assume compatible
@@ -116,8 +116,35 @@ is_compatible() {
         return 1
     fi
     
-    # Check if version is in the list
-    if echo "$versions_line" | grep -qE "(5\.1\+|$version)"; then
+    # Extract the major.minor version number (e.g., "5.2" from "5.2")
+    local version_num="${version//./}"  # Remove dot: "52"
+    
+    # Check for exact version match
+    if echo "$versions_line" | grep -qE "(\s|^)$version(\s|,|\$)"; then
+        return 0
+    fi
+    
+    # Check for range patterns like "5.1+", "5.2+", "5.3+", etc.
+    # 5.1+ means 5.1 and later (51, 52, 53, 54, 55)
+    # 5.2+ means 5.2 and later (52, 53, 54, 55)
+    # 5.3+ means 5.3 and later (53, 54, 55)
+    if echo "$versions_line" | grep -q "5\.1+"; then
+        return 0  # All versions are compatible with 5.1+
+    fi
+    
+    if echo "$versions_line" | grep -q "5\.2+" && [[ "$version_num" -ge 52 ]]; then
+        return 0
+    fi
+    
+    if echo "$versions_line" | grep -q "5\.3+" && [[ "$version_num" -ge 53 ]]; then
+        return 0
+    fi
+    
+    if echo "$versions_line" | grep -q "5\.4+" && [[ "$version_num" -ge 54 ]]; then
+        return 0
+    fi
+    
+    if echo "$versions_line" | grep -q "5\.5+" && [[ "$version_num" -ge 55 ]]; then
         return 0
     fi
     
@@ -154,7 +181,7 @@ if [[ "$SKIP_NOVASHARP" != "true" ]]; then
     echo "Building NovaSharp CLI..."
     dotnet build "$CLI_PROJECT" -c Release -v q --nologo
     export DOTNET_ROLL_FORWARD=Major
-    NOVA_CMD="dotnet run --project $CLI_PROJECT -c Release --framework net8.0 --no-build --"
+    NOVA_CMD="dotnet run --project $CLI_PROJECT -c Release --framework net8.0 --no-build -- --lua-version $LUA_VERSION"
 fi
 
 # Create output directory

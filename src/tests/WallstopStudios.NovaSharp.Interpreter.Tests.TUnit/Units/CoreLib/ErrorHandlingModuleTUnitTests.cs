@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -291,10 +292,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(tuple.Tuple[1].String).Contains("boom").ConfigureAwait(false);
         }
 
+        // Lua 5.1/5.2 allow nil handlers (behaves like no handler)
         [global::TUnit.Core.Test]
-        public async Task XpcallAllowsNilHandler()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task XpcallAllowsNilHandlerInLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
 
             DynValue tuple = script.DoString(
                 @"
@@ -306,10 +310,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(tuple.Tuple[1].String).Contains("nil-handler").ConfigureAwait(false);
         }
 
+        // Lua 5.3+ validates the handler type upfront, including nil
         [global::TUnit.Core.Test]
-        public async Task XpcallRejectsNonFunctionHandler()
+        public async Task XpcallRejectsNilHandlerInLua53Plus()
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua53);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return xpcall(function() end, nil)")
+            )!;
+
+            await Assert
+                .That(exception.Message)
+                .Contains("bad argument #2 to 'xpcall'")
+                .ConfigureAwait(false);
+        }
+
+        // Lua 5.3+ validates the handler type upfront
+        [global::TUnit.Core.Test]
+        public async Task XpcallRejectsNonFunctionHandlerInLua53Plus()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua53);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return xpcall(function() end, 123)")
@@ -321,9 +342,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
                 .ConfigureAwait(false);
         }
 
+        // Lua 5.1 and 5.2 do NOT validate handler type upfront - they allow non-function handlers
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task XpcallAllowsNonFunctionHandlerInLua51And52(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            // In Lua 5.1/5.2, xpcall with a non-function handler should return true
+            // if the main function doesn't error (the handler is never invoked)
+            DynValue result = script.DoString("return xpcall(function() end, 123)");
+
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             Script script = new(CoreModules.PresetComplete);
+            script.Options.DebugPrint = _ => { };
+            return script;
+        }
+
+        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            Script script = new(CoreModules.PresetComplete, options);
             script.Options.DebugPrint = _ => { };
             return script;
         }

@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -62,14 +63,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CharWrapsValuesOutsideByteRange()
+        public async Task CharErrorsOnValuesOutsideByteRange()
         {
             Script script = CreateScript();
-            DynValue result = script.DoString("return string.char(-1, 256)");
 
-            await Assert.That(result.String.Length).IsEqualTo(2).ConfigureAwait(false);
-            await Assert.That(result.String[0]).IsEqualTo((char)255).ConfigureAwait(false);
-            await Assert.That(result.String[1]).IsEqualTo('\0').ConfigureAwait(false);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.char(-1, 256)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("value out of range")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -81,13 +86,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("A").ConfigureAwait(false);
         }
 
+        // NOTE: Removed CharTruncatesFloatValues - behavior is version-specific.
+        // Lua 5.1/5.2: Float truncation (tested in CharTruncatesFloatValuesLua51And52)
+        // Lua 5.3+: Throws error (tested in CharErrorsOnNonIntegerFloatLua53Plus)
+
         [global::TUnit.Core.Test]
-        public async Task CharTruncatesFloatValues()
+        [Arguments(-1, "negative value")]
+        [Arguments(256, "value above 255")]
+        [Arguments(300, "value well above 255")]
+        [Arguments(-100, "large negative value")]
+        public async Task CharErrorsOnOutOfRangeValue(int value, string description)
         {
             Script script = CreateScript();
-            DynValue result = script.DoString("return string.char(65.5)");
 
-            await Assert.That(result.String).IsEqualTo("A").ConfigureAwait(false);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString($"return string.char({value})")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("value out of range")
+                .Because($"string.char should error for {description} ({value})")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(0, '\0', "zero produces null byte")]
+        [Arguments(255, (char)255, "255 produces max byte")]
+        [Arguments(1, (char)1, "one produces SOH")]
+        [Arguments(127, (char)127, "127 produces DEL")]
+        public async Task CharAcceptsBoundaryValues(int value, char expected, string description)
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString($"return string.char({value})");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected.ToString())
+                .Because(description)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -189,13 +226,235 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsEqualTo(76d).ConfigureAwait(false);
         }
 
+        // NOTE: ByteTruncatesFloatIndices behavior is version-specific.
+        // Lua 5.1/5.2: Silently truncates via floor (tested below)
+        // Lua 5.3+: Throws "number has no integer representation" (tested below)
+
         [global::TUnit.Core.Test]
-        public async Task ByteTruncatesFloatIndices()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task ByteTruncatesFloatIndicesLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString("return string.byte('Lua', 1.5)");
 
-            await Assert.That(result.Number).IsEqualTo(76d).ConfigureAwait(false);
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(76d)
+                .Because("Lua 5.1/5.2 should truncate 1.5 to 1 and return 'L' (76)")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ByteErrorsOnNonIntegerIndexLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.byte('Lua', 1.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because("Lua 5.3+ requires integer representation for indices")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ByteErrorsOnNaNIndexLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.byte('Lua', 0/0)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because("Lua 5.3+ requires integer representation - NaN has none")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ByteErrorsOnInfinityIndexLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.byte('Lua', 1/0)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because("Lua 5.3+ requires integer representation - Infinity has none")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task ByteReturnsNilForNaNIndexLua51And52(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString("return string.byte('Lua', 0/0)");
+
+            // NaN floored is still NaN, which when cast to int produces invalid index
+            await Assert
+                .That(result.IsNil() || result.IsVoid())
+                .IsTrue()
+                .Because("Lua 5.1/5.2 should return nil for NaN index")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task ByteNegativeFractionalIndexUsesFloorLua51And52(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            // -0.5 floored is -1, which means "last character" in Lua
+            DynValue result = script.DoString("return string.byte('Lua', -0.5)");
+
+            // 'a' is the last character, ASCII 97
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(97d)
+                .Because("Lua 5.1/5.2 should floor -0.5 to -1 (last char)")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ByteAcceptsLargeIntegerIndexLua53Plus(LuaCompatibilityVersion version)
+        {
+            // Large integer beyond double precision (2^53+1) but stored as integer is valid
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString("return string.byte('a', 9007199254740993)");
+
+            // Index 2^53+1 is way beyond string length, should return nil
+            await Assert
+                .That(result.IsNil() || result.IsVoid())
+                .IsTrue()
+                .Because(
+                    "Lua 5.3+ accepts large integers (2^53+1) as indices when stored as integer type"
+                )
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ByteAcceptsMathMaxIntegerIndexLua53Plus(LuaCompatibilityVersion version)
+        {
+            // math.maxinteger (2^63-1) is valid when stored as integer
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString("return string.byte('a', math.maxinteger)");
+
+            // Index is way beyond string length, should return nil
+            await Assert
+                .That(result.IsNil() || result.IsVoid())
+                .IsTrue()
+                .Because("Lua 5.3+ accepts math.maxinteger as index when stored as integer type")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ByteErrorsOnLargeFloatIndexLua53Plus(LuaCompatibilityVersion version)
+        {
+            // 1e308 is a valid float but cannot be converted to integer
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.byte('a', 1e308)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because("Lua 5.3+ rejects floats that overflow integer range")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ByteAcceptsWholeNumberFloatIndexLua53Plus(LuaCompatibilityVersion version)
+        {
+            // 5.0 is a float with exact integer representation
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString("return string.byte('hello', 5.0)");
+
+            // 'o' is ASCII 111
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(111d)
+                .Because("Lua 5.3+ accepts whole number floats (5.0) as indices")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ByteDistinguishesIntegerVsFloatForLargeValuesLua53Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            // This tests the critical distinction:
+            // - 9007199254740993 as integer (2^53+1) is valid
+            // - 9007199254740993 + 0.0 as float loses precision and may fail validation
+            // In Lua 5.4, converting to float and back changes the value, so the float
+            // version would round to 9007199254740992, which IS representable
+            Script script = CreateScriptWithVersion(version);
+
+            // Integer version should work
+            DynValue intResult = script.DoString(
+                "local x = 9007199254740993; return string.byte('a', x)"
+            );
+            await Assert
+                .That(intResult.IsNil() || intResult.IsVoid())
+                .IsTrue()
+                .Because("Large integer index should be accepted (returns nil for out-of-range)")
+                .ConfigureAwait(false);
+
+            // Float version also works because the rounded value is still exact
+            DynValue floatResult = script.DoString(
+                "local x = 9007199254740993.0; return string.byte('a', x)"
+            );
+            await Assert
+                .That(floatResult.IsNil() || floatResult.IsVoid())
+                .IsTrue()
+                .Because("Float that rounds to representable integer should also be accepted")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -287,6 +546,84 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue result = script.DoString("return string.sub('NovaSharp', -5, -2)");
 
             await Assert.That(result.String).IsEqualTo("Shar").ConfigureAwait(false);
+        }
+
+        // NOTE: string.sub index behavior is version-specific.
+        // Lua 5.1/5.2: Silently truncates via floor
+        // Lua 5.3+: Throws "number has no integer representation"
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task SubTruncatesFloatIndicesLua51And52(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString("return string.sub('Lua', 1.5, 3)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("Lua")
+                .Because("Lua 5.1/5.2 should truncate 1.5 to 1")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task SubErrorsOnNonIntegerIndexLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.sub('Lua', 1.5, 3)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because("Lua 5.3+ requires integer representation for indices")
+                .ConfigureAwait(false);
+        }
+
+        // NOTE: string.rep count behavior is version-specific.
+        // Lua 5.1/5.2: Silently truncates via floor
+        // Lua 5.3+: Throws "number has no integer representation"
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task RepTruncatesFloatCountLua51And52(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString("return string.rep('a', 2.5)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("aa")
+                .Because("Lua 5.1/5.2 should truncate 2.5 to 2")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task RepErrorsOnNonIntegerCountLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.rep('a', 2.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because("Lua 5.3+ requires integer representation for count")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -430,10 +767,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(negativeResult).IsEqualTo(6).ConfigureAwait(false);
         }
 
+        // ========================================
+        // string.char - Version-specific NaN/Infinity/Float tests
+        // Lua 5.1/5.2: NaN, Infinity, and non-integer floats are treated as 0 or truncated
+        // Lua 5.3+: These values throw "number has no integer representation"
+        // ========================================
+
         [global::TUnit.Core.Test]
-        public async Task CharHandlesNaNAsZero()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task CharHandlesNaNAsZeroLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString("return string.char(0/0)");
 
             await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
@@ -441,9 +786,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CharHandlesPositiveInfinityAsZero()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task CharHandlesPositiveInfinityAsZeroLua51And52(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString("return string.char(1/0)");
 
             await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
@@ -451,13 +800,100 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CharHandlesNegativeInfinityAsZero()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task CharHandlesNegativeInfinityAsZeroLua51And52(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString("return string.char(-1/0)");
 
             await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task CharTruncatesFloatValuesLua51And52(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString("return string.char(65.5)");
+
+            await Assert.That(result.String).IsEqualTo("A").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CharErrorsOnNaNLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.char(0/0)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CharErrorsOnPositiveInfinityLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.char(1/0)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CharErrorsOnNegativeInfinityLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.char(-1/0)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CharErrorsOnNonIntegerFloatLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.char(65.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1023,6 +1459,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);
+        }
+
+        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            return new Script(CoreModules.PresetComplete, options);
         }
     }
 }

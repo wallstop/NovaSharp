@@ -2,7 +2,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>
     /// Represents a parenthesized expression that enforces scalar semantics (Lua tuple → single value).

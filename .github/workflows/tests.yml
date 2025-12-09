@@ -491,3 +491,106 @@ jobs:
           name: lua-comparison-${{ matrix.lua-version }}
           path: artifacts/lua-comparison-results
           if-no-files-found: warn
+
+  # Lua 5.5 comparison job (builds from source since 5.5 is not yet in package managers)
+  lua-55-comparison:
+    runs-on: ubuntu-latest
+    needs: dotnet-tests
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libreadline-dev
+      - name: Download and build Lua 5.5
+        run: |
+          curl -L -o lua-5.5.0-rc2.tar.gz https://www.lua.org/work/lua-5.5.0-rc2.tar.gz
+          tar xzf lua-5.5.0-rc2.tar.gz
+          cd lua-5.5.0-rc2
+          make linux
+          sudo make install INSTALL_TOP=/usr/local
+          echo "/usr/local/bin" >> $GITHUB_PATH
+        shell: bash
+      - name: Verify Lua 5.5 installation
+        run: |
+          /usr/local/bin/lua -v
+        shell: bash
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore dependencies
+        run: dotnet restore src/NovaSharp.sln --locked-mode
+      - name: Build NovaSharp CLI
+        run: dotnet build src/tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj -c Release --no-restore
+      - name: Verify Lua fixtures exist
+        run: |
+          if [ ! -d "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures" ]; then
+            echo "Error: Lua fixtures not found. Run 'python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py' and commit the results."
+            exit 1
+          fi
+          fixture_count=$(find src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures -name "*.lua" | wc -l)
+          echo "Found $fixture_count Lua fixture files"
+        shell: bash
+      - name: Run fixtures against Lua 5.5
+        run: |
+          bash scripts/tests/run-lua-fixtures.sh --skip-novasharp --lua-version 5.5 --lua-cmd /usr/local/bin/lua
+        shell: bash
+      - name: Run fixtures against NovaSharp
+        env:
+          DOTNET_ROLL_FORWARD: Major
+        run: |
+          bash scripts/tests/run-lua-fixtures.sh --skip-lua --lua-version 5.5
+        shell: bash
+      - name: Compare outputs
+        id: compare
+        run: |
+          python3 scripts/tests/compare-lua-outputs.py \
+            --results-dir artifacts/lua-comparison-results \
+            --corpus-dir src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures \
+            --lua-version 5.5 \
+            --output-file artifacts/lua-comparison-results/comparison-5.5.json \
+            --monitor
+        shell: bash
+      - name: Publish comparison summary
+        if: always()
+        run: |
+          comparison_file="artifacts/lua-comparison-results/comparison-5.5.json"
+          if [ -f "$comparison_file" ]; then
+            python3 -c "
+          import json
+          with open('$comparison_file') as f:
+              data = json.load(f)
+          summary = data.get('summary', {})
+          match_rate = data.get('match_rate')
+          print('## Lua 5.5 Specification Comparison (Experimental)')
+          print()
+          print('> **Note**: Lua 5.5 is currently in release candidate phase. This comparison tracks compatibility progress.')
+          print()
+          print('| Metric | Count |')
+          print('| --- | --- |')
+          print(f\"| Match | {summary.get('match', 0)} |\")
+          print(f\"| Mismatch | {summary.get('mismatch', 0)} |\")
+          print(f\"| Both Error | {summary.get('both_error', 0)} |\")
+          print(f\"| Skipped | {summary.get('skipped', 0)} |\")
+          print()
+          if match_rate is not None:
+              print(f'**Match Rate**: {match_rate:.1f}%')
+          " >> "\$GITHUB_STEP_SUMMARY"
+          else
+            echo "Comparison results for Lua 5.5 not found." >> "\$GITHUB_STEP_SUMMARY"
+          fi
+        shell: bash
+      - name: Upload Lua 5.5 comparison results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: lua-comparison-5.5
+          path: artifacts/lua-comparison-results
+          if-no-files-found: warn

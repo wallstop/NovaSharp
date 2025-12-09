@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.Attributes
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Marks a type of automatic registration as userdata (which happens only if UserData.RegisterAssembly is called).

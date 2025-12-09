@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
 {
+    using System;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -40,16 +41,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
 
         /// <summary>
         /// Creates a <see cref="StringRange"/> from Lua substring arguments, defaulting missing
-        /// values according to the Lua spec.
+        /// values according to the Lua spec. Uses floor truncation for Lua 5.1/5.2 compatibility.
         /// </summary>
         /// <param name="start">Lua `i` argument (can be nil).</param>
         /// <param name="end">Lua `j` argument (can be nil).</param>
         /// <param name="defaultEnd">Optional default for `j` when omitted.</param>
         /// <returns>Constructed range.</returns>
+        /// <remarks>
+        /// For Lua 5.3+ strict integer validation, callers should validate arguments
+        /// before calling this method using <see cref="LuaNumberHelpers.RequireIntegerRepresentation"/>.
+        /// This method uses <see cref="Math.Floor"/> to truncate, matching Lua 5.1/5.2 behavior
+        /// where non-integer floats are silently truncated toward negative infinity.
+        /// </remarks>
         public static StringRange FromLuaRange(DynValue start, DynValue end, int? defaultEnd = null)
         {
-            int i = start.IsNil() ? 1 : (int)start.Number;
-            int j = end.IsNil() ? (defaultEnd ?? i) : (int)end.Number;
+            // Use Math.Floor for truncation (not C# cast which truncates toward zero)
+            // This matches Lua 5.1/5.2 behavior: string.byte("abc", -0.5) should treat -0.5 as -1
+            int i = start.IsNil() ? 1 : (int)Math.Floor(start.Number);
+            int j = end.IsNil() ? (defaultEnd ?? i) : (int)Math.Floor(end.Number);
 
             return new StringRange(i, j);
         }

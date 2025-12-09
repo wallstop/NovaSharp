@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.Attributes
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Marks a method as the handler of metamethods of a userdata type

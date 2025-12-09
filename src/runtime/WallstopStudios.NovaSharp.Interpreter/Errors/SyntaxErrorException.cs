@@ -2,7 +2,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
 {
     using System;
     using Debugging;
-    using Tree;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
     using System.Runtime.Serialization;

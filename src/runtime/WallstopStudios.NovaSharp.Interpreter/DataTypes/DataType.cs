@@ -1,6 +1,5 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
-    using System;
     using System.Collections.Concurrent;
     using System.Diagnostics.CodeAnalysis;
     using WallstopStudios.NovaSharp.Interpreter;

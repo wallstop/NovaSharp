@@ -151,8 +151,10 @@ try {
             $restoreArgs += "--no-restore"
         }
 
-        # Build with maximum parallelism and node reuse for optimal performance
-        dotnet build "src/NovaSharp.sln" -c $Configuration --nologo /m /nodeReuse:true @restoreArgs 2>&1 |
+        # Build with maximum parallelism and node reuse for optimal performance.
+        # Disable ContinuousIntegrationBuild to ensure coverlet can instrument assemblies
+        # (deterministic builds with source-link paths break coverage collection).
+        dotnet build "src/NovaSharp.sln" -c $Configuration --nologo /m /nodeReuse:true -p:ContinuousIntegrationBuild=false @restoreArgs 2>&1 |
             Tee-Object -FilePath $buildLogPath | Out-Null
 
         $buildExecuted = $true

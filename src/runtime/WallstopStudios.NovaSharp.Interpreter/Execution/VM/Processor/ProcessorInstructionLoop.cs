@@ -3,12 +3,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using Debugging;
-    using Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 

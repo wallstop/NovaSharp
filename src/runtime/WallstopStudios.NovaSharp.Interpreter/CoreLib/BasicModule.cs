@@ -368,14 +368,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     return DynValue.Nil;
                 }
 
-                if (
-                    double.TryParse(
-                        e.String,
-                        NumberStyles.Any,
-                        CultureInfo.InvariantCulture,
-                        out double d
-                    )
-                )
+                // Lua tonumber without base parses hex literals (0x/0X prefix) per §3.1
+                if (TryParseLuaNumeral(e.String, out double d))
                 {
                     return DynValue.NewNumber(d);
                 }
@@ -498,6 +492,183 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             return -1;
+        }
+
+        /// <summary>
+        /// Parses a Lua numeral string (decimal, hexadecimal integer, or hexadecimal float) per §3.1.
+        /// </summary>
+        /// <param name="text">Input text to parse.</param>
+        /// <param name="value">Outputs the parsed numeric value on success.</param>
+        /// <returns><c>true</c> if the text represents a valid Lua numeral; <c>false</c> otherwise.</returns>
+        private static bool TryParseLuaNumeral(string text, out double value)
+        {
+            value = 0;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return false;
+            }
+
+            ReadOnlySpan<char> span = text.AsSpan().Trim();
+            if (span.IsEmpty)
+            {
+                return false;
+            }
+
+            int index = 0;
+            bool negative = false;
+
+            // Handle leading sign
+            if (span[index] == '+' || span[index] == '-')
+            {
+                negative = span[index] == '-';
+                index++;
+                if (index >= span.Length)
+                {
+                    return false;
+                }
+            }
+
+            // Check for hex prefix
+            if (
+                index + 1 < span.Length
+                && span[index] == '0'
+                && (span[index + 1] == 'x' || span[index + 1] == 'X')
+            )
+            {
+                // Parse as hex (integer or float)
+                return TryParseHexLuaNumeral(span, index + 2, negative, out value);
+            }
+
+            // Decimal fallback using invariant culture
+            if (
+                double.TryParse(
+                    text,
+                    NumberStyles.Float | NumberStyles.AllowThousands,
+                    CultureInfo.InvariantCulture,
+                    out value
+                )
+            )
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Parses a hexadecimal Lua numeral (integer or floating point with optional <c>p</c> exponent).
+        /// </summary>
+        /// <param name="span">Full span containing the original string (including optional sign and <c>0x</c> prefix).</param>
+        /// <param name="startIndex">Index where hex digits begin (after <c>0x</c>).</param>
+        /// <param name="negative">Whether a leading minus sign was present.</param>
+        /// <param name="value">Outputs the parsed value on success.</param>
+        /// <returns><c>true</c> when the hex literal is valid; <c>false</c> otherwise.</returns>
+        private static bool TryParseHexLuaNumeral(
+            ReadOnlySpan<char> span,
+            int startIndex,
+            bool negative,
+            out double value
+        )
+        {
+            value = 0;
+            int index = startIndex;
+
+            double significand = 0;
+            bool digitsSeen = false;
+            int fractionalDigits = 0;
+
+            // Parse integer part
+            while (index < span.Length && IsHexDigit(span[index]))
+            {
+                significand = (significand * 16.0) + HexDigitToValue(span[index]);
+                index++;
+                digitsSeen = true;
+            }
+
+            // Parse fractional part
+            if (index < span.Length && span[index] == '.')
+            {
+                index++;
+                while (index < span.Length && IsHexDigit(span[index]))
+                {
+                    significand = (significand * 16.0) + HexDigitToValue(span[index]);
+                    index++;
+                    digitsSeen = true;
+                    fractionalDigits++;
+                }
+            }
+
+            if (!digitsSeen)
+            {
+                return false;
+            }
+
+            int exponent = -4 * fractionalDigits;
+
+            // Parse binary exponent (p/P)
+            if (index < span.Length && (span[index] == 'p' || span[index] == 'P'))
+            {
+                index++;
+                if (index >= span.Length)
+                {
+                    return false;
+                }
+
+                int expSign = 1;
+                if (span[index] == '+' || span[index] == '-')
+                {
+                    if (span[index] == '-')
+                    {
+                        expSign = -1;
+                    }
+                    index++;
+                }
+
+                if (index >= span.Length || !char.IsDigit(span[index]))
+                {
+                    return false;
+                }
+
+                int expValue = 0;
+                while (index < span.Length && char.IsDigit(span[index]))
+                {
+                    expValue = (expValue * 10) + (span[index] - '0');
+                    index++;
+                }
+
+                exponent += expSign * expValue;
+            }
+
+            // Must have consumed entire input
+            if (index != span.Length)
+            {
+                return false;
+            }
+
+            value = significand * Math.Pow(2, exponent);
+            if (negative)
+            {
+                value = -value;
+            }
+            return true;
+        }
+
+        private static bool IsHexDigit(char c)
+        {
+            return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+        }
+
+        private static int HexDigitToValue(char c)
+        {
+            if (c >= '0' && c <= '9')
+            {
+                return c - '0';
+            }
+            if (c >= 'a' && c <= 'f')
+            {
+                return c - 'a' + 10;
+            }
+            return c - 'A' + 10;
         }
 
         /// <summary>

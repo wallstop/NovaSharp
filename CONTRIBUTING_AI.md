@@ -13,6 +13,16 @@ This document provides comprehensive guidance for AI assistants (GitHub Copilot,
 
 But you must **never** stage files (`git add`) or create commits (`git commit`). The human will handle all version control operations.
 
+**NEVER use absolute paths to local development machines.** All file paths in committed code, configuration, scripts, and documentation must be relative to the repository root. Specifically:
+
+- ❌ Never reference paths like `D:/Code`, `C:/Users`, `/Users/username`, `/home/username`, or any other machine-specific absolute path
+- ❌ Never hardcode paths from your local environment into any committed file
+- ✅ Use relative paths from repo root (e.g., `src/runtime/...`, `./scripts/...`)
+- ✅ Use environment variables or runtime path resolution for dynamic paths
+- ✅ Template placeholders like `{path}` in test fixtures are acceptable—these are replaced at runtime
+
+Before suggesting any file changes, verify that no absolute paths to local machines are introduced.
+
 ## Project Overview
 
 NovaSharp is a multi-version Lua interpreter (supporting Lua 5.1, 5.2, 5.3, and 5.4) written in C# for .NET Standard 2.1, Mono, Xamarin, and Unity3D (including IL2CPP/AOT). It is an actively maintained continuation of the original interpreter by Marco Mastropaolo targeting modern .NET (6/7/8+), comprehensive Lua compatibility across all major versions, and Unity-first ergonomics.
@@ -146,6 +156,17 @@ Script.DoString("return x + 1")
 - **Stable ordering**: Never reorder or renumber existing enum values—add new values at the end with the next available number
 - **Flags enums**: Use powers of two (`1 << 0`, `1 << 1`, etc.) and include `None = 0` as a non-obsolete default when "no flags" is semantically valid
 
+### LuaNumber for Lua Math
+
+- **Always use `LuaNumber`**: When performing any Lua numeric operations, use the `LuaNumber` struct (from `DataTypes/LuaNumber.cs`) instead of raw C# numeric types (`double`, `float`, `int`, `long`)
+- **Preserve type information**: `LuaNumber` tracks whether the value is an integer or float subtype—this distinction is critical for Lua 5.3+ semantics
+- **Access patterns**:
+  - Use `DynValue.LuaNumber` to get the `LuaNumber` from a DynValue (preserves integer vs float)
+  - Avoid `DynValue.Number` (returns `double`, loses type information)
+  - Check `LuaNumber.IsInteger` before extracting as `AsInteger` or `AsFloat`
+- **Validation helpers**: Use `LuaNumberHelpers.RequireIntegerRepresentation()` for functions requiring integer arguments
+- **Exception**: Only extract to raw C# types (`double`, `long`) after you have verified the appropriate numeric subtype via `LuaNumber` properties
+
 ## Testing Guidelines
 
 ### Framework
@@ -220,6 +241,53 @@ This applies to all bugs, including:
 - API contracts not being honored
 
 If you discover a production bug while writing tests, fix the production code first, then verify the test passes with correct behavior. Never work around bugs with test accommodations.
+
+### Lua Fixture Verification Policy
+
+**REQUIRED**: When fixing any Lua semantic issue or discovering a behavioral discrepancy, create a comprehensive suite of standalone Lua files that can be run against both NovaSharp and the official Lua interpreter to verify correctness and prevent regressions.
+
+**Fixture Requirements**:
+
+1. **Create standalone `.lua` files** in the appropriate `LuaFixtures/<TestClass>/` directory
+1. **One fixture per behavior variant** — separate files for success cases, error cases, and edge cases
+1. **Version-aware naming** — suffix with `_51`, `_52`, `_53plus`, `_54plus`, etc. when behavior differs by version
+1. **Self-documenting** — include comments explaining expected behavior and which Lua versions apply
+1. **Runnable against real Lua** — fixtures must execute cleanly with `lua5.1`, `lua5.4`, etc.
+
+**Fixture Structure Pattern**:
+
+```lua
+-- Test: <description of what's being tested>
+-- Expected: <success/error/specific output>
+-- Versions: <5.1, 5.2, 5.3, 5.4 or specific subset>
+-- Reference: <Lua manual section, e.g., "§6.4.1">
+
+local success, err = pcall(function()
+    -- Test code here
+end)
+
+if success then
+    print("PASS")
+else
+    print("EXPECTED ERROR: " .. tostring(err))
+end
+```
+
+**Verification Workflow**:
+
+1. Run fixture against NovaSharp: `nova --lua-version 5.4 fixture.lua`
+1. Run fixture against real Lua: `lua5.4 fixture.lua`
+1. Compare outputs — they must match exactly
+1. Document any intentional divergences in the fixture comments
+
+**Example Fixtures** (from `string.char` fix):
+
+- `CharErrorsOnNegativeValue.lua` — tests error on `string.char(-1)`
+- `CharErrorsOnValueAbove255.lua` — tests error on `string.char(256)`
+- `CharAcceptsBoundaryValueZero.lua` — tests success on `string.char(0)`
+- `CharAcceptsBoundaryValue255.lua` — tests success on `string.char(255)`
+
+This policy ensures every behavioral fix has cross-interpreter verification and guards against future regressions.
 
 ## Lint Guards
 

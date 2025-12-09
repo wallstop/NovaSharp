@@ -3,7 +3,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
     using System.Collections.Generic;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>
     /// Represents a comma-separated expression list (used for table constructors, argument lists, etc.).

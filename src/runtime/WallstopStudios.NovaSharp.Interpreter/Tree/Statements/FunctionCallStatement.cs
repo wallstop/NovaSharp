@@ -3,7 +3,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
     using Expressions;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
-    using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>
     /// Represents a statement-level function call (where return values are discarded).

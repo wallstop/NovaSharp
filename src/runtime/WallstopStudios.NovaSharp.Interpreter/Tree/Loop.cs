@@ -3,9 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
     using System.Collections.Generic;
     using Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
-    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
-    using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>
     /// Represents a concrete loop body that can accept `break` statements and later patch them once the scope exits.

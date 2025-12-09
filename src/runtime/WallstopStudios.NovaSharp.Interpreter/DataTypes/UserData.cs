@@ -5,7 +5,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData;
     using WallstopStudios.NovaSharp.Interpreter.Interop.ProxyObjects;

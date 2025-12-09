@@ -1,7 +1,5 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree
 {
-    using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
-
     /// <summary>
     /// Marker for expressions that can participate in assignments (variables, table fields, etc.).
     /// </summary>

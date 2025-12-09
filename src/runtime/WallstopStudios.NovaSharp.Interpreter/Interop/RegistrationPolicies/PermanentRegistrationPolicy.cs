@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.RegistrationPolicies
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// A registration policy which makes registration permanent and not deletable.

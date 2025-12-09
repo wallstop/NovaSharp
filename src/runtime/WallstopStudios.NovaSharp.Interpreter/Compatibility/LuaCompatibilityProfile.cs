@@ -7,6 +7,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
     /// </summary>
     public sealed class LuaCompatibilityProfile
     {
+        private static readonly LuaCompatibilityProfile Lua51Profile = new(
+            LuaCompatibilityVersion.Lua51,
+            supportsBitwiseOperators: false,
+            supportsBit32Library: false,
+            supportsUtf8Library: false,
+            supportsTableMove: false,
+            supportsToBeClosedVariables: false,
+            supportsConstLocals: false,
+            supportsWarnFunction: false
+        );
+
         private static readonly LuaCompatibilityProfile Lua52Profile = new(
             LuaCompatibilityVersion.Lua52,
             supportsBitwiseOperators: false,
@@ -124,6 +135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
         {
             return version switch
             {
+                LuaCompatibilityVersion.Lua51 => Lua51Profile,
                 LuaCompatibilityVersion.Lua52 => Lua52Profile,
                 LuaCompatibilityVersion.Lua53 => Lua53Profile,
                 LuaCompatibilityVersion.Lua54 => Lua54Profile,
@@ -147,6 +159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
         {
             return version switch
             {
+                LuaCompatibilityVersion.Lua51 => "Lua 5.1",
                 LuaCompatibilityVersion.Lua52 => "Lua 5.2",
                 LuaCompatibilityVersion.Lua53 => "Lua 5.3",
                 LuaCompatibilityVersion.Lua54 => "Lua 5.4",

@@ -1,6 +1,5 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
-    using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
 
@@ -268,7 +267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             // Skip nil values
-            while (_current != null && _current.Value.Value != null && _current.Value.Value.IsNil())
+            while (_current is { Value.Value: not null } && _current.Value.Value.IsNil())
             {
                 _current = _current.Next;
             }

@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.RegistrationPolicies
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// The default registration policy used by NovaSharp unless explicitly replaced.

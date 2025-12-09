@@ -7,14 +7,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System.IO;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.LuaPort;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Interpreter.Utilities;
 
     /// <summary>
     /// Implements Lua's `string` library (§6.4), providing formatting, pattern matching, and utility helpers.
@@ -75,6 +76,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `string.char`, converting numeric code-points into a string (§6.4.1).
         /// </summary>
+        /// <remarks>
+        /// In Lua 5.3+, arguments must have an exact integer representation (no NaN, Infinity, or fractional parts).
+        /// In Lua 5.1/5.2, NaN and Infinity are treated as 0, and floats are truncated to integers.
+        /// All versions require the final value to be in the range 0-255.
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Numeric or numeric-string arguments.</param>
         /// <returns>Concatenated characters.</returns>
@@ -89,6 +95,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool requiresIntegerRepresentation = version >= LuaCompatibilityVersion.Lua53;
+
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
             for (int i = 0; i < args.Count; i++)
@@ -114,8 +126,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     d = v.Number;
                 }
 
-                int normalized = NormalizeByte(Math.Floor(d));
-                sb.Append((char)normalized);
+                int charValue;
+
+                if (requiresIntegerRepresentation)
+                {
+                    // Lua 5.3+ behavior: Require exact integer representation
+                    // NaN, Infinity, and non-integer floats all error
+                    if (double.IsNaN(d) || double.IsInfinity(d))
+                    {
+                        throw new ScriptRuntimeException(
+                            $"bad argument #{i + 1} to 'char' (number has no integer representation)"
+                        );
+                    }
+
+                    double floored = Math.Floor(d);
+                    if (floored != d)
+                    {
+                        // Non-integer float (e.g., 65.5)
+                        throw new ScriptRuntimeException(
+                            $"bad argument #{i + 1} to 'char' (number has no integer representation)"
+                        );
+                    }
+
+                    if (floored < 0 || floored > 255)
+                    {
+                        throw new ScriptRuntimeException(
+                            $"bad argument #{i + 1} to 'char' (value out of range)"
+                        );
+                    }
+
+                    charValue = (int)floored;
+                }
+                else
+                {
+                    // Lua 5.1/5.2 behavior: NaN/Infinity → 0, truncate floats
+                    double floored = Math.Floor(d);
+                    if (double.IsNaN(floored) || double.IsInfinity(floored))
+                    {
+                        charValue = 0;
+                    }
+                    else if (floored < 0 || floored > 255)
+                    {
+                        throw new ScriptRuntimeException(
+                            $"bad argument #{i + 1} to 'char' (value out of range)"
+                        );
+                    }
+                    else
+                    {
+                        charValue = (int)floored;
+                    }
+                }
+
+                sb.Append((char)charValue);
             }
 
             return DynValue.NewString(sb.ToString());
@@ -127,6 +189,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">String plus optional start/end indices.</param>
         /// <returns>Tuple of byte values.</returns>
+        /// <remarks>
+        /// In Lua 5.3+, index arguments must have an exact integer representation.
+        /// Non-integer indices (including NaN, Infinity, and fractional values) will throw
+        /// "bad argument #N to 'byte' (number has no integer representation)".
+        /// In Lua 5.1/5.2, non-integer indices are silently truncated via floor.
+        /// </remarks>
         [NovaSharpModuleMethod(Name = "byte")]
         public static DynValue Byte(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -138,6 +206,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue vs = args.AsType(0, "byte", DataType.String, false);
             DynValue vi = args.AsType(1, "byte", DataType.Number, true);
             DynValue vj = args.AsType(2, "byte", DataType.Number, true);
+
+            // Validate indices for Lua 5.3+ integer representation requirements
+            LuaNumberHelpers.ValidateStringIndices(
+                executionContext.Script.CompatibilityVersion,
+                vi,
+                vj,
+                "byte"
+            );
 
             return PerformByteLike(vs, vi, vj, i => NormalizeByte(i));
         }
@@ -371,6 +447,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `string.rep`, repeating a string N times with an optional separator (§6.4.1).
         /// </summary>
+        /// <remarks>
+        /// In Lua 5.3+, the count argument must have an exact integer representation.
+        /// Non-integer counts (including NaN, Infinity, and fractional values) will throw
+        /// "bad argument #2 to 'rep' (number has no integer representation)".
+        /// In Lua 5.1/5.2, non-integer counts are silently truncated via floor.
+        /// </remarks>
         [NovaSharpModuleMethod(Name = "rep")]
         public static DynValue Rep(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -383,6 +465,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue argN = args.AsType(1, "rep", DataType.Number, false);
             DynValue argSep = args.AsType(2, "rep", DataType.String, true);
 
+            // Validate count for Lua 5.3+ integer representation requirements
+            LuaNumberHelpers.ValidateIntegerArgument(
+                executionContext.Script.CompatibilityVersion,
+                argN,
+                "rep",
+                2
+            );
+
             if (String.IsNullOrEmpty(argS.String) || (argN.Number < 1))
             {
                 return DynValue.EmptyString;
@@ -390,7 +480,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             string sep = (argSep.IsNotNil()) ? argSep.String : null;
 
-            int count = (int)argN.Number;
+            int count = (int)Math.Floor(argN.Number);
             using Utf16ValueStringBuilder result = ZStringBuilder.Create();
 
             for (int i = 0; i < count; ++i)
@@ -453,6 +543,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `string.sub`, returning a substring defined by Lua indices (§6.4.1).
         /// </summary>
+        /// <remarks>
+        /// In Lua 5.3+, index arguments must have an exact integer representation.
+        /// Non-integer indices (including NaN, Infinity, and fractional values) will throw
+        /// "bad argument #N to 'sub' (number has no integer representation)".
+        /// In Lua 5.1/5.2, non-integer indices are silently truncated via floor.
+        /// </remarks>
         [NovaSharpModuleMethod(Name = "sub")]
         public static DynValue Sub(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -464,6 +560,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue argS = args.AsType(0, "sub", DataType.String, false);
             DynValue argI = args.AsType(1, "sub", DataType.Number, true);
             DynValue argJ = args.AsType(2, "sub", DataType.Number, true);
+
+            // Validate indices for Lua 5.3+ integer representation requirements
+            LuaNumberHelpers.ValidateStringIndices(
+                executionContext.Script.CompatibilityVersion,
+                argI,
+                argJ,
+                "sub"
+            );
 
             StringRange range = StringRange.FromLuaRange(argI, argJ, -1);
             string s = range.ApplyToString(argS.String);

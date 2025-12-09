@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 {
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>
     /// Represents a no-op statement introduced by stray semicolons.

@@ -4,7 +4,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.ProxyObjects;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
 
     /// <summary>
     /// Data descriptor used for proxy objects

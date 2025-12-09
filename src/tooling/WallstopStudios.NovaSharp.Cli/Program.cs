@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Cli
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Security;
     using WallstopStudios.NovaSharp.Cli.Commands;
@@ -213,6 +214,84 @@ namespace WallstopStudios.NovaSharp.Cli
             return true;
         }
 
+        /// <summary>
+        /// Tries to parse a Lua version string (e.g., "5.2", "5.4", "54", "Lua54") into a <see cref="LuaCompatibilityVersion"/>.
+        /// </summary>
+        /// <param name="versionString">The version string to parse.</param>
+        /// <param name="version">The parsed version, or <see cref="LuaCompatibilityVersion.Latest"/> if parsing fails.</param>
+        /// <returns><c>true</c> if parsing succeeded.</returns>
+        internal static bool TryParseLuaVersion(
+            string versionString,
+            out LuaCompatibilityVersion version
+        )
+        {
+            version = LuaCompatibilityVersion.Latest;
+
+            if (string.IsNullOrWhiteSpace(versionString))
+            {
+                return false;
+            }
+
+            // Normalize: remove "lua" prefix if present, trim whitespace
+            string normalized = versionString.Trim();
+            if (
+                normalized.StartsWith("lua", StringComparison.OrdinalIgnoreCase)
+                || normalized.StartsWith("Lua", StringComparison.Ordinal)
+            )
+            {
+                normalized = normalized.Substring(3);
+            }
+
+            // Remove dots: "5.4" -> "54"
+            normalized = normalized.Replace(".", string.Empty, StringComparison.Ordinal);
+
+            // Try parse as integer
+            if (
+                int.TryParse(
+                    normalized,
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out int numericVersion
+                )
+            )
+            {
+                switch (numericVersion)
+                {
+                    case 51:
+                        version = LuaCompatibilityVersion.Lua51;
+                        return true;
+                    case 52:
+                        version = LuaCompatibilityVersion.Lua52;
+                        return true;
+                    case 53:
+                        version = LuaCompatibilityVersion.Lua53;
+                        return true;
+                    case 54:
+                        version = LuaCompatibilityVersion.Lua54;
+                        return true;
+                    case 55:
+                        version = LuaCompatibilityVersion.Lua55;
+                        return true;
+                }
+            }
+
+            // Try parse "latest"
+            if (string.Equals(normalized, "latest", StringComparison.OrdinalIgnoreCase))
+            {
+                version = LuaCompatibilityVersion.Latest;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsLuaVersionOption(string argument)
+        {
+            return string.Equals(argument, "-v", StringComparison.Ordinal)
+                || string.Equals(argument, "--lua-version", StringComparison.Ordinal)
+                || string.Equals(argument, "--version", StringComparison.Ordinal);
+        }
+
         private static bool TryRunExecuteChunks(string[] args)
         {
             if (args == null || args.Length == 0)
@@ -221,11 +300,35 @@ namespace WallstopStudios.NovaSharp.Cli
             }
 
             List<string> inlineChunks = new();
+            LuaCompatibilityVersion luaVersion = LuaCompatibilityVersion.Latest;
             int index = 0;
 
             while (index < args.Length)
             {
                 string current = args[index];
+
+                // Check for --lua-version
+                if (IsLuaVersionOption(current))
+                {
+                    if (index + 1 >= args.Length)
+                    {
+                        Console.WriteLine(CliMessages.ProgramWrongSyntax);
+                        ShowCmdLineHelp();
+                        return true;
+                    }
+
+                    if (!TryParseLuaVersion(args[index + 1], out luaVersion))
+                    {
+                        Console.WriteLine(
+                            $"Invalid Lua version: {args[index + 1]}. Valid values: 5.1, 5.2, 5.3, 5.4, 5.5, latest"
+                        );
+                        return true;
+                    }
+
+                    index += 2;
+                    continue;
+                }
+
                 if (!IsExecuteOption(current))
                 {
                     break;
@@ -254,7 +357,11 @@ namespace WallstopStudios.NovaSharp.Cli
                 return true;
             }
 
-            Script script = new(CoreModules.PresetComplete);
+            ScriptOptions options = new(Script.DefaultOptions)
+            {
+                CompatibilityVersion = luaVersion,
+            };
+            Script script = new(CoreModules.PresetComplete, options);
 
             foreach (string chunk in inlineChunks)
             {
@@ -270,22 +377,93 @@ namespace WallstopStudios.NovaSharp.Cli
                 || string.Equals(argument, "--execute", StringComparison.Ordinal);
         }
 
+        private static bool IsKnownNonScriptOption(string argument)
+        {
+            // These options are handled elsewhere and should not be treated as script paths
+            return string.Equals(argument, "-H", StringComparison.Ordinal)
+                || string.Equals(argument, "--help", StringComparison.Ordinal)
+                || string.Equals(argument, "/?", StringComparison.Ordinal)
+                || string.Equals(argument, "-?", StringComparison.Ordinal)
+                || string.Equals(argument, "-X", StringComparison.Ordinal)
+                || string.Equals(argument, "-W", StringComparison.Ordinal);
+        }
+
         private static bool TryRunScriptArgument(string[] args)
         {
-            if (args.Length != 1 || string.IsNullOrWhiteSpace(args[0]) || args[0][0] == '-')
+            // Quick check: if the first argument is a known non-script option, don't try to run as script
+            if (args.Length > 0 && IsKnownNonScriptOption(args[0]))
             {
                 return false;
             }
 
-            string resolvedScriptPath = ResolveScriptPath(args[0]);
+            // First, extract any --lua-version option and find the script path
+            LuaCompatibilityVersion explicitVersion = LuaCompatibilityVersion.Latest;
+            bool hasExplicitVersion = false;
+            string scriptPath = null;
+            bool hasUnknownOptions = false;
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (IsLuaVersionOption(args[i]))
+                {
+                    if (i + 1 >= args.Length)
+                    {
+                        Console.WriteLine(CliMessages.ProgramWrongSyntax);
+                        ShowCmdLineHelp();
+                        return true;
+                    }
+
+                    if (!TryParseLuaVersion(args[i + 1], out explicitVersion))
+                    {
+                        Console.WriteLine(
+                            $"Invalid Lua version: {args[i + 1]}. Valid values: 5.1, 5.2, 5.3, 5.4, 5.5, latest"
+                        );
+                        return true;
+                    }
+
+                    hasExplicitVersion = true;
+                    i++; // Skip the version value
+                }
+                else if (args[i].Length > 0 && args[i][0] == '-')
+                {
+                    // Unknown option - let other handlers deal with it
+                    hasUnknownOptions = true;
+                }
+                else if (scriptPath == null)
+                {
+                    scriptPath = args[i];
+                }
+            }
+
+            // If there are unknown options, let other handlers deal with them
+            if (hasUnknownOptions)
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(scriptPath))
+            {
+                return false;
+            }
+
+            string resolvedScriptPath = ResolveScriptPath(scriptPath);
             ScriptOptions options = new(Script.DefaultOptions);
-            ModManifestCompatibility.TryApplyFromScriptPath(
-                resolvedScriptPath,
-                options,
-                Script.GlobalOptions.CompatibilityVersion,
-                info => Console.WriteLine(CliMessages.ContextualCompatibilityInfo(info)),
-                warning => Console.WriteLine(CliMessages.CompatibilityWarning(warning))
-            );
+
+            // Apply explicit version if provided; otherwise try to detect from mod.json
+            if (hasExplicitVersion)
+            {
+                options.CompatibilityVersion = explicitVersion;
+            }
+            else
+            {
+                ModManifestCompatibility.TryApplyFromScriptPath(
+                    resolvedScriptPath,
+                    options,
+                    Script.GlobalOptions.CompatibilityVersion,
+                    info => Console.WriteLine(CliMessages.ContextualCompatibilityInfo(info)),
+                    warning => Console.WriteLine(CliMessages.CompatibilityWarning(warning))
+                );
+            }
 
             Script script = new(CoreModules.PresetComplete, options);
             Console.WriteLine(
@@ -338,6 +516,7 @@ namespace WallstopStudios.NovaSharp.Cli
             Console.WriteLine(CliMessages.ProgramUsageHelpSwitch);
             Console.WriteLine(CliMessages.ProgramUsageExecuteSwitch);
             Console.WriteLine(CliMessages.ProgramUsageHardwireSwitch);
+            Console.WriteLine(CliMessages.ProgramUsageLuaVersionSwitch);
             Console.WriteLine();
         }
 

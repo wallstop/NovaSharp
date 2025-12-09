@@ -4,12 +4,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System.Collections.Generic;
     using System.Globalization;
     using Cysharp.Text;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -23,16 +23,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             .Instance.GetUtcNow()
             .UtcDateTime;
 
+        private static readonly Dictionary<char, string> StandardPatterns = new()
+        {
+            { 'a', "ddd" },
+            { 'A', "dddd" },
+            { 'b', "MMM" },
+            { 'B', "MMMM" },
+            { 'c', "f" },
+            { 'd', "dd" },
+            { 'D', "MM/dd/yy" },
+            { 'F', "yyyy-MM-dd" },
+            { 'g', "yy" },
+            { 'G', "yyyy" },
+            { 'h', "MMM" },
+            { 'H', "HH" },
+            { 'I', "hh" },
+            { 'm', "MM" },
+            { 'M', "mm" },
+            { 'p', "tt" },
+            { 'r', "h:mm:ss tt" },
+            { 'R', "HH:mm" },
+            { 'S', "ss" },
+            { 'T', "HH:mm:ss" },
+            { 'y', "yy" },
+            { 'Y', "yyyy" },
+            { 'x', "d" },
+            { 'X', "T" },
+            { 'z', "zzz" },
+            { 'Z', "zzz" },
+        };
+
         private static DynValue GetUnixTime(DateTime dateTime, DateTime? epoch = null)
         {
             double time = (dateTime - (epoch ?? Epoch)).TotalSeconds;
 
-            if (time < 0.0)
-            {
-                return DynValue.Nil;
-            }
-
-            return DynValue.NewNumber(time);
+            return time < 0.0 ? DynValue.Nil : DynValue.NewNumber(time);
         }
 
         private static DateTime FromUnixTime(double unixtime)
@@ -237,43 +262,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             else
             {
-                return DynValue.NewString(StrFTime(format, reference));
+                LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                    executionContext.Script.CompatibilityVersion
+                );
+                return DynValue.NewString(StrFTime(format, reference, version));
             }
         }
 
-        private static string StrFTime(string format, DateTime d)
+        private static string StrFTime(string format, DateTime d, LuaCompatibilityVersion version)
         {
             // ref: http://www.cplusplus.com/reference/ctime/strftime/
-
-            Dictionary<char, string> standardPatterns = new()
-            {
-                { 'a', "ddd" },
-                { 'A', "dddd" },
-                { 'b', "MMM" },
-                { 'B', "MMMM" },
-                { 'c', "f" },
-                { 'd', "dd" },
-                { 'D', "MM/dd/yy" },
-                { 'F', "yyyy-MM-dd" },
-                { 'g', "yy" },
-                { 'G', "yyyy" },
-                { 'h', "MMM" },
-                { 'H', "HH" },
-                { 'I', "hh" },
-                { 'm', "MM" },
-                { 'M', "mm" },
-                { 'p', "tt" },
-                { 'r', "h:mm:ss tt" },
-                { 'R', "HH:mm" },
-                { 'S', "ss" },
-                { 'T', "HH:mm:ss" },
-                { 'y', "yy" },
-                { 'Y', "yyyy" },
-                { 'x', "d" },
-                { 'X', "T" },
-                { 'z', "zzz" },
-                { 'Z', "zzz" },
-            };
 
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
@@ -304,79 +302,114 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     continue;
                 }
 
-                if (c == 'O' || c == 'E')
+                if (c is 'O' or 'E')
                 {
                     continue; // no modifiers
                 }
 
                 isEscapeSequence = false;
 
-                if (standardPatterns.TryGetValue(c, out string pattern))
+                if (StandardPatterns.TryGetValue(c, out string pattern))
                 {
                     sb.Append(d.ToString(pattern, CultureInfo.InvariantCulture));
                 }
-                else if (c == 'e')
-                {
-                    string s = d.ToString("%d", CultureInfo.InvariantCulture);
-                    if (s.Length < 2)
-                    {
-                        s = " " + s;
-                    }
-
-                    sb.Append(s);
-                }
-                else if (c == 'n')
-                {
-                    sb.Append('\n');
-                }
-                else if (c == 't')
-                {
-                    sb.Append('\t');
-                }
-                else if (c == 'C')
-                {
-                    sb.Append((int)(d.Year / 100));
-                }
-                else if (c == 'j')
-                {
-                    sb.Append(d.DayOfYear.ToString("000", CultureInfo.InvariantCulture));
-                }
-                else if (c == 'u')
-                {
-                    int weekDay = (int)d.DayOfWeek;
-                    if (weekDay == 0)
-                    {
-                        weekDay = 7;
-                    }
-
-                    sb.Append(weekDay);
-                }
-                else if (c == 'w')
-                {
-                    int weekDay = (int)d.DayOfWeek;
-                    sb.Append(weekDay);
-                }
-                else if (c == 'U')
-                {
-                    int week = GetWeekNumberWithFirstDay(d, DayOfWeek.Sunday);
-                    sb.Append(week.ToString("00", CultureInfo.InvariantCulture));
-                }
-                else if (c == 'V')
-                {
-                    int isoWeek = GetIso8601WeekNumber(d);
-                    sb.Append(isoWeek.ToString("00", CultureInfo.InvariantCulture));
-                }
-                else if (c == 'W')
-                {
-                    int week = GetWeekNumberWithFirstDay(d, DayOfWeek.Monday);
-                    sb.Append(week.ToString("00", CultureInfo.InvariantCulture));
-                }
                 else
                 {
-                    throw new ScriptRuntimeException(
-                        "bad argument #1 to 'date' (invalid conversion specifier '{0}')",
-                        format
-                    );
+                    switch (c)
+                    {
+                        case 'e':
+                        {
+                            string s = d.ToString("%d", CultureInfo.InvariantCulture);
+                            if (s.Length < 2)
+                            {
+                                s = " " + s;
+                            }
+
+                            sb.Append(s);
+                            break;
+                        }
+                        case 'n':
+                            sb.Append('\n');
+                            break;
+                        case 't':
+                            sb.Append('\t');
+                            break;
+                        case 'C':
+                            sb.Append((int)(d.Year / 100));
+                            break;
+                        case 'j':
+                            sb.Append(d.DayOfYear.ToString("000", CultureInfo.InvariantCulture));
+                            break;
+                        case 'u':
+                        {
+                            int weekDay = (int)d.DayOfWeek;
+                            if (weekDay == 0)
+                            {
+                                weekDay = 7;
+                            }
+
+                            sb.Append(weekDay);
+                            break;
+                        }
+                        case 'w':
+                        {
+                            int weekDay = (int)d.DayOfWeek;
+                            sb.Append(weekDay);
+                            break;
+                        }
+                        case 'U':
+                        {
+                            int week = GetWeekNumberWithFirstDay(d, DayOfWeek.Sunday);
+                            sb.Append(week.ToString("00", CultureInfo.InvariantCulture));
+                            break;
+                        }
+                        case 'V':
+                        {
+                            int isoWeek = GetIso8601WeekNumber(d);
+                            sb.Append(isoWeek.ToString("00", CultureInfo.InvariantCulture));
+                            break;
+                        }
+                        case 'W':
+                        {
+                            int week = GetWeekNumberWithFirstDay(d, DayOfWeek.Monday);
+                            sb.Append(week.ToString("00", CultureInfo.InvariantCulture));
+                            break;
+                        }
+                        default:
+                        {
+                            // Version-specific handling for unknown conversion specifiers:
+                            // Lua 5.1: Returns the literal specifier (e.g., "%Q" -> "%Q")
+                            // Lua 5.2+: Throws "bad argument #1 to 'date' (invalid conversion specifier '%Qa')"
+                            // Lua includes trailing characters after the invalid specifier for context
+                            if (version == LuaCompatibilityVersion.Lua51)
+                            {
+                                sb.Append('%');
+                                sb.Append(c);
+                            }
+                            else
+                            {
+                                // Build the invalid specifier string for the error message,
+                                // including trailing characters as Lua does
+                                Utf16ValueStringBuilder specBuilder = ZString.CreateStringBuilder();
+                                specBuilder.Append(c);
+                                // Include up to one trailing character for context (like Lua does)
+                                // Note: i points to current character c, so we need i+1 for the next character
+                                if (i + 1 < format.Length)
+                                {
+                                    specBuilder.Append(format[i + 1]);
+                                }
+                                string invalidSpec = specBuilder.ToString();
+                                specBuilder.Dispose();
+
+                                throw new ScriptRuntimeException(
+                                    "bad argument #1 to 'date' (invalid conversion specifier '%{0}')",
+                                    invalidSpec
+                                );
+                            }
+
+                            break;
+                        }
+                    }
                 }
             }
 

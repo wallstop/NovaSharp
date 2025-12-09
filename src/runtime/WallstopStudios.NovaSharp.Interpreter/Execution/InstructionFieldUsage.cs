@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
 
     /// <summary>

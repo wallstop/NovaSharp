@@ -26,6 +26,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         private static readonly string[] ExecuteCommandMissingArgument = { "-X" };
         private static readonly string[] ExecuteUnknownCommandArguments = { "-X", "nope" };
         private static readonly string[] HardwireFlagArguments = { "-W" };
+        private static readonly string[] InvalidLuaVersionArguments =
+        {
+            "--lua-version",
+            "invalid",
+            "script.lua",
+        };
+        private static readonly string[] LuaVersionMissingValueArguments = { "--lua-version" };
 
         static ProgramTUnitTests()
         {
@@ -506,5 +513,156 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                 return ReturnValue;
             }
         }
+
+        #region TryParseLuaVersion Tests
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("5.1", LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments("5.2", LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments("5.3", LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments("5.4", LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments("5.5", LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments("51", LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments("52", LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments("53", LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments("54", LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments("55", LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments("Lua5.1", LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments("Lua5.2", LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments("Lua5.3", LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments("Lua5.4", LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments("Lua5.5", LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments("lua51", LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments("lua52", LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments("lua53", LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments("lua54", LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments("lua55", LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments("latest", LuaCompatibilityVersion.Latest)]
+        [global::TUnit.Core.Arguments("Latest", LuaCompatibilityVersion.Latest)]
+        [global::TUnit.Core.Arguments("LATEST", LuaCompatibilityVersion.Latest)]
+        public async Task TryParseLuaVersionValidInputsReturnExpectedVersion(
+            string input,
+            LuaCompatibilityVersion expected
+        )
+        {
+            bool success = Program.TryParseLuaVersion(input, out LuaCompatibilityVersion result);
+
+            await Assert.That(success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result).IsEqualTo(expected).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(null)]
+        [global::TUnit.Core.Arguments("")]
+        [global::TUnit.Core.Arguments("   ")]
+        [global::TUnit.Core.Arguments("5.0")]
+        [global::TUnit.Core.Arguments("5.6")]
+        [global::TUnit.Core.Arguments("invalid")]
+        [global::TUnit.Core.Arguments("lua")]
+        [global::TUnit.Core.Arguments("6.0")]
+        [global::TUnit.Core.Arguments("abc")]
+        public async Task TryParseLuaVersionInvalidInputsReturnFalse(string input)
+        {
+            bool success = Program.TryParseLuaVersion(input, out LuaCompatibilityVersion result);
+
+            await Assert.That(success).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result)
+                .IsEqualTo(LuaCompatibilityVersion.Latest)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CheckArgsLuaVersionFlagSetsCompatibility()
+        {
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using TempFileScope scriptScope = TempFileScope.Create(
+                namePrefix: "version_test_",
+                extension: ".lua"
+            );
+            string scriptPath = scriptScope.FilePath;
+            await File.WriteAllTextAsync(scriptPath, "print(_VERSION)").ConfigureAwait(false);
+
+            await WithConsoleAsync(async console =>
+                {
+                    // Note: Using short flag form
+                    bool handled = Program.CheckArgs(
+                        new[] { "-v", "5.2", scriptPath },
+                        CreateShellContext()
+                    );
+
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    string output = console.Writer.ToString();
+                    await Assert.That(output).Contains("Lua 5.2").ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CheckArgsLuaVersionLongFlagSetsCompatibility()
+        {
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using TempFileScope scriptScope = TempFileScope.Create(
+                namePrefix: "version_test_",
+                extension: ".lua"
+            );
+            string scriptPath = scriptScope.FilePath;
+            await File.WriteAllTextAsync(scriptPath, "print(_VERSION)").ConfigureAwait(false);
+
+            await WithConsoleAsync(async console =>
+                {
+                    // Note: Using long flag form
+                    bool handled = Program.CheckArgs(
+                        new[] { "--lua-version", "5.3", scriptPath },
+                        CreateShellContext()
+                    );
+
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    string output = console.Writer.ToString();
+                    await Assert.That(output).Contains("Lua 5.3").ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CheckArgsInvalidLuaVersionReportsError()
+        {
+            await WithConsoleAsync(async console =>
+                {
+                    bool handled = Program.CheckArgs(
+                        InvalidLuaVersionArguments,
+                        CreateShellContext()
+                    );
+
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    string output = console.Writer.ToString();
+                    await Assert.That(output).Contains("Invalid Lua version").ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CheckArgsLuaVersionWithMissingValueReportsError()
+        {
+            await WithConsoleAsync(async console =>
+                {
+                    bool handled = Program.CheckArgs(
+                        LuaVersionMissingValueArguments,
+                        CreateShellContext()
+                    );
+
+                    await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    string output = console.Writer.ToString();
+                    await Assert
+                        .That(output)
+                        .Contains(CliMessages.ProgramWrongSyntax)
+                        .ConfigureAwait(false);
+                })
+                .ConfigureAwait(false);
+        }
+
+        #endregion
     }
 }

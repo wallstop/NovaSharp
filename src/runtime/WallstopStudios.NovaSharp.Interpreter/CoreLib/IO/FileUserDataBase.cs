@@ -6,12 +6,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
     using System.IO;
     using System.Security;
     using System.Text;
-    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 

@@ -2,7 +2,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
 
     /// <summary>
     /// A thread-safe generic object pool that manages reusable instances of type T.

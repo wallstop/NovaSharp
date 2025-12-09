@@ -1,4 +1,4 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:159

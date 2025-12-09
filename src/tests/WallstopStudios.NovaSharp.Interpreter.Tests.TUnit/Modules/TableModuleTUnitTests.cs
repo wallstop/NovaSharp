@@ -214,6 +214,165 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("sentinel");
         }
 
+        // ==========================================================================
+        // Integer representation tests (Lua 5.3+ semantics)
+        // ==========================================================================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task InsertErrorsOnNonIntegerPositionLua53Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("table.insert({1,2,3}, 1.5, 'x')"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        public async Task InsertTruncatesNonIntegerPositionLua51And52(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            // table.insert({1,2,3}, 1.9, 'x') should truncate 1.9 to 1, inserting at position 1
+            DynValue result = script.DoString(
+                @"
+                local t = {1, 2, 3}
+                table.insert(t, 1.9, 'x')
+                return t[1]
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("x").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task RemoveErrorsOnNonIntegerPositionLua53Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("table.remove({1,2,3}, 1.5)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task ConcatErrorsOnNonIntegerIndexLua53Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("table.concat({'a','b','c'}, '', 1.5)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task UnpackErrorsOnNonIntegerIndexLua53Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("table.unpack({1,2,3}, 1.5)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MoveErrorsOnNonIntegerArgLua53Plus()
+        {
+            // table.move is Lua 5.3+ only, so always requires integer representation
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = Compatibility.LuaCompatibilityVersion.Lua54;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("table.move({1,2,3}, 1.5, 2, 1)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InsertAcceptsIntegralFloatLua53Plus()
+        {
+            // Integral floats like 2.0 should be accepted
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = Compatibility.LuaCompatibilityVersion.Lua54;
+
+            DynValue result = script.DoString(
+                @"
+                local t = {1, 2, 3}
+                table.insert(t, 2.0, 'x')  -- 2.0 is integral
+                return t[2]
+            "
+            );
+
+            await Assert.That(result.String).IsEqualTo("x").ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);

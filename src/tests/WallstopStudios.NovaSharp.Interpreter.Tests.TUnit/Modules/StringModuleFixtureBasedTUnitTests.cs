@@ -185,5 +185,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// Tests large integer index handling at double precision boundaries.
+        /// </summary>
+        /// <remarks>
+        /// This fixture validates that NovaSharp correctly distinguishes between
+        /// integer and float types for large values near the 2^53 precision boundary.
+        /// Fixture: <c>LuaFixtures/StringModuleTUnitTests/LargeIntegerIndexBehavior.lua</c>
+        /// </remarks>
+        [global::TUnit.Core.Test]
+        public async Task LargeIntegerIndexBehaviorFromFixture()
+        {
+            LuaFixtureHelper helper = new("StringModuleTUnitTests", "LargeIntegerIndexBehavior");
+
+            await Assert.That(helper.FixtureExists()).IsTrue().ConfigureAwait(false);
+
+            // This fixture contains inline assert() calls - if it completes without
+            // throwing, all assertions passed. The fixture tests:
+            // - Large integer indices (2^53+1) stored as integer type
+            // - math.maxinteger as index
+            // - Whole number floats (5.0) as indices
+            // - Integer vs float type distinction via math.type()
+            // - Float precision loss behavior (2^53+1 rounds to 2^53)
+            helper.RunFixture();
+        }
     }
 }

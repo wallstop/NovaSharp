@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Options
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Defines behaviour of the colon ':' operator in CLR callbacks.

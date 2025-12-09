@@ -7,7 +7,7 @@ the Lua code from string literals. The extracted snippets are written to
 headers so they can be tested against real Lua runtimes.
 
 Each extracted file includes a metadata header:
-    -- @lua-versions: 5.1, 5.2, 5.3, 5.4
+    -- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
     -- @novasharp-only: false
     -- @source: path/to/test.cs:123
     -- @test: TestClass.TestMethod
@@ -126,6 +126,7 @@ class LuaVersionCompatibility:
     lua_52: bool = True
     lua_53: bool = True
     lua_54: bool = True
+    lua_55: bool = True
     novasharp_only: bool = False
     reasons: list[str] = field(default_factory=list)
     
@@ -141,6 +142,8 @@ class LuaVersionCompatibility:
             versions.append("5.3")
         if self.lua_54:
             versions.append("5.4")
+        if self.lua_55:
+            versions.append("5.5")
         return versions
     
     @property
@@ -151,7 +154,7 @@ class LuaVersionCompatibility:
         versions = self.compatible_versions
         if not versions:
             return "none"
-        if len(versions) == 4:
+        if len(versions) == 5:
             return "5.1+"
         return ", ".join(versions)
 
@@ -466,6 +469,7 @@ def write_manifest(result: ExtractionResult, output_dir: Path, dry_run: bool = F
             "5.2": len(result.by_version("5.2")),
             "5.3": len(result.by_version("5.3")),
             "5.4": len(result.by_version("5.4")),
+            "5.5": len(result.by_version("5.5")),
         },
         "snippets": [
             {
@@ -499,6 +503,7 @@ def print_summary(result: ExtractionResult) -> None:
     print(f"  Lua 5.2: {len(result.by_version('5.2'))}")
     print(f"  Lua 5.3: {len(result.by_version('5.3'))}")
     print(f"  Lua 5.4: {len(result.by_version('5.4'))}")
+    print(f"  Lua 5.5: {len(result.by_version('5.5'))}")
     
     if result.errors:
         print(f"\nErrors: {len(result.errors)}")

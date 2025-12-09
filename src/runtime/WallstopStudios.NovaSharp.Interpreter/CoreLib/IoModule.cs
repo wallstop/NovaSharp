@@ -12,7 +12,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -439,9 +438,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             string mode = vmode.IsNil() ? "r" : vmode.String;
 
+            // Version-specific handling for invalid mode:
+            // Lua 5.1: Returns (nil, error_message) for invalid mode
+            // Lua 5.2+: Throws "bad argument #2 to 'open' (invalid mode)"
             if (ContainsInvalidModeCharacters(mode))
             {
-                throw ScriptRuntimeException.BadArgument(1, "open", "invalid mode");
+                LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                    executionContext.Script.CompatibilityVersion
+                );
+                if (version == LuaCompatibilityVersion.Lua51)
+                {
+                    return DynValue.NewTuple(
+                        DynValue.Nil,
+                        DynValue.NewString(filename + ": invalid mode")
+                    );
+                }
+
+                throw new ScriptRuntimeException("bad argument #2 to 'open' (invalid mode)");
             }
 
             try

@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Debugging
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Enumeration of the possible watch types

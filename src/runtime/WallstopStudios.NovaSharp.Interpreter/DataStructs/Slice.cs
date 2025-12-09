@@ -2,8 +2,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
 
     /// <summary>
     /// A struct-based enumerator for <see cref="Slice{T}"/> to avoid heap allocation during foreach iteration.

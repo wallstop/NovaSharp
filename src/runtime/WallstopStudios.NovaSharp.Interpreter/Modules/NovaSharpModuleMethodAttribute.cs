@@ -1,8 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Modules
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
-    using WallstopStudios.NovaSharp.Interpreter.Execution;
 
     /// <summary>
     /// In a module type, mark methods or fields with this attribute to have them exposed as module functions.

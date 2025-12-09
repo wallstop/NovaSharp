@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -42,11 +43,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             await Assert.That(result.IsNil()).IsTrue();
         }
 
+        /// <remarks>
+        /// Lua 5.4 §6.4 string.byte — indices must have an exact integer representation.
+        /// Non-integer floats (1.9) throw "number has no integer representation".
+        /// This is a change from Lua 5.1/5.2 which silently truncated.
+        /// </remarks>
         [global::TUnit.Core.Test]
-        public async Task StringByteTruncatesFloatIndices()
+        public async Task StringByteErrorsOnNonIntegerIndex()
         {
-            DynValue result = Evaluate("return string.byte('Lua', 1.9)");
-            await Assert.That(result.Number).IsEqualTo(76);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                Evaluate("return string.byte('Lua', 1.9)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <remarks>Lua 5.4 accepts integral floats like 2.0 as valid indices.</remarks>
+        [global::TUnit.Core.Test]
+        public async Task StringByteAcceptsIntegralFloatIndices()
+        {
+            DynValue result = Evaluate("return string.byte('Lua', 2.0)");
+            await Assert.That(result.Number).IsEqualTo(117);
         }
 
         /// <remarks>Lua 5.4 §6.4 string.byte — empty ranges yield no values; NovaSharp currently returns void.</remarks>
@@ -79,21 +99,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             await Assert.That(result.String).IsEqualTo("abc");
         }
 
+        /// <remarks>Lua 5.4 §6.4 string.char — values outside 0-255 raise "value out of range" error.</remarks>
         [global::TUnit.Core.Test]
-        public async Task StringCharWrapsValuesModulo256()
+        public async Task StringCharErrorsOnOutOfRangeValues()
         {
-            DynValue result = Evaluate("return string.char(-1, 256)");
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                Evaluate("return string.char(-1, 256)")
+            );
 
-            await Assert.That(result.String.Length).IsEqualTo(2);
-            await Assert.That(result.String[0]).IsEqualTo((char)255);
-            await Assert.That(result.String[1]).IsEqualTo('\0');
+            await Assert.That(exception.Message).Contains("value out of range");
         }
 
+        /// <remarks>
+        /// Lua 5.4 §6.4 string.char — Non-integer floats throw "number has no integer representation".
+        /// Truncation behavior was only valid in Lua 5.1/5.2.
+        /// </remarks>
         [global::TUnit.Core.Test]
-        public async Task StringCharTruncatesFloats()
+        public async Task StringCharErrorsOnNonIntegerFloat()
         {
-            DynValue result = Evaluate("return string.char(65.8)");
-            await Assert.That(result.String).IsEqualTo("A");
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                Evaluate("return string.char(65.8)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <remarks>
+        /// Lua 5.4 §6.4 string.char — Integer floats like 65.0 are valid.
+        /// </remarks>
+        [global::TUnit.Core.Test]
+        public async Task StringCharAcceptsIntegerFloat()
+        {
+            DynValue result = Evaluate("return string.char(65.0)");
+            await Assert.That(result.String).IsEqualTo("A").ConfigureAwait(false);
         }
 
         /// <remarks>Lua 5.4 §6.4 string.char — zero arguments yield an empty string.</remarks>

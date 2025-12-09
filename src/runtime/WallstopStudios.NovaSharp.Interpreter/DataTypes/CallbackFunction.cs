@@ -4,7 +4,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Options;
 

@@ -4,7 +4,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System.IO;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>

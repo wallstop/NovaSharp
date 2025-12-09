@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
 
     /// <summary>

@@ -4,11 +4,15 @@
 
 > **🚫 CRITICAL: NEVER perform `git add` or `git commit` operations.** Leave all version control to the human developer.
 
+> **🚫 CRITICAL: NEVER use absolute paths to local development machines.** All file paths must be relative to the repository root. Never reference paths like `D:/Code`, `C:/Users`, `/Users/username`, `/home/username`, or any machine-specific path in committed files.
+
 See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
 - Project structure and module organization
 - Build, test, and development commands
 - Coding style and naming conventions
+- **LuaNumber usage for Lua math operations**
 - Testing guidelines and TUnit data-driven tests
+- **Lua fixture verification policy** (create cross-interpreter test fixtures for all bug fixes)
 - Commit and pull request guidelines
 
 For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).

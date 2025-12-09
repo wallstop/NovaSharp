@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib.IO;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -71,10 +72,11 @@ end
             await Assert.That(outputs[1]).IsEqualTo("1000001");
         }
 
+        // Lua 5.2+ throws for invalid mode
         [global::TUnit.Core.Test]
-        public async Task OpenThrowsForInvalidMode()
+        public async Task OpenThrowsForInvalidModeInLua52Plus()
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
             using TempFileScope missingFileScope = TempFileScope.Create(extension: ".txt");
             string path = missingFileScope.EscapedPath;
 
@@ -84,6 +86,24 @@ end
             });
 
             await Assert.That(exception.Message).Contains("invalid mode");
+        }
+
+        // Lua 5.1 returns (nil, error_message) for invalid mode
+        [global::TUnit.Core.Test]
+        public async Task OpenReturnsErrorTupleForInvalidModeInLua51()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
+            using TempFileScope tempScope = TempFileScope.Create(extension: ".txt");
+            string path = tempScope.EscapedPath;
+
+            DynValue result = script.DoString($"return io.open('{path}', 'z')");
+
+            await Assert.That(result.Tuple.Length).IsGreaterThan(1).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .Contains("invalid mode")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1008,6 +1028,17 @@ end
         private static Script CreateScript()
         {
             Script script = new Script(CoreModules.PresetComplete);
+            script.Options.DebugPrint = _ => { };
+            return script;
+        }
+
+        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            Script script = new Script(CoreModules.PresetComplete, options);
             script.Options.DebugPrint = _ => { };
             return script;
         }

@@ -306,7 +306,7 @@ def main():
     parser.add_argument(
         '--lua-version',
         default='5.4',
-        choices=['5.1', '5.2', '5.3', '5.4'],
+        choices=['5.1', '5.2', '5.3', '5.4', '5.5'],
         help='Lua version to compare against'
     )
     parser.add_argument(
@@ -329,6 +329,11 @@ def main():
         '--enforce',
         action='store_true',
         help='Exit with error on unexpected mismatches (for CI gating)'
+    )
+    parser.add_argument(
+        '--monitor',
+        action='store_true',
+        help='Monitor mode - report results without failing (for experimental versions like 5.5)'
     )
     
     args = parser.parse_args()
@@ -462,8 +467,16 @@ def main():
     
     print(f"\nReport written to: {args.output_file}")
     
-    # Exit with error only if enforce mode and there are unexpected mismatches
-    if args.enforce and stats['mismatch'] > 0:
+    # Exit logic based on mode
+    if args.monitor:
+        # Monitor mode: always succeed but report status
+        if stats['mismatch'] > 0:
+            print(f"\n📊 MONITOR MODE: {stats['mismatch']} mismatch(es) found (not failing)")
+            print("This is expected for experimental Lua versions like 5.5.")
+        else:
+            print("\n✅ MONITOR MODE: All comparable fixtures match.")
+        sys.exit(0)
+    elif args.enforce and stats['mismatch'] > 0:
         print(f"\n❌ ENFORCE MODE: {stats['mismatch']} unexpected mismatch(es) found!")
         print("Add to KNOWN_DIVERGENCES in compare-lua-outputs.py if these are expected,")
         print("or fix the divergence in NovaSharp runtime.")

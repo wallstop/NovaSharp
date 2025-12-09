@@ -2,7 +2,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
 {
     using System.IO;
     using System.Text;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Abstract class implementing a file Lua userdata. Methods are meant to be called by Lua code.

@@ -1,7 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
     /// Defines the NovaSharp VM instruction set. Values must remain stable because they are persisted in chunk dumps.

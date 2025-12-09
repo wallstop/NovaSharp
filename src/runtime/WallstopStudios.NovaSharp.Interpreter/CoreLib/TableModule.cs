@@ -36,8 +36,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue vi = args.AsType(1, "unpack", DataType.Number, true);
             DynValue vj = args.AsType(2, "unpack", DataType.Number, true);
 
-            int ii = vi.IsNil() ? 1 : (int)vi.Number;
-            int ij = vj.IsNil() ? GetTableLength(executionContext, s) : (int)vj.Number;
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+
+            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+            int ii = vi.IsNil()
+                ? 1
+                : (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vi, "unpack", 2);
+            int ij = vj.IsNil()
+                ? GetTableLength(executionContext, s)
+                : (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vj, "unpack", 3);
 
             Table t = s.Table;
             int count = ij - ii + 1;
@@ -231,6 +238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             int len = GetTableLength(executionContext, vlist);
             Table list = vlist.Table;
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
             if (vvalue.IsNil())
             {
@@ -249,7 +257,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            int pos = (int)vpos.Number;
+            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+            int pos = (int)
+                Utilities.LuaNumberHelpers.ToLongWithValidation(version, vpos, "insert", 2);
 
             if (pos > len + 1 || pos < 1)
             {
@@ -294,8 +304,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             int len = GetTableLength(executionContext, vlist);
             Table list = vlist.Table;
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            int pos = vpos.IsNil() ? len : (int)vpos.Number;
+            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+            int pos = vpos.IsNil()
+                ? len
+                : (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vpos, "remove", 2);
 
             if (pos >= len + 1 || (pos < 1 && len > 0))
             {
@@ -343,7 +357,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             Table list = vlist.Table;
             string sep = vsep.IsNil() ? "" : vsep.String;
-            int start = vstart.IsNilOrNan() ? 1 : (int)vstart.Number;
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+
+            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+            int start = vstart.IsNilOrNan()
+                ? 1
+                : (int)
+                    Utilities.LuaNumberHelpers.ToLongWithValidation(version, vstart, "concat", 3);
             int end;
 
             if (vend.IsNilOrNan())
@@ -352,7 +372,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             else
             {
-                end = (int)vend.Number;
+                // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+                end = (int)
+                    Utilities.LuaNumberHelpers.ToLongWithValidation(version, vend, "concat", 4);
             }
 
             if (end < start)
@@ -402,11 +424,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             const string func = "move";
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
             Table source = args.AsType(0, func, DataType.Table, false).Table;
-            int from = args.AsInt(1, func);
-            int to = args.AsInt(2, func);
-            int target = args.AsInt(3, func);
+            // table.move is Lua 5.3+ only, so always require integer representation
+            DynValue vFrom = args.AsType(1, func, DataType.Number, false);
+            DynValue vTo = args.AsType(2, func, DataType.Number, false);
+            DynValue vTarget = args.AsType(3, func, DataType.Number, false);
+            int from = (int)
+                Utilities.LuaNumberHelpers.ToLongWithValidation(version, vFrom, func, 2);
+            int to = (int)Utilities.LuaNumberHelpers.ToLongWithValidation(version, vTo, func, 3);
+            int target = (int)
+                Utilities.LuaNumberHelpers.ToLongWithValidation(version, vTarget, func, 4);
             Table destination =
                 (args.Count >= 5 && !args[4].IsNil())
                     ? args.AsType(4, func, DataType.Table, false).Table

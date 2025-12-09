@@ -182,8 +182,10 @@ if [[ "$skip_build" != true ]]; then
         build_restore_flag=(--no-restore)
     fi
 
-    # Build with maximum parallelism and node reuse for optimal performance
-    if ! dotnet build "src/NovaSharp.sln" -c "$configuration" --nologo -m /nodeReuse:true "${build_restore_flag[@]}" 2>&1 | tee "$build_log_path"; then
+    # Build with maximum parallelism and node reuse for optimal performance.
+    # Disable ContinuousIntegrationBuild to ensure coverlet can instrument assemblies
+    # (deterministic builds with source-link paths break coverage collection).
+    if ! dotnet build "src/NovaSharp.sln" -c "$configuration" --nologo -m /nodeReuse:true -p:ContinuousIntegrationBuild=false "${build_restore_flag[@]}" 2>&1 | tee "$build_log_path"; then
         echo ""
         echo "dotnet build failed, tailing $build_log_path:"
         tail -n 200 "$build_log_path"

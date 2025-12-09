@@ -45,7 +45,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
                 return LuaCompatibilityVersion.Lua52;
             }
 
+            // 301-basic.t expects Lua 5.1/5.2 xpcall nil handler behavior
+            // (nil handler allowed without upfront validation)
+            if (IsLua52XpcallSuite(path))
+            {
+                return LuaCompatibilityVersion.Lua52;
+            }
+
             return null;
+        }
+
+        private static bool IsLua52XpcallSuite(string path)
+        {
+            return string.Equals(
+                path,
+                "TestMore/StandardLibrary/301-basic.t",
+                StringComparison.OrdinalIgnoreCase
+            );
         }
 
         private static bool IsBit32Suite(string path)

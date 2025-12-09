@@ -168,10 +168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// <exception cref="SyntaxErrorException">Thrown when a label is defined twice in the same scope.</exception>
         internal void DefineLabel(LabelStatement label)
         {
-            if (_localLabels == null)
-            {
-                _localLabels = new Dictionary<string, LabelStatement>();
-            }
+            _localLabels ??= new Dictionary<string, LabelStatement>();
 
             if (_localLabels.TryGetValue(label.Label, out LabelStatement existing))
             {

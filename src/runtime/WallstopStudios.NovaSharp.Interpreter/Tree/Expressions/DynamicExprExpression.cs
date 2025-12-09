@@ -3,7 +3,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
     using System;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>
     /// Represents a dynamic expression placeholder (e.g., created via <c>?</c> prefix in the REPL).

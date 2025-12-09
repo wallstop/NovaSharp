@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
@@ -225,16 +226,100 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(formatted.String).IsEqualTo(" 1|\n|\t|%|20|001|5|5");
         }
 
+        // Lua 5.2+ throws for unknown conversion specifiers
         [global::TUnit.Core.Test]
-        public async Task DateThrowsWhenConversionSpecifierUnknown()
+        public async Task DateThrowsWhenConversionSpecifierUnknownInLua52Plus()
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString("return os.date('%Q', 1609459200)")
             );
 
             await Assert.That(exception.Message).Contains("invalid conversion specifier");
+        }
+
+        // Lua 5.1 returns the literal specifier for unknown conversion specifiers
+        [global::TUnit.Core.Test]
+        public async Task DateReturnsLiteralForUnknownSpecifierInLua51()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
+
+            DynValue result = script.DoString("return os.date('%Q', 1609459200)");
+
+            await Assert.That(result.String).Contains("%Q").ConfigureAwait(false);
+        }
+
+        // Data-driven tests for invalid specifier error messages in Lua 5.2+
+        // These verify that the error message correctly includes the trailing context character
+        [global::TUnit.Core.Test]
+        [Arguments("%Ja", "Ja", "Invalid specifier with trailing char 'a'")] // Specifier J with trailing 'a'
+        [Arguments("%Qb", "Qb", "Invalid specifier Q with trailing char 'b'")] // Specifier Q with trailing 'b'
+        [Arguments("%qx", "qx", "Invalid specifier q with trailing char 'x'")] // Specifier q with trailing 'x'
+        [Arguments("%J", "J", "Invalid specifier J at end of string")] // Specifier at end - no trailing char
+        [Arguments("%Q", "Q", "Invalid specifier Q at end of string")] // Specifier at end - no trailing char
+        [Arguments("hello %Ja world", "Ja", "Invalid specifier in middle of format string")]
+        [Arguments("%Y-%J-test", "J-", "Invalid specifier between valid specifiers")] // J with '-' trailing
+        public async Task DateErrorMessageIncludesCorrectSpecifierContext(
+            string formatString,
+            string expectedSpecifier,
+            string scenarioDescription
+        )
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+            {
+                DynValue result = script.DoString($"return os.date('{formatString}', 1609459200)");
+                // If we get here, no exception was thrown
+                throw new InvalidOperationException(
+                    $"Expected ScriptRuntimeException but got result: {result?.ToString() ?? "null"}. Scenario: {scenarioDescription}"
+                );
+            });
+
+            string expectedPattern = $"'%{expectedSpecifier}'";
+            await Assert
+                .That(exception.Message)
+                .Contains(expectedPattern)
+                .Because(
+                    $"{scenarioDescription}: Expected error message to contain '{expectedPattern}' but got: {exception.Message}"
+                )
+                .ConfigureAwait(false);
+
+            // Also verify the standard parts of the message are present
+            await Assert
+                .That(exception.Message)
+                .Contains("bad argument #1 to 'date'")
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("invalid conversion specifier")
+                .ConfigureAwait(false);
+        }
+
+        // Data-driven tests for Lua 5.1 literal output (unknown specifiers pass through)
+        [global::TUnit.Core.Test]
+        [Arguments("%Ja", "%J", "Specifier J with trailing char - outputs literal %J")]
+        [Arguments("%Qb", "%Q", "Specifier Q with trailing char - outputs literal %Q")]
+        [Arguments("%J", "%J", "Specifier J at end - outputs literal %J")]
+        [Arguments("hello %Q world", "hello %Q world", "Specifier in middle - preserves context")]
+        public async Task DateLua51OutputsLiteralForUnknownSpecifiers(
+            string formatString,
+            string expectedOutput,
+            string scenarioDescription
+        )
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
+
+            DynValue result = script.DoString($"return os.date('{formatString}', 1609459200)");
+
+            await Assert
+                .That(result.String)
+                .Contains(expectedOutput)
+                .Because(
+                    $"{scenarioDescription}: Expected output to contain '{expectedOutput}' but got: {result.String}"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -274,6 +359,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);
+        }
+
+        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            return new Script(CoreModules.PresetComplete, options);
         }
 
         private static Script CreateScriptWithTimeProvider(params DateTimeOffset[] timestamps)

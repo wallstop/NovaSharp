@@ -264,13 +264,13 @@ namespace WallstopStudios.NovaSharp.Cli
         /// Short usage line rendered in help output for the CLI program.
         /// </summary>
         internal static string ProgramUsageShort =>
-            "usage: NovaSharp [-H | --help | -X \"command\" | -W <dumpfile> <destfile> [--internals] [--vb] | <script>]";
+            "usage: NovaSharp [-H | --help | -X \"command\" | -W <dumpfile> <destfile> [--internals] [--vb] | [-v <version>] <script>]";
 
         /// <summary>
         /// Detailed usage instructions describing all CLI switches.
         /// </summary>
         internal static string ProgramUsageLong =>
-            "usage: NovaSharp [-H | --help | -X \"command\" | -W <dumpfile> <destfile> [--internals] [--vb] [--class:<name>] [--namespace:<name>] | <script>]";
+            "usage: NovaSharp [-H | --help | -X \"command\" | -W <dumpfile> <destfile> [--internals] [--vb] [--class:<name>] [--namespace:<name>] | [-v|--lua-version <version>] <script>]";
 
         /// <summary>
         /// Description for the help switch displayed in CLI usage.
@@ -286,6 +286,12 @@ namespace WallstopStudios.NovaSharp.Cli
         /// Description for the hardwire switch displayed in CLI usage.
         /// </summary>
         internal static string ProgramUsageHardwireSwitch => "-W : creates hardwire descriptors";
+
+        /// <summary>
+        /// Description for the Lua version switch displayed in CLI usage.
+        /// </summary>
+        internal static string ProgramUsageLuaVersionSwitch =>
+            "-v, --lua-version <version> : sets the Lua compatibility mode (5.1, 5.2, 5.3, 5.4, 5.5, latest)";
 
         /// <summary>
         /// Welcome banner emitted when the interpreter starts.

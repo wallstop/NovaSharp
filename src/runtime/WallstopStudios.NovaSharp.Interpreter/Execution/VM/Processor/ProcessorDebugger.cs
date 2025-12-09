@@ -2,7 +2,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
-    using System.Globalization;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;

@@ -1,12 +1,11 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
-    using System;
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -217,15 +216,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 a = ListPool<DynValue>.ToExactArray(tempList);
             }
 
+            // Version-specific handler validation:
+            // Lua 5.1 & 5.2: Do NOT pre-validate the error handler type.
+            //   Non-callable handlers are effectively ignored for successful calls,
+            //   and cause secondary errors on failure.
+            // Lua 5.3+: Pre-validate and throw "bad argument #2" if handler is not a function.
+            // NOTE: All versions throw if no handler argument is provided at all.
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool isLua51Or52 =
+                version == LuaCompatibilityVersion.Lua51
+                || version == LuaCompatibilityVersion.Lua52;
+
+            // Missing handler argument throws in all versions
+            if (args.Count < 2)
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    1,
+                    "xpcall",
+                    "function",
+                    "no value",
+                    false
+                );
+            }
+
             DynValue handler = null;
-            if (args[1].Type == DataType.Function || args[1].Type == DataType.ClrFunction)
+            DynValue handlerArg = args[1];
+            if (handlerArg.Type == DataType.Function || handlerArg.Type == DataType.ClrFunction)
             {
-                handler = args[1];
+                handler = handlerArg;
             }
-            else if (args[1].Type != DataType.Nil)
+            else if (!isLua51Or52)
             {
-                args.AsType(1, "xpcall", DataType.Function, false);
+                // Lua 5.3+ validates handler type upfront (including nil)
+                throw ScriptRuntimeException.BadArgument(
+                    1,
+                    "xpcall",
+                    "function",
+                    handlerArg.Type.ToLuaTypeString(),
+                    false
+                );
             }
+            // For Lua 5.1/5.2 with non-function values (including nil), handler remains null.
+            // If no error occurs, handler is never invoked. If an error occurs,
+            // a secondary error about the non-callable handler may be reported.
 
             return SetErrorHandlerStrategy(
                 "xpcall",

@@ -251,5 +251,180 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(exception.Message).Contains("integer").ConfigureAwait(false);
         }
+
+        // ========================================
+        // Hex String Parsing Tests (Lua §3.1 / §6.1)
+        // tonumber without base should parse hex strings with 0x/0X prefix
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesHexStringWithoutBase()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(new[] { DynValue.NewString("0xFF") }, isMethodCall: false);
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(255d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesLowercaseHexPrefixWithoutBase()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(new[] { DynValue.NewString("0x1a") }, isMethodCall: false);
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(26d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesUppercaseHexPrefixWithoutBase()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(new[] { DynValue.NewString("0X1A") }, isMethodCall: false);
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(26d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesNegativeHexStringWithoutBase()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("-0x10") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(-16d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesPositiveHexStringWithPlusSign()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("+0x10") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(16d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesHexStringWithWhitespace()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("  0xFF  ") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(255d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberReturnsNilForInvalidHexString()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            // "0x" without digits is invalid
+            CallbackArguments args = new(new[] { DynValue.NewString("0x") }, isMethodCall: false);
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberReturnsNilForHexStringWithInvalidChars()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            // "0xG" contains invalid hex digit
+            CallbackArguments args = new(new[] { DynValue.NewString("0xG") }, isMethodCall: false);
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesLargeHexStringWithoutBase()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("0xDeAdBeEf") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(3735928559d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesHexFloatWithFraction()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            // 0x1.8 = 1 + 8/16 = 1.5, p0 means * 2^0 = 1.5
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("0x1.8p0") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(1.5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesHexFloatWithExponent()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            // 0x1p2 = 1 * 2^2 = 4
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("0x1p2") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesHexFloatWithNegativeExponent()
+        {
+            Script script = new();
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            // 0x10p-2 = 16 * 2^(-2) = 16 / 4 = 4
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("0x10p-2") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
+        }
     }
 }

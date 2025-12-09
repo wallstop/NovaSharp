@@ -12,5 +12,6 @@
 	},
 
 	// Install all Lua versions for specification comparison testing
-	"postCreateCommand": "sudo apt-get update && sudo apt-get install -y lua5.1 lua5.2 lua5.3 lua5.4 python3-full && dotnet tool restore"
+	// Lua 5.1-5.4 from apt, Lua 5.5 built from source (RC phase, not in package managers)
+	"postCreateCommand": "bash .devcontainer/post-create.sh"
 }

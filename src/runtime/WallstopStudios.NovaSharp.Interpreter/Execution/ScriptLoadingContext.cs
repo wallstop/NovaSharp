@@ -2,7 +2,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
-    using WallstopStudios.NovaSharp.Interpreter.Tree;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
 
     /// <summary>

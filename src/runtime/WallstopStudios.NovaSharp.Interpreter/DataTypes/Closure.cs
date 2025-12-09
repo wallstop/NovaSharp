@@ -2,7 +2,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
-    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 

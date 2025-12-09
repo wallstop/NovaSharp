@@ -4,7 +4,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
-    using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
     /// Wraps the default file userdata descriptor to align Lua semantics for numeric indexing.

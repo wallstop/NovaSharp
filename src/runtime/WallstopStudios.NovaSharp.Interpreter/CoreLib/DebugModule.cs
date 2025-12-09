@@ -14,7 +14,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
-    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Utilities;
 

@@ -6,7 +6,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
-    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
 
     /// <summary>

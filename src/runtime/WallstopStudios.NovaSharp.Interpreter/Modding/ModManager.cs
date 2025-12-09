@@ -2,7 +2,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Diagnostics.CodeAnalysis;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 

@@ -768,6 +768,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue m = args.AsType(0, "random", DataType.Number, true);
             DynValue n = args.AsType(1, "random", DataType.Number, true);
             IRandomProvider r = executionContext.Script.RandomProvider;
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
             // No arguments: return float in [0, 1)
             if (m.IsNil() && n.IsNil())
@@ -778,7 +779,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // One argument
             if (n.IsNil())
             {
-                long mVal = (long)m.Number;
+                // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+                long mVal = Utilities.LuaNumberHelpers.ToLongWithValidation(
+                    version,
+                    m,
+                    "random",
+                    1
+                );
 
                 // math.random(0): return integer with all bits pseudo-random (Lua 5.4 §6.7)
                 if (mVal == 0)
@@ -798,8 +805,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             // Two arguments: math.random(m, n) returns integer in [m, n]
-            long mValue = (long)m.Number;
-            long nValue = (long)n.Number;
+            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+            long mValue = Utilities.LuaNumberHelpers.ToLongWithValidation(version, m, "random", 1);
+            long nValue = Utilities.LuaNumberHelpers.ToLongWithValidation(version, n, "random", 2);
 
             if (mValue > nValue)
             {
@@ -870,7 +878,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     );
                 }
 
-                r.SetSeed((int)x.Number);
+                // Lua 5.1-5.3: silently truncate to int (no integer representation check)
+                r.SetSeed(
+                    (int)
+                        Math.Floor(
+                            x.LuaNumber.IsInteger ? x.LuaNumber.AsInteger : x.LuaNumber.AsFloat
+                        )
+                );
                 return DynValue.Nil;
             }
 
@@ -885,12 +899,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             else if (y.IsNil())
             {
                 // One argument: convert to 128-bit seed
-                result = r.SetSeed((int)x.Number);
+                // Lua 5.4+: require integer representation
+                long xVal = Utilities.LuaNumberHelpers.ToLongWithValidation(
+                    version,
+                    x,
+                    "randomseed",
+                    1
+                );
+                result = r.SetSeed((int)xVal);
             }
             else
             {
                 // Two arguments: full 128-bit seed
-                result = r.SetSeed((long)x.Number, (long)y.Number);
+                // Lua 5.4+: require integer representation for both
+                long xVal = Utilities.LuaNumberHelpers.ToLongWithValidation(
+                    version,
+                    x,
+                    "randomseed",
+                    1
+                );
+                long yVal = Utilities.LuaNumberHelpers.ToLongWithValidation(
+                    version,
+                    y,
+                    "randomseed",
+                    2
+                );
+                result = r.SetSeed(xVal, yVal);
             }
 
             // Return the two seed components (Lua 5.4 behavior)

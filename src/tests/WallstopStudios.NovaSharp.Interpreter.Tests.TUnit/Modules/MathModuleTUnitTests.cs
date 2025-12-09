@@ -490,6 +490,202 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
         }
 
+        // ==========================================================================
+        // math.random integer representation tests (Lua 5.3+ semantics)
+        // ==========================================================================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task RandomErrorsOnNonIntegerArgLua53Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(1.5)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        public async Task RandomTruncatesNonIntegerArgLua51And52(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            // math.random(1.9) should truncate to 1, then return 1 (since random(1) returns 1)
+            DynValue result = script.DoString("return math.random(1.9)");
+
+            // Result should be 1 (truncated from 1.9)
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task RandomErrorsOnNaNLua53Plus(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(0/0)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task RandomErrorsOnInfinityLua53Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(1/0)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task RandomErrorsOnSecondNonIntegerArgLua53Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(1, 2.5)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RandomAcceptsIntegralFloatLua53Plus()
+        {
+            // Integral floats like 2.0 should be accepted in Lua 5.3+
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = Compatibility.LuaCompatibilityVersion.Lua54;
+
+            // math.random(1, 2.0) should work since 2.0 has integer representation
+            DynValue result = script.DoString("return math.random(1, 2.0)");
+
+            await Assert.That(result.Number).IsGreaterThanOrEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Number).IsLessThanOrEqualTo(2d).ConfigureAwait(false);
+        }
+
+        // ==========================================================================
+        // math.randomseed integer representation tests (Lua 5.4+ only)
+        // ==========================================================================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task RandomseedErrorsOnNonIntegerArgLua54Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("math.randomseed(1.5)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        public async Task RandomseedAcceptsNonIntegerArgLua51To53(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            // Should not throw in Lua 5.1-5.3
+            DynValue result = script.DoString("math.randomseed(1.5); return true");
+
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task RandomseedErrorsOnNaNLua54Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("math.randomseed(0/0)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);

@@ -10,5 +10,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
         Lua54 = 54,
         Lua53 = 53,
         Lua52 = 52,
+        Lua51 = 51,
     }
 }
