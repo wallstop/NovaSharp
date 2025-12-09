@@ -1,6 +1,6 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/ClosureTUnitTests.cs:36
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\DataTypes\ClosureTUnitTests.cs:36
 -- @test: ClosureTUnitTests.MetadataPropertiesExposeScriptAndEntryPoint
 return function() return 42 end

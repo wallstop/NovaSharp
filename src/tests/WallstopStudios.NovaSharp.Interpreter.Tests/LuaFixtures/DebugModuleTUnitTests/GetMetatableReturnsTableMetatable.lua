@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1188
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:1187
 -- @test: DebugModuleTUnitTests.GetMetatableReturnsTableMetatable
 -- @compat-notes: Lua 5.3+: bitwise operators
 local t = {}

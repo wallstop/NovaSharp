@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:772
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\IoModuleTUnitTests.cs:772
 -- @test: IoModuleTUnitTests.SetBufferingModesReturnTrue
 -- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
 local f = assert(io.open('{escapedPath}', 'w'))

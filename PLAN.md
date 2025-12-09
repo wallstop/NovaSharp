@@ -28,9 +28,17 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 ### 🔴 PRODUCTION BUGS TO FIX (NovaSharp diverges from Lua spec)
 
+### 🔴 NEXT BUG TO FIX: `string.format('%d', x)` integer representation error
+
 | Priority | Fixture | NovaSharp Behavior | Expected (Lua) Behavior | Fix Location |
 |----------|---------|-------------------|------------------------|--------------|
-| 🔴 HIGH | `FloorResultCanBeUsedInStringFormat.lua` | Overflow wraps to negative | Throws "number has no integer representation" | `StringModule.cs` |
+| 🔴 HIGH | `FloorResultCanBeUsedInStringFormat.lua` | Wraps to `-9223372036854775808` | Throws "number has no integer representation" | `StringModule.cs` |
+
+**Issue**: `string.format('%d', math.floor(math.maxinteger + 0.5))` should throw in Lua 5.3+ when the float value exceeds the representable integer range, but NovaSharp currently wraps.
+
+**Investigation needed for**:
+| Priority | Fixture | NovaSharp Behavior | Expected (Lua) Behavior | Fix Location |
+|----------|---------|-------------------|------------------------|--------------|
 | 🟡 MED | `FormatDecimalWithFloatFallsBackToConversion.lua` | ? | ? | Needs investigation |
 | 🟡 MED | `UpvalueIdReturnsUserDataHandles.lua` | ? | ? | Needs investigation |
 | 🟡 MED | `UpvalueJoinSharesState.lua` | ? | ? | Needs investigation |
@@ -139,6 +147,127 @@ end
 - `CharAcceptsBoundaryValue255.lua` — tests success on `string.char(255)`
 
 This policy ensures every behavioral fix has cross-interpreter verification and guards against future regressions.
+
+---
+
+## 🔴 CRITICAL Priority: Comprehensive LuaNumber Usage Audit (§8.37)
+
+**Status**: 📋 **PLANNED** — Thorough production code sweep required.
+
+**Problem Statement (2025-12-09)**:
+The codebase may contain locations where raw C# numeric types (`double`, `float`, `int`, `long`) are used instead of `LuaNumber` for Lua math operations. This can cause:
+
+1. **Precision loss**: Values beyond 2^53 cannot be exactly represented as doubles
+2. **Type coercion errors**: Integer vs float subtype distinction lost (critical for Lua 5.3+)
+3. **Overflow/underflow bugs**: Silent wrapping or unexpected behavior
+4. **IEEE 754 edge cases**: Incorrect handling of NaN, Infinity, negative zero
+5. **Value representation failures**: Unable to represent certain Lua values correctly
+
+### Scope of Audit
+
+**Files to Audit (Priority Order)**:
+
+1. **VM Core** (HIGHEST PRIORITY):
+   - `Execution/VM/Processor_Ops.cs` — Arithmetic operations
+   - `Execution/VM/Processor_Loop.cs` — Comparison and numeric opcodes
+   - `Execution/VM/Processor_*.cs` — All processor files
+
+2. **Expression Evaluation**:
+   - `Tree/Expressions/*.cs` — Numeric literal handling, constant folding
+   - `Tree/Statements/*.cs` — For loop numeric handling
+
+3. **Interop Layer**:
+   - `Interop/Converters/*.cs` — CLR type conversion
+   - `Interop/StandardDescriptors/*.cs` — Numeric member access
+
+4. **Data Types**:
+   - `DataTypes/DynValue.cs` — Ensure `LuaNumber` used consistently
+   - `DataTypes/Table.cs` — Numeric key handling
+   - `DataTypes/*.cs` — Any numeric operations
+
+5. **CoreLib Modules** (secondary pass):
+   - All modules in `CoreLib/*.cs` — Already audited per §8.33, but verify completeness
+
+### Patterns to Search For
+
+```bash
+# POTENTIALLY PROBLEMATIC PATTERNS:
+
+# Direct .Number access (loses integer subtype)
+grep -rn "\.Number" src/runtime/WallstopStudios.NovaSharp.Interpreter/ | grep -v "LuaNumber"
+
+# Explicit double casts that may lose precision
+grep -rn "(double)" src/runtime/WallstopStudios.NovaSharp.Interpreter/
+
+# Explicit float casts (even worse precision)
+grep -rn "(float)" src/runtime/WallstopStudios.NovaSharp.Interpreter/
+
+# Math operations on raw doubles
+grep -rn "Math\." src/runtime/WallstopStudios.NovaSharp.Interpreter/ | grep -v "LuaNumber"
+
+# Direct int/long arithmetic that may overflow
+grep -rn "checked\|unchecked" src/runtime/WallstopStudios.NovaSharp.Interpreter/
+
+# Numeric literals assigned to double variables
+grep -rn "double.*=" src/runtime/WallstopStudios.NovaSharp.Interpreter/
+```
+
+### Known Good Patterns (Reference)
+
+```csharp
+// CORRECT: Use LuaNumber throughout
+LuaNumber num = dynValue.LuaNumber;
+if (num.IsInteger)
+{
+    long intVal = num.AsInteger;  // Safe - verified integer
+}
+else
+{
+    double floatVal = num.AsFloat;  // Safe - verified float
+}
+
+// CORRECT: Arithmetic via LuaNumber operators
+LuaNumber result = left + right;  // Uses LuaNumber.operator+
+
+// CORRECT: Version-aware validation
+long value = LuaNumberHelpers.ToLongWithValidation(version, dynValue, "funcname", argIndex);
+
+// WRONG: Bypasses type system
+double value = dynValue.Number;  // Integer distinction lost!
+double result = a + b;  // Raw double math, may lose precision
+
+// WRONG: Silent precision loss
+int index = (int)dynValue.Number;  // May truncate large values incorrectly
+```
+
+### Implementation Tasks
+
+- [ ] **Phase 1**: Run grep patterns above, catalog all hits
+- [ ] **Phase 2**: Classify each hit as:
+  - ✅ Safe (intentional, documented, or internal-only)
+  - ⚠️ Suspicious (needs investigation)
+  - 🔴 Bug (incorrect usage, fix required)
+- [ ] **Phase 3**: Fix all 🔴 bugs, document all ⚠️ cases
+- [ ] **Phase 4**: Add regression tests for each fix
+- [ ] **Phase 5**: Create lint rule or CI check to prevent future violations
+- [ ] **Phase 6**: Document intentional raw numeric usage (if any)
+
+### Success Criteria
+
+- All Lua arithmetic operations use `LuaNumber` consistently
+- No silent precision loss for values beyond 2^53
+- Integer vs float subtype preserved throughout the pipeline
+- IEEE 754 special values (NaN, Inf, -0.0) handled correctly
+- CI prevents introduction of new raw numeric operations in Lua paths
+
+### Related Sections
+- §8.33: LuaNumber Compliance Sweep (CoreLib audit complete)
+- §8.34: Lua 5.3+ Integer Representation Errors
+- §8.36: Comprehensive Numeric Edge-Case Audit
+- §8.24: Dual Numeric Type System (LuaNumber struct)
+
+**Owner**: Interpreter team
+**Priority**: 🔴 HIGH — Numeric correctness is fundamental to Lua compatibility
 
 ---
 
@@ -529,9 +658,9 @@ See **Section 8.24** for the complete implementation plan.
 
 ---
 
-## Repository Snapshot
+## Repository Snapshot (Updated 2025-12-09)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true` enforced.
-- **Tests**: **4,409** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Tests**: **4,420** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
 - **Coverage**: ~87.7% line / ~86.7% branch (per latest coverage run).
 - **Coverage gating**: `COVERAGE_GATING_MODE=enforce` enabled with 90% thresholds.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.

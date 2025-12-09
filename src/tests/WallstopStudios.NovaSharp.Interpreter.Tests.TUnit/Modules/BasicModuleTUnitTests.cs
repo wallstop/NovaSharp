@@ -428,6 +428,155 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
         }
 
+        // ========================================
+        // Version-Specific Hex Parsing Tests (Lua §3.1)
+        // Lua 5.1 does NOT support hex string parsing in tonumber without explicit base.
+        // Hex parsing (0x prefix) was added in Lua 5.2.
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberReturnsNilForHexStringInLua51()
+        {
+            // In Lua 5.1, tonumber('0xFF') without a base should return nil
+            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(new[] { DynValue.NewString("0xFF") }, isMethodCall: false);
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexStringInLua52Plus(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.2+, tonumber('0xFF') without a base should parse the hex string
+            Script script = CreateScript(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(new[] { DynValue.NewString("0xFF") }, isMethodCall: false);
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.Number).IsEqualTo(255d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberReturnsNilForNegativeHexStringInLua51()
+        {
+            // In Lua 5.1, tonumber('-0x10') without a base should return nil
+            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("-0x10") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberReturnsNilForHexFloatInLua51()
+        {
+            // In Lua 5.1, tonumber('0x1.8p0') without a base should return nil
+            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("0x1.8p0") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesLargeHexIntegerWithFullPrecision()
+        {
+            // Test that large hex integers are parsed with full 64-bit precision
+            // 0x7FFFFFFFFFFFFFFF = long.MaxValue = 9223372036854775807
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("0x7FFFFFFFFFFFFFFF") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            // Should be stored as integer with exact value
+            await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.LuaNumber.AsInteger)
+                .IsEqualTo(9223372036854775807L)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesHexIntegerWithValueNearMaxLong()
+        {
+            // 0x123456789ABCDEF = 81985529216486895 (within long range)
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("0x123456789ABCDEF") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.LuaNumber.AsInteger)
+                .IsEqualTo(81985529216486895L)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesHexIntegerExceedingLongAsFloat()
+        {
+            // 0xFFFFFFFFFFFFFFFF = 18446744073709551615 (exceeds long.MaxValue)
+            // Should be parsed as float since it can't fit in a signed 64-bit integer
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("0xFFFFFFFFFFFFFFFF") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.LuaNumber.IsFloat).IsTrue().ConfigureAwait(false);
+            // Due to double precision limits, the value will be approximately 1.844674407370955e+19
+            await Assert.That(result.LuaNumber.AsFloat).IsGreaterThan(1.8e19).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToNumberParsesNegativeMaxLongCorrectly()
+        {
+            // -0x8000000000000000 = long.MinValue = -9223372036854775808
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString("-0x8000000000000000") },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.LuaNumber.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.LuaNumber.AsInteger)
+                .IsEqualTo(long.MinValue)
+                .ConfigureAwait(false);
+        }
+
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]

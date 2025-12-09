@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/CloseAttributeTUnitTests.cs:49
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\CloseAttributeTUnitTests.cs:49
 -- @test: CloseAttributeTUnitTests.ReassignmentClosesPreviousValueImmediately
 -- @compat-notes: Lua 5.4: close attribute; Lua 5.3+: bitwise operators; Uses injected variable: s
 local log = {}

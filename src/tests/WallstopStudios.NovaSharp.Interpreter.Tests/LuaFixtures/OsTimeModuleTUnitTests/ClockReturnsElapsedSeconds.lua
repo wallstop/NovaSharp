@@ -1,6 +1,6 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsTimeModuleTUnitTests.cs:118
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsTimeModuleTUnitTests.cs:121
 -- @test: OsTimeModuleTUnitTests.ClockReturnsElapsedSeconds
 return os.clock()

@@ -1,6 +1,6 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:952
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:952
 -- @test: StringModuleTUnitTests.FormatOctalWithZeroPadding
 return string.format('%08o', 8)

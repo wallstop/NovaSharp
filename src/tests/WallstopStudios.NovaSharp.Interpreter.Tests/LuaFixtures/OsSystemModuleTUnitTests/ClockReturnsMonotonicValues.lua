@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsSystemModuleTUnitTests.cs:392
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsSystemModuleTUnitTests.cs:417
 -- @test: OsSystemModuleTUnitTests.ClockReturnsMonotonicValues
 -- @compat-notes: Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
 local values = {{}}

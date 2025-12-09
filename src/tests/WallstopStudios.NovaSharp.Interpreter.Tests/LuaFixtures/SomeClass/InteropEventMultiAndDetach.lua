@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/UserDataEventsTUnitTests.cs:167
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataEventsTUnitTests.cs:167
 -- @test: SomeClass.InteropEventMultiAndDetach
 -- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: myobj
 local invocationCount = 0

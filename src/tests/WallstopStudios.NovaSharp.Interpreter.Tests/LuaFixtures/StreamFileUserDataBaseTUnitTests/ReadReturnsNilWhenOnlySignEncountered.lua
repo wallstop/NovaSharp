@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:750
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:750
 -- @test: StreamFileUserDataBaseTUnitTests.ReadReturnsNilWhenOnlySignEncountered
 -- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: file
 local f = file

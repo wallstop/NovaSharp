@@ -403,10 +403,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     return DynValue.Nil;
                 }
 
-                // Lua tonumber without base parses hex literals (0x/0X prefix) per §3.1
-                if (TryParseLuaNumeral(e.String, out double d))
+                // Lua 5.2+ tonumber without base parses hex literals (0x/0X prefix) per §3.1
+                // Lua 5.1 does NOT support hex parsing without explicit base
+                if (
+                    TryParseLuaNumeral(
+                        e.String,
+                        executionContext.Script.CompatibilityVersion,
+                        out LuaNumber luaNum
+                    )
+                )
                 {
-                    return DynValue.NewNumber(d);
+                    return DynValue.NewNumber(luaNum);
                 }
                 return DynValue.Nil;
             }
@@ -533,11 +540,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Parses a Lua numeral string (decimal, hexadecimal integer, or hexadecimal float) per §3.1.
         /// </summary>
         /// <param name="text">Input text to parse.</param>
-        /// <param name="value">Outputs the parsed numeric value on success.</param>
+        /// <param name="version">Lua compatibility version for version-specific parsing rules.</param>
+        /// <param name="value">Outputs the parsed numeric value as a <see cref="LuaNumber"/> on success.</param>
         /// <returns><c>true</c> if the text represents a valid Lua numeral; <c>false</c> otherwise.</returns>
-        private static bool TryParseLuaNumeral(string text, out double value)
+        /// <remarks>
+        /// <para>
+        /// Lua 5.1 does NOT support hex string parsing in tonumber without an explicit base.
+        /// Hex parsing (0x prefix) was added in Lua 5.2.
+        /// </para>
+        /// <para>
+        /// For Lua 5.3+, integers are parsed to full 64-bit precision and returned as integer subtypes.
+        /// Floats (including hex floats with 'p' exponent) are returned as float subtypes.
+        /// </para>
+        /// </remarks>
+        private static bool TryParseLuaNumeral(
+            string text,
+            LuaCompatibilityVersion version,
+            out LuaNumber value
+        )
         {
-            value = 0;
+            value = LuaNumber.Zero;
             if (string.IsNullOrWhiteSpace(text))
             {
                 return false;
@@ -563,14 +585,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
             }
 
-            // Check for hex prefix
+            // Check for hex prefix - only supported in Lua 5.2+
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
             if (
-                index + 1 < span.Length
+                resolved >= LuaCompatibilityVersion.Lua52
+                && index + 1 < span.Length
                 && span[index] == '0'
                 && (span[index + 1] == 'x' || span[index + 1] == 'X')
             )
             {
-                // Parse as hex (integer or float)
+                // Parse as hex (integer or float) - Lua 5.2+ only
                 return TryParseHexLuaNumeral(span, index + 2, negative, out value);
             }
 
@@ -580,10 +604,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     text,
                     NumberStyles.Float | NumberStyles.AllowThousands,
                     CultureInfo.InvariantCulture,
-                    out value
+                    out double doubleValue
                 )
             )
             {
+                // Use LuaNumber.FromDouble to auto-promote whole numbers to integers
+                value = LuaNumber.FromDouble(doubleValue);
                 return true;
             }
 
@@ -596,16 +622,219 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="span">Full span containing the original string (including optional sign and <c>0x</c> prefix).</param>
         /// <param name="startIndex">Index where hex digits begin (after <c>0x</c>).</param>
         /// <param name="negative">Whether a leading minus sign was present.</param>
-        /// <param name="value">Outputs the parsed value on success.</param>
+        /// <param name="value">Outputs the parsed value as a <see cref="LuaNumber"/> on success.</param>
         /// <returns><c>true</c> when the hex literal is valid; <c>false</c> otherwise.</returns>
+        /// <remarks>
+        /// Hex integers are parsed with full 64-bit precision. Hex floats (with '.' or 'p' exponent)
+        /// are parsed as IEEE 754 doubles.
+        /// </remarks>
         private static bool TryParseHexLuaNumeral(
             ReadOnlySpan<char> span,
             int startIndex,
             bool negative,
-            out double value
+            out LuaNumber value
         )
         {
-            value = 0;
+            value = LuaNumber.Zero;
+            int index = startIndex;
+
+            // Track if this is an integer or float - integers get full 64-bit precision
+            bool isFloat = false;
+            bool digitsSeen = false;
+            int integerDigitStart = index;
+
+            // First pass: scan to determine structure and check validity
+            while (index < span.Length && IsHexDigit(span[index]))
+            {
+                index++;
+                digitsSeen = true;
+            }
+
+            int integerDigitEnd = index;
+
+            // Check for fractional part - makes this a float
+            if (index < span.Length && span[index] == '.')
+            {
+                isFloat = true;
+                index++;
+                while (index < span.Length && IsHexDigit(span[index]))
+                {
+                    index++;
+                    digitsSeen = true;
+                }
+            }
+
+            if (!digitsSeen)
+            {
+                return false;
+            }
+
+            // Check for binary exponent - makes this a float
+            int exponent = 0;
+            if (index < span.Length && (span[index] == 'p' || span[index] == 'P'))
+            {
+                isFloat = true;
+                index++;
+                if (index >= span.Length)
+                {
+                    return false;
+                }
+
+                int expSign = 1;
+                if (span[index] == '+' || span[index] == '-')
+                {
+                    if (span[index] == '-')
+                    {
+                        expSign = -1;
+                    }
+                    index++;
+                }
+
+                if (index >= span.Length || !char.IsDigit(span[index]))
+                {
+                    return false;
+                }
+
+                int expValue = 0;
+                while (index < span.Length && char.IsDigit(span[index]))
+                {
+                    expValue = (expValue * 10) + (span[index] - '0');
+                    index++;
+                }
+
+                exponent = expSign * expValue;
+            }
+
+            // Must have consumed entire input
+            if (index != span.Length)
+            {
+                return false;
+            }
+
+            if (isFloat)
+            {
+                // Parse as floating point with proper handling
+                return TryParseHexFloat(span, startIndex, negative, out value);
+            }
+            else
+            {
+                // Parse as integer with full 64-bit precision
+                return TryParseHexInteger(
+                    span.Slice(integerDigitStart, integerDigitEnd - integerDigitStart),
+                    negative,
+                    out value
+                );
+            }
+        }
+
+        /// <summary>
+        /// Parses a hexadecimal integer with full 64-bit precision.
+        /// </summary>
+        private static bool TryParseHexInteger(
+            ReadOnlySpan<char> hexDigits,
+            bool negative,
+            out LuaNumber value
+        )
+        {
+            value = LuaNumber.Zero;
+
+            if (hexDigits.IsEmpty)
+            {
+                return false;
+            }
+
+            // For very large numbers that would overflow long, fall back to double
+            // A long can hold up to 16 hex digits (64 bits / 4 bits per digit)
+            // But we need to be careful with overflow during accumulation
+            if (hexDigits.Length > 16)
+            {
+                // Too many digits - parse as double (will lose precision but won't overflow)
+                double doubleValue = 0;
+                foreach (char c in hexDigits)
+                {
+                    doubleValue = (doubleValue * 16.0) + HexDigitToValue(c);
+                }
+                if (negative)
+                {
+                    doubleValue = -doubleValue;
+                }
+                value = LuaNumber.FromFloat(doubleValue);
+                return true;
+            }
+
+            // Parse with overflow checking
+            ulong accumulator = 0;
+            foreach (char c in hexDigits)
+            {
+                int digit = HexDigitToValue(c);
+
+                // Check for overflow before multiplication
+                if (accumulator > (ulong.MaxValue / 16))
+                {
+                    // Would overflow - fall back to double
+                    double doubleValue = 0;
+                    foreach (char ch in hexDigits)
+                    {
+                        doubleValue = (doubleValue * 16.0) + HexDigitToValue(ch);
+                    }
+                    if (negative)
+                    {
+                        doubleValue = -doubleValue;
+                    }
+                    value = LuaNumber.FromFloat(doubleValue);
+                    return true;
+                }
+
+                accumulator = (accumulator * 16) + (ulong)digit;
+            }
+
+            // Convert to signed long with proper handling of negative numbers
+            if (negative)
+            {
+                // For negative numbers, check if value fits in long range
+                if (accumulator > (ulong)long.MaxValue + 1)
+                {
+                    // Too large for long - return as negative double
+                    value = LuaNumber.FromFloat(-(double)accumulator);
+                }
+                else if (accumulator == (ulong)long.MaxValue + 1)
+                {
+                    // Exactly long.MinValue
+                    value = LuaNumber.FromInteger(long.MinValue);
+                }
+                else
+                {
+                    value = LuaNumber.FromInteger(-(long)accumulator);
+                }
+            }
+            else
+            {
+                // Positive number
+                if (accumulator > (ulong)long.MaxValue)
+                {
+                    // Too large for long - return as double (loses precision but correct behavior)
+                    value = LuaNumber.FromFloat((double)accumulator);
+                }
+                else
+                {
+                    value = LuaNumber.FromInteger((long)accumulator);
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Parses a hexadecimal floating point number (with '.' or 'p' exponent).
+        /// </summary>
+        private static bool TryParseHexFloat(
+            ReadOnlySpan<char> span,
+            int startIndex,
+            bool negative,
+            out LuaNumber value
+        )
+        {
+            value = LuaNumber.Zero;
             int index = startIndex;
 
             double significand = 0;
@@ -680,11 +909,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return false;
             }
 
-            value = significand * Math.Pow(2, exponent);
+            double result = significand * Math.Pow(2, exponent);
             if (negative)
             {
-                value = -value;
+                result = -result;
             }
+            value = LuaNumber.FromFloat(result);
             return true;
         }
 

@@ -561,7 +561,7 @@ jobs:
             --corpus-dir src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures \
             --lua-version 5.5 \
             --output-file artifacts/lua-comparison-results/comparison-5.5.json \
-            --monitor
+            --enforce
         shell: bash
       - name: Publish comparison summary
         if: always()
@@ -574,9 +574,9 @@ jobs:
               data = json.load(f)
           summary = data.get('summary', {})
           match_rate = data.get('match_rate')
-          print('## Lua 5.5 Specification Comparison (Experimental)')
+          print('## Lua 5.5 Specification Comparison')
           print()
-          print('> **Note**: Lua 5.5 is currently in release candidate phase. This comparison tracks compatibility progress.')
+          print('> **Note**: Lua 5.5 is currently in release candidate phase. Full compatibility is required.')
           print()
           print('| Metric | Count |')
           print('| --- | --- |')

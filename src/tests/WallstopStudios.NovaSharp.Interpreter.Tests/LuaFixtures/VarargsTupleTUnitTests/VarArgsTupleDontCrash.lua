@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/VarargsTupleTUnitTests.cs:63
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\VarargsTupleTUnitTests.cs:63
 -- @test: VarargsTupleTUnitTests.VarArgsTupleDontCrash
 -- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: r
 function f(a,b)

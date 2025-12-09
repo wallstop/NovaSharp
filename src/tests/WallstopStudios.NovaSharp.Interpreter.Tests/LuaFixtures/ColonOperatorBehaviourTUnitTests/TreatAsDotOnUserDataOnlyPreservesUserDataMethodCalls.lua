@@ -1,6 +1,6 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ColonOperatorBehaviourTUnitTests.cs:94
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ColonOperatorBehaviourTUnitTests.cs:94
 -- @test: ColonOperatorBehaviourTUnitTests.TreatAsDotOnUserDataOnlyPreservesUserDataMethodCalls
 return tableTarget:invoke(123)

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Interop/Descriptors/EventMemberDescriptorTUnitTests.cs:457
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Interop\Descriptors\EventMemberDescriptorTUnitTests.cs:457
 -- @test: EventMemberDescriptorTUnitTests.DispatchEventForwardsMultipleArguments
 -- @compat-notes: Lua 5.3+: bitwise operators
 payload = nil

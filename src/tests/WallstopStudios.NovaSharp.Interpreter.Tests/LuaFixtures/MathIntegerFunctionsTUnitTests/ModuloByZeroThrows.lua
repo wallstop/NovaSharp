@@ -1,6 +1,6 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathIntegerFunctionsTUnitTests.cs:480
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathIntegerFunctionsTUnitTests.cs:489
 -- @test: MathIntegerFunctionsTUnitTests.ModuloByZeroThrows
 return 1 % 0

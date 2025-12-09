@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathIntegerFunctionsTUnitTests.cs
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathIntegerFunctionsTUnitTests.cs:424
 -- @test: MathIntegerFunctionsTUnitTests.IntegerDivisionMinintegerByNegativeOneWraps
--- @compat-notes: Lua 5.3+: mininteger // -1 wraps to mininteger due to two's complement overflow.
+-- @compat-notes: Lua 5.3+: math.mininteger (5.3+)
 return math.mininteger // -1

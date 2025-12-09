@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1312
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:1310
 -- @test: DebugModuleTUnitTests.TracebackWithNumberLevel
 local function deep()
                     return debug.traceback('trace', 2)

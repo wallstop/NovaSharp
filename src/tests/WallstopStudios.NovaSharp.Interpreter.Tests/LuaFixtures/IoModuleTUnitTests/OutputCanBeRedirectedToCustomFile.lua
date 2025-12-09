@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:945
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\IoModuleTUnitTests.cs:945
 -- @test: IoModuleTUnitTests.OutputCanBeRedirectedToCustomFile
 -- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
 local original = io.output()

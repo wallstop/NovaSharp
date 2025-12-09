@@ -1,6 +1,6 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Smoke/ScriptSmokeTests.cs:14
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Smoke\ScriptSmokeTests.cs:14
 -- @test: ScriptSmokeTests.DoStringEvaluatesExpressions
 return 40 + 2

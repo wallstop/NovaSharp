@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:786
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:785
 -- @test: DebugModuleTUnitTests.GetInfoWithEmptyWhatReturnsEmptyTable
 -- @compat-notes: Lua 5.3+: bitwise operators
 local function sample() end

@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:521
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:520
 -- @test: DebugModuleTUnitTests.GetInfoReturnsFunctionPlaceholderForClrFunctionWithFFlag
 -- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: func
 local info = debug.getinfo(print, 'f')
