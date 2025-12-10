@@ -63,21 +63,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
                 );
             }
 
-            // Check if it's within the range where doubles can exactly represent integers
-            // and can be converted to long without overflow.
-            // For floats outside ±2^53, consecutive integers cannot be represented exactly,
-            // so we reject them unless they happen to be exactly representable.
-            // The actual check is whether the round-trip conversion preserves the value.
-            if (floatValue < (double)long.MinValue || floatValue > (double)long.MaxValue)
+            // Check if it's within the valid integer range.
+            // IMPORTANT: We must use explicit constants for the range check because:
+            // 1. (double)long.MaxValue == 9223372036854775808.0 (which is long.MaxValue + 1 due to rounding)
+            // 2. This makes (double)long.MaxValue equal to 2^63, which CANNOT fit in a long
+            // 3. Casting a double >= 2^63 to long produces undefined behavior (platform-dependent)
+            //    - On x64: wraps to long.MinValue
+            //    - On ARM64: may saturate to long.MaxValue (passing round-trip falsely)
+            //
+            // The valid range for conversion is: -2^63 <= value < 2^63
+            // Note: -2^63 is exactly representable as long.MinValue
+            // Note: 2^63 - 1 (long.MaxValue) rounds up to 2^63 when stored as double
+            const double TwoPow63 = 9223372036854775808.0; // 2^63, first value that doesn't fit in signed long
+            if (floatValue < -TwoPow63 || floatValue >= TwoPow63)
             {
-                // Outside long range entirely
+                // Outside valid long range
                 throw new ScriptRuntimeException(
                     $"bad argument #{argIndex} to '{functionName}' (number has no integer representation)"
                 );
             }
 
-            // Convert to long and verify round-trip preserves value
-            // This catches cases where the float is within long range but precision was already lost
+            // At this point, floatValue is in [-2^63, 2^63), so (long) cast is well-defined.
+            // Verify round-trip preserves value to catch precision loss.
+            // This handles cases where the float is within range but isn't exactly representable
+            // as an integer (e.g., values > 2^53 that lost precision during earlier operations).
             long asLong = (long)floatValue;
             if ((double)asLong != floatValue)
             {

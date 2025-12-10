@@ -580,6 +580,180 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         #endregion
 
+        #region Integer Representation Boundary Tests (RequireIntegerRepresentation edge cases)
+
+        /// <summary>
+        /// Tests that string.format %d rejects values at/beyond the 2^63 boundary.
+        /// This tests the fix for platform-dependent behavior where ARM64 vs x64 handle
+        /// the double-to-long conversion of 2^63 differently (saturation vs wrapping).
+        /// </summary>
+        /// <remarks>
+        /// The key insight is that (double)long.MaxValue == 9223372036854775808.0 (which is 2^63),
+        /// so comparing against (double)long.MaxValue doesn't correctly exclude values >= 2^63.
+        /// Reference: Lua 5.4 Manual §3.4.1 - Integers and floats are distinguishable subtypes.
+        /// </remarks>
+        [Test]
+        [Arguments("math.maxinteger + 0.5", "maxinteger plus fractional - rounds to 2^63")]
+        [Arguments("9223372036854775808.0", "exactly 2^63 as float literal")]
+        [Arguments("2^63", "2^63 computed - first value outside signed long range")]
+        [Arguments("2^63 + 1024", "beyond 2^63")]
+        [Arguments("-9223372036854777856.0", "next representable double below -2^63")]
+        [Arguments("-1e100", "large negative float (already tested separately)")]
+        public async Task FormatDecimalRejectsBoundaryValues(
+            string luaExpression,
+            string description
+        )
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString($"return string.format('%d', {luaExpression})")
+            );
+
+            await Assert
+                .That(exception)
+                .IsNotNull()
+                .Because($"Expected exception for {description}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because($"Error should indicate no integer representation for {description}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that string.format %d accepts values within the valid integer range.
+        /// These are boundary cases that SHOULD work (max representable values).
+        /// </summary>
+        [Test]
+        [Arguments("math.maxinteger", "9223372036854775807", "maxinteger (2^63-1)")]
+        [Arguments("math.mininteger", "-9223372036854775808", "mininteger (-2^63)")]
+        [Arguments("0", "0", "zero")]
+        [Arguments("-0.0", "0", "negative zero")]
+        [Arguments("1.0", "1", "float 1.0 (exact)")]
+        [Arguments("-1.0", "-1", "float -1.0 (exact)")]
+        [Arguments("9007199254740992.0", "9007199254740992", "2^53 (max safe integer for doubles)")]
+        [Arguments("-9007199254740992.0", "-9007199254740992", "-2^53")]
+        public async Task FormatDecimalAcceptsValidBoundaryValues(
+            string luaExpression,
+            string expectedOutput,
+            string description
+        )
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            DynValue result = script.DoString($"return string.format('%d', {luaExpression})");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expectedOutput)
+                .Because(
+                    $"string.format('%d', {luaExpression}) [{description}] should produce {expectedOutput}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that the boundary value math.maxinteger + 0.5 evaluates to 2^63 (due to rounding)
+        /// which is outside the valid signed integer range.
+        /// </summary>
+        [Test]
+        public async Task MaxintegerPlusHalfRoundsToTwoPow63()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            // math.maxinteger + 0.5 should round to 9223372036854775808.0 (2^63)
+            // due to double precision limitations
+            DynValue result = script.DoString(
+                @"
+                local v = math.maxinteger + 0.5
+                return v, math.type(v), v == 2^63
+            "
+            );
+
+            // It should be a float type (mixed int + float produces float)
+            await Assert
+                .That(result.Tuple[1].String)
+                .IsEqualTo("float")
+                .Because("integer + float should produce float")
+                .ConfigureAwait(false);
+
+            // The result should equal 2^63
+            await Assert
+                .That(result.Tuple[2].Boolean)
+                .IsTrue()
+                .Because("math.maxinteger + 0.5 should round to 2^63 due to double precision")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that all integer format specifiers (%d, %i, %o, %u, %x, %X) reject
+        /// the same boundary values consistently.
+        /// </summary>
+        [Test]
+        [Arguments("%d")]
+        [Arguments("%i")]
+        [Arguments("%o")]
+        [Arguments("%u")]
+        [Arguments("%x")]
+        [Arguments("%X")]
+        public async Task AllIntegerSpecifiersRejectTwoPow63(string specifier)
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString($"return string.format('{specifier}', 2^63)")
+            );
+
+            await Assert
+                .That(exception)
+                .IsNotNull()
+                .Because($"Expected exception for specifier {specifier} with 2^63")
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that the range check uses the correct boundary constants.
+        /// 2^63 (9223372036854775808) should be rejected, while 2^63-1024 should be accepted
+        /// (even though it loses precision when stored as a float).
+        /// </summary>
+        [Test]
+        public async Task RangeCheckUsesCorrectBoundaryConstants()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            // This value is within range but at the edge where double precision is limited
+            // The largest double strictly less than 2^63 is 9223372036854774784
+            DynValue result = script.DoString(
+                @"
+                local just_under = 9223372036854774784.0  -- largest double < 2^63
+                local at_boundary = 9223372036854775808.0  -- exactly 2^63
+                
+                local under_ok = pcall(function() string.format('%d', just_under) end)
+                local boundary_fail = not pcall(function() string.format('%d', at_boundary) end)
+                
+                return under_ok, boundary_fail
+            "
+            );
+
+            await Assert
+                .That(result.Tuple[0].Boolean)
+                .IsTrue()
+                .Because("Value just under 2^63 should be accepted")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Boolean)
+                .IsTrue()
+                .Because("Value at exactly 2^63 should be rejected")
+                .ConfigureAwait(false);
+        }
+
+        #endregion
+
         #region Helpers
 
         private static Script CreateScript(
