@@ -23,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [global::TUnit.Core.Test]
         public async Task TableMoveIsUnavailableBeforeLua53()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua52, CoreModulePresets.Default);
             DynValue table = script.Globals.Get("table");
             await Assert.That(table.Type).IsEqualTo(DataType.Table);
             DynValue move = table.Table.Get("move");
@@ -35,7 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModules.PresetDefault);
+                Script script = CreateScript(version, CoreModulePresets.Default);
                 DynValue result = script.DoString(
                     @"
                     local src = { 'a', 'b', 'c' }
@@ -57,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModules.PresetDefault);
+                Script script = CreateScript(version, CoreModulePresets.Default);
                 DynValue snapshot = script.DoString(
                     @"
                     local values = { 1, 2, 3, 4 }
@@ -75,7 +75,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModules.PresetDefault);
+                Script script = CreateScript(version, CoreModulePresets.Default);
                 DynValue tuple = script.DoString(
                     @"
                     local values = { 0, 0, 3, 4 }

@@ -530,7 +530,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             ArgumentNullException.ThrowIfNull(stub);
 
             ScriptPlatformScope globalScope = ScriptPlatformScope.Override(stub);
-            Script script = new Script(CoreModules.PresetComplete);
+            Script script = new Script(CoreModulePresets.Complete);
             if (version.HasValue)
             {
                 script.Options.CompatibilityVersion = version.Value;

@@ -23,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task LoadFunctionWithExplicitFriendlyName()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.LoadFunction(
                 "function() return 42 end",
@@ -40,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task LoadFunctionWithNullGlobalTableUsesDefaultGlobals()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.LoadFunction("function() return 'ok' end", globalTable: null);
 
@@ -53,7 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task LoadStringWithNullCodeThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 script.LoadString(null)
@@ -65,7 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task LoadStreamWithNullStreamThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 script.LoadStream(null)
@@ -77,7 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task LoadFileWithNullFilenameThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 script.LoadFile(null)
@@ -92,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             byte[] bytes = System.Text.Encoding.UTF8.GetBytes("return 99");
             ByteArrayScriptLoader loader = new(bytes);
             ScriptOptions options = new() { ScriptLoader = loader };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             DynValue result = script.LoadFile("dummy.lua");
             DynValue callResult = script.Call(result);
@@ -106,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             string code = "return 123";
             StreamScriptLoader loader = new(code);
             ScriptOptions options = new() { ScriptLoader = loader };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             DynValue result = script.LoadFile("dummy.lua");
             DynValue callResult = script.Call(result);
@@ -119,7 +119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             NullReturningScriptLoader loader = new();
             ScriptOptions options = new() { ScriptLoader = loader };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             InvalidCastException exception = Assert.Throws<InvalidCastException>(() =>
                 script.LoadFile("test.lua")
@@ -133,7 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             UnsupportedTypeScriptLoader loader = new();
             ScriptOptions options = new() { ScriptLoader = loader };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             InvalidCastException exception = Assert.Throws<InvalidCastException>(() =>
                 script.LoadFile("test.lua")
@@ -149,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task DumpWithNullFunctionThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             using MemoryStream ms = new();
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
@@ -162,7 +162,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task DumpWithNullStreamThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue func = script.LoadString("return 1");
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
@@ -175,7 +175,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task DumpWithNonFunctionThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             using MemoryStream ms = new();
             DynValue notFunction = DynValue.NewNumber(42);
 
@@ -189,7 +189,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task DumpWithReadOnlyStreamThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue func = script.LoadString("return 1");
             using ReadOnlyMemoryStream roStream = new();
 
@@ -203,7 +203,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task DumpWithClosureUpvaluesThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 local captured = 10
@@ -223,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task SetTypeMetatableWithInvalidTypeThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             Table metatable = new(script);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
@@ -236,7 +236,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task GetTypeMetatableWithInvalidTypeReturnsNull()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             Table result = script.GetTypeMetatable((DataType)999);
 
@@ -246,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task AttachDebuggerWithNullThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 script.AttachDebugger(null)
@@ -258,7 +258,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task AttachDebuggerSignalsSourceAndByteCode()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             int initialSourceCount = script.SourceCodeCount;
             script.LoadString("return 1", codeFriendlyName: "chunk1");
             script.LoadString("return 2", codeFriendlyName: "chunk2");
@@ -278,7 +278,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task LoadStringSignalsByteCodeChangeWhenDebuggerAttached()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             RecordingDebugger debugger = new();
             script.AttachDebugger(debugger);
 
@@ -295,7 +295,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CreateDynamicExpressionRemovesSourceOnError()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             int beforeCount = script.SourceCodeCount;
 
             Assert.Throws<SyntaxErrorException>(() => script.CreateDynamicExpression("+++"));
@@ -306,8 +306,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CreateConstantDynamicExpressionValidatesOwnership()
         {
-            Script scriptA = new(CoreModules.PresetComplete);
-            Script scriptB = new(CoreModules.PresetComplete);
+            Script scriptA = new(CoreModulePresets.Complete);
+            Script scriptB = new(CoreModulePresets.Complete);
             DynValue foreignValue = scriptA.DoString("return {}");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -348,7 +348,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task OwnerScriptReturnsSelf()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             await Assert.That(script.OwnerScript).IsSameReferenceAs(script).ConfigureAwait(false);
         }

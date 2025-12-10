@@ -14,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task EvalExecutesExpressionAgainstCurrentGlobals()
         {
             using UserDataRegistrationScope registrationScope = RegisterDummyType();
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.Globals["value"] = DynValue.NewNumber(6);
 
             DynValue result = script.DoString("return dynamic.eval('value * 3')");
@@ -26,7 +26,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         [global::TUnit.Core.Test]
         public async Task PreparedExpressionCanBeEvaluatedMultipleTimes()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue prepared = script.DoString("return dynamic.prepare('a + b')");
             script.Globals["expr"] = prepared;
@@ -47,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         public async Task EvalThrowsWhenUserDataIsNotPreparedExpression()
         {
             using UserDataRegistrationScope registrationScope = RegisterDummyType();
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.Globals["bad"] = UserData.Create(new Dummy());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -63,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         [global::TUnit.Core.Test]
         public async Task EvalThrowsScriptRuntimeExceptionOnSyntaxError()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return dynamic.eval('function(')")
@@ -75,7 +75,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         [global::TUnit.Core.Test]
         public async Task PrepareThrowsScriptRuntimeExceptionOnSyntaxError()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return dynamic.prepare('function(')")

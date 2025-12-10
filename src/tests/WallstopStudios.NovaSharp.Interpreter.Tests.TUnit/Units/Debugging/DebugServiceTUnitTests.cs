@@ -85,7 +85,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         [global::TUnit.Core.Test]
         public async Task ResetBreakpointsThrowsWhenProcessorUnavailable()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             SourceCode source = new("chunk", "return 1", sourceId: 1, script);
             DebugService service = new(script, null);
 
@@ -101,7 +101,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
             BreakpointRecordingDebugger Debugger
         ) RunScriptAndAttachDebugger()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             BreakpointRecordingDebugger debugger = new();
 
             script.AttachDebugger(debugger);

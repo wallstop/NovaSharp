@@ -28,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Cli
 
             Script.DefaultOptions.ScriptLoader = new ReplInterpreterScriptLoader();
 
-            Script script = new(CoreModules.PresetComplete)
+            Script script = new(CoreModulePresets.Complete)
             {
                 Globals = { ["makestatic"] = (Func<string, DynValue>)(MakeStatic) },
             };
@@ -361,7 +361,7 @@ namespace WallstopStudios.NovaSharp.Cli
             {
                 CompatibilityVersion = luaVersion,
             };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             foreach (string chunk in inlineChunks)
             {
@@ -465,7 +465,7 @@ namespace WallstopStudios.NovaSharp.Cli
                 );
             }
 
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
             Console.WriteLine(
                 CliMessages.ProgramRunningScript(
                     resolvedScriptPath,

@@ -14,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseBeforeStartReturnsTrueAndMarksDead()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function ready() return 1 end");
 
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("ready"));
@@ -28,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseWhileSuspendedEndsCoroutine()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function pause()
@@ -57,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseForceSuspendedCoroutineDrainsStack()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function slow()
@@ -86,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseAfterExceptionReturnsFalseTuple()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function blow()
@@ -111,7 +111,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseDeadCoroutineWithStoredErrorReturnsFalseTuple()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function explode()
@@ -138,7 +138,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseMainCoroutineThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function close_main()
@@ -157,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseRunningCoroutineThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function close_running()
@@ -179,7 +179,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseUnknownStateThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function idle() coroutine.yield('pause') end");
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("idle"));
 
@@ -196,7 +196,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseDeadCoroutineWithoutErrorsReturnsTrue()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function done() return 'ok' end");
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("done"));
 
@@ -212,7 +212,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseClrCallbackCoroutineReturnsTrue()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewNumber(1));
             DynValue coroutineValue = script.CreateCoroutine(callback);
 
@@ -225,7 +225,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CloseForceSuspendedCoroutineUnwindsSuccessfully()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function heavy_close()
@@ -257,7 +257,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task ClosePropagatesErrorsFromCloseMetamethod()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 local function new_closable()
@@ -291,7 +291,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CoroutineCloseFlushesAllClosersEvenWhenOneRaises()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 local log = {}

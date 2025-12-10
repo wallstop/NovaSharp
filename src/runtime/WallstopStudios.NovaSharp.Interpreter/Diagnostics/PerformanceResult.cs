@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Diagnostics
 {
     using System;
+    using System.ComponentModel;
     using System.Globalization;
 
     /// <summary>
@@ -64,10 +65,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Diagnostics
                 case PerformanceCounterType.TimeMilliseconds:
                     return "ms";
                 default:
-                    throw new InvalidOperationException(
-                        FormattableString.Invariant(
-                            $"PerformanceCounterType has invalid value {type}"
-                        )
+                    throw new InvalidEnumArgumentException(
+                        nameof(type),
+                        (int)type,
+                        typeof(PerformanceCounterType)
                     );
             }
         }

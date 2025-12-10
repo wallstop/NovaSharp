@@ -14,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ClassicPromptReflectsPendingState()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
 
             await Assert.That(interpreter.ClassicPrompt).IsEqualTo(">").ConfigureAwait(false);
             interpreter.Evaluate("function foo()");
@@ -25,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task CurrentPendingCommandExposesBufferedInput()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
 
             DynValue pending = interpreter.Evaluate("function sample()");
             await Assert.That(pending).IsNull().ConfigureAwait(false);
@@ -40,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task EvaluateSupportsClassicExpressionSyntax()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete))
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete))
             {
                 HandleClassicExprsSyntax = true,
             };
@@ -53,7 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task EvaluateSupportsDynamicExpressionSyntax()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete))
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete))
             {
                 HandleDynamicExprs = true,
             };
@@ -69,7 +69,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task EvaluateReturnsNullWhenAwaitingMoreInput()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
 
             DynValue first = interpreter.Evaluate("function foo()");
             await Assert.That(first).IsNull().ConfigureAwait(false);
@@ -88,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task DynamicExpressionReturnsComputedValueWhenCodeIsPresent()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete))
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete))
             {
                 HandleDynamicExprs = true,
             };
@@ -102,7 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task EmptyInputWithoutPendingReturnsVoid()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
 
             DynValue result = interpreter.Evaluate(string.Empty);
             await Assert.That(result).IsEqualTo(DynValue.Void).ConfigureAwait(false);
@@ -112,7 +112,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task DynamicExpressionHandlesEmptyCodeAsVoid()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete))
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete))
             {
                 HandleDynamicExprs = true,
             };
@@ -128,7 +128,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task ForcedBlankLineRethrowsPrematureSyntaxError()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
 
             DynValue pending = interpreter.Evaluate("function foo()");
             await Assert.That(pending).IsNull().ConfigureAwait(false);
@@ -144,7 +144,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task SyntaxErrorsClearPendingCommand()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
 
             SyntaxErrorException exception = ExpectException<SyntaxErrorException>(() =>
                 interpreter.Evaluate("return )")
@@ -156,7 +156,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task RuntimeExceptionsClearPendingCommand()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 interpreter.Evaluate("error('boom')")
@@ -168,7 +168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task UnhandledExceptionsAlsoClearPendingCommand()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
             ReplInterpreter.TestHooks.SetScript(interpreter, null);
 
             NullReferenceException exception = ExpectException<NullReferenceException>(() =>
@@ -181,7 +181,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task EvaluateThrowsWhenInputIsNull()
         {
-            ReplInterpreter interpreter = new(new Script(CoreModules.PresetComplete));
+            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 interpreter.Evaluate(null)

@@ -87,7 +87,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Initializes a new instance of the <see cref="Script"/> clas.s
         /// </summary>
         public Script()
-            : this(CoreModules.PresetDefault, null) { }
+            : this(CoreModulePresets.Default, null) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Script"/> class.
@@ -100,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Initializes a new instance using a custom options snapshot.
         /// </summary>
         public Script(ScriptOptions options)
-            : this(CoreModules.PresetDefault, options) { }
+            : this(CoreModulePresets.Default, options) { }
 
         /// <summary>
         /// Initializes a new instance with modules + options.

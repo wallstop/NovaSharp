@@ -20,7 +20,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<HiddenMembersSample>(ensureUnregistered: true);
             registrationScope.RegisterType<HiddenMembersSample>();
-            Script script = new Script(CoreModules.PresetComplete);
+            Script script = new Script(CoreModulePresets.Complete);
             script.Globals["sample"] = UserData.Create(new HiddenMembersSample());
 
             DynValue visibleResult = script.DoString("return sample.VisibleMethod()");
@@ -40,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                     ensureUnregistered: true
                 );
             registrationScope.RegisterType<DerivedHiddenMembersSample>();
-            Script script = new Script(CoreModules.PresetComplete);
+            Script script = new Script(CoreModulePresets.Complete);
             script.Globals["sample"] = UserData.Create(new DerivedHiddenMembersSample());
 
             DynValue visibleResult = script.DoString("return sample.Visible()");

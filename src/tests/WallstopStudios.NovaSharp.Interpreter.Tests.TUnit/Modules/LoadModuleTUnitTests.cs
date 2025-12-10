@@ -16,7 +16,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task RequireCachesModuleResult()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             RecordingScriptLoader loader = new()
             {
                 ModuleBody = "local name = ...; return { value = name, timestamp = os.time() }",
@@ -39,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task RequireThrowsWhenModuleCannotBeResolved()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.Options.ScriptLoader = new NullResolvingScriptLoader();
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -52,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadReturnsTupleWithErrorWhenReaderYieldsNonString()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue loadResult = script.DoString(
                 @"
                 local called = false
@@ -78,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadPropagatesDecoratedMessageWhenReaderThrowsSyntaxError()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.Globals["throw_reader_helper"] = DynValue.NewCallback(
                 (_, _) => throw new SyntaxErrorException("reader failure")
             );
@@ -101,7 +101,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadConcatenatesReaderFragmentsAndUsesProvidedEnvironment()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local fragments = { 'return ', 'value', nil }
@@ -123,7 +123,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadCompilesStringChunksAndUsesProvidedSourceName()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             Table env = new(script);
             env["value"] = DynValue.NewNumber(321);
 
@@ -149,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadRejectsChunkSourcesThatAreNeitherStringNorFunction()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("load(true)")
@@ -161,7 +161,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadReturnsTupleWithSyntaxErrorWhenStringIsInvalid()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue result = script.DoString("return load('function(')");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
@@ -172,7 +172,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadFileSafeUsesSafeEnvironmentWhenNotProvided()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             RecordingScriptLoader loader = new() { ModuleBody = "return marker" };
             script.Options.ScriptLoader = loader;
             script.Globals["marker"] = DynValue.NewString("global");
@@ -188,7 +188,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadSafeThrowsWhenEnvironmentCannotBeRetrieved()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -211,7 +211,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadFileHonorsExplicitEnvironmentParameter()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             RecordingScriptLoader loader = new() { ModuleBody = "return value" };
             script.Options.ScriptLoader = loader;
             script.Globals["value"] = DynValue.NewString("global");
@@ -231,7 +231,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadFileReturnsTupleWithSyntaxErrorMessage()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.Options.ScriptLoader = new SyntaxErrorScriptLoader();
 
             DynValue loadFileResult = script.DoString("return loadfile('broken.lua')");
@@ -246,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task LoadFileUsesRawMessageWhenScriptLoaderThrowsSyntaxErrorWithoutDecoration()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.Options.ScriptLoader = new ThrowingSyntaxErrorScriptLoader();
 
             DynValue result = script.DoString("return loadfile('anything.lua')");
@@ -288,7 +288,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task DoFileExecutesLoadedChunk()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             RecordingScriptLoader loader = new() { ModuleBody = "return 777" };
             script.Options.ScriptLoader = loader;
 
@@ -301,7 +301,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task DoFileWrapsSyntaxErrorsWithScriptRuntimeException()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.Options.ScriptLoader = new SyntaxErrorScriptLoader();
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -314,7 +314,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task NovaSharpInitCreatesPackageTableWhenMissing()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             Table globals = new(script);
             Table ioTable = new(script);
 
@@ -330,7 +330,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task NovaSharpInitThrowsWhenPackageIsNotTable()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             Table globals = new(script);
             globals["package"] = DynValue.NewNumber(42);
 

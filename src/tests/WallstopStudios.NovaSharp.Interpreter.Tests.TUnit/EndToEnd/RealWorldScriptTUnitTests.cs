@@ -45,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             }
 
             string source = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(false);
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue moduleValue = script.DoString(source);
 
             await Assert.That(moduleValue.IsNil()).IsFalse().ConfigureAwait(false);

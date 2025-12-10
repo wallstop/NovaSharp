@@ -192,7 +192,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 Q:a();
                 return 10 * Q.t.dojob();
                 ";
-            DynValue result = new Script(CoreModules.PresetHardSandbox).DoString(script);
+            DynValue result = new Script(CoreModulePresets.HardSandbox).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, 10).ConfigureAwait(false);
         }
 
@@ -213,7 +213,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 test();
                 return result;
                 ";
-            DynValue result = new Script(CoreModules.PresetHardSandbox).DoString(script);
+            DynValue result = new Script(CoreModulePresets.HardSandbox).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "helloXX").ConfigureAwait(false);
         }
     }

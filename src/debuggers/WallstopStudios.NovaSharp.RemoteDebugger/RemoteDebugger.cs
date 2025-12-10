@@ -172,7 +172,7 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger
         public Script AttachFromDirectory(
             string modDirectory,
             string scriptName = null,
-            CoreModules modules = CoreModules.PresetComplete,
+            CoreModules modules = default,
             ScriptOptions baseOptions = null,
             Action<string> infoSink = null,
             Action<string> warningSink = null,

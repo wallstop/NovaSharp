@@ -435,7 +435,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             await WithConsoleAsync(async console =>
                 {
-                    Script script = new(CoreModules.PresetDefault);
+                    Script script = new(CoreModulePresets.Default);
                     script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
 
                     Program.ShowBannerForTests(script);
@@ -459,7 +459,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
 
         private static ShellContext CreateShellContext()
         {
-            return new ShellContext(new Script(CoreModules.PresetComplete));
+            return new ShellContext(new Script(CoreModulePresets.Complete));
         }
 
         private static void RunInterpreterLoop(ReplInterpreter interpreter)
@@ -478,7 +478,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         private sealed class StubReplInterpreter : ReplInterpreter
         {
             public StubReplInterpreter()
-                : base(new Script(CoreModules.PresetDefault)) { }
+                : base(new Script(CoreModulePresets.Default)) { }
 
             public bool PendingCommand { get; set; }
 

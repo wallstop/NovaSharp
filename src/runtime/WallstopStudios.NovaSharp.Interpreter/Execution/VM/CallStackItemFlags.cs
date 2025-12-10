@@ -20,14 +20,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         EntryPoint = 1 << 0,
 
         /// <summary>
-        /// Marks the entry frame created when resuming a coroutine.
+        /// Marks the entry frame created when resuming a coroutine (bit 1).
         /// </summary>
-        ResumeEntryPoint = EntryPoint | (1 << 1),
+        ResumeEntryPointBit = 1 << 1,
 
         /// <summary>
-        /// Marks the frame created when a CLR caller invokes Lua code.
+        /// Marks the frame created when a CLR caller invokes Lua code (bit 2).
         /// </summary>
-        CallEntryPoint = EntryPoint | (1 << 2),
+        CallEntryPointBit = 1 << 2,
 
         /// <summary>
         /// Indicates that the call was compiled as a tail call.
@@ -38,5 +38,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Indicates that the call originated from <c>object:method()</c> syntax (implicit self).
         /// </summary>
         MethodCall = 1 << 5,
+    }
+
+    /// <summary>
+    /// Combined flag values for <see cref="CallStackItemFlags"/>.
+    /// These are the recommended way to specify combined flags for call stack frames.
+    /// </summary>
+    internal static class CallStackItemFlagsPresets
+    {
+        /// <summary>
+        /// Marks the entry frame created when resuming a coroutine.
+        /// </summary>
+        public const CallStackItemFlags ResumeEntryPoint =
+            CallStackItemFlags.EntryPoint | CallStackItemFlags.ResumeEntryPointBit;
+
+        /// <summary>
+        /// Marks the frame created when a CLR caller invokes Lua code.
+        /// </summary>
+        public const CallStackItemFlags CallEntryPoint =
+            CallStackItemFlags.EntryPoint | CallStackItemFlags.CallEntryPointBit;
     }
 }

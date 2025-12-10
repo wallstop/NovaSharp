@@ -51,7 +51,7 @@ namespace WallstopStudios.NovaSharp.Cli.Commands.Implementations
                     : new string(trimmedArgument);
             string targetFileName = sourcePath + "-compiled";
 
-            Script s = new Script(CoreModules.PresetDefault);
+            Script s = new Script(CoreModulePresets.Default);
             try
             {
                 DynValue chunk = s.LoadFile(sourcePath);

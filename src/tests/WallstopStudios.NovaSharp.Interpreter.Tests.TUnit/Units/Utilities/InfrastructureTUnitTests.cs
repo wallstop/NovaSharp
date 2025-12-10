@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
 {
     using System;
+    using System.ComponentModel;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -32,12 +33,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
             );
             await Assert.That(milliseconds).IsEqualTo("ms").ConfigureAwait(false);
 
-            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
-                PerformanceResult.PerformanceCounterTypeToString(
-                    (PerformanceCounterType)int.MaxValue
-                )
+            InvalidEnumArgumentException exception = Assert.Throws<InvalidEnumArgumentException>(
+                () =>
+                    PerformanceResult.PerformanceCounterTypeToString(
+                        (PerformanceCounterType)int.MaxValue
+                    )
             );
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
+            await Assert.That(exception.ParamName).IsEqualTo("type").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

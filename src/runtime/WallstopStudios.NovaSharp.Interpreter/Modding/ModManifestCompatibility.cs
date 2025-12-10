@@ -155,15 +155,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <summary>
         /// Creates a <see cref="Script"/> configured with a manifest-driven compatibility profile.
         /// </summary>
+        /// <param name="directory">The directory containing the mod manifest.</param>
+        /// <param name="modules">The core modules to load. If not specified, defaults to <see cref="CoreModulePresets.Complete"/>.</param>
+        /// <param name="baseOptions">Base script options to clone from.</param>
+        /// <param name="infoSink">Optional callback for informational messages.</param>
+        /// <param name="warningSink">Optional callback for warning messages.</param>
+        /// <param name="fileSystem">Optional file system abstraction.</param>
         public static Script CreateScriptFromDirectory(
             string directory,
-            CoreModules modules = CoreModules.PresetComplete,
+            CoreModules modules = default,
             ScriptOptions baseOptions = null,
             Action<string> infoSink = null,
             Action<string> warningSink = null,
             IModFileSystem fileSystem = null
         )
         {
+            // Default to Complete when no modules specified (default enum value is 0)
+            CoreModules effectiveModules =
+                modules == default ? CoreModulePresets.Complete : modules;
             ScriptOptions options = new(baseOptions ?? Script.DefaultOptions);
             IModFileSystem fs = fileSystem ?? PhysicalModFileSystem.Instance;
 
@@ -176,7 +185,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 fs
             );
 
-            return new Script(modules, options);
+            return new Script(effectiveModules, options);
         }
     }
 }

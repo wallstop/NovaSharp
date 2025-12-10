@@ -194,7 +194,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         public async Task LoadChangeEnvWithDebugSetUpValue()
         {
             List<Table> captured = new();
-            Script script = new(CoreModules.PresetComplete)
+            Script script = new(CoreModulePresets.Complete)
             {
                 Globals = { ["print"] = (Action<Table>)(captured.Add) },
             };

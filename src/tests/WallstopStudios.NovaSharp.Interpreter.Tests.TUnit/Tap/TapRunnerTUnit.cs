@@ -73,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
                 ForceUtcDateTime = true,
             };
 
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
             if (script.Options.ScriptLoader is not ScriptLoaderBase)
             {
                 script.Options.ScriptLoader = new FileSystemScriptLoader();

@@ -630,7 +630,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             {
                 CompatibilityVersion = LuaCompatibilityVersion.Lua54,
             };
-            return new Script(CoreModules.PresetComplete, options);
+            return new Script(CoreModulePresets.Complete, options);
         }
 
         #endregion

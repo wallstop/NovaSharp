@@ -483,7 +483,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
                 {
                     try
                     {
-                        Script script = new Script(CoreModules.PresetHardSandbox);
+                        Script script = new Script(CoreModulePresets.HardSandbox);
                         Interlocked.Increment(ref scriptCreationsSucceeded);
                     }
                     catch (Exception)

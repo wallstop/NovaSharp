@@ -15,7 +15,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task EvaluateSymbolByNameResolvesLocals()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue callback = DynValue.NewCallback(
                 (context, _) =>
                 {
@@ -42,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task CurrentGlobalEnvExposesGlobals()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.Globals["marker"] = DynValue.NewString("available");
 
             DynValue callback = DynValue.NewCallback(
@@ -74,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task GetMetatableReturnsAssignedMetatable()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue callback = DynValue.NewCallback(
                 (context, args) =>
@@ -99,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task GetMetamethodTailCallReturnsTailCallRequest()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             LastTailCall = null;
             DynValue callback = DynValue.NewCallback(
                 (context, args) =>
@@ -133,7 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task PerformMessageDecorationDecoratesException()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function decorator(message)
@@ -384,7 +384,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task IsYieldableReturnsFalseForMainProcessor()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue callback = DynValue.NewCallback(
                 (context, _) => DynValue.NewBoolean(context.IsYieldable())
             );
@@ -397,7 +397,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Test]
         public async Task IsYieldableReturnsTrueInsideCoroutine()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue callback = DynValue.NewCallback(
                 (context, _) => DynValue.NewBoolean(context.IsYieldable())
             );

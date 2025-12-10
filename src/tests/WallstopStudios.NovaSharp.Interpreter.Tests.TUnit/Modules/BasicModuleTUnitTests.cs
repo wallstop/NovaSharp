@@ -660,7 +660,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             {
                 CompatibilityVersion = version,
             };
-            return new Script(CoreModules.PresetComplete, options);
+            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

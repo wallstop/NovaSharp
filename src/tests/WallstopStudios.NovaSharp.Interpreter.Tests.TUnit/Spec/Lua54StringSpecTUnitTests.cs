@@ -265,7 +265,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 
         private static DynValue Evaluate(string lua)
         {
-            Script script = new Script(CoreModules.PresetComplete);
+            Script script = new Script(CoreModulePresets.Complete);
             return script.DoString(lua);
         }
     }

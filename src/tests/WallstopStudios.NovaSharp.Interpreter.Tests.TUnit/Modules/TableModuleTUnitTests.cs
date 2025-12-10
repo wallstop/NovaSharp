@@ -380,7 +380,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         private static Script CreateScript()
         {
-            return new Script(CoreModules.PresetComplete);
+            return new Script(CoreModulePresets.Complete);
         }
     }
 }

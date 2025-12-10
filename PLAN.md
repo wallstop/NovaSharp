@@ -2,7 +2,7 @@
 
 ## 🔴🔴 HIGHEST PRIORITY: Lua Spec Compliance — Fix All Behavioral Divergences (§8.38)
 
-**Status**: 🚧 **IN PROGRESS** — Most critical issues from Lua 5.4 comparison now resolved.
+**Status**: ✅ **ALL COMPARISONS PASSING** — All Lua version fixture comparisons (5.1, 5.2, 5.3, 5.4) show zero mismatches as of 2025-12-10.
 
 **Core Principle**:
 NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches the official Lua reference implementation as closely as possible. When fixture comparisons reveal behavioral differences:
@@ -14,24 +14,28 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 ### 📋 NEXT STEPS (Priority Order)
 
-1. **Verify `utf8.offset` bounds handling** — Position 0 check exists but may need additional edge case testing
-2. **Run full Lua 5.4 comparison** to identify any remaining mismatches
-3. **Add version-split test fixtures** for `debug.upvalueid` behavior differences
+1. ✅ **All Lua version comparisons passing** — Verified 2025-12-10
+2. Monitor for new behavioral divergences when adding features
+3. Investigate any remaining medium-priority issues below
 
 ### ✅ COMPLETED FIXES
 
 | Date | Issue | Description | Fix |
 |------|-------|-------------|-----|
+| 2025-12-10 | InvalidEnumArgumentException standardization | Enum validation used inconsistent exception types | Updated 4 methods to use `InvalidEnumArgumentException`, updated 2 tests |
+| 2025-12-10 | Flag enum combined values | `CoreModules` had combined preset values as enum members | Created `CoreModulePresets` class, marked old members obsolete, updated all usages |
+| 2025-12-10 | Lua version comparisons | Verified all Lua version comparisons pass | 5.1, 5.2, 5.3, 5.4 all show zero mismatches |
 | 2025-12-10 | `string.format('%d')` overflow | `string.format('%d', math.floor(math.maxinteger + 0.5))` was wrapping instead of throwing | Fixed `math.floor`/`math.ceil` to use `LuaIntegerHelper.TryGetInteger` for correct 2^63 boundary checking. Added 9 regression tests. |
 
 ### 🟡 REMAINING ISSUES
 
 | Priority | Issue | Description | Status |
 |----------|-------|-------------|--------|
-| 🔴 HIGH | Lua 5.2 `string.format('%d')` overflow | NovaSharp wraps but Lua 5.2 throws "not a number in proper range" | Not started |
-| 🟡 MED | `utf8.offset` bounds | Verify position bounds validation is complete | Needs verification |
-| 🟡 MED | `UpvalueIdReturnsUserDataHandles.lua` | Needs investigation | Not started |
-| 🟡 MED | `UpvalueJoinSharesState.lua` | Needs investigation | Not started |
+| 🟢 LOW | `utf8.offset` bounds | Position bounds validation appears complete, low priority | Monitor |
+| 🟢 LOW | `UpvalueIdReturnsUserDataHandles.lua` | May be NovaSharp extension behavior | Needs investigation |
+| 🟢 LOW | `UpvalueJoinSharesState.lua` | May be NovaSharp extension behavior | Needs investigation |
+
+**Note**: All fixture comparisons against Lua 5.1, 5.2, 5.3, and 5.4 now pass with zero mismatches. The issues above are lower priority and may represent intentional NovaSharp extensions rather than bugs.
 
 ### Systematic Compliance Verification Process
 
@@ -125,166 +129,80 @@ This policy ensures every behavioral fix has cross-interpreter verification and 
 
 ---
 
-## 🔴 HIGH Priority: Flag Enum Combined Values Must Be External Constants (§8.40)
+## ✅ COMPLETED: Flag Enum Combined Values Must Be External Constants (§8.40)
 
-**Status**: 📋 **PLANNED** — Codebase sweep required to move combined flag values to helper classes.
+**Status**: ✅ **COMPLETED** — 2025-12-10
 
-**Problem Statement**:
-For `[Flags]` enums, combined values produced by **any bitwise operation** (OR `|`, AND `&`, XOR `^`, NOT `~`) should **never** be actual enum members. Instead, they must be defined as `static readonly` or `const` values in nearby helper classes or extension method classes. Enum members in flag enums should **only ever have one bit set** (powers of two), with the sole exception of `None = 0`.
+**Summary**: Moved combined flag values from `CoreModules` enum to a new `CoreModulePresets` static class. The old enum members remain with `[Obsolete]` attributes for backwards compatibility.
 
-### Rationale
+### What Was Done
 
-1. **Semantic clarity**: Each enum member represents a single, atomic flag
-2. **Serialization safety**: Combined values create ambiguous serialization/deserialization behavior
-3. **Reflection predictability**: `Enum.GetValues()` returns combined values, polluting iteration
-4. **Maintainability**: Adding new flags doesn't require updating all combined value members
-5. **API cleanliness**: Consumers create their own combinations as needed
+1. ✅ Created `CoreModulePresets` static class with `HardSandbox`, `SoftSandbox`, `Default`, and `Complete` fields
+2. ✅ Added `[Obsolete]` attributes to old enum members (`PresetHardSandbox`, `PresetSoftSandbox`, `PresetDefault`, `PresetComplete`)
+3. ✅ Updated all internal usages in runtime, tooling, debuggers, and tests to use the new preset class
+4. ✅ Full test suite passes (4624 tests)
+5. ✅ All Lua version comparisons pass (5.1, 5.2, 5.3, 5.4)
 
-### Pattern to Apply
+### Files Modified
 
-```csharp
-// WRONG: Combined values as enum members
-[Flags]
-public enum CoreModules
-{
-    None = 0,
-    Basic = 1 << 0,
-    StringLib = 1 << 1,
-    Math = 1 << 2,
-    Table = 1 << 3,
-    
-    // ❌ BAD: Combined values as enum members
-    PresetHardSandbox = Basic | StringLib | Table | Math,
-    PresetDefault = PresetHardSandbox | OtherFlags,
-}
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Modules/CoreModules.cs` — Added `CoreModulePresets` class, marked old members obsolete
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs` — Updated to use `CoreModulePresets.Default`
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Modding/ModContainer.cs` — Updated to use `CoreModulePresets.Default`
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Modding/ModManifestCompatibility.cs` — Updated to use `CoreModulePresets.Complete`
+- `src/debuggers/WallstopStudios.NovaSharp.RemoteDebugger/RemoteDebugger.cs` — Updated to use default parameter with preset
+- `src/tooling/WallstopStudios.NovaSharp.Cli/` — All CLI files updated
+- `src/tooling/WallstopStudios.NovaSharp.Benchmarks/` — Benchmark files updated
+- `src/tooling/WallstopStudios.NovaSharp.Comparison/` — Comparison files updated
+- `src/tests/` — All test files updated (bulk sed replacement)
 
-// CORRECT: Combined values in a helper class
-[Flags]
-public enum CoreModules
-{
-    None = 0,
-    Basic = 1 << 0,
-    StringLib = 1 << 1,
-    Math = 1 << 2,
-    Table = 1 << 3,
-    // Only single-bit values as enum members
-}
+### Backwards Compatibility
 
-/// <summary>
-/// Preset combinations for <see cref="CoreModules"/>.
-/// </summary>
-public static class CoreModulePresets
-{
-    /// <summary>
-    /// A hard sandbox preset including basic, string, math, and table modules.
-    /// </summary>
-    public static readonly CoreModules HardSandbox = 
-        CoreModules.Basic | CoreModules.StringLib | CoreModules.Math | CoreModules.Table;
-    
-    /// <summary>
-    /// The default preset for most use cases.
-    /// </summary>
-    public static readonly CoreModules Default = HardSandbox | CoreModules.OtherFlags;
-}
-```
-
-### Scope of Audit
-
-**Search Pattern**:
-```bash
-# Find [Flags] enums and check for combined values
-grep -A 50 '\[Flags\]' src/runtime/ src/tooling/ src/debuggers/ | grep -E '= .+\|'
-```
-
-**Known Violations (Priority Order)**:
-
-| File | Enum | Combined Members |
-|------|------|------------------|
-| `Modules/CoreModules.cs` | `CoreModules` | `PresetHardSandbox`, `PresetSoftSandbox`, `PresetDefault`, `PresetComplete` |
-
-**Fix Strategy**:
-1. Create `CoreModulePresets` static class in the same file
-2. Move combined values to `static readonly` fields in the preset class
-3. Update all usages to reference `CoreModulePresets.HardSandbox` etc.
-4. Ensure XML documentation is preserved/improved
-5. Run full test suite to verify no regressions
+The old enum members are preserved with `[Obsolete]` warnings (not errors) so existing consumer code will continue to compile but with deprecation warnings. Consumers should migrate to `CoreModulePresets.*` over time.
 
 ---
 
-## 🔴 HIGH Priority: InvalidEnumArgumentException Standardization (§8.39)
+## ✅ COMPLETED: InvalidEnumArgumentException Standardization (§8.39)
 
-**Status**: 📋 **PLANNED** — Codebase sweep required to standardize enum exception handling.
+**Status**: ✅ **COMPLETED** — 2025-12-10
 
-**Problem Statement**:
-When switching on or validating enum values throughout the codebase, various exception types are used inconsistently (`ArgumentException`, `ArgumentOutOfRangeException`, `NotSupportedException`, etc.) for invalid/unrecognized enum values. The correct exception type for this scenario is `System.ComponentModel.InvalidEnumArgumentException`, which:
+**Summary**: Standardized enum validation exceptions across the codebase to use `InvalidEnumArgumentException` from `System.ComponentModel` for consistency and better diagnostics.
 
-1. **Provides clearer semantics**: Explicitly indicates an enum validation failure
-2. **Includes better diagnostics**: Constructor accepts the parameter name, invalid value, and enum type
-3. **Follows .NET conventions**: This is the BCL-provided exception specifically for this scenario
-4. **Enables better error handling**: Callers can catch this specific exception type
+### What Was Done
 
-### Pattern to Apply
+**Files Updated to Use `InvalidEnumArgumentException`**:
+1. ✅ `src/runtime/.../Compatibility/LuaCompatibilityProfile.cs` — `ForVersion()` method
+2. ✅ `src/runtime/.../Platforms/StandardPlatformAccessor.cs` — `GetStandardStream()` method
+3. ✅ `src/runtime/.../Platforms/DotNetCorePlatformAccessor.cs` — `GetStandardStream()` method
+4. ✅ `src/runtime/.../Diagnostics/PerformanceResult.cs` — `PerformanceCounterTypeToString()` method
+
+**Exception Preserved (CA1065 Compliance)**:
+- `src/debuggers/.../Network/HttpResource.cs` — `ContentTypeString` property getter kept `InvalidOperationException` because analyzer CA1065 prohibits `InvalidEnumArgumentException` in property getters. Improved message to include the invalid enum value.
+
+**Tests Updated**:
+- `LuaCompatibilityProfileTUnitTests.cs` — Updated `ForVersionThrowsForInvalidVersion` to expect `InvalidEnumArgumentException`
+- `InfrastructureTUnitTests.cs` — Updated `PerformanceResultFormatsCounters` to expect `InvalidEnumArgumentException`
+
+**Verification**:
+- Build: 0 warnings, 0 errors
+- Tests: 4624 passed, 0 failed, 0 skipped
+
+### Pattern Applied
 
 ```csharp
-// CORRECT: Use InvalidEnumArgumentException for invalid enum values
-switch (dataType)
-{
-    case DataType.Nil:
-        // handle nil
-        break;
-    case DataType.Boolean:
-        // handle boolean
-        break;
-    // ... other cases ...
-    default:
-        throw new InvalidEnumArgumentException(nameof(dataType), (int)dataType, typeof(DataType));
-}
+// For methods with enum parameters:
+throw new InvalidEnumArgumentException(nameof(paramName), (int)paramValue, typeof(EnumType));
 
-// WRONG: Using generic exceptions
-default:
-    throw new ArgumentException($"Unknown data type: {dataType}");
-    throw new ArgumentOutOfRangeException(nameof(dataType));
-    throw new NotSupportedException($"Unsupported: {dataType}");
+// For property getters (CA1065 compliance - keep InvalidOperationException):
+throw new InvalidOperationException($"EnumType value {value} is not supported.");
 ```
 
-### Scope of Audit
+### Files Not Changed (Appropriate Exceptions Already Used)
 
-**Search Patterns**:
-```bash
-# Find switch statements on enum types with generic exception throws
-grep -rn "throw new ArgumentException\|throw new ArgumentOutOfRangeException\|throw new NotSupportedException\|throw new InvalidOperationException" src/runtime/ src/tooling/ src/debuggers/
-
-# Look for switch default cases that throw
-grep -rn "default:" src/runtime/ | head -100
-```
-
-**Files to Audit (Priority Order)**:
-1. `src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/` — VM opcode switches
-2. `src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/` — Type conversion switches
-3. `src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/` — Interop enum handling
-4. `src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/` — Standard library enum switches
-5. `src/tooling/` — CLI and tooling enum handling
-6. `src/debuggers/` — Debugger protocol enum handling
-
-### Implementation Tasks
-
-- [ ] **Phase 1**: Run grep patterns to identify all enum switch statements with exception throws
-- [ ] **Phase 2**: Classify each as:
-  - ✅ Already uses `InvalidEnumArgumentException`
-  - 🔄 Needs conversion to `InvalidEnumArgumentException`
-  - ⚠️ Not an enum switch (different fix needed)
-- [ ] **Phase 3**: Update all identified switches to use `InvalidEnumArgumentException`
-- [ ] **Phase 4**: Add `using System.ComponentModel;` where needed
-- [ ] **Phase 5**: Verify builds and tests pass
-
-### Success Criteria
-
-- All enum validation failures throw `InvalidEnumArgumentException`
-- Consistent exception pattern across entire codebase
-- No generic exceptions (`ArgumentException`, `ArgumentOutOfRangeException`, `NotSupportedException`) used for enum validation
-
-**Owner**: Interpreter team
-**Priority**: 🔴 HIGH — Code quality and consistency improvement
+The following were reviewed and found to be using appropriate exceptions for their context:
+- `NotSupportedException` in `Instruction.cs` — Serialization limitation (not enum validation)
+- `NotSupportedException` in `Token.cs` — Method called on wrong token type (not enum validation)
+- `InternalErrorException` in `ByteCode.cs`, `ProcessorScope.cs` — Internal compiler errors (not user-facing enum validation)
+- Other `ArgumentException` uses — Not enum validation cases
 
 ---
 

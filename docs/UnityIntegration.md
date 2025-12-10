@@ -68,7 +68,7 @@ ScriptOptions baseOptions = new ScriptOptions(Script.DefaultOptions)
 
 Script script = ModManifestCompatibility.CreateScriptFromDirectory(
     modRoot,
-    CoreModules.PresetComplete,
+    CoreModulePresets.Complete,
     baseOptions,
     info => Debug.Log($"[NovaSharp] {info}"),
     warning => Debug.LogWarning($"[NovaSharp] {warning}")
@@ -102,7 +102,7 @@ string modRoot = Path.GetDirectoryName(entryPointPath);
 Script script = debugger.AttachFromDirectory(
     modRoot,
     "Streaming Assets Mod",
-    CoreModules.PresetComplete,
+    CoreModulePresets.Complete,
     debugOptions,
     info => Debug.Log($"[NovaSharp] {info}"),
     warning => Debug.LogWarning($"[NovaSharp] {warning}")

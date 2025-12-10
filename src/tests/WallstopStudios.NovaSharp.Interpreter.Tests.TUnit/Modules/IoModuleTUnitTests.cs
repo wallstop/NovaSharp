@@ -53,7 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 outputs.Add(message ?? string.Empty);
             };
 
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
             string chunk =
                 @"
 while true do
@@ -1027,7 +1027,7 @@ end
 
         private static Script CreateScript()
         {
-            Script script = new Script(CoreModules.PresetComplete);
+            Script script = new Script(CoreModulePresets.Complete);
             script.Options.DebugPrint = _ => { };
             return script;
         }
@@ -1038,7 +1038,7 @@ end
             {
                 CompatibilityVersion = version,
             };
-            Script script = new Script(CoreModules.PresetComplete, options);
+            Script script = new Script(CoreModulePresets.Complete, options);
             script.Options.DebugPrint = _ => { };
             return script;
         }

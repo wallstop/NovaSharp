@@ -18,7 +18,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task ResumeAfterCompletionThrowsCannotResumeNotSuspended()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function simple() return 5 end");
 
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("simple"));
@@ -52,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task CoroutineYieldPassesValuesWhenYieldingIsAllowed()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function worker()
@@ -73,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task YieldingFromMainChunkThrowsCannotYieldMain()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString("coroutine.yield('outside')")
@@ -86,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Test]
         public async Task YieldingWithClrBoundaryInsideCoroutineThrowsCannotYield()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function boundary()

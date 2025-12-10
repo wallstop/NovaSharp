@@ -17,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue tuple = script.DoString(
                 @"
@@ -39,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue tuple = script.DoString("return tonumber('2', 2), tonumber('g', 16)");
 
@@ -52,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue result = script.DoString(
                 "local ok, err = pcall(tonumber, '1', 40) return ok, err"
@@ -67,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue result = script.DoString(
                 "local ok, err = pcall(tonumber, '10', 2.5) return ok, err"
@@ -88,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue result = script.DoString("return tonumber('0xFF')");
 
@@ -100,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue result = script.DoString("return tonumber('0xff')");
 
@@ -112,7 +112,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue result = script.DoString("return tonumber('0XFF')");
 
@@ -124,7 +124,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue result = script.DoString("return tonumber('-0x10')");
 
@@ -136,7 +136,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue result = script.DoString("return tonumber('+0x10')");
 
@@ -148,7 +148,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue result = script.DoString("return tonumber('  0xFF  ')");
 
@@ -160,7 +160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             // "0x" without digits should return nil
             DynValue result = script.DoString("return tonumber('0x')");
@@ -173,7 +173,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             // "0xG" contains invalid hex digit
             DynValue result = script.DoString("return tonumber('0xG')");
@@ -186,7 +186,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             DynValue result = script.DoString("return tonumber('0xDeAdBeEf')");
 
@@ -198,7 +198,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             // 0x1.8 = 1 + 8/16 = 1.5, p0 means * 2^0 = 1.5
             DynValue result = script.DoString("return tonumber('0x1.8p0')");
@@ -211,7 +211,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             // 0x1p2 = 1 * 2^2 = 4
             DynValue result = script.DoString("return tonumber('0x1p2')");
@@ -224,7 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             // 0x10p-2 = 16 * 2^(-2) = 16 / 4 = 4
             DynValue result = script.DoString("return tonumber('0x10p-2')");
@@ -237,7 +237,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
-                CoreModules.PresetComplete
+                CoreModulePresets.Complete
             );
             // 0x1p+2 = 1 * 2^2 = 4
             DynValue result = script.DoString("return tonumber('0x1p+2')");

@@ -53,7 +53,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _currentComplexity = complexity;
 
             _scriptSource = LuaScriptCorpus.GetCompilationScript(complexity);
-            _precompiledScript = new Script(CoreModules.PresetComplete);
+            _precompiledScript = new Script(CoreModulePresets.Complete);
             _precompiledFunction = _precompiledScript.LoadString(
                 _scriptSource,
                 null,
@@ -67,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Compile + Execute")]
         public DynValue CompileAndExecute()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             return script.DoString(_scriptSource, null, $"compile_execute_{_currentComplexity}");
         }
 
@@ -77,7 +77,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Compile Only")]
         public DynValue CompileOnly()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             return script.LoadString(_scriptSource, null, $"compile_{_currentComplexity}");
         }
 

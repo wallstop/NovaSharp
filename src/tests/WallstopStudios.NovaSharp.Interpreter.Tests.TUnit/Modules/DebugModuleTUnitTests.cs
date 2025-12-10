@@ -16,7 +16,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetInfoReturnsFunctionReferenceForLuaFunctions()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -32,7 +32,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetInfoReportsCallerLocation()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -54,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetInfoReturnsNilWhenLevelExceedsStackDepth()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return debug.getinfo(50)");
 
@@ -64,7 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetInfoSurfacesArgumentErrors()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -82,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetLocalExposesCurrentLevelArguments()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -100,7 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetLocalReturnsNameForValidSlot()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -118,7 +118,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetLocalThrowsWhenLevelOutOfRange()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -135,7 +135,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetHookRecordsMaskAndCount()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -155,7 +155,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetLocalReportsLevelOutOfRange()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -175,7 +175,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetUpvalueReturnsNilForClrFunction()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return debug.getupvalue(print, 1)");
 
@@ -185,7 +185,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetUpvalueReturnsNilForInvalidIndex()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -200,7 +200,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetUpvalueReturnsNilForNegativeIndex()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -217,7 +217,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UpvalueIdReturnsNilForClrFunction()
         {
             // Per Lua 5.4 spec, debug.upvalueid returns nil for CLR functions (no accessible upvalues)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return debug.upvalueid(print, 1)");
 
@@ -228,7 +228,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UpvalueIdReturnsNilForInvalidIndex()
         {
             // Per Lua 5.4 spec, debug.upvalueid returns nil for invalid indices
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -243,7 +243,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetUpvalueReturnsNilForClrFunction()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return debug.setupvalue(print, 1, 'test')");
 
@@ -253,7 +253,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetUpvalueReturnsNilForInvalidIndex()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -268,7 +268,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetInfoReturnsNilForNegativeLevel()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return debug.getinfo(-1)");
 
@@ -278,7 +278,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetUserValueReturnsNilForNonUserData()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return debug.getuservalue('string')");
 
@@ -288,7 +288,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetUserValueThrowsForNonTableValue()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             UserData.RegisterType<DmTestUserDataClass>();
             DmTestUserDataClass obj = new();
             script.Globals["ud"] = UserData.Create(obj);
@@ -308,7 +308,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetUserValueThrowsWhenNoValueProvided()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             UserData.RegisterType<DmTestUserDataClass>();
             DmTestUserDataClass obj = new();
             script.Globals["ud"] = UserData.Create(obj);
@@ -328,7 +328,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetMetatableReturnsNilForTypesWithoutMetatable()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return debug.getmetatable(function() end)");
 
@@ -338,7 +338,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetMetatableThrowsWhenNoMetatableProvided()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -355,7 +355,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetMetatableThrowsForNonTableMetatable()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -373,7 +373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetMetatableWorksForFunctions()
         {
             // Functions can have metatables in NovaSharp
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -390,7 +390,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task TracebackReturnsCallStack()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -413,7 +413,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Note: NovaSharp's upvaluejoin implementation has limitations compared to standard Lua.
             // This test verifies the function runs without error, not full Lua semantics.
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -434,7 +434,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task UpvalueJoinThrowsForInvalidIndices()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -451,7 +451,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetInfoReturnsClrInfoForCallbackFunctions()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -470,7 +470,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Must explicitly set DebugInput to null; the default options have a delegate configured.
             ScriptOptions options = new() { DebugInput = null, DebugPrint = _ => { } };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             DynValue result = script.DoString(
                 @"
@@ -488,7 +488,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task DebugDebugExitsImmediatelyWhenDefaultInputReturnsNull()
         {
             // Default DebugInput returns null via Platform.DefaultInput - loop exits immediately
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return debug.debug()");
 
@@ -505,7 +505,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetInfoReturnsFunctionPlaceholderForClrFunctionWithFFlag()
         {
             // When using debug.getinfo with a function value, 'f' returns the function itself
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -522,7 +522,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetInfoReturnsLuaFunctionPlaceholderWithFFlag()
         {
             // When using debug.getinfo with a function value, 'f' returns the function itself
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -541,7 +541,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Tests BuildFunctionPlaceholder for CLR functions (frame.Address < 0)
             // Using a callback to get a frame-based getinfo for a CLR frame
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "callback",
@@ -570,7 +570,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Tests BuildFunctionPlaceholder for Lua functions (frame.Address >= 0)
             // Level 1 gets the Lua caller's frame (probe), level 0 is getinfo itself
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -591,7 +591,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetLocalFromClrFunctionReturnsPlaceholderLocals()
         {
             // Tests the CLR frame path in GetClrDebugLocalTuple - level 0 returns special placeholders
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "probe",
@@ -618,7 +618,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetLocalReturnsNilForInvalidIndexInClrFrame()
         {
             // Tests the CLR frame path with invalid index
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "probe",
@@ -642,7 +642,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetLocalFromClrFunctionReturnsPlaceholderName()
         {
             // Tests the CLR frame path in GetClrDebugLocalName for setlocal
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "probe",
@@ -672,7 +672,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetLocalReturnsNilForInvalidIndexInClrFrame()
         {
             // Tests the CLR frame path with invalid index
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "probe",
@@ -701,7 +701,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetUpValueFromClrFunctionReturnsNil()
         {
             // Tests the CLR function path in getupvalue
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -717,7 +717,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetUpValueFromClrFunctionReturnsNil()
         {
             // Tests the CLR function path in setupvalue
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -732,7 +732,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetHookReturnsNilWhenNoHookIsSet()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -750,7 +750,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SetHookClearsHookWhenNilPassed()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -770,7 +770,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task GetInfoWithEmptyWhatReturnsEmptyTable()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -790,7 +790,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetClrDebugLocalTupleReturnsIndexPlaceholder()
         {
             // Tests index 2 in GetClrDebugLocalTuple ((*index))
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "probe",
@@ -814,7 +814,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetClrDebugLocalTupleReturnsValuePlaceholder()
         {
             // Tests index 3 in GetClrDebugLocalTuple ((*value))
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "probe",
@@ -838,7 +838,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetClrDebugLocalReturnsIndexPlaceholderName()
         {
             // Tests index 2 in GetClrDebugLocalName (setlocal path)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "probe",
@@ -866,7 +866,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetClrDebugLocalReturnsValuePlaceholderName()
         {
             // Tests index 3 in GetClrDebugLocalName (setlocal path)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "probe",
@@ -894,7 +894,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetLocalFromFunctionReturnsUpValuePlaceholder()
         {
             // Tests GetLocalFromFunction with upvalues (function locals)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -917,7 +917,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetLocalFromFunctionReturnsNilForZeroOrNegativeIndex()
         {
             // Tests GetLocalFromFunction with index <= 0
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue zeroResult = script.DoString(
                 @"
@@ -942,7 +942,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetArgumentOrNilReturnsNilForOutOfBoundsIndex()
         {
             // Tests GetArgumentOrNil edge case through getlocal
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             script.Globals.Set(
                 "probe",
@@ -970,7 +970,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TracebackWithCoroutineUsesCoroutineStack()
         {
             // Tests debug.traceback with a thread (coroutine) argument (line 522-526)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -993,7 +993,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TracebackReturnsOriginalMessageWhenNotStringOrNumber()
         {
             // Tests debug.traceback returning non-string/non-number message unchanged (line 531-536)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1013,7 +1013,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetHookAndGetHookWithCoroutineTarget()
         {
             // Tests debug.sethook/gethook with a coroutine target (line 600-605)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1040,7 +1040,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetHookWithNoArgsClears()
         {
             // Tests debug.sethook() with no args clears hook (line 605-608)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1064,7 +1064,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetHookWithNilFunctionClearsHook()
         {
             // Tests debug.sethook(nil) clears hook (line 629-631)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1086,7 +1086,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetHookThrowsForNonFunctionHook()
         {
             // Tests debug.sethook with invalid hook type (line 635-637)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1104,7 +1104,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetHookWithCoroutineArgument()
         {
             // Tests debug.gethook(coroutine) (line 663-666)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1130,7 +1130,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // NovaSharp allows type metatables for Nil, Void, Boolean, Number, String, Function
             // This tests that debug.setmetatable on boolean works (line 315-317)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1150,7 +1150,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Tests debug.setmetatable on unsupported type (line 325-328)
             // UserData requires special handling, use Thread (coroutine) since
             // Thread is at the boundary where CanHaveTypeMetatables returns false
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1172,7 +1172,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetMetatableReturnsTableMetatable()
         {
             // Tests debug.getmetatable for a table (line 269-271)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1193,7 +1193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetMetatableReturnsNilForTableWithoutMetatable()
         {
             // Tests debug.getmetatable returning nil for table without metatable (line 269-271)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1209,7 +1209,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetMetatableOnTableWorks()
         {
             // Tests debug.setmetatable on a table (line 319-321)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1227,7 +1227,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UpvalueIdReturnsNilForOutOfRangeIndex()
         {
             // Per Lua 5.4 spec, debug.upvalueid returns nil when index is out of range
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1246,7 +1246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UpvalueIdReturnsUserDataForValidUpvalue()
         {
             // Tests debug.upvalueid returns a userdata identifier for valid upvalue
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1266,7 +1266,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UpvalueJoinThrowsForInvalidSecondClosure()
         {
             // Tests debug.upvaluejoin invalid index on second closure (line 487)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1290,7 +1290,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TracebackWithNumberLevel()
         {
             // Tests debug.traceback with a specific level to skip (line 543)
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1315,7 +1315,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task TracebackWithNilLevelUsesDefault()
         {
             // Tests debug.traceback with nil level uses default skip=1
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"

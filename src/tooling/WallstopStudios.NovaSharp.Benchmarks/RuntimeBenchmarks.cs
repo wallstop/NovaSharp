@@ -51,7 +51,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         {
             RuntimeScenario scenario = CurrentScenario;
 
-            _script = new Script(CoreModules.PresetComplete);
+            _script = new Script(CoreModulePresets.Complete);
             _compiledEntry = _script.LoadString(
                 LuaRuntimeSuites.GetScript(scenario),
                 null,

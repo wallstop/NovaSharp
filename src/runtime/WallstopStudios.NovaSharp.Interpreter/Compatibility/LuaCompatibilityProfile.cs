@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
 {
     using System;
+    using System.ComponentModel;
 
     /// <summary>
     /// Describes language/library behaviors that change across Lua compatibility versions.
@@ -141,10 +142,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
                 LuaCompatibilityVersion.Lua54 => Lua54Profile,
                 LuaCompatibilityVersion.Lua55 => Lua55Profile,
                 LuaCompatibilityVersion.Latest => Lua54Profile,
-                _ => throw new ArgumentOutOfRangeException(
+                _ => throw new InvalidEnumArgumentException(
                     nameof(version),
-                    version,
-                    "Unsupported compatibility version."
+                    (int)version,
+                    typeof(LuaCompatibilityVersion)
                 ),
             };
         }

@@ -3,7 +3,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
     using System;
 
     /// <summary>
-    /// Enumeration (combinable as flags) of all the standard library modules
+    /// Enumeration (combinable as flags) of all the standard library modules.
+    /// For preset combinations, use the <see cref="CoreModulePresets"/> class instead of the legacy enum members.
     /// </summary>
     [Flags]
     public enum CoreModules
@@ -98,30 +99,87 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
         /// The "json" package (introduced by NovaSharp).
         /// </summary>
         Json = 1 << 16,
+    }
 
+    /// <summary>
+    /// Preset combinations of <see cref="CoreModules"/> flags.
+    /// These are the recommended way to specify module sets when creating a <see cref="Script"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Per best practices, combined flag values are defined as static readonly fields in this helper class
+    /// rather than as enum members. This ensures:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>Semantic clarity: each enum member represents a single flag</description></item>
+    /// <item><description>Serialization safety: combined values don't pollute serialized data</description></item>
+    /// <item><description>Reflection predictability: <see cref="Enum.GetValues(Type)"/> returns only single-bit values</description></item>
+    /// <item><description>Maintainability: adding new flags doesn't require updating combined value members</description></item>
+    /// </list>
+    /// </remarks>
+    public static class CoreModulePresets
+    {
         /// <summary>
         /// A sort of "hard" sandbox preset, including string, math, table, bit32 packages, constants and table iterators.
         /// </summary>
-        PresetHardSandbox =
-            GlobalConsts | TableIterators | StringLib | Table | Basic | Math | Bit32,
+        /// <remarks>
+        /// Includes: <see cref="CoreModules.GlobalConsts"/>, <see cref="CoreModules.TableIterators"/>,
+        /// <see cref="CoreModules.StringLib"/>, <see cref="CoreModules.Table"/>, <see cref="CoreModules.Basic"/>,
+        /// <see cref="CoreModules.Math"/>, <see cref="CoreModules.Bit32"/>.
+        /// </remarks>
+        public static readonly CoreModules HardSandbox =
+            CoreModules.GlobalConsts
+            | CoreModules.TableIterators
+            | CoreModules.StringLib
+            | CoreModules.Table
+            | CoreModules.Basic
+            | CoreModules.Math
+            | CoreModules.Bit32;
 
         /// <summary>
         /// A softer sandbox preset, adding metatables support, error handling, coroutine, time functions, json parsing and dynamic evaluations.
         /// </summary>
-        PresetSoftSandbox =
-            PresetHardSandbox | Metatables | ErrorHandling | Coroutine | OsTime | Dynamic | Json,
+        /// <remarks>
+        /// Includes everything in <see cref="HardSandbox"/> plus: <see cref="CoreModules.Metatables"/>,
+        /// <see cref="CoreModules.ErrorHandling"/>, <see cref="CoreModules.Coroutine"/>, <see cref="CoreModules.OsTime"/>,
+        /// <see cref="CoreModules.Dynamic"/>, <see cref="CoreModules.Json"/>.
+        /// </remarks>
+        public static readonly CoreModules SoftSandbox =
+            HardSandbox
+            | CoreModules.Metatables
+            | CoreModules.ErrorHandling
+            | CoreModules.Coroutine
+            | CoreModules.OsTime
+            | CoreModules.Dynamic
+            | CoreModules.Json;
 
         /// <summary>
-        /// The default preset. Includes everything except "debug" as now.
-        /// Beware that using this preset allows scripts unlimited access to the system.
+        /// The default preset. Includes everything except "debug".
         /// </summary>
-        PresetDefault = PresetSoftSandbox | LoadMethods | OsSystem | Io,
+        /// <remarks>
+        /// <para>
+        /// Beware that using this preset allows scripts unlimited access to the system.
+        /// </para>
+        /// <para>
+        /// Includes everything in <see cref="SoftSandbox"/> plus: <see cref="CoreModules.LoadMethods"/>,
+        /// <see cref="CoreModules.OsSystem"/>, <see cref="CoreModules.Io"/>.
+        /// </para>
+        /// </remarks>
+        public static readonly CoreModules Default =
+            SoftSandbox | CoreModules.LoadMethods | CoreModules.OsSystem | CoreModules.Io;
 
         /// <summary>
-        /// The complete package.
-        /// Beware that using this preset allows scripts unlimited access to the system.
+        /// The complete package, including all modules.
         /// </summary>
-        PresetComplete = PresetDefault | Debug,
+        /// <remarks>
+        /// <para>
+        /// Beware that using this preset allows scripts unlimited access to the system.
+        /// </para>
+        /// <para>
+        /// Includes everything in <see cref="Default"/> plus: <see cref="CoreModules.Debug"/>.
+        /// </para>
+        /// </remarks>
+        public static readonly CoreModules Complete = Default | CoreModules.Debug;
     }
 
     /// <summary>

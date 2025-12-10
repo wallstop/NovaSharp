@@ -17,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         {
             List<string> warnings = new();
             Script script = new(
-                CoreModules.PresetComplete,
+                CoreModulePresets.Complete,
                 new ScriptOptions
                 {
                     CompatibilityVersion = LuaCompatibilityVersion.Lua53,
@@ -44,7 +44,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         {
             List<string> warnings = new();
             Script script = new(
-                CoreModules.PresetComplete,
+                CoreModulePresets.Complete,
                 new ScriptOptions
                 {
                     CompatibilityVersion = LuaCompatibilityVersion.Lua52,

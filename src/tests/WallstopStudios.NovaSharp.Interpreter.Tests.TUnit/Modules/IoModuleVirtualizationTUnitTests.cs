@@ -158,7 +158,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             {
                 Platform = new InMemoryPlatformAccessor();
                 _platformScope = ScriptPlatformScope.Override(Platform);
-                Script = new Script(CoreModules.PresetComplete);
+                Script = new Script(CoreModulePresets.Complete);
             }
 
             public Script Script { get; }

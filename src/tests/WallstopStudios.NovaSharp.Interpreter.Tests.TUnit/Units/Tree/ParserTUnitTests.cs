@@ -87,7 +87,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         public async Task UnicodeEscapeSequenceIsValidInLua53Plus(LuaCompatibilityVersion version)
         {
             ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
             DynValue result = script.DoString("return \"\\u{1F40D}\"");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -105,7 +105,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         )
         {
             ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             // NOTE: This documents a known spec divergence. Standard Lua 5.1/5.2 would
             // throw "invalid escape sequence near '\u'" but NovaSharp accepts it.

@@ -623,7 +623,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             out DispatchHost hostZero
         )
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             hostAdd = new DispatchHost(2, HostAddSequence);
             hostOther = new DispatchHost(3, HostOtherSequence);
             hostCopy = new DispatchHost(2, HostCopySequence);

@@ -35,7 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             DisplayName = displayName ?? modId;
             _entryPoints = new List<string>();
             _state = ModLoadState.Unloaded;
-            CoreModules = CoreModules.PresetDefault;
+            CoreModules = CoreModulePresets.Default;
         }
 
         /// <inheritdoc/>

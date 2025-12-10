@@ -36,10 +36,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             // These all use the main constructor path Script(CoreModules, ScriptOptions)
             Script script1 = new Script();
-            Script script2 = new Script(CoreModules.PresetComplete);
+            Script script2 = new Script(CoreModulePresets.Complete);
             Script script3 = new Script(new ScriptOptions(Script.DefaultOptions));
             Script script4 = new Script(
-                CoreModules.PresetComplete,
+                CoreModulePresets.Complete,
                 new ScriptOptions(Script.DefaultOptions)
             );
 
@@ -88,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             // Script() and Script(CoreModules) both pass null for options
             Script script1 = new Script();
-            Script script2 = new Script(CoreModules.PresetComplete);
+            Script script2 = new Script(CoreModulePresets.Complete);
 
             // Both should have GlobalOptions.CompatibilityVersion
             LuaCompatibilityVersion expected = Script.GlobalOptions.CompatibilityVersion;
@@ -260,8 +260,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task CoreModuleRegistrationOrderIsDeterministic()
         {
-            Script script1 = new Script(CoreModules.PresetComplete);
-            Script script2 = new Script(CoreModules.PresetComplete);
+            Script script1 = new Script(CoreModulePresets.Complete);
+            Script script2 = new Script(CoreModulePresets.Complete);
 
             // Both should have the same global functions available
             await Assert.That(script1.Globals["print"]).IsNotNull().ConfigureAwait(false);
@@ -289,7 +289,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             await Assert.That(minimal.Globals["math"]).IsNull().ConfigureAwait(false);
 
             // Complete modules: everything
-            Script complete = new Script(CoreModules.PresetComplete);
+            Script complete = new Script(CoreModulePresets.Complete);
             await Assert.That(complete.Globals["print"]).IsNotNull().ConfigureAwait(false);
             await Assert.That(complete.Globals["math"]).IsNotNull().ConfigureAwait(false);
         }
@@ -407,13 +407,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         /// <summary>
-        /// Script() is equivalent to Script(CoreModules.PresetDefault, null).
+        /// Script() is equivalent to Script(CoreModulePresets.Default, null).
         /// </summary>
         [Test]
         public async Task DefaultConstructorEquivalentToExplicitDefault()
         {
             Script default1 = new Script();
-            Script default2 = new Script(CoreModules.PresetDefault, null);
+            Script default2 = new Script(CoreModulePresets.Default, null);
 
             // Same compatibility version
             await Assert
@@ -438,8 +438,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task ModulesOnlyConstructorEquivalentToExplicitNull()
         {
-            Script modules1 = new Script(CoreModules.PresetHardSandbox);
-            Script modules2 = new Script(CoreModules.PresetHardSandbox, null);
+            Script modules1 = new Script(CoreModulePresets.HardSandbox);
+            Script modules2 = new Script(CoreModulePresets.HardSandbox, null);
 
             await Assert
                 .That(modules1.CompatibilityVersion)

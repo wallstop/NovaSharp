@@ -59,7 +59,7 @@ namespace WallstopStudios.NovaSharp.Cli.Commands.Implementations
                     return;
                 }
 
-                Script script = new(CoreModules.PresetComplete, options);
+                Script script = new(CoreModulePresets.Complete, options);
                 LogCompatibilitySummary(resolvedPath, script);
                 script.DoFile(resolvedPath);
             }

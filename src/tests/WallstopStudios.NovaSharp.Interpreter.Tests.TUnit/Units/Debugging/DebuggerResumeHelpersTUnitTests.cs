@@ -24,7 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         [global::TUnit.Core.Test]
         public async Task StepInThenStepOutBreaksOnExpectedLines()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             const string Code =
                 @"function callee()

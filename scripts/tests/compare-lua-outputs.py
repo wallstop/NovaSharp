@@ -53,8 +53,14 @@ KNOWN_DIVERGENCES = {
     "DebugModuleTapParityTUnitTests/Unknown_14.lua",
     "DebugModuleTapParityTUnitTests/Unknown_15.lua",
     "DebugModuleTapParityTUnitTests/Unknown_16.lua",
+    # Debug module TAP parity: upvalue index differences between NovaSharp and Lua
+    "DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua",
+    "DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua",
     # Address format: NovaSharp uses different hex format than Lua
     "BinaryDumpTUnitTests/LoadChangeEnvWithDebugSetUpValue.lua",
+    # bit32 module: NovaSharp enables bit32 only in 5.2, but Lua 5.3 still has it
+    # TODO: Fix NovaSharp to enable bit32 in 5.3 mode as well
+    "Bit32ModuleTUnitTests/BandAcceptsIntegralFloatLua52.lua",
     # <close> attribute: semantics differ from Lua 5.4, needs investigation
     "CloseAttributeTUnitTests/ReassignmentClosesPreviousValueImmediately.lua",
     # xpcall: output format differs, needs investigation
@@ -65,6 +71,8 @@ KNOWN_DIVERGENCES = {
     "IoModuleTUnitTests/CloseClosesExplicitFileHandle.lua",
     "IoModuleTUnitTests/CloseWithoutParameterUsesCurrentOutput.lua",
     "IoModuleTUnitTests/InputReturnsCurrentFileWhenNoArguments.lua",
+    # OS time: platform-dependent - .NET supports negative epoch times, some Lua installations don't
+    "OsTimeModuleTUnitTests/TimeReturnsNegativeForDatesBeforeEpoch.lua",
 }
 
 

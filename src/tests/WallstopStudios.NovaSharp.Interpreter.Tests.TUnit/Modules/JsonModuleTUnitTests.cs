@@ -14,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task EncodeProducesCanonicalObject()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
             );
@@ -41,7 +41,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task DecodeBuildsLuaTable()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
             );
@@ -60,7 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task ParseThrowsScriptRuntimeExceptionOnInvalidJson()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue jsonModule = script.DoString("return require('json')");
             DynValue parse = jsonModule.Table.Get("parse");
 
@@ -73,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task SerializeThrowsScriptRuntimeExceptionOnNonTable()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue jsonModule = script.DoString("return require('json')");
             DynValue serialize = jsonModule.Table.Get("serialize");
 
@@ -86,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task IsNullDetectsJsonNullAndNil()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local json = require('json')

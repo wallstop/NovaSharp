@@ -70,7 +70,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         private static ScriptExecutionContext CreateExecutionContext()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             return TestHelpers.CreateExecutionContext(script);
         }
     }

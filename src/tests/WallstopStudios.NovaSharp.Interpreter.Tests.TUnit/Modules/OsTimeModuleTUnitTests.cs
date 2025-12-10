@@ -414,7 +414,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         private static Script CreateScript()
         {
-            return new Script(CoreModules.PresetComplete);
+            return new Script(CoreModulePresets.Complete);
         }
 
         private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
@@ -423,7 +423,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             {
                 CompatibilityVersion = version,
             };
-            return new Script(CoreModules.PresetComplete, options);
+            return new Script(CoreModulePresets.Complete, options);
         }
 
         private static Script CreateScriptWithTimeProvider(params DateTimeOffset[] timestamps)
@@ -441,7 +441,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 TimeProvider = new SequenceTimeProvider(timestamps),
             };
 
-            return new Script(CoreModules.PresetComplete, options);
+            return new Script(CoreModulePresets.Complete, options);
         }
 
         private static TException ExpectException<TException>(Func<DynValue> action)

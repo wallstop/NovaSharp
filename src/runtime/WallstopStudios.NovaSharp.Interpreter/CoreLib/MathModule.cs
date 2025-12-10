@@ -152,11 +152,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Implements Lua 5.3+ `math.type`, returning `"integer"` or `"float"` depending on the
-        /// numeric representation (§6.7).
+        /// numeric representation, or `nil` for non-numeric values (§6.7).
         /// </summary>
+        /// <remarks>
+        /// Per Lua 5.3+ spec: "If x is not a number, math.type returns nil."
+        /// Reference: https://www.lua.org/manual/5.4/manual.html#pdf-math.type
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
-        /// <param name="args">Arguments where index 0 is the numeric value to inspect.</param>
-        /// <returns>`"integer"` or `"float"` as a string.</returns>
+        /// <param name="args">Arguments where index 0 is the value to inspect.</param>
+        /// <returns>`"integer"`, `"float"`, or <see cref="DynValue.Nil"/> for non-numbers.</returns>
         [NovaSharpModuleMethod(Name = "type")]
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         public static DynValue Type(ScriptExecutionContext executionContext, CallbackArguments args)
@@ -166,7 +170,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
-            DynValue value = args.AsType(0, "type", DataType.Number, false);
+
+            // Per Lua spec, math.type returns nil for non-numbers (doesn't throw)
+            DynValue value = args[0];
+            if (value.Type != DataType.Number)
+            {
+                return DynValue.Nil;
+            }
+
             // Use the LuaNumber's subtype information to determine integer vs float
             return DynValue.NewString(value.LuaNumber.LuaTypeName);
         }

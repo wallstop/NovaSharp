@@ -1162,7 +1162,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					do return x(); end
 								";
 
-            DynValue res = (new Script(CoreModules.PresetDefault)).DoString(script);
+            DynValue res = (new Script(CoreModulePresets.Default)).DoString(script);
 
             Assert.That(res.Type, Is.EqualTo(DataType.Number));
             Assert.That(res.Number, Is.EqualTo(1));

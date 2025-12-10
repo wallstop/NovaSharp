@@ -40,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             ReplInterpreter interpreter = new(script) { HandleClassicExprsSyntax = true };
 
             await WithConsoleAsync(
@@ -79,7 +79,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                     string resolvedPath = Path.GetFullPath(scriptPath);
 
                     ScriptOptions expectedOptions = new(Script.DefaultOptions);
-                    Script summaryScript = new(CoreModules.PresetComplete, expectedOptions);
+                    Script summaryScript = new(CoreModulePresets.Complete, expectedOptions);
                     string expectedSummary = summaryScript.CompatibilityProfile.GetFeatureSummary();
                     string expectedBanner = CliMessages.ProgramRunningScript(
                         resolvedPath,
@@ -146,7 +146,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopExecutesBangCommandViaCommandManager()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             ReplInterpreter interpreter = new(script);
 
             await WithConsoleAsync(
@@ -167,7 +167,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopRegisterUnknownTypeReportsError()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             ReplInterpreter interpreter = new(script);
             const string missingType = "NovaSharp.DoesNotExist.Sample";
 
@@ -189,7 +189,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopRegisterKnownTypeRegistersUserData()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             ReplInterpreter interpreter = new(script);
             TestRegistrationType instance = new();
             Type targetType = instance.GetType();
@@ -220,7 +220,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             ReplInterpreter interpreter = new(script);
 
             using TempFileScope sourceScope = TempFileScope.Create(
@@ -252,7 +252,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             ReplInterpreter interpreter = new(script);
             using TempFileScope missingFileScope = TempFileScope.Create(
                 namePrefix: "cli-missing-",
@@ -280,7 +280,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             ReplInterpreter interpreter = new(script);
             using TempFileScope sourceScope = TempFileScope.Create(
                 namePrefix: "cli-run-",
@@ -307,7 +307,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         [global::TUnit.Core.Test]
         public async Task InterpreterLoopDebugCommandUsesInjectedDebugger()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             ReplInterpreter interpreter = new(script);
             TestDebuggerBridge bridge = new();
             TestBrowserLauncher launcher = new()
@@ -398,7 +398,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             ReplInterpreter interpreter = new(script);
             using TempFileScope dumpScope = TempFileScope.Create(
                 namePrefix: "hardwire-repl-dump-",
@@ -455,7 +455,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
 
         private static ShellContext CreateShellContext()
         {
-            return new ShellContext(new Script(CoreModules.PresetComplete));
+            return new ShellContext(new Script(CoreModulePresets.Complete));
         }
 
         private static Task WithConsoleAsync(

@@ -17,7 +17,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         Value = 1 << 3,
         NumVal = 1 << 4,
         NumVal2 = 1 << 5,
-        NumValAsCodeAddress = (1 << 6) | NumVal,
+        NumValAsCodeAddressBit = 1 << 6,
+    }
+
+    /// <summary>
+    /// Combined flag values for <see cref="InstructionFieldUsage"/>.
+    /// </summary>
+    internal static class InstructionFieldUsagePresets
+    {
+        /// <summary>
+        /// Indicates the NumVal field represents a code address (jump target).
+        /// </summary>
+        public const InstructionFieldUsage NumValAsCodeAddress =
+            InstructionFieldUsage.NumValAsCodeAddressBit | InstructionFieldUsage.NumVal;
     }
 
     /// <summary>
@@ -74,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 case OpCode.JFor:
                 case OpCode.JtOrPop:
                 case OpCode.JfOrPop:
-                    return InstructionFieldUsage.NumValAsCodeAddress;
+                    return InstructionFieldUsagePresets.NumValAsCodeAddress;
                 case OpCode.Swap:
                     return InstructionFieldUsage.NumVal | InstructionFieldUsage.NumVal2;
                 case OpCode.Clean:
@@ -109,7 +121,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         | InstructionFieldUsage.NumVal2;
                 case OpCode.Closure:
                     return InstructionFieldUsage.SymbolList
-                        | InstructionFieldUsage.NumValAsCodeAddress;
+                        | InstructionFieldUsagePresets.NumValAsCodeAddress;
                 case OpCode.Nop:
                 case OpCode.Debug:
                 case OpCode.Invalid:

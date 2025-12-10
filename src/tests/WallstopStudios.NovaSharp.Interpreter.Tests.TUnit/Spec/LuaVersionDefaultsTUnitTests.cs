@@ -216,10 +216,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             // Different constructor overloads
             Script script1 = new Script();
-            Script script2 = new Script(CoreModules.PresetComplete);
+            Script script2 = new Script(CoreModulePresets.Complete);
             Script script3 = new Script(new ScriptOptions(Script.DefaultOptions));
             Script script4 = new Script(
-                CoreModules.PresetComplete,
+                CoreModulePresets.Complete,
                 new ScriptOptions(Script.DefaultOptions)
             );
 
@@ -242,10 +242,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         public async Task AllScriptConstructorsProduceSameRngType()
         {
             Script script1 = new Script();
-            Script script2 = new Script(CoreModules.PresetComplete);
+            Script script2 = new Script(CoreModulePresets.Complete);
             Script script3 = new Script(new ScriptOptions(Script.DefaultOptions));
             Script script4 = new Script(
-                CoreModules.PresetComplete,
+                CoreModulePresets.Complete,
                 new ScriptOptions(Script.DefaultOptions)
             );
 

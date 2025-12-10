@@ -89,7 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 if (_state == CoroutineState.NotStarted)
                 {
                     entrypoint = PushClrToScriptStackFrame(
-                        CallStackItemFlags.ResumeEntryPoint,
+                        CallStackItemFlagsPresets.ResumeEntryPoint,
                         null,
                         args
                     );

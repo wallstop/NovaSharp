@@ -11,7 +11,7 @@ NovaSharp executes a curated set of third-party Lua scripts to spot regressions 
 
 ## Execution Harness
 
-- `RealWorldScriptTUnitTests` (`src/tests/NovaSharp.Interpreter.Tests.TUnit/EndToEnd/RealWorldScriptTUnitTests.cs`) loads each script with `Script.DoString` under `CoreModules.PresetComplete` and asserts behaviour that mirrors real-world usage:
+- `RealWorldScriptTUnitTests` (`src/tests/NovaSharp.Interpreter.Tests.TUnit/EndToEnd/RealWorldScriptTUnitTests.cs`) loads each script with `Script.DoString` under `CoreModulePresets.Complete` and asserts behaviour that mirrors real-world usage:
   - `json.lua`: round-trips nested tables via `encode`/`decode`, keeping booleans, numeric fields, and array elements intact.
   - `inspect.lua`: formats nested tables, including a metatable-backed value, and verifies the readable output.
 - Shared fixtures remain under `src/tests/NovaSharp.Interpreter.Tests/Fixtures/RealWorld/**`, and the TUnit host links them into the output so the harness never relies on runtime network access.

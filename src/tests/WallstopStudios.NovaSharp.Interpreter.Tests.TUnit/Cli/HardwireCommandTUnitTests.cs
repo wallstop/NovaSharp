@@ -276,7 +276,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
 
         private static ShellContext CreateShellContext()
         {
-            return new ShellContext(new Script(CoreModules.PresetComplete));
+            return new ShellContext(new Script(CoreModulePresets.Complete));
         }
     }
 }

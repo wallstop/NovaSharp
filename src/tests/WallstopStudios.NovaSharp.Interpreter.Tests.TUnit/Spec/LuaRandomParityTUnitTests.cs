@@ -232,7 +232,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task ScriptWithLua54UsesLuaRandomProvider()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Default);
 
             await Assert
                 .That(script.RandomProvider)
@@ -243,7 +243,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task ScriptWithLua55UsesLuaRandomProvider()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Default);
 
             await Assert
                 .That(script.RandomProvider)
@@ -254,7 +254,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task ScriptWithLatestUsesLuaRandomProvider()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Latest, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Latest, CoreModulePresets.Default);
 
             await Assert
                 .That(script.RandomProvider)
@@ -265,7 +265,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task ScriptWithLua53UsesLua51RandomProvider()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModulePresets.Default);
 
             await Assert
                 .That(script.RandomProvider)
@@ -276,7 +276,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task ScriptWithLua52UsesLua51RandomProvider()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua52, CoreModulePresets.Default);
 
             await Assert
                 .That(script.RandomProvider)
@@ -293,7 +293,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 CompatibilityVersion = LuaCompatibilityVersion.Lua52,
                 RandomProvider = explicit_provider,
             };
-            Script script = new Script(CoreModules.PresetDefault, options);
+            Script script = new Script(CoreModulePresets.Default, options);
 
             await Assert
                 .That(script.RandomProvider)
@@ -308,7 +308,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task MathRandomSeedLua54ReturnsSeeds()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Default);
 
             DynValue result = script.DoString("return math.randomseed(42)");
 
@@ -320,7 +320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task MathRandomSeedLua54WithNoArgsReturnsSeeds()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Default);
 
             DynValue result = script.DoString("return math.randomseed()");
 
@@ -332,7 +332,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task MathRandomSeedLua53ReturnsNothing()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModulePresets.Default);
 
             DynValue result = script.DoString("return math.randomseed(42)");
 
@@ -343,7 +343,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task MathRandomSeedLua52ReturnsNothing()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua52, CoreModulePresets.Default);
 
             DynValue result = script.DoString("return math.randomseed(42)");
 
@@ -354,7 +354,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task MathRandomSeedLua53RequiresSeed()
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModules.PresetDefault);
+            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModulePresets.Default);
 
             // Lua 5.1-5.3 requires a seed argument
             ScriptRuntimeException exception = null;
@@ -389,8 +389,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 RandomProvider = new DeterministicRandomProvider(12345),
             };
 
-            Script script1 = new Script(CoreModules.PresetDefault, options1);
-            Script script2 = new Script(CoreModules.PresetDefault, options2);
+            Script script1 = new Script(CoreModulePresets.Default, options1);
+            Script script2 = new Script(CoreModulePresets.Default, options2);
 
             DynValue r1 = script1.DoString("return math.random(), math.random(), math.random()");
             DynValue r2 = script2.DoString("return math.random(), math.random(), math.random()");
@@ -423,8 +423,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 RandomProvider = new Lua51RandomProvider(12345),
             };
 
-            Script script1 = new Script(CoreModules.PresetDefault, options1);
-            Script script2 = new Script(CoreModules.PresetDefault, options2);
+            Script script1 = new Script(CoreModulePresets.Default, options1);
+            Script script2 = new Script(CoreModulePresets.Default, options2);
 
             DynValue r1 = script1.DoString("return math.random(), math.random(), math.random()");
             DynValue r2 = script2.DoString("return math.random(), math.random(), math.random()");
@@ -456,7 +456,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 
             foreach (LuaCompatibilityVersion version in versions)
             {
-                Script script = CreateScript(version, CoreModules.PresetDefault);
+                Script script = CreateScript(version, CoreModulePresets.Default);
 
                 // Test math.random(n) returns integer in [1, n]
                 DynValue result = script.DoString("return math.random(100)");
@@ -481,7 +481,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 
             foreach (LuaCompatibilityVersion version in versions)
             {
-                Script script = CreateScript(version, CoreModules.PresetDefault);
+                Script script = CreateScript(version, CoreModulePresets.Default);
 
                 // Test math.random() returns float in [0, 1)
                 DynValue result = script.DoString("return math.random()");

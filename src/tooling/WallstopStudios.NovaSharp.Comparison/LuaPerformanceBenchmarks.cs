@@ -56,7 +56,7 @@ public class LuaPerformanceBenchmarks : IDisposable
 
         _source = BenchmarkScripts.GetScript(CurrentScenario);
 
-        _novaSharpScript = new Script(CoreModules.PresetComplete);
+        _novaSharpScript = new Script(CoreModulePresets.Complete);
         _novaSharpFunction = _novaSharpScript.LoadString(
             _source,
             null,
@@ -79,7 +79,7 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// </summary>
     public DynValue NovaSharpCompile()
     {
-        Script script = new(CoreModules.PresetComplete);
+        Script script = new(CoreModulePresets.Complete);
         return script.LoadString(_source, null, $"compile_{CurrentScenario}");
     }
 

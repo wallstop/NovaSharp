@@ -237,7 +237,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 RandomProvider = provider,
             };
-            Script script = new Script(CoreModules.PresetDefault, options);
+            Script script = new Script(CoreModulePresets.Default, options);
 
             bool isSame = ReferenceEquals(script.RandomProvider, provider);
             await Assert.That(isSame).IsTrue().ConfigureAwait(false);
@@ -250,7 +250,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 RandomProvider = null,
             };
-            Script script = new Script(CoreModules.PresetDefault, options);
+            Script script = new Script(CoreModulePresets.Default, options);
 
             await Assert
                 .That(script.RandomProvider)
@@ -267,8 +267,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 RandomProvider = provider,
             };
 
-            Script script1 = new Script(CoreModules.PresetDefault, options);
-            Script script2 = new Script(CoreModules.PresetDefault, options);
+            Script script1 = new Script(CoreModulePresets.Default, options);
+            Script script2 = new Script(CoreModulePresets.Default, options);
 
             DataTypes.DynValue result1 = script1.DoString("return math.random()");
             provider.SetSeed(12345); // Reset to same seed
@@ -285,7 +285,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 RandomProvider = provider,
             };
-            Script script = new Script(CoreModules.PresetDefault, options);
+            Script script = new Script(CoreModulePresets.Default, options);
 
             // Get some random values
             script.DoString("r1 = math.random(); r2 = math.random(); r3 = math.random()");
@@ -314,7 +314,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 RandomProvider = provider,
             };
-            Script script = new Script(CoreModules.PresetDefault, options);
+            Script script = new Script(CoreModulePresets.Default, options);
 
             DataTypes.DynValue result = script.DoString(
                 @"
@@ -329,7 +329,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             // Reset and do it again
             provider.SetSeed(7777);
-            Script script2 = new Script(CoreModules.PresetDefault, options);
+            Script script2 = new Script(CoreModulePresets.Default, options);
             DataTypes.DynValue result2 = script2.DoString(
                 @"
                 local values = {}
@@ -354,7 +354,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 TimeProvider = provider,
             };
-            Script script = new Script(CoreModules.PresetDefault, options);
+            Script script = new Script(CoreModulePresets.Default, options);
 
             bool isSame = ReferenceEquals(script.TimeProvider, provider);
             await Assert.That(isSame).IsTrue().ConfigureAwait(false);
@@ -368,7 +368,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 TimeProvider = provider,
             };
-            Script script = new Script(CoreModules.PresetDefault, options);
+            Script script = new Script(CoreModulePresets.Default, options);
 
             // os.clock returns time since script start, so advance by a known amount
             provider.AdvanceSeconds(5.5);
@@ -389,7 +389,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 TimeProvider = provider,
             };
-            Script script = new Script(CoreModules.PresetDefault, options);
+            Script script = new Script(CoreModulePresets.Default, options);
 
             DataTypes.DynValue result = script.DoString("return os.time()");
 
@@ -424,8 +424,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 TimeProvider = timeProvider2,
             };
 
-            Script script1 = new Script(CoreModules.PresetDefault, options1);
-            Script script2 = new Script(CoreModules.PresetDefault, options2);
+            Script script1 = new Script(CoreModulePresets.Default, options1);
+            Script script2 = new Script(CoreModulePresets.Default, options2);
 
             // Simulate time advancement in both
             timeProvider1.AdvanceSeconds(10);
@@ -458,8 +458,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             };
 
             // Multiple scripts sharing the same provider will advance the same sequence
-            Script script1 = new Script(CoreModules.PresetDefault, options);
-            Script script2 = new Script(CoreModules.PresetDefault, options);
+            Script script1 = new Script(CoreModulePresets.Default, options);
+            Script script2 = new Script(CoreModulePresets.Default, options);
 
             DataTypes.DynValue r1 = script1.DoString("return math.random()");
             DataTypes.DynValue r2 = script2.DoString("return math.random()");
@@ -469,8 +469,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             // But resetting the seed should make it repeatable
             sharedRandom.SetSeed(42);
-            Script script3 = new Script(CoreModules.PresetDefault, options);
-            Script script4 = new Script(CoreModules.PresetDefault, options);
+            Script script3 = new Script(CoreModulePresets.Default, options);
+            Script script4 = new Script(CoreModulePresets.Default, options);
 
             DataTypes.DynValue r3 = script3.DoString("return math.random()");
             DataTypes.DynValue r4 = script4.DoString("return math.random()");

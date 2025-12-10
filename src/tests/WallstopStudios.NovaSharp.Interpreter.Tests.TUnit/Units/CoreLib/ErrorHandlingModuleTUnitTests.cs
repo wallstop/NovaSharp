@@ -469,7 +469,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         private static Script CreateScript()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.Options.DebugPrint = _ => { };
             return script;
         }
@@ -480,7 +480,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             {
                 CompatibilityVersion = version,
             };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
             script.Options.DebugPrint = _ => { };
             return script;
         }

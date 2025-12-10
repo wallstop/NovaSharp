@@ -132,7 +132,11 @@ namespace WallstopStudios.NovaSharp.RemoteDebugger.Network
                         return "text/css";
                     case HttpResourceType.Callback:
                     default:
-                        throw new InvalidOperationException();
+                        throw new InvalidOperationException(
+                            FormattableString.Invariant(
+                                $"HttpResourceType value {Type} does not have a content type string."
+                            )
+                        );
                 }
             }
         }

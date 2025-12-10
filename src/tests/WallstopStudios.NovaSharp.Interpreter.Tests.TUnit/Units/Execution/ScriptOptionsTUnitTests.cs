@@ -25,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DateTimeOffset fixedTime = new(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             FakeTimeProvider timeProvider = new(fixedTime);
             ScriptOptions options = new() { TimeProvider = timeProvider };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             await Assert
                 .That(script.TimeProvider)
@@ -42,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             FakeHighResolutionClock clock = new(12345L);
             ScriptOptions options = new() { HighResolutionClock = clock };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             await Assert.That(script.PerformanceStats).IsNotNull().ConfigureAwait(false);
         }
@@ -50,7 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task ConstructorWithNullOptionsUsesDefaults()
         {
-            Script script = new(CoreModules.PresetComplete, (ScriptOptions)null);
+            Script script = new(CoreModulePresets.Complete, (ScriptOptions)null);
 
             await Assert.That(script.Options).IsNotNull().ConfigureAwait(false);
             await Assert.That(script.TimeProvider).IsNotNull().ConfigureAwait(false);
@@ -60,7 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task ConstructorWithOptionsInheritsCompatibilityVersion()
         {
             ScriptOptions options = new() { CompatibilityVersion = LuaCompatibilityVersion.Lua52 };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             await Assert
                 .That(script.CompatibilityVersion)
@@ -74,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             LuaCompatibilityVersion originalVersion = Script.GlobalOptions.CompatibilityVersion;
             Script.GlobalOptions.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
 
-            Script script = new(CoreModules.PresetComplete, (ScriptOptions)null);
+            Script script = new(CoreModulePresets.Complete, (ScriptOptions)null);
 
             await Assert
                 .That(script.CompatibilityVersion)
@@ -88,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task DefaultOptionsAreClonedToScripts()
         {
             Script.DefaultOptions.UseLuaErrorLocations = true;
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             await Assert.That(script.Options.UseLuaErrorLocations).IsTrue().ConfigureAwait(false);
 
@@ -192,7 +192,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task CompatibilityProfileReturnsCorrectProfile()
         {
             ScriptOptions options = new() { CompatibilityVersion = LuaCompatibilityVersion.Lua54 };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             LuaCompatibilityProfile profile = script.CompatibilityProfile;
 
@@ -203,7 +203,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task RecycleCoroutineValidatesCoroutineType()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("done"));
             DynValue coroutineValue = script.CreateCoroutine(callback);
 
@@ -223,7 +223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task RecycleCoroutineValidatesCoroutineState()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function gen() coroutine.yield(1) return 2 end");
             DynValue func = script.Globals.Get("gen");
             DynValue coroutineValue = script.CreateCoroutine(func);
@@ -244,7 +244,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task RecycleCoroutineValidatesFunctionType()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function gen() return 'done' end");
             DynValue func = script.Globals.Get("gen");
             DynValue coroutineValue = script.CreateCoroutine(func);
@@ -263,8 +263,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task RecycleCoroutineValidatesOwnership()
         {
-            Script scriptA = new(CoreModules.PresetComplete);
-            Script scriptB = new(CoreModules.PresetComplete);
+            Script scriptA = new(CoreModulePresets.Complete);
+            Script scriptB = new(CoreModulePresets.Complete);
 
             scriptA.DoString("function gen() return 'a' end");
             DynValue funcA = scriptA.Globals.Get("gen");
@@ -286,7 +286,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task RecycleCoroutineReusesBuffers()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function gen() return 'original' end");
             DynValue originalFunc = script.Globals.Get("gen");
             DynValue coroutineValue = script.CreateCoroutine(originalFunc);
@@ -320,7 +320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task RegistryIsAccessible()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             Table registry = script.Registry;
 

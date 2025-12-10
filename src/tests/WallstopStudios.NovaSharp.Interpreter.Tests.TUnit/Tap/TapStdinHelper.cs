@@ -120,7 +120,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
                 },
             };
 
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
             script.Globals.Set(
                 "print",
                 DynValue.NewCallback(

@@ -1609,7 +1609,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         private static Script CreateScript()
         {
-            return new Script(CoreModules.PresetComplete);
+            return new Script(CoreModulePresets.Complete);
         }
 
         private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
@@ -1618,7 +1618,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             {
                 CompatibilityVersion = version,
             };
-            return new Script(CoreModules.PresetComplete, options);
+            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

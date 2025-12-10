@@ -94,6 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
     }
 #else
     using System;
+    using System.ComponentModel;
     using System.Diagnostics;
     using System.IO;
     using System.Text;
@@ -222,7 +223,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
                 case StandardFileType.StdErr:
                     return Console.OpenStandardError();
                 default:
-                    throw new ArgumentException("Unknown standard file type.", nameof(type));
+                    throw new InvalidEnumArgumentException(
+                        nameof(type),
+                        (int)type,
+                        typeof(StandardFileType)
+                    );
             }
         }
 

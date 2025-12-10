@@ -115,7 +115,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Platforms
         public async Task FilterSupportedModulesIsIdentity()
         {
             StandardPlatformAccessor accessor = new();
-            CoreModules modules = CoreModules.PresetComplete;
+            CoreModules modules = CoreModulePresets.Complete;
             await Assert
                 .That(accessor.FilterSupportedCoreModules(modules))
                 .IsEqualTo(modules)

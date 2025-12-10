@@ -119,7 +119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 try
                 {
                     int entrypoint = PushClrToScriptStackFrame(
-                        CallStackItemFlags.CallEntryPoint,
+                        CallStackItemFlagsPresets.CallEntryPoint,
                         function,
                         args
                     );

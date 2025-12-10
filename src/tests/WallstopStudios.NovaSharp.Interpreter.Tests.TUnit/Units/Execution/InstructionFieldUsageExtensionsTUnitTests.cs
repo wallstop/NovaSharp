@@ -21,7 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )]
         [global::TUnit.Core.Arguments(
             (int)OpCode.Jump,
-            (int)InstructionFieldUsage.NumValAsCodeAddress
+            (int)InstructionFieldUsagePresets.NumValAsCodeAddress
         )]
         [global::TUnit.Core.Arguments(
             (int)OpCode.Swap,
@@ -65,7 +65,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )]
         [global::TUnit.Core.Arguments(
             (int)OpCode.Closure,
-            (int)(InstructionFieldUsage.SymbolList | InstructionFieldUsage.NumValAsCodeAddress)
+            (int)(
+                InstructionFieldUsage.SymbolList | InstructionFieldUsagePresets.NumValAsCodeAddress
+            )
         )]
         [global::TUnit.Core.Arguments((int)OpCode.Nop, (int)InstructionFieldUsage.Name)]
         [global::TUnit.Core.Arguments(

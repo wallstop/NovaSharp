@@ -108,9 +108,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
                 case StandardFileType.StdErr:
                     return Console.OpenStandardError();
                 default:
-                    throw new ArgumentException(
-                        "Unsupported standard stream requested.",
-                        nameof(type)
+                    throw new InvalidEnumArgumentException(
+                        nameof(type),
+                        (int)type,
+                        typeof(StandardFileType)
                     );
             }
         }

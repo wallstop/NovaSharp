@@ -647,7 +647,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         private static ScriptExecutionContext CreateContext()
         {
-            return new Script(CoreModules.PresetDefault).CreateDynamicExecutionContext();
+            return new Script(CoreModulePresets.Default).CreateDynamicExecutionContext();
         }
 
         private static CallbackArguments CreateArgs(params DynValue[] values)
@@ -756,7 +756,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             {
                 CompatibilityVersion = version,
             };
-            return new Script(CoreModules.PresetComplete, options);
+            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

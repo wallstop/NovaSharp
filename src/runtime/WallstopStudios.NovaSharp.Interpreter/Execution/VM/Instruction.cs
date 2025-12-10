@@ -82,8 +82,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             if (
                 (OpCode == OpCode.Meta)
                 || (
-                    (usage & ((int)InstructionFieldUsage.NumValAsCodeAddress))
-                    == (int)InstructionFieldUsage.NumValAsCodeAddress
+                    (usage & ((int)InstructionFieldUsagePresets.NumValAsCodeAddress))
+                    == (int)InstructionFieldUsagePresets.NumValAsCodeAddress
                 )
             )
             {
@@ -180,8 +180,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int usage = (int)OpCode.GetFieldUsage();
 
             if (
-                (usage & ((int)InstructionFieldUsage.NumValAsCodeAddress))
-                == (int)InstructionFieldUsage.NumValAsCodeAddress
+                (usage & ((int)InstructionFieldUsagePresets.NumValAsCodeAddress))
+                == (int)InstructionFieldUsagePresets.NumValAsCodeAddress
             )
             {
                 wr.Write(NumVal - baseAddress);
@@ -265,8 +265,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int usage = (int)that.OpCode.GetFieldUsage();
 
             if (
-                (usage & ((int)InstructionFieldUsage.NumValAsCodeAddress))
-                == (int)InstructionFieldUsage.NumValAsCodeAddress
+                (usage & ((int)InstructionFieldUsagePresets.NumValAsCodeAddress))
+                == (int)InstructionFieldUsagePresets.NumValAsCodeAddress
             )
             {
                 that.NumVal = rd.ReadInt32() + baseAddress;

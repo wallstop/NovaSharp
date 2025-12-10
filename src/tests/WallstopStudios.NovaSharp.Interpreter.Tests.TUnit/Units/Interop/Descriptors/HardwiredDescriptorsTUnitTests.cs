@@ -124,7 +124,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             _descriptor = new TestHardwiredDescriptor();
             scope.RegisterType<TestHost>(_descriptor);
 
-            script = new(CoreModules.PresetComplete);
+            script = new(CoreModulePresets.Complete);
             script.Options.DebugPrint = _ => { };
             return scope;
         }

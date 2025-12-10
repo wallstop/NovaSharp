@@ -17,7 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallWithNullDynValueArgsThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function noop() end");
             DynValue function = script.Globals.Get("noop");
 
@@ -31,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallWithNullObjectArgsThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function noop() end");
             DynValue function = script.Globals.Get("noop");
 
@@ -45,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallWithNullFunctionThrows()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 script.Call((DynValue)null)
@@ -57,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallInvokesMetamethodWhenValueHasCall()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 local mt = {}
@@ -77,7 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallExecutesClrFunction()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("clr"));
 
             DynValue result = script.Call(callback);
@@ -89,7 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallRejectsNonCallableValues()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue notCallable = DynValue.NewString("nope");
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
@@ -105,7 +105,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallWithObjectArgumentsConvertsValues()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function add(a, b) return a + b end");
             DynValue function = script.Globals.Get("add");
 
@@ -117,7 +117,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallObjectOverloadInvokesClosureAndConvertsArguments()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString("function mul(a, b) return a * b end");
             object closure = script.Globals.Get("mul").Function;
 
@@ -129,7 +129,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallObjectOverloadInvokesDelegateCallback()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = (ctx, args) =>
                 DynValue.NewNumber(args[0].Number * 2d);
 
@@ -141,7 +141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallObjectOverloadRejectsNonCallableValues()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 script.Call((object)"not callable")
@@ -156,7 +156,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallObjectOverloadThrowsWhenFunctionNull()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 script.Call((object)null)
@@ -171,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CreateCoroutineValidatesInputs()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewString("done"));
 
             DynValue coroutine = script.CreateCoroutine(callback);
@@ -190,7 +190,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CreateCoroutineThrowsWhenFunctionNull()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 script.CreateCoroutine((DynValue)null)
@@ -208,7 +208,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             };
             List<string> messages = new();
             ScriptOptions options = new() { ScriptLoader = loader, DebugPrint = messages.Add };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             DynValue result = script.RequireModule("bit32");
 
@@ -224,7 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             StubScriptLoader loader = new() { ResolveReturnsNull = true };
             ScriptOptions options = new() { ScriptLoader = loader };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.RequireModule("missing")
@@ -242,7 +242,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             StubScriptLoader loader = new() { ModuleSource = "return function() end" };
             List<string> messages = new();
             ScriptOptions options = new() { ScriptLoader = loader, DebugPrint = messages.Add };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             script.RequireModule("bit32");
             script.RequireModule("bit32");
@@ -261,7 +261,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 DebugPrint = messages.Add,
                 CompatibilityVersion = LuaCompatibilityVersion.Lua52,
             };
-            Script script = new(CoreModules.PresetComplete, options);
+            Script script = new(CoreModulePresets.Complete, options);
 
             script.RequireModule("bit32");
 
@@ -273,7 +273,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             StubScriptLoader loader = new();
             Script script = new(
-                CoreModules.PresetComplete,
+                CoreModulePresets.Complete,
                 new ScriptOptions { ScriptLoader = loader }
             );
             Table customGlobals = new(script);
@@ -292,7 +292,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             StubScriptLoader loader = new();
             Script script = new(
-                CoreModules.PresetComplete,
+                CoreModulePresets.Complete,
                 new ScriptOptions { ScriptLoader = loader }
             );
 
@@ -309,10 +309,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         {
             StubScriptLoader loader = new();
             Script script = new(
-                CoreModules.PresetComplete,
+                CoreModulePresets.Complete,
                 new ScriptOptions { ScriptLoader = loader }
             );
-            Script foreignScript = new(CoreModules.PresetComplete);
+            Script foreignScript = new(CoreModulePresets.Complete);
             Table foreignGlobals = new(foreignScript);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -328,8 +328,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallRejectsValuesOwnedByDifferentScripts()
         {
-            Script scriptA = new(CoreModules.PresetComplete);
-            Script scriptB = new(CoreModules.PresetComplete);
+            Script scriptA = new(CoreModulePresets.Complete);
+            Script scriptB = new(CoreModulePresets.Complete);
 
             DynValue foreignTable = scriptA.DoString("return {}");
             scriptB.DoString("function echo(value) return value end");
@@ -347,11 +347,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CallObjectOverloadRejectsForeignClosure()
         {
-            Script scriptA = new(CoreModules.PresetComplete);
+            Script scriptA = new(CoreModulePresets.Complete);
             scriptA.DoString("function noop() return 1 end");
             object foreignClosure = scriptA.Globals.Get("noop").Function;
 
-            Script scriptB = new(CoreModules.PresetComplete);
+            Script scriptB = new(CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 scriptB.Call(foreignClosure)
@@ -366,8 +366,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CreateCoroutineRejectsFunctionsOwnedByDifferentScripts()
         {
-            Script scriptA = new(CoreModules.PresetComplete);
-            Script scriptB = new(CoreModules.PresetComplete);
+            Script scriptA = new(CoreModulePresets.Complete);
+            Script scriptB = new(CoreModulePresets.Complete);
             DynValue foreignFunction = scriptA.DoString("return function() end");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -383,7 +383,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CreateCoroutineObjectOverloadUsesClosure()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function generator()
@@ -406,7 +406,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CreateCoroutineObjectOverloadSupportsDelegates()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
             Func<ScriptExecutionContext, CallbackArguments, DynValue> callback = (ctx, _) =>
                 DynValue.NewNumber(99d);
 
@@ -426,7 +426,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CreateCoroutineObjectOverloadRejectsNonCallable()
         {
-            Script script = new(CoreModules.PresetComplete);
+            Script script = new(CoreModulePresets.Complete);
 
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 script.CreateCoroutine((object)"invalid")
@@ -441,11 +441,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Test]
         public async Task CreateCoroutineObjectOverloadRejectsForeignClosure()
         {
-            Script scriptA = new(CoreModules.PresetComplete);
+            Script scriptA = new(CoreModulePresets.Complete);
             scriptA.DoString("function noop() return 0 end");
             object foreignClosure = scriptA.Globals.Get("noop").Function;
 
-            Script scriptB = new(CoreModules.PresetComplete);
+            Script scriptB = new(CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 scriptB.CreateCoroutine(foreignClosure)

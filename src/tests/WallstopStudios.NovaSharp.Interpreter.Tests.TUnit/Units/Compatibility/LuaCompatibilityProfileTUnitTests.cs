@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
 {
     using System;
+    using System.ComponentModel;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using global::TUnit.Assertions.Extensions;
@@ -108,15 +109,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         {
             LuaCompatibilityVersion invalidVersion = (LuaCompatibilityVersion)999;
 
-            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
-                LuaCompatibilityProfile.ForVersion(invalidVersion)
+            InvalidEnumArgumentException exception = Assert.Throws<InvalidEnumArgumentException>(
+                () =>
+                    LuaCompatibilityProfile.ForVersion(invalidVersion)
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("version").ConfigureAwait(false);
-            await Assert
-                .That(exception.Message)
-                .Contains("Unsupported compatibility version")
-                .ConfigureAwait(false);
         }
 
         [Test]
