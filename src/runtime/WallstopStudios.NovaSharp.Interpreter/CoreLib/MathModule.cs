@@ -384,10 +384,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             double result = Math.Ceiling(arg.Number);
 
-            // Return integer subtype if result fits in integer range
-            if (result >= long.MinValue && result <= long.MaxValue && result == Math.Floor(result))
+            // Return integer subtype if result fits in integer range.
+            // Use TryGetInteger to correctly reject values >= 2^63 that would overflow.
+            // Note: (double)long.MaxValue rounds up to 2^63 due to IEEE 754 precision loss,
+            // so simple <= comparison doesn't work correctly for boundary values.
+            if (LuaIntegerHelper.TryGetInteger(result, out long intResult))
             {
-                return DynValue.NewInteger((long)result);
+                return DynValue.NewInteger(intResult);
             }
 
             return DynValue.NewFloat(result);
@@ -502,10 +505,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             double result = Math.Floor(arg.Number);
 
-            // Return integer subtype if result fits in integer range
-            if (result >= long.MinValue && result <= long.MaxValue && result == Math.Floor(result))
+            // Return integer subtype if result fits in integer range.
+            // Use TryGetInteger to correctly reject values >= 2^63 that would overflow.
+            // Note: (double)long.MaxValue rounds up to 2^63 due to IEEE 754 precision loss,
+            // so simple <= comparison doesn't work correctly for boundary values.
+            if (LuaIntegerHelper.TryGetInteger(result, out long intResult))
             {
-                return DynValue.NewInteger((long)result);
+                return DynValue.NewInteger(intResult);
             }
 
             return DynValue.NewFloat(result);

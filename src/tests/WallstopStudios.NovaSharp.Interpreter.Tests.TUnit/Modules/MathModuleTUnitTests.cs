@@ -502,15 +502,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task FloorResultCanBeUsedInStringFormat()
         {
-            // Verify integer promotion integrates with string.format %d
+            // Verify integer promotion integrates with string.format %d for valid integer values.
+            // Note: math.maxinteger + 0.5 rounds to 2^63 which is OUTSIDE integer range,
+            // so we test with a valid case instead.
             Script script = CreateScript();
-            DynValue result = script.DoString(
-                "return string.format('%d', math.floor(math.maxinteger + 0.5))"
+            DynValue result = script.DoString("return string.format('%d', math.floor(3.7))");
+
+            // math.floor(3.7) = 3 (promoted to integer subtype in Lua 5.3+)
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("3").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorResultForMaxintegerPlusHalfThrowsInStringFormat()
+        {
+            // Verify that math.floor(math.maxinteger + 0.5) correctly returns a float
+            // (not an integer), and that string.format('%d', ...) correctly rejects it.
+            // Reference: Lua 5.4 Manual §6.7 - math.floor returns integer only when result fits.
+            Script script = CreateScript();
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.format('%d', math.floor(math.maxinteger + 0.5))")
             );
 
-            // maxinteger + 0.5 as double loses precision, but floor result should be maxinteger
-            // (this tests the integration between floor and format)
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert
+                .That(exception)
+                .IsNotNull()
+                .Because("string.format should reject floor result that exceeds integer range")
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
         }
 
         // ==========================================================================

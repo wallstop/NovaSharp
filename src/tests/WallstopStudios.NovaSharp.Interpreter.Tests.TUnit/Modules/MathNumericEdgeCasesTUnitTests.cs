@@ -754,6 +754,195 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         #endregion
 
+        #region math.floor/math.ceil Overflow Boundary Tests
+
+        /// <summary>
+        /// Tests that math.floor returns a float (not integer) when the result is >= 2^63.
+        /// This is a regression test for the fix where math.floor incorrectly promoted
+        /// overflow values to integer type, causing wrapping in string.format('%d', ...).
+        /// </summary>
+        /// <remarks>
+        /// The bug occurred because (double)long.MaxValue rounds up to 2^63 due to IEEE 754
+        /// precision loss, so a naive comparison "result <= long.MaxValue" incorrectly passes
+        /// for values like 2^63. The fix uses LuaIntegerHelper.TryGetInteger which has proper
+        /// boundary checking.
+        /// Reference: Lua 5.4 Manual §6.7 - math.floor returns integer when result fits.
+        /// </remarks>
+        [Test]
+        public async Task FloorReturnsFloatWhenResultExceedsIntegerRange()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            // math.floor(math.maxinteger + 0.5) should return a FLOAT because the result (2^63)
+            // does not fit in a signed 64-bit integer
+            DynValue result = script.DoString(
+                @"
+                local v = math.floor(math.maxinteger + 0.5)
+                return math.type(v), v
+            "
+            );
+
+            await Assert
+                .That(result.Tuple[0].String)
+                .IsEqualTo("float")
+                .Because("math.floor result exceeding integer range should be float type")
+                .ConfigureAwait(false);
+
+            // The value should be 2^63 = 9223372036854775808
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(9223372036854775808.0)
+                .Because("The floored value should be 2^63")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.ceil returns a float (not integer) when the result exceeds integer range.
+        /// </summary>
+        [Test]
+        public async Task CeilReturnsFloatWhenResultExceedsIntegerRange()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            // math.ceil on a large value that exceeds integer range should return float
+            DynValue result = script.DoString(
+                @"
+                local v = math.ceil(math.mininteger - 10000000000.0)
+                return math.type(v), v
+            "
+            );
+
+            await Assert
+                .That(result.Tuple[0].String)
+                .IsEqualTo("float")
+                .Because("math.ceil result outside integer range should be float type")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Regression test: string.format('%d', math.floor(math.maxinteger + 0.5)) should throw.
+        /// Before the fix, math.floor incorrectly returned an integer type that wrapped to
+        /// long.MinValue, causing string.format to silently output the wrong value.
+        /// </summary>
+        [Test]
+        public async Task FormatDecimalThrowsForFlooredOverflowValue()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.format('%d', math.floor(math.maxinteger + 0.5))")
+            );
+
+            await Assert
+                .That(exception)
+                .IsNotNull()
+                .Because("string.format should reject floor result that exceeds integer range")
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.floor returns integer type when result IS within integer range.
+        /// This ensures the fix doesn't break the normal integer promotion behavior.
+        /// </summary>
+        /// <remarks>
+        /// Note: math.maxinteger + 0.0 loses precision when converted to float (rounds to 2^63),
+        /// so it is NOT a valid test case for integer promotion. We test with smaller values.
+        /// </remarks>
+        [Test]
+        [Arguments("3.7", 3L, "positive fractional")]
+        [Arguments("-3.7", -4L, "negative fractional")]
+        [Arguments("1000000000.0", 1000000000L, "medium integer as float")]
+        [Arguments("-1000000000.0", -1000000000L, "medium negative integer as float")]
+        public async Task FloorReturnsIntegerWhenResultFitsInRange(
+            string luaExpression,
+            long expectedValue,
+            string description
+        )
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            DynValue result = script.DoString(
+                $@"
+                local v = math.floor({luaExpression})
+                return math.type(v), v
+            "
+            );
+
+            await Assert
+                .That(result.Tuple[0].String)
+                .IsEqualTo("integer")
+                .Because($"math.floor({luaExpression}) [{description}] should return integer type")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo((double)expectedValue)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.ceil returns integer type when result IS within integer range.
+        /// </summary>
+        [Test]
+        [Arguments("3.2", 4L, "positive fractional")]
+        [Arguments("-3.2", -3L, "negative fractional")]
+        public async Task CeilReturnsIntegerWhenResultFitsInRange(
+            string luaExpression,
+            long expectedValue,
+            string description
+        )
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+
+            DynValue result = script.DoString(
+                $@"
+                local v = math.ceil({luaExpression})
+                return math.type(v), v
+            "
+            );
+
+            await Assert
+                .That(result.Tuple[0].String)
+                .IsEqualTo("integer")
+                .Because($"math.ceil({luaExpression}) [{description}] should return integer type")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo((double)expectedValue)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests Lua 5.1/5.2 behavior - floor returns a number (there's no math.type to check).
+        /// </summary>
+        /// <remarks>
+        /// In Lua 5.1/5.2, there's no integer subtype - all numbers are doubles. The math.type
+        /// function doesn't exist. NovaSharp's internal LuaNumber.IsInteger reflects whether
+        /// the underlying representation can be stored as an integer, but this is an implementation
+        /// detail, not a Lua 5.1/5.2 semantic distinction.
+        /// </remarks>
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task FloorReturnsNumberInLua51And52(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            // In Lua 5.1/5.2, math.floor just returns a number (no type distinction)
+            DynValue result = script.DoString("return math.floor(3.7)");
+
+            // The value should be 3.0 and of type number
+            await Assert.That(result.Number).IsEqualTo(3.0).ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+        }
+
+        #endregion
+
         #region Helpers
 
         private static Script CreateScript(

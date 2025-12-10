@@ -15,16 +15,21 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 ### 📋 NEXT STEPS (Priority Order)
 
 1. **Verify `utf8.offset` bounds handling** — Position 0 check exists but may need additional edge case testing
-2. **Investigate `FloorResultCanBeUsedInStringFormat.lua`** — `string.format('%d', math.floor(math.maxinteger + 0.5))` should throw, not wrap
-3. **Run full Lua 5.4 comparison** to identify any remaining mismatches
-4. **Add version-split test fixtures** for `debug.upvalueid` behavior differences
+2. **Run full Lua 5.4 comparison** to identify any remaining mismatches
+3. **Add version-split test fixtures** for `debug.upvalueid` behavior differences
+
+### ✅ COMPLETED FIXES
+
+| Date | Issue | Description | Fix |
+|------|-------|-------------|-----|
+| 2025-12-10 | `string.format('%d')` overflow | `string.format('%d', math.floor(math.maxinteger + 0.5))` was wrapping instead of throwing | Fixed `math.floor`/`math.ceil` to use `LuaIntegerHelper.TryGetInteger` for correct 2^63 boundary checking. Added 9 regression tests. |
 
 ### 🟡 REMAINING ISSUES
 
 | Priority | Issue | Description | Status |
 |----------|-------|-------------|--------|
+| 🔴 HIGH | Lua 5.2 `string.format('%d')` overflow | NovaSharp wraps but Lua 5.2 throws "not a number in proper range" | Not started |
 | 🟡 MED | `utf8.offset` bounds | Verify position bounds validation is complete | Needs verification |
-| 🔴 HIGH | `string.format('%d')` overflow | Should throw for floats exceeding integer range | Not started |
 | 🟡 MED | `UpvalueIdReturnsUserDataHandles.lua` | Needs investigation | Not started |
 | 🟡 MED | `UpvalueJoinSharesState.lua` | Needs investigation | Not started |
 
@@ -793,7 +798,7 @@ See **Section 8.24** for the complete implementation plan.
 
 ## Repository Snapshot (Updated 2025-12-10)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true` enforced.
-- **Tests**: **4,523** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Tests**: **4,557** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
 - **Coverage**: ~87.7% line / ~86.7% branch (per latest coverage run).
 - **Coverage gating**: `COVERAGE_GATING_MODE=enforce` enabled with 90% thresholds.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
@@ -804,6 +809,7 @@ See **Section 8.24** for the complete implementation plan.
 - **Benchmark CI**: `.github/workflows/benchmarks.yml` with BenchmarkDotNet, threshold-based regression alerting.
 - **Packaging**: NuGet publishing workflow + Unity UPM scripts in `scripts/packaging/`.
 - **Lua Version Comparison**: CI runs matrix tests against Lua 5.1, 5.2, 5.3, 5.4 reference interpreters.
+- **math.floor/ceil fix**: 2025-12-10 — Fixed 2^63 boundary detection to correctly return float for overflow values.
 - **Lua Fixture Corpus**: ~1,234 fixtures extracted from C# tests, parallel runner operational.
 
 ## Critical Initiatives
