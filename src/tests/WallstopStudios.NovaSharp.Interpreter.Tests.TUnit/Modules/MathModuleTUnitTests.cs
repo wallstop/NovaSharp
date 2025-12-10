@@ -709,6 +709,280 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        // ==========================================================================
+        // math.random edge case and boundary tests
+        // ==========================================================================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        public async Task RandomWithZeroUpperBoundThrowsErrorLua51To53(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1-5.3: math.random(0) throws "interval is empty"
+            // Lua 5.4+: math.random(0) returns a random integer
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return math.random(0)")
+            );
+            await Assert.That(ex.Message).Contains("interval is empty").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task RandomWithZeroReturnsRandomIntegerLua54Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.4+: math.random(0) returns a random integer (per Lua 5.4 §6.7)
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            DynValue result = script.DoString("return math.random(0)");
+            // Just verify it returns a number (the value is random)
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RandomWithNegativeUpperBoundThrowsError()
+        {
+            // All versions: math.random(-5) throws "interval is empty"
+            Script script = CreateScript();
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return math.random(-5)")
+            );
+            await Assert.That(ex.Message).Contains("interval is empty").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RandomWithInvertedRangeThrowsError()
+        {
+            Script script = CreateScript();
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return math.random(10, 5)")
+            );
+            await Assert.That(ex.Message).Contains("interval is empty").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RandomWithSingleValueRangeReturnsValue()
+        {
+            Script script = CreateScript();
+
+            // math.random(5, 5) should always return 5
+            DynValue result = script.DoString("return math.random(5, 5)");
+            await Assert.That(result.Number).IsEqualTo(5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RandomWithOneReturnsOne()
+        {
+            Script script = CreateScript();
+
+            // math.random(1) should always return 1
+            DynValue result = script.DoString("return math.random(1)");
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RandomWithNegativeRangeReturnsValueInRange()
+        {
+            Script script = CreateScript();
+
+            // math.random(-10, -5) should return value in [-10, -5]
+            DynValue result = script.DoString("return math.random(-10, -5)");
+            await Assert.That(result.Number).IsGreaterThanOrEqualTo(-10d).ConfigureAwait(false);
+            await Assert.That(result.Number).IsLessThanOrEqualTo(-5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RandomWithSpanningZeroReturnsValueInRange()
+        {
+            Script script = CreateScript();
+
+            // math.random(-5, 5) should return value in [-5, 5]
+            DynValue result = script.DoString("return math.random(-5, 5)");
+            await Assert.That(result.Number).IsGreaterThanOrEqualTo(-5d).ConfigureAwait(false);
+            await Assert.That(result.Number).IsLessThanOrEqualTo(5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RandomNoArgsReturnsFloatInZeroToOneRange()
+        {
+            Script script = CreateScript();
+
+            // math.random() should return a float in [0, 1)
+            DynValue result = script.DoString("return math.random()");
+            await Assert.That(result.Number).IsGreaterThanOrEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.Number).IsLessThan(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RandomWithLargeRangeReturnsValueInRange()
+        {
+            Script script = CreateScript();
+
+            // Test with a large but valid range
+            DynValue result = script.DoString("return math.random(1, 1000000)");
+            await Assert.That(result.Number).IsGreaterThanOrEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Number).IsLessThanOrEqualTo(1000000d).ConfigureAwait(false);
+        }
+
+        // ==========================================================================
+        // Data-driven test for version-specific integer representation errors
+        // ==========================================================================
+
+        /// <summary>
+        /// Consolidated data-driven test for expressions that should error with
+        /// "number has no integer representation" in Lua 5.3+ and later versions.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua53,
+            "math.random(1.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua53,
+            "math.random(0/0)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua53,
+            "math.random(1/0)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua53,
+            "math.random(1, 2.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua54,
+            "math.random(1.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua54,
+            "math.random(0/0)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua54,
+            "math.random(1/0)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua54,
+            "math.random(1, 2.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua54,
+            "math.randomseed(1.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua54,
+            "math.randomseed(0/0)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua55,
+            "math.random(1.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua55,
+            "math.random(0/0)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua55,
+            "math.random(1/0)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua55,
+            "math.random(1, 2.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua55,
+            "math.randomseed(1.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua55,
+            "math.randomseed(0/0)"
+        )]
+        public async Task IntegerRepresentationErrorCases(
+            Compatibility.LuaCompatibilityVersion version,
+            string luaExpression
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString(luaExpression)).ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .Because(
+                    $"Expression '{luaExpression}' should throw integer representation error in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Consolidated data-driven test for expressions that should succeed (accept non-integer)
+        /// in Lua 5.1 and 5.2, where fractional values are silently truncated.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua51,
+            "math.random(2.9)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua51,
+            "math.randomseed(1.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua52,
+            "math.random(2.9)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua52,
+            "math.randomseed(1.5)"
+        )]
+        [global::TUnit.Core.Arguments(
+            Compatibility.LuaCompatibilityVersion.Lua53,
+            "math.randomseed(1.5)"
+        )]
+        public async Task NonIntegerAcceptedInOlderVersions(
+            Compatibility.LuaCompatibilityVersion version,
+            string luaExpression
+        )
+        {
+            Script script = CreateScript();
+            script.Options.CompatibilityVersion = version;
+
+            // Should not throw - expression should execute successfully
+            ScriptRuntimeException caughtException = null;
+            try
+            {
+                script.DoString(luaExpression);
+            }
+            catch (ScriptRuntimeException e)
+            {
+                caughtException = e;
+            }
+
+            await Assert
+                .That(caughtException)
+                .IsNull()
+                .Because($"Expression '{luaExpression}' should succeed without error in {version}")
+                .ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModules.PresetComplete);

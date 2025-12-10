@@ -10,6 +10,7 @@
 
 See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
 - **🔴 Lua Spec Compliance Policy** (highest priority)
+- **🔴 Flag enum combined values must be external** (no `|`, `&`, `^`, `~` in enum members—use helper classes)
 - Project structure and module organization
 - Build, test, and development commands
 - Coding style and naming conventions

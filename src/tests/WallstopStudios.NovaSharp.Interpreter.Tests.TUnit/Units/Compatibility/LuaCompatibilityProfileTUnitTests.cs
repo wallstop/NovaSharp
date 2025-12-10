@@ -90,15 +90,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         }
 
         [Test]
-        public async Task ForVersionLatestReturnsLua55Profile()
+        public async Task ForVersionLatestReturnsLua54Profile()
         {
             LuaCompatibilityProfile profile = LuaCompatibilityProfile.ForVersion(
                 LuaCompatibilityVersion.Latest
             );
 
+            // Latest should resolve to CurrentDefault (Lua 5.4), not the highest supported version (5.5)
             await Assert
                 .That(profile.Version)
-                .IsEqualTo(LuaCompatibilityVersion.Lua55)
+                .IsEqualTo(LuaCompatibilityVersion.Lua54)
                 .ConfigureAwait(false);
         }
 

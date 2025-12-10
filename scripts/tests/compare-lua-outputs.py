@@ -104,6 +104,11 @@ def normalize_output(text: str, strict: bool = False) -> str:
     # Remove NovaSharp CLI compatibility info lines
     result = re.sub(r'^\[compatibility\].*$\n?', '', result, flags=re.MULTILINE)
     
+    # Normalize version strings (_VERSION output differs between Lua and NovaSharp)
+    # Lua outputs "Lua 5.x" while NovaSharp outputs "NovaSharp x.x.x.x"
+    result = re.sub(r'Lua 5\.\d+', '<lua-version>', result)
+    result = re.sub(r'NovaSharp \d+\.\d+\.\d+\.\d+', '<lua-version>', result)
+    
     # Normalize floating-point numbers (e.g., 1.0000000000001 -> 1.0)
     def normalize_float(match):
         try:

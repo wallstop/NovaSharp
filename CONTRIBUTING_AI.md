@@ -228,6 +228,29 @@ Script.DoString("return x + 1")
 - **Exceptions for Lua interop**: Enums like `DataType` where `Nil = 0` is a valid Lua type should **not** have an obsolete sentinel
 - **Stable ordering**: Never reorder or renumber existing enum values—add new values at the end with the next available number
 - **Flags enums**: Use powers of two (`1 << 0`, `1 << 1`, etc.) and include `None = 0` as a non-obsolete default when "no flags" is semantically valid
+- **🔴 Flag enum combined values must be external**: For `[Flags]` enums, combined values produced by **any bitwise operation** (`|`, `&`, `^`, `~`) must **never** be enum members. Instead, define them as `static readonly` or `const` fields in a nearby helper class or extension class. Enum members should **only ever have one bit set** (with the sole exception of `None = 0`). This ensures serialization safety, clean `Enum.GetValues()` iteration, and semantic clarity.
+- **InvalidEnumArgumentException for invalid enum values**: When switching on or validating enum values, throw `System.ComponentModel.InvalidEnumArgumentException` for unrecognized/invalid values instead of `ArgumentException`, `ArgumentOutOfRangeException`, or generic exceptions. This exception type is specifically designed for enum validation failures and provides clearer diagnostics:
+  ```csharp
+  // CORRECT: Use InvalidEnumArgumentException
+  switch (dataType)
+  {
+      case DataType.Nil:
+          // handle nil
+          break;
+      case DataType.Boolean:
+          // handle boolean
+          break;
+      // ... other cases ...
+      default:
+          throw new InvalidEnumArgumentException(nameof(dataType), (int)dataType, typeof(DataType));
+  }
+
+  // WRONG: Using generic exceptions for enum validation
+  default:
+      throw new ArgumentException($"Unknown data type: {dataType}");  // Use InvalidEnumArgumentException instead
+      throw new ArgumentOutOfRangeException(nameof(dataType));         // Use InvalidEnumArgumentException instead
+      throw new NotSupportedException($"Unsupported: {dataType}");    // Use InvalidEnumArgumentException instead
+  ```
 
 ### LuaNumber for Lua Math
 

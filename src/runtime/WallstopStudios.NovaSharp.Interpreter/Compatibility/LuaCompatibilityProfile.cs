@@ -140,7 +140,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
                 LuaCompatibilityVersion.Lua53 => Lua53Profile,
                 LuaCompatibilityVersion.Lua54 => Lua54Profile,
                 LuaCompatibilityVersion.Lua55 => Lua55Profile,
-                LuaCompatibilityVersion.Latest => Lua55Profile,
+                LuaCompatibilityVersion.Latest => Lua54Profile,
                 _ => throw new ArgumentOutOfRangeException(
                     nameof(version),
                     version,

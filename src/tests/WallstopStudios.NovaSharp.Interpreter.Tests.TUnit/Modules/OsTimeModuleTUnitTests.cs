@@ -211,11 +211,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Test]
         public async Task DateIgnoresOAndEFormatModifiers()
         {
+            // NOTE: This documents a NovaSharp extension. Standard Lua rejects %O and %E
+            // format modifiers as invalid conversion specifiers. NovaSharp strips them and
+            // treats the following character as the format specifier (POSIX-style behavior).
+            // For example, %OY becomes %Y (year) and %Ew becomes %w (weekday).
+            // This is a known divergence from standard Lua behavior.
             Script script = CreateScript();
             DynValue formatted = script.DoString("return os.date('!%OY-%Ew', 0)");
 
             await Assert.That(formatted.String).IsEqualTo("1970-4");
         }
+
+        // This is a documentation comment explaining the known spec divergence.
+        // No test assertion needed - the DateIgnoresOAndEFormatModifiers test above
+        // already validates NovaSharp's behavior, and this comment documents
+        // that it differs from standard Lua.
+        //
+        // Standard Lua behavior:
+        //   lua5.2 -e "print(os.date('%OY-%Ew', 0))"
+        //   lua5.2: (command line):1: bad argument #1 to 'date' (invalid conversion specifier '%OY-%Ew')
+        //
+        // NovaSharp behavior:
+        //   NovaSharp accepts %O and %E as POSIX-style modifier prefixes and strips them.
+        //   This results in %OY -> %Y (year: 1970) and %Ew -> %w (weekday: 4 for Thursday)
+        //   Output: "1970-4"
+        //
+        // If we want to match standard Lua behavior, we would need to add a check
+        // in OsTimeModule.cs to reject %O and %E as unknown specifiers.
 
         [global::TUnit.Core.Test]
         public async Task DateSupportsOyModifier()

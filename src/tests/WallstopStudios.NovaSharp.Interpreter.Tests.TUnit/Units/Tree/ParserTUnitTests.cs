@@ -3,9 +3,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     public sealed class ParserTUnitTests
     {
@@ -71,6 +74,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("hi-\U0001F40D").ConfigureAwait(false);
+        }
+
+        // NOTE: The \u{...} unicode escape syntax is officially supported only in Lua 5.3+.
+        // NovaSharp currently accepts it in all versions for simplicity. This test documents
+        // the known deviation from spec. When/if we add version-aware lexing, these tests
+        // should be updated to expect errors in pre-5.3 modes.
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UnicodeEscapeSequenceIsValidInLua53Plus(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
+            Script script = new(CoreModules.PresetComplete, options);
+            DynValue result = script.DoString("return \"\\u{1F40D}\"");
+
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("\U0001F40D").ConfigureAwait(false);
+        }
+
+        // This test documents that NovaSharp currently accepts \u{...} in pre-5.3 modes,
+        // which is a deviation from the official Lua spec. Standard Lua 5.1/5.2 would
+        // throw a syntax error. This is tracked as a known spec divergence.
+        [global::TUnit.Core.Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task UnicodeEscapeSequenceAcceptedInPreLua53ModesKnownDivergence(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
+            Script script = new(CoreModules.PresetComplete, options);
+
+            // NOTE: This documents a known spec divergence. Standard Lua 5.1/5.2 would
+            // throw "invalid escape sequence near '\u'" but NovaSharp accepts it.
+            // When version-aware lexing is implemented, change this to Assert.Throws.
+            DynValue result = script.DoString("return \"\\u{1F40D}\"");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("\U0001F40D")
+                .Because(
+                    "NovaSharp currently accepts \\u{...} in all versions (known spec divergence)"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

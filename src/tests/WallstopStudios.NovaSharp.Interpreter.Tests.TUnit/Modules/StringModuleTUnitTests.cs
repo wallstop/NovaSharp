@@ -1393,13 +1393,164 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task FormatDecimalWithFloatFallsBackToConversion()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, "123", false)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, "123", false)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, null, true)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, null, true)]
+        public async Task FormatDecimalWithFloatBehaviorByVersion(
+            LuaCompatibilityVersion version,
+            string expectedResult,
+            bool expectsError
+        )
         {
-            // Float values should be converted to integer (may lose precision for large values)
-            Script script = CreateScript();
-            DynValue result = script.DoString("return string.format('%d', 123.456)");
+            // Lua 5.1/5.2: Float values are converted to integer (truncated)
+            // Lua 5.3+: Float values that don't have integer representation throw an error
+            Script script = CreateScriptWithVersion(version);
 
-            await Assert.That(result.String).IsEqualTo("123").ConfigureAwait(false);
+            if (expectsError)
+            {
+                ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                    script.DoString("return string.format('%d', 123.456)")
+                );
+
+                await Assert
+                    .That(exception)
+                    .IsNotNull()
+                    .Because(
+                        $"Lua {version} should throw 'number has no integer representation' for %d with 123.456"
+                    )
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(exception.Message)
+                    .Contains("number has no integer representation")
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                DynValue result = script.DoString("return string.format('%d', 123.456)");
+                await Assert
+                    .That(result.String)
+                    .IsEqualTo(expectedResult)
+                    .Because($"Lua {version} should truncate float to integer for %d")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// Tests that string.format with %d accepts exact integer values in Lua 5.3+.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("123", "123")]
+        [global::TUnit.Core.Arguments("0", "0")]
+        [global::TUnit.Core.Arguments("-456", "-456")]
+        [global::TUnit.Core.Arguments("math.maxinteger", "9223372036854775807")]
+        [global::TUnit.Core.Arguments("math.mininteger", "-9223372036854775808")]
+        [global::TUnit.Core.Arguments("42.0", "42")] // Whole number float should work
+        [global::TUnit.Core.Arguments("-1.0", "-1")] // Negative whole number float
+        public async Task FormatDecimalAcceptsIntegerValues(string luaExpression, string expected)
+        {
+            Script script = CreateScript();
+            DynValue result = script.DoString($"return string.format('%d', {luaExpression})");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected)
+                .Because($"string.format('%d', {luaExpression}) should produce {expected}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that string.format with %d rejects non-integer values in Lua 5.3+.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("0.5", "fractional")]
+        [global::TUnit.Core.Arguments("-0.5", "negative fractional")]
+        [global::TUnit.Core.Arguments("1e100", "large float beyond integer range")]
+        [global::TUnit.Core.Arguments("-1e100", "large negative float")]
+        [global::TUnit.Core.Arguments("0/0", "NaN")]
+        [global::TUnit.Core.Arguments("1/0", "positive infinity")]
+        [global::TUnit.Core.Arguments("-1/0", "negative infinity")]
+        [global::TUnit.Core.Arguments("math.maxinteger + 0.5", "maxinteger plus fractional")]
+        public async Task FormatDecimalRejectsNonIntegerValues(
+            string luaExpression,
+            string description
+        )
+        {
+            Script script = CreateScript();
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString($"return string.format('%d', {luaExpression})")
+            );
+
+            await Assert
+                .That(exception)
+                .IsNotNull()
+                .Because($"string.format('%d', {luaExpression}) [{description}] should throw")
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because(
+                    $"Error message should indicate no integer representation for {description}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests other integer format specifiers (%i, %o, %u, %x, %X) with non-integer values in Lua 5.3+.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("%i")]
+        [global::TUnit.Core.Arguments("%o")]
+        [global::TUnit.Core.Arguments("%u")]
+        [global::TUnit.Core.Arguments("%x")]
+        [global::TUnit.Core.Arguments("%X")]
+        public async Task FormatIntegerSpecifiersRejectFloatValues(string specifier)
+        {
+            Script script = CreateScript();
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString($"return string.format('{specifier}', 123.456)")
+            );
+
+            await Assert
+                .That(exception)
+                .IsNotNull()
+                .Because($"string.format('{specifier}', 123.456) should throw in Lua 5.3+")
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that %f (float) specifier works with any numeric value (no integer constraint).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("123.456", "123")]
+        [global::TUnit.Core.Arguments("0.5", "0")]
+        [global::TUnit.Core.Arguments("-0.5", "-0")]
+        [global::TUnit.Core.Arguments("42", "42")]
+        public async Task FormatFloatAcceptsAnyNumericValue(
+            string luaValue,
+            string expectedIntegerPart
+        )
+        {
+            ArgumentNullException.ThrowIfNull(luaValue);
+            ArgumentNullException.ThrowIfNull(expectedIntegerPart);
+
+            Script script = CreateScript();
+            DynValue result = script.DoString($"return string.format('%f', {luaValue})");
+
+            // %f produces full precision output like "123.456000", just check it starts with expected integer part
+            await Assert
+                .That(result.String)
+                .StartsWith(expectedIntegerPart)
+                .Because(
+                    $"string.format('%f', {luaValue}) output should start with {expectedIntegerPart}"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

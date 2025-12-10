@@ -58,6 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Utilities;
     using static NovaSharp.Interpreter.LuaPort.LuaStateInterop.LuaBase;
     using lua_Integer = System.Int32;
     using LUA_INTFRM_T = System.Int64;
@@ -1169,11 +1170,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         case 'i':
                         {
                             Addintlen(form);
-                            // Lua 5.3+: preserve integer precision for large values (e.g., math.maxinteger)
+                            // Lua 5.3+: require integer representation and preserve precision
                             // Lua 5.1/5.2: use double conversion (no integer subtype existed)
                             if (supportsIntegerPrecision)
                             {
                                 LuaNumber num = LuaLCheckLuaNumber(l, arg);
+                                // In Lua 5.3+, %d and %i require the number to have an integer representation
+                                LuaNumberHelpers.RequireIntegerRepresentation(num, "format", arg);
                                 StringFormat(
                                     buff,
                                     form,
@@ -1192,11 +1195,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         case 'X':
                         {
                             Addintlen(form);
-                            // Lua 5.3+: preserve integer precision for large values
+                            // Lua 5.3+: require integer representation and preserve precision
                             // Lua 5.1/5.2: use double conversion (no integer subtype existed)
                             if (supportsIntegerPrecision)
                             {
                                 LuaNumber num = LuaLCheckLuaNumber(l, arg);
+                                // In Lua 5.3+, %o, %u, %x, %X require the number to have an integer representation
+                                LuaNumberHelpers.RequireIntegerRepresentation(num, "format", arg);
                                 StringFormat(
                                     buff,
                                     form,

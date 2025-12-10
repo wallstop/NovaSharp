@@ -783,10 +783,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     1
                 );
 
-                // math.random(0): return integer with all bits pseudo-random (Lua 5.4 §6.7)
+                // math.random(0): return integer with all bits pseudo-random (Lua 5.4+ only, §6.7)
+                // In Lua 5.1-5.3, math.random(0) throws "interval is empty"
                 if (mVal == 0)
                 {
-                    return DynValue.NewNumber(r.NextInt64());
+                    // Resolve Latest to current default version for proper version comparison
+                    LuaCompatibilityVersion effectiveVersion = LuaVersionDefaults.Resolve(version);
+                    if (effectiveVersion >= LuaCompatibilityVersion.Lua54)
+                    {
+                        return DynValue.NewNumber(r.NextInt64());
+                    }
+
+                    throw new ScriptRuntimeException(
+                        "bad argument #1 to 'random' (interval is empty)"
+                    );
                 }
 
                 // math.random(m): return integer in [1, m]
