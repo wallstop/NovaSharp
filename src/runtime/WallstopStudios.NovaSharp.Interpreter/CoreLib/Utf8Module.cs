@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using Cysharp.Text;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -54,6 +55,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue start = args.AsType(1, "utf8.codepoint", DataType.Number, true);
             DynValue end = args.AsType(2, "utf8.codepoint", DataType.Number, true);
 
+            int length = value.String.Length;
+
+            // Validate and normalize i (start position)
+            int i = start.IsNil() ? 1 : (int)start.Number;
+            if (i < 0)
+            {
+                i = length + i + 1;
+            }
+
+            // Validate and normalize j (end position)
+            // When end is nil, j defaults to i (endDefaultsToStart: true)
+            int j = end.IsNil() ? i : (int)end.Number;
+            if (j < 0)
+            {
+                j = length + j + 1;
+            }
+
+            // Per Lua spec: positions must be within [1, length] after normalization
+            // utf8.codepoint throws "out of bounds" for positions outside this range
+            // Check start position (i) first - it maps to argument #2
+            if (i < 1 || i > length)
+            {
+                throw new ScriptRuntimeException("bad argument #2 to 'codepoint' (out of bounds)");
+            }
+
+            // Check end position (j) - it maps to argument #3
+            if (j < 1 || j > length)
+            {
+                throw new ScriptRuntimeException("bad argument #3 to 'codepoint' (out of bounds)");
+            }
+
             (int startIndex, int endExclusive) = NormalizeRange(
                 value.String,
                 start,
@@ -61,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 endDefaultsToStart: true
             );
 
-            // Fast path: empty range
+            // Fast path: empty range (when start > end after normalization)
             if (startIndex >= endExclusive)
             {
                 return DynValue.Void;
@@ -120,33 +152,123 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
         }
 
+        // Lua 5.4 MAXUTF constant: (0x7FFFFFFFu) - the maximum code point value
+        private const long Lua54MaxUtf = 0x7FFFFFFF;
+
+        // Unicode maximum code point (used for Lua 5.3)
+        private const int UnicodeMaxCodePoint = 0x10FFFF;
+
         /// <summary>
         /// Implements Lua `utf8.char`, building a UTF-8 string from the provided scalar values (§6.5).
         /// </summary>
+        /// <remarks>
+        /// Lua 5.4 accepts code points up to 0x7FFFFFFF (using extended UTF-8 encoding with 5-6 bytes).
+        /// Lua 5.3 accepts code points 0-0x10FFFF (including surrogates).
+        /// Both versions accept surrogate code points (0xD800-0xDFFF).
+        /// </remarks>
         [NovaSharpModuleMethod(Name = "char")]
         public static DynValue Char(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            using Utf16ValueStringBuilder builder = ZStringBuilder.Create();
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+            bool useLua54ExtendedRange = version >= LuaCompatibilityVersion.Lua54;
+
+            // Use a byte list for extended UTF-8 encoding
+            using PooledResource<List<byte>> pooledBytes = ListPool<byte>.Get(out List<byte> bytes);
 
             for (int i = 0; i < args.Count; i++)
             {
-                int codePoint = args.AsInt(i, "utf8.char");
+                // Use long to handle values up to 0x7FFFFFFF
+                long codePoint = args.AsLong(i, "utf8.char");
 
-                if (
-                    codePoint < 0
-                    || codePoint > 0x10FFFF
-                    || (codePoint >= 0xD800 && codePoint <= 0xDFFF)
-                )
+                if (useLua54ExtendedRange)
                 {
-                    throw new ScriptRuntimeException(
-                        $"bad argument #{i + 1} to 'utf8.char' (value out of range)"
-                    );
-                }
+                    // Lua 5.4: accept 0 to 0x7FFFFFFF (no surrogate check)
+                    if (codePoint < 0 || codePoint > Lua54MaxUtf)
+                    {
+                        throw new ScriptRuntimeException(
+                            $"bad argument #{i + 1} to 'utf8.char' (value out of range)"
+                        );
+                    }
 
-                builder.Append(char.ConvertFromUtf32(codePoint));
+                    EncodeExtendedUtf8(codePoint, bytes);
+                }
+                else
+                {
+                    // Lua 5.3: Unicode range only (0 to 0x10FFFF), surrogates ARE accepted
+                    // The only difference from 5.4 is the maximum code point value
+                    if (codePoint < 0 || codePoint > UnicodeMaxCodePoint)
+                    {
+                        throw new ScriptRuntimeException(
+                            $"bad argument #{i + 1} to 'utf8.char' (value out of range)"
+                        );
+                    }
+
+                    EncodeExtendedUtf8(codePoint, bytes);
+                }
             }
 
-            return DynValue.NewString(builder.ToString());
+            // Convert byte array to string using Latin-1 encoding (each byte maps directly to a char)
+            // This is how Lua strings work internally - they are byte sequences
+            char[] chars = new char[bytes.Count];
+            for (int j = 0; j < bytes.Count; j++)
+            {
+                chars[j] = (char)bytes[j];
+            }
+            return DynValue.NewString(new string(chars));
+        }
+
+        /// <summary>
+        /// Encodes a code point to extended UTF-8 (supports values up to 0x7FFFFFFF).
+        /// This follows Lua 5.4's encoding scheme which uses the original UTF-8 specification
+        /// allowing 5 and 6 byte sequences for code points beyond the Unicode range.
+        /// </summary>
+        private static void EncodeExtendedUtf8(long codePoint, List<byte> output)
+        {
+            if (codePoint <= 0x7F)
+            {
+                // 1-byte sequence: 0xxxxxxx
+                output.Add((byte)codePoint);
+            }
+            else if (codePoint <= 0x7FF)
+            {
+                // 2-byte sequence: 110xxxxx 10xxxxxx
+                output.Add((byte)(0xC0 | (codePoint >> 6)));
+                output.Add((byte)(0x80 | (codePoint & 0x3F)));
+            }
+            else if (codePoint <= 0xFFFF)
+            {
+                // 3-byte sequence: 1110xxxx 10xxxxxx 10xxxxxx
+                output.Add((byte)(0xE0 | (codePoint >> 12)));
+                output.Add((byte)(0x80 | ((codePoint >> 6) & 0x3F)));
+                output.Add((byte)(0x80 | (codePoint & 0x3F)));
+            }
+            else if (codePoint <= 0x1FFFFF)
+            {
+                // 4-byte sequence: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+                output.Add((byte)(0xF0 | (codePoint >> 18)));
+                output.Add((byte)(0x80 | ((codePoint >> 12) & 0x3F)));
+                output.Add((byte)(0x80 | ((codePoint >> 6) & 0x3F)));
+                output.Add((byte)(0x80 | (codePoint & 0x3F)));
+            }
+            else if (codePoint <= 0x3FFFFFF)
+            {
+                // 5-byte sequence: 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+                output.Add((byte)(0xF8 | (codePoint >> 24)));
+                output.Add((byte)(0x80 | ((codePoint >> 18) & 0x3F)));
+                output.Add((byte)(0x80 | ((codePoint >> 12) & 0x3F)));
+                output.Add((byte)(0x80 | ((codePoint >> 6) & 0x3F)));
+                output.Add((byte)(0x80 | (codePoint & 0x3F)));
+            }
+            else
+            {
+                // 6-byte sequence: 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+                output.Add((byte)(0xFC | (codePoint >> 30)));
+                output.Add((byte)(0x80 | ((codePoint >> 24) & 0x3F)));
+                output.Add((byte)(0x80 | ((codePoint >> 18) & 0x3F)));
+                output.Add((byte)(0x80 | ((codePoint >> 12) & 0x3F)));
+                output.Add((byte)(0x80 | ((codePoint >> 6) & 0x3F)));
+                output.Add((byte)(0x80 | (codePoint & 0x3F)));
+            }
         }
 
         /// <summary>
@@ -175,6 +297,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue value = args.AsType(0, "utf8.offset", DataType.String, false);
             int n = args.AsInt(1, "utf8.offset");
             DynValue indexArg = args.AsType(2, "utf8.offset", DataType.Number, true);
+
+            // Validate position (i) before normalizing - position 0 is never valid
+            if (!indexArg.IsNil())
+            {
+                int rawPosition = (int)indexArg.Number;
+                int length = value.String.Length;
+
+                // Position 0 is always invalid per Lua spec
+                if (rawPosition == 0)
+                {
+                    throw new ScriptRuntimeException(
+                        "bad argument #3 to 'offset' (position out of bounds)"
+                    );
+                }
+
+                // Normalize negative positions, then check bounds
+                int normalizedPosition = rawPosition < 0 ? length + rawPosition + 1 : rawPosition;
+
+                // Position must be in range [1, length+1] after normalization
+                if (normalizedPosition < 1 || normalizedPosition > length + 1)
+                {
+                    throw new ScriptRuntimeException(
+                        "bad argument #3 to 'offset' (position out of bounds)"
+                    );
+                }
+            }
 
             if (n == 0)
             {

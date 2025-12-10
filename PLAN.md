@@ -2,7 +2,7 @@
 
 ## 🔴🔴 HIGHEST PRIORITY: Lua Spec Compliance — Fix All Behavioral Divergences (§8.38)
 
-**Status**: 🚧 **IN PROGRESS** — Systematic identification and fixing of all Lua spec violations.
+**Status**: 🚧 **IN PROGRESS** — Most critical issues from Lua 5.4 comparison now resolved.
 
 **Core Principle**:
 NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches the official Lua reference implementation as closely as possible. When fixture comparisons reveal behavioral differences:
@@ -12,51 +12,21 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 3. **ADD REGRESSION TESTS** with standalone `.lua` fixtures runnable against real Lua
 4. **NEVER adjust tests to accommodate bugs** — fix the runtime instead
 
-### ✅ RECENTLY FIXED PRODUCTION BUGS (2025-12-09)
+### 📋 NEXT STEPS (Priority Order)
 
-| Fixture | Issue | Fix | Verified |
-|---------|-------|-----|----------|
-| `BandAcceptsIntegralFloatLua52.lua` | Was timing out/hanging | Already fixed in previous work (see PLAN.md history) | ✅ `bit32.band(5.0, 3.0)` returns `1` correctly |
-| `MinintegerDividedByNegativeOneThrowsOverflow.lua` | Threw `OverflowException` instead of wrapping | Added special case in `LuaNumber.FloorDivide` for `mininteger // -1` | ✅ Now wraps to `mininteger` like Lua |
-| `IntegerDivisionMinintegerByNegativeOneThrows.lua` | Same as above | Same fix | ✅ Tests renamed to `*Wraps` and updated |
+1. **Verify `utf8.offset` bounds handling** — Position 0 check exists but may need additional edge case testing
+2. **Investigate `FloorResultCanBeUsedInStringFormat.lua`** — `string.format('%d', math.floor(math.maxinteger + 0.5))` should throw, not wrap
+3. **Run full Lua 5.4 comparison** to identify any remaining mismatches
+4. **Add version-split test fixtures** for `debug.upvalueid` behavior differences
 
-**Fix Details (mininteger // -1)**:
-- **Root Cause**: C# throws `OverflowException` when dividing `long.MinValue` by `-1` because the result would overflow `long.MaxValue`
-- **Lua Behavior**: Returns `mininteger` (two's complement wrapping)
-- **Fix Location**: `LuaNumber.FloorDivide()` in `src/runtime/.../DataTypes/LuaNumber.cs`
-- **Fix**: Added early detection `if (a._integer == long.MinValue && b._integer == -1) return FromInteger(long.MinValue);`
+### 🟡 REMAINING ISSUES
 
-### 🔴 PRODUCTION BUGS TO FIX (NovaSharp diverges from Lua spec)
-
-### 🔴 NEXT BUG TO FIX: `string.format('%d', x)` integer representation error
-
-| Priority | Fixture | NovaSharp Behavior | Expected (Lua) Behavior | Fix Location |
-|----------|---------|-------------------|------------------------|--------------|
-| 🔴 HIGH | `FloorResultCanBeUsedInStringFormat.lua` | Wraps to `-9223372036854775808` | Throws "number has no integer representation" | `StringModule.cs` |
-
-**Issue**: `string.format('%d', math.floor(math.maxinteger + 0.5))` should throw in Lua 5.3+ when the float value exceeds the representable integer range, but NovaSharp currently wraps.
-
-**Investigation needed for**:
-| Priority | Fixture | NovaSharp Behavior | Expected (Lua) Behavior | Fix Location |
-|----------|---------|-------------------|------------------------|--------------|
-| 🟡 MED | `FormatDecimalWithFloatFallsBackToConversion.lua` | ? | ? | Needs investigation |
-| 🟡 MED | `UpvalueIdReturnsUserDataHandles.lua` | ? | ? | Needs investigation |
-| 🟡 MED | `UpvalueJoinSharesState.lua` | ? | ? | Needs investigation |
-
-### Additional Tests Needed (For Previously Fixed Items)
-
-**`loadfile()` error handling**:
-- [ ] `LoadFileReturnsNilAndErrorForNonexistentFile.lua`
-- [ ] `LoadFileReturnsNilAndErrorForPermissionDenied.lua`
-- [ ] `LoadFileReturnsNilAndErrorForDirectoryPath.lua`
-- [ ] `LoadFileReturnsNilAndErrorForInvalidPath.lua`
-
-**`debug.upvalueid()` validation**:
-- [ ] `UpvalueIdThrowsForZeroIndex.lua`
-- [ ] `UpvalueIdThrowsForNegativeIndex.lua`
-- [ ] `UpvalueIdThrowsForIndexBeyondUpvalueCount.lua`
-- [ ] `UpvalueIdThrowsForClrFunction.lua`
-- [ ] `UpvalueIdReturnsValidIdForValidUpvalue.lua`
+| Priority | Issue | Description | Status |
+|----------|-------|-------------|--------|
+| 🟡 MED | `utf8.offset` bounds | Verify position bounds validation is complete | Needs verification |
+| 🔴 HIGH | `string.format('%d')` overflow | Should throw for floats exceeding integer range | Not started |
+| 🟡 MED | `UpvalueIdReturnsUserDataHandles.lua` | Needs investigation | Not started |
+| 🟡 MED | `UpvalueJoinSharesState.lua` | Needs investigation | Not started |
 
 ### Systematic Compliance Verification Process
 
@@ -821,9 +791,9 @@ See **Section 8.24** for the complete implementation plan.
 
 ---
 
-## Repository Snapshot (Updated 2025-12-09)
+## Repository Snapshot (Updated 2025-12-10)
 - **Build**: Zero warnings with `<TreatWarningsAsErrors>true` enforced.
-- **Tests**: **4,420** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
+- **Tests**: **4,523** interpreter tests pass via TUnit (Microsoft.Testing.Platform).
 - **Coverage**: ~87.7% line / ~86.7% branch (per latest coverage run).
 - **Coverage gating**: `COVERAGE_GATING_MODE=enforce` enabled with 90% thresholds.
 - **Audits**: `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` are green.
@@ -1111,14 +1081,31 @@ These documents contain comprehensive details on:
 - [ ] Add tests for invalid `__gc` values
 - [ ] Document garbage collection metamethod requirements
 
-#### 8.15 utf8 Library Strictness (Lua 5.4)
+#### 8.15 utf8 Library Differences (Lua 5.3 vs 5.4)
 
-**Breaking Change in 5.4**: The `utf8` library rejects UTF-16 surrogates by default (accepts them with `lax` mode).
+**Surrogate Code Points (0xD800-0xDFFF)**:
+- **Lua 5.3**: ✅ ACCEPTS surrogates (encodes them without error)
+- **Lua 5.4**: ✅ ACCEPTS surrogates (same behavior)
+- **Lua 5.4 `lax` mode**: For *decoding* invalid UTF-8 sequences, not for surrogates in `utf8.char`
 
-**Tasks**:
-- [ ] Verify `utf8.*` functions handle surrogates correctly per version
-- [ ] Add tests for surrogate handling with and without `lax` mode
-- [ ] Document utf8 library differences
+**Maximum Code Point Value**:
+- **Lua 5.3**: 0 to 0x10FFFF (Unicode range)
+- **Lua 5.4**: 0 to 0x7FFFFFFF (extended UTF-8 range, uses 5-6 byte sequences)
+
+**Boundary Validation** (SAME for 5.3 and 5.4):
+- `utf8.codepoint(s, i, j)`: Throws "out of bounds" / "out of range" for invalid i or j
+- `utf8.offset(s, n, i)`: Throws "position out of bounds" for position 0 or beyond string bounds
+
+**NovaSharp Current Status**:
+- [x] Extended range support added for Lua 5.4 (`EncodeExtendedUtf8`)
+- [x] Surrogate acceptance in both 5.3 and 5.4 modes (fixed 2025-12-10)
+- [x] `utf8.codepoint` bounds validation (fixed 2025-12-10)
+- [ ] `lax` mode not yet implemented (affects decoding, not `utf8.char`)
+
+**Remaining Tasks**:
+- [ ] Verify `utf8.offset` bounds handling is complete
+- [ ] Implement `lax` mode for decoding functions (`utf8.codes`, `utf8.codepoint`, `utf8.len`)
+- [ ] Document utf8 library version differences
 
 #### 8.16 collectgarbage Options (Lua 5.4)
 
@@ -1436,16 +1423,16 @@ Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`.
 
 | Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
 |----------|-----|-----|-----|-----|------------------|-------|
-| `utf8.char(...)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
+| `utf8.char(...)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | Surrogates accepted in both |
 | `utf8.codes(s [,lax])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | 🔲 Verify | `lax` mode in 5.4 |
-| `utf8.codepoint(s [,i [,j [,lax]]])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | 🔲 Verify | `lax` mode in 5.4 |
+| `utf8.codepoint(s [,i [,j [,lax]]])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | ✅ Available | Bounds validation fixed |
 | `utf8.len(s [,i [,j [,lax]]])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | 🔲 Verify | `lax` mode in 5.4 |
-| `utf8.offset(s, n [,i])` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
-| Surrogate rejection | ❌ N/A | ❌ N/A | By default | By default | 🔲 Verify | 5.4 `lax` accepts |
+| `utf8.offset(s, n [,i])` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | Position 0 check exists |
+| Max code point | ❌ N/A | ❌ N/A | 0x10FFFF | 0x7FFFFFFF | ✅ Available | Extended range in 5.4 |
 
 **Tasks**:
 - [ ] Implement `lax` mode parameter for UTF-8 functions in Lua 5.4
-- [ ] Verify surrogate handling per version
+- [ ] Verify `utf8.offset` bounds handling is complete
 
 ### 9.9 Debug Module Version Parity
 

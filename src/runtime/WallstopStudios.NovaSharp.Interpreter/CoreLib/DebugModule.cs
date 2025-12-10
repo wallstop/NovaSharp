@@ -416,9 +416,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 (indexNum.IsInteger ? (int)indexNum.AsInteger : (int)Math.Floor(indexNum.AsFloat))
                 - 1;
 
+            // Version-conditional behavior:
+            // - Lua 5.4+: Return nil for invalid indices, CLR functions, or null slots
+            // - Lua 5.3: Throw "bad argument #2 to 'upvalueid' (invalid upvalue index)"
+            Compatibility.LuaCompatibilityVersion resolvedVersion =
+                Compatibility.LuaVersionDefaults.Resolve(
+                    executionContext.Script.CompatibilityVersion
+                );
+            bool useLua54Behavior = resolvedVersion >= Compatibility.LuaCompatibilityVersion.Lua54;
+
             if (args[0].Type == DataType.ClrFunction)
             {
-                // CLR functions have no accessible upvalues - error per Lua spec
+                // CLR functions have no accessible upvalues
+                if (useLua54Behavior)
+                {
+                    return DynValue.Nil;
+                }
                 throw new ScriptRuntimeException(
                     "bad argument #2 to 'upvalueid' (invalid upvalue index)"
                 );
@@ -430,7 +443,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (index < 0 || index >= closure.Count)
             {
-                // Invalid index - error per Lua spec
+                // Invalid index
+                if (useLua54Behavior)
+                {
+                    return DynValue.Nil;
+                }
                 throw new ScriptRuntimeException(
                     "bad argument #2 to 'upvalueid' (invalid upvalue index)"
                 );
@@ -441,6 +458,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (slot == null)
             {
                 // Null slot is also invalid
+                if (useLua54Behavior)
+                {
+                    return DynValue.Nil;
+                }
                 throw new ScriptRuntimeException(
                     "bad argument #2 to 'upvalueid' (invalid upvalue index)"
                 );

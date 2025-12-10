@@ -214,40 +214,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueIdThrowsForClrFunction()
+        public async Task UpvalueIdReturnsNilForClrFunction()
         {
-            // Per Lua spec, debug.upvalueid throws error for CLR functions (no accessible upvalues)
+            // Per Lua 5.4 spec, debug.upvalueid returns nil for CLR functions (no accessible upvalues)
             Script script = new(CoreModules.PresetComplete);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString("return debug.upvalueid(print, 1)")
-            );
+            DynValue result = script.DoString("return debug.upvalueid(print, 1)");
 
-            await Assert
-                .That(exception.Message)
-                .Contains("invalid upvalue index")
-                .ConfigureAwait(false);
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueIdThrowsForInvalidIndex()
+        public async Task UpvalueIdReturnsNilForInvalidIndex()
         {
-            // Per Lua spec, debug.upvalueid throws error for invalid indices
+            // Per Lua 5.4 spec, debug.upvalueid returns nil for invalid indices
             Script script = new(CoreModules.PresetComplete);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString(
-                    @"
+            DynValue result = script.DoString(
+                @"
                 local function f() end
                 return debug.upvalueid(f, 999)
                 "
-                )
             );
 
-            await Assert
-                .That(exception.Message)
-                .Contains("invalid upvalue index")
-                .ConfigureAwait(false);
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1234,27 +1224,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueIdThrowsForOutOfRangeIndex()
+        public async Task UpvalueIdReturnsNilForOutOfRangeIndex()
         {
-            // Per Lua spec, debug.upvalueid throws error when index is out of range
+            // Per Lua 5.4 spec, debug.upvalueid returns nil when index is out of range
             Script script = new(CoreModules.PresetComplete);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString(
-                    @"
+            DynValue result = script.DoString(
+                @"
                 local function f()
                     -- Has _ENV as upvalue but nothing else
                 end
                 return debug.upvalueid(f, 999)
                 "
-                )
             );
 
-            // Index 999 is far beyond the available upvalues -> error
-            await Assert
-                .That(exception.Message)
-                .Contains("invalid upvalue index")
-                .ConfigureAwait(false);
+            // Index 999 is far beyond the available upvalues -> nil
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
