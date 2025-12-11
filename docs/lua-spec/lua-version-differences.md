@@ -4,70 +4,71 @@
 > **Last Updated**: 2025-12-11
 > **Sources**: Official Lua Reference Manuals for each version
 
----
+______________________________________________________________________
 
 ## Table of Contents
 
 1. [Summary Matrix](#1-summary-matrix)
-2. [math.random and math.randomseed](#2-mathrandom-and-mathrandomseed)
-3. [Integer vs Float Types](#3-integer-vs-float-types)
-4. [String Library Changes](#4-string-library-changes)
-5. [Table Library Changes](#5-table-library-changes)
-6. [Bitwise Operations](#6-bitwise-operations)
-7. [Coroutine Library Changes](#7-coroutine-library-changes)
-8. [Basic Functions](#8-basic-functions)
-9. [Module System Changes](#9-module-system-changes)
-10. [Metamethod Changes](#10-metamethod-changes)
-11. [String-to-Number Coercion](#11-string-to-number-coercion)
-12. [Implementation Priority](#12-implementation-priority)
+1. [math.random and math.randomseed](#2-mathrandom-and-mathrandomseed)
+1. [Integer vs Float Types](#3-integer-vs-float-types)
+1. [String Library Changes](#4-string-library-changes)
+1. [Table Library Changes](#5-table-library-changes)
+1. [Bitwise Operations](#6-bitwise-operations)
+1. [Coroutine Library Changes](#7-coroutine-library-changes)
+1. [Basic Functions](#8-basic-functions)
+1. [Module System Changes](#9-module-system-changes)
+1. [Metamethod Changes](#10-metamethod-changes)
+1. [String-to-Number Coercion](#11-string-to-number-coercion)
+1. [Implementation Priority](#12-implementation-priority)
 
----
+______________________________________________________________________
 
 ## 1. Summary Matrix
 
-| Feature | 5.1 | 5.2 | 5.3 | 5.4 |
-|---------|-----|-----|-----|-----|
-| **Number Type** | Float only | Float only | Integer + Float | Integer + Float |
-| **Bitwise Ops** | ❌ None | `bit32` library | Native operators | Native operators |
-| **Floor Division** | ❌ None | ❌ None | `//` operator | `//` operator |
-| **Environment** | `setfenv`/`getfenv` | `_ENV` mechanism | `_ENV` mechanism | `_ENV` mechanism |
-| **Goto/Labels** | ❌ None | ✅ `::label::`, `goto` | ✅ `::label::`, `goto` | ✅ `::label::`, `goto` |
-| **RNG Algorithm** | Platform C library | Platform C library | Platform C library | xoshiro256** |
-| **Coroutine Yield** | Not from pcall | ✅ Yieldable pcall | ✅ Yieldable pcall | ✅ Yieldable pcall |
-| **To-be-closed** | ❌ None | ❌ None | ❌ None | ✅ `local <close>` |
-| **Const variables** | ❌ None | ❌ None | ❌ None | ✅ `local <const>` |
-| **warn()** | ❌ None | ❌ None | ❌ None | ✅ Available |
-| **UTF-8 Library** | ❌ None | ❌ None | ✅ `utf8.*` | ✅ `utf8.*` |
-| **String Pack/Unpack** | ❌ None | ❌ None | ✅ Available | ✅ Available |
-| **GC Mode** | Incremental | Incremental + Generational | Incremental | Generational (default) |
+| Feature                | 5.1                 | 5.2                        | 5.3                    | 5.4                    |
+| ---------------------- | ------------------- | -------------------------- | ---------------------- | ---------------------- |
+| **Number Type**        | Float only          | Float only                 | Integer + Float        | Integer + Float        |
+| **Bitwise Ops**        | ❌ None             | `bit32` library            | Native operators       | Native operators       |
+| **Floor Division**     | ❌ None             | ❌ None                    | `//` operator          | `//` operator          |
+| **Environment**        | `setfenv`/`getfenv` | `_ENV` mechanism           | `_ENV` mechanism       | `_ENV` mechanism       |
+| **Goto/Labels**        | ❌ None             | ✅ `::label::`, `goto`     | ✅ `::label::`, `goto` | ✅ `::label::`, `goto` |
+| **RNG Algorithm**      | Platform C library  | Platform C library         | Platform C library     | xoshiro256\*\*         |
+| **Coroutine Yield**    | Not from pcall      | ✅ Yieldable pcall         | ✅ Yieldable pcall     | ✅ Yieldable pcall     |
+| **To-be-closed**       | ❌ None             | ❌ None                    | ❌ None                | ✅ `local <close>`     |
+| **Const variables**    | ❌ None             | ❌ None                    | ❌ None                | ✅ `local <const>`     |
+| **warn()**             | ❌ None             | ❌ None                    | ❌ None                | ✅ Available           |
+| **UTF-8 Library**      | ❌ None             | ❌ None                    | ✅ `utf8.*`            | ✅ `utf8.*`            |
+| **String Pack/Unpack** | ❌ None             | ❌ None                    | ✅ Available           | ✅ Available           |
+| **GC Mode**            | Incremental         | Incremental + Generational | Incremental            | Generational (default) |
 
----
+______________________________________________________________________
 
 ## 2. math.random and math.randomseed
 
 ### 2.1 math.random() Signatures
 
-| Version | No args | Single arg `n` | Two args `m, n` | `math.random(0)` |
-|---------|---------|----------------|-----------------|------------------|
-| 5.1 | `[0,1)` float | `[1,n]` integer | `[m,n]` integer | ❌ N/A |
-| 5.2 | `[0,1)` float | `[1,n]` integer | `[m,n]` integer | ❌ N/A |
-| 5.3 | `[0,1)` float | `[1,n]` integer | `[m,n]` integer | ❌ N/A |
-| 5.4 | `[0,1)` float | `[1,n]` integer | `[m,n]` integer | ✅ All 64 bits random |
+| Version | No args       | Single arg `n`  | Two args `m, n` | `math.random(0)`      |
+| ------- | ------------- | --------------- | --------------- | --------------------- |
+| 5.1     | `[0,1)` float | `[1,n]` integer | `[m,n]` integer | ❌ N/A                |
+| 5.2     | `[0,1)` float | `[1,n]` integer | `[m,n]` integer | ❌ N/A                |
+| 5.3     | `[0,1)` float | `[1,n]` integer | `[m,n]` integer | ❌ N/A                |
+| 5.4     | `[0,1)` float | `[1,n]` integer | `[m,n]` integer | ✅ All 64 bits random |
 
 ### 2.2 math.randomseed() Changes
 
-| Version | Signature | Return Value | Notes |
-|---------|-----------|--------------|-------|
-| 5.1 | `math.randomseed(x)` | None | Uses platform RNG |
-| 5.2 | `math.randomseed(x)` | None | Uses platform RNG |
-| 5.3 | `math.randomseed(x)` | None | Uses platform RNG |
-| 5.4 | `math.randomseed([x [, y]])` | Returns `x, y` | 128-bit seed, xoshiro256** |
+| Version | Signature                    | Return Value   | Notes                        |
+| ------- | ---------------------------- | -------------- | ---------------------------- |
+| 5.1     | `math.randomseed(x)`         | None           | Uses platform RNG            |
+| 5.2     | `math.randomseed(x)`         | None           | Uses platform RNG            |
+| 5.3     | `math.randomseed(x)`         | None           | Uses platform RNG            |
+| 5.4     | `math.randomseed([x [, y]])` | Returns `x, y` | 128-bit seed, xoshiro256\*\* |
 
 ### 2.3 RNG Algorithm Differences
 
 **Lua 5.1-5.3**: Uses the C standard library's `rand()` function. The quality and period depend entirely on the platform implementation.
 
-**Lua 5.4**: Uses **xoshiro256**** algorithm:
+**Lua 5.4**: Uses **xoshiro256**\*\* algorithm:
+
 - Better statistical properties
 - 256-bit state (128-bit seed via two integers)
 - Random default seed each run (sequences differ)
@@ -85,21 +86,21 @@ local r = math.random(0)  -- Returns 64-bit random integer
 ### 2.4 Implementation Notes for NovaSharp
 
 - **5.1-5.3**: Can use .NET `Random` class or similar
-- **5.4**: Should implement xoshiro256** for spec compliance
+- **5.4**: Should implement xoshiro256\*\* for spec compliance
 - **Seed handling**: 5.4 requires tracking two seed components
 
----
+______________________________________________________________________
 
 ## 3. Integer vs Float Types
 
 ### 3.1 Type System Changes
 
-| Version | Number Subtypes | `type()` result | `math.type()` |
-|---------|-----------------|-----------------|---------------|
-| 5.1 | Float only (double) | "number" | ❌ N/A |
-| 5.2 | Float only (double) | "number" | ❌ N/A |
-| 5.3 | Integer (64-bit) + Float (double) | "number" | "integer" / "float" |
-| 5.4 | Integer (64-bit) + Float (double) | "number" | "integer" / "float" |
+| Version | Number Subtypes                   | `type()` result | `math.type()`       |
+| ------- | --------------------------------- | --------------- | ------------------- |
+| 5.1     | Float only (double)               | "number"        | ❌ N/A              |
+| 5.2     | Float only (double)               | "number"        | ❌ N/A              |
+| 5.3     | Integer (64-bit) + Float (double) | "number"        | "integer" / "float" |
+| 5.4     | Integer (64-bit) + Float (double) | "number"        | "integer" / "float" |
 
 ### 3.2 Integer-Specific Constants (5.3+)
 
@@ -110,17 +111,17 @@ math.mininteger  -- -9223372036854775808 (-2^63)
 
 ### 3.3 Arithmetic Operation Results (5.3+)
 
-| Operation | Operands | Result Type |
-|-----------|----------|-------------|
-| `+`, `-`, `*` | Both integers | Integer |
-| `+`, `-`, `*` | Any float | Float |
-| `/` | Any | Always float |
-| `//` | Both integers | Integer |
-| `//` | Any float | Float |
-| `%` | Both integers | Integer |
-| `%` | Any float | Float |
-| `^` | Any | Always float |
-| Bitwise ops | Any | Integer |
+| Operation     | Operands      | Result Type  |
+| ------------- | ------------- | ------------ |
+| `+`, `-`, `*` | Both integers | Integer      |
+| `+`, `-`, `*` | Any float     | Float        |
+| `/`           | Any           | Always float |
+| `//`          | Both integers | Integer      |
+| `//`          | Any float     | Float        |
+| `%`           | Both integers | Integer      |
+| `%`           | Any float     | Float        |
+| `^`           | Any           | Always float |
+| Bitwise ops   | Any           | Integer      |
 
 ### 3.4 Integer Overflow Behavior (5.3+)
 
@@ -131,9 +132,9 @@ math.mininteger - 1 == math.maxinteger  -- true (wraps)
 
 ### 3.5 Floor/Ceil Return Types (5.3+)
 
-| Version | `math.floor(3.5)` | `math.ceil(3.5)` |
-|---------|-------------------|------------------|
-| 5.1-5.2 | `3.0` (float) | `4.0` (float) |
+| Version | `math.floor(3.5)`      | `math.ceil(3.5)`       |
+| ------- | ---------------------- | ---------------------- |
+| 5.1-5.2 | `3.0` (float)          | `4.0` (float)          |
 | 5.3-5.4 | `3` (integer, if fits) | `4` (integer, if fits) |
 
 ### 3.6 Conversion Functions (5.3+)
@@ -162,16 +163,16 @@ tostring(42.0)  --> "42"
 tostring(42.0)  --> "42.0"
 ```
 
----
+______________________________________________________________________
 
 ## 4. String Library Changes
 
 ### 4.1 string.format %q Specifier
 
-| Version | Input Types | Behavior |
-|---------|-------------|----------|
-| 5.1-5.3 | Strings only | Quotes string with escape sequences |
-| 5.4 | Strings, booleans, nil, numbers | Handles all types |
+| Version | Input Types                     | Behavior                            |
+| ------- | ------------------------------- | ----------------------------------- |
+| 5.1-5.3 | Strings only                    | Quotes string with escape sequences |
+| 5.4     | Strings, booleans, nil, numbers | Handles all types                   |
 
 ```lua
 -- 5.4 only
@@ -189,10 +190,10 @@ string.format("%p", {})     --> "0x..." (pointer address)
 
 ### 4.3 string.gmatch init Parameter
 
-| Version | Signature | Notes |
-|---------|-----------|-------|
-| 5.1-5.3 | `string.gmatch(s, pattern)` | No init parameter |
-| 5.4 | `string.gmatch(s, pattern [, init])` | Optional start position |
+| Version | Signature                            | Notes                   |
+| ------- | ------------------------------------ | ----------------------- |
+| 5.1-5.3 | `string.gmatch(s, pattern)`          | No init parameter       |
+| 5.4     | `string.gmatch(s, pattern [, init])` | Optional start position |
 
 ### 4.4 string.dump strip Parameter (5.3+)
 
@@ -216,11 +217,11 @@ string.rep("ab", 3, "-")  --> "ab-ab-ab"
 
 ### 4.6 Escape Sequences
 
-| Escape | 5.1 | 5.2+ | Description |
-|--------|-----|------|-------------|
-| `\xHH` | ❌ | ✅ | Hexadecimal byte |
-| `\z` | ❌ | ✅ | Skip whitespace |
-| `\u{XXXX}` | ❌ | ❌/✅ 5.3+ | Unicode codepoint |
+| Escape     | 5.1 | 5.2+       | Description       |
+| ---------- | --- | ---------- | ----------------- |
+| `\xHH`     | ❌  | ✅         | Hexadecimal byte  |
+| `\z`       | ❌  | ✅         | Skip whitespace   |
+| `\u{XXXX}` | ❌  | ❌/✅ 5.3+ | Unicode codepoint |
 
 ### 4.7 String Pack/Unpack (5.3+)
 
@@ -231,23 +232,23 @@ string.unpack(fmt, s [, pos])      -- Unpack from binary
 string.packsize(fmt)               -- Get format size
 ```
 
----
+______________________________________________________________________
 
 ## 5. Table Library Changes
 
 ### 5.1 Function Availability
 
-| Function | 5.1 | 5.2 | 5.3 | 5.4 |
-|----------|-----|-----|-----|-----|
-| `table.concat` | ✅ | ✅ | ✅ | ✅ |
-| `table.insert` | ✅ | ✅ | ✅ | ✅ |
-| `table.remove` | ✅ | ✅ | ✅ | ✅ |
-| `table.sort` | ✅ | ✅ | ✅ | ✅ |
-| `table.maxn` | ✅ | ❌ Removed | ❌ | ❌ |
-| `unpack` (global) | ✅ | ❌ Moved | ❌ | ❌ |
-| `table.unpack` | ❌ | ✅ | ✅ | ✅ |
-| `table.pack` | ❌ | ✅ | ✅ | ✅ |
-| `table.move` | ❌ | ❌ | ✅ | ✅ |
+| Function          | 5.1 | 5.2        | 5.3 | 5.4 |
+| ----------------- | --- | ---------- | --- | --- |
+| `table.concat`    | ✅  | ✅         | ✅  | ✅  |
+| `table.insert`    | ✅  | ✅         | ✅  | ✅  |
+| `table.remove`    | ✅  | ✅         | ✅  | ✅  |
+| `table.sort`      | ✅  | ✅         | ✅  | ✅  |
+| `table.maxn`      | ✅  | ❌ Removed | ❌  | ❌  |
+| `unpack` (global) | ✅  | ❌ Moved   | ❌  | ❌  |
+| `table.unpack`    | ❌  | ✅         | ✅  | ✅  |
+| `table.pack`      | ❌  | ✅         | ✅  | ✅  |
+| `table.move`      | ❌  | ❌         | ✅  | ✅  |
 
 ### 5.2 table.pack (5.2+)
 
@@ -289,16 +290,16 @@ In Lua 5.3+, table library functions respect metamethods:
 -- 5.3+: Uses __index/__newindex if present
 ```
 
----
+______________________________________________________________________
 
 ## 6. Bitwise Operations
 
 ### 6.1 Availability Matrix
 
-| Feature | 5.1 | 5.2 | 5.3 | 5.4 |
-|---------|-----|-----|-----|-----|
-| `bit32` library | ❌ | ✅ | ❌ Removed | ❌ |
-| Native operators | ❌ | ❌ | ✅ | ✅ |
+| Feature          | 5.1 | 5.2 | 5.3        | 5.4 |
+| ---------------- | --- | --- | ---------- | --- |
+| `bit32` library  | ❌  | ✅  | ❌ Removed | ❌  |
+| Native operators | ❌  | ❌  | ✅         | ✅  |
 
 ### 6.2 bit32 Library (5.2 Only)
 
@@ -321,14 +322,14 @@ bit32.replace(n, v, f, w) -- Replace bits
 
 ### 6.3 Native Operators (5.3+)
 
-| Operator | Description | Metamethod |
-|----------|-------------|------------|
-| `&` | Bitwise AND | `__band` |
-| `\|` | Bitwise OR | `__bor` |
-| `~` (binary) | Bitwise XOR | `__bxor` |
-| `~` (unary) | Bitwise NOT | `__bnot` |
-| `<<` | Left shift | `__shl` |
-| `>>` | Right shift | `__shr` |
+| Operator     | Description | Metamethod |
+| ------------ | ----------- | ---------- |
+| `&`          | Bitwise AND | `__band`   |
+| `\|`         | Bitwise OR  | `__bor`    |
+| `~` (binary) | Bitwise XOR | `__bxor`   |
+| `~` (unary)  | Bitwise NOT | `__bnot`   |
+| `<<`         | Left shift  | `__shl`    |
+| `>>`         | Right shift | `__shr`    |
 
 **Important**: Native operators work on **64-bit integers**.
 
@@ -346,22 +347,22 @@ bit32.lshift(1, 32)  --> 0
 1 >> -1  --> 0
 ```
 
----
+______________________________________________________________________
 
 ## 7. Coroutine Library Changes
 
 ### 7.1 Function Availability
 
-| Function | 5.1 | 5.2 | 5.3 | 5.4 |
-|----------|-----|-----|-----|-----|
-| `coroutine.create` | ✅ | ✅ | ✅ | ✅ |
-| `coroutine.resume` | ✅ | ✅ | ✅ | ✅ |
-| `coroutine.yield` | ✅ | ✅ | ✅ | ✅ |
-| `coroutine.status` | ✅ | ✅ | ✅ | ✅ |
-| `coroutine.wrap` | ✅ | ✅ | ✅ | ✅ |
-| `coroutine.running` | ✅ | ✅ | ✅ | ✅ |
-| `coroutine.isyieldable` | ❌ | ❌ | ✅ | ✅ |
-| `coroutine.close` | ❌ | ❌ | ❌ | ✅ |
+| Function                | 5.1 | 5.2 | 5.3 | 5.4 |
+| ----------------------- | --- | --- | --- | --- |
+| `coroutine.create`      | ✅  | ✅  | ✅  | ✅  |
+| `coroutine.resume`      | ✅  | ✅  | ✅  | ✅  |
+| `coroutine.yield`       | ✅  | ✅  | ✅  | ✅  |
+| `coroutine.status`      | ✅  | ✅  | ✅  | ✅  |
+| `coroutine.wrap`        | ✅  | ✅  | ✅  | ✅  |
+| `coroutine.running`     | ✅  | ✅  | ✅  | ✅  |
+| `coroutine.isyieldable` | ❌  | ❌  | ✅  | ✅  |
+| `coroutine.close`       | ❌  | ❌  | ❌  | ✅  |
 
 ### 7.2 coroutine.running() Changes
 
@@ -398,25 +399,25 @@ local ok, err = coroutine.close(co)  -- Closes to-be-closed variables
 ### 7.5 Yieldable pcall/xpcall (5.2+)
 
 | Version | Can yield from pcall | Can yield from metamethod |
-|---------|---------------------|---------------------------|
-| 5.1 | ❌ No | ❌ No |
-| 5.2+ | ✅ Yes | ✅ Yes |
+| ------- | -------------------- | ------------------------- |
+| 5.1     | ❌ No                | ❌ No                     |
+| 5.2+    | ✅ Yes               | ✅ Yes                    |
 
----
+______________________________________________________________________
 
 ## 8. Basic Functions
 
 ### 8.1 Function Availability
 
-| Function | 5.1 | 5.2 | 5.3 | 5.4 |
-|----------|-----|-----|-----|-----|
-| `setfenv` | ✅ | ❌ Removed | ❌ | ❌ |
-| `getfenv` | ✅ | ❌ Removed | ❌ | ❌ |
-| `loadstring` | ✅ | ❌ Use load() | ❌ | ❌ |
-| `module` | ✅ | ❌ Deprecated | ❌ | ❌ |
-| `unpack` | ✅ | ❌ table.unpack | ❌ | ❌ |
-| `rawlen` | ❌ | ✅ | ✅ | ✅ |
-| `warn` | ❌ | ❌ | ❌ | ✅ |
+| Function     | 5.1 | 5.2             | 5.3 | 5.4 |
+| ------------ | --- | --------------- | --- | --- |
+| `setfenv`    | ✅  | ❌ Removed      | ❌  | ❌  |
+| `getfenv`    | ✅  | ❌ Removed      | ❌  | ❌  |
+| `loadstring` | ✅  | ❌ Use load()   | ❌  | ❌  |
+| `module`     | ✅  | ❌ Deprecated   | ❌  | ❌  |
+| `unpack`     | ✅  | ❌ table.unpack | ❌  | ❌  |
+| `rawlen`     | ❌  | ✅              | ✅  | ✅  |
+| `warn`       | ❌  | ❌              | ❌  | ✅  |
 
 ### 8.2 warn() Function (5.4 Only)
 
@@ -431,22 +432,23 @@ warn("@on")    -- Enable warnings
 
 ### 8.3 load() Function Changes
 
-| Version | Signature | Mode parameter | Env parameter |
-|---------|-----------|----------------|---------------|
-| 5.1 | `load(func [, chunkname])` | ❌ | ❌ |
-| 5.2+ | `load(chunk [, chunkname [, mode [, env]]])` | ✅ | ✅ |
+| Version | Signature                                    | Mode parameter | Env parameter |
+| ------- | -------------------------------------------- | -------------- | ------------- |
+| 5.1     | `load(func [, chunkname])`                   | ❌             | ❌            |
+| 5.2+    | `load(chunk [, chunkname [, mode [, env]]])` | ✅             | ✅            |
 
 **Mode parameter** (5.2+):
+
 - `"b"` - Binary chunks only
 - `"t"` - Text chunks only
 - `"bt"` - Both (default)
 
 ### 8.4 loadfile() Changes
 
-| Version | Signature |
-|---------|-----------|
-| 5.1 | `loadfile([filename])` |
-| 5.2+ | `loadfile([filename [, mode [, env]]])` |
+| Version | Signature                               |
+| ------- | --------------------------------------- |
+| 5.1     | `loadfile([filename])`                  |
+| 5.2+    | `loadfile([filename [, mode [, env]]])` |
 
 ### 8.5 xpcall() Changes
 
@@ -470,24 +472,24 @@ tonumber("10.5")    --> 10.5 (float)
 tonumber("FF", 16)  --> 255 (integer)
 ```
 
----
+______________________________________________________________________
 
 ## 9. Module System Changes
 
 ### 9.1 package.loaders vs package.searchers
 
-| Version | Table Name |
-|---------|------------|
-| 5.1 | `package.loaders` |
-| 5.2+ | `package.searchers` |
+| Version | Table Name          |
+| ------- | ------------------- |
+| 5.1     | `package.loaders`   |
+| 5.2+    | `package.searchers` |
 
 ### 9.2 module() Function
 
-| Version | Status |
-|---------|--------|
-| 5.1 | ✅ Available |
-| 5.2 | ⚠️ Deprecated |
-| 5.3+ | ❌ Removed |
+| Version | Status        |
+| ------- | ------------- |
+| 5.1     | ✅ Available  |
+| 5.2     | ⚠️ Deprecated |
+| 5.3+    | ❌ Removed    |
 
 ### 9.3 Environment Mechanism
 
@@ -512,28 +514,28 @@ function M.foo() end
 return M
 ```
 
----
+______________________________________________________________________
 
 ## 10. Metamethod Changes
 
 ### 10.1 Metamethod Availability
 
-| Metamethod | 5.1 | 5.2 | 5.3 | 5.4 |
-|------------|-----|-----|-----|-----|
-| `__pairs` | ❌ | ✅ | ✅ | ✅ |
-| `__ipairs` | ❌ | ✅ | ⚠️ Deprecated | ❌ Removed |
-| `__len` (tables) | ❌ | ✅ | ✅ | ✅ |
-| `__gc` (tables) | ❌ | ✅ | ✅ | ✅ |
-| `__close` | ❌ | ❌ | ❌ | ✅ |
-| `__idiv` | ❌ | ❌ | ✅ | ✅ |
-| `__band` | ❌ | ❌ | ✅ | ✅ |
-| `__bor` | ❌ | ❌ | ✅ | ✅ |
-| `__bxor` | ❌ | ❌ | ✅ | ✅ |
-| `__bnot` | ❌ | ❌ | ✅ | ✅ |
-| `__shl` | ❌ | ❌ | ✅ | ✅ |
-| `__shr` | ❌ | ❌ | ✅ | ✅ |
+| Metamethod       | 5.1 | 5.2 | 5.3           | 5.4        |
+| ---------------- | --- | --- | ------------- | ---------- |
+| `__pairs`        | ❌  | ✅  | ✅            | ✅         |
+| `__ipairs`       | ❌  | ✅  | ⚠️ Deprecated | ❌ Removed |
+| `__len` (tables) | ❌  | ✅  | ✅            | ✅         |
+| `__gc` (tables)  | ❌  | ✅  | ✅            | ✅         |
+| `__close`        | ❌  | ❌  | ❌            | ✅         |
+| `__idiv`         | ❌  | ❌  | ✅            | ✅         |
+| `__band`         | ❌  | ❌  | ✅            | ✅         |
+| `__bor`          | ❌  | ❌  | ✅            | ✅         |
+| `__bxor`         | ❌  | ❌  | ✅            | ✅         |
+| `__bnot`         | ❌  | ❌  | ✅            | ✅         |
+| `__shl`          | ❌  | ❌  | ✅            | ✅         |
+| `__shr`          | ❌  | ❌  | ✅            | ✅         |
 
-### 10.2 __ipairs Lifecycle
+### 10.2 \_\_ipairs Lifecycle
 
 ```lua
 -- 5.2: __ipairs introduced for custom ipairs iteration
@@ -541,21 +543,21 @@ return M
 -- 5.4: __ipairs removed entirely
 ```
 
-### 10.3 __len for Tables
+### 10.3 \_\_len for Tables
 
 ```lua
 -- 5.1: # operator IGNORES __len for tables
 -- 5.2+: # operator USES __len for tables
 ```
 
-### 10.4 __gc for Tables
+### 10.4 \_\_gc for Tables
 
 ```lua
 -- 5.1: __gc only works for userdata
 -- 5.2+: __gc works for tables too
 ```
 
-### 10.5 __close Metamethod (5.4)
+### 10.5 \_\_close Metamethod (5.4)
 
 ```lua
 local mt = {
@@ -568,25 +570,25 @@ local mt = {
 local <close> resource = setmetatable({}, mt)
 ```
 
-### 10.6 __lt No Longer Emulates __le (5.4)
+### 10.6 \_\_lt No Longer Emulates \_\_le (5.4)
 
 ```lua
 -- 5.1-5.3: a <= b can fall back to not (b < a) if __le missing
 -- 5.4: __le must be explicitly defined
 ```
 
----
+______________________________________________________________________
 
 ## 11. String-to-Number Coercion
 
 ### 11.1 Coercion Changes
 
-| Context | 5.1-5.3 | 5.4 |
-|---------|---------|-----|
-| Arithmetic (`+`, `-`, `*`, `/`) | ✅ Auto-coerce | ✅ Via string metamethods |
-| Bitwise operations | N/A (5.2: bit32 converts) | ❌ Error |
-| Comparisons | ❌ | ❌ |
-| Concatenation | Number → String | Number → String |
+| Context                         | 5.1-5.3                   | 5.4                       |
+| ------------------------------- | ------------------------- | ------------------------- |
+| Arithmetic (`+`, `-`, `*`, `/`) | ✅ Auto-coerce            | ✅ Via string metamethods |
+| Bitwise operations              | N/A (5.2: bit32 converts) | ❌ Error                  |
+| Comparisons                     | ❌                        | ❌                        |
+| Concatenation                   | Number → String           | Number → String           |
 
 ### 11.2 Behavioral Example
 
@@ -603,35 +605,35 @@ local <close> resource = setmetatable({}, mt)
 
 In Lua 5.4, string-to-number coercion for arithmetic still works, but it's implemented via the string metatable's metamethods rather than built into the arithmetic operators themselves.
 
----
+______________________________________________________________________
 
 ## 12. Implementation Priority
 
 ### High Priority (Core Behavioral Differences)
 
 1. **Number type system** (5.3+) - Integer vs Float distinction
-2. **Bitwise operations** - bit32 (5.2) vs native operators (5.3+)
-3. **Environment mechanism** - setfenv/getfenv (5.1) vs _ENV (5.2+)
-4. **Basic functions** - warn (5.4), rawlen (5.2+)
-5. **Coroutine.close** (5.4)
+1. **Bitwise operations** - bit32 (5.2) vs native operators (5.3+)
+1. **Environment mechanism** - setfenv/getfenv (5.1) vs \_ENV (5.2+)
+1. **Basic functions** - warn (5.4), rawlen (5.2+)
+1. **Coroutine.close** (5.4)
 
 ### Medium Priority (Library Differences)
 
 6. **table.pack/unpack** - Location and availability
-7. **table.move** (5.3+)
-8. **string.pack/unpack** (5.3+)
-9. **math.randomseed** return value and algorithm (5.4)
-10. **Metamethod support** - __pairs, __ipairs, __close, __gc for tables
+1. **table.move** (5.3+)
+1. **string.pack/unpack** (5.3+)
+1. **math.randomseed** return value and algorithm (5.4)
+1. **Metamethod support** - \_\_pairs, \_\_ipairs, \_\_close, \_\_gc for tables
 
 ### Lower Priority (Edge Cases)
 
 11. **string.format %q** extended types (5.4)
-12. **string.gmatch init** parameter (5.4)
-13. **print() tostring** behavior (5.4)
-14. **__lt emulating __le** removal (5.4)
-15. **UTF-8 library lax parameter** (5.4)
+01. **string.gmatch init** parameter (5.4)
+01. **print() tostring** behavior (5.4)
+01. **\_\_lt emulating \_\_le** removal (5.4)
+01. **UTF-8 library lax parameter** (5.4)
 
----
+______________________________________________________________________
 
 ## Appendix: Quick Reference by Version
 
@@ -678,7 +680,7 @@ In Lua 5.4, string-to-number coercion for arithmetic still works, but it's imple
 - `coroutine.close()`
 - `coroutine.isyieldable` optional argument
 - Generational GC (default)
-- xoshiro256** RNG algorithm
+- xoshiro256\*\* RNG algorithm
 - `math.randomseed` returns seed, takes two args
 - `math.random(0)` for all bits
 - `__ipairs` removed
@@ -689,7 +691,7 @@ In Lua 5.4, string-to-number coercion for arithmetic still works, but it's imple
 - `print` doesn't call tostring
 - `utf8` lax parameter
 
----
+______________________________________________________________________
 
 ## References
 
