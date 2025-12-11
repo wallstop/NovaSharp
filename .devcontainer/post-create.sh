@@ -30,7 +30,7 @@ install_lua_from_package_manager() {
         linux)
             echo "Installing Lua 5.1-5.4 from apt..."
             sudo apt-get update
-            sudo apt-get install -y lua5.1 lua5.2 lua5.3 lua5.4 python3-full build-essential libreadline-dev curl
+            sudo apt-get install -y lua5.1 lua5.2 lua5.3 lua5.4 build-essential libreadline-dev curl
             ;;
         macos)
             echo "Installing Lua 5.1-5.4 from Homebrew..."
@@ -157,6 +157,10 @@ echo "Restoring .NET tools..."
 cd /workspaces/NovaSharp
 dotnet tool restore
 
+# Install Python tooling dependencies
+echo "Installing Python tooling dependencies..."
+pip install --user -r requirements.tooling.txt
+
 # Verify installations
 echo ""
 echo "=== Lua Version Verification ==="
@@ -176,6 +180,11 @@ verify_lua_version "lua5.2" "Lua 5.2"
 verify_lua_version "lua5.3" "Lua 5.3"
 verify_lua_version "lua5.4" "Lua 5.4"
 verify_lua_version "lua5.5" "Lua 5.5"
+
+echo ""
+echo "=== Python Verification ==="
+echo -n "Python: " && python3 --version 2>&1
+echo -n "pip: " && pip --version 2>&1
 
 echo ""
 echo "=== Dev Container Setup Complete ==="

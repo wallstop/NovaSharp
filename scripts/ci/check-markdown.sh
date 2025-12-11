@@ -59,8 +59,8 @@ if ! git rev-parse --verify "$base_ref" >/dev/null 2>&1; then
 fi
 
 mapfile -t md_files < <(
-  git diff --name-only "$base_ref"...HEAD -- '*.md' 2>/dev/null || \
-  git diff --name-only "$base_ref" HEAD -- '*.md'
+  (git diff --name-only "$base_ref"...HEAD -- '*.md' 2>/dev/null || \
+  git diff --name-only "$base_ref" HEAD -- '*.md') | grep -v '^progress/'
 )
 
 if [[ ${#md_files[@]} -eq 0 ]]; then
