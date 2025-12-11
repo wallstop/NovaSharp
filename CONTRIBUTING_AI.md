@@ -489,7 +489,7 @@ python scripts/lint/check-temp-path-usage.py
 
 ## Tool Use
 
-- Prefer ripgrep (`rg`) over grep for all string searching/filtering
+- Prefer ripgrep (`rg`) over `grep` for all string and text searching/filtering (avoid using grep, use rg)
 
 ## Implementation Notes
 
