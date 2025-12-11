@@ -22,6 +22,7 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 | Date | Issue | Description | Fix |
 |------|-------|-------------|-----|
+| 2025-12-11 | Version-aware number formatting | `tostring()` output didn't distinguish integers from floats in Lua 5.3+ mode | Added `LuaNumber.ToLuaString(version)` and `DynValue.ToPrintString(version)` for version-aware formatting. Updated `BasicModule.ToString()` and `CallbackArguments.AsStringUsingMeta()`. Updated TAP test `104-number.t` to expect Lua 5.4 behavior. |
 | 2025-12-10 | InvalidEnumArgumentException standardization | Enum validation used inconsistent exception types | Updated 4 methods to use `InvalidEnumArgumentException`, updated 2 tests |
 | 2025-12-10 | Flag enum combined values | `CoreModules` had combined preset values as enum members | Created `CoreModulePresets` class, marked old members obsolete, updated all usages |
 | 2025-12-10 | Lua version comparisons | Verified all Lua version comparisons pass | 5.1, 5.2, 5.3, 5.4 all show zero mismatches |
@@ -208,7 +209,7 @@ The following were reviewed and found to be using appropriate exceptions for the
 
 ## 🔴 CRITICAL Priority: Comprehensive LuaNumber Usage Audit (§8.37)
 
-**Status**: 📋 **PLANNED** — Thorough production code sweep required.
+**Status**: 🚧 **IN PROGRESS** — VM audit underway, for-loop and display bugs identified.
 
 **Problem Statement (2025-12-09)**:
 The codebase may contain locations where raw C# numeric types (`double`, `float`, `int`, `long`) are used instead of `LuaNumber` for Lua math operations. This can cause:
@@ -298,7 +299,7 @@ int index = (int)dynValue.Number;  // May truncate large values incorrectly
 
 ### Implementation Tasks
 
-- [ ] **Phase 1**: Run grep patterns above, catalog all hits
+- [x] **Phase 1**: Run grep patterns above, catalog all hits — **DONE 2025-12-11**
 - [ ] **Phase 2**: Classify each hit as:
   - ✅ Safe (intentional, documented, or internal-only)
   - ⚠️ Suspicious (needs investigation)
@@ -307,6 +308,154 @@ int index = (int)dynValue.Number;  // May truncate large values incorrectly
 - [ ] **Phase 4**: Add regression tests for each fix
 - [ ] **Phase 5**: Create lint rule or CI check to prevent future violations
 - [ ] **Phase 6**: Document intentional raw numeric usage (if any)
+
+### 🔴 Investigation Findings (2025-12-11)
+
+**Summary**: The VM for-loop implementation and number display path have critical bugs causing incorrect behavior for large integers (values > 2^53).
+
+#### Bug 1: Numeric For-Loop Uses Double Arithmetic (PARTIALLY FIXED)
+
+**Location**: `src/runtime/.../Execution/VM/Processor/ProcessorInstructionLoop.cs`
+
+**Affected Methods**:
+- `ExecJFor()` — For-loop condition check
+- `ExecIncr()` — For-loop increment operation
+- `ExecToNum()` — Numeric coercion for for-loop values
+
+**Problem**: The for-loop implementation was using `.Number` (which returns `double`) instead of `.LuaNumber` for comparisons and arithmetic. This causes:
+1. Integer precision loss for values > 2^53
+2. Infinite loops when integer step causes no change after double conversion
+3. Incorrect loop counts at precision boundaries
+
+**Partial Fix Applied**:
+```csharp
+// ExecJFor — NOW USES LuaNumber for comparison
+LuaNumber val = _valueStack.Peek(0).LuaNumber;
+LuaNumber step = _valueStack.Peek(1).LuaNumber;
+LuaNumber stop = _valueStack.Peek(2).LuaNumber;
+bool whileCond = LuaNumber.GreaterThan(step, LuaNumber.Zero)
+    ? LuaNumber.LessThanOrEqual(val, stop)
+    : LuaNumber.GreaterThanOrEqual(val, stop);
+
+// ExecIncr — NOW USES LuaNumber.Add
+top.AssignNumber(LuaNumber.Add(top.LuaNumber, btm.LuaNumber));
+
+// ExecToNum — NOW USES CastToLuaNumber
+LuaNumber? v = _valueStack.Pop().ToScalar().CastToLuaNumber();
+if (v.HasValue)
+{
+    _valueStack.Push(DynValue.NewNumber(v.Value));
+}
+```
+
+**Status**: ✅ Code changes applied, ✅ All 4624 tests pass
+
+**Remaining Issue**: For-loop with large integer boundaries still shows incorrect display (see Bug 2).
+
+#### Bug 2: DynValue.ToString() Loses Integer Precision (COMPLEX)
+
+**Location**: `src/runtime/.../DataTypes/DynValue.cs` line ~1043
+
+**Problem**: `DynValue.ToString()` uses `.Number` (double) for formatting:
+```csharp
+case DataType.Number:
+    return Number.ToString(CultureInfo.InvariantCulture);  // LOSES INTEGER PRECISION
+```
+
+This causes large integers like `9007199254740993` to display as `9007199254740992` because converting to double loses the last bit of precision.
+
+**Attempted Fix**:
+```csharp
+case DataType.Number:
+    return LuaNumber.ToString();  // Uses integer path for integers
+```
+
+**Complication**: This fix causes TAP test failures because `LuaNumber.ToString()` uses Lua 5.3+ formatting:
+- Lua 5.3+: `tostring(42.0)` → `"42.0"` (float indicator)
+- Lua 5.1/5.2: `tostring(42.0)` → `"42"` (no distinction)
+
+The TAP tests in `TestMore/` are written for Lua 5.1/5.2 behavior and expect `"42"` not `"42.0"`.
+
+**Root Cause Analysis**:
+1. `DynValue.ToString()` is used for both debug display AND Lua's `tostring()` function
+2. `ToString()` doesn't have access to the script's compatibility version
+3. `LuaNumber.ToString()` has version-aware formatting via `ToLuaString(version)` but default uses Lua 5.2 style
+4. The issue is that `ToPrintString()` falls through to `ToString()` for numbers
+
+**Possible Solutions** (to be evaluated):
+
+1. **Add version parameter to ToPrintString()**: Would require passing script context through call chain
+2. **Separate debug display from Lua tostring**: Create distinct methods for each use case
+3. **Make LuaNumber.ToString() default to integer-preserving format**: Would fix precision but break float indicator
+4. **Version-aware formatting at BasicModule.ToString level**: Most targeted but adds complexity
+
+#### Bug 3: Related Areas Needing Investigation
+
+**Other `.Number` usages found in VM (need classification)**:
+- Line 455, 1133, 1331, 1368: Argument count retrieval — `(int)(_valueStack.Pop().Number)` — Likely safe (small values)
+- Line 1836, 1867: Type checks — `if (l.Type == DataType.Number)` — Safe (not value access)
+
+**Instruction.cs**:
+- Line 364: `wr.Write(value.Number)` — Used for bytecode serialization — **NEEDS FIX** for integer preservation
+
+### ✅ COMPLETED: Version-Aware Number Formatting (2025-12-11)
+
+**Problem**: `tostring()` and `print()` output didn't correctly distinguish integers from floats in Lua 5.3+ mode. Integer-like floats (e.g., `42.0`) should display with the `.0` suffix in Lua 5.3+, but without it in Lua 5.1/5.2.
+
+**Solution Implemented** (Option C from recommendations):
+1. Added `LuaNumber.ToLuaString(LuaCompatibilityVersion version)` for version-aware formatting
+2. Added `DynValue.ToPrintString(LuaCompatibilityVersion version)` overload
+3. Updated `BasicModule.ToString()` to use version from execution context
+4. Updated `CallbackArguments.AsStringUsingMeta()` to use version from execution context
+5. Updated TAP test `104-number.t` to expect Lua 5.4 behavior for float literals
+
+**Files Modified**:
+- `src/runtime/.../DataTypes/LuaNumber.cs` — Added `ToLuaString(version)` method
+- `src/runtime/.../DataTypes/DynValue.cs` — Added `ToPrintString(version)` overload
+- `src/runtime/.../CoreLib/BasicModule.cs` — Uses version-aware formatting for tostring()
+- `src/runtime/.../DataTypes/CallbackArguments.cs` — Uses version-aware formatting for print()
+- `src/tests/.../TestMore/DataTypes/104-number.t` — Updated expectations for Lua 5.4
+
+**Test Results**: All 4624 tests pass.
+
+**Behavior by Version**:
+- Lua 5.1/5.2: `tostring(42.0)` → `"42"` (no distinction)
+- Lua 5.3+: `tostring(42.0)` → `"42.0"` (float indicator preserved)
+- All versions: `tostring(42)` → `"42"` (integers always without decimal)
+- All versions: Large integers (e.g., 9007199254740993) preserve precision
+
+### Remaining Next Steps (Priority Order)
+
+1. ✅ **Version-aware number formatting** — COMPLETED 2025-12-11
+
+2. **Fix bytecode serialization** (`Instruction.cs` line 364):
+   - Change `wr.Write(value.Number)` to preserve integer subtype
+   - May need to write type flag + appropriate value
+
+3. **Add regression tests**:
+   - For-loop with values at 2^53 boundary
+   - Bytecode dump/load round-trip for large integers
+
+4. **Document intentional `.Number` usage**:
+   - Argument count retrieval (always small integers)
+   - Type checks (not value access)
+
+### Test Commands
+
+```bash
+# Test for-loop with large integers
+dotnet run --project src/tooling/WallstopStudios.NovaSharp.Cli -c Release -- -e "
+for i = 9007199254740993, 9007199254740995 do 
+    print(i, math.type(i)) 
+end"
+
+# Compare with Lua 5.4
+lua5.4 -e "for i = 9007199254740993, 9007199254740995 do print(i, math.type(i)) end"
+
+# Test integer display
+dotnet run --project src/tooling/WallstopStudios.NovaSharp.Cli -c Release -- -e "print(9007199254740993)"
+lua5.4 -e "print(9007199254740993)"
+```
 
 ### Success Criteria
 

@@ -225,7 +225,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (tail == null || tail.IsNil())
             {
-                return DynValue.NewString(v.ToPrintString());
+                // Use version-aware formatting for numbers
+                LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+                return DynValue.NewString(v.ToPrintString(version));
             }
 
             tail.TailCallData.Continuation = new CallbackFunction(

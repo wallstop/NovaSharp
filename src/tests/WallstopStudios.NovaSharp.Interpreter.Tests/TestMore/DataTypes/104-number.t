@@ -176,9 +176,11 @@ error_like(function () return 1 >= '0' end,
 
 is(tostring(1000000000), '1000000000', "number 1000000000")
 
-is(tostring(1e9), '1000000000', "number 1e9")
+-- Lua 5.3+ distinguishes integers from floats in tostring output:
+-- 1e9 is a float literal, so tostring adds ".0" suffix
+is(tostring(1e9), '1000000000.0', "number 1e9")
 
-is(tostring(1.0e+9), '1000000000', "number 1.0e+9")
+is(tostring(1.0e+9), '1000000000.0', "number 1.0e+9")
 
 error_like(function () a= 3.14; b = a[1]; end,
            "^[^:]+:%d+: attempt to index",

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -224,6 +225,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(executionContext));
             }
 
+            // Get the Lua version for version-aware number formatting
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+
             if (
                 (this[argNum].Type == DataType.Table)
                 && (this[argNum].Table.MetaTable != null)
@@ -243,11 +247,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     );
                 }
 
-                return v.ToPrintString();
+                return v.ToPrintString(version);
             }
             else
             {
-                return (this[argNum].ToPrintString());
+                return this[argNum].ToPrintString(version);
             }
         }
 

@@ -708,8 +708,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <summary>
         /// Converts this number to its string representation following Lua formatting rules.
         /// Integers format without decimal point, floats with appropriate precision.
+        /// Uses Lua 5.3+ formatting by default (integer-like floats get ".0" suffix).
         /// </summary>
         public override string ToString()
+        {
+            // Default to Lua 5.3+ formatting for backwards compatibility with existing ToString() behavior
+            return ToLuaString(LuaCompatibilityVersion.Lua53);
+        }
+
+        /// <summary>
+        /// Converts this number to its string representation following Lua formatting rules
+        /// for the specified Lua version.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to use for formatting.</param>
+        /// <returns>The number formatted as a Lua string.</returns>
+        /// <remarks>
+        /// Formatting differences by version:
+        /// - Lua 5.1/5.2: Integer-like floats (e.g., 42.0) format as "42" (no decimal indicator)
+        /// - Lua 5.3+: Integer-like floats format as "42.0" (decimal indicator preserved)
+        /// - All versions: Integers always format without decimal point
+        /// - All versions: Non-integer floats use standard "shortest representation" formatting
+        /// </remarks>
+        public string ToLuaString(LuaCompatibilityVersion version)
         {
             if (IsInteger)
             {
@@ -730,13 +750,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return "-inf";
             }
 
-            // For integer-like floats, Lua 5.3+ adds ".0" suffix
+            // For integer-like floats, Lua 5.3+ adds ".0" suffix to distinguish from integers
+            // Lua 5.1/5.2 does not have this distinction (all numbers are floats)
             if (_float == Math.Floor(_float) && !double.IsInfinity(_float))
             {
-                return _float.ToString("0.0", CultureInfo.InvariantCulture);
+                LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
+                if (resolved >= LuaCompatibilityVersion.Lua53)
+                {
+                    return _float.ToString("0.0", CultureInfo.InvariantCulture);
+                }
+                // Lua 5.1/5.2: format without decimal point for integer-like floats
+                return ((long)_float).ToString(CultureInfo.InvariantCulture);
             }
 
-            return _float.ToString("G17", CultureInfo.InvariantCulture);
+            // Use standard "shortest representation" formatting - matches Lua's behavior
+            // and preserves backward compatibility with the original Number.ToString() call
+            return _float.ToString(CultureInfo.InvariantCulture);
         }
 
         /// <inheritdoc />

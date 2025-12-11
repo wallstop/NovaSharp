@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Text;
+    using Compatibility;
     using Cysharp.Text;
     using DataStructs;
     using Errors;
@@ -955,8 +956,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Returns a string which is what it's expected to be output by the print function applied to this value.
+        /// Uses the default Lua version for number formatting.
         /// </summary>
         public string ToPrintString()
+        {
+            return ToPrintString(LuaVersionDefaults.CurrentDefault);
+        }
+
+        /// <summary>
+        /// Returns a string which is what it's expected to be output by the print function applied to this value,
+        /// using the specified Lua version for number formatting.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to use for number formatting.</param>
+        /// <returns>The print-friendly string representation of this value.</returns>
+        /// <remarks>
+        /// Number formatting differences by version:
+        /// - Lua 5.1/5.2: Integer-like floats (e.g., 42.0) format as "42"
+        /// - Lua 5.3+: Integer-like floats format as "42.0" to distinguish from integers
+        /// </remarks>
+        public string ToPrintString(LuaCompatibilityVersion version)
         {
             if (_object is RefIdObject refId)
             {
@@ -978,8 +996,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 case DataType.String:
                     return String;
+                case DataType.Number:
+                    // Use LuaNumber.ToLuaString for version-aware formatting
+                    return LuaNumber.ToLuaString(version);
                 case DataType.Tuple:
-                    return JoinTupleStrings(Tuple, "\t", v => v.ToPrintString());
+                    return JoinTupleStrings(Tuple, "\t", v => v.ToPrintString(version));
                 case DataType.TailCallRequest:
                     return "(TailCallRequest -- INTERNAL!)";
                 case DataType.YieldRequest:
