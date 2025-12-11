@@ -22,8 +22,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     /// Note: Some features like the 'global' keyword and table.create may not yet be implemented
     /// in NovaSharp. These tests document the expected behavior for future implementation.
     ///
-    /// NovaSharp uses its own version string for _VERSION ("NovaSharp {version}") rather than
-    /// "Lua 5.x", so version detection tests verify compatibility mode rather than version string.
+    /// NovaSharp now correctly reports the Lua version via _VERSION (e.g., "Lua 5.5") based on
+    /// the active compatibility mode, matching the official Lua interpreter behavior.
     /// </remarks>
     public sealed class Lua55SpecTUnitTests : LuaSpecTestBase
     {
@@ -43,16 +43,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         /// <remarks>
-        /// NovaSharp reports its own version via _VERSION ("NovaSharp {version}") rather than
-        /// the standard Lua version string. This is consistent across all compatibility modes.
+        /// NovaSharp now correctly reports the Lua version via _VERSION (e.g., "Lua 5.5")
+        /// based on the active compatibility mode, matching the official Lua interpreter behavior.
         /// </remarks>
         [Test]
-        public async Task VersionGlobalReportsNovaSharpVersion()
+        public async Task VersionGlobalReportsLuaVersion()
         {
             Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
             DynValue result = script.DoString("return _VERSION");
 
-            await Assert.That(result.String).Contains("NovaSharp").ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("Lua 5.5").ConfigureAwait(false);
         }
 
         // ========================================

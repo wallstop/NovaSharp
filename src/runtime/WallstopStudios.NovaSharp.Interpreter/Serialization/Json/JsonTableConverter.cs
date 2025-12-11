@@ -146,37 +146,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
                     return;
             }
 
-            // Handle numeric types
-            if (
-                obj
-                is sbyte
-                    or byte
-                    or short
-                    or ushort
-                    or int
-                    or uint
-                    or long
-                    or ulong
-                    or float
-                    or double
-                    or decimal
-            )
+            // Handle numeric types - preserve integer representation for better precision
+            switch (obj)
             {
-                sb.Append(
-                    Convert
-                        .ToDouble(obj, CultureInfo.InvariantCulture)
-                        .ToString("r", CultureInfo.InvariantCulture)
-                );
-                return;
+                case sbyte sb1:
+                    sb.Append(sb1.ToString(CultureInfo.InvariantCulture));
+                    return;
+                case byte b1:
+                    sb.Append(b1.ToString(CultureInfo.InvariantCulture));
+                    return;
+                case short s1:
+                    sb.Append(s1.ToString(CultureInfo.InvariantCulture));
+                    return;
+                case ushort us1:
+                    sb.Append(us1.ToString(CultureInfo.InvariantCulture));
+                    return;
+                case int i1:
+                    sb.Append(i1.ToString(CultureInfo.InvariantCulture));
+                    return;
+                case uint ui1:
+                    sb.Append(ui1.ToString(CultureInfo.InvariantCulture));
+                    return;
+                case long l1:
+                    sb.Append(l1.ToString(CultureInfo.InvariantCulture));
+                    return;
+                case ulong ul1:
+                    sb.Append(ul1.ToString(CultureInfo.InvariantCulture));
+                    return;
+                case float f1:
+                    sb.Append(f1.ToString("r", CultureInfo.InvariantCulture));
+                    return;
+                case double d1:
+                    sb.Append(d1.ToString("r", CultureInfo.InvariantCulture));
+                    return;
+                case decimal dec1:
+                    sb.Append(dec1.ToString(CultureInfo.InvariantCulture));
+                    return;
             }
 
-            // Handle enums as numbers
-            if (obj is Enum)
+            // Handle enums as integers (preserve integer representation)
+            if (obj is Enum enumValue)
             {
+                // Use the underlying integer type for better JSON representation
                 sb.Append(
                     Convert
-                        .ToDouble(obj, CultureInfo.InvariantCulture)
-                        .ToString("r", CultureInfo.InvariantCulture)
+                        .ToInt64(enumValue, CultureInfo.InvariantCulture)
+                        .ToString(CultureInfo.InvariantCulture)
                 );
                 return;
             }
@@ -267,7 +282,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
                     sb.Append(value.Boolean ? "true" : "false");
                     break;
                 case DataType.Number:
-                    sb.Append(value.Number.ToString("r", CultureInfo.InvariantCulture));
+                    // Preserve integer/float subtype distinction for Lua 5.3+ compliance
+                    // Integer values serialize without decimal point for better JSON semantics
+                    if (value.IsInteger)
+                    {
+                        sb.Append(value.LuaNumber.AsInteger.ToString(CultureInfo.InvariantCulture));
+                    }
+                    else
+                    {
+                        sb.Append(value.Number.ToString("r", CultureInfo.InvariantCulture));
+                    }
                     break;
                 case DataType.String:
                     sb.Append(EscapeString(value.String));

@@ -33,16 +33,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsEqualTo(3d).Within(1e-12).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that math.pow correctly computes exponentiation.
+        /// math.pow was deprecated in Lua 5.3 and removed in Lua 5.5.
+        /// Use the ^ operator instead in Lua 5.5+.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task PowHandlesLargeExponent()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        public async Task PowHandlesLargeExponent(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return math.pow(10, 6)");
 
             await Assert
                 .That(result.Number)
                 .IsEqualTo(1_000_000d)
                 .Within(1e-6)
+                .Because($"math.pow(10, 6) should return 1000000 in {version}")
                 .ConfigureAwait(false);
         }
 
@@ -97,15 +107,64 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that math.pow returns infinity for exponents that exceed double range.
+        /// math.pow was deprecated in Lua 5.3 and removed in Lua 5.5.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task PowWithLargeExponentReturnsInfinity()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        public async Task PowWithLargeExponentReturnsInfinity(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return math.pow(10, 309)");
 
             await Assert
                 .That(double.IsPositiveInfinity(result.Number))
                 .IsTrue()
+                .Because($"math.pow(10, 309) should return +inf in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.pow is NOT available in Lua 5.5 (it was removed).
+        /// In Lua 5.5, use the ^ operator instead: 10^6.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task PowIsNilInLua55()
+        {
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua55);
+            DynValue result = script.DoString("return math.pow");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because(
+                    "math.pow was removed in Lua 5.5. Use ^ operator instead. "
+                        + $"Actual type: {result.Type}, value: {result}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that the ^ operator (exponentiation) still works in Lua 5.5.
+        /// This is the replacement for the deprecated math.pow function.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task ExponentiationOperatorWorksInLua55()
+        {
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua55);
+            DynValue result = script.DoString("return 10 ^ 6");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(1_000_000d)
+                .Within(1e-6)
+                .Because("10 ^ 6 should return 1000000 in Lua 5.5")
                 .ConfigureAwait(false);
         }
 
@@ -1009,6 +1068,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         private static Script CreateScript()
         {
             return new Script(CoreModulePresets.Complete);
+        }
+
+        private static Script CreateScript(Compatibility.LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

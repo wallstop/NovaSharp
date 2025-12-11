@@ -227,6 +227,111 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0L)]
+        [global::TUnit.Core.Arguments(1L)]
+        [global::TUnit.Core.Arguments(127L)]
+        [global::TUnit.Core.Arguments(255L)]
+        public async Task FromIntegerReturnsCachedValueForSmallPositiveIntegers(long value)
+        {
+            DynValue first = DynValue.FromInteger(value);
+            DynValue second = DynValue.FromInteger(value);
+
+            await Assert.That(first).IsSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(-1L)]
+        [global::TUnit.Core.Arguments(-127L)]
+        [global::TUnit.Core.Arguments(-256L)]
+        public async Task FromIntegerReturnsCachedValueForSmallNegativeIntegers(long value)
+        {
+            DynValue first = DynValue.FromInteger(value);
+            DynValue second = DynValue.FromInteger(value);
+
+            await Assert.That(first).IsSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(256L)]
+        [global::TUnit.Core.Arguments(1000L)]
+        [global::TUnit.Core.Arguments(-257L)]
+        [global::TUnit.Core.Arguments(-1000L)]
+        public async Task FromIntegerReturnsNewValueForOutOfCacheRange(long value)
+        {
+            DynValue first = DynValue.FromInteger(value);
+            DynValue second = DynValue.FromInteger(value);
+
+            await Assert.That(first).IsNotSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first.ReadOnly).IsFalse().ConfigureAwait(false);
+            await Assert.That(first.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0.0)]
+        [global::TUnit.Core.Arguments(1.0)]
+        [global::TUnit.Core.Arguments(-1.0)]
+        [global::TUnit.Core.Arguments(2.0)]
+        [global::TUnit.Core.Arguments(0.5)]
+        [global::TUnit.Core.Arguments(double.PositiveInfinity)]
+        [global::TUnit.Core.Arguments(double.NegativeInfinity)]
+        public async Task FromFloatReturnsCachedValueForCommonFloats(double value)
+        {
+            DynValue first = DynValue.FromFloat(value);
+            DynValue second = DynValue.FromFloat(value);
+
+            await Assert.That(first).IsSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(3.14159)]
+        [global::TUnit.Core.Arguments(-0.333)]
+        [global::TUnit.Core.Arguments(12345.6789)]
+        public async Task FromFloatReturnsNewValueForUncommonFloats(double value)
+        {
+            DynValue first = DynValue.FromFloat(value);
+            DynValue second = DynValue.FromFloat(value);
+
+            await Assert.That(first).IsNotSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(first.ReadOnly).IsFalse().ConfigureAwait(false);
+            await Assert.That(first.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Number).IsEqualTo(value).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FromFloatPreservesFloatSubtypeForWholeNumbers()
+        {
+            // 1.0 from cache should be float subtype, not integer
+            DynValue one = DynValue.FromFloat(1.0);
+
+            await Assert.That(one.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(one.IsInteger).IsFalse().ConfigureAwait(false);
+            await Assert.That(one.Number).IsEqualTo(1.0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FromIntegerPreservesIntegerSubtype()
+        {
+            // Both cached and uncached should be integer subtype
+            DynValue cachedOne = DynValue.FromInteger(1);
+            DynValue uncachedLarge = DynValue.FromInteger(1000);
+
+            await Assert.That(cachedOne.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(cachedOne.IsFloat).IsFalse().ConfigureAwait(false);
+            await Assert.That(uncachedLarge.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(uncachedLarge.IsFloat).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task CheckTypeAutoConvertsNumbersToStrings()
         {
             DynValue number = DynValue.NewNumber(12.5);

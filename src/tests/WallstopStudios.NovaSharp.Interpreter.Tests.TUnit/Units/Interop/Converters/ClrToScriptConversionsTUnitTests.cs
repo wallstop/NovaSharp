@@ -199,6 +199,109 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             await Assert.That(result.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        public async Task TryObjectToTrivialDynValuePreservesIntegerSubtype()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
+            Script script = new();
+
+            // Test various integer types
+            DynValue intResult = ClrToScriptConversions.TryObjectToTrivialDynValue(script, 42);
+            await Assert.That(intResult.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(intResult.LuaNumber.AsInteger).IsEqualTo(42L).ConfigureAwait(false);
+
+            DynValue longResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                9007199254740993L
+            );
+            await Assert.That(longResult.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(longResult.LuaNumber.AsInteger)
+                .IsEqualTo(9007199254740993L)
+                .ConfigureAwait(false);
+
+            DynValue byteResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                (byte)255
+            );
+            await Assert.That(byteResult.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(byteResult.LuaNumber.AsInteger).IsEqualTo(255L).ConfigureAwait(false);
+
+            DynValue shortResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                (short)1000
+            );
+            await Assert.That(shortResult.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(shortResult.LuaNumber.AsInteger)
+                .IsEqualTo(1000L)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TryObjectToTrivialDynValuePreservesFloatSubtype()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
+            Script script = new();
+
+            // Test float types - should NOT be integers
+            DynValue floatResult = ClrToScriptConversions.TryObjectToTrivialDynValue(script, 3.14f);
+            await Assert.That(floatResult.IsInteger).IsFalse().ConfigureAwait(false);
+
+            DynValue doubleResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                3.14159
+            );
+            await Assert.That(doubleResult.IsInteger).IsFalse().ConfigureAwait(false);
+
+            DynValue decimalResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                3.14m
+            );
+            await Assert.That(decimalResult.IsInteger).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TryObjectToSimpleDynValuePreservesIntegerSubtype()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
+            Script script = new();
+
+            // Large integer beyond double precision
+            DynValue longResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                9007199254740993L
+            );
+            await Assert.That(longResult.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(longResult.LuaNumber.AsInteger)
+                .IsEqualTo(9007199254740993L)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ObjectToDynValuePreservesIntegerSubtype()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
+            Script script = new();
+
+            // Large integer beyond double precision
+            DynValue longResult = ClrToScriptConversions.ObjectToDynValue(
+                script,
+                9007199254740993L
+            );
+            await Assert.That(longResult.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(longResult.LuaNumber.AsInteger)
+                .IsEqualTo(9007199254740993L)
+                .ConfigureAwait(false);
+
+            // Small int
+            DynValue intResult = ClrToScriptConversions.ObjectToDynValue(script, 42);
+            await Assert.That(intResult.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(intResult.LuaNumber.AsInteger).IsEqualTo(42L).ConfigureAwait(false);
+        }
+
         public static DynValue StaticClrCallback(ScriptExecutionContext ctx, CallbackArguments args)
         {
             return DynValue.NewNumber(42);

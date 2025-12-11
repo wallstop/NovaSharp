@@ -208,10 +208,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return value ? True : False;
         }
 
-        // Cache for small integers (0-255) commonly used as Lua array indices
+        // Cache for small non-negative integers (0-255) commonly used as Lua array indices
         private static readonly DynValue[] SmallIntegerCache = InitializeSmallIntegerCache();
 
+        // Cache for small negative integers (-256 to -1) commonly used in loops and offsets
+        private static readonly DynValue[] NegativeIntegerCache = InitializeNegativeIntegerCache();
+
+        // Cache for common float values used frequently in Lua scripts
+        private static readonly Dictionary<double, DynValue> CommonFloatCache =
+            InitializeCommonFloatCache();
+
         private const int SmallIntegerCacheSize = 256;
+        private const int NegativeIntegerCacheSize = 256;
 
         private static DynValue[] InitializeSmallIntegerCache()
         {
@@ -221,6 +229,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 cache[i] = new DynValue()
                 {
                     _number = LuaNumber.FromInteger(i),
+                    _type = DataType.Number,
+                    _readOnly = true,
+                };
+            }
+            return cache;
+        }
+
+        private static DynValue[] InitializeNegativeIntegerCache()
+        {
+            DynValue[] cache = new DynValue[NegativeIntegerCacheSize];
+            for (int i = 0; i < NegativeIntegerCacheSize; i++)
+            {
+                // Cache values -256 to -1: index 0 = -256, index 255 = -1
+                long value = i - NegativeIntegerCacheSize;
+                cache[i] = new DynValue()
+                {
+                    _number = LuaNumber.FromInteger(value),
+                    _type = DataType.Number,
+                    _readOnly = true,
+                };
+            }
+            return cache;
+        }
+
+        private static Dictionary<double, DynValue> InitializeCommonFloatCache()
+        {
+            // Common float values frequently used in Lua scripts
+            double[] commonValues = new double[]
+            {
+                0.0,
+                1.0,
+                -1.0,
+                2.0,
+                -2.0,
+                0.5,
+                -0.5,
+                0.25,
+                0.1,
+                10.0,
+                100.0,
+                1000.0,
+                double.PositiveInfinity,
+                double.NegativeInfinity,
+                // Note: NaN cannot be reliably used as a dictionary key due to NaN != NaN
+            };
+
+            Dictionary<double, DynValue> cache = new Dictionary<double, DynValue>(
+                commonValues.Length
+            );
+            foreach (double value in commonValues)
+            {
+                cache[value] = new DynValue()
+                {
+                    _number = LuaNumber.FromFloat(value),
                     _type = DataType.Number,
                     _readOnly = true,
                 };
@@ -302,7 +364,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Returns a cached readonly number value for small non-negative integers (0-255).
+        /// Returns a cached readonly float value for common float constants (0.0, 1.0, -1.0, etc.).
+        /// Falls back to <see cref="NewFloat(double)"/> for values outside the cache.
+        /// Use this in hot paths where readonly values are acceptable and float subtype must be preserved.
+        /// </summary>
+        /// <param name="num">The float value.</param>
+        /// <returns>A cached or new <see cref="DynValue"/> representing the float.</returns>
+        public static DynValue FromFloat(double num)
+        {
+            // Check common float cache first
+            if (CommonFloatCache.TryGetValue(num, out DynValue cached))
+            {
+                return cached;
+            }
+            return NewFloat(num);
+        }
+
+        /// <summary>
+        /// Returns a cached readonly number value for small integers (-256 to 255).
         /// Falls back to <see cref="NewInteger(long)"/> for values outside the cache range.
         /// Use this in hot paths where readonly values are acceptable.
         /// The resulting value will have the Lua "integer" subtype.
@@ -315,6 +394,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             if (num >= 0 && num < SmallIntegerCacheSize)
             {
                 return SmallIntegerCache[num];
+            }
+            // Check if the number is a small negative integer in cache range (-256 to -1)
+            if (num >= -NegativeIntegerCacheSize && num < 0)
+            {
+                // Map -256..-1 to indices 0..255
+                return NegativeIntegerCache[num + NegativeIntegerCacheSize];
             }
             return NewInteger(num);
         }

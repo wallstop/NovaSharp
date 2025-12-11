@@ -712,10 +712,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Implements Lua `math.pow` / exponentiation operator fallback, returning x^y (§6.7).
+        /// This function was deprecated in Lua 5.3 and removed in Lua 5.5.
+        /// Use the <c>^</c> operator instead: <c>x^y</c>.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments for base and exponent.</param>
         /// <returns>Exponentiation result.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "pow")]
         public static DynValue Pow(ScriptExecutionContext executionContext, CallbackArguments args)
         {

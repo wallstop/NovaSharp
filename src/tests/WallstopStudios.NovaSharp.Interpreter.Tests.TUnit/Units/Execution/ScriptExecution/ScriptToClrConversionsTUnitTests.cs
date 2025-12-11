@@ -37,6 +37,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        public async Task DynValueToObjectPreservesIntegerSubtype()
+        {
+            // When DynValue is an integer subtype, ToObject should return long (not double)
+            DynValue intValue = DynValue.NewInteger(9007199254740993L); // Beyond double precision
+
+            object result = ScriptToClrConversions.DynValueToObject(intValue);
+
+            await Assert.That(result is long).IsTrue().ConfigureAwait(false);
+            await Assert.That((long)result).IsEqualTo(9007199254740993L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectReturnsDoubleForFloatSubtype()
+        {
+            // When DynValue is a float subtype, ToObject should return double
+            DynValue floatValue = DynValue.NewFloat(3.14159);
+
+            object result = ScriptToClrConversions.DynValueToObject(floatValue);
+
+            await Assert.That(result is double).IsTrue().ConfigureAwait(false);
+            await Assert.That((double)result).IsEqualTo(3.14159).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DynValueToObjectOfTypeLongPreservesIntegerPrecision()
+        {
+            // Large integer beyond double precision should be preserved when converting to long
+            DynValue intValue = DynValue.NewInteger(9007199254740993L);
+
+            long result = ScriptToClrConversions.DynValueToObjectOfType<long>(intValue);
+
+            await Assert.That(result).IsEqualTo(9007199254740993L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task DynValueToObjectReturnsNullForVoidValues()
         {
             object result = ScriptToClrConversions.DynValueToObject(DynValue.Void);

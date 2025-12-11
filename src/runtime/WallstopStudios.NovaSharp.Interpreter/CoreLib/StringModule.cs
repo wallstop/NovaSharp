@@ -448,15 +448,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `string.rep`, repeating a string N times with an optional separator (§6.4.1).
         /// </summary>
         /// <remarks>
+        /// <para>
         /// In Lua 5.3+, the count argument must have an exact integer representation.
         /// Non-integer counts (including NaN, Infinity, and fractional values) will throw
         /// "bad argument #2 to 'rep' (number has no integer representation)".
         /// In Lua 5.1/5.2, non-integer counts are silently truncated via floor.
+        /// </para>
+        /// <para>
+        /// The separator parameter was added in Lua 5.2 and is ignored in Lua 5.1 mode.
+        /// </para>
         /// </remarks>
         [NovaSharpModuleMethod(Name = "rep")]
         public static DynValue Rep(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            ModuleArgumentValidation.RequireExecutionContext(
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
@@ -478,7 +483,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return DynValue.EmptyString;
             }
 
-            string sep = (argSep.IsNotNil()) ? argSep.String : null;
+            // Separator was added in Lua 5.2 - ignore it in Lua 5.1 mode
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            string sep =
+                (argSep.IsNotNil() && version >= LuaCompatibilityVersion.Lua52)
+                    ? argSep.String
+                    : null;
 
             int count = (int)Math.Floor(argN.Number);
             using Utf16ValueStringBuilder result = ZStringBuilder.Create();

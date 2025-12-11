@@ -330,7 +330,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 case DataType.Boolean:
                     return DynValue.NewBoolean(rd.ReadBoolean());
                 case DataType.Number:
-                    return DynValue.NewNumber(rd.ReadDouble());
+                    // Read the integer/float subtype flag (0 = integer, 1 = float)
+                    byte numSubtype = rd.ReadByte();
+                    if (numSubtype == 0)
+                    {
+                        // Integer subtype - read as Int64 to preserve full precision
+                        return DynValue.NewInteger(rd.ReadInt64());
+                    }
+                    else
+                    {
+                        // Float subtype - read as double
+                        return DynValue.NewFloat(rd.ReadDouble());
+                    }
                 case DataType.String:
                     return DynValue.NewString(rd.ReadString());
                 case DataType.Table:
@@ -361,7 +372,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     wr.Write(value.Boolean);
                     break;
                 case DataType.Number:
-                    wr.Write(value.Number);
+                    // Write integer/float subtype flag and appropriate value type
+                    // to preserve Lua 5.3+ integer vs float distinction
+                    if (value.LuaNumber.IsInteger)
+                    {
+                        wr.Write((byte)0); // Integer subtype flag
+                        wr.Write(value.LuaNumber.AsInteger);
+                    }
+                    else
+                    {
+                        wr.Write((byte)1); // Float subtype flag
+                        wr.Write(value.LuaNumber.AsFloat);
+                    }
                     break;
                 case DataType.String:
                     wr.Write(value.String);

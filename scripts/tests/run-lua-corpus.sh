@@ -15,7 +15,7 @@
 #   --lua-version <ver>   Lua version to use: 5.1, 5.2, 5.3, 5.4 (default: 5.4)
 #   --lua-cmd <cmd>       Override Lua command (default: lua<version>)
 #   --nova-cmd <cmd>      NovaSharp CLI command
-#                         (default: dotnet run --project src/tooling/NovaSharp.Cli)
+#                         (default: dotnet run --project src/tooling/WallstopStudios.NovaSharp.Cli)
 #   --skip-novasharp      Skip NovaSharp execution (reference Lua only)
 #   --skip-lua            Skip reference Lua execution (NovaSharp only)
 #   --limit <n>           Limit number of snippets to process

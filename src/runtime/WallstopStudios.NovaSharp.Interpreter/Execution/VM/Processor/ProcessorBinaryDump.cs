@@ -15,7 +15,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     internal sealed partial class Processor
     {
         private const ulong DumpChunkMagic = 0x1A0D234E4F4F4D1D;
-        private const int DumpChunkVersion = 0x150;
+
+        /// <summary>
+        /// Dump format version. Version history:
+        /// - 0x150: Original format (all numbers as double, loses integer subtype)
+        /// - 0x151: LuaNumber format (preserves integer vs float subtype for Lua 5.3+ semantics)
+        /// </summary>
+        private const int DumpChunkVersion = 0x151;
 
         /// <summary>
         /// Determines whether the provided stream contains a NovaSharp chunk header.
@@ -159,7 +165,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (version != DumpChunkVersion)
             {
-                throw new ArgumentException("Invalid version");
+                throw new ArgumentException(
+                    $"Invalid version: {version}, NovaSharp supports version {DumpChunkVersion}"
+                );
             }
 
             hasUpValues = br.ReadBoolean();

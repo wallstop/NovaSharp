@@ -162,7 +162,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                     : LuaCompatibilityProfile.ForVersion(Script.GlobalOptions.CompatibilityVersion);
 
             table.Set("_G", DynValue.NewTable(table));
-            table.Set("_VERSION", DynValue.NewString($"NovaSharp {Script.VERSION}"));
+            table.Set("_VERSION", DynValue.NewString(profile.DisplayName));
             table.Set("_NovaSharp", novaSharpTable);
 
             m.Set("version", DynValue.NewString(Script.VERSION));

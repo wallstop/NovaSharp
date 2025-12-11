@@ -1,10 +1,12 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -126,9 +128,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua 5.4's <c>coroutine.close</c>, closing the supplied coroutine.
         /// </summary>
+        /// <remarks>
+        /// This function was added in Lua 5.4 and is not available in earlier versions.
+        /// It closes a suspended or dead coroutine, releasing any pending to-be-closed variables.
+        /// </remarks>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Arguments (handle to close).</param>
         /// <returns>The close result tuple provided by the coroutine.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "close")]
         public static DynValue Close(
             ScriptExecutionContext executionContext,
@@ -234,9 +241,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements <c>coroutine.isyieldable</c>, returning true when the current execution context can yield.
         /// </summary>
+        /// <remarks>
+        /// This function was added in Lua 5.3. In Lua 5.4+, it accepts an optional coroutine argument.
+        /// </remarks>
         /// <param name="executionContext">Current execution context.</param>
-        /// <param name="args">Ignored but validated per Lua semantics.</param>
+        /// <param name="args">In Lua 5.3: ignored. In Lua 5.4+: optional coroutine to check instead of current context.</param>
         /// <returns><c>true</c> when yielding is allowed; otherwise <c>false</c>.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         [NovaSharpModuleMethod(Name = "isyieldable")]
         public static DynValue IsYieldable(
             ScriptExecutionContext executionContext,
@@ -247,7 +258,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            ModuleArgumentValidation.RequireArguments(args, nameof(args));
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            // Lua 5.4+ supports an optional coroutine argument
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+
+            if (version >= LuaCompatibilityVersion.Lua54 && args.Count > 0 && !args[0].IsNil())
+            {
+                // Check the specified coroutine instead of the current context
+                DynValue coArg = args.AsType(0, "isyieldable", DataType.Thread, true);
+                if (coArg.Type == DataType.Thread)
+                {
+                    Coroutine co = coArg.Coroutine;
+                    // A coroutine is yieldable if it's running or suspended (but not dead or main)
+                    CoroutineState state = co.State;
+                    return DynValue.FromBoolean(
+                        state == CoroutineState.Running
+                            || state == CoroutineState.Suspended
+                            || state == CoroutineState.NotStarted
+                            || state == CoroutineState.ForceSuspended
+                    );
+                }
+            }
 
             return DynValue.FromBoolean(executionContext.IsYieldable());
         }

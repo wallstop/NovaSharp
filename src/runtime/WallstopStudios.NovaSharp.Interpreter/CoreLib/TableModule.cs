@@ -73,6 +73,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         /// <summary>
+        /// Implements Lua 5.1's `table.maxn`, returning the largest positive numeric key in a table (§5.5).
+        /// </summary>
+        /// <remarks>
+        /// This function was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// It returns 0 if the table has no positive numeric keys.
+        /// Unlike #t, this function scans all keys, not just the array portion.
+        /// </remarks>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments (the table to scan).</param>
+        /// <returns>The largest positive numeric key, or 0 if none exist.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
+        [NovaSharpModuleMethod(Name = "maxn")]
+        public static DynValue MaxN(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue vTable = args.AsType(0, "maxn", DataType.Table, false);
+            Table table = vTable.Table;
+
+            double maxKey = 0;
+
+            foreach (TablePair pair in table.Pairs)
+            {
+                if (pair.Key.Type == DataType.Number)
+                {
+                    double key = pair.Key.Number;
+                    if (key > maxKey && key == Math.Floor(key))
+                    {
+                        maxKey = key;
+                    }
+                }
+            }
+
+            return DynValue.NewNumber(maxKey);
+        }
+
+        /// <summary>
         /// Implements Lua `table.pack`, wrapping arbitrary arguments into a table with field `n` (§6.6).
         /// </summary>
         [NovaSharpModuleMethod(Name = "pack")]

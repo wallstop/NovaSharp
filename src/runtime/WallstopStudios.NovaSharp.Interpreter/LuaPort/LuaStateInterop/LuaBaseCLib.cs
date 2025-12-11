@@ -88,9 +88,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return Char.IsLower(c);
         }
 
+        /// <summary>
+        /// Tests if a character is a punctuation character per C standard ispunct().
+        /// This matches Lua's %p character class behavior.
+        /// Definition: printable character that is not a space or alphanumeric.
+        /// </summary>
+        /// <remarks>
+        /// .NET's Char.IsPunctuation() has a narrower definition that excludes
+        /// characters like $, +, &lt;, =, &gt;, ^, `, |, ~. The C standard ispunct()
+        /// returns true for any printable character that is not space or alphanumeric.
+        /// </remarks>
         internal static bool IsPunctuation(char c)
         {
-            return Char.IsPunctuation(c);
+            // C ispunct(): printable, not space, not alphanumeric
+            // ASCII printable range: 0x21-0x7E (33-126), excludes space (0x20)
+            return c >= 0x21 && c <= 0x7E && !Char.IsLetterOrDigit(c);
         }
 
         internal static bool IsSpace(char c)

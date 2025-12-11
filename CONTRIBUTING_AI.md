@@ -206,6 +206,7 @@ Script.DoString("return x + 1")
 - **Naming**: PascalCase for types/methods, `_camelCase` for private fields
 - **Formatting**: Run `dotnet csharpier format .` before committing — CSharpier is canonical
 - **Lua fixtures**: Preserve 2-space indentation for easier diffing with upstream
+- **Comments**: Use minimal comments - only comment if necessary or if the implementation is unclear
 
 ### Type System
 
@@ -218,6 +219,7 @@ Script.DoString("return x + 1")
 - **No regions**: Never add `#region`/`#endregion` directives; delete any you encounter
 - **Internals access**: Prefer `internal` + `InternalsVisibleTo` over reflection hacks
 - **Reflection policy**: Review `docs/modernization/reflection-audit.md` before adding reflection
+- **Regions**: Never use regions, in production code or test code
 
 ### Enum Conventions
 
@@ -307,6 +309,7 @@ throw new ArgumentNullException("script");  // Use nameof(script)
 - **TUnit only**: Use `global::TUnit.Core.Test`; do not add NUnit fixtures
 - **Async assertions**: Use `await Assert.That(...)` with `.ConfigureAwait(false)` on every await
 - **CA2007 enforcement**: This analyzer is enforced as an error; append `.ConfigureAwait(false)` to all awaits
+- **Lua version**: All new tests should be explicit about any and all Lua versions that the test scenario is valid for. Tests should have both positive and negative cases for features/behavior that do not target all supported Lua versions
 
 ### Test Organization
 
@@ -483,6 +486,10 @@ python scripts/lint/check-userdata-scope-usage.py
 python scripts/lint/check-test-finally.py
 python scripts/lint/check-temp-path-usage.py
 ```
+
+## Tool Use
+
+- Prefer ripgrep (`rg`) over grep for all string searching/filtering
 
 ## Implementation Notes
 

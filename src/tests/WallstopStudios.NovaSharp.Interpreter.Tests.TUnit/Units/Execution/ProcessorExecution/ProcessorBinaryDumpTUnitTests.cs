@@ -12,7 +12,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     public sealed class ProcessorBinaryDumpTUnitTests
     {
         private const ulong DumpChunkMagic = 0x1A0D234E4F4F4D1D;
-        private const int DumpChunkVersion = 0x150;
+
+        // Version 0x151: LuaNumber format (preserves integer vs float subtype)
+        private const int DumpChunkVersion = 0x151;
 
         [global::TUnit.Core.Test]
         public async Task UndumpThrowsWhenHeaderMissing()

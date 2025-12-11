@@ -97,7 +97,13 @@ is(math.min(1, 2, 3, -4), -4)
 
 eq_array({math.modf(2.25)}, {2, 0.25}, "function modf")
 
-is(math.pow(-2, 3), -8, "function pow")
+-- math.pow was deprecated in Lua 5.3 and removed in Lua 5.5
+-- Use the ^ operator instead: base ^ exp
+if math.pow then
+    is(math.pow(-2, 3), -8, "function pow")
+else
+    is(math.pow, nil, "function pow (removed in Lua 5.5)")
+end
 
 like(math.rad(180), '^3%.14', "function rad")
 

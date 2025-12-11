@@ -1,8 +1,10 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -193,9 +195,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `rawlen`, returning the raw length of a string or table without
         /// metamethods (§6.5).
         /// </summary>
+        /// <remarks>
+        /// This function was added in Lua 5.2 and is not available in Lua 5.1 mode.
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments containing the target string/table.</param>
         /// <returns>Length as a number.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "rawlen")]
         public static DynValue RawLen(
             ScriptExecutionContext executionContext,
