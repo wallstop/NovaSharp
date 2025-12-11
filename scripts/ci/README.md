@@ -10,6 +10,13 @@ Scripts in this folder run before the main build/test stages (either locally or 
 - `apply-formatters.sh` — Applies repository-wide fixes (`dotnet csharpier .` + Python-based `format_markdown.py`) and is used by automation to prepare auto-fix branches when linting fails on pull requests.
 - `format_markdown.py` — Uses `mdformat` (via `mdformat-gfm`) to format Markdown deterministically. Supports `--check` and `--fix` modes plus file-scoped or repo-wide execution.
 - `check_markdown_links.py` — Parses Markdown via `markdown-it-py` and validates both HTTP(S) and relative links with deterministic timeouts/retries defined in `.markdown-link-check.json`.
+- `check-fixture-catalog.ps1` — Regenerates the NUnit fixture catalog (via `scripts/tests/update-fixture-catalog.ps1`) and fails if `FixtureCatalogGenerated.cs` changes, ensuring contributors rerun the generator when fixtures move.
+- `check-platform-testhooks.sh` — Runs `scripts/lint/check-platform-testhooks.py` to ensure no new files reference `PlatformAutoDetector.TestHooks` directly; detector overrides must go through the shared scope helpers tracked in PLAN.md.
+- `check-console-capture-semaphore.sh` — Runs `scripts/lint/check-console-capture-semaphore.py`, which rejects references to `ConsoleCaptureCoordinator.Semaphore` outside the coordinator helper and forbids direct instantiation of `ConsoleCaptureScope`/`ConsoleRedirectionScope` so tests keep using the `ConsoleTestUtilities` helpers.
+- `check-userdata-scope.sh` — Runs `scripts/lint/check-userdata-scope-usage.py`, failing when tests call `UserData.RegisterType`/`UserData.UnregisterType` directly outside the approved isolation suites; use `UserDataRegistrationScope` instead.
+- `check-test-finally.sh` — Runs `scripts/lint/check-test-finally.py` to ensure tests continue using the shared cleanup scopes instead of reintroducing manual `try`/`finally` blocks.
+- `check-temp-path-usage.sh` — Runs `scripts/lint/check-temp-path-usage.py`, which flags any new references to `Path.GetTempPath()` inside the test tree so contributors keep using `TempFileScope`/`TempDirectoryScope` for cleanup.
+- `check-shell-executable.sh` — Runs `scripts/lint/check-shell-executable.py`, which fails when any `.sh` file in the repository is missing the executable bit in git. This prevents CI failures from permission denied errors on Linux/macOS runners.
 
 ## Usage
 

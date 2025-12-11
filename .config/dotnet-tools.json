@@ -13,13 +13,22 @@
       "version": "6.0.4",
       "commands": [
         "coverlet"
-      ]
+      ],
+      "rollForward": false
     },
     "dotnet-reportgenerator-globaltool": {
       "version": "5.5.0",
       "commands": [
         "reportgenerator"
-      ]
+      ],
+      "rollForward": false
+    },
+    "ilspycmd": {
+      "version": "9.1.0.7988",
+      "commands": [
+        "ilspycmd"
+      ],
+      "rollForward": false
     }
   }
 }

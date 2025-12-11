@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>WallstopStudios.NovaSharp.Cli</AssemblyName>
+        <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+        <Nullable>disable</Nullable>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <LangVersion>9</LangVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="$(ToolingRoot)WallstopStudios.NovaSharp.Hardwire/WallstopStudios.NovaSharp.Hardwire.csproj" />
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(DebuggersRoot)WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj" />
+        <ProjectReference Include="$(DebuggersRoot)WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Remove="$(MSBuildProjectDirectory)/moonsharp.ico" />
+    </ItemGroup>
+</Project>

@@ -5,6 +5,42 @@ log() {
   printf '%s\n' "$1"
 }
 
+warn() {
+  printf '%s\n' "[pre-commit] WARNING: $1" >&2
+}
+
+# Runs git add with retry logic to handle index.lock contention.
+# Usage: git_add_with_retry [file ...]
+git_add_with_retry() {
+  max_retries=5
+  retry_delay=1
+  attempt=0
+
+  while [ "$attempt" -lt "$max_retries" ]; do
+    if git add -- "$@" 2>/dev/null; then
+      return 0
+    fi
+
+    # Check if the failure was due to index.lock
+    if [ -f ".git/index.lock" ]; then
+      attempt=$((attempt + 1))
+      if [ "$attempt" -lt "$max_retries" ]; then
+        warn "git index.lock contention detected, retrying in ${retry_delay}s (attempt $attempt/$max_retries)..."
+        sleep "$retry_delay"
+        # Exponential backoff with jitter
+        retry_delay=$((retry_delay * 2))
+      fi
+    else
+      # Some other error occurred, fail immediately
+      git add -- "$@"
+      return $?
+    fi
+  done
+
+  # Final attempt - let it fail with the actual error message
+  git add -- "$@"
+}
+
 ensure_tool_on_path() {
   tool_name="$1"
   friendly_name="$2"
@@ -39,6 +75,27 @@ run_python() {
   exit 1
 }
 
+check_mdformat_version() {
+  # Expected version from requirements.tooling.txt
+  expected_version="1.0.0"
+
+  # Get installed version (returns empty if not installed)
+  installed_version="$(run_python -c "import mdformat; print(mdformat.__version__)" 2>/dev/null || printf '')"
+
+  if [ -z "$installed_version" ]; then
+    warn "mdformat is not installed. Run 'python -m pip install -r requirements.tooling.txt' to install."
+    return 1
+  fi
+
+  if [ "$installed_version" != "$expected_version" ]; then
+    warn "mdformat version mismatch: installed $installed_version, expected $expected_version"
+    warn "Run 'python -m pip install -r requirements.tooling.txt' to update."
+    warn "Continuing with installed version (may cause CI failures)..."
+  fi
+
+  return 0
+}
+
 staged_files_for_pattern() {
   pattern="$1"
   git diff --cached --name-only --diff-filter=ACM -- "$pattern"
@@ -69,7 +126,7 @@ format_all_csharp_files() {
     shift
     IFS=$old_ifs
 
-    git add -- "$@"
+    git_add_with_retry "$@"
   )
 }
 
@@ -79,6 +136,9 @@ format_markdown_files() {
     log "[pre-commit] No staged Markdown files detected; skipping Markdown checks."
     return
   fi
+
+  # Warn if mdformat version doesn't match requirements
+  check_mdformat_version || true
 
   (
     set -f
@@ -100,7 +160,7 @@ format_markdown_files() {
     run_python scripts/ci/check_markdown_links.py --files "$@"
 
     log "[pre-commit] Restaging formatted Markdown files..."
-    git add -- "$@"
+    git_add_with_retry "$@"
   )
 }
 
@@ -108,7 +168,7 @@ update_documentation_audit_log() {
   log "[pre-commit] Refreshing documentation audit log..."
   run_python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
   if [ -f documentation_audit.log ]; then
-    git add documentation_audit.log
+    git_add_with_retry documentation_audit.log
   fi
 }
 
@@ -116,7 +176,144 @@ update_naming_audit_log() {
   log "[pre-commit] Refreshing naming audit log..."
   run_python tools/NamingAudit/naming_audit.py --write-log naming_audit.log
   if [ -f naming_audit.log ]; then
-    git add naming_audit.log
+    git_add_with_retry naming_audit.log
+  fi
+}
+
+run_powershell_script() {
+  script="$1"
+  if command -v pwsh >/dev/null 2>&1; then
+    pwsh -NoLogo -NoProfile -File "$script"
+    return
+  fi
+
+  if command -v powershell >/dev/null 2>&1; then
+    powershell -NoLogo -NoProfile -File "$script"
+    return
+  fi
+
+  printf '%s\n' "[pre-commit] PowerShell is required to run $script. Install pwsh or Windows PowerShell to keep the fixture catalog in sync." >&2
+  exit 1
+}
+
+update_fixture_catalog() {
+  log "[pre-commit] Regenerating NUnit fixture catalog..."
+  run_powershell_script ./scripts/tests/update-fixture-catalog.ps1 >/dev/null
+  git_add_with_retry src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/FixtureCatalogGenerated.cs
+}
+
+update_spelling_audit_log() {
+  log "[pre-commit] Refreshing spelling audit log..."
+  if run_python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log 2>/dev/null; then
+    if [ -f spelling_audit.log ]; then
+      git_add_with_retry spelling_audit.log
+    fi
+  else
+    warn "Spelling audit failed (codespell may not be installed). Run 'pip install -r requirements.tooling.txt' to enable."
+  fi
+}
+
+check_branding() {
+  log "[pre-commit] Checking NovaSharp branding..."
+  # Check for MoonSharp-branded filenames in staged files
+  moonsharp_files="$(git diff --cached --name-only --diff-filter=ACM | grep -i 'MoonSharp' || printf '')"
+  if [ -n "$moonsharp_files" ]; then
+    printf '%s\n' "[pre-commit] ERROR: MoonSharp-branded filenames detected in staged files:" >&2
+    printf '%s\n' "$moonsharp_files" >&2
+    exit 1
+  fi
+
+  # Check for MoonSharp content in staged files (excluding allowlisted paths)
+  staged_output="$(git diff --cached --name-only --diff-filter=ACM || printf '')"
+  if [ -z "$staged_output" ]; then
+    return
+  fi
+
+  # Allowlist for files that may legitimately contain MoonSharp references
+  # (performance comparisons, branding enforcement scripts, documentation about branding)
+
+  violations=""
+  for file in $staged_output; do
+    # Skip allowlisted files
+    case "$file" in
+      docs/Performance.md|README.md|src/samples/Tutorial/Tutorials/readme.md|moonsharp_DescriptorHelpers.cs|AGENTS.md|PLAN.md) continue ;;
+      src/tooling/WallstopStudios.NovaSharp.Benchmarks/PerformanceReportWriter.cs) continue ;;
+      scripts/branding/ensure-novasharp-branding.sh) continue ;;
+      scripts/dev/pre-commit.sh|scripts/dev/README.md) continue ;;  # Branding check documentation
+      src/tooling/WallstopStudios.NovaSharp.Comparison*) continue ;;
+    esac
+
+    # Check staged content for MoonSharp
+    if git show ":$file" 2>/dev/null | grep -q 'MoonSharp'; then
+      violations="$violations$file\n"
+    fi
+  done
+
+  if [ -n "$violations" ]; then
+    printf '%s\n' "[pre-commit] ERROR: MoonSharp identifier detected in staged content:" >&2
+    printf "$violations" >&2
+    printf '%s\n' "Replace with NovaSharp or add to the allowlist in scripts/branding/ensure-novasharp-branding.sh" >&2
+    exit 1
+  fi
+}
+
+check_namespace_alignment() {
+  log "[pre-commit] Checking namespace alignment..."
+  if ! run_python tools/NamespaceAudit/namespace_audit.py; then
+    printf '%s\n' "[pre-commit] ERROR: Namespace mismatches detected. Fix the namespaces to match directory layout." >&2
+    exit 1
+  fi
+}
+
+check_shell_executable() {
+  log "[pre-commit] Checking shell script permissions..."
+  if ! run_python scripts/lint/check-shell-executable.py 2>/dev/null; then
+    printf '%s\n' "[pre-commit] ERROR: Shell scripts missing executable bit. See message above for fix." >&2
+    exit 1
+  fi
+}
+
+check_shell_python_invocation() {
+  log "[pre-commit] Checking shell script Python invocation patterns..."
+  if ! run_python scripts/lint/check-shell-python-invocation.py 2>/dev/null; then
+    printf '%s\n' "[pre-commit] ERROR: Shell scripts must use explicit 'python' to invoke .py files. See message above." >&2
+    exit 1
+  fi
+}
+
+check_test_lint() {
+  # Only run test linting if test files are staged
+  test_files="$(git diff --cached --name-only --diff-filter=ACM -- 'src/tests/*.cs' || printf '')"
+  if [ -z "$test_files" ]; then
+    return
+  fi
+
+  log "[pre-commit] Running test infrastructure lint checks..."
+  lint_failed=0
+
+  # Check for temp path usage violations
+  if ! run_python scripts/lint/check-temp-path-usage.py 2>/dev/null; then
+    lint_failed=1
+  fi
+
+  # Check for userdata scope violations
+  if ! run_python scripts/lint/check-userdata-scope-usage.py 2>/dev/null; then
+    lint_failed=1
+  fi
+
+  # Check for console capture violations
+  if ! run_python scripts/lint/check-console-capture-semaphore.py 2>/dev/null; then
+    lint_failed=1
+  fi
+
+  # Check for finally block violations
+  if ! run_python scripts/lint/check-test-finally.py 2>/dev/null; then
+    lint_failed=1
+  fi
+
+  if [ "$lint_failed" -eq 1 ]; then
+    printf '%s\n' "[pre-commit] ERROR: Test lint checks failed. See messages above." >&2
+    exit 1
   fi
 }
 
@@ -134,9 +331,25 @@ ensure_tool_on_path "dotnet" ".NET SDK"
 log "[pre-commit] Restoring dotnet tools (CSharpier)..."
 dotnet tool restore >/dev/null
 
+# === Auto-fix / Auto-update Hooks ===
+# These hooks auto-fix issues and restage files
+
 format_all_csharp_files
 format_markdown_files
 update_documentation_audit_log
 update_naming_audit_log
+update_spelling_audit_log
+update_fixture_catalog
+
+# === Validation Hooks ===
+# These hooks check for issues and fail the commit if found
+
+check_branding
+check_namespace_alignment
+check_shell_executable
+check_shell_python_invocation
+check_test_lint
 
 log "[pre-commit] Completed successfully."
+
+

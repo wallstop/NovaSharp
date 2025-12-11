@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Description>VS Code Debug Adapter Protocol (DAP) implementation for NovaSharp. Enables full debugging experience including breakpoints, stepping, variable inspection, and watch expressions in Visual Studio Code.</Description>
+        <Copyright>Copyright (c) 2024-2025 Wallstop Studios. Derived from work by Marco Mastropaolo (c) 2014-2016.</Copyright>
+        <AssemblyTitle>WallstopStudios.NovaSharp.VsCodeDebugger</AssemblyTitle>
+        <VersionPrefix>3.0.0</VersionPrefix>
+        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+        <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
+        <AssemblyName>WallstopStudios.NovaSharp.VsCodeDebugger</AssemblyName>
+        <PackageId>WallstopStudios.NovaSharp.VsCodeDebugger</PackageId>
+        <RootNamespace>WallstopStudios.NovaSharp.VsCodeDebugger</RootNamespace>
+        <LangVersion>latest</LangVersion>
+        <IsPackable>true</IsPackable>
+        <!-- TODO: Enable GenerateDocumentationFile after fixing all XML comment issues -->
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(RepoRoot)README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Remove="$(MSBuildProjectDirectory)/keypair.snk" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+    </ItemGroup>
+</Project>

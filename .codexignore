@@ -1,0 +1,35 @@
+## Build outputs and caches
+bin/
+obj/
+**/bin/
+**/obj/
+artifacts/
+BenchmarkDotNet.Artifacts/
+TestResults/
+
+## Generated coverage & reports
+docs/coverage/latest/
+docs/coverage/history/
+artifacts/coverage/
+*.trx
+*.coverage*
+
+## Logs / temp files
+*.log
+*.tmp
+*.cache
+*.user
+
+## IDE / tooling state
+.vs/
+.idea/
+.vscode/
+
+## Dependency folders
+node_modules/
+packages/
+
+## Misc large artefacts
+*.nupkg
+*.snupkg
+*.tgz

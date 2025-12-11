@@ -2,9 +2,10 @@
 param(
     [string]$Configuration = "Release",
     [string]$Solution = "src/NovaSharp.sln",
-    [string]$TestProject = "src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj",
+    [string]$TestProject = "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj",
     [switch]$SkipTests,
-[switch]$SkipToolRestore
+    [switch]$SkipToolRestore,
+    [switch]$SkipRestore
 )
 
 $ErrorActionPreference = "Stop"
@@ -53,6 +54,10 @@ if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
     Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 hosts can run the net8 test runner."
 }
 
+# Suppress TUnit ASCII banner and telemetry messages
+$env:TESTINGPLATFORM_NOBANNER = "1"
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+
 Push-Location $repoRoot
 try {
     if (-not $SkipToolRestore) {
@@ -64,21 +69,43 @@ try {
     }
 
     Write-Host "Building $Solution (configuration: $Configuration)..."
-    dotnet build $Solution -c $Configuration
+    $restoreArgs = @()
+    if ($SkipRestore) {
+        $restoreArgs += "--no-restore"
+    }
+
+    dotnet build $Solution -c $Configuration /m @restoreArgs
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet build $Solution -c $Configuration failed with exit code $LASTEXITCODE."
     }
 
     if (-not $SkipTests) {
         $resultsDir = Join-Path $repoRoot "artifacts/test-results"
-        if (-not (Test-Path $resultsDir)) {
-            New-Item -ItemType Directory -Force -Path $resultsDir | Out-Null
+        $placeholderPath = Join-Path $resultsDir ".placeholder"
+
+        # Clear and recreate the results directory
+        if (Test-Path $resultsDir) {
+            Remove-Item -Recurse -Force $resultsDir
         }
+        New-Item -ItemType Directory -Force -Path $resultsDir | Out-Null
+
+        # Create placeholder file to ensure artifact upload succeeds even if tests fail before emitting TRX
+        $placeholderContent = @"
+NovaSharp test results were not generated. This placeholder file ensures CI artifact uploads succeed even when the test runner fails before emitting TRX output. Inspect the workflow logs for the full dotnet test failure details.
+"@
+        Set-Content -Path $placeholderPath -Value $placeholderContent
 
         Write-Host "Running tests for $TestProject..."
-        dotnet test $TestProject -c $Configuration --no-build --logger "trx;LogFileName=NovaSharpTests.trx" --results-directory $resultsDir
+        dotnet test --project $TestProject -c $Configuration --no-build `
+            --report-trx --report-trx-filename "NovaSharpInterpreterTUnit.trx" `
+            --results-directory $resultsDir
         if ($LASTEXITCODE -ne 0) {
             throw "dotnet test $TestProject failed with exit code $LASTEXITCODE."
+        }
+
+        # Remove placeholder after successful test run
+        if (Test-Path $placeholderPath) {
+            Remove-Item -Force $placeholderPath
         }
     }
 

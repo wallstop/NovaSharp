@@ -8,6 +8,7 @@ if [[ -z "$repo_root" ]]; then
 fi
 
 skip_build=false
+skip_restore=false
 configuration="Release"
 minimum_interpreter_coverage="70.0"
 minimum_interpreter_branch_coverage="0"
@@ -25,6 +26,7 @@ Usage: ./scripts/coverage/coverage.sh [options]
     --minimum-interpreter-method-coverage <value>
                                              Minimum NovaSharp.Interpreter method coverage percentage (default: 0)
     --coverage-gating-mode <monitor|enforce> Override COVERAGE_GATING_MODE (monitor = warn at ≥95%, enforce = fail)
+    --skip-restore                            Skip dotnet restore and pass --no-restore to builds/tests
 EOF
 }
 
@@ -53,6 +55,10 @@ while [[ $# -gt 0 ]]; do
         --coverage-gating-mode)
             coverage_gating_mode="$2"
             shift 2
+            ;;
+        --skip-restore)
+            skip_restore=true
+            shift
             ;;
         -h|--help)
             usage
@@ -104,6 +110,43 @@ should_emit_full_summary() {
     return 1
 }
 
+run_coverlet() {
+    local runner_output="$1"
+    local target_args="$2"
+    local coverage_base="$3"
+    local label="$4"
+    shift 4
+    local extra_args=("$@")
+
+    log "Collecting coverage via coverlet ($label)..."
+
+    local cmd=(
+        dotnet tool run coverlet "$runner_output"
+        --target "dotnet"
+        --targetargs "$target_args"
+        --format "json"
+        --format "lcov"
+        --format "cobertura"
+        --format "opencover"
+        --output "$coverage_base"
+        --verbosity "minimal"
+        --include "[WallstopStudios.NovaSharp.*]*"
+        --exclude "[WallstopStudios.NovaSharp.*Tests*]*"
+    )
+
+    if [[ ${#extra_args[@]} -gt 0 ]]; then
+        cmd+=("${extra_args[@]}")
+    fi
+
+    # Note: coverlet returns non-zero if tests fail, even though coverage was collected.
+    # We check for output files rather than exit code to determine success.
+    local exit_code=0
+    "${cmd[@]}" || exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        log "Warning: Test runner returned exit code $exit_code (some tests may have failed)"
+    fi
+}
+
 pushd "$repo_root" >/dev/null
 
 trap 'popd >/dev/null' EXIT
@@ -113,41 +156,58 @@ if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
     log "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 runtimes can host net8 test runners."
 fi
 
+# Suppress TUnit ASCII banner and telemetry messages
+export TESTINGPLATFORM_NOBANNER=1
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
 log "Restoring local dotnet tools..."
 dotnet tool restore >/dev/null
+
+if [[ "$skip_restore" != true ]]; then
+    log "Restoring solution packages..."
+    dotnet restore "src/NovaSharp.sln" >/dev/null
+fi
 
 coverage_root="$repo_root/artifacts/coverage"
 mkdir -p "$coverage_root"
 build_log_path="$coverage_root/build.log"
-runner_project="src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj"
+tunit_runner_project="src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj"
+remote_runner_project="src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj"
 
 if [[ "$skip_build" != true ]]; then
     log "Building solution (configuration: $configuration)..."
     : > "$build_log_path"
-    if ! dotnet build "src/NovaSharp.sln" -c "$configuration" 2>&1 | tee "$build_log_path"; then
+    build_restore_flag=()
+    if [[ "$skip_restore" == true ]]; then
+        build_restore_flag=(--no-restore)
+    fi
+
+    # Build with maximum parallelism and node reuse for optimal performance.
+    # Disable ContinuousIntegrationBuild to ensure coverlet can instrument assemblies
+    # (deterministic builds with source-link paths break coverage collection).
+    if ! dotnet build "src/NovaSharp.sln" -c "$configuration" --nologo -m /nodeReuse:true -p:ContinuousIntegrationBuild=false "${build_restore_flag[@]}" 2>&1 | tee "$build_log_path"; then
         echo ""
         echo "dotnet build failed, tailing $build_log_path:"
         tail -n 200 "$build_log_path"
         error_exit "dotnet build src/NovaSharp.sln -c $configuration failed."
     fi
 
-    log "Building test project (configuration: $configuration)..."
-    if ! dotnet build "$runner_project" -c "$configuration" --no-restore 2>&1 | tee -a "$build_log_path"; then
-        echo ""
-        echo "dotnet build $runner_project failed, tailing $build_log_path:"
-        tail -n 200 "$build_log_path"
-        error_exit "dotnet build $runner_project -c $configuration failed."
-    fi
+    # Test projects are built as part of the solution; no need to rebuild them individually.
 fi
 
 test_results_dir="$coverage_root/test-results"
 mkdir -p "$test_results_dir"
+tunit_results_dir="$test_results_dir/tunit"
+remote_results_dir="$test_results_dir/remote"
+mkdir -p "$tunit_results_dir" "$remote_results_dir"
 
-runner_output="$repo_root/src/tests/NovaSharp.Interpreter.Tests/bin/$configuration/net8.0/NovaSharp.Interpreter.Tests.dll"
-if [[ ! -f "$runner_output" ]]; then
-    message="Runner output not found at '$runner_output'."
+tunit_runner_output="$repo_root/src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/bin/$configuration/net8.0/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.dll"
+
+tunit_message_prefix="TUnit runner output not found at '$tunit_runner_output'."
+if [[ ! -f "$tunit_runner_output" ]]; then
+    message="$tunit_message_prefix"
     if [[ "$skip_build" == true ]]; then
-        message+=" Re-run without --skip-build or build the test project manually."
+        message+=" Re-run without --skip-build or build the TUnit test project manually."
     else
         if [[ -f "$build_log_path" ]]; then
             message+=" Inspect $build_log_path for build errors."
@@ -158,29 +218,53 @@ if [[ ! -f "$runner_output" ]]; then
     error_exit "$message"
 fi
 
+remote_runner_output="$repo_root/src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/bin/$configuration/net8.0/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.dll"
+if [[ ! -f "$remote_runner_output" ]]; then
+    message="Remote debugger runner output not found at '$remote_runner_output'."
+    if [[ "$skip_build" == true ]]; then
+        message+=" Re-run without --skip-build or build the TUnit test project manually."
+    else
+        if [[ -f "$build_log_path" ]]; then
+            message+=" Inspect $build_log_path for build errors."
+        else
+            message+=" dotnet build may have failed."
+        fi
+    fi
+    error_exit "$message"
+fi
 coverage_base="$coverage_root/coverage"
 report_target="$repo_root/docs/coverage/latest"
 
-target_args=(
-    test "$runner_project"
+# TUnit coverage goes to a subdirectory
+tunit_coverage_dir="$coverage_root/tunit"
+mkdir -p "$tunit_coverage_dir"
+tunit_coverage_base="$tunit_coverage_dir/coverage"
+tunit_coverage_json="${tunit_coverage_base}.json"
+
+# Use 'run' instead of 'test' because Microsoft.Testing.Platform
+# (configured in global.json) does not support 'dotnet test <project>' syntax.
+tunit_target_args=(
+    run --project "$tunit_runner_project"
     -c "$configuration"
     --no-build
-    --logger "trx;LogFileName=NovaSharpTests.trx"
-    --results-directory "$test_results_dir"
 )
-joined_target_args="$(printf "%s " "${target_args[@]}")"
-joined_target_args="${joined_target_args% }"
+remote_target_args=(
+    run --project "$remote_runner_project"
+    -c "$configuration"
+    --no-build
+)
+tunit_joined_target_args="$(printf "%s " "${tunit_target_args[@]}")"
+tunit_joined_target_args="${tunit_joined_target_args% }"
+remote_joined_target_args="$(printf "%s " "${remote_target_args[@]}")"
+remote_joined_target_args="${remote_joined_target_args% }"
 
-log "Collecting coverage via coverlet..."
-dotnet tool run coverlet "$runner_output" \
-    --target "dotnet" \
-    --targetargs "$joined_target_args" \
-    --format "lcov" \
-    --format "cobertura" \
-    --format "opencover" \
-    --output "$coverage_base" \
-    --include "[NovaSharp.*]*" \
-    --exclude "[NovaSharp.*Tests*]*"
+run_coverlet "$tunit_runner_output" "$tunit_joined_target_args" "$tunit_coverage_base" "Interpreter TUnit"
+
+if [[ ! -f "$tunit_coverage_json" ]]; then
+    error_exit "Coverage report not found at '$tunit_coverage_json' after running TUnit tests."
+fi
+
+run_coverlet "$remote_runner_output" "$remote_joined_target_args" "$coverage_base" "RemoteDebugger" --merge-with "$tunit_coverage_json"
 
 log "Generating report set..."
 rm -rf "$report_target"
@@ -194,7 +278,7 @@ dotnet tool run reportgenerator \
     "-reports:$cobertura_report" \
     "-targetdir:$report_target" \
     "-reporttypes:$report_types" \
-    "-assemblyfilters:+NovaSharp.*"
+    "-assemblyfilters:+WallstopStudios.NovaSharp.*"
 
 summary_path="$report_target/Summary.txt"
 if [[ -f "$summary_path" ]]; then
@@ -236,13 +320,14 @@ summary_json="$report_target/Summary.json"
 python_cmd="$(ensure_python)"
 
 if [[ -f "$summary_json" ]]; then
-    read -r interpreter_line interpreter_branch interpreter_method <<<"$("$python_cmd" - <<'PY'
+    read -r interpreter_line interpreter_branch interpreter_method <<<"$("$python_cmd" - "$summary_json" <<'PY'
 import json, sys
 from pathlib import Path
-data = json.loads(Path("$summary_json").read_text(encoding="utf-8"))
+summary_path = sys.argv[1]
+data = json.loads(Path(summary_path).read_text(encoding="utf-8"))
 assemblies = data.get("coverage", {}).get("assemblies", [])
 for asm in assemblies:
-    if asm.get("name") == "NovaSharp.Interpreter":
+    if asm.get("name") == "WallstopStudios.NovaSharp.Interpreter":
         print(
             asm.get("coverage", 0),
             asm.get("branchcoverage", 0),

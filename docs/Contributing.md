@@ -21,9 +21,9 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 ## Build & Test Commands
 
 - Full solution build: `dotnet build src/NovaSharp.sln -c Release`
-- Interpreter-only build: `dotnet build src/runtime/NovaSharp.Interpreter/NovaSharp.Interpreter.csproj`
+- Interpreter-only build: `dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/NovaSharp.Interpreter.csproj`
 - Interpreter tests (Release):\
-  `dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release --logger "trx;LogFileName=NovaSharpTests.trx"`
+  `dotnet test --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx"`
 
 ## Coverage
 

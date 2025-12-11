@@ -13,16 +13,19 @@ if git ls-files -- '*MoonSharp*' | grep -q .; then
 fi
 
 # Explicit allowlist for legacy comparison artefacts we intentionally keep.
+# Also includes scripts that document the branding check itself.
 readarray -t allowlist <<'EOF'
 :(exclude)docs/Performance.md
 :(exclude)README.md
 :(exclude)src/samples/Tutorial/Tutorials/readme.md
 :(exclude)moonsharp_DescriptorHelpers.cs
-:(exclude)src/tooling/Benchmarks/NovaSharp.Benchmarks/PerformanceReportWriter.cs
+:(exclude)src/tooling/WallstopStudios.NovaSharp.Benchmarks/PerformanceReportWriter.cs
 :(exclude)scripts/branding/ensure-novasharp-branding.sh
+:(exclude)scripts/dev/pre-commit.sh
+:(exclude)scripts/dev/README.md
 :(exclude)AGENTS.md
-:(exclude)src/tooling/NovaSharp.Comparison
-:(exclude)src/tooling/NovaSharp.Comparison/**
+:(exclude)src/tooling/WallstopStudios.NovaSharp.Comparison
+:(exclude)src/tooling/WallstopStudios.NovaSharp.Comparison/**
 :(exclude)PLAN.md
 EOF
 

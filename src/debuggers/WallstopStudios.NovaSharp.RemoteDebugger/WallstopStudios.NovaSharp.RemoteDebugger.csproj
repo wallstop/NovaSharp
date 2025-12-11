@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Description>Web-based remote debugger for NovaSharp. Provides a browser-accessible debugging interface for Lua scripts running in Unity or other .NET hosts.</Description>
+        <Copyright>Copyright (c) 2024-2025 Wallstop Studios. Derived from work by Marco Mastropaolo (c) 2014-2016.</Copyright>
+        <AssemblyTitle>WallstopStudios.NovaSharp.RemoteDebugger</AssemblyTitle>
+        <VersionPrefix>3.0.0</VersionPrefix>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AssemblyName>WallstopStudios.NovaSharp.RemoteDebugger</AssemblyName>
+        <PackageId>WallstopStudios.NovaSharp.RemoteDebugger</PackageId>
+        <RootNamespace>WallstopStudios.NovaSharp.RemoteDebugger</RootNamespace>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <IsPackable>true</IsPackable>
+        <!-- TODO: Enable GenerateDocumentationFile after fixing all XML comment issues -->
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(RepoRoot)README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Resources\Main.html" />
+        <EmbeddedResource Include="Resources\Main.swf" />
+        <EmbeddedResource Include="Resources\playerProductInstall.swf" />
+        <EmbeddedResource Include="Resources\swfobject.js" />
+        <EmbeddedResource Include="Resources\bootstrap.min.css" />
+        <EmbeddedResource Include="Resources\JumpPage.html" />
+        <EmbeddedResource Include="Resources\NovaSharpdbg.png" />
+        <EmbeddedResource Include="Resources\theme.css" />
+        <EmbeddedResource Include="Resources\bootstrap.min.js" />
+        <EmbeddedResource Include="Resources\jquery.min.js" />
+    </ItemGroup>
+</Project>

@@ -1,0 +1,1040 @@
+namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
+    using DataStructs;
+    using Errors;
+    using Sandboxing;
+
+    /// <summary>
+    /// A class representing a Lua table.
+    /// </summary>
+    public class Table : RefIdObject, IScriptPrivateResource
+    {
+        // Estimated base memory overhead for an empty Table (LinkedList, three indexes, metadata).
+        // This is a conservative estimate: 4 object headers + 3 dictionary overheads + misc.
+        private const int BaseTableOverhead = 256;
+
+        // Estimated overhead per entry (LinkedListNode, TablePair struct, dictionary entry overhead).
+        private const int PerEntryOverhead = 64;
+
+        private readonly LinkedList<TablePair> _values;
+        private readonly LinkedListIndex<DynValue, TablePair> _valueMap;
+        private readonly LinkedListIndex<string, TablePair> _stringMap;
+        private readonly LinkedListIndex<int, TablePair> _arrayMap;
+        private readonly Script _owner;
+
+        private int _initArray;
+        private int _cachedLength = -1;
+        private bool _containsNilEntries;
+        private int _trackedEntryCount;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Table"/> class.
+        /// </summary>
+        /// <param name="owner">The owner script.</param>
+        public Table(Script owner)
+        {
+            _values = new LinkedList<TablePair>();
+            _stringMap = new LinkedListIndex<string, TablePair>(_values);
+            _arrayMap = new LinkedListIndex<int, TablePair>(_values);
+            _valueMap = new LinkedListIndex<DynValue, TablePair>(_values);
+            _owner = owner;
+
+            // Track initial allocation if memory tracking is enabled
+            AllocationTracker tracker = owner?.AllocationTracker;
+            if (tracker != null)
+            {
+                tracker.RecordAllocation(BaseTableOverhead);
+            }
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Table"/> class.
+        /// </summary>
+        /// <param name="owner">The owner.</param>
+        /// <param name="arrayValues">The values for the "array-like" part of the table.</param>
+        public Table(Script owner, params DynValue[] arrayValues)
+            : this(owner)
+        {
+            if (arrayValues == null)
+            {
+                throw new ArgumentNullException(nameof(arrayValues));
+            }
+
+            for (int i = 0; i < arrayValues.Length; i++)
+            {
+                Set(DynValue.NewNumber(i + 1), arrayValues[i]);
+            }
+        }
+
+        /// <summary>
+        /// Gets the script owning this resource.
+        /// </summary>
+        public Script OwnerScript
+        {
+            get { return _owner; }
+        }
+
+        /// <summary>
+        /// Removes all items from the Table.
+        /// </summary>
+        public void Clear()
+        {
+            _values.Clear();
+            _stringMap.Clear();
+            _arrayMap.Clear();
+            _valueMap.Clear();
+            _cachedLength = -1;
+        }
+
+        /// <summary>
+        /// Gets the integral key from a double.
+        /// </summary>
+        private static int GetIntegralKey(double d)
+        {
+            int v = ((int)d);
+
+            if (d >= 1.0 && d == v)
+            {
+                return v;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Gets or sets the
+        /// <see cref="System.Object" /> with the specified key(s).
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <value>
+        /// The <see cref="System.Object" />.
+        /// </value>
+        /// <param name="keys">The keys to access the table and subtables</param>
+        [SuppressMessage(
+            "Design",
+            "CA1043:Use Integral Or String Argument For Indexers",
+            Justification = "Lua tables support arbitrary key sequences and the indexer mirrors that flexibility."
+        )]
+        public object this[params object[] keys]
+        {
+            get { return Get(keys).ToObject(); }
+            set { Set(keys, DynValue.FromObject(OwnerScript, value)); }
+        }
+
+        /// <summary>
+        /// Gets or sets the <see cref="System.Object"/> with the specified key(s).
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// </summary>
+        /// <value>
+        /// The <see cref="System.Object"/>.
+        /// </value>
+        /// <param name="key">The key.</param>
+        /// <returns></returns>
+        public object this[object key]
+        {
+            get { return Get(key).ToObject(); }
+            set { Set(key, DynValue.FromObject(OwnerScript, value)); }
+        }
+
+        private Table ResolveMultipleKeys(object[] keys, out object key)
+        {
+            //Contract.Ensures(Contract.Result<Table>() != null);
+            //Contract.Requires(keys != null);
+
+            Table t = this;
+            key = (keys.Length > 0) ? keys[0] : null;
+
+            for (int i = 1; i < keys.Length; ++i)
+            {
+                DynValue vt = t.RawGet(key);
+
+                if (vt == null)
+                {
+                    throw new ScriptRuntimeException("Key '{0}' did not point to anything");
+                }
+
+                if (vt.Type != DataType.Table)
+                {
+                    throw new ScriptRuntimeException("Key '{0}' did not point to a table");
+                }
+
+                t = vt.Table;
+                key = keys[i];
+            }
+
+            return t;
+        }
+
+        /// <summary>
+        /// Append the value to the table using the next available integer index.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        public void Append(DynValue value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            this.CheckScriptOwnership(value);
+            PerformTableSet(
+                _arrayMap,
+                Length + 1,
+                DynValue.FromNumber(Length + 1),
+                value,
+                true,
+                Length + 1
+            );
+        }
+
+        private void PerformTableSet<T>(
+            LinkedListIndex<T, TablePair> listIndex,
+            T key,
+            DynValue keyDynValue,
+            DynValue value,
+            bool isNumber,
+            int appendKey
+        )
+        {
+            TablePair prev = listIndex.Set(key, new TablePair(keyDynValue, value));
+
+            // Track entry additions/removals for memory accounting
+            AllocationTracker tracker = _owner?.AllocationTracker;
+            if (tracker != null)
+            {
+                bool wasEmpty = prev.Value == null || prev.Value.IsNil();
+                bool isNowEmpty = value.IsNil();
+
+                if (wasEmpty && !isNowEmpty)
+                {
+                    // New entry added
+                    tracker.RecordAllocation(PerEntryOverhead);
+                    _trackedEntryCount++;
+                }
+                else if (!wasEmpty && isNowEmpty)
+                {
+                    // Entry removed (set to nil)
+                    tracker.RecordDeallocation(PerEntryOverhead);
+                    _trackedEntryCount--;
+                }
+            }
+
+            // If this is an insert, we can invalidate all iterators and collect dead keys
+            if (
+                _containsNilEntries
+                && value.IsNotNil()
+                && (prev.Value == null || prev.Value.IsNil())
+            )
+            {
+                CollectDeadKeys();
+            }
+            // If this value is nil (and we didn't collect), set that there are nil entries, and invalidate array len cache
+            else if (value.IsNil())
+            {
+                _containsNilEntries = true;
+
+                if (isNumber)
+                {
+                    _cachedLength = -1;
+                }
+            }
+            else if (isNumber)
+            {
+                // If this is an array insert, we might have to invalidate the array length
+                if (prev.Value == null || prev.Value.IsNilOrNan())
+                {
+                    // If this is an array append, let's check the next element before blindly invalidating
+                    if (appendKey >= 0)
+                    {
+                        LinkedListNode<TablePair> next = _arrayMap.Find(appendKey + 1);
+                        if (next == null || next.Value.Value == null || next.Value.Value.IsNil())
+                        {
+                            _cachedLength += 1;
+                        }
+                        else
+                        {
+                            _cachedLength = -1;
+                        }
+                    }
+                    else
+                    {
+                        _cachedLength = -1;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets the value associated to the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        public void Set(string key, DynValue value)
+        {
+            if (key == null)
+            {
+                throw ScriptRuntimeException.TableIndexIsNil();
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            this.CheckScriptOwnership(value);
+            PerformTableSet(_stringMap, key, DynValue.NewString(key), value, false, -1);
+        }
+
+        /// <summary>
+        /// Sets the value associated to the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        public void Set(int key, DynValue value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            this.CheckScriptOwnership(value);
+            PerformTableSet(_arrayMap, key, DynValue.FromNumber(key), value, true, -1);
+        }
+
+        /// <summary>
+        /// Sets the value associated to the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        public void Set(DynValue key, DynValue value)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            if (key.IsNilOrNan())
+            {
+                if (key.IsNil())
+                {
+                    throw ScriptRuntimeException.TableIndexIsNil();
+                }
+                else
+                {
+                    throw ScriptRuntimeException.TableIndexIsNaN();
+                }
+            }
+
+            if (key.Type == DataType.String)
+            {
+                Set(key.String, value);
+                return;
+            }
+
+            if (key.Type == DataType.Number)
+            {
+                int idx = GetIntegralKey(key.Number);
+
+                if (idx > 0)
+                {
+                    Set(idx, value);
+                    return;
+                }
+            }
+
+            this.CheckScriptOwnership(key);
+            this.CheckScriptOwnership(value);
+
+            PerformTableSet(_valueMap, key, key, value, false, -1);
+        }
+
+        /// <summary>
+        /// Sets the value associated with the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        public void Set(object key, DynValue value)
+        {
+            if (key == null)
+            {
+                throw ScriptRuntimeException.TableIndexIsNil();
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            switch (key)
+            {
+                case string s:
+                    Set(s, value);
+                    break;
+                case int i:
+                    Set(i, value);
+                    break;
+                default:
+                    Set(DynValue.FromObject(OwnerScript, key), value);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Sets the value associated with the specified keys.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The keys.</param>
+        /// <param name="value">The value.</param>
+        public void Set(object[] keys, DynValue value)
+        {
+            if (keys == null || keys.Length == 0)
+            {
+                throw ScriptRuntimeException.TableIndexIsNil();
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            ResolveMultipleKeys(keys, out object key).Set(key, value);
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        public DynValue Get(string key)
+        {
+            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            return RawGet(key) ?? DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        public DynValue Get(int key)
+        {
+            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            return RawGet(key) ?? DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        public DynValue Get(DynValue key)
+        {
+            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            return RawGet(key) ?? DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified key.
+        /// (expressed as a <see cref="System.Object"/>).
+        /// </summary>
+        /// <param name="key">The key.</param>
+        public DynValue Get(object key)
+        {
+            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            return RawGet(key) ?? DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified keys (expressed as an
+        /// array of <see cref="System.Object"/>).
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The keys to access the table and subtables</param>
+        public DynValue Get(params object[] keys)
+        {
+            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            return RawGet(keys) ?? DynValue.Nil;
+        }
+
+        private static DynValue RawGetValue(LinkedListNode<TablePair> linkedListNode)
+        {
+            return linkedListNode?.Value.Value;
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified key,
+        /// without bringing to Nil the non-existent values.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        public DynValue RawGet(string key)
+        {
+            return RawGetValue(_stringMap.Find(key));
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified key,
+        /// without bringing to Nil the non-existent values.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        public DynValue RawGet(int key)
+        {
+            return RawGetValue(_arrayMap.Find(key));
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified key,
+        /// without bringing to Nil the non-existent values.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        public DynValue RawGet(DynValue key)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            switch (key.Type)
+            {
+                case DataType.String:
+                    return RawGet(key.String);
+                case DataType.Number:
+                {
+                    int idx = GetIntegralKey(key.Number);
+                    if (idx > 0)
+                    {
+                        return RawGet(idx);
+                    }
+
+                    break;
+                }
+            }
+
+            return RawGetValue(_valueMap.Find(key));
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified key,
+        /// without bringing to Nil the non-existent values.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        public DynValue RawGet(object key)
+        {
+            return key switch
+            {
+                null => null,
+                string s => RawGet(s),
+                int i => RawGet(i),
+                _ => RawGet(DynValue.FromObject(OwnerScript, key)),
+            };
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified keys (expressed as an
+        /// array of <see cref="System.Object"/>).
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The keys to access the table and subtables</param>
+        public DynValue RawGet(params object[] keys)
+        {
+            if (keys == null || keys.Length == 0)
+            {
+                return null;
+            }
+
+            return ResolveMultipleKeys(keys, out object key).RawGet(key);
+        }
+
+        private bool PerformTableRemove<T>(
+            LinkedListIndex<T, TablePair> listIndex,
+            T key,
+            bool isNumber
+        )
+        {
+            bool removed = listIndex.Remove(key);
+
+            if (removed && isNumber)
+            {
+                _cachedLength = -1;
+            }
+
+            return removed;
+        }
+
+        /// <summary>
+        /// Remove the value associated with the specified key from the table.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(string key)
+        {
+            return PerformTableRemove(_stringMap, key, false);
+        }
+
+        /// <summary>
+        /// Remove the value associated with the specified key from the table.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(int key)
+        {
+            return PerformTableRemove(_arrayMap, key, true);
+        }
+
+        /// <summary>
+        /// Remove the value associated with the specified key from the table.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(DynValue key)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            switch (key.Type)
+            {
+                case DataType.String:
+                    return Remove(key.String);
+                case DataType.Number:
+                {
+                    int idx = GetIntegralKey(key.Number);
+                    if (idx > 0)
+                    {
+                        return Remove(idx);
+                    }
+
+                    break;
+                }
+            }
+
+            return PerformTableRemove(_valueMap, key, false);
+        }
+
+        /// <summary>
+        /// Remove the value associated with the specified key from the table.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(object key)
+        {
+            return key switch
+            {
+                string s => Remove(s),
+                int i => Remove(i),
+                _ => Remove(DynValue.FromObject(OwnerScript, key)),
+            };
+        }
+
+        /// <summary>
+        /// Remove the value associated with the specified keys from the table.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The key.</param>
+        /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(params object[] keys)
+        {
+            return keys is { Length: > 0 } && ResolveMultipleKeys(keys, out object key).Remove(key);
+        }
+
+        /// <summary>
+        /// Collects the dead keys. This frees up memory but invalidates pending iterators.
+        /// It's called automatically internally when the semantics of Lua tables allow, but can be forced
+        /// externally if it's known that no iterators are pending.
+        /// </summary>
+        public void CollectDeadKeys()
+        {
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                if (node.Value.Value.IsNil())
+                {
+                    Remove(node.Value.Key);
+                }
+            }
+
+            _containsNilEntries = false;
+            _cachedLength = -1;
+        }
+
+        /// <summary>
+        /// Returns the next pair from a value
+        /// </summary>
+        public TablePair? NextKey(DynValue v)
+        {
+            while (true)
+            {
+                if (v == null)
+                {
+                    throw new ArgumentNullException(nameof(v));
+                }
+
+                if (v.IsNil())
+                {
+                    LinkedListNode<TablePair> node = _values.First;
+
+                    if (node == null)
+                    {
+                        return TablePair.Nil;
+                    }
+
+                    if (!node.Value.Value.IsNil())
+                    {
+                        return node.Value;
+                    }
+
+                    v = node.Value.Key;
+                    continue;
+                }
+
+                switch (v.Type)
+                {
+                    case DataType.String:
+                        return GetNextOf(_stringMap.Find(v.String));
+                    case DataType.Number:
+                    {
+                        int idx = GetIntegralKey(v.Number);
+
+                        if (idx > 0)
+                        {
+                            return GetNextOf(_arrayMap.Find(idx));
+                        }
+
+                        break;
+                    }
+                }
+
+                return GetNextOf(_valueMap.Find(v));
+            }
+        }
+
+        private static TablePair? GetNextOf(LinkedListNode<TablePair> linkedListNode)
+        {
+            while (true)
+            {
+                if (linkedListNode == null)
+                {
+                    return null;
+                }
+
+                if (linkedListNode.Next == null)
+                {
+                    return TablePair.Nil;
+                }
+
+                linkedListNode = linkedListNode.Next;
+
+                if (!linkedListNode.Value.Value.IsNil())
+                {
+                    return linkedListNode.Value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the length of the "array part".
+        /// </summary>
+        public int Length
+        {
+            get
+            {
+                if (_cachedLength >= 0)
+                {
+                    return _cachedLength;
+                }
+
+                _cachedLength = 0;
+
+                for (
+                    int i = 1;
+                    _arrayMap.TryGetValue(i, out LinkedListNode<TablePair> node)
+                        && node?.Value.Value != null
+                        && node.Value.Value.IsNotNil();
+                    i++
+                )
+                {
+                    _cachedLength = i;
+                }
+
+                return _cachedLength;
+            }
+        }
+
+        /// <summary>
+        /// Initializes the hidden array iteration keys used by `next`/`ipairs` while inserting complex values (tables/functions).
+        /// </summary>
+        internal void InitNextArrayKeys(DynValue val, bool lastPosition)
+        {
+            if (val.Type == DataType.Tuple && lastPosition)
+            {
+                foreach (DynValue v in val.Tuple)
+                {
+                    InitNextArrayKeys(v, true);
+                }
+            }
+            else
+            {
+                Set(++_initArray, val.ToScalar());
+            }
+        }
+
+        /// <summary>
+        /// Gets the meta-table associated with this instance.
+        /// </summary>
+        public Table MetaTable
+        {
+            get { return _metaTable; }
+            set
+            {
+                this.CheckScriptOwnership(_metaTable);
+                _metaTable = value;
+            }
+        }
+        private Table _metaTable;
+
+        /// <summary>
+        /// Enumerates the key/value pairs.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<TablePair> Pairs => EnumeratePairs();
+
+        /// <summary>
+        /// Enumerates the keys.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<DynValue> Keys => EnumerateKeys();
+
+        /// <summary>
+        /// Enumerates the values
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<DynValue> Values => EnumerateValues();
+
+        private IEnumerable<TablePair> EnumeratePairs()
+        {
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                yield return node.Value;
+            }
+        }
+
+        private IEnumerable<DynValue> EnumerateKeys()
+        {
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                yield return node.Value.Key;
+            }
+        }
+
+        private IEnumerable<DynValue> EnumerateValues()
+        {
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                yield return node.Value.Value;
+            }
+        }
+
+        /// <summary>
+        /// Gets a struct-based enumerator for iterating over key/value pairs without heap allocation.
+        /// </summary>
+        /// <returns>A <see cref="TablePairsEnumerator"/> that can be used in foreach loops.</returns>
+        /// <remarks>
+        /// Use this method in hot paths where avoiding allocations is important.
+        /// For general use, the <see cref="Pairs"/> property is more convenient.
+        /// </remarks>
+        [SuppressMessage(
+            "Design",
+            "CA1024:Use properties where appropriate",
+            Justification = "Method returns a new struct enumerator instance each call for foreach pattern."
+        )]
+        public TablePairsEnumerator GetPairsEnumerator()
+        {
+            return new TablePairsEnumerator(_values);
+        }
+
+        /// <summary>
+        /// Gets a struct-based enumerator for iterating over keys without heap allocation.
+        /// </summary>
+        /// <returns>A <see cref="TableKeysEnumerator"/> that can be used in foreach loops.</returns>
+        [SuppressMessage(
+            "Design",
+            "CA1024:Use properties where appropriate",
+            Justification = "Method returns a new struct enumerator instance each call for foreach pattern."
+        )]
+        public TableKeysEnumerator GetKeysEnumerator()
+        {
+            return new TableKeysEnumerator(_values);
+        }
+
+        /// <summary>
+        /// Gets a struct-based enumerator for iterating over values without heap allocation.
+        /// </summary>
+        /// <returns>A <see cref="TableValuesEnumerator"/> that can be used in foreach loops.</returns>
+        [SuppressMessage(
+            "Design",
+            "CA1024:Use properties where appropriate",
+            Justification = "Method returns a new struct enumerator instance each call for foreach pattern."
+        )]
+        public TableValuesEnumerator GetValuesEnumerator()
+        {
+            return new TableValuesEnumerator(_values);
+        }
+
+        /// <summary>
+        /// Gets a struct-based enumerator for iterating over non-nil key/value pairs without heap allocation.
+        /// </summary>
+        /// <returns>A <see cref="TableNonNilPairsEnumerator"/> that can be used in foreach loops.</returns>
+        [SuppressMessage(
+            "Design",
+            "CA1024:Use properties where appropriate",
+            Justification = "Method returns a new struct enumerator instance each call for foreach pattern."
+        )]
+        public TableNonNilPairsEnumerator GetNonNilPairsEnumerator()
+        {
+            return new TableNonNilPairsEnumerator(_values);
+        }
+
+        /// <summary>
+        /// Fills the destination span with key/value pairs from the table.
+        /// </summary>
+        /// <param name="destination">The span to fill.</param>
+        /// <returns>The number of pairs written to the span.</returns>
+        /// <remarks>
+        /// This method does not allocate and is suitable for hot paths.
+        /// If the destination is smaller than the table, only the first entries are copied.
+        /// </remarks>
+        public int FillPairs(Span<TablePair> destination)
+        {
+            int index = 0;
+            for (
+                LinkedListNode<TablePair> node = _values.First;
+                node != null && index < destination.Length;
+                node = node.Next
+            )
+            {
+                destination[index++] = node.Value;
+            }
+            return index;
+        }
+
+        /// <summary>
+        /// Fills the destination span with keys from the table.
+        /// </summary>
+        /// <param name="destination">The span to fill.</param>
+        /// <returns>The number of keys written to the span.</returns>
+        public int FillKeys(Span<DynValue> destination)
+        {
+            int index = 0;
+            for (
+                LinkedListNode<TablePair> node = _values.First;
+                node != null && index < destination.Length;
+                node = node.Next
+            )
+            {
+                destination[index++] = node.Value.Key;
+            }
+            return index;
+        }
+
+        /// <summary>
+        /// Fills the destination span with values from the table.
+        /// </summary>
+        /// <param name="destination">The span to fill.</param>
+        /// <returns>The number of values written to the span.</returns>
+        public int FillValues(Span<DynValue> destination)
+        {
+            int index = 0;
+            for (
+                LinkedListNode<TablePair> node = _values.First;
+                node != null && index < destination.Length;
+                node = node.Next
+            )
+            {
+                destination[index++] = node.Value.Value;
+            }
+            return index;
+        }
+
+        /// <summary>
+        /// Fills the destination collection with key/value pairs, clearing it first.
+        /// </summary>
+        /// <typeparam name="TCollection">The type of the collection.</typeparam>
+        /// <param name="destination">The collection to fill.</param>
+        /// <returns>The collection for fluent chaining.</returns>
+        public TCollection FillPairs<TCollection>(TCollection destination)
+            where TCollection : ICollection<TablePair>
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            destination.Clear();
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                destination.Add(node.Value);
+            }
+            return destination;
+        }
+
+        /// <summary>
+        /// Fills the destination collection with keys, clearing it first.
+        /// </summary>
+        /// <typeparam name="TCollection">The type of the collection.</typeparam>
+        /// <param name="destination">The collection to fill.</param>
+        /// <returns>The collection for fluent chaining.</returns>
+        public TCollection FillKeys<TCollection>(TCollection destination)
+            where TCollection : ICollection<DynValue>
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            destination.Clear();
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                destination.Add(node.Value.Key);
+            }
+            return destination;
+        }
+
+        /// <summary>
+        /// Fills the destination collection with values, clearing it first.
+        /// </summary>
+        /// <typeparam name="TCollection">The type of the collection.</typeparam>
+        /// <param name="destination">The collection to fill.</param>
+        /// <returns>The collection for fluent chaining.</returns>
+        public TCollection FillValues<TCollection>(TCollection destination)
+            where TCollection : ICollection<DynValue>
+        {
+            if (destination == null)
+            {
+                throw new ArgumentNullException(nameof(destination));
+            }
+
+            destination.Clear();
+            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            {
+                destination.Add(node.Value.Value);
+            }
+            return destination;
+        }
+
+        /// <summary>
+        /// Gets the total number of entries in the table, including nil entries.
+        /// </summary>
+        /// <remarks>
+        /// This count includes entries where the value has been set to nil.
+        /// For the "array length" (consecutive non-nil integer keys starting at 1), use <see cref="Length"/>.
+        /// </remarks>
+        public int Count => _values.Count;
+    }
+}

@@ -1,0 +1,250 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    paths:
+      - 'src/runtime/**'
+      - 'src/tooling/WallstopStudios.NovaSharp.Benchmarks/**'
+      - '.github/workflows/benchmarks.yml'
+  workflow_dispatch:
+    inputs:
+      alert_threshold:
+        description: 'Percentage threshold for performance regression alerts'
+        required: false
+        default: '115'
+      fail_on_alert:
+        description: 'Fail the workflow if regression is detected'
+        required: false
+        default: 'true'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/NovaSharp.sln --locked-mode
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Build solution
+        run: dotnet build src/NovaSharp.sln -c Release --no-restore
+
+      - name: Run benchmarks
+        id: run_benchmarks
+        run: |
+          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj \
+            -c Release --no-build -- \
+            --filter "*RuntimeBenchmarks*" \
+            --exporters json
+        env:
+          DOTNET_ROLL_FORWARD: Major
+
+      - name: Find benchmark result
+        id: find_result
+        run: |
+          result_file=$(find BenchmarkDotNet.Artifacts -name "*RuntimeBenchmarks*.json" -type f | head -1)
+          if [ -z "$result_file" ]; then
+            echo "No benchmark result file found"
+            exit 1
+          fi
+          echo "result_file=$result_file" >> "$GITHUB_OUTPUT"
+          echo "Found benchmark result: $result_file"
+
+      - name: Transform to benchmark-action format
+        id: transform
+        run: |
+          python3 - << 'EOF'
+          import json
+          import sys
+          from pathlib import Path
+          import os
+
+          # Find the benchmark results
+          artifacts_dir = Path("BenchmarkDotNet.Artifacts")
+          result_files = list(artifacts_dir.rglob("*-report-full-compressed.json"))
+          
+          if not result_files:
+              # Try alternative naming
+              result_files = list(artifacts_dir.rglob("*.json"))
+              result_files = [f for f in result_files if "RuntimeBenchmarks" in f.name]
+          
+          if not result_files:
+              print("No benchmark JSON files found")
+              sys.exit(1)
+          
+          result_file = result_files[0]
+          print(f"Processing: {result_file}")
+          
+          with open(result_file) as f:
+              data = json.load(f)
+          
+          # Transform to github-action-benchmark format
+          benchmarks = []
+          for benchmark in data.get("Benchmarks", []):
+              name = benchmark.get("FullName", benchmark.get("Method", "Unknown"))
+              stats = benchmark.get("Statistics", {})
+              mean_ns = stats.get("Mean", 0)
+              
+              # Convert nanoseconds to appropriate unit
+              if mean_ns > 1_000_000_000:
+                  value = mean_ns / 1_000_000_000
+                  unit = "s"
+              elif mean_ns > 1_000_000:
+                  value = mean_ns / 1_000_000
+                  unit = "ms"
+              elif mean_ns > 1_000:
+                  value = mean_ns / 1_000
+                  unit = "μs"
+              else:
+                  value = mean_ns
+                  unit = "ns"
+              
+              benchmarks.append({
+                  "name": name,
+                  "unit": unit,
+                  "value": round(value, 3),
+                  "extra": f"P95: {stats.get('P95', 0) / 1_000:.3f}μs"
+              })
+          
+          # Write output
+          output_path = Path("benchmark-results.json")
+          with open(output_path, "w") as f:
+              json.dump(benchmarks, f, indent=2)
+          
+          print(f"Wrote {len(benchmarks)} benchmarks to {output_path}")
+          
+          # Also write to step summary
+          summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
+          if summary:
+              with open(summary, "a") as f:
+                  f.write("## Benchmark Results\n\n")
+                  f.write("| Name | Value | Unit | Extra |\n")
+                  f.write("|------|-------|------|-------|\n")
+                  for b in benchmarks:
+                      f.write(f"| {b['name']} | {b['value']} | {b['unit']} | {b.get('extra', '')} |\n")
+                  f.write("\n")
+          EOF
+
+      - name: Check if gh-pages branch exists
+        id: check_gh_pages
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "gh-pages branch exists"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "gh-pages branch does not exist"
+          fi
+
+      - name: Create gh-pages branch
+        if: steps.check_gh_pages.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          echo "Creating gh-pages branch for benchmark storage..."
+          # Create orphan branch with initial benchmark data structure
+          git checkout --orphan gh-pages
+          git reset --hard
+          mkdir -p benchmarks
+          echo '[]' > benchmarks/data.js
+          echo '# Benchmark Results' > README.md
+          echo '' >> README.md
+          echo 'This branch contains historical benchmark data for NovaSharp.' >> README.md
+          git add benchmarks/data.js README.md
+          git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
+            commit -m "Initialize gh-pages branch for benchmark storage"
+          git push origin gh-pages
+          # Return to original branch
+          git checkout -
+          echo "gh-pages branch created successfully"
+
+      - name: Store benchmark results
+        # Only run if gh-pages exists (either pre-existing or just created)
+        if: steps.check_gh_pages.outputs.exists == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: NovaSharp Benchmarks
+          tool: customSmallerIsBetter
+          output-file-path: benchmark-results.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Auto-push only on master branch pushes
+          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          # Alert threshold (default 115% = 15% regression)
+          alert-threshold: ${{ github.event.inputs.alert_threshold || '115%' }}
+          # Fail on alert for PRs, configurable via input
+          fail-on-alert: ${{ github.event.inputs.fail_on_alert == 'true' || (github.event_name == 'pull_request') }}
+          # Comment on PR with results
+          comment-on-alert: true
+          # Store data in gh-pages branch under benchmarks directory
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: benchmarks
+
+      - name: Skip benchmark storage (no gh-pages branch)
+        if: steps.check_gh_pages.outputs.exists == 'false' && !(github.event_name == 'push' && github.ref == 'refs/heads/master')
+        run: |
+          echo "::warning::Skipping benchmark storage - gh-pages branch does not exist."
+          echo "The gh-pages branch will be created on the next push to master."
+          echo "Benchmark results are still available in the uploaded artifacts."
+
+      - name: Upload benchmark artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: benchmark-results
+          path: |
+            BenchmarkDotNet.Artifacts/
+            benchmark-results.json
+          if-no-files-found: warn
+
+  # Comparison benchmarks run separately and less frequently
+  comparison:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: benchmark
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/NovaSharp.sln
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Build solution
+        run: dotnet build src/NovaSharp.sln -c Release --no-restore
+
+      - name: Run comparison benchmarks
+        run: |
+          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
+            -c Release --no-build -- \
+            --filter "*" \
+            --exporters json
+        env:
+          DOTNET_ROLL_FORWARD: Major
+
+      - name: Upload comparison artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: comparison-results
+          path: BenchmarkDotNet.Artifacts/
+          if-no-files-found: warn

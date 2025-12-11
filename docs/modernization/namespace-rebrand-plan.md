@@ -20,16 +20,16 @@ This document captures the staged rollout plan for rebranding every NovaSharp as
 
 ## Current State Snapshot
 
-| Project                     | Path                                          | Output                                  | Assembly / Root Namespace     | Package / Tool Id               | Notes                                                          |
-| --------------------------- | --------------------------------------------- | --------------------------------------- | ----------------------------- | ------------------------------- | -------------------------------------------------------------- |
-| NovaSharp.Interpreter       | `src/runtime/NovaSharp.Interpreter`           | Class library (`netstandard2.1`)        | `NovaSharp.Interpreter`       | `NovaSharp.Interpreter.netcore` | Primary runtime; referenced by every other project.            |
-| NovaSharp.Interpreter.Tests | `src/tests/NovaSharp.Interpreter.Tests`       | NUnit test host (`net8.0`)              | `NovaSharp.Interpreter.Tests` | n/a                             | Friend assembly access via `InternalsVisibleTo`.               |
-| NovaSharp.Cli               | `src/tooling/NovaSharp.Cli`                   | CLI (`netstandard2.1`)                  | `NovaSharp.Cli`               | n/a (not currently packed)      | Ships REPL + tooling wrappers.                                 |
-| NovaSharp.RemoteDebugger    | `src/debuggers/NovaSharp.RemoteDebugger`      | Class library (`netstandard2.1`)        | `NovaSharp.RemoteDebugger`    | n/a                             | Hosts remote debugger protocol + HTML assets.                  |
-| NovaSharp.VsCodeDebugger    | `src/debuggers/NovaSharp.VsCodeDebugger`      | Class library (`netstandard2.1;net8.0`) | `NovaSharp.VsCodeDebugger`    | `NovaSharp.VsCodeDebugger`      | Distributed as NuGet + VS Code extension payload.              |
-| NovaSharp.Hardwire          | `src/tooling/NovaSharp.Hardwire`              | Library (`netstandard2.1`)              | `NovaSharp.Hardwire`          | n/a                             | Generates hardwired descriptors; consumed by CLI + benchmarks. |
-| NovaSharp.Benchmarks        | `src/tooling/Benchmarks/NovaSharp.Benchmarks` | Console (`net8.0`)                      | `NovaSharp.Benchmarks`        | n/a                             | Local-only performance harness.                                |
-| NovaSharp.Comparison        | `src/tooling/NovaSharp.Comparison`            | Console (`net8.0`)                      | `NovaSharp.Comparison`        | n/a                             | Benchmarks vs NLua.                                            |
+| Project                              | Path                                               | Output                                  | Assembly / Root Namespace              | Package / Tool Id               | Notes                                                          |
+| ------------------------------------ | -------------------------------------------------- | --------------------------------------- | -------------------------------------- | ------------------------------- | -------------------------------------------------------------- |
+| NovaSharp.Interpreter                | `src/runtime/NovaSharp.Interpreter`                | Class library (`netstandard2.1`)        | `NovaSharp.Interpreter`                | `NovaSharp.Interpreter.netcore` | Primary runtime; referenced by every other project.            |
+| NovaSharp.Interpreter.Tests.TUnit    | `src/tests/NovaSharp.Interpreter.Tests.TUnit`      | TUnit test host (`net8.0`)              | `NovaSharp.Interpreter.Tests.TUnit`    | n/a                             | Friend assembly access via `InternalsVisibleTo`.               |
+| NovaSharp.Cli                        | `src/tooling/NovaSharp.Cli`                        | CLI (`netstandard2.1`)                  | `NovaSharp.Cli`                        | n/a (not currently packed)      | Ships REPL + tooling wrappers.                                 |
+| NovaSharp.RemoteDebugger             | `src/debuggers/NovaSharp.RemoteDebugger`           | Class library (`netstandard2.1`)        | `NovaSharp.RemoteDebugger`             | n/a                             | Hosts remote debugger protocol + HTML assets.                  |
+| NovaSharp.VsCodeDebugger             | `src/debuggers/NovaSharp.VsCodeDebugger`           | Class library (`netstandard2.1;net8.0`) | `NovaSharp.VsCodeDebugger`             | `NovaSharp.VsCodeDebugger`      | Distributed as NuGet + VS Code extension payload.              |
+| NovaSharp.Hardwire                   | `src/tooling/NovaSharp.Hardwire`                   | Library (`netstandard2.1`)              | `NovaSharp.Hardwire`                   | n/a                             | Generates hardwired descriptors; consumed by CLI + benchmarks. |
+| WallstopStudios.NovaSharp.Benchmarks | `src/tooling/WallstopStudios.NovaSharp.Benchmarks` | Console (`net8.0`)                      | `WallstopStudios.NovaSharp.Benchmarks` | n/a                             | Local-only performance harness.                                |
+| WallstopStudios.NovaSharp.Comparison | `src/tooling/WallstopStudios.NovaSharp.Comparison` | Console (`net8.0`)                      | `WallstopStudios.NovaSharp.Comparison` | n/a                             | Benchmarks vs NLua.                                            |
 
 ## Proposed Naming Baseline
 
@@ -38,7 +38,7 @@ This document captures the staged rollout plan for rebranding every NovaSharp as
 | Scope                                      | Current Prefix                                         | Target Prefix                                                                          | Notes                                                                                                                 |
 | ------------------------------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Runtime & shared data types                | `NovaSharp.Interpreter`                                | `WallstopStudios.NovaSharp.Interpreter`                                                | Applies to `Execution`, `DataTypes`, `LuaPort`, `Interop`, etc. LuaPort keep snake_case but moves under the new root. |
-| Test assemblies                            | `NovaSharp.Interpreter.Tests`                          | `WallstopStudios.NovaSharp.Interpreter.Tests`                                          | Mirrors runtime namespace so InternalsVisibleTo stays aligned.                                                        |
+| Test assemblies                            | `NovaSharp.Interpreter.Tests.TUnit`                    | `WallstopStudios.NovaSharp.Interpreter.Tests.TUnit`                                    | Mirrors runtime namespace so InternalsVisibleTo stays aligned.                                                        |
 | CLI tooling                                | `NovaSharp.Cli`                                        | `WallstopStudios.NovaSharp.Cli`                                                        | Includes commands, REPL infra, shared options.                                                                        |
 | Debuggers                                  | `NovaSharp.RemoteDebugger`, `NovaSharp.VsCodeDebugger` | `WallstopStudios.NovaSharp.RemoteDebugger`, `WallstopStudios.NovaSharp.VsCodeDebugger` | Shared debugger core should eventually live under `WallstopStudios.NovaSharp.Debuggers.*`.                            |
 | Tooling (Hardwire, Benchmarks, Comparison) | `NovaSharp.*`                                          | `WallstopStudios.NovaSharp.*`                                                          | Keeps internal-only tooling consistent to simplify global using/search.                                               |
@@ -80,7 +80,7 @@ Package description/URL metadata should reference `https://wallstop-studios.com/
 1. Add temporary compatibility wrappers for the most widely referenced entry points (`Script`, `DynValue`, `UserData`, CLI commands):
    - Add `NovaSharp.LegacyNamespaces.cs` containing `[Obsolete]` forwarding partial classes that derive from the new types or expose static helper methods (limited surface to avoid bloating binaries).
    - Document that the wrappers will be removed after one release.
-1. Run `dotnet build src/NovaSharp.sln -c Release` and `dotnet test src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj -c Release`.
+1. Run `dotnet build src/NovaSharp.sln -c Release` and `dotnet test --project src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj -c Release`.
 
 ### Stage 3 – Tooling & Debugger Rename
 
@@ -107,7 +107,7 @@ Package description/URL metadata should reference `https://wallstop-studios.com/
 
 - `tools/NamingAudit`: add a `--namespace-prefix WallstopStudios.NovaSharp` flag plus an `--allowlist` for LuaPort & legacy wrappers.
 - `.editorconfig`: add `dotnet_naming_symbols.namespace_symbols` rule enforcing `WallstopStudios.` prefix once the rename lands.
-- CI: extend `tests.yml` to run `dotnet format` + `naming_audit.py --verify-log` using the new prefix and fail early.
+- CI: extend `tests.yml` to run `dotnet csharpier check .` (via `scripts/ci/check-csharpier.sh`) plus `naming_audit.py --verify-log` using the new prefix so formatting/naming regressions fail early.
 - Scripts: update `scripts/coverage/coverage.ps1` and `scripts/coverage/coverage-hotspots.md` references after the rename so coverage automation continues to work.
 
 ## Compatibility & Communication Plan

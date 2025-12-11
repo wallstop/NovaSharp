@@ -15,3 +15,11 @@ aString
 anObject
 anArray
 aNegativeNumber
+# Test variable names (camelCase)
+afterAll
+# Test data strings used in comparison/pattern tests
+abd
+# Truncated string output (e.g., string.format('%.3s', 'Hello') -> "Hel")
+Hel
+# Documentation placeholder for Nth variable (e.g., var1, var2, ..., varN)
+varN

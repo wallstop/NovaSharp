@@ -1,0 +1,577 @@
+namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.CoreLib;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Interop;
+    using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors;
+    using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
+
+    public sealed class StandardEnumUserDataDescriptorTUnitTests
+    {
+        [global::TUnit.Core.Test]
+        public async Task ConstructorRejectsNonEnumTypes()
+        {
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+            {
+                _ = new StandardEnumUserDataDescriptor(typeof(string));
+            });
+
+            await Assert
+                .That(exception.Message)
+                .Contains("enumType must be an enum")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FlagsEnumPopulatesMembersAndMetadata()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+
+            await Assert
+                .That(descriptor.UnderlyingType)
+                .IsEqualTo(typeof(byte))
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.IsUnsigned).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptor.IsFlags).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptor.HasMember("flagsOr")).IsTrue().ConfigureAwait(false);
+            await Assert.That(descriptor.HasMember("__flagsOr")).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(descriptor.HasMember(nameof(SampleFlags.Fast)))
+                .IsTrue()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task NonFlagsEnumDoesNotExposeFlagHelpers()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
+
+            await Assert.That(descriptor.IsFlags).IsFalse().ConfigureAwait(false);
+            await Assert.That(descriptor.HasMember("flagsOr")).IsFalse().ConfigureAwait(false);
+            await Assert.That(descriptor.HasMember("__flagsOr")).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallbackOrCombinesUnsignedValues()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackOr(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SampleFlags.Fast, descriptor),
+                    UserData.Create(SampleFlags.Safe, descriptor)
+                )
+            );
+
+            await Assert
+                .That((SampleFlags)result.UserData.Object)
+                .IsEqualTo(SampleFlags.Fast | SampleFlags.Safe)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallbackXorComputesExclusiveBits()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackXor(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SampleFlags.Fast | SampleFlags.Safe, descriptor),
+                    UserData.Create(SampleFlags.Safe, descriptor)
+                )
+            );
+
+            await Assert
+                .That((SampleFlags)result.UserData.Object)
+                .IsEqualTo(SampleFlags.Fast)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallbackNotOnUnsignedFlagsReturnsComplement()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackBwNot(
+                context,
+                TestHelpers.CreateArguments(UserData.Create(SampleFlags.Safe, descriptor))
+            );
+
+            await Assert
+                .That((SampleFlags)result.UserData.Object)
+                .IsEqualTo(~SampleFlags.Safe)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallbackOrAcceptsNumericArguments()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackOr(
+                context,
+                TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(4))
+            );
+
+            await Assert
+                .That((SampleFlags)result.UserData.Object)
+                .IsEqualTo(SampleFlags.Fast | SampleFlags.Light)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallbackHasAllReturnsBooleanResult()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue hasAll = descriptor.CallbackHasAll(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SampleFlags.Fast | SampleFlags.Safe, descriptor),
+                    UserData.Create(SampleFlags.Safe, descriptor)
+                )
+            );
+
+            await Assert.That(hasAll.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(hasAll.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallbackHasAnyReturnsBoolean()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue hasAny = descriptor.CallbackHasAny(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SampleFlags.Fast, descriptor),
+                    UserData.Create(SampleFlags.Safe, descriptor)
+                )
+            );
+
+            await Assert.That(hasAny.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(hasAny.Boolean).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallbackAndUsesSignedArithmeticWhenEnumIsSigned()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackAnd(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
+                    UserData.Create(SignedIntFlags.Left, descriptor)
+                )
+            );
+
+            await Assert
+                .That((SignedIntFlags)result.UserData.Object)
+                .IsEqualTo(SignedIntFlags.Left)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallbackXorUsesSignedArithmeticWhenEnumIsSigned()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackXor(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
+                    UserData.Create(SignedIntFlags.Right, descriptor)
+                )
+            );
+
+            await Assert
+                .That((SignedIntFlags)result.UserData.Object)
+                .IsEqualTo(SignedIntFlags.Left)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SignedFlagsHasAllReturnsBoolean()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue hasAll = descriptor.CallbackHasAll(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SignedIntFlags.Left | SignedIntFlags.Right, descriptor),
+                    UserData.Create(SignedIntFlags.Left, descriptor)
+                )
+            );
+
+            await Assert.That(hasAll.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(hasAll.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SignedFlagsHasAnyReturnsBoolean()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue hasAny = descriptor.CallbackHasAny(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SignedIntFlags.Left, descriptor),
+                    UserData.Create(SignedIntFlags.Right, descriptor)
+                )
+            );
+
+            await Assert.That(hasAny.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(hasAny.Boolean).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SignedBinaryOperationThrowsWhenArgumentCountInvalid()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.CallbackAnd(
+                    context,
+                    TestHelpers.CreateArguments(UserData.Create(SignedIntFlags.Left, descriptor))
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("expects two arguments")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SignedEnumsUseSignedArithmetic()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleSignedEnum));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackBwNot(
+                context,
+                TestHelpers.CreateArguments(
+                    UserData.Create(SampleSignedEnum.NegativeOne, descriptor)
+                )
+            );
+
+            await Assert
+                .That((SampleSignedEnum)result.UserData.Object)
+                .IsEqualTo(SampleSignedEnum.Zero)
+                .ConfigureAwait(false);
+            await Assert.That(descriptor.IsUnsigned).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SignedConversionSupportsAllUnderlyingTypes()
+        {
+            foreach ((Type enumType, object flagValue) in SignedEnumCases())
+            {
+                StandardEnumUserDataDescriptor descriptor = new(enumType);
+                ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+                DynValue left = UserData.Create(flagValue, descriptor);
+                DynValue result = descriptor.CallbackAnd(
+                    context,
+                    TestHelpers.CreateArguments(left, left)
+                );
+
+                long expected = Convert.ToInt64(flagValue, CultureInfo.InvariantCulture);
+                long actual = Convert.ToInt64(result.UserData.Object, CultureInfo.InvariantCulture);
+
+                await Assert.That(descriptor.IsUnsigned).IsFalse().ConfigureAwait(false);
+                await Assert.That(actual).IsEqualTo(expected).ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task UnsignedConversionSupportsAllUnderlyingTypes()
+        {
+            foreach ((Type enumType, object flagValue) in UnsignedEnumCases())
+            {
+                StandardEnumUserDataDescriptor descriptor = new(enumType);
+                ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+                DynValue left = UserData.Create(flagValue, descriptor);
+                DynValue result = descriptor.CallbackAnd(
+                    context,
+                    TestHelpers.CreateArguments(left, left)
+                );
+
+                ulong expected = Convert.ToUInt64(flagValue, CultureInfo.InvariantCulture);
+                ulong actual = Convert.ToUInt64(
+                    result.UserData.Object,
+                    CultureInfo.InvariantCulture
+                );
+
+                await Assert.That(descriptor.IsUnsigned).IsTrue().ConfigureAwait(false);
+                await Assert.That(actual).IsEqualTo(expected).ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BinaryOperationSignedAcceptsNumericArguments()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleSignedEnum));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            DynValue result = descriptor.CallbackOr(
+                context,
+                TestHelpers.CreateArguments(DynValue.NewNumber(1), DynValue.NewNumber(2))
+            );
+
+            await Assert.That((int)result.UserData.Object).IsEqualTo(3).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BinaryOperationRejectsInvalidOperandType()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.CallbackOr(
+                    context,
+                    TestHelpers.CreateArguments(DynValue.NewString("bad"), DynValue.NewNumber(1))
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("Enum userdata or number expected")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BinaryOperationRejectsForeignDescriptor()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            StandardEnumUserDataDescriptor foreignDescriptor = new(typeof(SampleEnum));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.CallbackOr(
+                    context,
+                    TestHelpers.CreateArguments(
+                        UserData.Create(SampleEnum.One, foreignDescriptor),
+                        DynValue.NewNumber(1)
+                    )
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("Enum userdata or number expected")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SignedBinaryOperationRejectsForeignDescriptor()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
+            StandardEnumUserDataDescriptor foreignDescriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.CallbackOr(
+                    context,
+                    TestHelpers.CreateArguments(
+                        UserData.Create(SampleFlags.Fast, foreignDescriptor),
+                        UserData.Create(SignedIntFlags.Left, descriptor)
+                    )
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("Enum userdata or number expected")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BinaryOperationThrowsWhenArgumentCountInvalid()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.CallbackOr(
+                    context,
+                    TestHelpers.CreateArguments(UserData.Create(SampleFlags.Fast, descriptor))
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("expects two arguments")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task UnaryOperationThrowsWhenArgumentCountInvalid()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.CallbackBwNot(context, TestHelpers.CreateArguments())
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("expects one argument")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MetaIndexReturnsConcatForFlags()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
+
+            DynValue meta = descriptor.MetaIndex(new Script(), SampleFlags.Fast, "__concat");
+
+            await Assert.That(meta.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MetaIndexReturnsNullForNonFlags()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
+            DynValue meta = descriptor.MetaIndex(new Script(), SampleEnum.One, "__concat");
+
+            await Assert.That(meta).IsNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IsTypeCompatibleRespectsDescriptorType()
+        {
+            StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
+
+            await Assert
+                .That(descriptor.IsTypeCompatible(typeof(SampleEnum), SampleEnum.One))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(descriptor.IsTypeCompatible(typeof(SampleEnum), null))
+                .IsFalse()
+                .ConfigureAwait(false);
+        }
+
+        private static IEnumerable<(Type EnumType, object Value)> SignedEnumCases()
+        {
+            yield return (typeof(SByteEnum), SByteEnum.Value);
+            yield return (typeof(ShortEnum), ShortEnum.Value);
+            yield return (typeof(IntEnum), IntEnum.Value);
+            yield return (typeof(LongEnum), LongEnum.Value);
+        }
+
+        private static IEnumerable<(Type EnumType, object Value)> UnsignedEnumCases()
+        {
+            yield return (typeof(ByteFlags), ByteFlags.Flag);
+            yield return (typeof(UShortFlags), UShortFlags.Flag);
+            yield return (typeof(UIntFlags), UIntFlags.Flag);
+            yield return (typeof(ULongFlags), ULongFlags.Flag);
+        }
+
+        private enum SampleEnum
+        {
+            One,
+            Two,
+        }
+
+        [Flags]
+        private enum SampleFlags : byte
+        {
+            None = 0,
+            Fast = 1,
+            Safe = 2,
+            Light = 4,
+        }
+
+        [Flags]
+        private enum SignedIntFlags : int
+        {
+            None = 0,
+            Left = 1 << 30,
+            Right = 1 << 29,
+        }
+
+        private enum SampleSignedEnum : int
+        {
+            Zero = 0,
+            NegativeOne = -1,
+        }
+
+        private enum SByteEnum : sbyte
+        {
+            Zero = 0,
+            Value = 1,
+        }
+
+        private enum ShortEnum : short
+        {
+            Zero = 0,
+            Value = 1,
+        }
+
+        private enum IntEnum : int
+        {
+            Zero = 0,
+            Value = 1,
+        }
+
+        private enum LongEnum : long
+        {
+            Zero = 0,
+            Value = 1,
+        }
+
+        [Flags]
+        private enum ByteFlags : byte
+        {
+            None = 0,
+            Flag = 1,
+        }
+
+        [Flags]
+        private enum UShortFlags : ushort
+        {
+            None = 0,
+            Flag = 1,
+        }
+
+        [Flags]
+        private enum UIntFlags : uint
+        {
+            None = 0,
+            Flag = 1,
+        }
+
+        [Flags]
+        private enum ULongFlags : ulong
+        {
+            None = 0,
+            Flag = 1,
+        }
+    }
+}

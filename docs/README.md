@@ -4,18 +4,20 @@ This folder hosts the canonical documentation set for NovaSharp. Use the index b
 
 ## Quick Links
 
-| Topic                          | Path                                                            | Notes                                                                                                         |
-| ------------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Testing / CI workflow          | `docs/Testing.md`                                               | NUnit layout, TAP fixtures, coverage workflow (`scripts/coverage/coverage.ps1` / `.sh`).                      |
-| Coverage dashboards & hotspots | `docs/coverage/README.md`, `docs/coverage/coverage-hotspots.md` | Explains generated artefacts, summarizes modules below target coverage, and links to the latest HTML reports. |
-| Lua compatibility matrix       | `docs/LuaCompatibility.md`                                      | Tracks Lua 5.4.8 parity plus work-in-progress items with owners.                                              |
-| Modernization notes            | `docs/Modernization.md`, `docs/modernization/*`                 | Architecture decisions, legacy cleanup plans, and audits (vestigial code, reflection usage, branding).        |
-| Project structure blueprint    | `docs/ProjectStructureBlueprint.md`                             | Current vs. proposed directory/solution layout with migration phases.                                         |
-| Performance benchmarks         | `docs/Performance.md`, `docs/performance-history/`              | Benchmark harness guidance and historical runs.                                                               |
-| Unity integration              | `docs/UnityIntegration.md`                                      | Unity-specific packaging, IL2CPP guidance, and sample workflows.                                              |
-| Proposals                      | `docs/proposals/`                                               | Roslyn hardwire generator, namespace rules, and upcoming feature designs.                                     |
-| Script tooling                 | `scripts/README.md`, `scripts/coverage/README.md`               | Entry point for helper scripts (build, coverage, branding guards, etc.).                                      |
-| Naming audit helper            | `tools/NamingAudit/README.md`                                   | Python-based checker that enforces PascalCase file/type names per `.editorconfig`.                            |
+| Topic                          | Path                                                            | Notes                                                                                                               |
+| ------------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Testing / CI workflow          | `docs/Testing.md`                                               | TUnit layout, TAP fixtures, coverage workflow (`scripts/coverage/coverage.ps1` / `.sh`).                            |
+| Lua comparison harness         | `docs/testing/lua-comparison-harness.md`                        | Plan for extracting inline Lua snippets and comparing against canonical Lua 5.4 interpreter.                        |
+| Lua semantic divergences       | `docs/testing/lua-divergences.md`                               | Catalog of known NovaSharp vs reference Lua differences with CI gate configuration.                                 |
+| Coverage dashboards & hotspots | `docs/coverage/README.md`, `docs/coverage/coverage-hotspots.md` | Explains generated artefacts, summarizes modules below target coverage, and links to the latest HTML reports.       |
+| Lua compatibility matrix       | `docs/LuaCompatibility.md`                                      | Tracks Lua 5.4.8 parity plus work-in-progress items with owners.                                                    |
+| Modernization notes            | `docs/Modernization.md`, `docs/modernization/*`                 | Architecture decisions, legacy cleanup plans, and audits (vestigial code, reflection usage, branding, concurrency). |
+| Project structure blueprint    | `docs/ProjectStructureBlueprint.md`                             | Current vs. proposed directory/solution layout with migration phases.                                               |
+| Performance benchmarks         | `docs/Performance.md`, `docs/performance-history/`              | Benchmark harness guidance and historical runs.                                                                     |
+| Unity integration              | `docs/UnityIntegration.md`                                      | Unity-specific packaging, IL2CPP guidance, and sample workflows.                                                    |
+| Proposals                      | `docs/proposals/`                                               | Roslyn hardwire generator, namespace rules, VM correctness, and upcoming feature designs.                           |
+| Script tooling                 | `scripts/README.md`, `scripts/coverage/README.md`               | Entry point for helper scripts (build, coverage, branding guards, etc.).                                            |
+| Naming audit helper            | `tools/NamingAudit/README.md`                                   | Python-based checker that enforces PascalCase file/type names per `.editorconfig`.                                  |
 
 ## Contributing Expectations
 

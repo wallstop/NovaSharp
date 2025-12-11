@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Description>Shared infrastructure primitives for the NovaSharp Lua interpreter. Provides attribute definitions, platform abstractions, and compatibility shims.</Description>
+        <Copyright>Copyright (c) 2024-2025 Wallstop Studios. Derived from work by Marco Mastropaolo (c) 2014-2016.</Copyright>
+        <AssemblyTitle>WallstopStudios.NovaSharp.Interpreter.Infrastructure</AssemblyTitle>
+        <VersionPrefix>3.0.0</VersionPrefix>
+        <TargetFrameworks>netstandard2.1</TargetFrameworks>
+        <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
+        <AssemblyName>WallstopStudios.NovaSharp.Interpreter.Infrastructure</AssemblyName>
+        <PackageId>WallstopStudios.NovaSharp.Interpreter.Infrastructure</PackageId>
+        <RootNamespace>WallstopStudios.NovaSharp.Interpreter.Infrastructure</RootNamespace>
+        <LangVersion>latest</LangVersion>
+        <IsPackable>true</IsPackable>
+        <!-- TODO: Enable GenerateDocumentationFile after fixing all XML comment issues -->
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+        <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+        <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+        <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(RepoRoot)README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
+</Project>

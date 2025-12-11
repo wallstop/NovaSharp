@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>disable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <AssemblyName>WallstopStudios.NovaSharp.Comparison</AssemblyName>
+        <RootNamespace>WallstopStudios.NovaSharp.Comparison</RootNamespace>
+        <IsPackable>false</IsPackable>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    </PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="BenchmarkDotNet" Version="0.15.6" />
+        <PackageReference Include="KeraLua" Version="1.4.7" />
+        <PackageReference Include="NLua" Version="1.7.6" />
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+        <ProjectReference Include="$(ToolingRoot)WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj" />
+    </ItemGroup>
+</Project>

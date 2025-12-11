@@ -4,36 +4,38 @@ This document captures the current repository layout, highlights legacy or dupli
 
 ## 1. Current State (Nov 2025, post-initial refactor)
 
-| Path                                                         | Purpose                            | Notes / Issues                                                                                                     |
-| ------------------------------------------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `src/runtime/NovaSharp.Interpreter`                          | Core runtime source                | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` staging removed.                                        |
-| `src/debuggers/NovaSharp.RemoteDebugger`                     | Remote debugger assemblies         | Path aligned, no structural changes needed.                                                                        |
-| `src/debuggers/NovaSharp.VsCodeDebugger`                     | VS Code debugger backend           | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` mirror removed.                                         |
-| `src/debuggers/vscode-extension`                             | VS Code extension (TypeScript)     | Now grouped under debuggers.                                                                                       |
-| `src/tooling/NovaSharp.Cli`                                  | CLI shell (`NovaSharp.Cli.csproj`) | Renamed; NuGet restore only (no checked-in packages); release docs now reference the `cli` drop (formerly `repl`). |
-| `src/tooling/NovaSharp.Hardwire`                             | Hardwire generator                 | Tooling category aligned.                                                                                          |
-| `src/tooling/Benchmarks`, `src/tooling/NovaSharp.Comparison` | Benchmark/perf harnesses           | Paths aligned; scripts still assume legacy locations.                                                              |
-| `src/tests/NovaSharp.Interpreter.Tests`                      | Consolidated NUnit suite           | Powers local + CI execution; hosts Lua TAP fixtures.                                                               |
-| `src/samples/Tutorial`                                       | Tutorial snippets                  | Under dedicated samples hierarchy.                                                                                 |
-| `docs/manual/NovaSharp.Documentation`                        | Historical documentation           | Lives under docs tree; evaluate for migration to markdown.                                                         |
+| Path                                                                                          | Purpose                                            | Notes / Issues                                                                                                     |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `src/runtime/WallstopStudios.NovaSharp.Interpreter`                                           | Core runtime source                                | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` staging removed.                                        |
+| `src/debuggers/WallstopStudios.NovaSharp.RemoteDebugger`                                      | Remote debugger assemblies                         | Path aligned, no structural changes needed.                                                                        |
+| `src/debuggers/WallstopStudios.NovaSharp.VsCodeDebugger`                                      | VS Code debugger backend                           | Multi-targeted (`netstandard2.1; net8.0`) with `_Projects` mirror removed.                                         |
+| `src/debuggers/vscode-extension`                                                              | VS Code extension (TypeScript)                     | Now grouped under debuggers.                                                                                       |
+| `src/tooling/WallstopStudios.NovaSharp.Cli`                                                   | CLI shell (`WallstopStudios.NovaSharp.Cli.csproj`) | Renamed; NuGet restore only (no checked-in packages); release docs now reference the `cli` drop (formerly `repl`). |
+| `src/tooling/WallstopStudios.NovaSharp.Hardwire`                                              | Hardwire generator                                 | Tooling category aligned.                                                                                          |
+| `src/tooling/Benchmarks`, `src/tooling/WallstopStudios.NovaSharp.Comparison`                  | Benchmark/perf harnesses                           | Paths aligned; scripts still assume legacy locations.                                                              |
+| `src/tests/WallstopStudios.WallstopStudios.WallstopStudios.NovaSharp.Interpreter.Tests.TUnit` | Interpreter test host (TUnit)                      | Canonical interpreter/debugger suites; Microsoft.Testing.Platform runner.                                          |
+| `src/tests/WallstopStudios.WallstopStudios.NovaSharp.Interpreter.Tests`                       | Shared fixtures/helpers                            | Lua TAP fixtures, RealWorld corpuses, shared test infrastructure consumed by the TUnit host.                       |
+| `src/samples/Tutorial`                                                                        | Tutorial snippets                                  | Under dedicated samples hierarchy.                                                                                 |
+| `docs/manual/WallstopStudios.NovaSharp.Documentation`                                         | Historical documentation                           | Lives under docs tree; evaluate for migration to markdown.                                                         |
 
 ## 2. Target Layout (post-Milestone B/C)
 
 ```
 src/
   runtime/
-    NovaSharp.Interpreter/                 (multi-targeted, no `_Projects`)
+    WallstopStudios.NovaSharp.Interpreter/                 (multi-targeted, no `_Projects`)
   debuggers/
-    NovaSharp.RemoteDebugger/
-    NovaSharp.VsCodeDebugger/
+    WallstopStudios.NovaSharp.RemoteDebugger/
+    WallstopStudios.NovaSharp.VsCodeDebugger/
     vscode-extension/
   tooling/
-    NovaSharp.Cli/
-    NovaSharp.Hardwire/
+    WallstopStudios.NovaSharp.Cli/
+    WallstopStudios.NovaSharp.Hardwire/
     Benchmarks/
-    NovaSharp.Comparison/
+    WallstopStudios.NovaSharp.Comparison/
   tests/
-    NovaSharp.Interpreter.Tests/          (NUnit suite + Lua TAP fixtures)
+    WallstopStudios.WallstopStudios.WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/    (TUnit suite + linked shared assets)
+    WallstopStudios.WallstopStudios.NovaSharp.Interpreter.Tests/          (Shared Lua TAP fixtures and helpers)
   samples/
     Tutorial/
   docs/
@@ -45,7 +47,7 @@ src/
 Key principles:
 
 - **Single source of truth:** Eliminate `_Projects/*netcore` mirrors by converting main projects to multi-targeting where required.
-- **Namespace alignment:** Paths should mirror namespaces (`runtime/NovaSharp.Interpreter/...`), satisfying the new `.editorconfig` rules.
+- **Namespace alignment:** Paths should mirror namespaces (`runtime/WallstopStudios.NovaSharp.Interpreter/...`), satisfying the new `.editorconfig` rules.
 - **Clear ownership:** Runtime vs. debugger vs. tooling content live in dedicated top-level folders, aiding discoverability.
 - **Legacy cleanup:** Obsolete clients/tools should be removed promptly; the former `legacy/` quarantine has been retired to keep the tree lean.
 
@@ -58,8 +60,8 @@ Key principles:
 
 1. **Project Updates**
 
-   - Collapse `_Projects/...netcore` folders by multi-targeting the primary csproj (e.g., `NovaSharp.Interpreter.csproj` → `<TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>`). ✅ Interpreter and VS Code debugger complete; validate remaining tooling projects.
-   - ✅ Renamed `tooling/NovaSharp/NovaSharp.csproj` to `tooling/NovaSharp.Cli/NovaSharp.Cli.csproj` and relocated CLI assets accordingly.
+   - Collapse `_Projects/...netcore` folders by multi-targeting the primary csproj (e.g., `WallstopStudios.NovaSharp.Interpreter.csproj` → `<TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>`). ✅ Interpreter and VS Code debugger complete; validate remaining tooling projects.
+   - ✅ Renamed `tooling/NovaSharp/NovaSharp.csproj` to `tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj` and relocated CLI assets accordingly.
    - Update `NovaSharp.sln`, project `RootNamespace`, and `AssemblyName` values after rename/multi-target work.
 
 1. **Namespace + Usings Sweep**
@@ -85,5 +87,5 @@ Key principles:
 
 ## 4. Open Questions
 
-- Should `NovaSharp.Interpreter.Tests` be further split into `unit/` vs `integration/` folders to ease discovery?
+- Should `WallstopStudios.WallstopStudios.NovaSharp.Interpreter.Tests` be further split into `unit/` vs `integration/` folders to ease discovery?
 - Are there packaging assets that should move into a dedicated `packaging/` hierarchy alongside signing resources?

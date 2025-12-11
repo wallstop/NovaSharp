@@ -6,7 +6,8 @@ param(
     [double]$MinimumInterpreterBranchCoverage = 0.0,
     [double]$MinimumInterpreterMethodCoverage = 0.0,
     [ValidateSet("", "monitor", "enforce")]
-    [string]$CoverageGatingMode = $env:COVERAGE_GATING_MODE
+    [string]$CoverageGatingMode = $env:COVERAGE_GATING_MODE,
+    [switch]$SkipRestore
 )
 
 function Get-CoverageTarget {
@@ -23,6 +24,57 @@ function Get-CoverageTarget {
     }
 
     return $Fallback
+}
+
+function Invoke-CoverletRun {
+    param(
+        [string]$RunnerOutput,
+        [string]$TargetArgs,
+        [string]$CoverageBase,
+        [string]$Label,
+        [string[]]$AdditionalArgs = @()
+    )
+
+    Write-Host ("Collecting coverage via coverlet ({0})..." -f $Label)
+
+    $arguments = @(
+        "tool",
+        "run",
+        "coverlet",
+        $RunnerOutput,
+        "--target",
+        "dotnet",
+        "--targetargs",
+        $TargetArgs,
+        "--format",
+        "json",
+        "--format",
+        "lcov",
+        "--format",
+        "cobertura",
+        "--format",
+        "opencover",
+        "--output",
+        $CoverageBase,
+        "--verbosity",
+        "minimal",
+        "--include",
+        "[WallstopStudios.NovaSharp.*]*",
+        "--exclude",
+        "[WallstopStudios.NovaSharp.*Tests*]*"
+    )
+
+    if ($AdditionalArgs -and $AdditionalArgs.Count -gt 0) {
+        $arguments += $AdditionalArgs
+    }
+
+    dotnet @arguments
+    # Note: coverlet returns non-zero if tests fail, even though coverage was collected.
+    # We check for output files rather than exit code to determine success.
+    $testExitCode = $LASTEXITCODE
+    if ($testExitCode -ne 0) {
+        Write-Host "Warning: Test runner returned exit code $testExitCode (some tests may have failed)"
+    }
 }
 
 $ErrorActionPreference = "Stop"
@@ -71,6 +123,10 @@ if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
     Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 runtimes can host net8 test runners."
 }
 
+# Suppress TUnit ASCII banner and telemetry messages
+$env:TESTINGPLATFORM_NOBANNER = "1"
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+
 Push-Location $repoRoot
 try {
     Write-Host "Restoring local tools..."
@@ -81,7 +137,8 @@ try {
     $buildLogPath = Join-Path $coverageRoot "build.log"
 
     $buildExecuted = $false
-    $runnerProject = "src/tests/NovaSharp.Interpreter.Tests/NovaSharp.Interpreter.Tests.csproj"
+    $tunitRunnerProject = "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj"
+    $remoteDebuggerRunnerProject = "src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj"
 
     if (-not $SkipBuild) {
         Write-Host "Building solution (configuration: $Configuration)..."
@@ -89,7 +146,15 @@ try {
             Remove-Item $buildLogPath -Force
         }
 
-        dotnet build "src/NovaSharp.sln" -c $Configuration 2>&1 |
+        $restoreArgs = @()
+        if ($SkipRestore) {
+            $restoreArgs += "--no-restore"
+        }
+
+        # Build with maximum parallelism and node reuse for optimal performance.
+        # Disable ContinuousIntegrationBuild to ensure coverlet can instrument assemblies
+        # (deterministic builds with source-link paths break coverage collection).
+        dotnet build "src/NovaSharp.sln" -c $Configuration --nologo /m /nodeReuse:true -p:ContinuousIntegrationBuild=false @restoreArgs 2>&1 |
             Tee-Object -FilePath $buildLogPath | Out-Null
 
         $buildExecuted = $true
@@ -104,31 +169,22 @@ try {
             )
         }
 
-        Write-Host "Building test project (configuration: $Configuration)..."
-        dotnet build $runnerProject -c $Configuration --no-restore 2>&1 |
-            Tee-Object -FilePath $buildLogPath -Append | Out-Null
-
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host ""
-            Write-Host "dotnet build $runnerProject failed (exit code $LASTEXITCODE). Showing the last 200 lines:"
-            Get-Content $buildLogPath -Tail 200 | ForEach-Object { Write-Host $_ }
-            throw (
-                "dotnet build {0} -c {1} failed. See {2} for full output." -f
-                $runnerProject,
-                $Configuration,
-                $buildLogPath
-            )
-        }
+        # Test projects are built as part of the solution; no need to rebuild them individually.
     }
 
     $testResultsDir = Join-Path $coverageRoot "test-results"
     New-Item -ItemType Directory -Force -Path $testResultsDir | Out-Null
+    $tunitResultsDir = Join-Path $testResultsDir "tunit"
+    $remoteDebuggerResultsDir = Join-Path $testResultsDir "remote-debugger"
+    New-Item -ItemType Directory -Force -Path $tunitResultsDir | Out-Null
+    New-Item -ItemType Directory -Force -Path $remoteDebuggerResultsDir | Out-Null
 
-    $runnerOutput = Join-Path $repoRoot "src/tests/NovaSharp.Interpreter.Tests/bin/$Configuration/net8.0/NovaSharp.Interpreter.Tests.dll"
-    if (-not (Test-Path $runnerOutput)) {
-        $message = "Runner output not found at '$runnerOutput'."
+    $tunitRunnerOutput = Join-Path $repoRoot "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/bin/$Configuration/net8.0/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.dll"
+    $remoteDebuggerRunnerOutput = Join-Path $repoRoot "src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/bin/$Configuration/net8.0/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.dll"
+    if (-not (Test-Path $tunitRunnerOutput)) {
+        $message = "TUnit runner output not found at '$tunitRunnerOutput'."
         if ($SkipBuild) {
-            $message += " Rerun without -SkipBuild or build the test project manually."
+            $message += " Rerun without -SkipBuild or build the TUnit test project manually."
         }
         else {
             if (Test-Path $buildLogPath) {
@@ -137,26 +193,55 @@ try {
             else {
                 $message += " The preceding build may have failed."
             }
-            $message += " You can also run `dotnet build src/NovaSharp.sln -c $Configuration` to confirm."
+            $message += " You can also run `dotnet build $tunitRunnerProject -c $Configuration` to confirm."
+        }
+
+        throw $message
+    }
+
+    if (-not (Test-Path $remoteDebuggerRunnerOutput)) {
+        $message = "Remote debugger runner output not found at '$remoteDebuggerRunnerOutput'."
+        if ($SkipBuild) {
+            $message += " Rerun without -SkipBuild or build the remote debugger test project manually."
+        }
+        else {
+            if (Test-Path $buildLogPath) {
+                $message += " The preceding build may have failed; inspect $buildLogPath for details."
+            }
+            else {
+                $message += " The preceding build may have failed."
+            }
+            $message += " You can also run `dotnet build $remoteDebuggerRunnerProject -c $Configuration` to confirm."
         }
 
         throw $message
     }
 
     $coverageBase = Join-Path $coverageRoot "coverage"
-    $targetArgs =
-        "test `"$runnerProject`" -c $Configuration --no-build --logger `"trx;LogFileName=NovaSharpTests.trx`" --results-directory `"$testResultsDir`""
+    $tunitCoverageDir = Join-Path $coverageRoot "tunit"
+    New-Item -ItemType Directory -Force -Path $tunitCoverageDir | Out-Null
+    $tunitCoverageBase = Join-Path $tunitCoverageDir "coverage"
+    # Use 'dotnet run' instead of 'dotnet test' because Microsoft.Testing.Platform
+    # (configured in global.json) does not support 'dotnet test --project' syntax.
+    $tunitTargetArgs =
+        "run --project `"$tunitRunnerProject`" -c $Configuration --no-build"
+    $remoteDebuggerTargetArgs =
+        "run --project `"$remoteDebuggerRunnerProject`" -c $Configuration --no-build"
 
-    Write-Host "Collecting coverage via coverlet..."
-    dotnet tool run coverlet $runnerOutput `
-        --target "dotnet" `
-        --targetargs $targetArgs `
-        --format "lcov" `
-        --format "cobertura" `
-        --format "opencover" `
-        --output $coverageBase `
-        --include "[NovaSharp.*]*" `
-        --exclude "[NovaSharp.*Tests*]*"
+    Invoke-CoverletRun -RunnerOutput $tunitRunnerOutput -TargetArgs $tunitTargetArgs -CoverageBase $tunitCoverageBase -Label "TUnit"
+
+    $tunitCoverageJson = "$tunitCoverageBase.json"
+    if (-not (Test-Path $tunitCoverageJson)) {
+        throw "Coverage report not found at '$tunitCoverageJson' after running TUnit tests."
+    }
+
+    $remoteDebuggerMergeArgs = @("--merge-with", $tunitCoverageJson)
+    Invoke-CoverletRun `
+        -RunnerOutput $remoteDebuggerRunnerOutput `
+        -TargetArgs $remoteDebuggerTargetArgs `
+        -CoverageBase $coverageBase `
+        -Label "RemoteDebugger" `
+        -AdditionalArgs $remoteDebuggerMergeArgs
 
     $reportTarget = Join-Path $repoRoot "docs/coverage/latest"
     if (Test-Path $reportTarget) {
@@ -175,7 +260,7 @@ try {
         "-reports:$coberturaReport" `
         "-targetdir:$reportTarget" `
         "-reporttypes:$reportTypes" `
-        "-assemblyfilters:+NovaSharp.*"
+        "-assemblyfilters:+WallstopStudios.NovaSharp.*"
 
 function ShouldEmitFullCoverageSummary {
     # NOVASHARP_COVERAGE_SUMMARY can be set to 1/true/yes (emit) or 0/false/no (suppress).
@@ -264,7 +349,7 @@ if (Test-Path $summaryPath) {
     if (Test-Path $summaryJsonPath) {
         $summaryData = Get-Content $summaryJsonPath -Raw | ConvertFrom-Json
         $interpreterAssembly = $summaryData.coverage.assemblies |
-            Where-Object { $_.name -eq "NovaSharp.Interpreter" }
+            Where-Object { $_.name -eq "WallstopStudios.NovaSharp.Interpreter" }
 
         if ($null -eq $interpreterAssembly) {
             throw "Interpreter assembly not found in coverage summary. Verify reportgenerator configuration."

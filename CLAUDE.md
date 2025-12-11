@@ -1,10 +1,34 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+> **⚠️ This file is deprecated.** All AI assistant guidelines have been consolidated into [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md). This file is retained for backwards compatibility with Claude Code.
 
-## Project Overview
+> **🚫 CRITICAL: NEVER perform `git add` or `git commit` operations.** Leave all version control to the human developer.
 
-NovaSharp is a complete Lua 5.2 interpreter written in C# for .NET, Mono, Xamarin, and Unity3D platforms. It provides 99% Lua compatibility with advanced features like debugging support, bytecode dumping/loading, and seamless CLR interop.
+> **🚫 CRITICAL: NEVER use absolute paths to local development machines.** All file paths must be relative to the repository root. Never reference paths like `D:/Code`, `C:/Users`, `/Users/username`, `/home/username`, or any machine-specific path in committed files.
+
+> **🔴 HIGHEST PRIORITY: Lua Spec Compliance** — NovaSharp's primary goal is to faithfully match the official Lua reference implementation. When fixture comparisons reveal behavioral differences, these are **production bugs in NovaSharp that must be fixed**. **NEVER adjust tests or fixture expectations to match NovaSharp's incorrect behavior** — always fix the production code instead. See `PLAN.md` §8.38 for known spec violations and `CONTRIBUTING_AI.md` for the full policy.
+
+See [`CONTRIBUTING_AI.md`](CONTRIBUTING_AI.md) for:
+- **🔴 Lua Spec Compliance Policy** (highest priority)
+- **🔴 Flag enum combined values must be external** (no `|`, `&`, `^`, `~` in enum members—use helper classes)
+- Project overview and architecture
+- Build, test, and development commands
+- Coding style and conventions
+- **LuaNumber usage for Lua math operations**
+- Testing guidelines and **production bug policy** (never adjust tests to accommodate bugs)
+- **Lua fixture verification policy** (create cross-interpreter test fixtures for all bug fixes)
+- **Lua corpus regeneration** (regenerate fixtures after test changes via `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`)
+- Implementation notes for VM, interop, tables, and opcodes
+
+For human contributors, see [`docs/Contributing.md`](docs/Contributing.md).
+
+---
+
+## Legacy Content (Preserved for Reference)
+
+### Project Overview
+
+NovaSharp is a multi-version Lua interpreter (supporting Lua 5.1, 5.2, 5.3, and 5.4) written in C# for .NET, Mono, Xamarin, and Unity3D platforms. It provides comprehensive Lua compatibility across all major versions with advanced features like debugging support, bytecode dumping/loading, and seamless CLR interop.
 
 ## Build, Test, and Development Commands
 
@@ -29,7 +53,7 @@ msbuild src\NovaSharp.sln /p:Configuration=Release
 ### Testing
 ```bash
 # Run all interpreter tests
-dotnet test src\tests\NovaSharp.Interpreter.Tests\NovaSharp.Interpreter.Tests.csproj -c Release
+dotnet test src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release
 
 # Generate coverage reports (Coverlet + ReportGenerator)
 pwsh ./scripts/coverage/coverage.ps1   # or bash ./scripts/coverage/coverage.sh on macOS/Linux
@@ -54,20 +78,20 @@ Entry point is the `Script` class, which coordinates the entire pipeline.
 
 ### 2. Core Subsystems
 
-**Tree (Parsing & AST)** - `src/runtime/NovaSharp.Interpreter/Tree/`
+**Tree (Parsing & AST)** - `src/runtime/WallstopStudios.NovaSharp.Interpreter/Tree/`
 - Converts source code to Abstract Syntax Tree
 - Each AST node implements its own `Compile(ByteCode)` method
 - Key classes: `Lexer`, `Parser`, `Statement`, `Expression`
 - Loader_Fast.cs orchestrates the parse-compile sequence
 
-**Execution/VM (Bytecode & Runtime)** - `src/runtime/NovaSharp.Interpreter/Execution/`
+**Execution/VM (Bytecode & Runtime)** - `src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/`
 - `Processor` class implements stack-based virtual machine
 - 52 opcodes (ADD, MUL, CALL, JF, etc.)
 - Uses `FastStack<T>` for value stack and execution stack
 - Each `Instruction` contains opcode, operands, and source location
 - Supports tail call optimization for Lua compatibility
 
-**Interop (C# ↔ Lua Bridge)** - `src/runtime/NovaSharp.Interpreter/Interop/`
+**Interop (C# ↔ Lua Bridge)** - `src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/`
 - Bidirectional conversion between C# objects and Lua values
 - Uses descriptor pattern via `IUserDataDescriptor`
 - Global `TypeDescriptorRegistry` caches type metadata
@@ -137,14 +161,12 @@ Script.DoString("return x + 1")
 
 ## Testing Guidelines
 
-- **Framework**: NUnit 2.6 (`[TestFixture]`, `[Test]` attributes)
-- **Organization**: Place tests in descriptive folders (e.g., `Units`, `EndToEnd`, feature-specific) with clear class names
-- **Naming**: `<Feature>Tests.cs` pattern, store Lua fixtures alongside test classes
-- **Method Names**: Use PascalCase without underscores for `[Test]` methods; rename legacy cases when modifying them
-- **Suite Maintenance**: Update `tests/NovaSharp.Interpreter.Tests` when interpreter behavior changes; the consolidated project runs under NUnit and feeds CI coverage
-- **Coverage Areas**: Add tests for new opcodes, metatables, debugger paths, and interop scenarios
-- **Spec Alignment**: When any test fails, walk the official Lua manuals for every supported version (baseline: Lua 5.4.8 at `https://www.lua.org/manual/5.4/`) to confirm the correct semantics, record the relevant section/link in the test or PR notes, and update both production code and expectations so NovaSharp stays faithful to upstream Lua behaviour.
-- **Spec Suites**: Spec-driven coverage (string/math/table/etc.) must cite the specific manual section (e.g., “§6.4 String Manipulation”) and assert behaviour that matches the canonical Lua interpreter rather than legacy pre-rename quirks.
+- **Framework**: Interpreter and debugger suites run on TUnit (`global::TUnit.Core.Test` + async `Assert.That` APIs). Do not add new NUnit fixtures—`src/tests/WallstopStudios.NovaSharp.Interpreter.Tests` now stores shared Lua fixtures and helpers only.
+- **Organization**: Keep fixtures in descriptive folders (`Units`, `EndToEnd`, feature-specific) with `<Feature>TUnitTests.cs` names; store Lua fixtures alongside the tests that consume them.
+- **Method Names**: Use PascalCase without underscores; rename legacy methods when touching them.
+- **Suite Maintenance**: Extend `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit` for interpreter behaviour changes. Shared helpers (e.g., TAP corpuses) still live under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests`.
+- **Coverage Areas**: Add tests for new opcodes, metatables, debugger paths, and interop scenarios.
+- **Spec Alignment**: When tests fail, reread the official Lua manual (baseline: Lua 5.4.8 at `https://www.lua.org/manual/5.4/`), cite the consulted section in PR notes/tests, and update runtime + expectations together.
 
 ## Commit & Pull Request Guidelines
 
@@ -157,11 +179,11 @@ Script.DoString("return x + 1")
 
 ## Module Organization
 
-  - **Runtime Code**: All under `src/runtime/`, interpreter in `src/runtime/NovaSharp.Interpreter/`
+  - **Runtime Code**: All under `src/runtime/`, interpreter in `src/runtime/WallstopStudios.NovaSharp.Interpreter/`
   - **Debuggers**: `src/debuggers/NovaSharp.VsCodeDebugger/`, `src/debuggers/NovaSharp.RemoteDebugger/`, and `src/debuggers/vscode-extension/`
   - **Tooling**: `src/tooling/` for the CLI (`NovaSharp`), hardwire generator, benchmarks, and perf comparisons
   - **Samples**: `src/samples/` for tutorials and examples
-  - **Tests**: `src/tests/NovaSharp.Interpreter.Tests/` (NUnit-based suite powering local + CI execution)
+  - **Tests**: `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/` (TUnit suite powering local + CI); shared Lua fixtures remain under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/`
   - **Legacy Assets**: Flash/Flex debugger, Lua52 binaries, and other historical scripts have been removed from `src/legacy`; see `docs/Modernization.md` for the deprecation summary.
 
 ## Important Implementation Notes

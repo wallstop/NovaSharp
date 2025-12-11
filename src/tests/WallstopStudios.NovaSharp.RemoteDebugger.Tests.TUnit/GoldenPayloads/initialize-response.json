@@ -1,0 +1,11 @@
+{
+  "Success": true,
+  "Command": "initialize",
+  "Body": {
+    "SupportsConfigurationDoneRequest": false,
+    "SupportsFunctionBreakpoints": false,
+    "SupportsConditionalBreakpoints": false,
+    "SupportsEvaluateForHovers": false,
+    "ExceptionBreakpointFilters": []
+  }
+}
