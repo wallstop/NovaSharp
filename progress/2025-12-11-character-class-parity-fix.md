@@ -16,17 +16,17 @@ NovaSharp's `IsPunctuation(char c)` function was using .NET's `Char.IsPunctuatio
 
 The following ASCII characters were NOT being recognized as punctuation by NovaSharp but ARE punctuation in reference Lua:
 
-| Code | Character | Description |
-|------|-----------|-------------|
-| 36   | `$`       | Dollar sign |
-| 43   | `+`       | Plus sign |
-| 60   | `<`       | Less than |
-| 61   | `=`       | Equals |
+| Code | Character | Description  |
+| ---- | --------- | ------------ |
+| 36   | `$`       | Dollar sign  |
+| 43   | `+`       | Plus sign    |
+| 60   | `<`       | Less than    |
+| 61   | `=`       | Equals       |
 | 62   | `>`       | Greater than |
-| 94   | `^`       | Caret |
-| 96   | `` ` ``   | Backtick |
-| 124  | `\|`      | Pipe |
-| 126  | `~`       | Tilde |
+| 94   | `^`       | Caret        |
+| 96   | `` ` ``   | Backtick     |
+| 124  | `\|`      | Pipe         |
+| 126  | `~`       | Tilde        |
 
 ### Root Cause
 
@@ -59,6 +59,7 @@ internal static bool IsPunctuation(char c)
 ## Tests Added
 
 Created comprehensive character class parity tests in:
+
 - `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/PatternMatching/CharacterClassParityTUnitTests.cs`
 
 ### Test Coverage (158 test cases across 16 test methods)
@@ -66,6 +67,7 @@ Created comprehensive character class parity tests in:
 All tests run against **all supported Lua versions** (5.1, 5.2, 5.3, 5.4, 5.5) to ensure consistent behavior.
 
 1. **Full ASCII range tests** for each character class (×5 Lua versions each):
+
    - `%a` (alpha) - 52 characters (A-Z, a-z)
    - `%c` (control) - 33 characters (0-31, 127)
    - `%d` (digit) - 10 characters (0-9)
@@ -77,18 +79,20 @@ All tests run against **all supported Lua versions** (5.1, 5.2, 5.3, 5.4, 5.5) t
    - `%w` (alnum) - 62 characters (0-9, A-Z, a-z)
    - `%x` (xdigit) - 22 characters (0-9, A-F, a-f)
 
-2. **Negated class tests** (×5 Lua versions each) for `%A`, `%D`, `%L`, `%S`, `%U`
+1. **Negated class tests** (×5 Lua versions each) for `%A`, `%D`, `%L`, `%S`, `%U`
 
-3. **Specific punctuation character tests** - Comprehensive character-by-character tests across all Lua versions, with special focus on previously-missing characters: `$`, `+`, `<`, `=`, `>`, `^`, `` ` ``, `|`, `~`
+1. **Specific punctuation character tests** - Comprehensive character-by-character tests across all Lua versions, with special focus on previously-missing characters: `$`, `+`, `<`, `=`, `>`, `^`, `` ` ``, `|`, `~`
 
 ## Verification
 
 ### Reference Lua 5.4 Output
+
 ```
 %p (punct): 33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,58,59,60,61,62,63,64,91,92,93,94,95,96,123,124,125,126
 ```
 
 ### NovaSharp Output (After Fix)
+
 ```
 %p (punct): 33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,58,59,60,61,62,63,64,91,92,93,94,95,96,123,124,125,126
 ```
@@ -115,6 +119,6 @@ All tests run against **all supported Lua versions** (5.1, 5.2, 5.3, 5.4, 5.5) t
 The following items from Initiative 8.4 still need verification:
 
 1. Compare remaining character classes for non-ASCII characters (Unicode range)
-2. Verify `string.format` output for edge cases (NaN, Inf, large numbers)
-3. Test pattern matching with non-ASCII characters
-4. Document any intentional Unicode-aware divergences
+1. Verify `string.format` output for edge cases (NaN, Inf, large numbers)
+1. Test pattern matching with non-ASCII characters
+1. Document any intentional Unicode-aware divergences
