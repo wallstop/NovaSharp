@@ -122,7 +122,7 @@ cat > "$PACKAGE_ROOT/package.json" << EOF
   "unityRelease": "0f1",
   "documentationUrl": "https://github.com/wallstop/NovaSharp",
   "changelogUrl": "https://github.com/wallstop/NovaSharp/releases",
-  "licensesUrl": "https://github.com/wallstop/NovaSharp/blob/master/LICENSE",
+  "licensesUrl": "https://github.com/wallstop/NovaSharp/blob/main/LICENSE",
   "license": "MIT",
   "keywords": [
     "lua",

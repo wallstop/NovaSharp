@@ -6,7 +6,7 @@ Use this folder to regenerate the NovaSharp benchmark baselines documented in `d
 
 The `.github/workflows/benchmarks.yml` workflow runs benchmarks automatically:
 
-- **On push to master**: Full benchmark run with results stored in `gh-pages` branch
+- **On push to main**: Full benchmark run with results stored in `gh-pages` branch
 - **On PRs**: Benchmark run with comparison against baseline; comments on PRs with regression alerts
 - **Manual dispatch**: Configurable threshold and fail-on-alert settings
 

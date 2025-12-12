@@ -2,7 +2,7 @@ name: Benchmarks
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
     paths:
       - 'src/runtime/**'
@@ -141,6 +141,14 @@ jobs:
                   f.write("\n")
           EOF
 
+      - name: Clean up local changes before branch operations
+        run: |
+          # The benchmark harness may update docs/Performance.md locally.
+          # Discard these changes so git can switch branches cleanly.
+          git checkout -- docs/Performance.md 2>/dev/null || true
+          # Also reset any other untracked/modified files that could interfere
+          git clean -fd 2>/dev/null || true
+
       - name: Check if gh-pages branch exists
         id: check_gh_pages
         run: |
@@ -153,7 +161,7 @@ jobs:
           fi
 
       - name: Create gh-pages branch
-        if: steps.check_gh_pages.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: steps.check_gh_pages.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           echo "Creating gh-pages branch for benchmark storage..."
           # Create orphan branch with initial benchmark data structure
@@ -174,15 +182,15 @@ jobs:
 
       - name: Store benchmark results
         # Only run if gh-pages exists (either pre-existing or just created)
-        if: steps.check_gh_pages.outputs.exists == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+        if: steps.check_gh_pages.outputs.exists == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: NovaSharp Benchmarks
           tool: customSmallerIsBetter
           output-file-path: benchmark-results.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # Auto-push only on master branch pushes
-          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+          # Auto-push only on main branch pushes
+          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           # Alert threshold (default 115% = 15% regression)
           alert-threshold: ${{ github.event.inputs.alert_threshold || '115%' }}
           # Fail on alert for PRs, configurable via input
@@ -194,10 +202,10 @@ jobs:
           benchmark-data-dir-path: benchmarks
 
       - name: Skip benchmark storage (no gh-pages branch)
-        if: steps.check_gh_pages.outputs.exists == 'false' && !(github.event_name == 'push' && github.ref == 'refs/heads/master')
+        if: steps.check_gh_pages.outputs.exists == 'false' && !(github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: |
           echo "::warning::Skipping benchmark storage - gh-pages branch does not exist."
-          echo "The gh-pages branch will be created on the next push to master."
+          echo "The gh-pages branch will be created on the next push to main."
           echo "Benchmark results are still available in the uploaded artifacts."
 
       - name: Upload benchmark artifacts
@@ -212,7 +220,7 @@ jobs:
   # Comparison benchmarks run separately and less frequently
   comparison:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: benchmark
     steps:
       - uses: actions/checkout@v6

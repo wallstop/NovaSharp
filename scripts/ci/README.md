@@ -21,7 +21,7 @@ Scripts in this folder run before the main build/test stages (either locally or 
 ## Usage
 
 ```bash
-NOVASHARP_BASE_REF=origin/master bash ./scripts/ci/ensure-readme-updates.sh
+NOVASHARP_BASE_REF=origin/main bash ./scripts/ci/ensure-readme-updates.sh
 ```
 
 - When running in GitHub Actions, the workflow supplies `NOVASHARP_BASE_REF` automatically so the script diff uses the merge base for the PR (or `HEAD^` on direct pushes).

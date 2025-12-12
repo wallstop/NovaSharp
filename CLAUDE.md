@@ -175,7 +175,7 @@ Script.DoString("return x + 1")
 - **Issue References**: Use `Fixes #ID` to auto-close issues on merge
 - **PR Descriptions**: Summarize changes, list build/test commands executed, attach UI captures for debugger work
 - **Breaking Changes**: Document prominently and coordinate release notes before merging
-- **Main Branch**: Use `master` for pull requests
+- **Main Branch**: Use `main` for pull requests
 
 ## Module Organization
 
