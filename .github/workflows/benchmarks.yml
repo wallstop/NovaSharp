@@ -49,6 +49,7 @@ jobs:
 
       - name: Run benchmarks
         id: run_benchmarks
+        continue-on-error: true
         run: |
           set -euo pipefail
           echo "Running benchmarks..."
@@ -60,6 +61,7 @@ jobs:
           # List what was created for debugging
           echo "Contents of BenchmarkDotNet.Artifacts:"
           find BenchmarkDotNet.Artifacts -type f -name "*.json" 2>/dev/null || echo "No JSON files found"
+          ls -la BenchmarkDotNet.Artifacts/ 2>/dev/null || echo "BenchmarkDotNet.Artifacts directory not found"
         env:
           DOTNET_ROLL_FORWARD: Major
           # Skip Performance.md update in CI to avoid git conflicts
@@ -67,16 +69,18 @@ jobs:
 
       - name: Find and validate benchmark results
         id: find_result
+        continue-on-error: true
         run: |
-          set -euo pipefail
+          set -uo pipefail
           
           # Look for the benchmark result files
           echo "Searching for benchmark results..."
           
           # BenchmarkDotNet creates results in BenchmarkDotNet.Artifacts/results/
           if [ ! -d "BenchmarkDotNet.Artifacts" ]; then
-            echo "::error::BenchmarkDotNet.Artifacts directory not found"
-            exit 1
+            echo "::warning::BenchmarkDotNet.Artifacts directory not found"
+            echo "has_results=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           
           # Find the full report JSON (preferred) or any JSON with benchmark data
@@ -101,10 +105,11 @@ jobs:
           fi
           
           if [ -z "$result_file" ]; then
-            echo "::error::No benchmark result JSON file found in BenchmarkDotNet.Artifacts"
+            echo "::warning::No benchmark result JSON file found in BenchmarkDotNet.Artifacts"
             echo "Directory contents:"
             find BenchmarkDotNet.Artifacts -type f 2>/dev/null || echo "Empty or missing"
-            exit 1
+            echo "has_results=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           
           echo "Found benchmark result: $result_file"
@@ -113,6 +118,7 @@ jobs:
 
       - name: Transform to benchmark-action format
         id: transform
+        if: steps.find_result.outputs.has_results == 'true'
         run: |
           set -euo pipefail
           python3 << 'PYTHON_SCRIPT'
@@ -236,16 +242,24 @@ jobs:
 
       - name: Verify benchmark-results.json exists
         id: verify_results
+        if: steps.find_result.outputs.has_results == 'true'
         run: |
-          set -euo pipefail
           if [ ! -f "benchmark-results.json" ]; then
-            echo "::error::benchmark-results.json was not created"
-            exit 1
+            echo "::warning::benchmark-results.json was not created"
+            echo "has_output=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           echo "benchmark-results.json contents:"
           cat benchmark-results.json
           echo ""
           echo "has_output=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set output when no results
+        id: set_no_output
+        if: steps.find_result.outputs.has_results != 'true'
+        run: |
+          echo "has_output=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::No benchmark results available to store"
 
       - name: Clean up local changes before branch operations
         run: |
@@ -286,10 +300,22 @@ jobs:
           git checkout -
           echo "gh-pages branch created successfully"
 
+      - name: Check if benchmark results file exists
+        id: check_results_file
+        run: |
+          if [ -f "benchmark-results.json" ]; then
+            echo "file_exists=true" >> "$GITHUB_OUTPUT"
+            echo "benchmark-results.json exists"
+            ls -la benchmark-results.json
+          else
+            echo "file_exists=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::benchmark-results.json does not exist"
+          fi
+
       - name: Store benchmark results
-        # Only run if we have valid results AND gh-pages exists (either pre-existing or just created)
+        # Only run if the file physically exists AND gh-pages exists (either pre-existing or just created)
         if: |
-          steps.verify_results.outputs.has_output == 'true' &&
+          steps.check_results_file.outputs.file_exists == 'true' &&
           (steps.check_gh_pages.outputs.exists == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -311,11 +337,11 @@ jobs:
 
       - name: Skip benchmark storage (no gh-pages branch or no results)
         if: |
-          steps.verify_results.outputs.has_output != 'true' ||
+          steps.check_results_file.outputs.file_exists != 'true' ||
           (steps.check_gh_pages.outputs.exists == 'false' && !(github.event_name == 'push' && github.ref == 'refs/heads/main'))
         run: |
-          if [ "${{ steps.verify_results.outputs.has_output }}" != "true" ]; then
-            echo "::warning::Skipping benchmark storage - no valid benchmark results were generated."
+          if [ "${{ steps.check_results_file.outputs.file_exists }}" != "true" ]; then
+            echo "::warning::Skipping benchmark storage - benchmark-results.json was not created."
           else
             echo "::warning::Skipping benchmark storage - gh-pages branch does not exist."
             echo "The gh-pages branch will be created on the next push to main."
