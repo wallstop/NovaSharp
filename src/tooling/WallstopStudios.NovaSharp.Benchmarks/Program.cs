@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Benchmarks
 {
+    using System;
     using BenchmarkDotNet.Reports;
     using BenchmarkDotNet.Running;
 
@@ -20,7 +21,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 .FromAssembly(typeof(Program).Assembly)
                 .Run(effectiveArgs, DefaultConfigFactory.Create());
 
-            PerformanceReportWriter.Write("NovaSharp Benchmarks", summaries);
+            // Skip Performance.md update in CI environments to avoid git conflicts
+            // during branch operations (e.g., github-action-benchmark switching to gh-pages).
+            // Set NOVASHARP_SKIP_PERFORMANCE_DOC=1 to disable locally as well.
+            string skipEnv = Environment.GetEnvironmentVariable("NOVASHARP_SKIP_PERFORMANCE_DOC");
+            string ciEnv = Environment.GetEnvironmentVariable("CI");
+            bool skipPerformanceDoc =
+                string.Equals(skipEnv, "1", StringComparison.Ordinal)
+                || string.Equals(skipEnv, "true", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(ciEnv, "true", StringComparison.OrdinalIgnoreCase);
+
+            if (!skipPerformanceDoc)
+            {
+                PerformanceReportWriter.Write("NovaSharp Benchmarks", summaries);
+            }
         }
     }
 }

@@ -487,9 +487,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             public sealed class PublicNested { }
 
+#pragma warning disable CS0628 // New protected member declared in sealed type
             protected internal sealed class ProtectedInternalNested { }
+#pragma warning restore CS0628 // New protected member declared in sealed type
 
+#pragma warning disable CS0628 // New protected member declared in sealed type
             protected sealed class ProtectedNested { }
+#pragma warning restore CS0628 // New protected member declared in sealed type
 
             private sealed class PrivateNested { }
 
@@ -657,8 +661,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
         private abstract class PropertyFixtures
         {
-            public const string PrivatePropertyName = nameof(PrivateBoth);
-
             public int GetterOnly { get; private set; }
 
             public int SetterOnly { private get; set; }
