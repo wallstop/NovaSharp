@@ -661,8 +661,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
         private abstract class PropertyFixtures
         {
-            // ReSharper disable once UnusedMember.Local
-            public const string PrivatePropertyName = nameof(PrivateBoth);
 
             public int GetterOnly { get; private set; }
 
