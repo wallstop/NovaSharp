@@ -11,8 +11,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [PlatformDetectorIsolation]
+    [ScriptDefaultOptionsIsolation]
     public sealed class ScriptRunTUnitTests
     {
         [global::TUnit.Core.Test]
@@ -35,12 +37,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             );
             string tempFile = tempFileScope.FilePath;
 
-            await File.WriteAllTextAsync(tempFile, "return 'file-result'").ConfigureAwait(false);
+            const string expectedCode = "return 'file-result'";
+
+            // Write file using standard async file write
+            await File.WriteAllTextAsync(tempFile, expectedCode).ConfigureAwait(false);
+
+            // Verify the file was written correctly before executing
+            bool fileExists = File.Exists(tempFile);
+            string actualFileContents = fileExists
+                ? await File.ReadAllTextAsync(tempFile).ConfigureAwait(false)
+                : "<file not found>";
+            long fileLength = fileExists ? new FileInfo(tempFile).Length : -1;
+            string defaultLoaderType =
+                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "<null loader>";
+
+            // Create a script directly to check the actual loader used
+            Script testScript = new();
+            string actualScriptLoaderType =
+                testScript.Options.ScriptLoader?.GetType().Name ?? "<null loader>";
+
+            // Diagnostic context for troubleshooting CI failures
+            string diagnostics =
+                $"FilePath={tempFile}, Exists={fileExists}, Length={fileLength}, "
+                + $"Contents='{actualFileContents}', DefaultLoader={defaultLoaderType}, "
+                + $"ActualScriptLoader={actualScriptLoaderType}";
 
             DynValue result = Script.RunFile(tempFile);
 
-            await Assert.That(result.Type).IsEqualTo(DataType.String);
-            await Assert.That(result.String).IsEqualTo("file-result");
+            // Use diagnostic message in assertion failure
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(DataType.String)
+                .Because(
+                    $"Expected String result from script. Actual type: {result.Type}. Diagnostics: {diagnostics}"
+                )
+                .ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("file-result").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -207,6 +239,96 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 .That(Script.DefaultOptions.ScriptLoader)
                 .IsTypeOf<FileSystemScriptLoader>()
                 .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RunFileHandlesEmptyFile()
+        {
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using TempFileScope tempFileScope = TempFileScope.CreateEmpty(extension: ".lua");
+
+            DynValue result = Script.RunFile(tempFileScope.FilePath);
+
+            // Empty file returns Void (no return statement)
+            await Assert.That(result.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RunFileHandlesWhitespaceOnlyFile()
+        {
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using TempFileScope tempFileScope = TempFileScope.CreateWithText(
+                "   \n\t\n   ",
+                extension: ".lua"
+            );
+
+            DynValue result = Script.RunFile(tempFileScope.FilePath);
+
+            // Whitespace-only file returns Void (no return statement)
+            await Assert.That(result.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RunFileHandlesUtf8BomFile()
+        {
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
+
+            // Create file with UTF-8 BOM
+            using TempFileScope tempFileScope = TempFileScope.CreateWithText(
+                "return 'with-bom'",
+                encoding: new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true),
+                extension: ".lua"
+            );
+
+            DynValue result = Script.RunFile(tempFileScope.FilePath);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo("with-bom").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RunFileHandlesMultiStatementScript()
+        {
+            using PlatformDetectorOverrideScope platformScope =
+                PlatformDetectionTestHelper.ForceFileSystemLoader();
+            using TempFileScope tempFileScope = TempFileScope.CreateWithText(
+                "local x = 10\nlocal y = 20\nreturn x + y",
+                extension: ".lua"
+            );
+
+            DynValue result = Script.RunFile(tempFileScope.FilePath);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(30).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task RunFileScriptLoaderIsolationWorks()
+        {
+            // Verify the ForceFileSystemLoader scope properly isolates
+            string loaderBeforeScope =
+                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "<null>";
+
+            using (
+                PlatformDetectorOverrideScope platformScope =
+                    PlatformDetectionTestHelper.ForceFileSystemLoader()
+            )
+            {
+                string loaderDuringScope =
+                    Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "<null>";
+                await Assert
+                    .That(loaderDuringScope)
+                    .IsEqualTo(nameof(FileSystemScriptLoader))
+                    .ConfigureAwait(false);
+            }
+
+            // After scope ends, loader should be restored
+            string loaderAfterScope =
+                Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "<null>";
+            await Assert.That(loaderAfterScope).IsEqualTo(loaderBeforeScope).ConfigureAwait(false);
         }
 
         private static string EncodeFunctionAsBase64(Script script, DynValue chunk)

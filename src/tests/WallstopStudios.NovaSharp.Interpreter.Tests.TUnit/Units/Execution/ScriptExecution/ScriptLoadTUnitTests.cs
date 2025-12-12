@@ -19,6 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ScriptLoadTUnitTests
     {
@@ -316,12 +317,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
         [global::TUnit.Core.Test]
         [PlatformDetectorIsolation]
+        [ScriptDefaultOptionsIsolation]
         public async Task RunStringAndRunFileExecuteConvenienceHelpers()
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectionTestHelper.ForceFileSystemLoader();
+
+            // Verify the script loader is correctly configured before running tests
+            string loaderType = Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "null";
+            await Assert
+                .That(loaderType)
+                .IsEqualTo(nameof(FileSystemScriptLoader))
+                .Because($"Expected FileSystemScriptLoader but got {loaderType}")
+                .ConfigureAwait(false);
+
             DynValue stringResult = Script.RunString("return 321");
-            await Assert.That(stringResult.Number).IsEqualTo(321);
+            await Assert
+                .That(stringResult.Type)
+                .IsEqualTo(DataType.Number)
+                .Because($"RunString result type was {stringResult.Type}, expected Number")
+                .ConfigureAwait(false);
+            await Assert.That(stringResult.Number).IsEqualTo(321).ConfigureAwait(false);
 
             using TempFileScope tempFileScope = TempFileScope.Create(
                 namePrefix: "script-",
@@ -330,8 +346,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             string path = tempFileScope.FilePath;
 
             await File.WriteAllTextAsync(path, "return 654").ConfigureAwait(false);
+
+            // Verify file was written correctly
+            string fileContent = await File.ReadAllTextAsync(path).ConfigureAwait(false);
+            await Assert
+                .That(fileContent)
+                .IsEqualTo("return 654")
+                .Because($"File content mismatch. Path: {path}, FileExists: {File.Exists(path)}")
+                .ConfigureAwait(false);
+
             DynValue fileResult = Script.RunFile(path);
-            await Assert.That(fileResult.Number).IsEqualTo(654);
+
+            // Provide diagnostic information on failure
+            string diagnosticContext =
+                $"Path: {path}, FileExists: {File.Exists(path)}, "
+                + $"ScriptLoader: {Script.DefaultOptions.ScriptLoader?.GetType().Name ?? "null"}, "
+                + $"ResultType: {fileResult.Type}, FileContent: '{fileContent}'";
+
+            await Assert
+                .That(fileResult.Type)
+                .IsEqualTo(DataType.Number)
+                .Because(diagnosticContext)
+                .ConfigureAwait(false);
+            await Assert
+                .That(fileResult.Number)
+                .IsEqualTo(654)
+                .Because(diagnosticContext)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
