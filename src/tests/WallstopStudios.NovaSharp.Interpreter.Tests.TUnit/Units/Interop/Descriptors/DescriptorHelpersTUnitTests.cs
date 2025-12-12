@@ -661,7 +661,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
         private abstract class PropertyFixtures
         {
-
             public int GetterOnly { get; private set; }
 
             public int SetterOnly { private get; set; }
