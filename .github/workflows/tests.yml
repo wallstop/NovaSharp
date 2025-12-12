@@ -179,7 +179,7 @@ jobs:
           fi
       - name: Create auto-fix PR
         if: steps.autofix_changes.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: apply lint autofixes"
