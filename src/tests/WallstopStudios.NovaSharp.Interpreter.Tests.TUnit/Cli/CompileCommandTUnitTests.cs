@@ -9,9 +9,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
     using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     [PlatformDetectorIsolation]
+    [ScriptDefaultOptionsIsolation]
     public sealed class CompileCommandTUnitTests
     {
         [global::TUnit.Core.Test]

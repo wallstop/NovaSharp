@@ -11,12 +11,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for Script constructor options, global options scopes, and default options handling.
     /// Targets uncovered branches related to TimeProvider, HighResolutionClock, and options scopes.
     /// </summary>
     [ScriptGlobalOptionsIsolation]
+    [ScriptDefaultOptionsIsolation]
+    [PlatformDetectorIsolation]
     public sealed class ScriptOptionsTUnitTests
     {
         [global::TUnit.Core.Test]

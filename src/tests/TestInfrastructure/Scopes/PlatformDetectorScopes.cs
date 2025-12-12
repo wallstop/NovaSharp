@@ -48,6 +48,18 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
         /// to a <see cref="FileSystemScriptLoader"/> so that static methods like
         /// <see cref="Script.RunFile(string)"/> will use the file system loader.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This method modifies both <see cref="PlatformAutoDetector"/> state and
+        /// <see cref="Script.DefaultOptions"/>. Tests that call this method should use both
+        /// <c>[PlatformDetectorIsolation]</c> and <c>[ScriptDefaultOptionsIsolation]</c>
+        /// attributes to ensure proper isolation from other parallel tests.
+        /// </para>
+        /// <para>
+        /// Without proper isolation, race conditions can occur where one test's modification
+        /// to <see cref="Script.DefaultOptions"/> affects another test running in parallel.
+        /// </para>
+        /// </remarks>
         public static PlatformDetectorOverrideScope ForceFileSystemLoader()
         {
             IDisposable defaultOptionsScope = null;

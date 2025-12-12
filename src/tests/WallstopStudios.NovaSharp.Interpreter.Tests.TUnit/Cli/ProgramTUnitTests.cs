@@ -17,8 +17,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     using WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [PlatformDetectorIsolation]
+    [ScriptDefaultOptionsIsolation]
     public sealed class ProgramTUnitTests
     {
         private static readonly string[] HelpFlagArguments = { "-H" };

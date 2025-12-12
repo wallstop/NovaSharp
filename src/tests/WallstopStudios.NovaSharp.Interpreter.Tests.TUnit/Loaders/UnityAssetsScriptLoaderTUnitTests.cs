@@ -16,8 +16,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [PlatformDetectorIsolation]
+    [ScriptDefaultOptionsIsolation]
     public sealed class UnityAssetsScriptLoaderTUnitTests
     {
         private static readonly string[] ExpectedLoadedScripts = { "alpha.lua", "beta.lua" };
