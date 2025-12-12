@@ -5,7 +5,7 @@
 **Status**: ✅ Complete
 **Related Sections**: PLAN.md §8.24 (Dual Numeric Type System Phase 5)
 
----
+______________________________________________________________________
 
 ## Summary
 
@@ -134,28 +134,31 @@ public static DynValue FromFloat(double num)
 
 Added 10 new test cases in `DynValueTUnitTests.cs`:
 
-| Test Method | Description |
-|-------------|-------------|
-| `FromIntegerReturnsCachedValueForSmallPositiveIntegers` | Verifies cache hits for 0, 1, 127, 255 |
-| `FromIntegerReturnsCachedValueForSmallNegativeIntegers` | Verifies cache hits for -1, -127, -256 |
-| `FromIntegerReturnsNewValueForOutOfCacheRange` | Verifies cache misses for 256, 1000, -257, -1000 |
-| `FromFloatReturnsCachedValueForCommonFloats` | Verifies cache hits for 0.0, 1.0, -1.0, etc. |
-| `FromFloatReturnsNewValueForUncommonFloats` | Verifies cache misses for 3.14159, etc. |
-| `FromFloatPreservesFloatSubtypeForWholeNumbers` | Verifies 1.0 cached as float (not integer) |
-| `FromIntegerPreservesIntegerSubtype` | Verifies integer subtype is preserved |
+| Test Method                                             | Description                                      |
+| ------------------------------------------------------- | ------------------------------------------------ |
+| `FromIntegerReturnsCachedValueForSmallPositiveIntegers` | Verifies cache hits for 0, 1, 127, 255           |
+| `FromIntegerReturnsCachedValueForSmallNegativeIntegers` | Verifies cache hits for -1, -127, -256           |
+| `FromIntegerReturnsNewValueForOutOfCacheRange`          | Verifies cache misses for 256, 1000, -257, -1000 |
+| `FromFloatReturnsCachedValueForCommonFloats`            | Verifies cache hits for 0.0, 1.0, -1.0, etc.     |
+| `FromFloatReturnsNewValueForUncommonFloats`             | Verifies cache misses for 3.14159, etc.          |
+| `FromFloatPreservesFloatSubtypeForWholeNumbers`         | Verifies 1.0 cached as float (not integer)       |
+| `FromIntegerPreservesIntegerSubtype`                    | Verifies integer subtype is preserved            |
 
 ## Verification
 
 ### Build Results
+
 - **Status**: ✅ Success
 - **Warnings**: 0
 
 ### Test Results
+
 - **Total Tests**: 4,741
 - **Passed**: 4,741
 - **Failed**: 0
 
 ### Lua Comparison Results (5.4)
+
 - **Total Fixtures**: 853 (compatible with Lua 5.4)
 - **Match**: 643
 - **Mismatch**: 0
@@ -167,15 +170,16 @@ Added 10 new test cases in `DynValueTUnitTests.cs`:
 
 The caching changes are designed to reduce allocations in hot paths:
 
-| Cache | Range | Expected Impact |
-|-------|-------|-----------------|
-| Positive Integer Cache | 0-255 | Lua array indices, loop counters |
-| Negative Integer Cache | -256 to -1 | Reverse loops, negative offsets |
-| Common Float Cache | 14 values | Math constants, common multipliers |
+| Cache                  | Range      | Expected Impact                    |
+| ---------------------- | ---------- | ---------------------------------- |
+| Positive Integer Cache | 0-255      | Lua array indices, loop counters   |
+| Negative Integer Cache | -256 to -1 | Reverse loops, negative offsets    |
+| Common Float Cache     | 14 values  | Math constants, common multipliers |
 
 ## Files Modified
 
 ### Production Code
+
 - `src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/DynValue.cs`
   - Added `NegativeIntegerCache` and initialization
   - Added `CommonFloatCache` and initialization
@@ -183,6 +187,7 @@ The caching changes are designed to reduce allocations in hot paths:
   - Updated `FromInteger(long)` to use negative cache
 
 ### Test Code
+
 - `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/DynValueTUnitTests.cs`
   - Added 10 new caching verification tests
 

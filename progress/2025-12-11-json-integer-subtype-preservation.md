@@ -5,19 +5,20 @@
 **Status**: ✅ Complete
 **Related Sections**: PLAN.md §8.24 (Dual Numeric Type System Phase 4), §8.37 (LuaNumber Usage Audit)
 
----
+______________________________________________________________________
 
 ## Summary
 
 Fixed JSON serialization in `JsonTableConverter` to preserve integer subtype information. Before this fix, all numbers (including integers) were converted to double format during JSON serialization, which caused:
 
 1. Large integers (>2^53) to lose precision
-2. Integer values to be serialized with unnecessary decimal points (e.g., `42.0` instead of `42`)
-3. Inconsistent JSON output between integer and float DynValues
+1. Integer values to be serialized with unnecessary decimal points (e.g., `42.0` instead of `42`)
+1. Inconsistent JSON output between integer and float DynValues
 
 ## Problem Statement
 
 Before this fix:
+
 - `ValueToJson()` called `value.Number.ToString("r", ...)` which converts all numbers to double format
 - `ObjectToJsonCore()` converted all CLR numeric types to double before serialization
 - Large integers like `9007199254740993` (2^53 + 1) would lose precision when serialized
@@ -99,16 +100,16 @@ if (obj is Enum enumValue)
 
 ### Production Code
 
-| File | Change |
-|------|--------|
-| `Serialization/Json/JsonTableConverter.cs` | Updated `ValueToJson()` for integer/float preservation |
+| File                                       | Change                                                       |
+| ------------------------------------------ | ------------------------------------------------------------ |
+| `Serialization/Json/JsonTableConverter.cs` | Updated `ValueToJson()` for integer/float preservation       |
 | `Serialization/Json/JsonTableConverter.cs` | Updated `ObjectToJsonCore()` for type-specific serialization |
-| `Serialization/Json/JsonTableConverter.cs` | Updated enum handling to use integer serialization |
+| `Serialization/Json/JsonTableConverter.cs` | Updated enum handling to use integer serialization           |
 
 ### Test Code
 
-| File | Change |
-|------|--------|
+| File                                                      | Change                                           |
+| --------------------------------------------------------- | ------------------------------------------------ |
 | `SerializationTests/Json/JsonTableConverterTUnitTests.cs` | Added 6 new tests for integer/float preservation |
 
 ## New Tests
@@ -116,11 +117,11 @@ if (obj is Enum enumValue)
 Six regression tests were added to verify correct serialization:
 
 1. **TableToJsonPreservesIntegerSubtype**: Verifies integer values serialize without decimal points
-2. **TableToJsonPreservesFloatSubtype**: Verifies float values serialize correctly
-3. **TableToJsonArrayPreservesIntegerSubtype**: Verifies array elements serialize as integers
-4. **TableToJsonLargeIntegerPrecision**: Verifies large integers (>2^53) maintain precision
-5. **ObjectToJsonPreservesIntegerTypes**: Verifies CLR integer types serialize correctly
-6. **ObjectToJsonPreservesFloatTypes**: Verifies CLR float types serialize correctly
+1. **TableToJsonPreservesFloatSubtype**: Verifies float values serialize correctly
+1. **TableToJsonArrayPreservesIntegerSubtype**: Verifies array elements serialize as integers
+1. **TableToJsonLargeIntegerPrecision**: Verifies large integers (>2^53) maintain precision
+1. **ObjectToJsonPreservesIntegerTypes**: Verifies CLR integer types serialize correctly
+1. **ObjectToJsonPreservesFloatTypes**: Verifies CLR float types serialize correctly
 
 ## Test Results
 
@@ -131,12 +132,14 @@ All 4718 tests pass after the changes.
 Also added 7 tests for interop converter integer preservation:
 
 ### ClrToScriptConversionsTUnitTests
+
 - `TryObjectToTrivialDynValuePreservesIntegerSubtype`
 - `TryObjectToTrivialDynValuePreservesFloatSubtype`
 - `TryObjectToSimpleDynValuePreservesIntegerSubtype`
 - `ObjectToDynValuePreservesIntegerSubtype`
 
 ### ScriptToClrConversionsTUnitTests
+
 - `DynValueToObjectPreservesIntegerSubtype`
 - `DynValueToObjectReturnsDoubleForFloatSubtype`
 - `DynValueToObjectOfTypeLongPreservesIntegerPrecision`
@@ -146,6 +149,7 @@ Also added 7 tests for interop converter integer preservation:
 This completes the JSON serialization item in §8.24 Phase 4. The interop converters (`FromObject`/`ToObject`) were already correctly handling integer preservation.
 
 **Phase 4 Status**:
+
 - [x] Update binary dump/load format — ✅ DONE (2025-12-11, version 0x151)
 - [x] Update `FromObject()` / `ToObject()` for integer preservation — ✅ Already implemented
 - [x] Update JSON serialization (integers as JSON integers, not floats) — ✅ DONE (this fix)
@@ -156,6 +160,7 @@ This completes the JSON serialization item in §8.24 Phase 4. The interop conver
 Phase 4 of §8.24 (Interop & Serialization) is now complete. The remaining work in §8.24 is:
 
 **Phase 5: Caching & Performance Validation** (planned)
+
 - Extend `DynValue` caches for common float values (0.0, 1.0, -1.0, etc.)
 - Add `FromFloat(double)` cache method for hot paths
 - Add negative integer cache (-256 to -1)

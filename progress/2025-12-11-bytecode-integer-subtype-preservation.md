@@ -5,7 +5,7 @@
 **Status**: ✅ Complete
 **Related Sections**: PLAN.md §8.37 (LuaNumber Usage Audit), §8.24 (Dual Numeric Type System Phase 4)
 
----
+______________________________________________________________________
 
 ## Summary
 
@@ -14,6 +14,7 @@ Fixed a critical bug where bytecode dump/load operations lost the integer subtyp
 ## Problem Statement
 
 Before this fix:
+
 - `DumpValue()` called `wr.Write(value.Number)` which converts to double, losing integer subtype
 - `ReadValue()` called `DynValue.NewNumber(rd.ReadDouble())` which uses `FromDouble()` auto-detection
 - Large integers like `9007199254740993` (2^53 + 1) would lose precision when round-tripped
@@ -37,8 +38,9 @@ private const int DumpChunkVersion = 0x151;
 ### Modified `DumpValue()` Method
 
 For `DataType.Number`, now writes:
+
 1. A type flag byte: `0` for integer, `1` for float
-2. The appropriate value: `Int64` for integers, `Double` for floats
+1. The appropriate value: `Int64` for integers, `Double` for floats
 
 **File**: `Instruction.cs`
 
@@ -83,35 +85,39 @@ case DataType.Number:
 
 ### Production Code
 
-| File | Change |
-|------|--------|
-| `ProcessorBinaryDump.cs` | Bumped `DumpChunkVersion` to `0x151` with documentation |
-| `Instruction.cs` | Updated `DumpValue()` and `ReadValue()` for integer/float preservation |
+| File                     | Change                                                                 |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `ProcessorBinaryDump.cs` | Bumped `DumpChunkVersion` to `0x151` with documentation                |
+| `Instruction.cs`         | Updated `DumpValue()` and `ReadValue()` for integer/float preservation |
 
 ### Test Code
 
-| File | Change |
-|------|--------|
-| `Units/Execution/ProcessorBinaryDumpTUnitTests.cs` | Updated version constant, added 4 round-trip tests |
-| `Units/Execution/ProcessorExecution/ProcessorBinaryDumpTUnitTests.cs` | Updated version constant |
+| File                                                                  | Change                                             |
+| --------------------------------------------------------------------- | -------------------------------------------------- |
+| `Units/Execution/ProcessorBinaryDumpTUnitTests.cs`                    | Updated version constant, added 4 round-trip tests |
+| `Units/Execution/ProcessorExecution/ProcessorBinaryDumpTUnitTests.cs` | Updated version constant                           |
 
 ## New Tests
 
 Four regression tests were added to verify correct subtype preservation:
 
 1. **`DumpLoadRoundTripPreservesIntegerSubtype`**
+
    - Tests `return 9007199254740993` (2^53 + 1)
    - Verifies integer subtype preserved after dump/load cycle
 
-2. **`DumpLoadRoundTripPreservesFloatSubtype`**
+1. **`DumpLoadRoundTripPreservesFloatSubtype`**
+
    - Tests `return 3.14159`
    - Verifies float subtype preserved after dump/load cycle
 
-3. **`DumpLoadRoundTripPreservesNegativeZeroAsFloat`**
+1. **`DumpLoadRoundTripPreservesNegativeZeroAsFloat`**
+
    - Tests `return -0.0`
    - Verifies negative zero remains float (important for IEEE 754 semantics)
 
-4. **`DumpLoadRoundTripPreservesLargeIntegerPrecision`**
+1. **`DumpLoadRoundTripPreservesLargeIntegerPrecision`**
+
    - Tests `return 9223372036854775807` (long.MaxValue, 2^63-1)
    - Verifies exact integer preservation for values that cannot be represented exactly as double
 
@@ -144,6 +150,7 @@ The bytecode dump format changed from version `0x150` to `0x151`. Old bytecode d
 ## Next Steps
 
 Remaining items in §8.24 Phase 4:
+
 - Update `FromObject()` / `ToObject()` for integer preservation
 - Update JSON serialization (integers as JSON integers, not floats)
 - Ensure CLR interop handles `int`, `long`, `float`, `double` correctly
