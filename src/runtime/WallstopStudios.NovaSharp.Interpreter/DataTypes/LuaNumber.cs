@@ -760,7 +760,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     return _float.ToString("0.0", CultureInfo.InvariantCulture);
                 }
                 // Lua 5.1/5.2: format without decimal point for integer-like floats
-                return ((long)_float).ToString(CultureInfo.InvariantCulture);
+                // Only cast to long if the value is within long range to avoid overflow
+                if (_float >= long.MinValue && _float <= long.MaxValue)
+                {
+                    return ((long)_float).ToString(CultureInfo.InvariantCulture);
+                }
+                // For values outside long range, use standard float formatting
+                return _float.ToString(CultureInfo.InvariantCulture);
             }
 
             // Use standard "shortest representation" formatting - matches Lua's behavior

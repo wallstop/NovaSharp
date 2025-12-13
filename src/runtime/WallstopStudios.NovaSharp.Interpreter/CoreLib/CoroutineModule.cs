@@ -176,9 +176,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements <c>coroutine.running</c>, returning the currently running coroutine and whether it is the main thread.
         /// </summary>
+        /// <remarks>
+        /// <para>Version-specific behavior:</para>
+        /// <list type="bullet">
+        /// <item><description><b>Lua 5.1</b>: Returns only the running coroutine (single value).</description></item>
+        /// <item><description><b>Lua 5.2+</b>: Returns a tuple of (coroutine, isMain) where isMain is true for the main thread.</description></item>
+        /// </list>
+        /// </remarks>
         /// <param name="executionContext">Current execution context.</param>
         /// <param name="args">Ignored but validated per Lua semantics.</param>
-        /// <returns>A tuple of the running coroutine and a boolean indicating main status.</returns>
+        /// <returns>The running coroutine, optionally with a boolean indicating main status (5.2+).</returns>
         [NovaSharpModuleMethod(Name = "running")]
         public static DynValue Running(
             ScriptExecutionContext executionContext,
@@ -192,8 +199,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             Coroutine c = executionContext.CallingCoroutine;
+            DynValue coroutineValue = DynValue.NewCoroutine(c);
+
+            // Version-specific return value:
+            // - Lua 5.1: Returns only the coroutine
+            // - Lua 5.2+: Returns (coroutine, isMain) tuple
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                return coroutineValue;
+            }
+
             return DynValue.NewTuple(
-                DynValue.NewCoroutine(c),
+                coroutineValue,
                 DynValue.FromBoolean(c.State == CoroutineState.Main)
             );
         }

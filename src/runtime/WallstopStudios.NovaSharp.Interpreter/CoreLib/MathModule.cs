@@ -20,8 +20,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleConstant(Name = "pi")]
         public const double PI = Math.PI;
 
+        /// <summary>
+        /// Lua's <c>math.huge</c> constant representing positive infinity (§6.7).
+        /// Per the Lua specification, this is the value HUGE_VAL from the C library,
+        /// which is IEEE 754 positive infinity (1/0 in Lua).
+        /// </summary>
         [NovaSharpModuleConstant]
-        public const double HUGE = double.MaxValue;
+        public const double HUGE = double.PositiveInfinity;
 
         /// <summary>
         /// The maximum value for an integer in Lua 5.3+ (2^63 - 1).
@@ -99,6 +104,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue arg = args.AsType(0, funcName, DataType.Number, false);
             DynValue arg2 = args.AsType(1, funcName, DataType.Number, false);
             return DynValue.NewNumber(func(arg.Number, arg2.Number));
+        }
+
+        /// <summary>
+        /// Two-argument executor that always returns a float result.
+        /// Used for operations like exponentiation that always produce floats per Lua spec.
+        /// </summary>
+        private static DynValue Exec2Float(
+            CallbackArguments args,
+            string funcName,
+            Func<double, double, double> func
+        )
+        {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg = args.AsType(0, funcName, DataType.Number, false);
+            DynValue arg2 = args.AsType(1, funcName, DataType.Number, false);
+            return DynValue.NewFloat(func(arg.Number, arg2.Number));
         }
 
         private static DynValue Exec2N(
@@ -545,11 +567,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         /// <summary>
+        /// Implements Lua 5.1 `math.mod`, an alias for `math.fmod` (§5.6 in Lua 5.1 manual).
+        /// </summary>
+        /// <remarks>
+        /// This function was deprecated in Lua 5.1 itself (alias for fmod) and removed in Lua 5.2.
+        /// Users should use <c>math.fmod</c> or the <c>%</c> operator instead.
+        /// </remarks>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments supplying dividend and divisor.</param>
+        /// <returns>Remainder value (same as fmod).</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+        [NovaSharpModuleMethod(Name = "mod")]
+        public static DynValue Mod(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            return Exec2(args, "mod", (d1, d2) => Math.IEEERemainder(d1, d2));
+        }
+
+        /// <summary>
         /// Implements Lua `math.frexp`, decomposing a number into mantissa/exponent components (§6.7).
+        /// This function was deprecated in Lua 5.2 and removed in Lua 5.3.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments providing the number to decompose.</param>
         /// <returns>Tuple {m, e} as defined by Lua.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "frexp")]
         public static DynValue Frexp(
             ScriptExecutionContext executionContext,
@@ -622,10 +667,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Implements Lua `math.ldexp`, building a number from mantissa and exponent (§6.7).
+        /// This function was deprecated in Lua 5.2 and removed in Lua 5.3.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments containing mantissa and exponent.</param>
         /// <returns>Result of <c>mantissa * 2^exp</c>.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "ldexp")]
         public static DynValue Ldexp(
             ScriptExecutionContext executionContext,
@@ -640,19 +687,67 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         }
 
         /// <summary>
-        /// Implements Lua `math.log`, returning the logarithm of a number with an optional base (§6.7).
+        /// Implements Lua `math.log`, returning the logarithm of a number (§6.7).
         /// </summary>
+        /// <remarks>
+        /// <para><b>Lua 5.1:</b> Only takes one argument; always returns natural logarithm (base e).
+        /// Additional arguments are silently ignored.</para>
+        /// <para><b>Lua 5.2+:</b> Accepts optional base parameter. If omitted, returns natural logarithm.</para>
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
-        /// <param name="args">Arguments providing the value (and optional base).</param>
+        /// <param name="args">Arguments providing the value (and optional base for 5.2+).</param>
         /// <returns>The logarithm result.</returns>
         [NovaSharpModuleMethod(Name = "log")]
         public static DynValue Log(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg = args.AsType(0, "log", DataType.Number, false);
+
+            // Lua 5.1: only natural log, ignore any base argument
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            if (version <= LuaCompatibilityVersion.Lua51)
+            {
+                return DynValue.NewNumber(Math.Log(arg.Number));
+            }
+
+            // Lua 5.2+: optional base parameter (default: e for natural log)
+            DynValue baseArg = args.AsType(1, "log", DataType.Number, true);
+            if (baseArg.IsNil())
+            {
+                return DynValue.NewNumber(Math.Log(arg.Number));
+            }
+
+            return DynValue.NewNumber(Math.Log(arg.Number, baseArg.Number));
+        }
+
+        /// <summary>
+        /// Implements Lua `math.log10`, returning the base-10 logarithm of a number (§6.7).
+        /// </summary>
+        /// <remarks>
+        /// Available in all Lua versions (5.1-5.4). In Lua 5.2+, this is equivalent to
+        /// <c>math.log(x, 10)</c> but is retained for compatibility.
+        /// </remarks>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the value.</param>
+        /// <returns>The base-10 logarithm result.</returns>
+        [NovaSharpModuleMethod(Name = "log10")]
+        public static DynValue Log10(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2N(args, "log", Math.E, (d1, d2) => Math.Log(d1, d2));
+            return Exec1(args, "log10", d => Math.Log10(d));
         }
 
         /// <summary>
@@ -690,24 +785,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `math.modf`, splitting a number into integer and fractional parts (§6.7).
         /// </summary>
+        /// <remarks>
+        /// <para><b>Lua 5.1/5.2:</b> Both parts returned as floats.</para>
+        /// <para><b>Lua 5.3+:</b> The integer part is returned as integer subtype when it fits
+        /// in the integer range; the fractional part is always a float.</para>
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments with the value to split.</param>
         /// <returns>Tuple {integerPart, fractionalPart}.</returns>
         [NovaSharpModuleMethod(Name = "modf")]
         public static DynValue Modf(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            ModuleArgumentValidation.RequireExecutionContext(
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue arg = args.AsType(0, "modf", DataType.Number, false);
-            double integerPart = Math.Truncate(arg.Number);
-            double fractionalPart = arg.Number - integerPart;
-            return DynValue.NewTuple(
-                DynValue.NewNumber(integerPart),
-                DynValue.NewNumber(fractionalPart)
+
+            double value = arg.Number;
+            double integerPart = Math.Truncate(value);
+            double fractionalPart = value - integerPart;
+
+            // Check version for integer promotion behavior
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
             );
+
+            // Lua 5.1/5.2: both parts are floats
+            if (version < LuaCompatibilityVersion.Lua53)
+            {
+                return DynValue.NewTuple(
+                    DynValue.NewNumber(integerPart),
+                    DynValue.NewNumber(fractionalPart)
+                );
+            }
+
+            // Lua 5.3+: integer part is integer subtype if it fits
+            DynValue integerResult;
+            if (TryGetIntegerFromDouble(integerPart, out long integerValue))
+            {
+                integerResult = DynValue.NewInteger(integerValue);
+            }
+            else
+            {
+                // Value outside integer range (e.g., very large float)
+                integerResult = DynValue.NewNumber(integerPart);
+            }
+
+            // Fractional part is always a float
+            return DynValue.NewTuple(integerResult, DynValue.NewFloat(fractionalPart));
         }
 
         /// <summary>
@@ -717,7 +844,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments for base and exponent.</param>
-        /// <returns>Exponentiation result.</returns>
+        /// <returns>Exponentiation result as a float (per Lua spec, exponentiation always returns float).</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "pow")]
         public static DynValue Pow(ScriptExecutionContext executionContext, CallbackArguments args)
@@ -726,7 +853,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "pow", (d1, d2) => Math.Pow(d1, d2));
+            // Exponentiation always returns float per Lua spec (§3.4.1)
+            return Exec2Float(args, "pow", (d1, d2) => Math.Pow(d1, d2));
         }
 
         /// <summary>

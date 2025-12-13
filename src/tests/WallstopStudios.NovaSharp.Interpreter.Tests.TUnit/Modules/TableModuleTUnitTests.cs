@@ -378,9 +378,184 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("x").ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that table.pack is available in Lua 5.2+.
+        /// table.pack was added in Lua 5.2.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task PackAvailableInLua52Plus(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return table.pack(1, 2, 3).n");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(3)
+                .Because($"table.pack should be available in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that table.pack is NOT available in Lua 5.1.
+        /// table.pack was added in Lua 5.2.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task PackIsNilInLua51()
+        {
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua51);
+            DynValue result = script.DoString("return table.pack");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because(
+                    $"table.pack was added in Lua 5.2. Actual type: {result.Type}, value: {result}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that table.unpack is available in Lua 5.2+.
+        /// table.unpack was added in Lua 5.2 (moved from global unpack).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task TableUnpackAvailableInLua52Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return table.unpack({10, 20, 30})");
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo(10)
+                .Because($"table.unpack should be available in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that table.unpack is NOT available in Lua 5.1.
+        /// In Lua 5.1, use the global unpack function instead.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task TableUnpackIsNilInLua51()
+        {
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua51);
+            DynValue result = script.DoString("return table.unpack");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because(
+                    $"table.unpack was added in Lua 5.2. Use global unpack in 5.1. Actual type: {result.Type}, value: {result}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that global unpack is available in Lua 5.1.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task GlobalUnpackAvailableInLua51()
+        {
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua51);
+            DynValue result = script.DoString("return unpack({10, 20, 30})");
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo(10)
+                .Because("Global unpack should be available in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that global unpack is NOT available in Lua 5.2+.
+        /// Global unpack was moved to table.unpack in Lua 5.2.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task GlobalUnpackIsNilInLua52Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return unpack");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because(
+                    $"Global unpack was moved to table.unpack in Lua 5.2+. Actual type: {result.Type}, value: {result}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that table.maxn is available in Lua 5.1 and 5.2.
+        /// table.maxn was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        public async Task MaxnAvailableInLua51And52(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return table.maxn({[5] = true, [3] = true})");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(5)
+                .Because($"table.maxn should return 5 in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that table.maxn is NOT available in Lua 5.3+.
+        /// table.maxn was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task MaxnIsNilInLua53Plus(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return table.maxn");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because(
+                    $"table.maxn was removed in Lua 5.3+. Actual type: {result.Type}, value: {result}"
+                )
+                .ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModulePresets.Complete);
+        }
+
+        private static Script CreateScript(Compatibility.LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

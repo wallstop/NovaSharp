@@ -94,8 +94,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments("-0.0", 0.0, "negative float zero")]
         [Arguments("1e10", 1e10, "scientific notation")]
         [Arguments("-1e10", 1e10, "negative scientific notation")]
-        [Arguments("math.huge", double.MaxValue, "huge positive")]
-        [Arguments("-math.huge", double.MaxValue, "huge negative")]
+        [Arguments("math.huge", double.PositiveInfinity, "huge positive")]
+        [Arguments("-math.huge", double.PositiveInfinity, "huge negative")]
         public async Task MathAbsFloatSubtype(
             string expression,
             double expected,

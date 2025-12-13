@@ -652,6 +652,241 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        // print() Version-Specific Behavior Tests
+
+        /// <summary>
+        /// In Lua 5.1-5.3, print() calls the global tostring function, which can be overridden.
+        /// This test verifies that overriding the global tostring affects print() output.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task PrintCallsGlobalTostringInLua51To53(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            string output = null;
+            script.Options.DebugPrint = s => output = s;
+
+            // Override global tostring to return a custom prefix
+            script.DoString(
+                @"
+                function tostring(v)
+                    return 'CUSTOM:' .. type(v)
+                end
+                t = setmetatable({}, { __tostring = function() return 'META' end })
+                print(t)
+            "
+            );
+
+            // In Lua 5.1-5.3, print calls global tostring, so we get 'CUSTOM:table' not 'META'
+            await Assert.That(output).IsEqualTo("CUSTOM:table").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// In Lua 5.4+, print() uses the __tostring metamethod directly (hardwired behavior),
+        /// bypassing the global tostring function even if it's overridden.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrintUsesTostringMetamethodDirectlyInLua54Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            string output = null;
+            script.Options.DebugPrint = s => output = s;
+
+            // Override global tostring - should be ignored in Lua 5.4+
+            script.DoString(
+                @"
+                function tostring(v)
+                    return 'CUSTOM:' .. type(v)
+                end
+                t = setmetatable({}, { __tostring = function() return 'META' end })
+                print(t)
+            "
+            );
+
+            // In Lua 5.4+, print uses __tostring directly, so we get 'META' not 'CUSTOM:table'
+            await Assert.That(output).IsEqualTo("META").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// In Lua 5.4+, when there's no __tostring metamethod but global tostring is overridden,
+        /// print() should still use default formatting (not call the overridden global tostring).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrintIgnoresGlobalTostringForPlainTablesInLua54Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            string output = null;
+            script.Options.DebugPrint = s => output = s;
+
+            // Override global tostring but use a plain table without __tostring
+            script.DoString(
+                @"
+                function tostring(v)
+                    return 'CUSTOM:' .. type(v)
+                end
+                t = {}  -- plain table, no metatable
+                print(t)
+            "
+            );
+
+            // In Lua 5.4+, print uses default formatting for tables without __tostring
+            // Should print something like "table: 0x..." not "CUSTOM:table"
+            await Assert.That(output).Contains("table:").ConfigureAwait(false);
+            await Assert.That(output).DoesNotContain("CUSTOM").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// In Lua 5.1-5.3, when there's no __tostring metamethod but global tostring is overridden,
+        /// print() should call the overridden global tostring.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task PrintCallsGlobalTostringForPlainTablesInLua51To53(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            string output = null;
+            script.Options.DebugPrint = s => output = s;
+
+            // Override global tostring and use a plain table without __tostring
+            script.DoString(
+                @"
+                function tostring(v)
+                    return 'CUSTOM:' .. type(v)
+                end
+                t = {}  -- plain table, no metatable
+                print(t)
+            "
+            );
+
+            // In Lua 5.1-5.3, print calls global tostring, so we get 'CUSTOM:table'
+            await Assert.That(output).IsEqualTo("CUSTOM:table").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// In Lua 5.1-5.3, print() uses the global tostring even for primitive types like numbers.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task PrintCallsGlobalTostringForNumbersInLua51To53(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            string output = null;
+            script.Options.DebugPrint = s => output = s;
+
+            // Override global tostring to format numbers specially
+            script.DoString(
+                @"
+                function tostring(v)
+                    if type(v) == 'number' then
+                        return 'NUM:' .. v
+                    end
+                    return v
+                end
+                print(42)
+            "
+            );
+
+            // In Lua 5.1-5.3, print calls global tostring
+            await Assert.That(output).IsEqualTo("NUM:42").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// In Lua 5.4+, print() uses default formatting for primitive types,
+        /// ignoring any global tostring override.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrintIgnoresGlobalTostringForNumbersInLua54Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            string output = null;
+            script.Options.DebugPrint = s => output = s;
+
+            // Override global tostring - should be ignored in Lua 5.4+
+            script.DoString(
+                @"
+                function tostring(v)
+                    if type(v) == 'number' then
+                        return 'NUM:' .. v
+                    end
+                    return v
+                end
+                print(42)
+            "
+            );
+
+            // In Lua 5.4+, print uses default formatting, not global tostring
+            await Assert.That(output).IsEqualTo("42").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that print() with multiple arguments separates them with tabs,
+        /// regardless of Lua version.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        public async Task PrintSeparatesArgumentsWithTabs(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            string output = null;
+            script.Options.DebugPrint = s => output = s;
+
+            script.DoString("print(1, 2, 3)");
+
+            await Assert.That(output).IsEqualTo("1\t2\t3").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that print() with a ClrFunction tostring replacement works in Lua 5.1-5.3.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task PrintWorksWithClrFunctionTostringInLua51To53(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            string output = null;
+            script.Options.DebugPrint = s => output = s;
+
+            // Replace global tostring with a CLR callback
+            script.Globals["tostring"] = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    return DynValue.NewString("CLR:" + args[0].Type);
+                }
+            );
+
+            script.DoString("print({})");
+
+            // CLR tostring should be called
+            await Assert.That(output).IsEqualTo("CLR:Table").ConfigureAwait(false);
+        }
+
         private static Script CreateScript(
             LuaCompatibilityVersion version = LuaCompatibilityVersion.Lua54
         )

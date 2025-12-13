@@ -825,12 +825,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             string s = ArgAsType(l, 1, DataType.String, false).String;
             string p = PatchPattern(ArgAsType(l, 2, DataType.String, false).String);
 
+            // Lua 5.4 added optional 'init' parameter (§6.4.1)
+            uint startPos = 0;
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                l.ExecutionContext.Script.CompatibilityVersion
+            );
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                // Get init parameter (default 1 in Lua terms = position 0 in C# terms)
+                ptrdiff_t init = Posrelat(LuaLOptInteger(l, 3, 1), (uint)s.Length) - 1;
+                if (init < 0)
+                {
+                    init = 0;
+                }
+                else if (init > s.Length)
+                {
+                    init = s.Length;
+                }
+                startPos = (uint)init;
+            }
+            // For Lua 5.1-5.3, the third argument is ignored (always starts at position 0)
+
             c.AdditionalData = new GMatchAuxData()
             {
                 s = new CharPtr(s),
                 p = new CharPtr(p),
                 ls = (uint)s.Length,
-                pos = 0,
+                pos = startPos,
             };
 
             l.Push(DynValue.NewCallback(c));

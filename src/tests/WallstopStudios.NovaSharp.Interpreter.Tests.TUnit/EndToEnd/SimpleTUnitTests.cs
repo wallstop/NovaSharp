@@ -1242,7 +1242,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script =
                 @"
 					function x(...)
-						local t = pack(...);
+						local t = table.pack(...);
 						local sum = 0;
 
 						for i = 1, #t do
@@ -1267,7 +1267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             string script =
                 @"
 					function x(m, ...)
-						local t = pack(...);
+						local t = table.pack(...);
 						local sum = 0;
 
 						for i = 1, #t do
@@ -1471,7 +1471,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             string script =
                 @"
-					local t = pack(...);
+					local t = table.pack(...);
 					local sum = 0;
 
 					for i = 1, #t do

@@ -1889,13 +1889,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 );
                 if (ip < 0)
                 {
-                    ip = InternalInvokeBinaryMetaMethod(
-                        r,
-                        l,
-                        "__lt",
-                        instructionPtr,
-                        DynValue.True
-                    );
+                    // Lua 5.5 removes the fallback from __lt to emulate __le.
+                    // In earlier versions (5.1-5.4), if __le is not defined, we try __lt with swapped arguments.
+                    // Note: Lua 5.4 manual §8.1 claims this was removed in 5.4, but actual Lua 5.4.x still supports it.
+                    // Lua 5.5 (verified against lua5.5) actually removes this fallback behavior.
+                    // Latest mode follows current target (Lua 5.4.x) behavior which allows the fallback.
+                    Compatibility.LuaCompatibilityVersion version = _script
+                        .Options
+                        .CompatibilityVersion;
+                    bool allowLtFallback = version != Compatibility.LuaCompatibilityVersion.Lua55;
+
+                    if (allowLtFallback)
+                    {
+                        ip = InternalInvokeBinaryMetaMethod(
+                            r,
+                            l,
+                            "__lt",
+                            instructionPtr,
+                            DynValue.True
+                        );
+                    }
 
                     if (ip < 0)
                     {

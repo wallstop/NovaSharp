@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -940,9 +941,154 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(values.Span[1].String).IsEqualTo("value").ConfigureAwait(false);
         }
 
+        // =====================================================
+        // coroutine.running() Version Parity Tests
+        // =====================================================
+        // Lua 5.1: coroutine.running() returns only the coroutine
+        // Lua 5.2+: coroutine.running() returns (coroutine, isMain)
+
+        /// <summary>
+        /// Verifies that Lua 5.1 mode returns only the coroutine from coroutine.running().
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task RunningReturnsOnlyCoroutineInLua51()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
+
+            DynValue result = script.DoString(
+                @"
+                -- Count how many values coroutine.running returns
+                local function countReturns()
+                    return select('#', coroutine.running())
+                end
+                
+                local co = coroutine.create(countReturns)
+                local ok, count = coroutine.resume(co)
+                return count
+                "
+            );
+
+            // In Lua 5.1, coroutine.running() returns only 1 value
+            await Assert.That(result.Number).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that Lua 5.2+ mode returns (coroutine, isMain) from coroutine.running().
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        public async Task RunningReturnsTupleInLua52Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                -- Count how many values coroutine.running returns
+                local function countReturns()
+                    return select('#', coroutine.running())
+                end
+                
+                local co = coroutine.create(countReturns)
+                local ok, count = coroutine.resume(co)
+                return count
+                "
+            );
+
+            // In Lua 5.2+, coroutine.running() returns 2 values
+            await Assert.That(result.Number).IsEqualTo(2).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that Lua 5.1 mode's coroutine.running() returns the correct coroutine.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task RunningReturnsCorrectCoroutineInLua51()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
+
+            DynValue result = script.DoString(
+                @"
+                local function checkRunning()
+                    local running = coroutine.running()
+                    -- Should be a thread value, not nil
+                    return type(running)
+                end
+                
+                local co = coroutine.create(checkRunning)
+                local ok, result = coroutine.resume(co)
+                return result
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("thread").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that Lua 5.2+ mode's coroutine.running() returns isMain=false inside a coroutine.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        public async Task RunningReturnsIsMainFalseInsideCoroutineInLua52Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local function checkIsMain()
+                    local _, isMain = coroutine.running()
+                    return isMain
+                end
+                
+                local co = coroutine.create(checkIsMain)
+                local ok, isMain = coroutine.resume(co)
+                return isMain
+                "
+            );
+
+            await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that Lua 5.2+ mode's coroutine.running() returns isMain=true in the main thread.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        public async Task RunningReturnsIsMainTrueInMainThreadInLua52Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local _, isMain = coroutine.running()
+                return isMain
+                "
+            );
+
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModulePresets.Complete);
+        }
+
+        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

@@ -705,6 +705,110 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GMatchWithInitParameterStartsAtSpecifiedPosition(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.4+ supports optional init parameter for string.gmatch
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                for m in string.gmatch('abc def ghi', '%w+', 5) do
+                    results[#results + 1] = m
+                end
+                return table.concat(results, ',')
+                "
+            );
+
+            // Starting at position 5 should skip 'abc ' and start at 'def'
+            await Assert.That(result.String).IsEqualTo("def,ghi").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task GMatchIgnoresInitParameterInLuaBelow54(LuaCompatibilityVersion version)
+        {
+            // Lua 5.1-5.3 ignore the third argument to string.gmatch
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                for m in string.gmatch('abc def ghi', '%w+', 5) do
+                    results[#results + 1] = m
+                end
+                return table.concat(results, ',')
+                "
+            );
+
+            // In Lua 5.1-5.3, the init parameter is ignored - starts from beginning
+            await Assert.That(result.String).IsEqualTo("abc,def,ghi").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GMatchWithNegativeInitStartsFromEnd(LuaCompatibilityVersion version)
+        {
+            // Negative init means offset from end of string (Lua 5.4+)
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                -- 'abc def ghi' has length 11, init=-3 means start at position 9 (the 'g' in 'ghi')
+                for m in string.gmatch('abc def ghi', '%w+', -3) do
+                    results[#results + 1] = m
+                end
+                return table.concat(results, ',')
+                "
+            );
+
+            // Starting at -3 from end should only match 'ghi'
+            await Assert.That(result.String).IsEqualTo("ghi").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GMatchWithInitAtExactWordBoundary()
+        {
+            // Test init parameter at exact word boundary in Lua 5.4
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua54);
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                -- 'hello world' - 'world' starts at position 7
+                for m in string.gmatch('hello world', '%w+', 7) do
+                    results[#results + 1] = m
+                end
+                return table.concat(results, ',')
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("world").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GMatchWithInitBeyondStringLengthReturnsNoMatches()
+        {
+            // Test init parameter beyond string length in Lua 5.4
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua54);
+            DynValue result = script.DoString(
+                @"
+                local count = 0
+                for m in string.gmatch('abc', '%w+', 100) do
+                    count = count + 1
+                end
+                return count
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task DumpWrapsClrFunctionFailuresWithScriptRuntimeException()
         {
             Script script = CreateScript();

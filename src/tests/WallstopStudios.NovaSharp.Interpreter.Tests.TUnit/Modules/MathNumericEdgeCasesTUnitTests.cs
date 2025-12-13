@@ -291,9 +291,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Test]
         public async Task InfinityPlusInfinityIsInfinity()
         {
-            // Use 1/0 for true infinity since math.huge is double.MaxValue in NovaSharp
+            // math.huge is IEEE 754 positive infinity per Lua spec
             Script script = CreateScript();
-            DynValue result = script.DoString("local inf = 1/0; return inf + inf");
+            DynValue result = script.DoString("return math.huge + math.huge");
 
             await Assert
                 .That(double.IsPositiveInfinity(result.Number))
@@ -304,9 +304,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Test]
         public async Task InfinityMinusInfinityIsNaN()
         {
-            // Use 1/0 for true infinity since math.huge is double.MaxValue in NovaSharp
+            // math.huge is IEEE 754 positive infinity per Lua spec
             Script script = CreateScript();
-            DynValue result = script.DoString("local inf = 1/0; return inf - inf");
+            DynValue result = script.DoString("return math.huge - math.huge");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }
@@ -314,9 +314,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Test]
         public async Task InfinityTimesZeroIsNaN()
         {
-            // Use 1/0 for true infinity since math.huge is double.MaxValue in NovaSharp
+            // math.huge is IEEE 754 positive infinity per Lua spec
             Script script = CreateScript();
-            DynValue result = script.DoString("local inf = 1/0; return inf * 0");
+            DynValue result = script.DoString("return math.huge * 0");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
         }

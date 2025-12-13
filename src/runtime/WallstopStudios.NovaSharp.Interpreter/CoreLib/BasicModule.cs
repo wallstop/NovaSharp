@@ -942,6 +942,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua's <c>print</c> function (§6.1) by formatting the arguments with tabs and forwarding them to
         /// the host-provided debug sink.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Version-specific behavior:</b>
+        /// </para>
+        /// <list type="bullet">
+        /// <item>
+        /// <description>
+        /// <b>Lua 5.1–5.3:</b> <c>print</c> calls the global <c>tostring</c> function for each argument.
+        /// If the user has overridden <c>tostring</c> in the global environment, that override is called.
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>
+        /// <b>Lua 5.4+:</b> <c>print</c> uses the <c>__tostring</c> metamethod directly (hardwired behavior),
+        /// bypassing the global <c>tostring</c> function entirely.
+        /// </description>
+        /// </item>
+        /// </list>
+        /// </remarks>
         /// <param name="executionContext">Current execution context, used to resolve the script's debug printer.</param>
         /// <param name="args">Arguments to format and print.</param>
         /// <returns><see cref="DynValue.Nil"/>, matching Lua's return contract.</returns>
@@ -957,7 +976,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            Script script = executionContext.Script;
+            LuaCompatibilityVersion version = script.CompatibilityVersion;
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
+
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+
+            // Lua 5.4+ behavior: print uses __tostring metamethod directly (hardwired)
+            // Lua 5.1-5.3 behavior: print calls global tostring function (user-overridable)
+            bool useLua54HardwiredTostring = resolved >= LuaCompatibilityVersion.Lua54;
 
             for (int i = 0; i < args.Count; i++)
             {
@@ -971,12 +998,63 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     sb.Append('\t');
                 }
 
-                sb.Append(args.AsStringUsingMeta(executionContext, i, "print"));
+                if (useLua54HardwiredTostring)
+                {
+                    // Lua 5.4+: Use __tostring metamethod directly (current behavior)
+                    sb.Append(args.AsStringUsingMeta(executionContext, i, "print"));
+                }
+                else
+                {
+                    // Lua 5.1-5.3: Call global tostring function (user-overridable)
+                    sb.Append(CallGlobalTostring(script, args[i], version));
+                }
             }
 
-            executionContext.Script.Options.DebugPrint(sb.ToString());
+            script.Options.DebugPrint(sb.ToString());
 
             return DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Calls the global <c>tostring</c> function for a value, respecting user overrides.
+        /// Used by <see cref="Print"/> in Lua 5.1–5.3 mode.
+        /// </summary>
+        /// <param name="script">The script containing the global environment.</param>
+        /// <param name="value">The value to convert to string.</param>
+        /// <param name="version">The Lua compatibility version for number formatting.</param>
+        /// <returns>The string representation of the value.</returns>
+        private static string CallGlobalTostring(
+            Script script,
+            DynValue value,
+            LuaCompatibilityVersion version
+        )
+        {
+            // Get the global tostring function
+            DynValue tostringFunc = script.Globals.RawGet("tostring");
+
+            if (
+                tostringFunc != null
+                && (
+                    tostringFunc.Type == DataType.Function
+                    || tostringFunc.Type == DataType.ClrFunction
+                )
+            )
+            {
+                // Call the global tostring function (user-overridable, including CLR callbacks)
+                DynValue result = script.Call(tostringFunc, value);
+
+                if (result.Type == DataType.String)
+                {
+                    return result.String;
+                }
+
+                // tostring must return a string - if not, fall back to default formatting
+                // This matches Lua's behavior where invalid tostring results are not fatal in print
+                return value.ToPrintString(version);
+            }
+
+            // No global tostring or not a callable - use default formatting
+            return value.ToPrintString(version);
         }
 
         /// <summary>

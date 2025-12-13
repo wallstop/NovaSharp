@@ -238,10 +238,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             await EndToEndDynValueAssert.ExpectAsync(result, "id$$").ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that table.unpack returns a tuple of values.
+        /// </summary>
         [global::TUnit.Core.Test]
         public async Task TableUnpackReturnsTuple()
         {
-            DynValue result = Script.RunString("return unpack({3,4})");
+            DynValue result = Script.RunString("return table.unpack({3,4})");
             await EndToEndDynValueAssert.ExpectAsync(result, 3, 4).ConfigureAwait(false);
         }
 

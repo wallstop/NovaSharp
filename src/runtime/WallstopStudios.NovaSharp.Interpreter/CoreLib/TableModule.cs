@@ -19,7 +19,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     {
         /// <summary>
         /// Implements Lua `table.unpack`, returning a tuple of array elements between the provided indices (§6.6).
+        /// This function was added in Lua 5.2, replacing the global <c>unpack</c> function from Lua 5.1.
         /// </summary>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "unpack")]
         public static DynValue Unpack(
             ScriptExecutionContext executionContext,
@@ -115,7 +117,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Implements Lua `table.pack`, wrapping arbitrary arguments into a table with field `n` (§6.6).
+        /// This function was added in Lua 5.2.
         /// </summary>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "pack")]
         public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -536,14 +540,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     }
 
     /// <summary>
-    /// Class exposing table.unpack and table.pack in the global namespace (to work around the most common Lua 5.1 compatibility issue).
+    /// Class exposing <c>unpack</c> in the global namespace for Lua 5.1 compatibility.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// In Lua 5.1, <c>unpack</c> was a global function.
+    /// In Lua 5.2+, it was moved to the <c>table</c> library as <c>table.unpack</c>.
+    /// </para>
+    /// <para>
+    /// Note: Unlike <c>unpack</c>, <c>table.pack</c> was introduced NEW in Lua 5.2;
+    /// there was no global <c>pack</c> function in Lua 5.1 or any other version.
+    /// </para>
+    /// </remarks>
     [NovaSharpModule]
     public static class TableModuleGlobals
     {
         /// <summary>
-        /// Global alias for `table.unpack` to maintain Lua 5.1 compatibility.
+        /// Global <c>unpack</c> function for Lua 5.1 compatibility.
+        /// This function was moved to <c>table.unpack</c> in Lua 5.2 and removed from the global namespace.
         /// </summary>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
         [NovaSharpModuleMethod(Name = "unpack")]
         public static DynValue Unpack(
             ScriptExecutionContext executionContext,
@@ -551,15 +567,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             return TableModule.Unpack(executionContext, args);
-        }
-
-        /// <summary>
-        /// Global alias for `table.pack` to maintain Lua 5.1 compatibility.
-        /// </summary>
-        [NovaSharpModuleMethod(Name = "pack")]
-        public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
-        {
-            return TableModule.Pack(executionContext, args);
         }
     }
 }

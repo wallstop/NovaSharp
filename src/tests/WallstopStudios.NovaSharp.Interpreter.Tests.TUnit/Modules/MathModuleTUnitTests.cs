@@ -89,13 +89,106 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsEqualTo(-1d).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that math.ldexp correctly computes mantissa * 2^exp.
+        /// math.ldexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
         public async Task LdexpCombinesMantissaAndExponent()
         {
-            Script script = CreateScript();
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.ldexp(0.5, 3)");
 
             await Assert.That(result.Number).IsEqualTo(4d).Within(1e-12).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.ldexp is available in Lua 5.1 and 5.2.
+        /// math.ldexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        public async Task LdexpAvailableInLua51And52(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return math.ldexp(0.5, 3)");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(4d)
+                .Within(1e-12)
+                .Because($"math.ldexp should be available in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.ldexp is NOT available in Lua 5.3+ (it was removed).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task LdexpIsNilInLua53Plus(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return math.ldexp");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because(
+                    $"math.ldexp was removed in Lua 5.3+. Actual type: {result.Type}, value: {result}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.frexp is available in Lua 5.1 and 5.2.
+        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        public async Task FrexpAvailableInLua51And52(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return math.frexp(8)");
+
+            // math.frexp(8) returns m=0.5, e=4 (8 = 0.5 * 2^4)
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo(0.5d)
+                .Within(1e-12)
+                .Because($"math.frexp mantissa should be 0.5 in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(4d)
+                .Because($"math.frexp exponent should be 4 in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.frexp is NOT available in Lua 5.3+ (it was removed).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FrexpIsNilInLua53Plus(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return math.frexp");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because(
+                    $"math.frexp was removed in Lua 5.3+. Actual type: {result.Type}, value: {result}"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -288,10 +381,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(tuple.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that math.frexp returns (0, 0) for input 0.
+        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
         public async Task FrexpWithZeroReturnsZeroMantissaAndExponent()
         {
-            Script script = CreateScript();
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.frexp(0)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -299,10 +396,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that math.frexp returns (0, 0) for input -0.0.
+        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
         public async Task FrexpWithNegativeZeroReturnsZeroMantissaAndExponent()
         {
-            Script script = CreateScript();
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.frexp(-0.0)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -310,10 +411,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that math.frexp returns negative mantissa for negative input.
+        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
         public async Task FrexpWithNegativeNumberReturnsNegativeMantissa()
         {
-            Script script = CreateScript();
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.frexp(-8)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -328,12 +433,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that math.frexp handles subnormal (denormalized) numbers correctly.
+        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
         public async Task FrexpWithSubnormalNumberHandlesExponentCorrectly()
         {
             // Subnormal (denormalized) numbers have exponent bits = 0
             // The smallest positive subnormal is approximately 4.94e-324
-            Script script = CreateScript();
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             double subnormal = double.Epsilon; // Smallest positive subnormal
             script.Globals["subnormal"] = subnormal;
             DynValue result = script.DoString("return math.frexp(subnormal)");
@@ -352,10 +461,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that math.frexp returns mantissa in [0.5, 1) for positive numbers.
+        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
         public async Task FrexpWithPositiveNumberReturnsMantissaInExpectedRange()
         {
-            Script script = CreateScript();
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.frexp(16)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -371,10 +484,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that frexp and ldexp are inverse operations.
+        /// Both were deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
         public async Task FrexpAndLdexpRoundTrip()
         {
-            Script script = CreateScript();
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString(
                 @"
                 local m, e = math.frexp(123.456)
@@ -1062,6 +1179,256 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .That(caughtException)
                 .IsNull()
                 .Because($"Expression '{luaExpression}' should succeed without error in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.log ignores the base parameter in Lua 5.1 (always returns natural log).
+        /// Verified against reference Lua 5.1: math.log(100) == math.log(100, 10) == 4.605170...
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task LogIgnoresBaseInLua51()
+        {
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua51);
+
+            // In Lua 5.1, math.log always returns natural log regardless of second argument
+            DynValue resultWithoutBase = script.DoString("return math.log(100)");
+            DynValue resultWithBase = script.DoString("return math.log(100, 10)");
+
+            // Both should return ln(100) ≈ 4.605
+            double expectedNaturalLog = Math.Log(100);
+            await Assert
+                .That(resultWithoutBase.Number)
+                .IsEqualTo(expectedNaturalLog)
+                .Within(1e-10)
+                .ConfigureAwait(false);
+            await Assert
+                .That(resultWithBase.Number)
+                .IsEqualTo(expectedNaturalLog)
+                .Within(1e-10)
+                .Because("Lua 5.1 ignores the base parameter")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.log uses the base parameter in Lua 5.2+.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task LogUsesBaseInLua52Plus(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            // math.log(100, 10) should return log base 10 of 100 = 2
+            DynValue result = script.DoString("return math.log(100, 10)");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(2d)
+                .Within(1e-10)
+                .Because($"math.log(100, 10) should return 2 in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.log10 is available in all Lua versions.
+        /// Verified against reference Lua 5.1-5.4: math.log10(100) == 2.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task Log10AvailableInAllVersions(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return math.log10(100)");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(2d)
+                .Within(1e-10)
+                .Because($"math.log10(100) should return 2 in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.log10 returns correct results for various inputs.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task Log10ReturnsCorrectValues()
+        {
+            Script script = CreateScript();
+
+            await Assert
+                .That(script.DoString("return math.log10(1)").Number)
+                .IsEqualTo(0d)
+                .Within(1e-10)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return math.log10(10)").Number)
+                .IsEqualTo(1d)
+                .Within(1e-10)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.DoString("return math.log10(1000)").Number)
+                .IsEqualTo(3d)
+                .Within(1e-10)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.mod is available only in Lua 5.1 (removed in 5.2+).
+        /// Verified against reference Lua: math.mod exists in 5.1, nil in 5.2+.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        public async Task ModAvailableOnlyInLua51()
+        {
+            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua51);
+
+            // math.mod should be available and work like fmod
+            DynValue result = script.DoString("return math.mod(10, 3)");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(Math.IEEERemainder(10, 3))
+                .Within(1e-10)
+                .Because("math.mod(10, 3) should work in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.mod is NOT available in Lua 5.2+ (it was removed).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ModIsNilInLua52Plus(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return math.mod");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because($"math.mod was removed in Lua 5.2+. Actual type: {result.Type}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.modf returns integer subtype for integral part in Lua 5.3+.
+        /// Verified against reference Lua 5.3/5.4: math.type returns "integer" for integral part.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ModfReturnsIntegerSubtypeInLua53Plus(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+
+            // math.modf(3.5) should return (3, 0.5) with 3 as integer subtype
+            DynValue result = script.DoString(
+                "local i, f = math.modf(3.5); return math.type(i), i, math.type(f), f"
+            );
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].String)
+                .IsEqualTo("integer")
+                .Because($"Integral part should be integer subtype in {version}")
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].String)
+                .IsEqualTo("float")
+                .Because($"Fractional part should be float subtype in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[3].Number)
+                .IsEqualTo(0.5d)
+                .Within(1e-10)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.modf returns float subtype for both parts in Lua 5.1/5.2.
+        /// Verified against reference Lua 5.1/5.2: type() returns "number" for both parts.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        public async Task ModfReturnsFloatSubtypeInLua51And52(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+
+            // math.modf(3.5) should return (3.0, 0.5) both as floats
+            DynValue result = script.DoString(
+                "local i, f = math.modf(3.5); return type(i), i, type(f), f"
+            );
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].String)
+                .IsEqualTo("number")
+                .Because($"Integral part should be number in {version}")
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].String)
+                .IsEqualTo("number")
+                .Because($"Fractional part should be number in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[3].Number)
+                .IsEqualTo(0.5d)
+                .Within(1e-10)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.modf works correctly with negative numbers.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        public async Task ModfWithNegativeNumbersReturnsIntegerSubtype(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+
+            // math.modf(-3.5) should return (-3, -0.5) with -3 as integer subtype
+            DynValue result = script.DoString(
+                "local i, f = math.modf(-3.5); return math.type(i), i, math.type(f), f"
+            );
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].String)
+                .IsEqualTo("integer")
+                .Because($"Integral part should be integer subtype in {version}")
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(-3d).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].String)
+                .IsEqualTo("float")
+                .Because($"Fractional part should be float subtype in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[3].Number)
+                .IsEqualTo(-0.5d)
+                .Within(1e-10)
                 .ConfigureAwait(false);
         }
 
