@@ -1,10 +1,12 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @source: MathPowEdgeCasesTUnitTests
--- @test: MathPowEdgeCasesTUnitTests.PowLargeNumbers
 -- Test: math.pow with very large numbers (overflow to infinity)
 -- Expected: Proper overflow handling per IEEE 754
 -- Reference: Lua §6.7, IEEE 754-2008
 
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowLargeNumbers
 local inf = math.huge
 
 -- Large exponents that stay within double range

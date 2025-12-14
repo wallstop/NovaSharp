@@ -1,11 +1,13 @@
--- @lua-versions: 5.3, 5.4
--- @source: MathPowEdgeCasesTUnitTests
--- @test: MathPowEdgeCasesTUnitTests.PowReturnsFloat
 -- Test: Exponentiation always returns float subtype in Lua 5.3+
 -- Expected: math.type returns "float" for all pow results
 -- Reference: Lua §3.4.1 - "Exponentiation and float division always convert their operands to floats"
 
 -- math.type is only available in Lua 5.3+
+-- @lua-versions: 5.3, 5.4
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowReturnsFloat
 if not math.type then
   print("SKIP: math.type not available (requires Lua 5.3+)")
   return

@@ -1,7 +1,11 @@
--- @lua-versions: 5.1, 5.2
 -- Tests that table.insert(t, pos, value) accepts fractional position in Lua 5.1/5.2
 -- These versions silently truncate via floor
 
+-- @lua-versions: 5.1, 5.2
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs
+-- @test: TableModuleTUnitTests.InsertFractional_51_52
 local t = {1, 2, 3}
 table.insert(t, 2.9, "x")  -- Should insert at position 2
 assert(t[1] == 1, "First element should still be 1")

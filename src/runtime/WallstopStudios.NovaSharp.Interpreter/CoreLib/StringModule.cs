@@ -27,6 +27,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Registers the `string` metatable so literal strings inherit the library functions.
+        /// For Lua 5.4+, also registers arithmetic metamethods that provide string-to-number coercion.
         /// </summary>
         /// <param name="globalTable">Global table provided by the module host.</param>
         /// <param name="stringTable">Library table containing the exported functions.</param>
@@ -34,9 +35,199 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
             stringTable = ModuleArgumentValidation.RequireTable(stringTable, nameof(stringTable));
-            Table stringMetatable = new(globalTable.OwnerScript);
+
+            Script script = globalTable.OwnerScript;
+            Table stringMetatable = new(script);
             stringMetatable.Set("__index", DynValue.NewTable(stringTable));
-            globalTable.OwnerScript.SetTypeMetatable(DataType.String, stringMetatable);
+
+            // Lua 5.4+: String-to-number coercion was removed from the arithmetic operators themselves.
+            // Instead, the string metatable provides arithmetic metamethods that perform the coercion.
+            // See Lua 5.4 Reference Manual §3.4.1
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                script.CompatibilityVersion
+            );
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                RegisterStringArithmeticMetamethods(stringMetatable);
+            }
+
+            script.SetTypeMetatable(DataType.String, stringMetatable);
+        }
+
+        /// <summary>
+        /// Registers arithmetic metamethods (__add, __sub, __mul, etc.) on the string metatable.
+        /// These metamethods coerce string operands to numbers for arithmetic in Lua 5.4+.
+        /// Per Lua 5.4 manual §3.4.3: "If the conversion fails, the library calls the metamethod
+        /// of the other operand (if present) or it raises an error."
+        /// </summary>
+        private static void RegisterStringArithmeticMetamethods(Table stringMetatable)
+        {
+            // __add: a + b
+            stringMetatable.Set(
+                "__add",
+                DynValue.NewCallback(
+                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__add", LuaNumber.Add)
+                )
+            );
+
+            // __sub: a - b
+            stringMetatable.Set(
+                "__sub",
+                DynValue.NewCallback(
+                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__sub", LuaNumber.Subtract)
+                )
+            );
+
+            // __mul: a * b
+            stringMetatable.Set(
+                "__mul",
+                DynValue.NewCallback(
+                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__mul", LuaNumber.Multiply)
+                )
+            );
+
+            // __div: a / b
+            stringMetatable.Set(
+                "__div",
+                DynValue.NewCallback(
+                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__div", LuaNumber.Divide)
+                )
+            );
+
+            // __mod: a % b
+            stringMetatable.Set(
+                "__mod",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                        StringBinaryArithmetic(
+                            ctx,
+                            args,
+                            "__mod",
+                            (a, b) => LuaNumber.Modulo(a, b, LuaCompatibilityVersion.Lua54)
+                        )
+                )
+            );
+
+            // __pow: a ^ b
+            stringMetatable.Set(
+                "__pow",
+                DynValue.NewCallback(
+                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__pow", LuaNumber.Power)
+                )
+            );
+
+            // __idiv: a // b (floor division)
+            stringMetatable.Set(
+                "__idiv",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, "__idiv", LuaNumber.FloorDivide)
+                )
+            );
+
+            // __unm: -a (unary minus)
+            stringMetatable.Set(
+                "__unm",
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        LuaNumber? a = CoerceToLuaNumber(args[0]);
+                        if (!a.HasValue)
+                        {
+                            throw ScriptRuntimeException.ArithmeticOnNonNumber(args[0]);
+                        }
+                        return DynValue.NewNumber(LuaNumber.Negate(a.Value));
+                    }
+                )
+            );
+        }
+
+        /// <summary>
+        /// Implements a binary arithmetic metamethod for strings with proper fallback behavior.
+        /// Per Lua 5.4 manual: if coercion fails, calls the other operand's metamethod (if present).
+        /// </summary>
+        private static DynValue StringBinaryArithmetic(
+            ScriptExecutionContext ctx,
+            CallbackArguments args,
+            string metamethodName,
+            Func<LuaNumber, LuaNumber, LuaNumber> operation
+        )
+        {
+            DynValue left = args[0];
+            DynValue right = args[1];
+
+            LuaNumber? a = CoerceToLuaNumber(left);
+            LuaNumber? b = CoerceToLuaNumber(right);
+
+            // If both can be coerced to numbers, perform the operation
+            if (a.HasValue && b.HasValue)
+            {
+                return DynValue.NewNumber(operation(a.Value, b.Value));
+            }
+
+            // Coercion failed - try to fall back to the other operand's metamethod
+            // We need to check if the non-string operand has its own metamethod
+            DynValue nonStringOperand = left.Type == DataType.String ? right : left;
+
+            // Only try fallback if the other operand could have a metamethod (tables, userdata)
+            if (
+                nonStringOperand.Type == DataType.Table
+                || nonStringOperand.Type == DataType.UserData
+            )
+            {
+                DynValue otherMetamethod = ctx.GetBinaryMetamethod(
+                    nonStringOperand,
+                    nonStringOperand,
+                    metamethodName
+                );
+
+                if (otherMetamethod != null && otherMetamethod.IsNotNil())
+                {
+                    // Call the other operand's metamethod with the original arguments
+                    return ctx.Script.Call(otherMetamethod, left, right);
+                }
+            }
+
+            // No fallback available - throw the appropriate error
+            throw ArithmeticCoercionError(left, right);
+        }
+
+        /// <summary>
+        /// Coerces a DynValue to a LuaNumber for string arithmetic metamethods.
+        /// Returns null if the value cannot be coerced.
+        /// </summary>
+        private static LuaNumber? CoerceToLuaNumber(DynValue value)
+        {
+            if (value.Type == DataType.Number)
+            {
+                return value.LuaNumber;
+            }
+
+            if (value.Type == DataType.String)
+            {
+                if (LuaNumber.TryParse(value.String, out LuaNumber result))
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Creates an appropriate arithmetic error for string coercion failure.
+        /// </summary>
+        private static ScriptRuntimeException ArithmeticCoercionError(DynValue a, DynValue b)
+        {
+            // Report the first non-number operand
+            if (
+                a.Type != DataType.Number
+                && (a.Type != DataType.String || !LuaNumber.TryParse(a.String, out _))
+            )
+            {
+                return ScriptRuntimeException.ArithmeticOnNonNumber(a);
+            }
+            return ScriptRuntimeException.ArithmeticOnNonNumber(b);
         }
 
         /// <summary>

@@ -1,11 +1,13 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @source: MathPowEdgeCasesTUnitTests
--- @test: MathPowEdgeCasesTUnitTests.PowBasicCases
 -- Test: Basic math.pow/^ operations
 -- Expected: Correct power results
 -- Reference: Lua §6.7 (math.pow), §3.4.1 (arithmetic operators)
 
 -- Basic integer exponents
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowBasicCases
 assert(math.pow(2, 3) == 8, "2^3 should equal 8")
 assert(math.pow(10, 2) == 100, "10^2 should equal 100")
 assert(math.pow(2, 10) == 1024, "2^10 should equal 1024")

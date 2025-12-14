@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using Debugging;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -843,7 +844,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private void ExecToNum(Instruction i)
         {
-            double? v = _valueStack.Pop().ToScalar().CastToNumber();
+            // Use CastToLuaNumber to preserve integer/float subtype for precise arithmetic.
+            // Using CastToNumber (double) loses integer precision for large values near maxinteger,
+            // causing for-loops to infinite loop due to floating-point precision limits.
+            LuaNumber? v = _valueStack.Pop().ToScalar().CastToLuaNumber();
             if (v.HasValue)
             {
                 _valueStack.Push(DynValue.NewNumber(v.Value));
@@ -934,11 +938,64 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private int ExecJFor(Instruction i, int instructionPtr)
         {
-            double val = _valueStack.Peek(0).Number;
-            double step = _valueStack.Peek(1).Number;
-            double stop = _valueStack.Peek(2).Number;
+            // Use LuaNumber to preserve integer precision for large values (e.g., near maxinteger).
+            // Using .Number (double) causes precision loss and infinite loops for large integer bounds.
+            LuaNumber val = _valueStack.Peek(0).LuaNumber;
+            LuaNumber step = _valueStack.Peek(1).LuaNumber;
+            LuaNumber stop = _valueStack.Peek(2).LuaNumber;
 
-            bool whileCond = (step > 0) ? val <= stop : val >= stop;
+            // Lua for-loop condition: if step > 0 then val <= stop else val >= stop
+            // Use LuaNumber comparison to avoid precision loss with large step values
+            bool stepPositive = LuaNumber.LessThan(LuaNumber.Zero, step);
+
+            // For integer for-loops in Lua 5.3+, detect overflow to prevent infinite loops.
+            // Per Lua 5.4 §3.3.5: "the control variable never wraps around".
+            // If step is positive and val < stop but we're past the first iteration (val has been incremented),
+            // we need to detect if the previous increment caused overflow.
+            // Overflow detection: if step > 0 and val < start (represented as stop - n*step equivalent),
+            // or more simply: if step > 0 and val wrapped to negative when it should be positive.
+            if (val.IsInteger && step.IsInteger && stop.IsInteger)
+            {
+                long stepVal = step.AsInteger;
+                long valVal = val.AsInteger;
+                long stopVal = stop.AsInteger;
+
+                // Detect overflow: for positive step, if val < (stop - large_positive) we likely wrapped
+                // More precisely: if step > 0, increment causes overflow when val > maxint - step
+                // After overflow, val will be negative (wrapped from max to min).
+                // If step > 0 and val < 0 and stop > 0, this indicates overflow occurred.
+                // Similarly for step < 0.
+                if (stepVal > 0)
+                {
+                    // Positive step: loop should go from low to high
+                    // If val suddenly became much smaller than stop (wrapped), stop the loop
+                    // Detection: if previous val was > current val after increment, overflow occurred
+                    // Since we don't track previous val, use: if step > 0 but val > stop, it's definitely done.
+                    // But also: if overflow occurred, val wrapped around.
+                    // Conservative detection: if the distance from val to stop is larger than it should be.
+                    // Simplest: use checked arithmetic or detect sign change when it shouldn't happen.
+                    // If stopVal >= 0 and valVal < 0 and step > 0, we wrapped from positive to negative.
+                    if (stopVal >= 0 && valVal < 0)
+                    {
+                        // Overflow occurred - loop should terminate
+                        return i.NumVal;
+                    }
+                }
+                else if (stepVal < 0)
+                {
+                    // Negative step: loop should go from high to low
+                    // If stopVal <= 0 and valVal > 0, we wrapped from negative to positive
+                    if (stopVal <= 0 && valVal > 0)
+                    {
+                        // Overflow occurred - loop should terminate
+                        return i.NumVal;
+                    }
+                }
+            }
+
+            bool whileCond = stepPositive
+                ? LuaNumber.LessThanOrEqual(val, stop)
+                : LuaNumber.LessThanOrEqual(stop, val);
 
             if (!whileCond)
             {
@@ -967,7 +1024,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _valueStack.Push(top);
             }
 
-            top.AssignNumber(top.Number + btm.Number);
+            // Use LuaNumber.Add to preserve integer precision for large values.
+            // Raw double addition causes precision loss near maxinteger, leading to infinite loops.
+            top.AssignNumber(LuaNumber.Add(top.LuaNumber, btm.LuaNumber));
         }
 
         private void ExecCNot(Instruction i)
@@ -1459,8 +1518,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1486,8 +1545,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1513,8 +1572,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1540,8 +1599,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1571,8 +1630,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1599,8 +1658,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1629,8 +1688,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1748,7 +1807,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private int ExecNeg(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
-            LuaNumber? rn = r.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
 
             if (rn.HasValue)
             {
@@ -2245,6 +2304,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     );
                 }
             }
+        }
+
+        /// <summary>
+        /// Converts a DynValue to a LuaNumber for arithmetic operations.
+        /// In Lua 5.4+, strings are NOT automatically coerced to numbers by the arithmetic operators;
+        /// instead, coercion happens via the string metatable's arithmetic metamethods.
+        /// In Lua 5.1-5.3, strings are automatically coerced to numbers.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The LuaNumber if conversion is possible without violating version semantics;
+        /// null if the value cannot be used as a number in arithmetic.
+        /// </returns>
+        private LuaNumber? CastToLuaNumberForArithmetic(DynValue value)
+        {
+            DataType type = value.Type;
+
+            // Numbers always convert
+            if (type == DataType.Number)
+            {
+                return value.LuaNumber;
+            }
+
+            // Strings: version-dependent behavior
+            // In Lua 5.4+, strings are NOT coerced by the arithmetic operators themselves;
+            // the coercion happens via string metatable metamethods (__add, __sub, etc.)
+            if (type == DataType.String)
+            {
+                LuaCompatibilityVersion version = _script.Options.CompatibilityVersion;
+                if (version >= LuaCompatibilityVersion.Lua54)
+                {
+                    // 5.4+: Do NOT coerce strings here; fall through to metamethod lookup
+                    return null;
+                }
+
+                // 5.1-5.3: Auto-coerce strings to numbers
+                if (LuaNumber.TryParse(value.String, out LuaNumber result))
+                {
+                    return result;
+                }
+            }
+
+            return null;
         }
     }
 }

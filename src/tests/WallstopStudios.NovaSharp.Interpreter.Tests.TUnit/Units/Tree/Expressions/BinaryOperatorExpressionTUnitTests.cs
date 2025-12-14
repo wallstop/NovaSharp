@@ -270,6 +270,140 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
+        public async Task LessThanPreservesIntegerPrecisionAtBoundaries()
+        {
+            // Test that large integers are compared correctly in DynamicExpression.Eval().
+            // Before the fix, this would incorrectly compare as equal due to double precision loss.
+            Script script = new();
+            const long maxIntegerMinusOne = long.MaxValue - 1;
+            const long maxInteger = long.MaxValue;
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThan,
+                "<",
+                ctx => new LiteralExpression(
+                    ctx,
+                    DynValue.NewNumber(LuaNumber.FromInteger(maxIntegerMinusOne))
+                ),
+                ctx => new LiteralExpression(
+                    ctx,
+                    DynValue.NewNumber(LuaNumber.FromInteger(maxInteger))
+                )
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            // 9223372036854775806 < 9223372036854775807 should be true
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LessOrEqualPreservesIntegerPrecisionAtBoundaries()
+        {
+            // Test that large integers are compared correctly in DynamicExpression.Eval().
+            Script script = new();
+            const long maxInteger = long.MaxValue;
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThanEqual,
+                "<=",
+                ctx => new LiteralExpression(
+                    ctx,
+                    DynValue.NewNumber(LuaNumber.FromInteger(maxInteger))
+                ),
+                ctx => new LiteralExpression(
+                    ctx,
+                    DynValue.NewNumber(LuaNumber.FromInteger(maxInteger))
+                )
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            // maxinteger <= maxinteger should be true
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task AdditionPreservesIntegerSubtype()
+        {
+            // Test that integer arithmetic in DynamicExpression.Eval() preserves the integer subtype.
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpAdd,
+                "+",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(10))),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(20)))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(30L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SubtractionPreservesIntegerSubtype()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpMinusOrSub,
+                "-",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(50))),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(20)))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(30L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MultiplicationPreservesIntegerSubtype()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpMul,
+                "*",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(6))),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(7)))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(42L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FloorDivisionPreservesIntegerSubtype()
+        {
+            Script script = new();
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpFloorDiv,
+                "//",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(17))),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(5)))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            // 17 // 5 = 3 (integer)
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(3L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task LessThanThrowsOnMismatchedTypes()
         {
             Script script = new();

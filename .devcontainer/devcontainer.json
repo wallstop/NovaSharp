@@ -2,20 +2,20 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/dotnet
 {
 	"name": "C# (.NET)",
-	"image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-bookworm",
-	"features": {
-		"ghcr.io/devcontainers/features/dotnet:2": {
-			"additionalVersions": "8.0"
-		},
-		"ghcr.io/devcontainers/features/powershell:1": {},
-		"ghcr.io/nikiforovall/devcontainer-features/dotnet-csharpier:1": {},
-		"ghcr.io/devcontainers-extra/features/ripgrep:1": {},
-		"ghcr.io/devcontainers/features/python:1": {
-			"version": "3.12"
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "."
+	},
+
+	// VS Code extensions for development
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"bits.csharp-test-filter"
+			]
 		}
 	},
 
-	// Install all Lua versions for specification comparison testing
-	// Lua 5.1-5.4 from apt, Lua 5.5 built from source (RC phase, not in package managers)
+	// Restore dotnet tools and Python dependencies after container creation
 	"postCreateCommand": "bash .devcontainer/post-create.sh"
 }

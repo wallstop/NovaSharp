@@ -11,10 +11,9 @@ from typing import Iterable, List, Sequence
 try:
     import mdformat
 except ModuleNotFoundError as exc:  # pragma: no cover - guidance for missing deps
-    sys.stderr.write(
-        "mdformat is not installed. Run `python -m pip install -r requirements.tooling.txt`.\n"
-    )
-    raise
+    raise SystemExit(
+        "mdformat is not installed. Run `python -m pip install -r requirements.tooling.txt`."
+    ) from exc
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

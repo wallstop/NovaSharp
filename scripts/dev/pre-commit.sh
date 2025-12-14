@@ -75,6 +75,26 @@ run_python() {
   exit 1
 }
 
+install_python_tooling() {
+  log "[pre-commit] Installing Python tooling dependencies..."
+  if run_python -m pip install --quiet --requirement requirements.tooling.txt; then
+    return 0
+  fi
+
+  warn "Standard pip install failed; retrying with user-level installation..."
+  if run_python -m pip install --quiet --user --requirement requirements.tooling.txt; then
+    return 0
+  fi
+
+  warn "User install failed; retrying with --break-system-packages (PEP 668 overrides)..."
+  if run_python -m pip install --quiet --user --break-system-packages --requirement requirements.tooling.txt; then
+    return 0
+  fi
+
+  warn "Failed to install Python tooling dependencies. Run 'python -m pip install --break-system-packages -r requirements.tooling.txt'."
+  return 1
+}
+
 check_mdformat_version() {
   # Expected version from requirements.tooling.txt
   expected_version="1.0.0"
@@ -83,14 +103,29 @@ check_mdformat_version() {
   installed_version="$(run_python -c "import mdformat; print(mdformat.__version__)" 2>/dev/null || printf '')"
 
   if [ -z "$installed_version" ]; then
-    warn "mdformat is not installed. Run 'python -m pip install -r requirements.tooling.txt' to install."
-    return 1
+    warn "mdformat is not installed; installing tooling requirements..."
+    install_python_tooling || return 1
+    installed_version="$(run_python -c "import mdformat; print(mdformat.__version__)" 2>/dev/null || printf '')"
+
+    if [ -z "$installed_version" ]; then
+      warn "mdformat is still missing. Run 'python -m pip install -r requirements.tooling.txt' to install."
+      return 1
+    fi
   fi
 
   if [ "$installed_version" != "$expected_version" ]; then
     warn "mdformat version mismatch: installed $installed_version, expected $expected_version"
-    warn "Run 'python -m pip install -r requirements.tooling.txt' to update."
-    warn "Continuing with installed version (may cause CI failures)..."
+    warn "Attempting to update Python tooling dependencies..."
+    if install_python_tooling; then
+      installed_version="$(run_python -c "import mdformat; print(mdformat.__version__)" 2>/dev/null || printf '')"
+    else
+      warn "Continuing with installed version (may cause CI failures)..."
+      return 0
+    fi
+
+    if [ "$installed_version" != "$expected_version" ]; then
+      warn "mdformat version remains $installed_version after update; continuing (may cause CI failures)..."
+    fi
   fi
 
   return 0
@@ -137,8 +172,10 @@ format_markdown_files() {
     return
   fi
 
-  # Warn if mdformat version doesn't match requirements
-  check_mdformat_version || true
+  if ! check_mdformat_version; then
+    warn "mdformat is required to format Markdown. Run 'python -m pip install -r requirements.tooling.txt'."
+    exit 1
+  fi
 
   (
     set -f
@@ -351,5 +388,3 @@ check_shell_python_invocation
 check_test_lint
 
 log "[pre-commit] Completed successfully."
-
-

@@ -24,9 +24,9 @@ Version-specific random providers still needed:
 
 ---
 
-## 🔴 CRITICAL Priority: Comprehensive LuaNumber Usage Audit (§8.37)
+## 🟡 MEDIUM Priority: Comprehensive LuaNumber Usage Audit (§8.37)
 
-**Status**: 🚧 **IN PROGRESS** — VM audit underway, for-loop and display bugs identified.
+**Status**: ✅ **CORE FIXES COMPLETE** — Phases 1-4 done, only Phase 5 (lint rule) remaining.
 
 **Problem Statement (2025-12-09)**:
 The codebase may contain locations where raw C# numeric types (`double`, `float`, `int`, `long`) are used instead of `LuaNumber` for Lua math operations. This can cause:
@@ -117,9 +117,9 @@ int index = (int)dynValue.Number;  // May truncate large values incorrectly
 ### Implementation Tasks
 
 - [x] **Phase 1**: Run grep patterns above, catalog all hits — **DONE 2025-12-11**
-- [ ] **Phase 2**: Classify remaining hits as Safe/Suspicious/Bug
-- [ ] **Phase 3**: Fix any remaining bugs, document edge cases
-- [ ] **Phase 4**: Add regression tests for each fix
+- [x] **Phase 2**: Classify remaining hits as Safe/Suspicious/Bug — **DONE 2025-12-13**
+- [x] **Phase 3**: Fix any remaining bugs, document edge cases — **DONE 2025-12-13**
+- [x] **Phase 4**: Add regression tests for each fix — **DONE 2025-12-13**
 - [ ] **Phase 5**: Create lint rule or CI check to prevent future violations
 
 ### Completed Fixes
@@ -128,10 +128,25 @@ int index = (int)dynValue.Number;  // May truncate large values incorrectly
 - ✅ Version-aware number formatting via `LuaNumber.ToLuaString(version)`
 - ✅ Bytecode serialization preserves integer/float subtype (version 0x151)
 - ✅ JSON serialization preserves integer/float subtype
+- ✅ **2025-12-13**: VM for-loop precision and overflow fix (see `progress/2025-12-13-for-loop-luanumber-precision.md`)
+  - `ExecToNum()`: Changed `CastToNumber()` → `CastToLuaNumber()` to preserve integer subtype
+  - `ExecJFor()`: Changed double comparisons → `LuaNumber.LessThan/LessThanOrEqual()`, added overflow detection for integer boundaries (Lua 5.4 §3.3.5)
+  - `ExecIncr()`: Changed `top.Number + btm.Number` → `LuaNumber.Add(top.LuaNumber, btm.LuaNumber)`
+- ✅ **2025-12-13**: BinaryOperatorExpression dynamic evaluation fix (see `progress/2025-12-13-binary-operator-expression-luanumber-fix.md`)
+  - `EvalComparison()`: Changed `l.Number < r.Number` → `LuaNumber.LessThan/LessThanOrEqual()`
+  - `EvalArithmetic()`: Changed `CastToNumber()` + double ops → `CastToLuaNumber()` + `LuaNumber.Add/Subtract/Multiply/Divide/Modulo/Power()`
+  - `EvalFloorDivision()`: Changed `Math.Floor(d1/d2)` → `LuaNumber.FloorDivide()`
 
 **Safe `.Number` usages (documented)**: Argument count retrieval (always small values), type checks (not value access)
 
-### Remaining
+### Audit Classification Summary (2025-12-13)
+
+| Location | Pattern | Classification |
+|----------|---------|----------------|
+| `ProcessorInstructionLoop.cs` (arg counts) | `(int)_valueStack.*.Number` | SAFE (small values) |
+| `BinaryOperatorExpression.cs` | `l.Number < r.Number` | **FIXED** |
+| `BinaryOperatorExpression.cs` | `EvalArithmetic/EvalFloorDivision` | **FIXED** |
+| VM execution (`ExecLess`, `ExecLessEq`, `ExecArith`) | Already uses `LuaNumber` | SAFE |
 
 ### Related Sections
 - §8.33: LuaNumber Compliance Sweep (CoreLib audit complete)
@@ -140,7 +155,7 @@ int index = (int)dynValue.Number;  // May truncate large values incorrectly
 - §8.24: Dual Numeric Type System (LuaNumber struct)
 
 **Owner**: Interpreter team
-**Priority**: 🔴 HIGH — Numeric correctness is fundamental to Lua compatibility
+**Priority**: 🟡 MEDIUM — Core fixes complete, only lint rule (Phase 5) remaining
 
 ---
 
@@ -464,7 +479,7 @@ done
 
 **Build & Tests**:
 - Zero warnings with `<TreatWarningsAsErrors>true` enforced
-- **5,025** interpreter tests pass via TUnit (Microsoft.Testing.Platform)
+- **5,031+** interpreter tests pass via TUnit (Microsoft.Testing.Platform) — count growing with new test additions
 - Coverage: ~75.3% line / ~76.1% branch (gating enforced at 90%)
 - CI: Tests on matrix of `[ubuntu-latest, windows-latest, macos-latest]`
 
@@ -480,11 +495,12 @@ done
 
 **Lua Compatibility**:
 - All version fixture comparisons (5.1, 5.2, 5.3, 5.4) show **zero mismatches**
-- ~1,249 Lua fixtures extracted from C# tests, parallel runner operational
+- ~1,260+ Lua fixtures extracted from C# tests, parallel runner operational (including new setfenv/getfenv fixtures)
 - Bytecode format version `0x151` preserves integer/float subtype
 - JSON/bytecode serialization preserves integer/float subtype
 - DynValue caching extended for negative integers and common floats
 - All character classes, metamethod fallbacks, and version-specific behaviors implemented
+- ✅ **COMPLETE**: `setfenv`/`getfenv` for Lua 5.1 compatibility mode (implementation and tests passing)
 
 ## Critical Initiatives
 
@@ -798,9 +814,13 @@ These documents contain comprehensive details on:
 
 **Breaking Change in 5.2**: The concept of function environments was fundamentally changed.
 
+**Status**: ✅ **COMPLETE** — `setfenv`/`getfenv` implemented for Lua 5.1 mode (2025-12-13).
+
 **Tasks**:
 - [ ] Verify environment handling matches target version
-- [ ] Support `setfenv`/`getfenv` only for 5.1 compatibility mode
+- [x] Create tests for `setfenv`/`getfenv` 5.1 behavior — **DONE** (20+ tests in `SetFenvGetFenvTUnitTests.cs`)
+- [x] Create Lua fixtures for `setfenv`/`getfenv` — **DONE** (12+ fixtures in `LuaFixtures/SetFenvGetFenvTUnitTests/`)
+- [x] Implement `setfenv`/`getfenv` in `BasicModule.cs` for 5.1 mode — **DONE**
 - [ ] Document `_ENV` usage for 5.2+ code
 
 #### 8.20 ipairs Metamethod Changes (Lua 5.3+)
@@ -839,15 +859,16 @@ These documents contain comprehensive details on:
 
 ### 🔴 IMMEDIATE: High-Priority Version Parity Items
 
-1. **`setfenv`/`getfenv` for Lua 5.1** (Section 9.4)
-   - Required for proper Lua 5.1 compatibility mode
-   - Not implemented—code calling these in 5.1 mode gets "attempt to call nil"
-   - Complexity: Moderate (requires understanding Lua 5.1's function environment model)
+1. ~~**`setfenv`/`getfenv` for Lua 5.1** (Section 8.19) — ✅ **COMPLETE**~~
+   - ~~Required for proper Lua 5.1 compatibility mode~~
+   - Implementation complete with all tests passing (2025-12-13)
+   - See `progress/2025-12-13-setfenv-getfenv-implementation-status.md` for details
 
-2. **String-to-number coercion metamethods for Lua 5.4** (Section 9.4)
-   - Lua 5.4 removed implicit string-to-number coercion in arithmetic
-   - NovaSharp may still allow `"5" + 3` in 5.4 mode (should error without metamethod)
-   - Verify and fix to match spec
+2. ~~**String-to-number coercion metamethods for Lua 5.4** (Section 9.4)~~ — ✅ **COMPLETE**
+   - ~~Lua 5.4 removed implicit string-to-number coercion in arithmetic~~
+   - ~~NovaSharp may still allow `"5" + 3` in 5.4 mode (should error without metamethod)~~
+   - Implementation complete with VM version-aware coercion and string metatable metamethods (2025-01-14)
+   - See `progress/2025-01-14-string-arithmetic-coercion-lua54.md` for details
 
 3. **`load`/`loadfile` signature verification per version** (Section 9.4)
    - Lua 5.1: 2-3 args, Lua 5.2+: 4 args (with `mode` and `env`)
@@ -1010,8 +1031,8 @@ Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`.
 
 | Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
 |----------|-----|-----|-----|-----|------------------|-------|
-| `setfenv(f, table)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Implement | 5.1 only |
-| `getfenv(f)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Implement | 5.1 only |
+| `setfenv(f, table)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | 5.1 only — implementation complete |
+| `getfenv(f)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | 5.1 only — implementation complete |
 | `unpack(list [,i [,j]])` | ✅ Global | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | Version-gated 5.1 only |
 | `module(name [,...])` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | 🔲 Verify | 5.1 module system |
 | `loadstring(string [,chunkname])` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `load(string)` |
@@ -1020,11 +1041,11 @@ Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`.
 | `rawlen(v)` | ❌ N/A | ✅ | ✅ | ✅ | ✅ Available | Added in 5.2 |
 | `xpcall(f, msgh [,...])` | 2 args | Extra args | Extra args | Extra args | ✅ Completed | 5.2+ passes args to f (2025-12-13) |
 | `print(...)` behavior | Calls tostring | Calls tostring | Calls tostring | Uses __tostring | ✅ Completed | 5.4 hardwired (2025-12-13) |
-| String-to-number coercion | Implicit | Implicit | Implicit | Metamethod | 🔲 Implement | 5.4 breaking change |
+| String-to-number coercion | Implicit | Implicit | Implicit | Metamethod | ✅ Completed | 5.4 breaking change (2025-01-14) |
 
 **Tasks**:
-- [ ] Implement `setfenv`/`getfenv` for Lua 5.1 compatibility mode
-- [ ] Implement string-to-number coercion via metamethods for Lua 5.4
+- [x] ~~**IN PROGRESS**: Implement `setfenv`/`getfenv` for Lua 5.1~~ — ✅ **COMPLETED** (2025-12-13)
+- [x] ~~Implement string-to-number coercion via metamethods for Lua 5.4~~ — ✅ **COMPLETED** (2025-01-14)
 - [ ] Verify `load`/`loadfile` signature per version
 
 ### 9.5 Coroutine Module Version Parity

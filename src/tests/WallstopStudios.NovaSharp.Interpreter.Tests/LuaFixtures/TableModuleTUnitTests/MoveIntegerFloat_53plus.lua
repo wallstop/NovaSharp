@@ -1,7 +1,11 @@
--- @lua-versions: 5.3, 5.4
 -- Tests that table.move accepts float indices that have integer representation in Lua 5.3+
 -- Per Lua 5.3 manual §6.6: 1.0, 3.0 have integer representation
 
+-- @lua-versions: 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs
+-- @test: TableModuleTUnitTests.MoveIntegerFloat_53plus
 local a1 = {1, 2, 3, 4, 5}
 local a2 = {}
 table.move(a1, 1.0, 3.0, 1.0, a2)  -- All have integer representation

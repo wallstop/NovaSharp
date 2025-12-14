@@ -1,11 +1,13 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @source: MathPowEdgeCasesTUnitTests
--- @test: MathPowEdgeCasesTUnitTests.PowNegativeBaseFractionalExponent
 -- Test: Negative base with fractional exponent produces NaN
 -- Expected: NaN result (complex number in real domain)
 -- Reference: Lua §6.7, IEEE 754-2008
 
 -- Helper to check if a value is NaN
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowNegativeBaseFractionalExponent
 local function isnan(x)
   return x ~= x
 end

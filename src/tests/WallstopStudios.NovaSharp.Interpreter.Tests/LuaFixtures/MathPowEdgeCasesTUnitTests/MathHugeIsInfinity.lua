@@ -1,10 +1,12 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @source: MathPowEdgeCasesTUnitTests
--- @test: MathPowEdgeCasesTUnitTests.MathHugeIsInfinity
 -- Test: Verify math.huge is IEEE 754 positive infinity
 -- Expected: math.huge equals 1/0 and behaves as infinity
 -- Reference: Lua §6.7 - "math.huge: The float value HUGE_VAL, a value greater than any other numeric value"
 
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.MathHugeIsInfinity
 local inf = math.huge
 
 -- math.huge must equal 1/0 (IEEE 754 positive infinity)

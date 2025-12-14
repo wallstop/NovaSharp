@@ -1,10 +1,12 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @source: MathPowEdgeCasesTUnitTests
--- @test: MathPowEdgeCasesTUnitTests.PowInfinityCases
 -- Test: math.pow edge cases involving infinity (math.huge)
 -- Expected: IEEE 754 compliant infinity handling
 -- Reference: Lua §6.7, IEEE 754-2008
 
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowInfinityCases
 local inf = math.huge
 local neginf = -math.huge
 
