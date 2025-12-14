@@ -870,9 +870,10 @@ These documents contain comprehensive details on:
    - Implementation complete with VM version-aware coercion and string metatable metamethods (2025-01-14)
    - See `progress/2025-01-14-string-arithmetic-coercion-lua54.md` for details
 
-3. **`load`/`loadfile` signature verification per version** (Section 9.4)
-   - Lua 5.1: 2-3 args, Lua 5.2+: 4 args (with `mode` and `env`)
-   - Need to verify NovaSharp's implementation matches per-version signatures
+3. ~~**`load`/`loadfile` signature verification per version** (Section 9.4)~~ — ✅ **COMPLETE**
+   - ~~Lua 5.1: 2-3 args, Lua 5.2+: 4 args (with `mode` and `env`)~~
+   - Implementation complete: `loadstring` available in 5.1 only, `load` rejects strings in 5.1 (2025-12-14)
+   - See `progress/2025-12-14-load-loadstring-version-parity.md` for details
 
 4. **`io.lines` return value for Lua 5.4** (Section 9.7)
    - Lua 5.4 changed `io.lines` to return 4 values instead of 1
@@ -1035,9 +1036,9 @@ Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`.
 | `getfenv(f)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | 5.1 only — implementation complete |
 | `unpack(list [,i [,j]])` | ✅ Global | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | Version-gated 5.1 only |
 | `module(name [,...])` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | 🔲 Verify | 5.1 module system |
-| `loadstring(string [,chunkname])` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `load(string)` |
-| `load(chunk [,chunkname [,mode [,env]]])` | 2-3 args | 4 args | 4 args | 4 args | 🔲 Verify | Signature change |
-| `loadfile(filename [,mode [,env]])` | 1 arg | 3 args | 3 args | 3 args | 🔲 Verify | Signature change |
+| `loadstring(string [,chunkname])` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | 5.1 only (2025-12-14) |
+| `load(chunk [,chunkname [,mode [,env]]])` | 2-3 args | 4 args | 4 args | 4 args | ✅ Completed | Signature change (2025-12-14) |
+| `loadfile(filename [,mode [,env]])` | 1 arg | 3 args | 3 args | 3 args | ✅ Completed | Signature verified (2025-12-14) |
 | `rawlen(v)` | ❌ N/A | ✅ | ✅ | ✅ | ✅ Available | Added in 5.2 |
 | `xpcall(f, msgh [,...])` | 2 args | Extra args | Extra args | Extra args | ✅ Completed | 5.2+ passes args to f (2025-12-13) |
 | `print(...)` behavior | Calls tostring | Calls tostring | Calls tostring | Uses __tostring | ✅ Completed | 5.4 hardwired (2025-12-13) |
@@ -1046,7 +1047,7 @@ Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`.
 **Tasks**:
 - [x] ~~**IN PROGRESS**: Implement `setfenv`/`getfenv` for Lua 5.1~~ — ✅ **COMPLETED** (2025-12-13)
 - [x] ~~Implement string-to-number coercion via metamethods for Lua 5.4~~ — ✅ **COMPLETED** (2025-01-14)
-- [ ] Verify `load`/`loadfile` signature per version
+- [x] ~~Verify `load`/`loadfile` signature per version~~ — ✅ **COMPLETED** (2025-12-14)
 
 ### 9.5 Coroutine Module Version Parity
 

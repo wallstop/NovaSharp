@@ -19,12 +19,11 @@ RUN apt-get update && apt-get install -y wget apt-transport-https software-prope
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python 3.12
+# Install Python 3.11 (default in Debian Bookworm) and venv support
 RUN apt-get update && apt-get install -y \
-    python3.12 \
-    python3.12-venv \
+    python3 \
+    python3-venv \
     python3-pip \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
