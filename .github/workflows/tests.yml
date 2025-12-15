@@ -135,7 +135,7 @@ jobs:
         shell: pwsh
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: NovaSharp-test-results-${{ matrix.os }}
           path: artifacts/test-results
@@ -393,7 +393,7 @@ jobs:
         shell: bash
       - name: Upload coverage reports
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-artifacts
           path: |
@@ -485,7 +485,7 @@ jobs:
         shell: bash
       - name: Upload Lua ${{ matrix.lua-version }} comparison results
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: lua-comparison-${{ matrix.lua-version }}
           path: artifacts/lua-comparison-results
@@ -594,7 +594,7 @@ jobs:
         shell: bash
       - name: Upload Lua 5.5 comparison results
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: lua-comparison-5.5
           path: artifacts/lua-comparison-results
