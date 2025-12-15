@@ -349,7 +349,7 @@ jobs:
           echo "Benchmark results are still available in the uploaded artifacts (if any)."
 
       - name: Upload benchmark artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: benchmark-results
@@ -392,7 +392,7 @@ jobs:
           DOTNET_ROLL_FORWARD: Major
 
       - name: Upload comparison artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: comparison-results
           path: BenchmarkDotNet.Artifacts/
