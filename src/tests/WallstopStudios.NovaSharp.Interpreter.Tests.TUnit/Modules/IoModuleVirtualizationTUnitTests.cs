@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
@@ -18,9 +19,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     public sealed class IoModuleVirtualizationTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task IoOpenWriteThenReadUsesVirtualFileSystem()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IoOpenWriteThenReadUsesVirtualFileSystem(LuaCompatibilityVersion version)
         {
-            using VirtualIoContext context = CreateVirtualIoContext();
+            using VirtualIoContext context = CreateVirtualIoContext(version);
             Script script = context.Script;
             InMemoryPlatformAccessor platform = context.Platform;
 
@@ -41,9 +47,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task IoOutputRedirectWritesToVirtualFile()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IoOutputRedirectWritesToVirtualFile(LuaCompatibilityVersion version)
         {
-            using VirtualIoContext context = CreateVirtualIoContext();
+            using VirtualIoContext context = CreateVirtualIoContext(version);
             Script script = context.Script;
             InMemoryPlatformAccessor platform = context.Platform;
 
@@ -65,9 +76,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task OsRemoveDeletesVirtualFile()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OsRemoveDeletesVirtualFile(LuaCompatibilityVersion version)
         {
-            using VirtualIoContext context = CreateVirtualIoContext();
+            using VirtualIoContext context = CreateVirtualIoContext(version);
             Script script = context.Script;
             InMemoryPlatformAccessor platform = context.Platform;
 
@@ -81,9 +97,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task OsTmpNameGeneratesUniqueVirtualNames()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OsTmpNameGeneratesUniqueVirtualNames(LuaCompatibilityVersion version)
         {
-            using VirtualIoContext context = CreateVirtualIoContext();
+            using VirtualIoContext context = CreateVirtualIoContext(version);
             Script script = context.Script;
             InMemoryPlatformAccessor platform = context.Platform;
 
@@ -106,9 +127,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task OsRenameMovesVirtualFileContents()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OsRenameMovesVirtualFileContents(LuaCompatibilityVersion version)
         {
-            using VirtualIoContext context = CreateVirtualIoContext();
+            using VirtualIoContext context = CreateVirtualIoContext(version);
             Script script = context.Script;
             InMemoryPlatformAccessor platform = context.Platform;
 
@@ -123,9 +149,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task IoWriteTargetsVirtualStdOut()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IoWriteTargetsVirtualStdOut(LuaCompatibilityVersion version)
         {
-            using VirtualIoContext context = CreateVirtualIoContext();
+            using VirtualIoContext context = CreateVirtualIoContext(version);
             Script script = context.Script;
             InMemoryPlatformAccessor platform = context.Platform;
 
@@ -136,9 +167,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task IoStdErrWriteCapturesVirtualStdErr()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IoStdErrWriteCapturesVirtualStdErr(LuaCompatibilityVersion version)
         {
-            using VirtualIoContext context = CreateVirtualIoContext();
+            using VirtualIoContext context = CreateVirtualIoContext(version);
             Script script = context.Script;
             InMemoryPlatformAccessor platform = context.Platform;
 
@@ -148,13 +184,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(platform.GetStdOutText()).IsEqualTo(string.Empty);
         }
 
-        private static VirtualIoContext CreateVirtualIoContext() => new();
+        private static VirtualIoContext CreateVirtualIoContext(
+            LuaCompatibilityVersion version = LuaCompatibilityVersion.Lua54
+        ) => new(version);
 
         private sealed class VirtualIoContext : IDisposable
         {
             private readonly ScriptPlatformScope _platformScope;
 
-            internal VirtualIoContext()
+            internal VirtualIoContext(
+                LuaCompatibilityVersion version = LuaCompatibilityVersion.Lua54
+            )
             {
                 Platform = new InMemoryPlatformAccessor();
                 _platformScope = ScriptPlatformScope.Override(Platform);

@@ -199,24 +199,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             Coroutine c = executionContext.CallingCoroutine;
-            DynValue coroutineValue = DynValue.NewCoroutine(c);
+            bool isMain = c.State == CoroutineState.Main;
 
-            // Version-specific return value:
-            // - Lua 5.1: Returns only the coroutine
-            // - Lua 5.2+: Returns (coroutine, isMain) tuple
+            // Version-specific return value (Lua 5.1 manual §5.2, Lua 5.4 manual §6.2):
+            // - Lua 5.1: Returns nil when called from main thread, otherwise returns the running coroutine
+            // - Lua 5.2+: Returns (coroutine, isMain) tuple where isMain is true for the main thread
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
                 executionContext.Script.CompatibilityVersion
             );
 
             if (version == LuaCompatibilityVersion.Lua51)
             {
-                return coroutineValue;
+                // Lua 5.1: Returns nil when called by the main thread
+                return isMain ? DynValue.Nil : DynValue.NewCoroutine(c);
             }
 
-            return DynValue.NewTuple(
-                coroutineValue,
-                DynValue.FromBoolean(c.State == CoroutineState.Main)
-            );
+            return DynValue.NewTuple(DynValue.NewCoroutine(c), DynValue.FromBoolean(isMain));
         }
 
         /// <summary>

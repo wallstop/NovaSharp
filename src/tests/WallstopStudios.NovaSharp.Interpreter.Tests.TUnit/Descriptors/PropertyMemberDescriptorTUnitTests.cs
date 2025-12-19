@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -21,7 +22,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     public sealed class PropertyMemberDescriptorTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task TryCreateIfVisibleReturnsDescriptorForPublicProperty()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TryCreateIfVisibleReturnsDescriptorForPublicProperty(
+            LuaCompatibilityVersion version
+        )
         {
             PropertyInfo property = SamplePropertiesMetadata.StaticValue;
 
@@ -38,7 +46,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task TryCreateIfVisibleRespectsHiddenAttribute()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TryCreateIfVisibleRespectsHiddenAttribute(LuaCompatibilityVersion version)
         {
             PropertyInfo property = SamplePropertiesMetadata.HiddenProperty;
 
@@ -51,7 +64,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task TryCreateIfVisibleHonorsAccessorVisibilityOverrides()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TryCreateIfVisibleHonorsAccessorVisibilityOverrides(
+            LuaCompatibilityVersion version
+        )
         {
             PropertyInfo property = SamplePropertiesMetadata.HiddenSetter;
 
@@ -66,7 +86,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task TryCreateIfVisibleAllowsNonPublicPropertyMarkedVisible()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TryCreateIfVisibleAllowsNonPublicPropertyMarkedVisible(
+            LuaCompatibilityVersion version
+        )
         {
             PropertyInfo property = SamplePropertiesMetadata.PrivateButVisible;
 
@@ -81,7 +108,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task MemberAccessReflectsAvailableAccessors()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MemberAccessReflectsAvailableAccessors(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor readWrite = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -104,7 +136,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConstructorThrowsWhenBothAccessorsMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ConstructorThrowsWhenBothAccessorsMissing(LuaCompatibilityVersion version)
         {
             PropertyInfo property = SamplePropertiesMetadata.InstanceValue;
 
@@ -122,7 +159,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConstructorThrowsWhenPropertyNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ConstructorThrowsWhenPropertyNull(LuaCompatibilityVersion version)
         {
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
             {
@@ -133,7 +175,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConstructorFallsBackToReflectionWhenPlatformIsAot()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ConstructorFallsBackToReflectionWhenPlatformIsAot(
+            LuaCompatibilityVersion version
+        )
         {
             using PlatformDetectorOverrideScope platformScope =
                 PlatformDetectorOverrideScope.SetRunningOnAot(true);
@@ -147,7 +196,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetValueReturnsInstanceValueWithLazyOptimization()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetValueReturnsInstanceValueWithLazyOptimization(
+            LuaCompatibilityVersion version
+        )
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -162,7 +218,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetValueThrowsWhenGetterMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetValueThrowsWhenGetterMissing(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
                 SamplePropertiesMetadata.SetterOnly,
@@ -177,7 +238,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetValueThrowsWhenInstanceMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetValueThrowsWhenInstanceMissing(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -192,7 +258,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueUpdatesInstancePropertyAndConvertsNumbers()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueUpdatesInstancePropertyAndConvertsNumbers(
+            LuaCompatibilityVersion version
+        )
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -206,7 +279,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueThrowsWhenSetterMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueThrowsWhenSetterMissing(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
                 SamplePropertiesMetadata.GetterOnly,
@@ -221,7 +299,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueThrowsWhenDynValueNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueThrowsWhenDynValueNull(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -236,7 +319,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetValueThrowsWhenScriptMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetValueThrowsWhenScriptMissing(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -248,7 +336,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueThrowsWhenScriptMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueThrowsWhenScriptMissing(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -261,7 +354,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueThrowsOnTypeMismatch()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueThrowsOnTypeMismatch(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -280,7 +378,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueConvertsDoubleToPropertyType()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueConvertsDoubleToPropertyType(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = PropertyMemberDescriptor.TryCreateIfVisible(
                 SamplePropertiesMetadata.ShortValue,
@@ -294,7 +397,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueWrapsArgumentExceptionFromOptimizedSetter()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueWrapsArgumentExceptionFromOptimizedSetter(
+            LuaCompatibilityVersion version
+        )
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -313,7 +423,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueWrapsInvalidCastExceptionFromOptimizedSetter()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueWrapsInvalidCastExceptionFromOptimizedSetter(
+            LuaCompatibilityVersion version
+        )
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -332,7 +449,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueThrowsWhenInstanceMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueThrowsWhenInstanceMissing(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -347,7 +469,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetValueOptimizesStaticSetterWhenLazy()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueOptimizesStaticSetterWhenLazy(LuaCompatibilityVersion version)
         {
             SampleProperties.LazyStatic = 0;
             PropertyMemberDescriptor descriptor = new(
@@ -362,7 +489,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task OptimizePrecompilesGetterAndSetter()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OptimizePrecompilesGetterAndSetter(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -380,7 +512,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task PrepareForWiringPopulatesMetadataTable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrepareForWiringPopulatesMetadataTable(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,
@@ -400,7 +537,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task PrepareForWiringThrowsWhenTableNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrepareForWiringThrowsWhenTableNull(LuaCompatibilityVersion version)
         {
             PropertyMemberDescriptor descriptor = new(
                 SamplePropertiesMetadata.InstanceValue,

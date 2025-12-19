@@ -26,7 +26,7 @@
 
 ### Tooling coverage gaps
 
-- `.editorconfig` only defines naming rules for interfaces, events, consts, tests, etc.; there is no rule that enforces PascalCase for methods or `_camelCase` for private fields, so IDE1006 is not emitted anywhere and the current `naming_audit.log` (59 B) incorrectly reports “All inspected files/types follow PascalCase expectations.”
+- `.editorconfig` only defines naming rules for interfaces, events, consts, tests, etc.; there is no rule that enforces PascalCase for methods or `_camelCase` for private fields, so IDE1006 is not emitted anywhere and the current `docs/audits/naming_audit.log` (59 B) incorrectly reports "All inspected files/types follow PascalCase expectations."
 - CI does not run any dedicated audit; contributors rely on manual review, which is how the current drift survived the modernization to `net8.0`.
 
 ## Proposed Alignment Plan
@@ -41,7 +41,7 @@
    - ✅ (2025-11-20) Added `.editorconfig` rules that force PascalCase for every method (`methods_must_be_pascal`) and `_camelCase` for private fields, excluding only the `NovaSharp.Interpreter.LuaPort` namespace so the mirrored Lua sources remain untouched. IDE1006 now fires as an error outside the LuaPort folder, immediately surfacing snake_case regressions.
    - ✅ (2025-11-20) CI now runs `dotnet csharpier check .` inside the lint job (via `scripts/ci/check-csharpier.sh`), so pull requests fail automatically when the canonical formatter detects drift. Any residual `dotnet format` complaints are treated as configuration bugs to fix rather than formatting to change.
 1. **Audit automation**
-   - ✅ (2025-11-22) Extended `tools/NamingAudit/naming_audit.py` with deterministic `--write-log`/`--verify-log` switches so the committed `naming_audit.log` always reflects the current analyzer output. The lint and dotnet-test workflows verify the log during every run, keeping the PLAN checkpoint honest without manual intervention.
+   - ✅ (2025-11-22) Extended `tools/NamingAudit/naming_audit.py` with deterministic `--write-log`/`--verify-log` switches so the committed `docs/audits/naming_audit.log` always reflects the current analyzer output. The lint and dotnet-test workflows verify the log during every run, keeping the PLAN checkpoint honest without manual intervention.
 
 ## Next Steps
 

@@ -4,15 +4,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     public sealed class CoroutineTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task CoroutineBasicInterleavesLuaCoroutines()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineBasicInterleavesLuaCoroutines(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 s = ''
 
@@ -43,16 +49,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return s;
                 ";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert
                 .ExpectAsync(result, "1-5;2-6;3-7;4-8;")
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task CoroutineWrapPreservesSchedulingOrder()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineWrapPreservesSchedulingOrder(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 s = ''
 
@@ -83,16 +95,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return s;
                 ";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert
                 .ExpectAsync(result, "1-5;2-6;3-7;4-8;")
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task CoroutineClrBoundaryDetection()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineClrBoundaryDetection(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 function a()
                     callback(b)
@@ -106,15 +124,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return coroutine.resume(c);
                 ";
 
-            Script host = new()
-            {
-                Globals =
-                {
-                    ["callback"] = DynValue.NewCallback((ctx, args) => args[0].Function.Call()),
-                },
-            };
+            Script host = new Script(version, CoreModulePresets.Complete);
+            host.Globals["callback"] = DynValue.NewCallback((ctx, args) => args[0].Function.Call());
 
-            DynValue resumeResult = host.DoString(script);
+            DynValue resumeResult = host.DoString(code);
             await Assert.That(resumeResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(resumeResult.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(resumeResult.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
@@ -128,10 +141,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 .ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests various coroutine error handling scenarios.
+        /// This test uses setmetatable and __tostring metamethods which interact with
+        /// the CLR-call boundary detection. The behavior requires Lua 5.4+ print/__tostring
+        /// semantics where the __tostring metamethod is called in a way that allows CLR
+        /// boundary detection to work correctly.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task CoroutineVariousErrorHandlingMatchesNunitSuite()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineVariousErrorHandlingMatchesNunitSuite(
+            LuaCompatibilityVersion version
+        )
         {
-            string script =
+            string code =
                 @"
                 function checkresume(step, ex, ey)
                     local x, y = coroutine.resume(c)
@@ -160,15 +184,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ";
 
             string lastPrinted = "";
-            Script host = new() { Options = { DebugPrint = s => lastPrinted = s } };
-            host.DoString(script);
+            Script host = new Script(version, CoreModulePresets.Complete);
+            host.Options.DebugPrint = s => lastPrinted = s;
+            host.DoString(code);
             await Assert.That(lastPrinted).IsEqualTo("2").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task CoroutineCanBeResumedDirectlyFromClr()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineCanBeResumedDirectlyFromClr(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 return function()
                     local x = 0
@@ -182,8 +212,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            Script host = new();
-            DynValue factory = host.DoString(script);
+            Script host = new Script(version, CoreModulePresets.Complete);
+            DynValue factory = host.DoString(code);
             DynValue coroutine = host.CreateCoroutine(factory);
 
             string result = "";
@@ -197,9 +227,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task CoroutineSupportsTypedEnumerable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineSupportsTypedEnumerable(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 return function()
                     local x = 0
@@ -213,8 +248,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            Script host = new();
-            DynValue factory = host.DoString(script);
+            Script host = new Script(version, CoreModulePresets.Complete);
+            DynValue factory = host.DoString(code);
             DynValue coroutine = host.CreateCoroutine(factory);
 
             string result = "";
@@ -227,9 +262,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task CoroutineAutoYieldResumesUntilCompletion()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineAutoYieldResumesUntilCompletion(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 function fib(n)
                     if (n == 0 or n == 1) then
@@ -240,8 +280,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            Script host = new(default(CoreModules));
-            host.DoString(script);
+            Script host = new Script(version, default(CoreModules));
+            host.DoString(code);
             DynValue fib = host.Globals.Get("fib");
 
             DynValue coroutine = host.CreateCoroutine(fib);

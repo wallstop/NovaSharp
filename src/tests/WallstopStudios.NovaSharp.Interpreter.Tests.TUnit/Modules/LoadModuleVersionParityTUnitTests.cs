@@ -20,15 +20,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     /// </summary>
     public sealed class LoadModuleVersionParityTUnitTests
     {
-        private static Script CreateScript(LuaCompatibilityVersion version)
-        {
-            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
-            {
-                CompatibilityVersion = version,
-            };
-            return new Script(CoreModulePresets.Complete, options);
-        }
-
         // =============================================================================
         // loadstring availability tests
         // =============================================================================
@@ -37,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task LoadstringIsAvailableInLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return type(loadstring)");
             await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
         }
@@ -49,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task LoadstringIsNilInLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return type(loadstring)");
             await Assert.That(result.String).IsEqualTo("nil").ConfigureAwait(false);
         }
@@ -62,7 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task LoadstringCompilesStringInLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local f, err = loadstring('return 42')
@@ -77,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task LoadstringUsesChunknameForErrors(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local f, err = loadstring('error(""boom"")', 'my-chunk')
@@ -95,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local f, err = loadstring('function(')
@@ -122,7 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task LoadRejectsStringsInLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("load('return 1')")
@@ -139,7 +130,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task LoadAcceptsReaderFunctionInLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local done = false
@@ -166,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task LoadAcceptsStringsInLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local f = load('return 42')
@@ -183,7 +174,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task LoadAcceptsReaderFunctionInLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local done = false
@@ -206,7 +197,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task LoadUsesEnvParameterInLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local env = { x = 100 }
@@ -225,7 +216,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task LoadsafeRejectsStringsInLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("loadsafe('return 1')")
@@ -244,7 +235,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task LoadsafeAcceptsStringsInLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local f = loadsafe('return 99')
@@ -268,7 +259,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("load(123)")
@@ -290,7 +281,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local parts = { 'return ', '1 + ', '2' }

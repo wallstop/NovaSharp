@@ -9,222 +9,197 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 3. **ADD REGRESSION TESTS** with standalone `.lua` fixtures runnable against real Lua
 4. **NEVER adjust tests to accommodate bugs** — fix the runtime instead
 
-**Current Status**: ✅ All Lua version fixture comparisons (5.1, 5.2, 5.3, 5.4) show zero mismatches.
+**Current Status**: 🟡 Lua fixture comparisons have remaining mismatches to investigate (5.1: 34, 5.2: 30, 5.4: 17, 5.5: 19). Many are error format differences or NovaSharp-specific edge cases.
 
 ---
 
-## 🟡 Remaining Version Compatibility Work
+## 🔴 HIGH Priority: TUnit Test Multi-Version Coverage Audit (§8.39)
 
-### Random Number Generation (Lower Priority)
+**Status**: 🟡 **PHASE 3 IN PROGRESS** — Bulk remediation ongoing. ~1,414 tests compliant out of ~3,568 total (2025-12-19).
 
-Version-specific random providers still needed:
-- POSIX LCG for 5.1/5.2/5.3
-- xoshiro256** for 5.4
-- `math.randomseed()` return value change in 5.4
+**Problem Statement**:
+NovaSharp supports Lua 5.1, 5.2, 5.3, 5.4, and 5.5. Every TUnit test MUST explicitly declare which `LuaCompatibilityVersion` values it targets via `[Arguments]` attributes. Tests without version coverage will be rejected. Additionally, version-specific features require BOTH positive tests (feature works in supported versions) AND negative tests (feature is unavailable/nil/errors in unsupported versions).
 
----
+### Audit Results (2025-12-19)
 
-## 🟡 MEDIUM Priority: Comprehensive LuaNumber Usage Audit (§8.37)
+| Metric | Count |
+|--------|-------|
+| Files analyzed | 249 |
+| Total tests | ~3,568 |
+| Compliant tests | **1,414** |
+| **🔴 Lua execution tests needing version** | **424** |
+| ⚪ Infrastructure tests (no Lua) | ~1,730 |
+| **Compliance %** | **~39.6%** |
 
-**Status**: ✅ **CORE FIXES COMPLETE** — Phases 1-4 done, only Phase 5 (lint rule) remaining.
-
-**Problem Statement (2025-12-09)**:
-The codebase may contain locations where raw C# numeric types (`double`, `float`, `int`, `long`) are used instead of `LuaNumber` for Lua math operations. This can cause:
-
-1. **Precision loss**: Values beyond 2^53 cannot be exactly represented as doubles
-2. **Type coercion errors**: Integer vs float subtype distinction lost (critical for Lua 5.3+)
-3. **Overflow/underflow bugs**: Silent wrapping or unexpected behavior
-4. **IEEE 754 edge cases**: Incorrect handling of NaN, Infinity, negative zero
-5. **Value representation failures**: Unable to represent certain Lua values correctly
-
-### Scope of Audit
-
-**Files to Audit (Priority Order)**:
-
-1. **VM Core** (HIGHEST PRIORITY):
-   - `Execution/VM/Processor_Ops.cs` — Arithmetic operations
-   - `Execution/VM/Processor_Loop.cs` — Comparison and numeric opcodes
-   - `Execution/VM/Processor_*.cs` — All processor files
-
-2. **Expression Evaluation**:
-   - `Tree/Expressions/*.cs` — Numeric literal handling, constant folding
-   - `Tree/Statements/*.cs` — For loop numeric handling
-
-3. **Interop Layer**:
-   - `Interop/Converters/*.cs` — CLR type conversion
-   - `Interop/StandardDescriptors/*.cs` — Numeric member access
-
-4. **Data Types**:
-   - `DataTypes/DynValue.cs` — Ensure `LuaNumber` used consistently
-   - `DataTypes/Table.cs` — Numeric key handling
-   - `DataTypes/*.cs` — Any numeric operations
-
-5. **CoreLib Modules** (secondary pass):
-   - All modules in `CoreLib/*.cs` — Already audited per §8.33, but verify completeness
-
-### Patterns to Search For
+### Audit Script Usage
 
 ```bash
-# POTENTIALLY PROBLEMATIC PATTERNS:
-
-# Direct .Number access (loses integer subtype)
-grep -rn "\.Number" src/runtime/WallstopStudios.NovaSharp.Interpreter/ | grep -v "LuaNumber"
-
-# Explicit double casts that may lose precision
-grep -rn "(double)" src/runtime/WallstopStudios.NovaSharp.Interpreter/
-
-# Explicit float casts (even worse precision)
-grep -rn "(float)" src/runtime/WallstopStudios.NovaSharp.Interpreter/
-
-# Math operations on raw doubles
-grep -rn "Math\." src/runtime/WallstopStudios.NovaSharp.Interpreter/ | grep -v "LuaNumber"
-
-# Direct int/long arithmetic that may overflow
-grep -rn "checked\|unchecked" src/runtime/WallstopStudios.NovaSharp.Interpreter/
-
-# Numeric literals assigned to double variables
-grep -rn "double.*=" src/runtime/WallstopStudios.NovaSharp.Interpreter/
+python3 scripts/lint/check-tunit-version-coverage.py
+python3 scripts/lint/check-tunit-version-coverage.py --detailed  # Show all non-compliant tests
+python3 scripts/lint/check-tunit-version-coverage.py --lua-only --fail-on-noncompliant  # CI mode
 ```
 
-### Known Good Patterns (Reference)
+### Implementation Tasks
 
+- [x] **Phase 1: Automated Audit** — Script created ✅
+- [x] **Phase 2: Classification** — Tests categorized by module ✅
+- [x] **Phase 3: Bulk Remediation (Partial)** — 562 tests converted, 424 remaining
+- [ ] **Phase 3: Remediation (continued)** — Fix remaining 424 Lua execution tests
+- [ ] **Phase 3a: Version-Specific Fixes** — Fix tests that fail on wrong Lua versions
+- [ ] **Phase 4: Negative Test Gap Analysis** — Identify version-specific features missing negative tests
+- [ ] **Phase 5: CI Lint Rule** — Add CI check that rejects PRs with tests missing version coverage
+
+### Success Criteria
+
+- [ ] Every TUnit test file has version-specific `[Arguments]` attributes
+- [ ] Universal features have 5 `[Arguments]` (one per Lua version)
+- [ ] Version-specific features have BOTH positive AND negative test methods
+- [ ] CI lint rule prevents regression
+
+**Owner**: Test infrastructure team
+**Priority**: 🔴 HIGH
+
+---
+
+## 🔴 HIGH Priority: Test Data-Driving Helper Infrastructure (§8.42)
+
+**Status**: 📋 **PLANNED** — Create consolidated helpers to simplify multi-version, multi-input test combinations.
+
+**Problem Statement**:
+NovaSharp tests require explicit manual `[Arguments]` entries for every combination of Lua version (5.1, 5.2, 5.3, 5.4, 5.5) and test input. This results in massive boilerplate — 5+ `[Arguments]` attributes per test method, multiplied by multiple input variations. The maintenance burden is unsustainable and error-prone.
+
+**Goal**: Provide simple, consolidated helpers that automatically expand Lua version combinations, reducing test boilerplate from 25+ lines of attributes to 1-2 lines while maintaining full version coverage.
+
+### Proposed Helpers
+
+| Helper | Description | Example Usage |
+|--------|-------------|---------------|
+| `[AllLuaVersions]` | Expands to all 5 Lua versions (5.1-5.5) | Single attribute replaces 5 `[Arguments]` |
+| `[LuaVersionsFrom(5.3)]` | Versions from 5.3+ (inclusive) | For features introduced in 5.3 |
+| `[LuaVersionsUntil(5.2)]` | Versions up to 5.2 (inclusive) | For features removed/changed after 5.2 |
+| `[LuaVersionRange(5.2, 5.4)]` | Specific version range | For targeted version support |
+| `[AllLuaVersionsWith(...)]` | Combine versions with other test data | `[AllLuaVersionsWith("input1", "input2")]` |
+| `[LuaTestMatrix]` | Full Cartesian product of versions × inputs | For comprehensive edge-case testing |
+
+### Example: Before vs After
+
+**Before (Current Pattern)**:
 ```csharp
-// CORRECT: Use LuaNumber throughout
-LuaNumber num = dynValue.LuaNumber;
-if (num.IsInteger)
-{
-    long intVal = num.AsInteger;  // Safe - verified integer
-}
-else
-{
-    double floatVal = num.AsFloat;  // Safe - verified float
-}
+[Test]
+[Arguments(LuaCompatibilityVersion.Lua51, "test1")]
+[Arguments(LuaCompatibilityVersion.Lua52, "test1")]
+[Arguments(LuaCompatibilityVersion.Lua53, "test1")]
+[Arguments(LuaCompatibilityVersion.Lua54, "test1")]
+[Arguments(LuaCompatibilityVersion.Lua55, "test1")]
+[Arguments(LuaCompatibilityVersion.Lua51, "test2")]
+[Arguments(LuaCompatibilityVersion.Lua52, "test2")]
+[Arguments(LuaCompatibilityVersion.Lua53, "test2")]
+[Arguments(LuaCompatibilityVersion.Lua54, "test2")]
+[Arguments(LuaCompatibilityVersion.Lua55, "test2")]
+public async Task TestFeature(LuaCompatibilityVersion version, string input) { ... }
+```
 
-// CORRECT: Arithmetic via LuaNumber operators
-LuaNumber result = left + right;  // Uses LuaNumber.operator+
-
-// CORRECT: Version-aware validation
-long value = LuaNumberHelpers.ToLongWithValidation(version, dynValue, "funcname", argIndex);
-
-// WRONG: Bypasses type system
-double value = dynValue.Number;  // Integer distinction lost!
-double result = a + b;  // Raw double math, may lose precision
-
-// WRONG: Silent precision loss
-int index = (int)dynValue.Number;  // May truncate large values incorrectly
+**After (With Helpers)**:
+```csharp
+[Test]
+[LuaTestMatrix("test1", "test2")]
+public async Task TestFeature(LuaCompatibilityVersion version, string input) { ... }
 ```
 
 ### Implementation Tasks
 
-- [x] **Phase 1**: Run grep patterns above, catalog all hits — **DONE 2025-12-11**
-- [x] **Phase 2**: Classify remaining hits as Safe/Suspicious/Bug — **DONE 2025-12-13**
-- [x] **Phase 3**: Fix any remaining bugs, document edge cases — **DONE 2025-12-13**
-- [x] **Phase 4**: Add regression tests for each fix — **DONE 2025-12-13**
-- [ ] **Phase 5**: Create lint rule or CI check to prevent future violations
+- [ ] **Phase 1: Design & Prototype** — Create helper attributes in test infrastructure
+  - [ ] Implement `AllLuaVersionsAttribute` using TUnit's `[MethodDataSource]` pattern
+  - [ ] Implement `LuaVersionsFromAttribute` and `LuaVersionsUntilAttribute`
+  - [ ] Implement `LuaTestMatrixAttribute` for Cartesian products
+  - [ ] Add compile-time validation for version range sanity
+- [ ] **Phase 2: Migration** — Replace existing verbose `[Arguments]` patterns
+  - [ ] Audit all TUnit test files for multi-version patterns
+  - [ ] Create migration script to auto-convert common patterns
+  - [ ] Manually review and convert complex cases
+- [ ] **Phase 3: Documentation & Enforcement**
+  - [ ] Update `.llm/context.md` with helper usage guidelines
+  - [ ] Update `docs/Testing.md` with examples
+  - [ ] Add lint rule to flag verbose patterns that should use helpers
+- [ ] **Phase 4: Cleanup** — Remove redundant boilerplate from all tests
 
-### Completed Fixes
+### Success Criteria
 
-- ✅ Numeric for-loop now uses `LuaNumber` for comparisons and arithmetic
-- ✅ Version-aware number formatting via `LuaNumber.ToLuaString(version)`
-- ✅ Bytecode serialization preserves integer/float subtype (version 0x151)
-- ✅ JSON serialization preserves integer/float subtype
-- ✅ **2025-12-13**: VM for-loop precision and overflow fix (see `progress/2025-12-13-for-loop-luanumber-precision.md`)
-  - `ExecToNum()`: Changed `CastToNumber()` → `CastToLuaNumber()` to preserve integer subtype
-  - `ExecJFor()`: Changed double comparisons → `LuaNumber.LessThan/LessThanOrEqual()`, added overflow detection for integer boundaries (Lua 5.4 §3.3.5)
-  - `ExecIncr()`: Changed `top.Number + btm.Number` → `LuaNumber.Add(top.LuaNumber, btm.LuaNumber)`
-- ✅ **2025-12-13**: BinaryOperatorExpression dynamic evaluation fix (see `progress/2025-12-13-binary-operator-expression-luanumber-fix.md`)
-  - `EvalComparison()`: Changed `l.Number < r.Number` → `LuaNumber.LessThan/LessThanOrEqual()`
-  - `EvalArithmetic()`: Changed `CastToNumber()` + double ops → `CastToLuaNumber()` + `LuaNumber.Add/Subtract/Multiply/Divide/Modulo/Power()`
-  - `EvalFloorDivision()`: Changed `Math.Floor(d1/d2)` → `LuaNumber.FloorDivide()`
+- [ ] All tests use consolidated helpers instead of manual version enumeration
+- [ ] New tests can specify version coverage in 1-2 lines
+- [ ] `.llm/context.md` documents helper usage for AI assistants
+- [ ] Lint rule prevents regression to verbose patterns
 
-**Safe `.Number` usages (documented)**: Argument count retrieval (always small values), type checks (not value access)
-
-### Audit Classification Summary (2025-12-13)
-
-| Location | Pattern | Classification |
-|----------|---------|----------------|
-| `ProcessorInstructionLoop.cs` (arg counts) | `(int)_valueStack.*.Number` | SAFE (small values) |
-| `BinaryOperatorExpression.cs` | `l.Number < r.Number` | **FIXED** |
-| `BinaryOperatorExpression.cs` | `EvalArithmetic/EvalFloorDivision` | **FIXED** |
-| VM execution (`ExecLess`, `ExecLessEq`, `ExecArith`) | Already uses `LuaNumber` | SAFE |
-
-### Related Sections
-- §8.33: LuaNumber Compliance Sweep (CoreLib audit complete)
-- §8.34: Lua 5.3+ Integer Representation Errors
-- §8.36: Comprehensive Numeric Edge-Case Audit
-- §8.24: Dual Numeric Type System (LuaNumber struct)
-
-**Owner**: Interpreter team
-**Priority**: 🟡 MEDIUM — Core fixes complete, only lint rule (Phase 5) remaining
+**Owner**: Test infrastructure team
+**Priority**: 🔴 HIGH
 
 ---
 
-## 🔴 CRITICAL Priority: CLI Lua Version Propagation & Modularization (§8.31)
+## 🔴 HIGH Priority: TUnit Lua Test Extraction Audit (§8.40)
 
-**Status**: 🚧 **IN PROGRESS** — Initial `--lua-version` flag added, needs comprehensive hardening.
+**Status**: 📋 **AUDIT REQUIRED** — Extract inline Lua from TUnit tests into standalone fixtures.
 
-**Problem Statement (2025-12-08)**:
-All Lua version comparison CI/CD scripts and tooling must properly propagate the Lua version to NovaSharp via CLI arguments. The initial `--lua-version` flag was added to the CLI, but the argument parsing infrastructure needs significant hardening and modularization.
-
-### Critical Requirements
-
-1. **All comparison scripts must pass `--lua-version`**:
-   - `scripts/tests/run-lua-fixtures.sh` ✅ Updated
-   - Any other scripts invoking `nova` or NovaSharp CLI must also pass the flag
-   - CI/CD workflows must validate correct version propagation
-
-2. **CLI Argument Parsing Modularization**:
-   - Current: Ad-hoc parsing scattered throughout `Program.cs`
-   - Target: Centralized argument registry with clear supported-args list
-   - Required features:
-     - List of all supported arguments with descriptions
-     - Validation of mutually exclusive flags
-     - Help text generation from argument definitions
-     - Version-aware default behaviors
-
-3. **Exhaustive CLI Tests**:
-   - All argument combinations (valid and invalid)
-   - Error message validation
-   - Help/usage output validation
-   - Version flag interactions with other flags
-   - Edge cases: empty args, malformed args, unknown flags
+**Goal**: Every TUnit test executing Lua code must have a corresponding `.lua` fixture file for cross-interpreter verification against lua5.1, lua5.2, lua5.3, lua5.4, lua5.5.
 
 ### Implementation Tasks
 
-- [ ] Create `CliArgumentRegistry` class with all supported arguments
-- [ ] Refactor `Program.cs` to use centralized registry
-- [ ] Add `--help` / `-h` that lists all supported arguments
-- [ ] Add tests for every supported argument
-- [ ] Add tests for invalid/unknown argument handling
-- [ ] Document all CLI arguments in `docs/cli-reference.md`
-- [ ] Update all CI scripts to validate version propagation
-- [ ] Add integration tests that verify CLI → Script.CompatibilityVersion flow
+- [ ] **Phase 1**: Run corpus extractor to inventory inline Lua code
+- [ ] **Phase 2**: Compare against existing `LuaFixtures/` directories
+- [ ] **Phase 3**: Extract missing fixtures with metadata headers
+- [ ] **Phase 4**: Run comparison harness against all Lua versions
+- [ ] **Phase 5**: Fix NovaSharp bugs revealed by comparison
+- [ ] **Phase 6**: Add CI validation for fixture coverage
 
----
-
-## 🟡 LuaNumber Compliance Sweep (§8.33)
-
-**Status**: ✅ **CORELIB COMPLETE** — All CoreLib modules audited. VM audit remaining.
-
-**Completed**: All CoreLib modules (`StringModule`, `MathModule`, `TableModule`, `BasicModule`, `Bit32Module`, `DebugModule`, `OsTimeModule`, `IoModule`) audited and updated with version-aware integer validation.
-
-**Remaining Work**:
-- [ ] VM and expression evaluation audit (`Processor_Ops.cs`, `Processor_Loop.cs`, `Expression.cs`)
-- [ ] Create lint script to detect `.Number` usage patterns
-
-// WRONG: Loses type information
-double value = dynValue.Number;  // Integer distinction lost!
-```
-
-### Audit Commands
+### Commands
 
 ```bash
-# Find potential violations in CoreLib
-grep -rn "\.Number" src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/ | grep -v "LuaNumber"
+# Inventory
+python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py --dry-run
 
-# Find all DynValue.Number access patterns
-grep -rn "DynValue.*\.Number" src/runtime/WallstopStudios.NovaSharp.Interpreter/
+# Cross-interpreter verification
+python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.4
+python3 scripts/tests/compare-lua-outputs.py --lua-version 5.4 --results-dir artifacts/lua-comparison-5.4
 ```
+
+**Owner**: Test infrastructure team
+**Priority**: 🔴 HIGH
+
+---
+
+## ✅ COMPLETE: Remove NUnit Dependency from TUnit Project (§8.41)
+
+**Status**: ✅ **COMPLETE** — NUnit fully removed from TUnit project (2025-12-19).
+
+**Summary**:
+The TUnit test project (`WallstopStudios.NovaSharp.Interpreter.Tests.TUnit`) no longer depends on NUnit. All NUnit-style assertions have been converted to TUnit equivalents.
+
+### Migration Completed
+
+| Phase | Status | Details |
+|-------|--------|---------|
+| Phase 1: SimpleTUnitTests.cs | ✅ Complete | Converted all NUnit assertions to TUnit |
+| Phase 2: EventMemberDescriptorTUnitTests.cs | ✅ Complete | Fixed syntax error and all assertion patterns |
+| Phase 3: Assert.Throws conversions | ✅ Complete | All files converted |
+| Phase 4: Remove NUnit imports | ✅ Complete | No `using NUnit.Framework;` in any file |
+| Phase 5: Remove NUnit package | ✅ Complete | NUnit package reference removed from csproj |
+
+### Key Patterns Used
+
+| Pattern | TUnit Equivalent |
+|---------|------------------|
+| Exception testing | `T ex = Assert.Throws<T>(() => code)!;` (TUnit API) |
+| Equality | `await Assert.That(x).IsEqualTo(y).ConfigureAwait(false)` |
+| Not null | `await Assert.That(x).IsNotNull().ConfigureAwait(false)` |
+| Boolean | `await Assert.That(x).IsTrue().ConfigureAwait(false)` |
+| Contains | `await Assert.That(str).Contains("text").ConfigureAwait(false)` |
+
+### Verification
+
+- ✅ Build succeeds with 0 errors
+- ✅ No `using NUnit.Framework;` in any TUnit test file
+- ✅ No `.ThrowsException().OfType<>()` patterns
+- ✅ No `<PackageReference Include="NUnit"` in TUnit project csproj
+- ✅ 9,876 tests pass (23 pre-existing Lua version compatibility failures unrelated to migration)
 
 ---
 
@@ -236,8 +211,6 @@ grep -rn "DynValue.*\.Number" src/runtime/WallstopStudios.NovaSharp.Interpreter/
 Lua 5.3 introduced the concept of "integer representation" for numeric arguments to certain functions. Values that cannot be represented as integers (NaN, Infinity, non-integral floats in some contexts) must throw specific errors.
 
 ### Affected Functions (Partial List)
-
-The following functions require integer arguments in Lua 5.3+ and must throw "number has no integer representation" for invalid inputs:
 
 | Function | Parameter | Lua 5.1/5.2 Behavior | Lua 5.3+ Behavior |
 |----------|-----------|---------------------|-------------------|
@@ -253,240 +226,52 @@ The following functions require integer arguments in Lua 5.3+ and must throw "nu
 | `utf8.char(...)` | all args | N/A (5.3+) | Must be integer |
 | `utf8.codepoint(s, i, j)` | i, j | N/A (5.3+) | Must be integer |
 
-### Implementation Strategy
-
-1. **Create shared validation helper**:
-```csharp
-// In a shared location, e.g., LuaNumberHelpers.cs
-internal static long ToIntegerStrict(Script script, double value, string funcName, int argIndex)
-{
-    if (double.IsNaN(value) || double.IsInfinity(value))
-    {
-        throw new ScriptRuntimeException(
-            $"bad argument #{argIndex} to '{funcName}' (number has no integer representation)"
-        );
-    }
-    
-    double floored = Math.Floor(value);
-    if (floored != value && script.Options.CompatibilityVersion >= LuaCompatibilityVersion.Lua53)
-    {
-        // 5.3+ strict mode: non-integral floats may also error in some contexts
-        // (depends on specific function requirements)
-    }
-    
-    return (long)floored;
-}
-```
-
-2. **Apply to all affected functions with version checks**
-
-3. **Add comprehensive test matrix per function**
-
 ### Implementation Tasks
 
 - [ ] Create `LuaNumberHelpers.ToIntegerStrict()` helper
 - [ ] Audit all functions in the affected list
 - [ ] Add version-aware validation to each function
-- [ ] Create data-driven tests for each function with NaN/Infinity/fractional inputs
+- [ ] Create data-driven tests with NaN/Infinity/fractional inputs
 - [ ] Add Lua fixtures for CI comparison testing
-- [ ] Update `docs/LuaCompatibility.md`
-
-### Reference
-- Lua 5.3 Reference Manual §3.4.3: "Coercions and Conversions"
-- Lua 5.3 changes document: Integer subtype introduction
 
 ---
 
-## 🔴 CRITICAL Priority: Comprehensive Numeric Edge-Case Audit & Spec Compliance Verification (§8.36)
+## 🟡 MEDIUM Priority: Comprehensive Numeric Edge-Case Audit (§8.36)
 
-**Status**: 📋 **INVESTIGATION REQUIRED** — Systematic audit needed for all Lua versions.
+**Status**: 📋 **PARTIAL** — Core fixes done, remaining edge cases to audit.
 
-**Problem Statement (2025-12-09)**:
-Recent bug fixes (§8.32, §8.33) exposed deeper issues around numeric edge cases:
+**Problem**: Values beyond 2^53 cannot be exactly represented as doubles. Lua 5.3+ distinguishes integer vs float subtypes; NovaSharp must preserve this distinction through the validation pipeline.
 
-1. **Double precision limitations**: Values beyond 2^53 cannot be exactly represented as doubles. When Lua stores a value as an **integer** type (Lua 5.3+), it preserves full 64-bit precision, but the **same literal value** stored as a float loses precision.
+**Completed**:
+- ✅ `LuaNumber` struct preserves integer/float distinction
+- ✅ Core validation uses `LuaNumber` not `double`
+- ✅ Lint script prevents `DynValue.Number` usage in CoreLib
 
-2. **Type-dependent behavior**: `9007199254740993` as integer is valid for `string.byte`, but as float (`9007199254740993.0`) it rounds to `9007199254740992` — a **different value**.
-
-3. **Version-specific semantics**: Each Lua version (5.1, 5.2, 5.3, 5.4, 5.5) has subtly different rules for numeric coercion, truncation, and error handling.
-
-**Root Discovery**:
-- `LuaNumber` struct correctly distinguishes integer vs float subtypes
-- Original `LuaNumberHelpers` used `double` for validation, losing the integer type information
-- Fix: Updated to use `LuaNumber` directly, checking `IsInteger` before applying float validation
-
-**Critical Question**: Where else in the codebase are we extracting `DynValue.Number` (double) when we should be using `DynValue.LuaNumber` (preserves type)?
-
-### Scope of Investigation
-
-#### Phase 1: Audit All Numeric Coercion Sites
-
-Search for patterns that may incorrectly lose integer precision:
-
-```csharp
-// POTENTIALLY PROBLEMATIC PATTERNS:
-dynValue.Number              // Converts to double, loses integer precision for large values
-(double)value               // Explicit cast loses precision
-Math.Floor(dynValue.Number) // Double input may already have lost precision
-
-// CORRECT PATTERNS:
-dynValue.LuaNumber           // Preserves integer vs float distinction
-dynValue.LuaNumber.IsInteger // Check type before extraction
-dynValue.LuaNumber.AsInteger // Extract as long when integer type
-```
-
-**Files to Audit**:
-- `src/runtime/.../CoreLib/*.cs` — All standard library modules
-- `src/runtime/.../CoreLib/StringLib/*.cs` — String library helpers
-- `src/runtime/.../CoreLib/TableLib/*.cs` — Table library helpers
-- `src/runtime/.../Execution/VM/Processor*.cs` — VM arithmetic operations
-- `src/runtime/.../Interop/Converters/*.cs` — CLR type converters
-
-#### Phase 2: Exhaustive Test Scenarios for All Affected Functions
-
-Create data-driven tests covering ALL edge cases for EVERY Lua version:
-
-**Numeric Boundary Values**:
-| Category | Values to Test | Why |
-|----------|---------------|-----|
-| Safe integers | 0, 1, -1, 2^52-1, -(2^52-1) | Within double precision |
-| Precision boundary | 2^53, 2^53+1, 2^53+2 | Where float loses precision |
-| Large integers | 2^62, 2^63-1 (maxinteger), -2^63 (mininteger) | Full integer range |
-| Floats | 1.5, -1.5, 0.0, -0.0, 1e308, -1e308 | Float-specific |
-| Special | NaN, +Infinity, -Infinity | IEEE 754 special values |
-| Negative zero | -0.0 | Must remain float, not integer |
-
-**Functions Requiring Full Audit**:
-| Function | Args | Lua 5.1 | Lua 5.2 | Lua 5.3 | Lua 5.4 |
-|----------|------|---------|---------|---------|---------|
-| `string.byte(s, i, j)` | i, j | floor | floor | error if non-int | error if non-int |
-| `string.sub(s, i, j)` | i, j | floor | floor | error if non-int | error if non-int |
-| `string.rep(s, n, sep)` | n | floor | floor | error if non-int | error if non-int |
-| `string.char(...)` | all | mod 256 | mod 256 | 0-255 or error | 0-255 or error |
-| `string.format('%d', x)` | x | ? | ? | requires integer | requires integer |
-| `table.insert(t, pos, v)` | pos | floor | floor | must be integer | must be integer |
-| `table.remove(t, pos)` | pos | floor | floor | must be integer | must be integer |
-| `table.concat(t, sep, i, j)` | i, j | floor | floor | must be integer | must be integer |
-| `table.move(a1, f, e, t, a2)` | f,e,t | N/A | N/A | must be integer | must be integer |
-| `math.random(m, n)` | m, n | floor | floor | must be integer | must be integer |
-| `utf8.char(...)` | all | N/A | N/A | must be integer | must be integer |
-| `utf8.codepoint(s, i, j)` | i, j | N/A | N/A | must be integer | must be integer |
-| `utf8.offset(s, n, i)` | n, i | N/A | N/A | must be integer | must be integer |
-| `bit32.*` functions | all | N/A | integer-like | N/A | N/A |
-
-#### Phase 3: Create Reference Lua Test Scripts
-
-For each function, create a reference script that runs against actual Lua interpreters:
-
-```lua
--- test_string_byte_boundaries.lua
--- Run with: lua5.1, lua5.2, lua5.3, lua5.4
-
-local function test(desc, f)
-  local ok, result = pcall(f)
-  print(string.format("%-50s %s %s", desc, ok and "OK" or "ERR", tostring(result)))
-end
-
--- Precision boundary tests
-test("string.byte('a', 9007199254740993)",    function() return string.byte("a", 9007199254740993) end)
-test("string.byte('a', 9007199254740993.0)",  function() return string.byte("a", 9007199254740993.0) end)
-test("string.byte('a', math.maxinteger)",     function() return string.byte("a", math.maxinteger) end)
-
--- NaN/Infinity tests  
-test("string.byte('a', 0/0)",                 function() return string.byte("a", 0/0) end)
-test("string.byte('a', 1/0)",                 function() return string.byte("a", 1/0) end)
-test("string.byte('a', -1/0)",                function() return string.byte("a", -1/0) end)
-
--- Fractional tests
-test("string.byte('Lua', 1.5)",               function() return string.byte("Lua", 1.5) end)
-test("string.byte('Lua', -0.5)",              function() return string.byte("Lua", -0.5) end)
-```
-
-#### Phase 4: Version-Specific Behavioral Documentation
-
-Document exact expected behavior for each version in `docs/testing/numeric-edge-cases.md`:
-
-```markdown
-## string.byte(s, i, j)
-
-### Lua 5.1
-- **Non-integer float**: Silently truncated via `math.floor`
-- **NaN**: Treated as invalid index, returns nil
-- **Infinity**: Treated as invalid index, returns nil
-- **Large integers**: No distinction (all numbers are floats)
-
-### Lua 5.2
-- Same as 5.1
-
-### Lua 5.3
-- **Non-integer float**: Error "number has no integer representation"
-- **NaN**: Error "number has no integer representation"
-- **Infinity**: Error "number has no integer representation"  
-- **Large integers**: Valid if stored as integer type
-- **Large floats**: Error if outside representable range
-
-### Lua 5.4
-- Same as 5.3
-```
-
-#### Phase 5: CI Integration
-
-1. **Add dedicated edge-case test suite**: `NumericEdgeCaseTUnitTests.cs`
-2. **Create Lua comparison fixtures**: One fixture per function/version combination
-3. **Add regression test for the specific fix**: Ensure `LuaNumber` type is preserved through validation pipeline
-4. **Update coverage gating**: Ensure edge-case paths have coverage
-
-### Implementation Checklist
-
-- [ ] **Audit**: grep for `DynValue.Number` usage in CoreLib, flag potential precision loss sites
-- [ ] **Audit**: grep for `(double)` casts on numeric DynValues
-- [ ] **Audit**: grep for `Math.Floor(*.Number)` patterns
-- [ ] **Document**: Create `docs/testing/numeric-edge-cases.md` with expected behavior matrix
-- [ ] **Create**: Reference Lua scripts for boundary testing (run against lua5.1/5.2/5.3/5.4)
-- [ ] **Create**: `NumericEdgeCaseTUnitTests.cs` with exhaustive data-driven tests
-- [ ] **Create**: Lua fixtures for CI comparison testing
-- [ ] **Verify**: Run NovaSharp against reference scripts, document divergences
-- [ ] **Fix**: Address any newly discovered precision loss sites
-- [ ] **Coverage**: Ensure all edge-case branches have test coverage
-
-### Quick Reference Commands
-
-```bash
-# Find potential precision loss patterns in CoreLib
-grep -rn "\.Number" src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/ | grep -v "LuaNumber"
-
-# Find explicit double casts
-grep -rn "(double)" src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/
-
-# Find Math.Floor usage that may lose precision
-grep -rn "Math.Floor.*Number" src/runtime/WallstopStudios.NovaSharp.Interpreter/
-
-# Run boundary tests against reference Lua
-for v in 5.1 5.2 5.3 5.4; do
-  echo "=== Lua $v ==="
-  lua$v test_string_byte_boundaries.lua
-done
-```
-
-### Related Sections
-- §8.33: `string.byte`/`string.sub`/`string.rep` version-aware validation (✅ Complete)
-- §8.34: Lua 5.3+ integer representation errors (📋 Documented)
-- §8.24: Dual numeric type system (`LuaNumber` struct) (✅ Complete)
+**Remaining**:
+- [ ] Audit `Interop/Converters/*.cs` for precision loss patterns
+- [ ] Create `NumericEdgeCaseTUnitTests.cs` with boundary values
+- [ ] Document version-specific behavior in `docs/testing/numeric-edge-cases.md`
 
 ---
 
-## Repository Snapshot (Updated 2025-12-13)
+## Repository Snapshot (Updated 2025-12-19)
 
 **Build & Tests**:
 - Zero warnings with `<TreatWarningsAsErrors>true` enforced
-- **5,031+** interpreter tests pass via TUnit (Microsoft.Testing.Platform) — count growing with new test additions
-- Coverage: ~75.3% line / ~76.1% branch (gating enforced at 90%)
+- **3,568** interpreter tests via TUnit (Microsoft.Testing.Platform)
+- Coverage: ~75.3% line / ~76.1% branch (gating targets at 90%)
 - CI: Tests on matrix of `[ubuntu-latest, windows-latest, macos-latest]`
 
+**TUnit Version Coverage Progress**:
+- **1,414** tests with explicit `[Arguments(LuaCompatibilityVersion.LuaXX)]` attributes (39.6% compliance)
+- **424** Lua execution tests still need version coverage
+- **1,730** infrastructure tests (no Lua execution, exempt from version requirement)
+
 **Audits & Quality**:
-- `documentation_audit.log`, `naming_audit.log`, `spelling_audit.log` green
+- `docs/audits/documentation_audit.log`, `docs/audits/naming_audit.log`, `docs/audits/spelling_audit.log` green
 - Runtime/tooling/tests remain region-free
 - DAP golden tests: 20 tests validating VS Code debugger payloads
+- LuaNumber lint script (`check-luanumber-usage.py`) passing
 
 **Infrastructure**:
 - Sandbox: Complete with instruction/memory/coroutine limits, per-mod isolation
@@ -494,38 +279,22 @@ done
 - Packaging: NuGet publishing workflow + Unity UPM scripts
 
 **Lua Compatibility**:
-- All version fixture comparisons (5.1, 5.2, 5.3, 5.4) show **zero mismatches**
-- ~1,260+ Lua fixtures extracted from C# tests, parallel runner operational (including new setfenv/getfenv fixtures)
+- Fixture comparisons have some remaining mismatches (5.1: 34, 5.2: 30, 5.4: 17, 5.5: 19) — primarily error format differences
+- ~1,260+ Lua fixtures extracted from C# tests, parallel runner operational
 - Bytecode format version `0x151` preserves integer/float subtype
 - JSON/bytecode serialization preserves integer/float subtype
 - DynValue caching extended for negative integers and common floats
 - All character classes, metamethod fallbacks, and version-specific behaviors implemented
-- ✅ **COMPLETE**: `setfenv`/`getfenv` for Lua 5.1 compatibility mode (implementation and tests passing)
+- CLI argument registry (`CliArgumentRegistry`) with comprehensive Lua version support
+- VM state protection (Phase 1) prevents external corruption
 
 ## Critical Initiatives
 
-### Initiative 12: VM Correctness and State Protection 🔴 **CRITICAL**
-**Goal**: Make the VM bulletproof against external state corruption while maintaining full Lua compatibility.
-**Scope**: `DynValue` mutability controls, public API audit, table key safety, closure upvalue protection.
-**Status**: Analysis complete. See [`docs/proposals/vm-correctness.md`](docs/proposals/vm-correctness.md) for detailed findings.
-**Effort**: 1-2 weeks implementation + comprehensive testing
-
-**Key Changes Required**:
-1. Make `DynValue.Assign()` internal (prevents external corruption)
-2. Fix `Closure.GetUpValue()` to return readonly; add `SetUpValue()` method
-3. Ensure table keys are readonly in `_valueMap` (prevents hash corruption)
-4. Fix UserData/Thread hash codes (performance)
-5. **Full public API audit**: Review all public methods returning `DynValue` for potential corruption vectors
-
-**API Breaking Changes**: Acceptable if required for VM correctness and Lua compatibility.
-
-**Follow-up Task**: Comprehensive audit of all public APIs on VM types (`Script`, `Table`, `Closure`, `Coroutine`, `DynValue`, `UserData`, `CallbackArguments`, etc.) to identify any additional vectors where external code could corrupt or cause unexpected VM state.
-
-### Initiative 9: Version-Aware Lua Standard Library Parity 🔴 **CRITICAL**
+### Initiative 9: Version-Aware Lua Standard Library Parity 🟡 **MOSTLY COMPLETE**
 **Goal**: ALL Lua functions must behave according to their version specification (5.1, 5.2, 5.3, 5.4).
 **Scope**: Math, String, Table, Basic, Coroutine, OS, IO, UTF-8, Debug modules + metamethod behaviors.
-**Status**: Comprehensive audit required. See **Section 9** for detailed tracking.
-**Effort**: 4-6 weeks
+**Status**: Most modules complete. See **Section 9** for remaining items.
+**Effort**: Ongoing
 
 ### Initiative 10: KopiLua Performance Hyper-Optimization 🎯 **HIGH**
 **Goal**: Zero-allocation string pattern matching. Replace legacy KopiLua allocations with modern .NET patterns.
@@ -546,24 +315,11 @@ done
 **Status**: Planned. Incremental enforcement during code changes.
 **Effort**: Ongoing (apply during code reviews and new development)
 
-**Motivation**:
-- Duplicated strings are error-prone (typos, inconsistent updates)
-- Refactoring safety: `nameof()` expressions survive renames
-- Single source of truth for error messages, Lua keywords, metamethod names, etc.
-
 **Key Areas to Audit**:
 1. **Metamethod names**: `__index`, `__newindex`, `__call`, `__tostring`, etc.
 2. **Lua keywords**: `nil`, `true`, `false`, `and`, `or`, `not`, `function`, etc.
 3. **Error messages**: `bad argument`, `attempt to`, `number has no integer representation`, etc.
 4. **Module names**: `string`, `table`, `math`, `io`, `os`, `debug`, `coroutine`, etc.
-5. **Format specifiers**: `%d`, `%s`, `%f`, etc. (where appropriate)
-
-**Implementation Guidelines**:
-- Use `const string` for compile-time constants
-- Use `static readonly string` when runtime initialization is needed
-- Prefer `nameof()` for all parameter names, property names, and member references
-- Group related constants in dedicated static classes (e.g., `MetamethodNames`, `LuaKeywords`, `ErrorMessages`)
-- Apply incrementally: consolidate strings when touching related code
 
 **Validation Commands**:
 ```bash
@@ -595,15 +351,6 @@ Current coverage (~75% line, ~76% branch) has significant room for improvement. 
 - Restructure test tree by domain (`Runtime/VM`, `Runtime/Modules`, `Tooling/Cli`)
 - Add guardrails so new code lands in correct folders with consistent namespaces
 
-### 2.5. Test modernization: TUnit data-driven attributes (future)
-- Migrate loop-based parameterized tests to TUnit `[Arguments]` attributes where compile-time constants allow
-- Use `[MethodDataSource]` or `[ClassDataSource]` for runtime data (e.g., `Type` parameters, complex objects)
-- Benefits: Better test discovery/reporting in IDEs, clearer test naming per parameter set
-- Candidate tests:
-  - `IsRunningOnAotTreatsProbeExceptionsAsAotHosts` (exception types)
-  - Tests using inline `foreach` loops over test cases
-- Reference: [TUnit Data-Driven Tests](https://tunit.dev/)
-
 ### 3. Tooling, docs, and contributor experience
 - Roslyn source generators/analyzers for NovaSharp descriptors.
 - DocFX (or similar) for API documentation.
@@ -626,14 +373,6 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 - [`docs/lua-spec/lua-5.4-spec.md`](docs/lua-spec/lua-5.4-spec.md) — Lua 5.4 Reference Manual (primary target)
 - [`docs/lua-spec/lua-5.5-spec.md`](docs/lua-spec/lua-5.5-spec.md) — Lua 5.5 (Work in Progress)
 
-These documents contain comprehensive details on:
-- Language syntax and semantics
-- Type system (nil, boolean, number, string, table, function, userdata, thread)
-- Standard library functions with exact signatures and behaviors
-- Metamethods and metatable behavior
-- Error handling and message formats
-- Version-specific changes and breaking changes
-
 **Use these specs** when:
 - Implementing or auditing standard library functions
 - Verifying VM behavior against spec
@@ -646,27 +385,9 @@ These documents contain comprehensive details on:
 - **Gating**: `enforce` mode. Known divergences documented in `docs/testing/lua-divergences.md`.
 - **Test authoring pattern**: Use `LuaFixtureHelper` to load `.lua` files from `LuaFixtures/` directory.
 
-### Full Lua specification audit
-- **Tracking**: `docs/testing/spec-audit.md` contains detailed tracking table with status per feature.
-- **Progress**: Most core features verified against Lua 5.4 manual; `string.pack`/`unpack` extended options remain unimplemented.
-
 ### 8. Lua Runtime Specification Parity (CRITICAL)
 
 **Goal**: Ensure NovaSharp behaves identically to reference Lua interpreters across all supported versions (5.1, 5.2, 5.3, 5.4) for deterministic, reproducible script execution.
-
-#### 8.4 String and Pattern Matching
-
-**Status**: ✅ **ASCII COMPLETE** — All ASCII character classes verified (2025-12-11).
-
-**Completed**:
-- [x] All ASCII character classes (`%a`, `%c`, `%d`, `%g`, `%l`, `%p`, `%s`, `%u`, `%w`, `%x`) match reference Lua
-- [x] Fixed `%p` (punctuation) to match C's `ispunct()` (2025-12-11)
-
-**Remaining Tasks**:
-- [ ] Verify character classes for non-ASCII characters (Unicode range)
-- [ ] Verify `string.format` output matches for edge cases (NaN, Inf, very large numbers)
-- [ ] Test pattern matching with non-ASCII characters
-- [ ] Document any intentional Unicode-aware divergences
 
 #### 8.5 os.time and os.date Semantics
 
@@ -717,20 +438,6 @@ These documents contain comprehensive details on:
 - [ ] Create `LuaFixtures/ErrorMessages/` for error format verification
 - [ ] Extend `compare-lua-outputs.py` to compare byte-for-byte output for determinism tests
 
-#### 8.9 String-to-Number Coercion Changes (Lua 5.4)
-
-**Breaking Change in 5.4**: String-to-number coercion was removed from the core language. Arithmetic operations no longer automatically convert string operands to numbers.
-
-**Tasks**:
-- [ ] Verify NovaSharp behavior matches the target `LuaCompatibilityVersion`
-- [ ] Ensure string metatable has arithmetic metamethods for 5.4 compatibility
-- [ ] Add tests for string arithmetic operations per version
-- [ ] Document the coercion change in `docs/LuaCompatibility.md`
-
-#### 8.10 print/tostring Behavior Changes (Lua 5.4)
-
-**Status**: ✅ **COMPLETE** — `print` correctly uses global `tostring` in 5.1-5.3, `__tostring` directly in 5.4+ (2025-12-13).
-
 #### 8.11 Numerical For Loop Semantics (Lua 5.4)
 
 **Breaking Change in 5.4**: Control variable in integer `for` loops never overflows/wraps.
@@ -739,19 +446,6 @@ These documents contain comprehensive details on:
 - [ ] Verify NovaSharp for loop handles integer limits correctly per version
 - [ ] Add edge case tests for near-maxinteger loop bounds
 - [ ] Document loop semantics per version
-
-#### 8.12 io.lines Return Value Changes (Lua 5.4)
-
-**Breaking Change in 5.4**: `io.lines` returns 4 values instead of 1 (adds close function and two placeholders).
-
-**Tasks**:
-- [ ] Verify `io.lines` return value count matches target version
-- [ ] Add tests for multi-value return unpacking from `io.lines`
-
-#### 8.13 __lt/__le Metamethod Changes (Lua 5.5)
-
-**Status**: ✅ **COMPLETE** — Version-gated fallback behavior implemented (2025-12-13). The `__lt` metamethod emulation for `__le` is allowed in 5.1-5.4 but removed in 5.5.
-
 
 #### 8.14 __gc Metamethod Handling (Lua 5.4)
 
@@ -763,24 +457,8 @@ These documents contain comprehensive details on:
 
 #### 8.15 utf8 Library Differences (Lua 5.3 vs 5.4)
 
-**Surrogate Code Points (0xD800-0xDFFF)**:
-- **Lua 5.3**: ✅ ACCEPTS surrogates (encodes them without error)
-- **Lua 5.4**: ✅ ACCEPTS surrogates (same behavior)
-- **Lua 5.4 `lax` mode**: For *decoding* invalid UTF-8 sequences, not for surrogates in `utf8.char`
-
-**Maximum Code Point Value**:
-- **Lua 5.3**: 0 to 0x10FFFF (Unicode range)
-- **Lua 5.4**: 0 to 0x7FFFFFFF (extended UTF-8 range, uses 5-6 byte sequences)
-
-**Boundary Validation** (SAME for 5.3 and 5.4):
-- `utf8.codepoint(s, i, j)`: Throws "out of bounds" / "out of range" for invalid i or j
-- `utf8.offset(s, n, i)`: Throws "position out of bounds" for position 0 or beyond string bounds
-
-**NovaSharp Status**: Extended range support and surrogate acceptance complete. `lax` mode not yet implemented.
-
 **Remaining Tasks**:
 - [ ] Verify `utf8.offset` bounds handling is complete
-- [ ] Implement `lax` mode for decoding functions (`utf8.codes`, `utf8.codepoint`, `utf8.len`)
 - [ ] Document utf8 library version differences
 
 #### 8.16 collectgarbage Options (Lua 5.4)
@@ -809,19 +487,6 @@ These documents contain comprehensive details on:
 - [ ] Verify `bit32` availability matches target version
 - [ ] Add compatibility warning when using `bit32` on 5.3
 - [ ] Document migration path from `bit32` to native operators
-
-#### 8.19 Environment Changes (Lua 5.2+)
-
-**Breaking Change in 5.2**: The concept of function environments was fundamentally changed.
-
-**Status**: ✅ **COMPLETE** — `setfenv`/`getfenv` implemented for Lua 5.1 mode (2025-12-13).
-
-**Tasks**:
-- [ ] Verify environment handling matches target version
-- [x] Create tests for `setfenv`/`getfenv` 5.1 behavior — **DONE** (20+ tests in `SetFenvGetFenvTUnitTests.cs`)
-- [x] Create Lua fixtures for `setfenv`/`getfenv` — **DONE** (12+ fixtures in `LuaFixtures/SetFenvGetFenvTUnitTests/`)
-- [x] Implement `setfenv`/`getfenv` in `BasicModule.cs` for 5.1 mode — **DONE**
-- [ ] Document `_ENV` usage for 5.2+ code
 
 #### 8.20 ipairs Metamethod Changes (Lua 5.3+)
 
@@ -857,66 +522,48 @@ These documents contain comprehensive details on:
 
 ## Recommended Next Steps (Priority Order)
 
-### 🔴 IMMEDIATE: High-Priority Version Parity Items
+### 🔴 IMMEDIATE: High-Priority Test Infrastructure Items
 
-1. ~~**`setfenv`/`getfenv` for Lua 5.1** (Section 8.19) — ✅ **COMPLETE**~~
-   - ~~Required for proper Lua 5.1 compatibility mode~~
-   - Implementation complete with all tests passing (2025-12-13)
-   - See `progress/2025-12-13-setfenv-getfenv-implementation-status.md` for details
+1. **TUnit Multi-Version Coverage Audit** (Section §8.39) — 🟡 **IN PROGRESS (39.6%)**
+   - Every TUnit test MUST specify target Lua versions via `[Arguments]` attributes
+   - **424 Lua execution tests** still need version coverage (down from 465)
+   - **Next**: Continue bulk remediation of non-compliant test files
+   - Create CI lint rule to enforce version coverage
 
-2. ~~**String-to-number coercion metamethods for Lua 5.4** (Section 9.4)~~ — ✅ **COMPLETE**
-   - ~~Lua 5.4 removed implicit string-to-number coercion in arithmetic~~
-   - ~~NovaSharp may still allow `"5" + 3` in 5.4 mode (should error without metamethod)~~
-   - Implementation complete with VM version-aware coercion and string metatable metamethods (2025-01-14)
-   - See `progress/2025-01-14-string-arithmetic-coercion-lua54.md` for details
+2. **TUnit Lua Test Extraction Audit** (Section §8.40) — 📋 **AUDIT REQUIRED**
+   - Extract ALL inline Lua code from TUnit tests into standalone `.lua` fixture files
+   - Enable cross-interpreter verification against lua5.1, lua5.2, lua5.3, lua5.4, lua5.5
+   - Fix any NovaSharp bugs revealed by comparison (Lua spec is authoritative)
 
-3. ~~**`load`/`loadfile` signature verification per version** (Section 9.4)~~ — ✅ **COMPLETE**
-   - ~~Lua 5.1: 2-3 args, Lua 5.2+: 4 args (with `mode` and `env`)~~
-   - Implementation complete: `loadstring` available in 5.1 only, `load` rejects strings in 5.1 (2025-12-14)
-   - See `progress/2025-12-14-load-loadstring-version-parity.md` for details
-
-4. **`io.lines` return value for Lua 5.4** (Section 9.7)
-   - Lua 5.4 changed `io.lines` to return 4 values instead of 1
-   - Breaking change that affects code unpacking the return value
-
-5. **`utf8` `lax` mode for Lua 5.4** (Section 9.8)
-   - `utf8.codes`, `utf8.codepoint`, `utf8.len` gained `lax` parameter in 5.4
-   - Allows decoding invalid UTF-8 sequences without error
+3. **Fixture Mismatch Investigation** — 📋 **INVESTIGATION REQUIRED**
+   - Remaining mismatches: 5.1=34, 5.2=30, 5.4=17, 5.5=19
+   - Many are error format differences; prioritize behavioral mismatches
 
 ### 🟡 MEDIUM: Remaining Version Parity Items
 
-6. **`os.execute` return value per version** (Section 9.6)
-   - Return shape changed from single status to tuple in later versions
-
-7. **`debug.setcstacklimit` for Lua 5.4** (Section 9.9)
+4. **`debug.setcstacklimit` for Lua 5.4** (Section 9.9)
    - New function, may require VM infrastructure changes
 
-8. **Multi-user-value support for 5.4** (Section 9.9)
+5. **Multi-user-value support for 5.4** (Section 9.9)
    - `debug.getuservalue`/`setuservalue` take `n` parameter in 5.4
 
-9. **Deprecation warnings for `bit32` in 5.3 mode** (Section 9.10)
+6. **Deprecation warnings for `bit32` in 5.3 mode** (Section 9.10)
    - Library is available but deprecated; should emit warnings
 
 ### 🟢 LOWER PRIORITY: Polish and Infrastructure
 
-10. **Version migration guides** (Section 9.12)
+7. **Version migration guides** (Section 9.12)
     - `docs/LuaVersionMigration.md` with 5.1→5.2, 5.2→5.3, 5.3→5.4 guides
 
-11. **CI jobs per LuaCompatibilityVersion** (Section 9.12)
+8. **CI jobs per LuaCompatibilityVersion** (Section 9.12)
     - Run test suite explicitly with each version setting
 
-12. **`string.pack`/`unpack` extended options** (Section 9.2)
+9. **`string.pack`/`unpack` extended options** (Section 9.2)
     - Complete implementation of all format specifiers
-
-### Active/Upcoming Items
-
-1. **String/Pattern Matching** — Unicode handling and `string.format` edge cases remaining
-2. **Version-Aware Lua Standard Library Parity** (Initiative 9) — See **Section 9** for tracking
-3. **Tooling enhancements** — Roslyn source generators, DocFX, CLI golden tests
 
 ### Future Phases (Lower Priority)
 
-4. **Interpreter hyper-optimization - Phase 4** (Initiative 5): 🔮 **PLANNED** — Zero-allocation runtime goal
+- **Interpreter hyper-optimization - Phase 4** (Initiative 5): 🔮 **PLANNED** — Zero-allocation runtime goal
     
     **Target:** Match or exceed native Lua performance; achieve <100 bytes/call allocation overhead.
     
@@ -927,14 +574,12 @@ These documents contain comprehensive details on:
     - Span-based APIs throughout
     - Roslyn source generators for interop
 
-5. **Concurrency improvements** (Initiative 7, optional):
+- **Concurrency improvements** (Initiative 7, optional):
     - Consider `System.Threading.Lock` (.NET 9+) for cleaner lock semantics
     - Split debugger locks for reduced contention
     - Add timeout to `BlockingChannel`
 
-6. **Coverage improvements** (Initiative 12): 🟢 **LOW PRIORITY**
-    
-    **Status**: 📋 **PLANNED** — Current coverage below target gates.
+- **Coverage improvements** (Initiative 12): 🟢 **LOW PRIORITY**
     
     **Goal**: Improve coverage to meet and eventually exceed gates.
     
@@ -951,190 +596,39 @@ These documents contain comprehensive details on:
     - [ ] Investigate coverage gaps in major modules (Hardwire, CLI)
     - [ ] Add tests for uncovered code paths
     - [ ] Monitor coverage trends as new features and tests are added
-    - [ ] Update `.github/workflows/tests.yml` and `docs/Testing.md` when thresholds change
-    
-    **Owner**: Quality team
-    **Priority**: 🟢 LOW — Nice-to-have quality improvement
 
 ---
 Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`.
 
 ---
 
-## Initiative 9: Version-Aware Lua Standard Library Parity 🔴 **CRITICAL**
+## Initiative 9: Version-Aware Lua Standard Library Parity — Remaining Items
 
-**Status**: 🚧 **IN PROGRESS** — Comprehensive audit required to ensure ALL Lua functions behave correctly per version.
+**Status**: 🟡 **MOSTLY COMPLETE** — Most modules implemented. Remaining: `string.pack`/`unpack` extended options, `debug.setcstacklimit`, multi-user-value support.
 
-**Priority**: CRITICAL — Core interpreter correctness for production use.
+### 9.2 String Module Version Parity 🟡
 
-**Goal**: Every Lua function and language feature must behave according to the specification for the configured `LuaCompatibilityVersion`. This is not just about API surface (whether a function exists) but about behavioral semantics that differ between versions.
-
-### 9.1 Math Module Version Parity
-
-| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|----------|-----|-----|-----|-----|------------------|-------|
-| `math.random()` | LCG | LCG | LCG | xoshiro256** | ✅ Completed | Version-specific RNG |
-| `math.randomseed(x)` | 1 arg, nil return | 1 arg, nil return | 1 arg, nil return | 0-2 args, returns (x,y) | ✅ Completed | Version-aware behavior |
-| `math.type(x)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | Returns "integer"/"float" |
-| `math.tointeger(x)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | Integer conversion |
-| `math.ult(m, n)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | Unsigned comparison |
-| `math.maxinteger` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | 2^63-1 |
-| `math.mininteger` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Completed | -2^63 |
-| `math.log(x [,base])` | 1 arg only | 1-2 args | 1-2 args | 1-2 args | ✅ Completed | 5.1 ignores base, 5.2+ uses it (2025-12-13) |
-| `math.log10(x)` | ✅ | ✅ | ✅ | ✅ | ✅ Completed | Available in ALL versions (2025-12-13) |
-| `math.ldexp(m, e)` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ✅ Completed | Version-gated 5.1-5.2 |
-| `math.frexp(x)` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ✅ Completed | Version-gated 5.1-5.2 |
-| `math.pow(x, y)` | ✅ | ⚠️ Deprecated | ⚠️ Deprecated | ⚠️ Deprecated | ✅ Completed | Version-gated 5.1-5.4, removed in 5.5 |
-| `math.mod(x, y)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | Version-gated 5.1 only (2025-12-13) |
-| `math.fmod(x, y)` | ✅ | ✅ | ✅ | ✅ | ✅ Available | Float modulo |
-| `math.modf(x)` | Float parts | Float parts | Int+Float parts | Int+Float parts | ✅ Completed | Integer promotion in 5.3+ (2025-12-13) |
-| `math.floor(x)` | Float | Float | Integer if fits | Integer if fits | ✅ Completed | Integer promotion |
-| `math.ceil(x)` | Float | Float | Integer if fits | Integer if fits | ✅ Completed | Integer promotion |
+| Function | Status | Notes |
+|----------|--------|-------|
+| `string.pack/unpack/packsize` | 🚧 Partial | Extended options (`c`, `z`, alignment) missing |
+| `string.format('%a')` | 🔲 Verify | Hex float format specifier |
 
 **Tasks**:
-- [ ] Implement deprecation warnings for 5.2+ deprecated functions
+- [ ] Complete `string.pack`/`unpack` extended format options
+- [ ] Implement `string.format('%a')` hex float format
 
-### 9.2 String Module Version Parity
+### 9.9 Debug Module Version Parity 🔲
 
-| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|----------|-----|-----|-----|-----|------------------|-------|
-| `string.pack(fmt, ...)` | ❌ N/A | ❌ N/A | ✅ | ✅ | 🚧 Partial | Extended options missing |
-| `string.unpack(fmt, s [,pos])` | ❌ N/A | ❌ N/A | ✅ | ✅ | 🚧 Partial | Extended options missing |
-| `string.packsize(fmt)` | ❌ N/A | ❌ N/A | ✅ | ✅ | 🚧 Partial | Extended options missing |
-| `string.format('%a', x)` | ❌ N/A | ❌ N/A | ✅ | ✅ | 🔲 Verify | Hex float format |
-| `string.format('%d', maxint)` | Double precision | Double precision | Integer precision | Integer precision | ✅ Completed | LuaNumber precision |
-| `string.gmatch(s, pattern [,init])` | No init | No init | No init | ✅ init arg | ✅ Completed | Version-aware: 5.4+ uses init, 5.1-5.3 ignore (2025-12-13) |
-| Pattern `%g` (graphical) | ❌ N/A | ✅ | ✅ | ✅ | 🔲 Verify | Added in 5.2 |
-| Frontier pattern `%f[]` | ✅ | ✅ | ✅ | ✅ | ✅ Available | All versions |
+| Function | Status | Notes |
+|----------|--------|-------|
+| `debug.setcstacklimit` | 🔲 Implement | 5.4 only |
+| `debug.setmetatable` return | �� Verify | Boolean in 5.4 |
+| `debug.getuservalue/setuservalue` | 🔲 Implement | Multi-user-value in 5.4 |
 
-**Tasks**:
-- [ ] Complete `string.pack`/`unpack` extended format options (`c`, `z`, alignment)
-- [ ] Implement `string.format('%a')` hex float format specifier
-- [ ] Verify `%g` character class availability per version
-- [ ] Document string pattern differences between versions
+### 9.10 Bitwise Operations — Remaining
 
-### 9.3 Table Module Version Parity
-
-| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|----------|-----|-----|-----|-----|------------------|-------|
-| `table.pack(...)` | ❌ N/A | ✅ | ✅ | ✅ | ✅ Completed | Version-gated 5.2+, sets `n` field |
-| `table.unpack(list [,i [,j]])` | ❌ N/A | ✅ | ✅ | ✅ | ✅ Completed | Version-gated 5.2+ |
-| `table.move(a1, f, e, t [,a2])` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | Metamethod-aware |
-| `table.maxn(table)` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ✅ Completed | Version-gated 5.1-5.2 |
-| `table.getn(table)` | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `#table` |
-| `table.setn(table, n)` | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Removed |
-| `table.foreachi(t, f)` | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `ipairs` |
-| `table.foreach(t, f)` | ⚠️ Deprecated | ❌ Removed | ❌ Removed | ❌ Removed | 🔲 Verify | Use `pairs` |
-
-*All table module tasks completed.*
-
-### 9.4 Basic Functions Version Parity
-
-| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|----------|-----|-----|-----|-----|------------------|-------|
-| `setfenv(f, table)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | 5.1 only — implementation complete |
-| `getfenv(f)` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | 5.1 only — implementation complete |
-| `unpack(list [,i [,j]])` | ✅ Global | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | Version-gated 5.1 only |
-| `module(name [,...])` | ✅ | ⚠️ Deprecated | ❌ Removed | ❌ Removed | 🔲 Verify | 5.1 module system |
-| `loadstring(string [,chunkname])` | ✅ | ❌ Removed | ❌ Removed | ❌ Removed | ✅ Completed | 5.1 only (2025-12-14) |
-| `load(chunk [,chunkname [,mode [,env]]])` | 2-3 args | 4 args | 4 args | 4 args | ✅ Completed | Signature change (2025-12-14) |
-| `loadfile(filename [,mode [,env]])` | 1 arg | 3 args | 3 args | 3 args | ✅ Completed | Signature verified (2025-12-14) |
-| `rawlen(v)` | ❌ N/A | ✅ | ✅ | ✅ | ✅ Available | Added in 5.2 |
-| `xpcall(f, msgh [,...])` | 2 args | Extra args | Extra args | Extra args | ✅ Completed | 5.2+ passes args to f (2025-12-13) |
-| `print(...)` behavior | Calls tostring | Calls tostring | Calls tostring | Uses __tostring | ✅ Completed | 5.4 hardwired (2025-12-13) |
-| String-to-number coercion | Implicit | Implicit | Implicit | Metamethod | ✅ Completed | 5.4 breaking change (2025-01-14) |
-
-**Tasks**:
-- [x] ~~**IN PROGRESS**: Implement `setfenv`/`getfenv` for Lua 5.1~~ — ✅ **COMPLETED** (2025-12-13)
-- [x] ~~Implement string-to-number coercion via metamethods for Lua 5.4~~ — ✅ **COMPLETED** (2025-01-14)
-- [x] ~~Verify `load`/`loadfile` signature per version~~ — ✅ **COMPLETED** (2025-12-14)
-
-### 9.5 Coroutine Module Version Parity
-
-| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|----------|-----|-----|-----|-----|------------------|-------|
-| `coroutine.isyieldable()` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | Added in 5.3 |
-| `coroutine.close(co)` | ❌ N/A | ❌ N/A | ❌ N/A | ✅ | ✅ Available | Added in 5.4 |
-| `coroutine.running()` | Returns co only | Returns co, bool | Returns co, bool | Returns co, bool | ✅ Completed | Return shape (2025-12-13) |
-
-*All coroutine module tasks completed.*
-
-### 9.6 OS Module Version Parity
-
-| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|----------|-----|-----|-----|-----|------------------|-------|
-| `os.execute(command)` | Returns status | Returns (ok, signal, code) | Returns tuple | Returns tuple | ✅ Available | |
-| `os.exit(code [,close])` | 1 arg | 2 args | 2 args | 2 args | 🔲 Verify | `close` param |
-
-**Tasks**:
-- [ ] Verify `os.execute` return value per version
-- [ ] Verify `os.exit` `close` parameter support
-
-### 9.7 IO Module Version Parity
-
-| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|----------|-----|-----|-----|-----|------------------|-------|
-| `io.lines(filename, ...)` | Returns iterator | Returns iterator | Returns iterator | Returns 4 values | 🔲 Implement | 5.4 breaking change |
-| `io.read("*n")` | Number | Number | Number | Number | ✅ Available | Hex parsing in 5.3+ |
-| `file:setvbuf(mode [,size])` | ✅ | ✅ | ✅ | ✅ | 🔲 Verify | Buffer modes |
-
-**Tasks**:
-- [ ] Implement `io.lines` 4-return-value for Lua 5.4
-- [ ] Verify `io.read("*n")` hex parsing per version
-
-### 9.8 UTF-8 Module Version Parity
-
-| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|----------|-----|-----|-----|-----|------------------|-------|
-| `utf8.char(...)` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | Surrogates accepted in both |
-| `utf8.codes(s [,lax])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | 🔲 Verify | `lax` mode in 5.4 |
-| `utf8.codepoint(s [,i [,j [,lax]]])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | ✅ Available | Bounds validation fixed |
-| `utf8.len(s [,i [,j [,lax]]])` | ❌ N/A | ❌ N/A | ✅ | ✅ (lax) | 🔲 Verify | `lax` mode in 5.4 |
-| `utf8.offset(s, n [,i])` | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | Position 0 check exists |
-| Max code point | ❌ N/A | ❌ N/A | 0x10FFFF | 0x7FFFFFFF | ✅ Available | Extended range in 5.4 |
-
-**Tasks**:
-- [ ] Implement `lax` mode parameter for UTF-8 functions in Lua 5.4
-- [ ] Verify `utf8.offset` bounds handling is complete
-
-### 9.9 Debug Module Version Parity
-
-| Function | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|----------|-----|-----|-----|-----|------------------|-------|
-| `debug.setcstacklimit(limit)` | ❌ N/A | ❌ N/A | ❌ N/A | ✅ | 🔲 Implement | 5.4 only |
-| `debug.setmetatable(value, table)` | 1st return | 1st return | 1st return | boolean | 🔲 Verify | Return type change |
-| `debug.getuservalue(u [,n])` | ❌ N/A | ✅ (1 value) | ✅ (1 value) | ✅ (n-th value) | 🔲 Implement | 5.4 multi-user-values |
-| `debug.setuservalue(u, value [,n])` | ❌ N/A | ✅ | ✅ | ✅ (n-th value) | 🔲 Implement | 5.4 multi-user-values |
-
-**Tasks**:
-- [ ] Implement `debug.setcstacklimit` for Lua 5.4
-- [ ] Verify `debug.setmetatable` return value per version
-- [ ] Implement multi-user-value support for 5.4
-
-### 9.10 Bitwise Operations Version Parity
-
-| Feature | 5.1 | 5.2 | 5.3 | 5.4 | NovaSharp Status | Notes |
-|---------|-----|-----|-----|-----|------------------|-------|
-| `bit32` library | ❌ N/A | ✅ | ⚠️ Deprecated | ❌ Removed | ✅ Available | Version-gated |
-| Native `&`, `|`, `~` operators | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
-| `~` unary (bitwise NOT) | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
-| `<<`, `>>` operators | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
-
-**Tasks**:
-- [ ] Emit deprecation warning when `bit32` used in 5.3 mode
+- [ ] Emit deprecation warning for `bit32` in 5.3 mode
 - [ ] Verify `bit32` unavailable in 5.4 mode
-
-### 9.11 Metamethod Behavior Version Parity
-
-| Metamethod | 5.1 | 5.2 | 5.3 | 5.4 | 5.5 | NovaSharp Status | Notes |
-|------------|-----|-----|-----|-----|-----|------------------|-------|
-| `__lt` emulates `__le` | ✅ | ✅ | ✅ | ✅ | ❌ No | ✅ Completed | 5.5 actually removes fallback (not 5.4) |
-| `__gc` non-function handling | Silent | Silent | Silent | Warn during GC | Warn during GC | 🔬 Investigating | See §8.14 for details |
-| `__pairs`/`__ipairs` | ❌ N/A | ✅ | ✅ (no __ipairs) | ✅ (no __ipairs) | ✅ | 🔲 Verify | `__ipairs` deprecated 5.3 |
-| `__close` | ❌ N/A | ❌ N/A | ❌ N/A | ✅ | ✅ | ✅ Available | |
-
-**Tasks**:
-- [ ] Verify `__ipairs` behavior per version
 
 ### 9.12 Testing Infrastructure
 
@@ -1144,15 +638,6 @@ Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`.
 - [ ] Add CI jobs that run test suite with each `LuaCompatibilityVersion`
 - [ ] Create version migration guide (`docs/LuaVersionMigration.md`)
 - [ ] Document all version-specific behaviors in `docs/LuaCompatibility.md`
-
-**Success Criteria**:
-- All Lua standard library functions behave according to their version specification
-- Version-gated functions raise appropriate errors or deprecation warnings
-- CI validates all behaviors against reference Lua interpreters (5.1, 5.2, 5.3, 5.4)
-- Documentation clearly explains behavior differences per version
-
-**Owner**: Interpreter team
-**Effort Estimate**: 4-6 weeks comprehensive audit and implementation
 
 ---
 
@@ -1264,44 +749,8 @@ Game developers using NovaSharp could ship an offline compilation tool with thei
 ### 12.2 Research Questions
 
 1. **Feasibility**: Can Lua's dynamic semantics (metatables, dynamic typing, `_ENV` manipulation) be reasonably compiled to static C#?
-
 2. **Performance Gains**: What speedup is realistic? (Likely 2-10x for compute-heavy scripts, minimal for I/O-bound)
-
-3. **Compatibility**: How do compiled scripts interact with:
-   - Interpreted Lua scripts calling compiled functions?
-   - Runtime `require()` and module loading?
-   - Debug hooks and coroutine yield points?
-   - Dynamic `_G` / `_ENV` modifications?
-
-4. **Code Generation Strategy**:
-   - Direct IL emission vs. C# source generation (Roslyn)?
-   - How to handle Lua's 1-based arrays and `nil` semantics?
-   - Representation of Lua tables in compiled code?
-
-5. **Tooling Requirements**:
-   - Standalone CLI tool vs. Unity Editor integration?
-   - Incremental compilation support?
-   - Source maps for debugging compiled scripts?
-
-### 12.3 Prior Art to Study
-
-- **LuaJIT**: Highly optimized tracing JIT—study its IR and optimization passes
-- **Ravi**: Lua 5.3 derivative with optional static typing and LLVM backend
-- **Typed Lua**: Academic work on gradual typing for Lua
-- **MoonSharp's own hardwire system**: Existing precompilation for C# interop descriptors
-- **IronPython/IronRuby**: How .NET handled dynamic language compilation
-
-### 12.4 Potential Architecture
-
-```
-Lua Source → [NovaSharp Parser] → AST → [Type Inference Pass] → Typed AST
-    → [C# Code Generator] → Generated .cs files → [Roslyn] → DLL
-```
-
-Or alternatively:
-```
-Lua Source → [NovaSharp Compiler] → Bytecode → [Bytecode-to-IL Translator] → DLL
-```
+3. **Compatibility**: How do compiled scripts interact with interpreted scripts, runtime `require()`, debug hooks?
 
 ### 12.5 Risks & Challenges
 
@@ -1309,14 +758,6 @@ Lua Source → [NovaSharp Compiler] → Bytecode → [Bytecode-to-IL Translator]
 - **Maintenance Burden**: Two execution paths (interpreted + compiled) doubles testing surface
 - **Edge Cases**: Metamethod chains, `debug.setlocal`, `load()` with dynamic strings
 - **Unity IL2CPP**: Compiled DLLs must work under Unity's AOT restrictions
-
-### 12.6 Success Criteria (If Pursued)
-
-- [ ] Prototype compiles simple Lua scripts (no metatables) to working C# code
-- [ ] Benchmark shows measurable speedup (>2x) on compute benchmarks
-- [ ] Compiled code can call and be called by interpreted Lua
-- [ ] Tool runs standalone (no NovaSharp runtime required for compilation)
-- [ ] Works with Unity IL2CPP builds
 
 **Owner**: TBD (requires dedicated research effort)
 **Effort Estimate**: Unknown—initial feasibility study: 2-4 weeks; full implementation: 3-6 months
@@ -1331,13 +772,7 @@ Lua Source → [NovaSharp Compiler] → Bytecode → [Bytecode-to-IL Translator]
 
 **Goal**: Prettify and configure the `gh-pages` branch to provide a readable, well-documented benchmark dashboard that makes performance trends easy to understand.
 
-### 13.1 Current State
-
-The `gh-pages` branch is auto-generated by `github-action-benchmark` and contains:
-- `benchmarks/data.js` — Raw JSON benchmark history (machine-generated)
-- Minimal `README.md` placeholder
-
-### 13.2 Proposed Improvements
+### 13.1 Proposed Improvements
 
 **Documentation**:
 - [ ] Expand `README.md` with explanation of benchmark methodology
@@ -1349,24 +784,11 @@ The `gh-pages` branch is auto-generated by `github-action-benchmark` and contain
 - [ ] Configure `github-action-benchmark` chart options (title, axis labels, colors)
 - [ ] Add index.html with styled benchmark chart display
 - [ ] Include historical context (baseline establishment date, significant changes)
-- [ ] Add download links for raw data exports
 
-**Organization**:
-- [ ] Structure benchmark data by category (runtime, comparison, per-version)
-- [ ] Add `.nojekyll` file to prevent GitHub Pages Jekyll processing
-- [ ] Configure custom 404 page pointing to main documentation
-
-**Automation**:
-- [ ] Update workflow to maintain consistent gh-pages structure
-- [ ] Add validation step to ensure gh-pages content integrity
-
-### 13.3 Success Criteria
-
+**Success Criteria**:
 - [ ] Contributors can understand benchmark results without reading workflow code
 - [ ] Performance trends are visually accessible via GitHub Pages URL
 - [ ] Documentation explains threshold values and alert meanings
-- [ ] Raw data remains accessible for external analysis
 
 **Owner**: DevOps / CI team
 **Effort Estimate**: 1-2 days
-

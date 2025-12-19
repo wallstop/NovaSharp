@@ -3,31 +3,50 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     public sealed class DynamicTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessEval()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DynamicAccessEval(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return dynamic.eval('5+1');");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return dynamic.eval('5+1');");
             await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessPrepare()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DynamicAccessPrepare(LuaCompatibilityVersion version)
         {
             string code =
                 @"
                 local prepared = dynamic.prepare('5+1');
                 return dynamic.eval(prepared);
                 ";
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessScope()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DynamicAccessScope(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -40,12 +59,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return worker();
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
+        // _ENV is a Lua 5.2+ feature
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessScopeSecurityReturnsNil()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DynamicAccessScopeSecurityReturnsNil(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -59,14 +84,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return worker();
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessFromCSharp()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DynamicAccessFromCSharp(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString("t = { ciao = { 'hello' } }");
 
             DynValue evaluation = script

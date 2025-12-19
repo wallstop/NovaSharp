@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
@@ -14,9 +15,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     public sealed class DebugModuleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task GetInfoReturnsFunctionReferenceForLuaFunctions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoReturnsFunctionReferenceForLuaFunctions(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -30,9 +38,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoReportsCallerLocation()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoReportsCallerLocation(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -52,9 +65,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoReturnsNilWhenLevelExceedsStackDepth()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoReturnsNilWhenLevelExceedsStackDepth(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString("return debug.getinfo(50)");
 
@@ -62,9 +82,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoSurfacesArgumentErrors()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoSurfacesArgumentErrors(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -80,9 +105,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetLocalExposesCurrentLevelArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetLocalExposesCurrentLevelArguments(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -98,9 +128,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetLocalReturnsNameForValidSlot()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetLocalReturnsNameForValidSlot(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -116,9 +151,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetLocalThrowsWhenLevelOutOfRange()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetLocalThrowsWhenLevelOutOfRange(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -133,9 +173,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetHookRecordsMaskAndCount()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetHookRecordsMaskAndCount(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -153,9 +198,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetLocalReportsLevelOutOfRange()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetLocalReportsLevelOutOfRange(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -173,9 +223,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetUpvalueReturnsNilForClrFunction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUpvalueReturnsNilForClrFunction(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString("return debug.getupvalue(print, 1)");
 
@@ -183,9 +238,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetUpvalueReturnsNilForInvalidIndex()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUpvalueReturnsNilForInvalidIndex(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -198,9 +258,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetUpvalueReturnsNilForNegativeIndex()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUpvalueReturnsNilForNegativeIndex(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -214,10 +279,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueIdReturnsNilForClrFunction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UpvalueIdReturnsNilForClrFunctionLua54Plus(
+            LuaCompatibilityVersion version
+        )
         {
             // Per Lua 5.4 spec, debug.upvalueid returns nil for CLR functions (no accessible upvalues)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString("return debug.upvalueid(print, 1)");
 
@@ -225,10 +294,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueIdReturnsNilForInvalidIndex()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task UpvalueIdThrowsForClrFunctionPreLua54(LuaCompatibilityVersion version)
+        {
+            // Per Lua 5.2/5.3 spec, debug.upvalueid throws error for CLR functions (no accessible upvalues)
+            // NovaSharp provides debug.upvalueid for all versions, with version-specific error handling
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return debug.upvalueid(print, 1)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("invalid upvalue index")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UpvalueIdReturnsNilForInvalidIndexLua54Plus(
+            LuaCompatibilityVersion version
+        )
         {
             // Per Lua 5.4 spec, debug.upvalueid returns nil for invalid indices
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -241,9 +334,129 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetUpvalueReturnsNilForClrFunction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task UpvalueIdThrowsForInvalidIndexPreLua54(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            // Per Lua 5.2/5.3 spec, debug.upvalueid throws error for invalid indices
+            // NovaSharp provides debug.upvalueid for all versions, with version-specific error handling
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(
+                    @"
+                    local function f() end
+                    return debug.upvalueid(f, 999)
+                    "
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("invalid upvalue index")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UpvalueIdReturnsNilForZeroIndexLua54Plus(LuaCompatibilityVersion version)
+        {
+            // Zero is an invalid index (Lua uses 1-based indexing for upvalues)
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local x = 10
+                local function f() return x end
+                return debug.upvalueid(f, 0)
+                "
+            );
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task UpvalueIdThrowsForZeroIndexPreLua54(LuaCompatibilityVersion version)
+        {
+            // Zero is an invalid index (Lua uses 1-based indexing for upvalues)
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(
+                    @"
+                    local x = 10
+                    local function f() return x end
+                    return debug.upvalueid(f, 0)
+                    "
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("invalid upvalue index")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UpvalueIdReturnsNilForNegativeIndexLua54Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Negative indices are invalid
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local x = 10
+                local function f() return x end
+                return debug.upvalueid(f, -1)
+                "
+            );
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task UpvalueIdThrowsForNegativeIndexPreLua54(LuaCompatibilityVersion version)
+        {
+            // Negative indices are invalid
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(
+                    @"
+                    local x = 10
+                    local function f() return x end
+                    return debug.upvalueid(f, -1)
+                    "
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("invalid upvalue index")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetUpvalueReturnsNilForClrFunction(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString("return debug.setupvalue(print, 1, 'test')");
 
@@ -251,9 +464,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetUpvalueReturnsNilForInvalidIndex()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetUpvalueReturnsNilForInvalidIndex(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -266,9 +484,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoReturnsNilForNegativeLevel()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoReturnsNilForNegativeLevel(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString("return debug.getinfo(-1)");
 
@@ -276,9 +499,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetUserValueReturnsNilForNonUserData()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUserValueReturnsNilForNonUserData(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString("return debug.getuservalue('string')");
 
@@ -286,9 +514,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetUserValueThrowsForNonTableValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetUserValueThrowsForNonTableValue(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             UserData.RegisterType<DmTestUserDataClass>();
             DmTestUserDataClass obj = new();
             script.Globals["ud"] = UserData.Create(obj);
@@ -306,9 +539,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetUserValueThrowsWhenNoValueProvided()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetUserValueThrowsWhenNoValueProvided(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             UserData.RegisterType<DmTestUserDataClass>();
             DmTestUserDataClass obj = new();
             script.Globals["ud"] = UserData.Create(obj);
@@ -326,9 +564,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetMetatableReturnsNilForTypesWithoutMetatable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetMetatableReturnsNilForTypesWithoutMetatable(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString("return debug.getmetatable(function() end)");
 
@@ -336,9 +581,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetMetatableThrowsWhenNoMetatableProvided()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetMetatableThrowsWhenNoMetatableProvided(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -353,9 +603,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetMetatableThrowsForNonTableMetatable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetMetatableThrowsForNonTableMetatable(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -370,10 +625,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetMetatableWorksForFunctions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetMetatableWorksForFunctions(LuaCompatibilityVersion version)
         {
             // Functions can have metatables in NovaSharp
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -388,9 +648,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TracebackReturnsCallStack()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TracebackReturnsCallStack(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -409,11 +674,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueJoinExecutesWithoutError()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UpvalueJoinExecutesWithoutError(LuaCompatibilityVersion version)
         {
             // Note: NovaSharp's upvaluejoin implementation has limitations compared to standard Lua.
             // This test verifies the function runs without error, not full Lua semantics.
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -432,9 +702,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueJoinThrowsForInvalidIndices()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UpvalueJoinThrowsForInvalidIndices(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -449,9 +724,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoReturnsClrInfoForCallbackFunctions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoReturnsClrInfoForCallbackFunctions(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -466,7 +746,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DebugDebugThrowsWhenDebugInputIsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DebugDebugThrowsWhenDebugInputIsNull(LuaCompatibilityVersion version)
         {
             // Must explicitly set DebugInput to null; the default options have a delegate configured.
             ScriptOptions options = new() { DebugInput = null, DebugPrint = _ => { } };
@@ -485,10 +770,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DebugDebugExitsImmediatelyWhenDefaultInputReturnsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DebugDebugExitsImmediatelyWhenDefaultInputReturnsNull(
+            LuaCompatibilityVersion version
+        )
         {
             // Default DebugInput returns null via Platform.DefaultInput - loop exits immediately
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString("return debug.debug()");
 
@@ -502,10 +794,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // documented in PLAN.md. The DebugInput check and null-exits-loop paths are covered above.
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoReturnsFunctionPlaceholderForClrFunctionWithFFlag()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoReturnsFunctionPlaceholderForClrFunctionWithFFlag(
+            LuaCompatibilityVersion version
+        )
         {
             // When using debug.getinfo with a function value, 'f' returns the function itself
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -519,10 +818,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoReturnsLuaFunctionPlaceholderWithFFlag()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoReturnsLuaFunctionPlaceholderWithFFlag(
+            LuaCompatibilityVersion version
+        )
         {
             // When using debug.getinfo with a function value, 'f' returns the function itself
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -537,11 +843,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoFromFrameReturnsStringPlaceholderForClrFunction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoFromFrameReturnsStringPlaceholderForClrFunction(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests BuildFunctionPlaceholder for CLR functions (frame.Address < 0)
             // Using a callback to get a frame-based getinfo for a CLR frame
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "callback",
@@ -566,11 +879,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoFromFrameReturnsStringPlaceholderForLuaFunction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoFromFrameReturnsStringPlaceholderForLuaFunction(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests BuildFunctionPlaceholder for Lua functions (frame.Address >= 0)
             // Level 1 gets the Lua caller's frame (probe), level 0 is getinfo itself
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -588,10 +908,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetLocalFromClrFunctionReturnsPlaceholderLocals()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetLocalFromClrFunctionReturnsPlaceholderLocals(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests the CLR frame path in GetClrDebugLocalTuple - level 0 returns special placeholders
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "probe",
@@ -615,10 +942,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetLocalReturnsNilForInvalidIndexInClrFrame()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetLocalReturnsNilForInvalidIndexInClrFrame(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests the CLR frame path with invalid index
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "probe",
@@ -639,10 +973,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetLocalFromClrFunctionReturnsPlaceholderName()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetLocalFromClrFunctionReturnsPlaceholderName(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests the CLR frame path in GetClrDebugLocalName for setlocal
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "probe",
@@ -669,10 +1010,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetLocalReturnsNilForInvalidIndexInClrFrame()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetLocalReturnsNilForInvalidIndexInClrFrame(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests the CLR frame path with invalid index
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "probe",
@@ -698,10 +1046,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetUpValueFromClrFunctionReturnsNil()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUpValueFromClrFunctionReturnsNil(LuaCompatibilityVersion version)
         {
             // Tests the CLR function path in getupvalue
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -714,10 +1067,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetUpValueFromClrFunctionReturnsNil()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetUpValueFromClrFunctionReturnsNil(LuaCompatibilityVersion version)
         {
             // Tests the CLR function path in setupvalue
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -730,9 +1088,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetHookReturnsNilWhenNoHookIsSet()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetHookReturnsNilWhenNoHookIsSet(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -748,9 +1111,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetHookClearsHookWhenNilPassed()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetHookClearsHookWhenNilPassed(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -768,9 +1136,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetInfoWithEmptyWhatReturnsEmptyTable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoWithEmptyWhatReturnsEmptyTable(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -787,10 +1160,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetClrDebugLocalTupleReturnsIndexPlaceholder()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetClrDebugLocalTupleReturnsIndexPlaceholder(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests index 2 in GetClrDebugLocalTuple ((*index))
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "probe",
@@ -811,10 +1191,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetClrDebugLocalTupleReturnsValuePlaceholder()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetClrDebugLocalTupleReturnsValuePlaceholder(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests index 3 in GetClrDebugLocalTuple ((*value))
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "probe",
@@ -835,10 +1222,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetClrDebugLocalReturnsIndexPlaceholderName()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetClrDebugLocalReturnsIndexPlaceholderName(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests index 2 in GetClrDebugLocalName (setlocal path)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "probe",
@@ -863,10 +1257,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetClrDebugLocalReturnsValuePlaceholderName()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetClrDebugLocalReturnsValuePlaceholderName(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests index 3 in GetClrDebugLocalName (setlocal path)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "probe",
@@ -891,10 +1292,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetLocalFromFunctionReturnsUpValuePlaceholder()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetLocalFromFunctionReturnsUpValuePlaceholder(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests GetLocalFromFunction with upvalues (function locals)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -914,10 +1322,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetLocalFromFunctionReturnsNilForZeroOrNegativeIndex()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetLocalFromFunctionReturnsNilForZeroOrNegativeIndex(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests GetLocalFromFunction with index <= 0
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue zeroResult = script.DoString(
                 @"
@@ -939,10 +1354,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetArgumentOrNilReturnsNilForOutOfBoundsIndex()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetArgumentOrNilReturnsNilForOutOfBoundsIndex(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests GetArgumentOrNil edge case through getlocal
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             script.Globals.Set(
                 "probe",
@@ -967,10 +1389,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TracebackWithCoroutineUsesCoroutineStack()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TracebackWithCoroutineUsesCoroutineStack(LuaCompatibilityVersion version)
         {
             // Tests debug.traceback with a thread (coroutine) argument (line 522-526)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -990,10 +1417,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TracebackReturnsOriginalMessageWhenNotStringOrNumber()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TracebackReturnsOriginalMessageWhenNotStringOrNumber(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests debug.traceback returning non-string/non-number message unchanged (line 531-536)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1010,10 +1444,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetHookAndGetHookWithCoroutineTarget()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetHookAndGetHookWithCoroutineTarget(LuaCompatibilityVersion version)
         {
             // Tests debug.sethook/gethook with a coroutine target (line 600-605)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1037,10 +1476,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetHookWithNoArgsClears()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetHookWithNoArgsClears(LuaCompatibilityVersion version)
         {
             // Tests debug.sethook() with no args clears hook (line 605-608)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1061,10 +1505,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetHookWithNilFunctionClearsHook()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetHookWithNilFunctionClearsHook(LuaCompatibilityVersion version)
         {
             // Tests debug.sethook(nil) clears hook (line 629-631)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1083,10 +1532,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetHookThrowsForNonFunctionHook()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetHookThrowsForNonFunctionHook(LuaCompatibilityVersion version)
         {
             // Tests debug.sethook with invalid hook type (line 635-637)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1101,10 +1555,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetHookWithCoroutineArgument()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetHookWithCoroutineArgument(LuaCompatibilityVersion version)
         {
             // Tests debug.gethook(coroutine) (line 663-666)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1126,11 +1585,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetMetatableOnBooleanSetsTypeMetatable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetMetatableOnBooleanSetsTypeMetatable(LuaCompatibilityVersion version)
         {
             // NovaSharp allows type metatables for Nil, Void, Boolean, Number, String, Function
             // This tests that debug.setmetatable on boolean works (line 315-317)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1145,12 +1609,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetMetatableThrowsForUserDataWithoutDescriptor()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetMetatableThrowsForUserDataWithoutDescriptor(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests debug.setmetatable on unsupported type (line 325-328)
             // UserData requires special handling, use Thread (coroutine) since
             // Thread is at the boundary where CanHaveTypeMetatables returns false
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1169,10 +1640,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetMetatableReturnsTableMetatable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetMetatableReturnsTableMetatable(LuaCompatibilityVersion version)
         {
             // Tests debug.getmetatable for a table (line 269-271)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1190,10 +1666,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetMetatableReturnsNilForTableWithoutMetatable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetMetatableReturnsNilForTableWithoutMetatable(
+            LuaCompatibilityVersion version
+        )
         {
             // Tests debug.getmetatable returning nil for table without metatable (line 269-271)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1206,10 +1689,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetMetatableOnTableWorks()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetMetatableOnTableWorks(LuaCompatibilityVersion version)
         {
             // Tests debug.setmetatable on a table (line 319-321)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1224,10 +1712,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueIdReturnsNilForOutOfRangeIndex()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UpvalueIdReturnsNilForOutOfRangeIndexLua54Plus(
+            LuaCompatibilityVersion version
+        )
         {
             // Per Lua 5.4 spec, debug.upvalueid returns nil when index is out of range
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1243,10 +1735,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueIdReturnsUserDataForValidUpvalue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task UpvalueIdThrowsForOutOfRangeIndexPreLua54(LuaCompatibilityVersion version)
+        {
+            // Per Lua 5.2/5.3 spec, debug.upvalueid throws error for out of range indices
+            // NovaSharp provides debug.upvalueid for all versions, with version-specific error handling
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(
+                    @"
+                    local function f()
+                        -- Has _ENV as upvalue but nothing else
+                    end
+                    return debug.upvalueid(f, 999)
+                    "
+                )
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("invalid upvalue index")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UpvalueIdReturnsUserDataForValidUpvalue(LuaCompatibilityVersion version)
         {
             // Tests debug.upvalueid returns a userdata identifier for valid upvalue
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1263,10 +1787,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task UpvalueJoinThrowsForInvalidSecondClosure()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UpvalueJoinThrowsForInvalidSecondClosure(LuaCompatibilityVersion version)
         {
             // Tests debug.upvaluejoin invalid index on second closure (line 487)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1287,10 +1816,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TracebackWithNumberLevel()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TracebackWithNumberLevel(LuaCompatibilityVersion version)
         {
             // Tests debug.traceback with a specific level to skip (line 543)
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1312,10 +1846,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TracebackWithNilLevelUsesDefault()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TracebackWithNilLevelUsesDefault(LuaCompatibilityVersion version)
         {
             // Tests debug.traceback with nil level uses default skip=1
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -1328,6 +1867,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(result.String).Contains("msg").ConfigureAwait(false);
             await Assert.That(result.String).Contains("traceback").ConfigureAwait(false);
+        }
+
+        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            script.Options.DebugPrint = _ => { };
+            return script;
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage(

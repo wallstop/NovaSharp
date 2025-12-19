@@ -3,8 +3,8 @@
 
 Wraps the `codespell` CLI so we can produce deterministic logs and wire the
 results into CI. The script mirrors the naming/namespace audit helpers: run it
-with `--write-log spelling_audit.log` to refresh the committed report, or use
-`--verify-log spelling_audit.log` to fail when the log is stale.
+with `--write-log docs/audits/spelling_audit.log` to refresh the committed report, or use
+`--verify-log docs/audits/spelling_audit.log` to fail when the log is stale.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_LOG = ROOT / "spelling_audit.log"
+DEFAULT_LOG = ROOT / "docs" / "audits" / "spelling_audit.log"
 DEFAULT_ALLOWLIST = ROOT / "tools" / "SpellingAudit" / "allowlist.txt"
 TOP_LEVEL_EXCLUDES = {".git", ".vs", "artifacts"}
 
@@ -131,14 +131,14 @@ def parse_args() -> argparse.Namespace:
         nargs="?",
         type=Path,
         const=DEFAULT_LOG,
-        help="Write the audit report to the specified path (defaults to spelling_audit.log).",
+        help="Write the audit report to the specified path (defaults to docs/audits/spelling_audit.log).",
     )
     parser.add_argument(
         "--verify-log",
         nargs="?",
         type=Path,
         const=DEFAULT_LOG,
-        help="Verify that the current audit matches the given log (defaults to spelling_audit.log).",
+        help="Verify that the current audit matches the given log (defaults to docs/audits/spelling_audit.log).",
     )
     parser.add_argument(
         "--allowlist",
@@ -299,7 +299,7 @@ def main() -> None:
     sys.stdout.write(report)
     if findings:
         raise SpellingAuditError(
-            "Spelling audit found one or more issues. Update the affected files or refresh spelling_audit.log."
+            "Spelling audit found one or more issues. Update the affected files or refresh docs/audits/spelling_audit.log."
         )
 
 

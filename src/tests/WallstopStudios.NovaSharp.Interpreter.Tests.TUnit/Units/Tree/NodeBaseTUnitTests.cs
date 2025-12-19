@@ -82,13 +82,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
-        public void CheckTokenTypeNotNextThrowsWhenTokenDiffers()
+        public async Task CheckTokenTypeNotNextThrowsWhenTokenDiffers()
         {
             ScriptLoadingContext context = CreateContext("name");
 
-            Assert.Throws<SyntaxErrorException>(() =>
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 TestNode.CallCheckTokenTypeNotNext(context, TokenType.Number)
-            );
+            )!;
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -107,23 +108,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
-        public void CheckTokenTypeWithMultipleOptionsThrowsWhenTokenDoesNotMatch()
+        public async Task CheckTokenTypeWithMultipleOptionsThrowsWhenTokenDoesNotMatch()
         {
             ScriptLoadingContext context = CreateContext("end");
 
-            Assert.Throws<SyntaxErrorException>(() =>
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 TestNode.CallCheckTokenType(context, TokenType.True, TokenType.False)
-            );
+            )!;
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CheckTokenTypeWithThreeOptionsThrowsWhenTokenDoesNotMatch()
+        public async Task CheckTokenTypeWithThreeOptionsThrowsWhenTokenDoesNotMatch()
         {
             ScriptLoadingContext context = CreateContext("do");
 
-            Assert.Throws<SyntaxErrorException>(() =>
+            SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 TestNode.CallCheckTokenType(context, TokenType.If, TokenType.Else, TokenType.ElseIf)
-            );
+            )!;
+            await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

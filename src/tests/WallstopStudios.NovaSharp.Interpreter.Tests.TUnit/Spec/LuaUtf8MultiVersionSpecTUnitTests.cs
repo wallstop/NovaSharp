@@ -33,7 +33,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Default);
+                Script script = new Script(version, CoreModulePresets.Default);
                 script.Globals.Set("sample", DynValue.NewString("héll😀"));
                 script.Globals.Set("invalid", DynValue.NewString("\uD83D"));
 
@@ -52,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Default);
+                Script script = new Script(version, CoreModulePresets.Default);
                 script.Globals.Set("word", DynValue.NewString("A😀€"));
 
                 DynValue tuple = script.DoString("return utf8.codepoint(word, 1, #word)");
@@ -69,7 +69,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Default);
+                Script script = new Script(version, CoreModulePresets.Default);
                 script.Globals.Set("word", DynValue.NewString("A😀B"));
 
                 DynValue offsets = script.DoString(
@@ -95,7 +95,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Default);
+                Script script = new Script(version, CoreModulePresets.Default);
                 script.Globals.Set("word", DynValue.NewString("A😀B"));
 
                 DynValue summary = script.DoString(
@@ -117,7 +117,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Default);
+                Script script = new Script(version, CoreModulePresets.Default);
                 DynValue pattern = script.DoString("return utf8.charpattern");
 
                 const string Expected = "[\0-\x7F\xC2-\xF4][\x80-\xBF]*";

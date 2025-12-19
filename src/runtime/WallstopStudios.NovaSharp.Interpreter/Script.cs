@@ -84,27 +84,80 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Script"/> clas.s
+        /// Initializes a new instance of the <see cref="Script"/> class with default modules
+        /// and the Lua version from <see cref="GlobalOptions"/>.
         /// </summary>
+        /// <remarks>
+        /// Uses <see cref="CoreModulePresets.Default"/> and inherits <see cref="ScriptGlobalOptions.CompatibilityVersion"/>
+        /// from <see cref="GlobalOptions"/>. For explicit version control, use <see cref="Script(LuaCompatibilityVersion)"/>
+        /// or <see cref="Script(LuaCompatibilityVersion, CoreModules)"/>.
+        /// </remarks>
         public Script()
             : this(CoreModulePresets.Default, null) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Script"/> class.
+        /// Initializes a new instance of the <see cref="Script"/> class with the specified Lua version
+        /// and default modules.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to target.</param>
+        /// <remarks>
+        /// Uses <see cref="CoreModulePresets.Default"/>. This is the recommended constructor when you need
+        /// explicit version control without custom modules.
+        /// </remarks>
+        public Script(LuaCompatibilityVersion version)
+            : this(version, CoreModulePresets.Default) { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Script"/> class with the specified Lua version
+        /// and core modules.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to target.</param>
+        /// <param name="coreModules">The core modules to be pre-registered in the default global table.</param>
+        /// <remarks>
+        /// This is the recommended constructor for explicit control over both version and modules.
+        /// </remarks>
+        public Script(LuaCompatibilityVersion version, CoreModules coreModules)
+            : this(coreModules, CreateOptionsForVersion(version)) { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Script"/> class with the specified core modules
+        /// and the Lua version from <see cref="GlobalOptions"/>.
         /// </summary>
         /// <param name="coreModules">The core modules to be pre-registered in the default global table.</param>
+        /// <remarks>
+        /// Inherits <see cref="ScriptGlobalOptions.CompatibilityVersion"/> from <see cref="GlobalOptions"/>.
+        /// For explicit version control, use <see cref="Script(LuaCompatibilityVersion, CoreModules)"/>.
+        /// </remarks>
         public Script(CoreModules coreModules)
             : this(coreModules, null) { }
 
         /// <summary>
-        /// Initializes a new instance using a custom options snapshot.
+        /// Initializes a new instance using a custom options snapshot with default modules.
         /// </summary>
+        /// <param name="options">
+        /// The options to use. The <see cref="ScriptOptions.CompatibilityVersion"/> from these options
+        /// is used as-is (unlike the parameterless constructor which inherits from <see cref="GlobalOptions"/>).
+        /// </param>
+        /// <remarks>
+        /// Uses <see cref="CoreModulePresets.Default"/>. Note that if you create a fresh <see cref="ScriptOptions"/>
+        /// without copying from <see cref="DefaultOptions"/>, the version defaults to <see cref="LuaCompatibilityVersion.Latest"/>.
+        /// </remarks>
         public Script(ScriptOptions options)
             : this(CoreModulePresets.Default, options) { }
 
         /// <summary>
-        /// Initializes a new instance with modules + options.
+        /// Initializes a new instance with the specified modules and options.
         /// </summary>
+        /// <param name="coreModules">The core modules to be pre-registered in the default global table.</param>
+        /// <param name="options">
+        /// The options to use, or <c>null</c> to use <see cref="DefaultOptions"/> with
+        /// <see cref="ScriptGlobalOptions.CompatibilityVersion"/> from <see cref="GlobalOptions"/>.
+        /// </param>
+        /// <remarks>
+        /// This is the most flexible constructor. When <paramref name="options"/> is <c>null</c>,
+        /// the script inherits <see cref="ScriptGlobalOptions.CompatibilityVersion"/> from <see cref="GlobalOptions"/>.
+        /// When <paramref name="options"/> is provided, its <see cref="ScriptOptions.CompatibilityVersion"/> is used as-is.
+        /// </remarks>
         public Script(CoreModules coreModules, ScriptOptions options)
         {
             Options = new ScriptOptions(options ?? DefaultOptions);
@@ -155,6 +208,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             return new Lua51RandomProvider();
+        }
+
+        /// <summary>
+        /// Creates a <see cref="ScriptOptions"/> instance configured for the specified Lua version.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to target.</param>
+        /// <returns>A new <see cref="ScriptOptions"/> with the specified version.</returns>
+        private static ScriptOptions CreateOptionsForVersion(LuaCompatibilityVersion version)
+        {
+            return new ScriptOptions(DefaultOptions) { CompatibilityVersion = version };
         }
 
         /// <summary>

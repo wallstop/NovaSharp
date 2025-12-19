@@ -2,7 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
     using System.Collections.Generic;
-    using NUnit.Framework;
+    using System.Threading.Tasks;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -30,7 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCallStatement()
+        public async Task CSharpStaticFunctionCallStatement()
         {
             DynValue[] args = Array.Empty<DynValue>();
 
@@ -53,16 +53,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Void));
-            Assert.That(args.Length, Is.EqualTo(2));
-            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[0].String, Is.EqualTo("hello"));
-            Assert.That(args[1].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[1].String, Is.EqualTo("world"));
+            await Assert.That(res.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+            await Assert.That(args.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[0].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(args[1].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[1].String).IsEqualTo("world").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCallRedef()
+        public async Task CSharpStaticFunctionCallRedef()
         {
             DynValue[] args = Array.Empty<DynValue>();
 
@@ -84,16 +84,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(args.Length, Is.EqualTo(2));
-            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[0].String, Is.EqualTo("hello"));
-            Assert.That(args[1].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[1].String, Is.EqualTo("world"));
-            Assert.That(res.Type, Is.EqualTo(DataType.Void));
+            await Assert.That(args.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[0].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(args[1].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[1].String).IsEqualTo("world").ConfigureAwait(false);
+            await Assert.That(res.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCall4()
+        public async Task CSharpStaticFunctionCall4()
         {
             string script = "return callback()();";
 
@@ -119,12 +119,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1234.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCall3()
+        public async Task CSharpStaticFunctionCall3()
         {
             string script = "return callback();";
 
@@ -142,12 +142,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1234.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCall2()
+        public async Task CSharpStaticFunctionCall2()
         {
             DynValue[] args = Array.Empty<DynValue>();
 
@@ -169,15 +169,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(args.Length, Is.EqualTo(1));
-            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[0].String, Is.EqualTo("hello"));
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1234.0));
+            await Assert.That(args.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[0].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCall()
+        public async Task CSharpStaticFunctionCall()
         {
             DynValue[] args = Array.Empty<DynValue>();
 
@@ -199,18 +199,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(args.Length, Is.EqualTo(2));
-            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[0].String, Is.EqualTo("hello"));
-            Assert.That(args[1].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[1].String, Is.EqualTo("world"));
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1234.0));
+            await Assert.That(args.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[0].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(args[1].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[1].String).IsEqualTo("world").ConfigureAwait(false);
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         //!!! DO NOT REFORMAT THIS METHOD !!!
-        public void LongStrings()
+        public async Task LongStrings()
         {
             string script =
                 @"    
@@ -226,17 +226,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Tuple.Length, Is.EqualTo(3));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[0].String, Is.EqualTo("\t\t\t\t\tciao\n\t\t\t\t"));
-            Assert.That(res.Tuple[1].String, Is.EqualTo(" [[uh]] "));
-            Assert.That(res.Tuple[2].String, Is.EqualTo("[==[[=[[[eheh]]=]=]"));
+            await Assert.That(res.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert
+                .That(res.Tuple[0].String)
+                .IsEqualTo("\t\t\t\t\tciao\n\t\t\t\t")
+                .ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].String).IsEqualTo(" [[uh]] ").ConfigureAwait(false);
+            await Assert
+                .That(res.Tuple[2].String)
+                .IsEqualTo("[==[[=[[[eheh]]=]=]")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void UnicodeEscapeLua53Style()
+        public async Task UnicodeEscapeLua53Style()
         {
             string script =
                 @"    
@@ -245,23 +251,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("ciaoA"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("ciaoA").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void InvalidEscape()
+        public async Task InvalidEscape()
         {
             string script =
                 @"    
 				x = 'ciao\k{41}';
 				return x;";
 
-            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
+            await Assert
+                .That(() => Script.RunString(script))
+                .Throws<SyntaxErrorException>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void KeywordsInStrings()
+        public async Task KeywordsInStrings()
         {
             string keywrd =
                 "and break do else elseif end false end for function end goto if ::in:: in local nil not [or][[][==][[]] repeat return { then 0 end return; }; then true (x != 5 or == * 3 - 5) x";
@@ -272,12 +281,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x;";
 
             DynValue res = Script.RunString(script);
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo(keywrd));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo(keywrd).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ParserErrorMessage()
+        public async Task ParserErrorMessage()
         {
             bool caught = false;
             string script =
@@ -293,14 +302,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             catch (SyntaxErrorException ex)
             {
                 caught = true;
-                Assert.That(string.IsNullOrEmpty(ex.Message), Is.False, ex.Message);
+                await Assert.That(string.IsNullOrEmpty(ex.Message)).IsFalse().ConfigureAwait(false);
             }
 
-            Assert.That(caught, Is.True);
+            await Assert.That(caught).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void StringsWithBackslashLineEndings2()
+        public async Task StringsWithBackslashLineEndings2()
         {
             string script =
                 @"    
@@ -310,11 +319,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void StringsWithBackslashLineEndings()
+        public async Task StringsWithBackslashLineEndings()
         {
             string script =
                 @"    
@@ -324,11 +333,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionCallWrappers()
+        public async Task FunctionCallWrappers()
         {
             string script =
                 @"    
@@ -342,41 +351,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.Globals.Get("boh").Function.Call(82);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1994));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1994).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ReturnSimpleUnop()
+        public async Task ReturnSimpleUnop()
         {
             string script = @"return -42";
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(-42));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(-42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ReturnSimple()
+        public async Task ReturnSimple()
         {
             string script = @"return 42";
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(42));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorSimple()
+        public async Task OperatorSimple()
         {
             string script = @"return 6*7";
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(42));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -405,7 +414,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionOrOperator()
+        public async Task FunctionOrOperator()
         {
             string script =
                 @"    
@@ -417,11 +426,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.ClrFunction));
+            await Assert.That(res.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SelectNegativeIndex()
+        public async Task SelectNegativeIndex()
         {
             string script =
                 @"    
@@ -431,12 +440,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new();
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("c"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("c").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void BoolConversionAndShortCircuit()
+        public async Task BoolConversionAndShortCircuit()
         {
             string script =
                 @"    
@@ -454,17 +463,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Tuple.Length, Is.EqualTo(5));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Boolean));
-            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Boolean));
-            Assert.That(res.Tuple[3].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[4].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].String, Is.EqualTo("!"));
-            Assert.That(res.Tuple[1].Boolean, Is.EqualTo(true));
-            Assert.That(res.Tuple[2].Boolean, Is.EqualTo(false));
-            Assert.That(res.Tuple[3].String, Is.EqualTo("!"));
-            Assert.That(res.Tuple[4].Number, Is.EqualTo(2));
+            await Assert.That(res.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[4].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].String).IsEqualTo("!").ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Boolean).IsEqualTo(true).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Boolean).IsEqualTo(false).ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].String).IsEqualTo("!").ConfigureAwait(false);
+            await Assert.That(res.Tuple[4].Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -486,7 +495,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public void Factorial()
+        public async Task Factorial()
         {
             string script =
                 @"    
@@ -503,12 +512,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void IfStatmWithScopeCheck()
+        public async Task IfStatmWithScopeCheck()
         {
             string script =
                 @"    
@@ -523,15 +532,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ScopeBlockCheck()
+        public async Task ScopeBlockCheck()
         {
             string script =
                 @"    
@@ -545,15 +554,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ForLoopWithBreak()
+        public async Task ForLoopWithBreak()
         {
             string script =
                 @"    
@@ -568,12 +577,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ForEachLoopWithBreak()
+        public async Task ForEachLoopWithBreak()
         {
             string script =
                 @"    
@@ -607,16 +616,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(6));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(12));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(12).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ForEachLoop()
+        public async Task ForEachLoop()
         {
             string script =
                 @"    
@@ -646,16 +655,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(21));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(42));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(21).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void LengthOperator()
+        public async Task LengthOperator()
         {
             string script =
                 @"    
@@ -666,16 +675,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(4));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ForLoopWithBreakAndScopeCheck()
+        public async Task ForLoopWithBreakAndScopeCheck()
         {
             string script =
                 @"    
@@ -693,15 +702,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FactorialWithOneReturn()
+        public async Task FactorialWithOneReturn()
         {
             string script =
                 @"    
@@ -717,150 +726,150 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VeryBasic()
+        public async Task VeryBasic()
         {
             string script = @"return 7";
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(7));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence1()
+        public async Task OperatorPrecedence1()
         {
             string script = @"return 1+2*3";
 
             Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(7));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence2()
+        public async Task OperatorPrecedence2()
         {
             string script = @"return 2*3+1";
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(7));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorAssociativity()
+        public async Task OperatorAssociativity()
         {
             string script = @"return 2^3^2";
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(512));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(512).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence3()
+        public async Task OperatorPrecedence3()
         {
             string script = @"return 5-3-2";
             Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence4()
+        public async Task OperatorPrecedence4()
         {
             string script = @"return 3 + -1";
             Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(2));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence5()
+        public async Task OperatorPrecedence5()
         {
             string script = @"return 3 * -1 + 5 * 3";
             Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(12));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(12).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence6()
+        public async Task OperatorPrecedence6()
         {
             string script = @"return -2^2";
             Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(-4));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(-4).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence7()
+        public async Task OperatorPrecedence7()
         {
             string script = @"return -7 / 0.5";
             Script s = new(default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(-14));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(-14).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedenceAndAssociativity()
+        public async Task OperatorPrecedenceAndAssociativity()
         {
             string script = @"return 5+3*7-2*5+2^3^2";
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(528));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(528).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorParenthesis()
+        public async Task OperatorParenthesis()
         {
             string script = @"return (5+3)*7-2*5+(2^3)^2";
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(110));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(110).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void GlobalVarAssignment()
+        public async Task GlobalVarAssignment()
         {
             string script = @"x = 1; return x;";
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TupleAssignment1()
+        public async Task TupleAssignment1()
         {
             string script =
                 @"    
@@ -878,12 +887,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(6));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void IterativeFactorialWithWhile()
+        public async Task IterativeFactorialWithWhile()
         {
             string script =
                 @"    
@@ -900,12 +909,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void IterativeFactorialWithRepeatUntilAndScopeCheck()
+        public async Task IterativeFactorialWithRepeatUntilAndScopeCheck()
         {
             string script =
                 @"    
@@ -924,12 +933,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SimpleForLoop()
+        public async Task SimpleForLoop()
         {
             string script =
                 @"    
@@ -943,12 +952,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(6.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(6.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SimpleFunc()
+        public async Task SimpleFunc()
         {
             string script =
                 @"    
@@ -960,12 +969,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(3));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void IterativeFactorialWithFor()
+        public async Task IterativeFactorialWithFor()
         {
             string script =
                 @"    
@@ -983,12 +992,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void LocalFunctionsObscureScopeRule()
+        public async Task LocalFunctionsObscureScopeRule()
         {
             string script =
                 @"    
@@ -1001,11 +1010,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Function));
+            await Assert.That(res.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionWithStringArg2()
+        public async Task FunctionWithStringArg2()
         {
             string script =
                 @"    
@@ -1022,12 +1031,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("ciao"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("ciao").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionWithStringArg()
+        public async Task FunctionWithStringArg()
         {
             string script =
                 @"    
@@ -1044,12 +1053,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("ciao"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("ciao").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionWithTableArg()
+        public async Task FunctionWithTableArg()
         {
             string script =
                 @"    
@@ -1066,11 +1075,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Table));
+            await Assert.That(res.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TupleAssignment2()
+        public async Task TupleAssignment2()
         {
             string script =
                 @"    
@@ -1085,13 +1094,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(1));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(1));
-            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1150,7 +1159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public void ExpressionReducesTuples()
+        public async Task ExpressionReducesTuples()
         {
             string script =
                 @"
@@ -1164,12 +1173,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = (new Script(CoreModulePresets.Default)).DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ExpressionReducesTuples2()
+        public async Task ExpressionReducesTuples2()
         {
             string script =
                 @"
@@ -1182,12 +1191,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(4));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ArgsDoNotChange()
+        public async Task ArgsDoNotChange()
         {
             string script =
                 @"
@@ -1205,17 +1214,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Tuple.Length, Is.EqualTo(3));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(11));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(1));
-            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
+            await Assert.That(res.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsNoError()
+        public async Task VarArgsNoError()
         {
             string script =
                 @"
@@ -1232,12 +1241,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsSum()
+        public async Task VarArgsSum()
         {
             string script =
                 @"
@@ -1257,12 +1266,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(10));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsSum2()
+        public async Task VarArgsSum2()
         {
             string script =
                 @"
@@ -1282,12 +1291,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(50));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(50).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsSumTb()
+        public async Task VarArgsSumTb()
         {
             string script =
                 @"
@@ -1307,12 +1316,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(10));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SwapPattern()
+        public async Task SwapPattern()
         {
             string script =
                 @"
@@ -1327,16 +1336,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(4));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(4));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
-            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
-            Assert.That(res.Tuple[3].Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SwapPatternGlobal()
+        public async Task SwapPatternGlobal()
         {
             string script =
                 @"
@@ -1351,16 +1360,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(4));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(4));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
-            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
-            Assert.That(res.Tuple[3].Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void EnvTestSuite()
+        public async Task EnvTestSuite()
         {
             string script =
                 @"
@@ -1392,30 +1401,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = Script.RunString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Table));
+            await Assert.That(res.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
             Table t = res.Table;
 
-            Assert.That(t.Get("T1").Type, Is.EqualTo(DataType.Boolean), "T1-Type");
-            Assert.That(t.Get("T1").Boolean, Is.EqualTo(true), "T1-Val");
+            await Assert.That(t.Get("T1").Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(t.Get("T1").Boolean).IsEqualTo(true).ConfigureAwait(false);
 
-            Assert.That(t.Get("T2").Type, Is.EqualTo(DataType.Boolean), "T2-Type");
-            Assert.That(t.Get("T2").Boolean, Is.EqualTo(true), "T2-Val");
+            await Assert.That(t.Get("T2").Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(t.Get("T2").Boolean).IsEqualTo(true).ConfigureAwait(false);
 
-            Assert.That(t.Get("T3").Type, Is.EqualTo(DataType.Number), "T3-Type");
-            Assert.That(t.Get("T3").Number, Is.EqualTo(1), "T3-Val");
+            await Assert.That(t.Get("T3").Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(t.Get("T3").Number).IsEqualTo(1).ConfigureAwait(false);
 
-            Assert.That(t.Get("T4").Type, Is.EqualTo(DataType.Nil), "T4");
+            await Assert.That(t.Get("T4").Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
 
-            Assert.That(t.Get("T5").Type, Is.EqualTo(DataType.Number), "T5-Type");
-            Assert.That(t.Get("T5").Number, Is.EqualTo(2), "T5-Val");
+            await Assert.That(t.Get("T5").Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(t.Get("T5").Number).IsEqualTo(2).ConfigureAwait(false);
 
-            Assert.That(t.Get("T6").Type, Is.EqualTo(DataType.Number), "T6-Type");
-            Assert.That(t.Get("T6").Number, Is.EqualTo(3), "T6-Val");
+            await Assert.That(t.Get("T6").Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(t.Get("T6").Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TupleToOperator()
+        public async Task TupleToOperator()
         {
             string script =
                 @"    
@@ -1429,12 +1438,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Boolean));
-            Assert.That(res.Boolean, Is.EqualTo(true));
+            await Assert.That(res.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(res.Boolean).IsEqualTo(true).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void LiteralExpands()
+        public async Task LiteralExpands()
         {
             string script =
                 @"    
@@ -1445,12 +1454,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("aABCz"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("aABCz").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void HomonymArguments()
+        public async Task HomonymArguments()
         {
             string script =
                 @"    
@@ -1462,12 +1471,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script s = new(default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(3));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsSumMainChunk()
+        public async Task VarArgsSumMainChunk()
         {
             string script =
                 @"
@@ -1485,12 +1494,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = fn.Function.Call(1, 2, 3, 4);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(10));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsInNoVarArgsReturnsError()
+        public async Task VarArgsInNoVarArgsReturnsError()
         {
             string script =
                 @"
@@ -1508,47 +1517,53 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return x(1,2,3,4);
 								";
 
-            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
+            await Assert
+                .That(() => Script.RunString(script))
+                .Throws<SyntaxErrorException>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void HexFloats1()
+        public async Task HexFloats1()
         {
             string script = "return 0x0.1E";
             DynValue result = Script.RunString(script);
-            Assert.That(result.Number, Is.EqualTo((double)0x1E / (double)0x100));
+            await Assert
+                .That(result.Number)
+                .IsEqualTo((double)0x1E / (double)0x100)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void HexFloats2()
+        public async Task HexFloats2()
         {
             string script = "return 0xA23p-4";
             DynValue result = Script.RunString(script);
-            Assert.That(result.Number, Is.EqualTo((double)0xA23 / 16.0));
+            await Assert.That(result.Number).IsEqualTo((double)0xA23 / 16.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void HexFloats3()
+        public async Task HexFloats3()
         {
             string script = "return 0X1.921FB54442D18P+1";
             DynValue result = Script.RunString(script);
-            Assert.That(
-                result.Number,
-                Is.EqualTo((1 + (double)0x921FB54442D18 / (double)0x10000000000000) * 2)
-            );
+            await Assert
+                .That(result.Number)
+                .IsEqualTo((1 + (double)0x921FB54442D18 / (double)0x10000000000000) * 2)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SimpleDelegateInterop1()
+        public async Task SimpleDelegateInterop1()
         {
             int a = 3;
             Script script = new() { Globals = { ["action"] = new Action(() => a = 5) } };
             script.DoString("action()");
-            Assert.That(a, Is.EqualTo(5));
+            await Assert.That(a).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SimpleDelegateInterop2()
+        public async Task SimpleDelegateInterop2()
         {
             using UserDataRegistrationPolicyScope policyScope =
                 UserDataRegistrationPolicyScope.Override(InteropRegistrationPolicy.Automatic);
@@ -1556,7 +1571,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             int a = 3;
             Script script = new() { Globals = { ["action"] = new Action(() => a = 5) } };
             script.DoString("action()");
-            Assert.That(a, Is.EqualTo(5));
+            await Assert.That(a).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1623,25 +1638,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         //		}
 
         [global::TUnit.Core.Test]
-        public void NumericConversionFailsIfOutOfBounds()
+        public async Task NumericConversionFailsIfOutOfBounds()
         {
             Script s = new()
             {
                 Globals = { ["my_function_takes_byte"] = (Action<byte>)(p => { }) },
             };
 
-            try
-            {
-                s.DoString(
-                    "my_function_takes_byte(2010191) -- a huge number that is definitely not a byte"
-                );
-
-                Assert.Fail(); // ScriptRuntimeException should have been thrown, if it doesn't Assert.Fail should execute
-            }
-            catch (ScriptRuntimeException)
-            {
-                //Assert.Pass(e.DecoratedMessage);
-            }
+            await Assert
+                .That(() =>
+                    s.DoString(
+                        "my_function_takes_byte(2010191) -- a huge number that is definitely not a byte"
+                    )
+                )
+                .Throws<ScriptRuntimeException>()
+                .ConfigureAwait(false);
         }
     }
 }

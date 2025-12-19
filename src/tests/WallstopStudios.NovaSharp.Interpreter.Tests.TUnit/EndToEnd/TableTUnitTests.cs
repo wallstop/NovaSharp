@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -10,30 +11,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     public sealed class TableTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task TableAccessAndEmptyCtor()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableAccessAndEmptyCtor(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("a = {} a[1] = 1 return a[1]");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("a = {} a[1] = 1 return a[1]");
             await EndToEndDynValueAssert.ExpectAsync(result, 1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableAccessAndCtor()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableAccessAndCtor(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 "a = { 55, 2, 3, aurevoir=6, [false] = 7 } "
                 + "a[1] = 1; a.ciao = 4; a['hello'] = 5; "
                 + "return a[1], a[2], a[3], a['ciao'], a.hello, a.aurevoir, a[false]";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert
                 .ExpectAsync(result, 1, 2, 3, 4, 5, 6, 7)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableMethod1()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableMethod1(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString(
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
                 "x = 0 a = { value = 1912, val = function(self, num) x = self.value + num end } "
                     + "a.val(a, 82) return x"
             );
@@ -41,9 +60,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableMethod2()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableMethod2(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString(
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
                 "x = 0 a = { value = 1912, val = function(self, num) x = self.value + num end } "
                     + "a:val(82) return x"
             );
@@ -51,9 +76,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableMethod3()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableMethod3(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString(
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
                 "x = 0 a = { value = 1912 } function a.val(self, num) x = self.value + num end "
                     + "a:val(82) return x"
             );
@@ -61,9 +92,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableMethod4()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableMethod4(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString(
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
                 "x = 0 local a = { value = 1912 } function a:val(num) x = self.value + num end "
                     + "a:val(82) return x"
             );
@@ -71,9 +108,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableMethod5AllowsNestedPointerSyntax()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableMethod5AllowsNestedPointerSyntax(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString(
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
                 "x = 0 a = { value = 1912 } b = { tb = a } c = { tb = b } "
                     + "function c.tb.tb:val(num) x = self.value + num end "
                     + "a:val(82) return x"
@@ -82,9 +125,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableMethodChainingReturnsSelf()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableMethodChainingReturnsSelf(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString(
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
                 "return (function() local a = {x=0} "
                     + "function a:add(x) self.x, a.y = self.x + x, 20; return self end "
                     + "return (a:add(10):add(20):add(30).x == 60 and a.y == 20) end)()"
@@ -93,9 +142,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableNextWithMutation()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableNextWithMutation(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 x = {}
                 function copy(k, v) x[k] = v end
@@ -108,14 +162,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return x.a .. '|' .. x.b .. '|' .. x.c .. '|' .. x.d .. '|' .. x.e
             ";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, "1|2|3|4|5").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task TablePairsAggregatesKeysAndValues()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TablePairsAggregatesKeysAndValues(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 V = 0
                 K = ''
@@ -127,15 +187,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return K, V
             ";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await Assert.That(result.Tuple[0].String.Length).IsEqualTo(5).ConfigureAwait(false);
             await Assert.That(result.Tuple[1].Number).IsEqualTo(15).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableIPairsStopsAfterBreak()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableIPairsStopsAfterBreak(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 x = 0
                 y = 0
@@ -148,14 +214,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return x, y
             ";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 6, 12).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadReturnsSyntaxError()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadReturnsSyntaxError(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 function reader()
                     i = i + 1
@@ -167,7 +239,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return f, msg
             ";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[1].Type)
@@ -176,22 +249,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableSimplifiedAccesses()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableSimplifiedAccesses(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue table = script.DoString("t = { ciao = 'hello' } return t");
             await Assert.That(table.Table["ciao"]).IsEqualTo("hello").ConfigureAwait(false);
 
-            Script scriptWithGlobal = new() { Globals = { ["x"] = "hello" } };
+            Script scriptWithGlobal = new Script(version, CoreModulePresets.Complete);
+            scriptWithGlobal.Globals["x"] = "hello";
             DynValue tableWithRef = scriptWithGlobal.DoString("t = { ciao = x } return t");
             await Assert.That(tableWithRef.Table["ciao"]).IsEqualTo("hello").ConfigureAwait(false);
 
-            Script empty = new();
+            Script empty = new Script(version, CoreModulePresets.Complete);
             DynValue created = empty.DoString("t = {} return t");
             empty.Globals["t", "ciao"] = "hello";
             await Assert.That(created.Table["ciao"]).IsEqualTo("hello").ConfigureAwait(false);
 
-            Script assignAfter = new();
+            Script assignAfter = new Script(version, CoreModulePresets.Complete);
             assignAfter.DoString("t = {}");
             assignAfter.Globals["t", "ciao"] = "hello";
             await Assert
@@ -199,14 +278,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 .IsEqualTo("hello")
                 .ConfigureAwait(false);
 
-            Script readGlobal = new();
+            Script readGlobal = new Script(version, CoreModulePresets.Complete);
             readGlobal.DoString("t = { ciao = 'hello' }");
             await Assert
                 .That(readGlobal.Globals["t", "ciao"])
                 .IsEqualTo("hello")
                 .ConfigureAwait(false);
 
-            Script nested = new(default(CoreModules));
+            Script nested = new Script(version, default(CoreModules));
             nested.DoString("t = { ciao = { 'hello' } }");
             await Assert
                 .That(nested.Globals["t", "ciao", 1])
@@ -215,9 +294,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task NilRemovesEntryForPairs()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NilRemovesEntryForPairs(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 str = ''
                 function showTable(t)
@@ -234,24 +318,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return str
             ";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, "id$$").ConfigureAwait(false);
         }
 
         /// <summary>
         /// Tests that table.unpack returns a tuple of values.
+        /// table.unpack was moved from global unpack in Lua 5.2.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task TableUnpackReturnsTuple()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableUnpackReturnsTuple(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return table.unpack({3,4})");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return table.unpack({3,4})");
             await EndToEndDynValueAssert.ExpectAsync(result, 3, 4).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task PrimeTableAllowsSimpleValues()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrimeTableAllowsSimpleValues(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString("t = ${ ciao = 'hello' }");
 
             await Assert.That(script.Globals["t", "ciao"]).IsEqualTo("hello").ConfigureAwait(false);
@@ -262,9 +358,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task PrimeTableBlocksFunctions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrimeTableBlocksFunctions(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new Script(version, CoreModulePresets.Complete);
             Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("t = ${ ciao = function() end }")
             );
@@ -274,6 +375,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [global::TUnit.Core.Test]
         public async Task TableLengthCalculationsMirrorNunit()
         {
+            // This test doesn't execute Lua code, just verifies Table class behavior
             Table table = new(null);
 
             await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);

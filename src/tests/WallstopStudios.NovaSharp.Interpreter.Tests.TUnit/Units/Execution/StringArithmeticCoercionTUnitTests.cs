@@ -13,7 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     /// Per Lua 5.4 spec: String-to-number coercion was removed from arithmetic operators.
     /// Instead, the string metatable provides arithmetic metamethods (__add, __sub, etc.)
     /// that perform the coercion.
-    /// Per CONTRIBUTING_AI.md: These tests verify NovaSharp matches official Lua behavior.
+    /// Per .llm/context.md: These tests verify NovaSharp matches official Lua behavior.
     /// </summary>
     /// <remarks>
     /// Reference: Lua 5.4 Manual §3.4.1 - Coercion and conversion
@@ -37,7 +37,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version);
 
             DynValue result = script.DoString(
                 @"
@@ -66,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version);
 
             DynValue result = script.DoString(
                 @"
@@ -110,7 +110,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task StringAdditionWorksInAllVersions(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version);
 
             DynValue result = script.DoString("return '10' + 1");
 
@@ -132,7 +132,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task AllArithmeticOperationsWorkWithStrings(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version);
 
             // Test addition
             DynValue addResult = script.DoString("return '10' + 1");
@@ -200,7 +200,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task FloorDivisionWorksWithStrings(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version);
 
             DynValue result = script.DoString("return '10' // 3");
 
@@ -224,7 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CustomStringMetamethodIsCalledInLua54Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version);
 
             DynValue result = script.DoString(
                 @"
@@ -264,7 +264,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [Arguments(LuaCompatibilityVersion.Lua53)]
         public async Task CustomStringMetamethodNotCalledInPreLua54(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version);
 
             DynValue result = script.DoString(
                 @"
@@ -311,24 +311,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task NonNumericStringCausesArithmeticError(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version);
 
             await Assert
                 .That(() => script.DoString("return 'hello' + 1"))
                 .Throws<ScriptRuntimeException>()
                 .Because($"Non-numeric string arithmetic should throw in {version}")
                 .ConfigureAwait(false);
-        }
-
-        #endregion
-
-        #region Helpers
-
-        private static Script CreateScript(LuaCompatibilityVersion version)
-        {
-            return new Script(
-                new ScriptOptions(Script.DefaultOptions) { CompatibilityVersion = version }
-            );
         }
 
         #endregion

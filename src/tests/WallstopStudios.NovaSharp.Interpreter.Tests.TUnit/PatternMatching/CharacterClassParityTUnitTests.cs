@@ -457,7 +457,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task AlphaClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%a");
         await Assert.That(actual).IsEquivalentTo(ExpectedAlpha).ConfigureAwait(false);
     }
@@ -470,7 +470,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task ControlClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%c");
         await Assert.That(actual).IsEquivalentTo(ExpectedControl).ConfigureAwait(false);
     }
@@ -483,7 +483,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task DigitClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%d");
         await Assert.That(actual).IsEquivalentTo(ExpectedDigit).ConfigureAwait(false);
     }
@@ -496,7 +496,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task LowerClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%l");
         await Assert.That(actual).IsEquivalentTo(ExpectedLower).ConfigureAwait(false);
     }
@@ -509,7 +509,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task PunctClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%p");
         await Assert.That(actual).IsEquivalentTo(ExpectedPunct).ConfigureAwait(false);
     }
@@ -522,7 +522,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task SpaceClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%s");
         await Assert.That(actual).IsEquivalentTo(ExpectedSpace).ConfigureAwait(false);
     }
@@ -535,7 +535,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task UpperClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%u");
         await Assert.That(actual).IsEquivalentTo(ExpectedUpper).ConfigureAwait(false);
     }
@@ -548,7 +548,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task AlnumClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%w");
         await Assert.That(actual).IsEquivalentTo(ExpectedAlnum).ConfigureAwait(false);
     }
@@ -561,7 +561,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task XdigitClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%x");
         await Assert.That(actual).IsEquivalentTo(ExpectedXdigit).ConfigureAwait(false);
     }
@@ -576,7 +576,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task GraphClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%g");
         await Assert.That(actual).IsEquivalentTo(ExpectedGraph).ConfigureAwait(false);
     }
@@ -593,7 +593,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task NegatedAlphaClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%A");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedAlpha).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
@@ -607,7 +607,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task NegatedDigitClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%D");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedDigit).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
@@ -621,7 +621,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task NegatedLowerClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%L");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedLower).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
@@ -635,7 +635,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task NegatedSpaceClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%S");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedSpace).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
@@ -649,7 +649,7 @@ public sealed class CharacterClassParityTUnitTests
     [Arguments(LuaCompatibilityVersion.Lua55)]
     public async Task NegatedUpperClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%U");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedUpper).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
@@ -754,7 +754,7 @@ public sealed class CharacterClassParityTUnitTests
         bool shouldMatch
     )
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         DynValue result = script.DoString(
             $"return string.match({EscapeString(character)}, '%p') ~= nil"
         );
@@ -770,15 +770,5 @@ public sealed class CharacterClassParityTUnitTests
             "\"" => "'\"'",
             _ => $"'{s}'",
         };
-    }
-
-    private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
-    {
-        ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
-        {
-            CompatibilityVersion = version,
-        };
-        Script script = new Script(CoreModulePresets.Default, options);
-        return script;
     }
 }

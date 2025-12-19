@@ -11,9 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         [global::TUnit.Core.Test]
         public async Task SyntaxErrorDecoratedMessageIncludesCompatibilityProfile()
         {
-            Script script = new(
-                new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua52 }
-            );
+            Script script = new(LuaCompatibilityVersion.Lua52);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("local = 1")
@@ -28,9 +26,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         [global::TUnit.Core.Test]
         public async Task RuntimeErrorDecoratedMessageIncludesCompatibilityProfile()
         {
-            Script script = new(
-                new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua55 }
-            );
+            Script script = new(LuaCompatibilityVersion.Lua55);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("error('boom')")

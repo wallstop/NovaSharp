@@ -38,7 +38,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Complete);
+                Script script = new Script(version, CoreModulePresets.Complete);
                 DynValue tuple = script.DoString(
                     "return math.type(5), math.type(3.5), math.type(1.0)"
                 );
@@ -55,7 +55,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Complete);
+                Script script = new Script(version, CoreModulePresets.Complete);
                 DynValue tuple = script.DoString(
                     "return math.tointeger(10.0), math.tointeger(-3), math.tointeger('42'), math.tointeger(3.25)"
                 );
@@ -75,7 +75,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             // Reference: Lua 5.3 Manual §6.7
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Complete);
+                Script script = new Script(version, CoreModulePresets.Complete);
                 DynValue result = script.DoString("return math.tointeger({})");
 
                 await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
@@ -87,7 +87,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Complete);
+                Script script = new Script(version, CoreModulePresets.Complete);
                 DynValue result = script.DoString("return math.tointeger(true)");
 
                 await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
@@ -99,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Complete);
+                Script script = new Script(version, CoreModulePresets.Complete);
                 DynValue result = script.DoString("return math.tointeger(function() end)");
 
                 await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
@@ -111,7 +111,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Complete);
+                Script script = new Script(version, CoreModulePresets.Complete);
                 DynValue tuple = script.DoString(
                     "return math.ult(0, -1), math.ult(-1, 0), math.ult(10, 20)"
                 );
@@ -127,7 +127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             foreach (LuaCompatibilityVersion version in Lua53PlusVersions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Complete);
+                Script script = new Script(version, CoreModulePresets.Complete);
                 DynValue tuple = script.DoString(
                     "local ok, err = pcall(math.ult, 1.5, 2) return ok, err"
                 );

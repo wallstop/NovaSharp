@@ -32,18 +32,18 @@ jobs:
       - name: Enforce naming conventions
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp
       - name: Verify naming audit log
-        run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log naming_audit.log
+        run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log docs/audits/naming_audit.log
       - name: Enforce spelling conventions
         run: python3 tools/SpellingAudit/spelling_audit.py
       - name: Verify spelling audit log
-        run: python3 tools/SpellingAudit/spelling_audit.py --verify-log spelling_audit.log
+        run: python3 tools/SpellingAudit/spelling_audit.py --verify-log docs/audits/spelling_audit.log
       - name: Generate documentation audit log
-        run: python3 tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
+        run: python3 tools/DocumentationAudit/documentation_audit.py --write-log docs/audits/documentation_audit.log
       - name: Verify documentation audit log
         run: |
-          if ! git diff --quiet -- documentation_audit.log; then
-            echo "::error file=documentation_audit.log::documentation_audit.log is out of date. Run 'python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log' and commit the result."
-            git --no-pager diff -- documentation_audit.log
+          if ! git diff --quiet -- docs/audits/documentation_audit.log; then
+            echo "::error file=docs/audits/documentation_audit.log::docs/audits/documentation_audit.log is out of date. Run 'python tools/DocumentationAudit/documentation_audit.py --write-log docs/audits/documentation_audit.log' and commit the result."
+            git --no-pager diff -- docs/audits/documentation_audit.log
             exit 1
           fi
       - name: Determine documentation diff base

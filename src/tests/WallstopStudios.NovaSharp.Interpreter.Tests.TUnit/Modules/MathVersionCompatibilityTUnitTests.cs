@@ -14,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     /// <summary>
     /// Tests for math module functions that are version-specific.
     /// Verifies that Lua 5.3+ features are NOT available in Lua 5.1/5.2 modes.
-    /// Per CONTRIBUTING_AI.md: These tests verify NovaSharp matches official Lua behavior.
+    /// Per .llm/context.md: These tests verify NovaSharp matches official Lua behavior.
     /// </summary>
     /// <remarks>
     /// Reference: Lua 5.3 Manual §6.7 - math.tointeger, math.type, math.ult, math.maxinteger, math.mininteger
@@ -33,7 +33,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua52)]
         public async Task MathTypeShouldBeNilInPreLua53(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return math.type");
 
@@ -57,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task MathTypeAvailableInLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue intResult = script.DoString("return math.type(5)");
             DynValue floatResult = script.DoString("return math.type(5.5)");
@@ -93,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string input
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString($"return math.type({input})");
 
@@ -120,7 +120,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua52)]
         public async Task MathToIntegerShouldBeNilInPreLua53(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return math.tointeger");
 
@@ -149,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             double expected
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString($"return math.tointeger({input})");
 
@@ -172,7 +172,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string input
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString($"return math.tointeger({input})");
 
@@ -195,7 +195,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua52)]
         public async Task MathUltShouldBeNilInPreLua53(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return math.ult");
 
@@ -218,7 +218,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task MathUltWorksInLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // -1 in unsigned is MAX, so 0 < MAX should be true
             DynValue zeroLtNegOne = script.DoString("return math.ult(0, -1)");
@@ -250,7 +250,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua52)]
         public async Task MathIntegerConstantsShouldBeNilInPreLua53(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue maxint = script.DoString("return math.maxinteger");
             DynValue minint = script.DoString("return math.mininteger");
@@ -283,7 +283,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task MathIntegerConstantsAvailableInLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue maxint = script.DoString("return math.maxinteger");
             DynValue minint = script.DoString("return math.mininteger");
@@ -380,7 +380,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string function
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString($"return math.{function}");
 
@@ -409,7 +409,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task MathPiAvailableInAllVersions(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return math.pi");
 
@@ -432,7 +432,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task MathHugeAvailableInAllVersions(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return math.huge");
 
@@ -457,7 +457,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua52)]
         public async Task CallingMathTypeInPreLua53ThrowsError(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException caught = Assert.Throws<ScriptRuntimeException>(() =>
             {
@@ -485,7 +485,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua52)]
         public async Task CallingMathToIntegerInPreLua53ThrowsError(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException caught = Assert.Throws<ScriptRuntimeException>(() =>
             {
@@ -507,7 +507,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua52)]
         public async Task CallingMathUltInPreLua53ThrowsError(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException caught = Assert.Throws<ScriptRuntimeException>(() =>
             {
@@ -537,7 +537,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task DiagnosticDumpMathTableContents(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // Get all keys from math table
             DynValue result = script.DoString(
@@ -560,14 +560,5 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         #endregion
-
-        private static Script CreateScript(LuaCompatibilityVersion version)
-        {
-            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
-            {
-                CompatibilityVersion = version,
-            };
-            return new Script(CoreModulePresets.Complete, options);
-        }
     }
 }

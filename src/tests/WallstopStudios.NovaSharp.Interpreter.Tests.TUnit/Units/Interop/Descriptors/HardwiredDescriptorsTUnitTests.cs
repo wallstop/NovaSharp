@@ -10,7 +10,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
-    using CollectionAssert = NUnit.Framework.CollectionAssert;
 
     [UserDataIsolation]
     public sealed class HardwiredDescriptorsTUnitTests
@@ -76,10 +75,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 .That(_descriptor.Method.LastArgumentCount)
                 .IsEqualTo(2)
                 .ConfigureAwait(false);
-            CollectionAssert.AreEqual(
-                new object[] { 5, "fallback" },
-                _descriptor.Method.LastParameters
-            );
+            await Assert
+                .That(_descriptor.Method.LastParameters)
+                .IsEquivalentTo(new object[] { 5, "fallback" })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -97,10 +96,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 .That(_descriptor.Method.LastArgumentCount)
                 .IsEqualTo(2)
                 .ConfigureAwait(false);
-            CollectionAssert.AreEqual(
-                new object[] { 7, "custom" },
-                _descriptor.Method.LastParameters
-            );
+            await Assert
+                .That(_descriptor.Method.LastParameters)
+                .IsEquivalentTo(new object[] { 7, "custom" })
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

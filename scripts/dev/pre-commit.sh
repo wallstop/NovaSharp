@@ -203,17 +203,17 @@ format_markdown_files() {
 
 update_documentation_audit_log() {
   log "[pre-commit] Refreshing documentation audit log..."
-  run_python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
-  if [ -f documentation_audit.log ]; then
-    git_add_with_retry documentation_audit.log
+  run_python tools/DocumentationAudit/documentation_audit.py --write-log docs/audits/documentation_audit.log
+  if [ -f docs/audits/documentation_audit.log ]; then
+    git_add_with_retry docs/audits/documentation_audit.log
   fi
 }
 
 update_naming_audit_log() {
   log "[pre-commit] Refreshing naming audit log..."
-  run_python tools/NamingAudit/naming_audit.py --write-log naming_audit.log
-  if [ -f naming_audit.log ]; then
-    git_add_with_retry naming_audit.log
+  run_python tools/NamingAudit/naming_audit.py --write-log docs/audits/naming_audit.log
+  if [ -f docs/audits/naming_audit.log ]; then
+    git_add_with_retry docs/audits/naming_audit.log
   fi
 }
 
@@ -241,9 +241,9 @@ update_fixture_catalog() {
 
 update_spelling_audit_log() {
   log "[pre-commit] Refreshing spelling audit log..."
-  if run_python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log 2>/dev/null; then
-    if [ -f spelling_audit.log ]; then
-      git_add_with_retry spelling_audit.log
+  if run_python tools/SpellingAudit/spelling_audit.py --write-log docs/audits/spelling_audit.log 2>/dev/null; then
+    if [ -f docs/audits/spelling_audit.log ]; then
+      git_add_with_retry docs/audits/spelling_audit.log
     fi
   else
     warn "Spelling audit failed (codespell may not be installed). Run 'pip install -r requirements.tooling.txt' to enable."

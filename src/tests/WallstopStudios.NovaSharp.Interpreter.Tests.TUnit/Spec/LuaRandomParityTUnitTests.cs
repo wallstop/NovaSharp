@@ -456,7 +456,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 
             foreach (LuaCompatibilityVersion version in versions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Default);
+                Script script = new Script(version, CoreModulePresets.Default);
 
                 // Test math.random(n) returns integer in [1, n]
                 DynValue result = script.DoString("return math.random(100)");
@@ -481,7 +481,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 
             foreach (LuaCompatibilityVersion version in versions)
             {
-                Script script = CreateScript(version, CoreModulePresets.Default);
+                Script script = new Script(version, CoreModulePresets.Default);
 
                 // Test math.random() returns float in [0, 1)
                 DynValue result = script.DoString("return math.random()");

@@ -31,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvExistsInLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return type(getfenv)");
 
@@ -42,7 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task SetFenvExistsInLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return type(setfenv)");
 
@@ -56,7 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task GetFenvIsNilInLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return getfenv");
 
@@ -70,7 +70,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task SetFenvIsNilInLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return setfenv");
 
@@ -81,7 +81,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvReturnsGlobalEnvironmentByDefault(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return getfenv() == _G");
 
@@ -92,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvWithZeroReturnsGlobalEnvironment(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return getfenv(0) == _G");
 
@@ -103,7 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvWithOneReturnsCurrentEnvironment(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return getfenv(1) == _G");
 
@@ -114,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvOnFunctionReturnsEnvironment(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -130,7 +130,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task SetFenvChangesFunctionEnvironment(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -149,7 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task SetFenvReturnsTheFunction(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -166,7 +166,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvReflectsSetFenvChanges(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -185,7 +185,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvWithInvalidLevelThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("getfenv(100)")
@@ -198,7 +198,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvWithNegativeLevelThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("getfenv(-1)")
@@ -211,7 +211,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvWithStringThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("getfenv('string')")
@@ -224,7 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task SetFenvWithInvalidLevelThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("setfenv(100, {})")
@@ -237,7 +237,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task SetFenvWithNonTableSecondArgThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("local f = function() end; setfenv(f, 'string')")
@@ -250,7 +250,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task SetFenvOnClrFunctionThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("setfenv(print, {})")
@@ -263,7 +263,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task GetFenvOnClrFunctionReturnsGlobal(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return getfenv(print) == _G");
 
@@ -274,7 +274,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [Arguments(LuaCompatibilityVersion.Lua51)]
         public async Task SetFenvWithLevelChangesEnvironment(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"

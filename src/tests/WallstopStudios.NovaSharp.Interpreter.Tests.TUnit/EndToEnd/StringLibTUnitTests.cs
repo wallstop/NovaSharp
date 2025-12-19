@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -11,9 +12,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     public sealed class StringLibTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task StringGMatchConcatenatesWords()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StringGMatchConcatenatesWords(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"    
 				t = '';
 
@@ -24,158 +30,247 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return (t);
 				";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await Assert.That(result.Type).IsEqualTo(DataType.String);
             await Assert.That(result.String).IsEqualTo("HelloLuauser");
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindReturnsMatchStartAndEnd()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindReturnsMatchStartAndEnd(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return string.find('Hello Lua user', 'Lua');");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.find('Hello Lua user', 'Lua');");
             return EndToEndDynValueAssert.ExpectAsync(result, 7, 9);
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindReturnsNilWhenPatternMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindReturnsNilWhenPatternMissing(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return string.find('Hello Lua user', 'banana');");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.find('Hello Lua user', 'banana');");
             return EndToEndDynValueAssert.ExpectAsync(result, null);
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindRespectsStartIndex()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindRespectsStartIndex(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return string.find('Hello Lua user', 'Lua', 1);");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.find('Hello Lua user', 'Lua', 1);");
             return EndToEndDynValueAssert.ExpectAsync(result, 7, 9);
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindRespectsStartIndexBeyondMatch()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindRespectsStartIndexBeyondMatch(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return string.find('Hello Lua user', 'Lua', 8);");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.find('Hello Lua user', 'Lua', 8);");
             return EndToEndDynValueAssert.ExpectAsync(result, null);
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindSupportsNegativeStartIndices()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindSupportsNegativeStartIndices(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return string.find('Hello Lua user', 'e', -5);");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.find('Hello Lua user', 'e', -5);");
             return EndToEndDynValueAssert.ExpectAsync(result, 13, 13);
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindMatchesPatternsWithoutStart()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindMatchesPatternsWithoutStart(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return string.find('Hello Lua user', '%su');");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.find('Hello Lua user', '%su');");
             return EndToEndDynValueAssert.ExpectAsync(result, 10, 11);
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindMatchesPatternsWithStart()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindMatchesPatternsWithStart(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return string.find('Hello Lua user', '%su', 1);");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.find('Hello Lua user', '%su', 1);");
             return EndToEndDynValueAssert.ExpectAsync(result, 10, 11);
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindHonorsPlainSearchFlag()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindHonorsPlainSearchFlag(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString(
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
                 "return string.find('Hello Lua user', '%su', 1, true);"
             );
             return EndToEndDynValueAssert.ExpectAsync(result, null);
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindExtractsDateFromMessage()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindExtractsDateFromMessage(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
 				s = 'Deadline is 30/05/1999, firm'
 				date = '%d%d/%d%d/%d%d%d%d';
-				return s:sub(s:find(date));
+                return s:sub(s:find(date));
 			";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, "30/05/1999");
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindSupportsFrontierPatterns()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindSupportsFrontierPatterns(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
 				s = 'Deadline is 30/05/1999, firm'
 				date = '%f[%S]%d%d/%d%d/%d%d%d%d';
-				return s:sub(s:find(date));
+                return s:sub(s:find(date));
 			";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, "30/05/1999");
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFindFrontierPatternMissesWhitespaceBoundary()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFindFrontierPatternMissesWhitespaceBoundary(
+            LuaCompatibilityVersion version
+        )
         {
-            string script =
+            string code =
                 @"
 				s = 'Deadline is 30/05/1999, firm'
 				date = '%f[%s]%d%d/%d%d/%d%d%d%d';
-				return s:find(date);
+                return s:find(date);
 			";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, null);
         }
 
         [global::TUnit.Core.Test]
-        public Task StringFormatPadsNumericArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringFormatPadsNumericArguments(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
 				d = 5; m = 11; y = 1990
-				return string.format('%02d/%02d/%04d', d, m, y)
+                return string.format('%02d/%02d/%04d', d, m, y)
 			";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, "05/11/1990");
         }
 
         [global::TUnit.Core.Test]
-        public Task StringGSubDuplicatesWords()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringGSubDuplicatesWords(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
 				s = string.gsub('hello world', '(%w+)', '%1 %1')
-				return s, s == 'hello hello world world'
+                return s, s == 'hello hello world world'
 			";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, "hello hello world world", true);
         }
 
         [global::TUnit.Core.Test]
-        public async Task PrintSupportsVariadicArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrintSupportsVariadicArguments(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
 				print('ciao', 1);
 			";
 
             string printed = null;
-            Script scriptHost = new();
-            DynValue chunk = scriptHost.LoadString(script);
+            Script scriptHost = new Script(version, CoreModulePresets.Complete);
+            DynValue chunk = scriptHost.LoadString(code);
             scriptHost.Options.DebugPrint = s => printed = s;
             scriptHost.Call(chunk);
 
             await Assert.That(printed).IsEqualTo("ciao\t1");
         }
 
+        // print/__tostring CLR boundary detection behaves differently in pre-5.4 versions
         [global::TUnit.Core.Test]
-        public async Task PrintInvokesToStringMetamethods()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrintInvokesToStringMetamethods(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
 				t = {};
 				m = {};
@@ -190,8 +285,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			";
 
             string printed = null;
-            Script scriptHost = new();
-            DynValue chunk = scriptHost.LoadString(script);
+            Script scriptHost = new Script(version, CoreModulePresets.Complete);
+            DynValue chunk = scriptHost.LoadString(code);
             scriptHost.Options.DebugPrint = s => printed = s;
             scriptHost.Call(chunk);
 
@@ -199,47 +294,59 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public Task ToStringMetamethodCanReturnVoid()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task ToStringMetamethodCanReturnVoid(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
 				t = {}
 				mt = {}
 				a = nil
 				function mt.__tostring () a = 'yup' end
 				setmetatable(t, mt)
-				return tostring(t), a;
+                return tostring(t), a;
 			";
 
-            DynValue result = Script.RunString(script);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, DataType.Void, "yup");
         }
 
         [global::TUnit.Core.Test]
-        public async Task StringGSubRejectsPercentEscapes()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StringGSubRejectsPercentEscapes(LuaCompatibilityVersion version)
         {
-            string script = "string.gsub('hello world', '%w+', '%e')";
+            string code = "string.gsub('hello world', '%w+', '%e')";
 
+            Script script = new Script(version, CoreModulePresets.Complete);
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
             {
-                Script.RunString(script);
+                script.DoString(code);
             });
 
             await Assert.That(exception.Message).Contains("invalid use of '%'");
         }
 
         [global::TUnit.Core.Test]
-        public Task StringGSubHandlesMultilinePatterns()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringGSubHandlesMultilinePatterns(LuaCompatibilityVersion version)
         {
-            Script script = new()
-            {
-                Globals =
-                {
-                    ["a"] =
-                        @"                  'C:\temp\test.lua:68: bad argument #1 to 'date' (invalid conversion specifier '%Ja')'
-    doesn't match '^[^:]+:%d+: bad argument #1 to 'date' %(invalid conversion specifier '%%Ja'%)'",
-                },
-            };
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.Globals["a"] =
+                @"                  'C:\temp\test.lua:68: bad argument #1 to 'date' (invalid conversion specifier '%Ja')'
+    doesn't match '^[^:]+:%d+: bad argument #1 to 'date' %(invalid conversion specifier '%%Ja'%)'";
 
             string lua = "return string.gsub(a, '\\n', '\\n #')";
             DynValue result = script.DoString(lua);
@@ -250,16 +357,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public Task StringMatchMatchesErrorMessage()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task StringMatchMatchesErrorMessage(LuaCompatibilityVersion version)
         {
             string source = "test.lua:185: field 'day' missing in date table";
             string pattern = "^[^:]+:%d+: field 'day' missing in date table";
-            return TestMatchAsync(source, pattern, expectedMatch: true);
+            return TestMatchAsync(version, source, pattern, expectedMatch: true);
         }
 
-        private static async Task TestMatchAsync(string source, string pattern, bool expectedMatch)
+        private static async Task TestMatchAsync(
+            LuaCompatibilityVersion version,
+            string source,
+            string pattern,
+            bool expectedMatch
+        )
         {
-            Script script = new(CoreModules.StringLib);
+            Script script = new Script(version, CoreModules.StringLib);
             script.Globals["s"] = source;
             script.Globals["p"] = pattern;
             DynValue result = script.DoString("return string.match(s, p)");

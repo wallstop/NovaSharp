@@ -48,7 +48,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Arguments(LuaCompatibilityVersion.Lua54)]
         public async Task LtFallbackToLeWorksInLua51Through54(LuaCompatibilityVersion version)
         {
-            Script script = new(new ScriptOptions { CompatibilityVersion = version });
+            Script script = new(version);
             DynValue result = script.DoString(ScriptWithOnlyLtMetamethod);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
@@ -58,9 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         [Test]
         public async Task LtFallbackToLeFailsInLua55()
         {
-            Script script = new(
-                new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua55 }
-            );
+            Script script = new(LuaCompatibilityVersion.Lua55);
 
             ScriptRuntimeException ex = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(() =>
@@ -77,9 +75,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         {
             // Latest mode follows the current NovaSharp target (Lua 5.4.x), which allows the fallback.
             // When NovaSharp targets Lua 5.5+, this test should be updated to expect failure.
-            Script script = new(
-                new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Latest }
-            );
+            Script script = new(LuaCompatibilityVersion.Latest);
             DynValue result = script.DoString(ScriptWithOnlyLtMetamethod);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
@@ -107,7 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 return a <= b
                 ";
 
-            Script script = new(new ScriptOptions { CompatibilityVersion = version });
+            Script script = new(version);
             DynValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
@@ -135,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 return a < b  -- Using < operator, which uses __lt directly
                 ";
 
-            Script script = new(new ScriptOptions { CompatibilityVersion = version });
+            Script script = new(version);
             DynValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
@@ -159,9 +155,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 return a <= b  -- Should be false: not (1 < 2) = not true = false
                 ";
 
-            Script script = new(
-                new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua54 }
-            );
+            Script script = new(LuaCompatibilityVersion.Lua54);
             DynValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
@@ -184,9 +178,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 return a <= b  -- Should be true: not (2 < 2) = not false = true
                 ";
 
-            Script script = new(
-                new ScriptOptions { CompatibilityVersion = LuaCompatibilityVersion.Lua54 }
-            );
+            Script script = new(LuaCompatibilityVersion.Lua54);
             DynValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);

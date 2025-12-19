@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using CoreLib;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -14,8 +15,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     [UserDataIsolation]
     public sealed class MetatableTUnitTests
     {
+        // __ipairs metamethod was added in Lua 5.2 and removed in Lua 5.3+
         [global::TUnit.Core.Test]
-        public async Task TableIPairsWithMetatable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task TableIPairsWithMetatable(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -38,12 +41,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return x;
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "321").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableAddWithMetatable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableAddWithMetatable(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -59,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return v1 + v2;
                 ";
 
-            Script scriptHost = new();
+            Script scriptHost = new Script(version, CoreModulePresets.Complete);
             scriptHost.Globals.RegisterModuleType(typeof(TableIteratorsModule));
             scriptHost.Globals.RegisterModuleType(typeof(MetaTableModule));
             DynValue result = scriptHost.DoString(script);
@@ -67,7 +75,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableEqualityUsesSharedMetatable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MetatableEqualityUsesSharedMetatable(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -82,13 +95,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return ( t1a == t1b ), ( t1a == t2 )
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableCallReturnsValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MetatableCallReturnsValue(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -101,14 +119,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return t;
                 ";
 
-            Script scriptHost = new();
+            Script scriptHost = new Script(version, CoreModulePresets.Complete);
             DynValue table = scriptHost.DoString(script);
             DynValue result = scriptHost.Call(table, 3);
             await EndToEndDynValueAssert.ExpectAsync(result, 468).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableCallUpdatesState()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MetatableCallUpdatesState(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -123,12 +146,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return x;
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, 468).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableIndexAndSetIndexFunctions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MetatableIndexAndSetIndexFunctions(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -149,12 +177,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return s;
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableIndexAndSetIndexBounce()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MetatableIndexAndSetIndexBounce(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -169,7 +202,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return s;
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc").ConfigureAwait(false);
         }
 
@@ -189,7 +222,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableExtensibleObjectSample()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MetatableExtensibleObjectSample(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -207,7 +245,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return myobj.extended() * myobj.getSomething();
                 ";
 
-            Script scriptHost = new();
+            Script scriptHost = new Script(version, CoreModulePresets.Complete);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<MyObject>(ensureUnregistered: true);
             registrationScope.RegisterType<MyObject>();
@@ -217,7 +255,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task IndexSetDoesNotWrackStack()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IndexSetDoesNotWrackStack(LuaCompatibilityVersion version)
         {
             string scriptCode =
                 @"
@@ -230,7 +273,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            Script script = new(
+            Script script = new Script(
+                version,
                 CoreModules.Basic
                     | CoreModules.Table
                     | CoreModules.TableIterators

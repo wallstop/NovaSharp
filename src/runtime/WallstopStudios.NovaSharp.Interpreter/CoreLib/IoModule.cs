@@ -357,7 +357,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Runtime context owning the script and platform accessor.</param>
         /// <param name="args">Argument zero is the path to read.</param>
-        /// <returns>A tuple of strings terminated by <c>nil</c>, mirroring Lua semantics.</returns>
+        /// <returns>
+        /// In Lua 5.1-5.3: An iterator triple <c>(iterator, nil, nil)</c>.
+        /// In Lua 5.4+: A quadruple <c>(iterator, nil, nil, file_handle)</c> where the file handle
+        /// can be used with to-be-closed variables or manual cleanup.
+        /// </returns>
         [NovaSharpModuleMethod(Name = "lines")]
         public static DynValue Lines(
             ScriptExecutionContext executionContext,
@@ -383,37 +387,61 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             try
             {
-                List<DynValue> readLines = new();
+                LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                    executionContext.Script.CompatibilityVersion
+                );
 
-                using (
-                    Stream stream = Script.GlobalOptions.Platform.OpenFile(
-                        executionContext.Script,
-                        filename,
-                        null,
-                        "r"
-                    )
-                )
+                // Open the file for reading - keep it open for lazy iteration
+                FileUserData fileHandle = Open(
+                    executionContext,
+                    filename,
+                    GetUtf8Encoding(),
+                    "r",
+                    false
+                );
+
+                // Create an iterator that reads lines lazily from the file
+                DynValue iterator = EnumerableWrapper.ConvertIterator(
+                    executionContext.Script,
+                    CreateLazyLineIterator(fileHandle)
+                );
+
+                // Lua 5.4+ returns 4 values: (iterator, nil, nil, file_handle)
+                // This allows use with to-be-closed variables
+                if (version >= LuaCompatibilityVersion.Lua54)
                 {
-                    using (StreamReader reader = new(stream))
-                    {
-                        while (!reader.EndOfStream)
-                        {
-                            string line = reader.ReadLine();
-                            readLines.Add(DynValue.NewString(line));
-                        }
-                    }
+                    return DynValue.NewTuple(
+                        iterator.Tuple[0], // iterator function
+                        DynValue.Nil, // state
+                        DynValue.Nil, // initial value
+                        UserData.Create(fileHandle) // file handle for to-be-closed
+                    );
                 }
 
-                readLines.Add(DynValue.Nil);
-
-                return EnumerableWrapper.ConvertIterator(
-                    executionContext.Script,
-                    readLines.GetEnumerator()
-                );
+                // Lua 5.1-5.3: return just the iterator triple (iterator, nil, nil)
+                return iterator;
             }
             catch (Exception ex)
             {
                 throw new ScriptRuntimeException(IoExceptionToLuaMessage(ex, filename));
+            }
+        }
+
+        /// <summary>
+        /// Creates a lazy line iterator for a file that yields lines one at a time.
+        /// </summary>
+        private static IEnumerator<DynValue> CreateLazyLineIterator(FileUserData fileHandle)
+        {
+            while (true)
+            {
+                string line = fileHandle.ReadLineInternal();
+                if (line == null)
+                {
+                    yield return DynValue.Nil;
+                    yield break;
+                }
+
+                yield return DynValue.NewString(line);
             }
         }
 

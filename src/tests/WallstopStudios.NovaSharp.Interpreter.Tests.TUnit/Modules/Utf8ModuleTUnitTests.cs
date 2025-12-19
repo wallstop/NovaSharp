@@ -10,24 +10,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
     public sealed class Utf8ModuleTUnitTests
     {
+        // Tests that UTF8 is unavailable in pre-5.3 versions
         [global::TUnit.Core.Test]
-        public async Task Utf8LibraryRespectsCompatibilityProfile()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task Utf8LibraryShouldBeNilInPreLua53(LuaCompatibilityVersion version)
         {
-            Script lua52 = CreateScript(LuaCompatibilityVersion.Lua52);
-            Script lua53 = CreateScript(LuaCompatibilityVersion.Lua53);
+            Script script = CreateScript(version);
+            await Assert.That(script.Globals.Get("utf8").IsNil()).IsTrue().ConfigureAwait(false);
+        }
 
-            await Assert.That(lua52.Globals.Get("utf8").IsNil()).IsTrue().ConfigureAwait(false);
+        // Tests that UTF8 is available in 5.3+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8LibraryAvailableInLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
             await Assert
-                .That(lua53.Globals.Get("utf8").Type)
+                .That(script.Globals.Get("utf8").Type)
                 .IsEqualTo(DataType.Table)
                 .ConfigureAwait(false);
         }
 
         // Lua 5.3 manual §6.5: utf8.len counts characters within the provided range.
         [global::TUnit.Core.Test]
-        public async Task Utf8LenCountsUtf8Characters()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8LenCountsUtf8Characters(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             string sample = "héll😀";
             script.Globals.Set("sample", DynValue.NewString(sample));
 
@@ -43,9 +57,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 manual §6.5: utf8.len returns nil + position on invalid UTF-8.
         [global::TUnit.Core.Test]
-        public async Task Utf8LenReturnsNilAndPositionForInvalidSequences()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8LenReturnsNilAndPositionForInvalidSequences(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("invalid", DynValue.NewString("\uD83D"));
 
             DynValue tuple = script.DoString("return utf8.len(invalid)");
@@ -57,9 +76,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.len accepts negative i/j indices and clamps zero to 1.
         [global::TUnit.Core.Test]
-        public async Task Utf8LenHandlesNegativeRangeIndices()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8LenHandlesNegativeRangeIndices(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("word", DynValue.NewString("abcdef"));
 
             DynValue result = script.DoString(
@@ -76,9 +98,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 manual §6.5: high surrogates not followed by low surrogates are invalid.
         [global::TUnit.Core.Test]
-        public async Task Utf8LenReturnsNilForBrokenHighSurrogatePairs()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8LenReturnsNilForBrokenHighSurrogatePairs(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("broken", DynValue.NewString("\uD83DA"));
 
             DynValue tuple = script.DoString("return utf8.len(broken)");
@@ -92,9 +119,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua strings are byte sequences, so utf8.char produces UTF-8 encoded bytes.
         // 0x41='A' (1 byte), 0x1F600=😀 (4 bytes: F0 9F 98 80), 0x20AC=€ (3 bytes: E2 82 AC)
         [global::TUnit.Core.Test]
-        public async Task Utf8CharBuildsStringsFromCodePoints()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CharBuildsStringsFromCodePoints(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return utf8.char(0x41, 0x1F600, 0x20AC)");
 
             // Lua strings are byte sequences - verify the UTF-8 encoded bytes
@@ -115,9 +145,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.codepoint returns decoded scalars.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodePointReturnsCodePoints()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodePointReturnsCodePoints(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("word", DynValue.NewString("A😀€"));
 
             DynValue values = script.DoString("return utf8.codepoint(word, 1, #word)");
@@ -130,9 +163,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.codepoint defaults j to i when omitted.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodePointDefaultsEndToStartWhenRangeIsOmitted()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodePointDefaultsEndToStartWhenRangeIsOmitted(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("word", DynValue.NewString("ABCDE"));
 
             DynValue values = script.DoString(
@@ -148,9 +186,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 manual §6.5: utf8.codepoint returns no values for reversed/empty ranges within bounds.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodePointReturnsVoidForReversedRange()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodePointReturnsVoidForReversedRange(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             // Range where end < start but both are valid positions
             DynValue result = script.DoString("return utf8.codepoint('abc', 3, 1)");
@@ -160,9 +201,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 manual §6.5: utf8.codepoint throws for out-of-bounds positions.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodePointThrowsForOutOfBoundsRange()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodePointThrowsForOutOfBoundsRange(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             // Position 5 is out of bounds for 3-character string
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -174,9 +218,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 manual §6.5: utf8.charpattern matches the documented regex.
         [global::TUnit.Core.Test]
-        public async Task Utf8CharpatternMatchesLuaSpecification()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CharpatternMatchesLuaSpecification(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             DynValue pattern = script.DoString("return utf8.charpattern");
 
             const string Expected = "[\0-\x7F\xC2-\xF4][\x80-\xBF]*";
@@ -186,9 +233,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.codes emits positions and scalars.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodesIteratesPositionsAndScalars()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodesIteratesPositionsAndScalars(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("word", DynValue.NewString("A😀B"));
 
             DynValue summary = script.DoString(
@@ -206,9 +256,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.codes rejects invalid UTF-8.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodesThrowsOnInvalidUtf8Sequences()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodesThrowsOnInvalidUtf8Sequences(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("invalid", DynValue.NewString("\uD83D"));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -223,9 +276,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.codes accepts nil control values.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodesIteratorAcceptsNilControlValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodesIteratorAcceptsNilControlValue(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             DynValue result = script.DoString(
                 @"
@@ -241,9 +297,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.codes returns nil once the control value passes the end.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodesIteratorReturnsNilWhenControlIsPastEnd()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodesIteratorReturnsNilWhenControlIsPastEnd(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             DynValue result = script.DoString(
                 @"
@@ -257,9 +318,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.codes throws when the control points inside a rune.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodesIteratorThrowsWhenControlPointsInsideRune()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodesIteratorThrowsWhenControlPointsInsideRune(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("emoji", DynValue.NewString("A😀B"));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -279,9 +345,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.offset navigates forward/backward across boundaries.
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetNavigatesBoundaries()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetNavigatesBoundaries(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("word", DynValue.NewString("A😀B"));
 
             DynValue offsets = script.DoString(
@@ -304,9 +373,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 manual §6.5: utf8.offset fails when i is not on a boundary.
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetRequiresCharacterBoundaries()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetRequiresCharacterBoundaries(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("word", DynValue.NewString("A😀B"));
 
             DynValue result = script.DoString("return utf8.offset(word, 1, 3)");
@@ -316,9 +388,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 manual §6.5: utf8.offset supports negative positions (counting from end).
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetSupportsNegativePositions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetSupportsNegativePositions(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             DynValue offsets = script.DoString(
                 @"
@@ -332,9 +407,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 manual §6.5: utf8.offset throws for position 0 (out of bounds).
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetThrowsForPositionZero()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetThrowsForPositionZero(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return utf8.offset('abcd', 1, 0)")
@@ -349,10 +427,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.3 manual §6.5: utf8.char rejects out-of-range code points (>0x10FFFF).
         // However, Lua 5.4 extends the range to accept code points up to 0x7FFFFFFF.
         [global::TUnit.Core.Test]
-        public async Task Utf8CharRejectsOutOfRangeCodePointsLua53()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task Utf8CharRejectsOutOfRangeCodePointsLua53(LuaCompatibilityVersion version)
         {
             // Lua 5.3: rejects code points > 0x10FFFF
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53);
+            Script script = CreateScript(version);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return utf8.char(0x110000)")
@@ -366,10 +445,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 accepts extended code points up to 0x7FFFFFFF
         [global::TUnit.Core.Test]
-        public async Task Utf8CharAcceptsExtendedCodePointsLua54()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CharAcceptsExtendedCodePointsLua54(LuaCompatibilityVersion version)
         {
             // Lua 5.4: accepts code points up to 0x7FFFFFFF
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             // This should NOT throw in Lua 5.4
             DynValue result = script.DoString("return utf8.char(0x110000)");
@@ -384,10 +465,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // - Lua 5.3: 0 to 0x10FFFF (surrogates ARE allowed)
         // - Lua 5.4: 0 to 0x7FFFFFFF (extended range)
         [global::TUnit.Core.Test]
-        public async Task Utf8CharAcceptsSurrogateCodePointsLua53()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task Utf8CharAcceptsSurrogateCodePointsLua53(LuaCompatibilityVersion version)
         {
             // Verified: lua5.3 -e "print(utf8.char(0xD800))" works without error
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53);
+            Script script = CreateScript(version);
 
             // This should NOT throw in Lua 5.3 - surrogates are accepted
             DynValue result = script.DoString("return utf8.char(0xD800)");
@@ -399,10 +481,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 accepts surrogate code points (same as 5.3, but test is kept for completeness)
         [global::TUnit.Core.Test]
-        public async Task Utf8CharAcceptsSurrogateCodePointsLua54()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CharAcceptsSurrogateCodePointsLua54(LuaCompatibilityVersion version)
         {
             // Lua 5.4: accepts surrogate code points
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             // This should NOT throw in Lua 5.4
             DynValue result = script.DoString("return utf8.char(0xD800)");
@@ -414,9 +498,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.codepoint errors on malformed UTF-8.
         [global::TUnit.Core.Test]
-        public async Task Utf8CodePointThrowsOnInvalidUtf8Sequences()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodePointThrowsOnInvalidUtf8Sequences(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("invalid", DynValue.NewString("\uDC00"));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -431,9 +518,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.offset returns nil when advancing past the end.
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetReturnsNilWhenAdvancingPastEndOfString()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetReturnsNilWhenAdvancingPastEndOfString(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             DynValue result = script.DoString("return utf8.offset('\U0001F600', 2)");
 
@@ -442,9 +534,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.offset returns nil when moving before the start.
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetReturnsNilWhenMovingBeforeStart()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetReturnsNilWhenMovingBeforeStart(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             DynValue result = script.DoString("return utf8.offset('ab', -3)");
 
@@ -453,9 +548,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.4 manual §6.5: utf8.offset throws for positions outside valid range.
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetThrowsForPositionOutOfBounds()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetThrowsForPositionOutOfBounds(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             // Position 10 is outside the valid range [1, length+1] for a 3-character string
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -470,9 +568,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: negative offsets across leading low surrogates return nil.
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetNegativeReturnsNilForLeadingLowSurrogate()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetNegativeReturnsNilForLeadingLowSurrogate(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("leadingLow", DynValue.NewString("\uDC00"));
 
             DynValue result = script.DoString("return utf8.offset(leadingLow, -1)");
@@ -482,9 +585,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: negative offsets across standalone low surrogates return nil.
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetNegativeReturnsNilForStandaloneLowSurrogate()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetNegativeReturnsNilForStandaloneLowSurrogate(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("mixedLow", DynValue.NewString("A\uDC00"));
 
             DynValue result = script.DoString("return utf8.offset(mixedLow, -1)");
@@ -494,9 +602,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: negative offsets across dangling high surrogates return nil.
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetNegativeReturnsNilForDanglingHighSurrogate()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetNegativeReturnsNilForDanglingHighSurrogate(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("danglingHigh", DynValue.NewString("\uD83D"));
 
             DynValue result = script.DoString("return utf8.offset(danglingHigh, -1)");
@@ -506,9 +619,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.3 manual §6.5: utf8.offset(i = 0) returns nil for empty strings.
         [global::TUnit.Core.Test]
-        public async Task Utf8OffsetZeroReturnsNilForEmptyString()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetZeroReturnsNilForEmptyString(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("empty", DynValue.NewString(string.Empty));
 
             DynValue result = script.DoString("return utf8.offset(empty, 0)");
@@ -520,19 +636,123 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.4 manual §6.5: The third argument i defaults to 1 when n is non-negative and to #s + 1 otherwise.
         // If i is outside the range [1, #s + 1], the function fails with an error.
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments("abc", 1, 0, "position out of bounds")] // position 0 is invalid
-        [global::TUnit.Core.Arguments("abc", 1, -5, "position out of bounds")] // position -5 => #s+1+(-5)=-1 for "abc"(len 3) = -1, out of bounds
-        [global::TUnit.Core.Arguments("abc", 1, 5, "position out of bounds")] // position 5 > 4 (#s+1) for "abc"
-        [global::TUnit.Core.Arguments("abc", 1, 10, "position out of bounds")] // position 10 >> length+1
-        [global::TUnit.Core.Arguments("", 1, 2, "position out of bounds")] // position 2 > 1 (#s+1) for ""
+        // Lua 5.3
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua53,
+            "abc",
+            1,
+            0,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua53,
+            "abc",
+            1,
+            -5,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua53,
+            "abc",
+            1,
+            5,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua53,
+            "abc",
+            1,
+            10,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua53,
+            "",
+            1,
+            2,
+            "position out of bounds"
+        )]
+        // Lua 5.4
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            "abc",
+            1,
+            0,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            "abc",
+            1,
+            -5,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            "abc",
+            1,
+            5,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            "abc",
+            1,
+            10,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            "",
+            1,
+            2,
+            "position out of bounds"
+        )]
+        // Lua 5.5
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua55,
+            "abc",
+            1,
+            0,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua55,
+            "abc",
+            1,
+            -5,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua55,
+            "abc",
+            1,
+            5,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua55,
+            "abc",
+            1,
+            10,
+            "position out of bounds"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua55,
+            "",
+            1,
+            2,
+            "position out of bounds"
+        )]
         public async Task Utf8OffsetThrowsForInvalidPositions(
+            LuaCompatibilityVersion version,
             string input,
             int n,
             int pos,
             string expectedError
         )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("s", DynValue.NewString(input));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -545,18 +765,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Data-driven tests for utf8.offset valid negative positions
         // Negative positions are valid - they count from end: -1 = last position, -n = position #s+1-n
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments("abc", 1, -1, 3)] // -1 => position 3 (last char position)
-        [global::TUnit.Core.Arguments("abc", 1, -2, 2)] // -2 => position 2
-        [global::TUnit.Core.Arguments("abc", 1, -3, 1)] // -3 => position 1 (first char position)
-        [global::TUnit.Core.Arguments("abc", 0, -1, 3)] // n=0 means "find boundary at or before position"
+        // Lua 5.3
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "abc", 1, -1, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "abc", 1, -2, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "abc", 1, -3, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "abc", 0, -1, 3)]
+        // Lua 5.4
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "abc", 1, -1, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "abc", 1, -2, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "abc", 1, -3, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "abc", 0, -1, 3)]
+        // Lua 5.5
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "abc", 1, -1, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "abc", 1, -2, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "abc", 1, -3, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "abc", 0, -1, 3)]
         public async Task Utf8OffsetAcceptsValidNegativePositions(
+            LuaCompatibilityVersion version,
             string input,
             int n,
             int pos,
             double expectedResult
         )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
             script.Globals.Set("s", DynValue.NewString(input));
 
             DynValue result = script.DoString($"return utf8.offset(s, {n}, {pos})");
@@ -569,11 +801,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.4: accepts 0x0 to 0x7FFFFFFF (extended range)
         // Only values ABOVE Unicode max are rejected in Lua 5.3
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(0x110000)] // just above Unicode max (0x10FFFF)
-        [global::TUnit.Core.Arguments(0x200000)] // well above Unicode max
-        public async Task Utf8CharRejectsInvalidCodePointsLua53(int codePoint)
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x110000)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x200000)]
+        public async Task Utf8CharRejectsInvalidCodePointsLua53DataDriven(
+            LuaCompatibilityVersion version,
+            int codePoint
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53);
+            Script script = CreateScript(version);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString($"return utf8.char(0x{codePoint:X})")
@@ -588,15 +823,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Data-driven tests for utf8.char acceptance of surrogates in Lua 5.3
         // Verified against real Lua 5.3 - surrogates ARE accepted
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(0xD800, 3)] // surrogate start - 3 bytes (ED A0 80)
-        [global::TUnit.Core.Arguments(0xD8FF, 3)] // surrogate middle - 3 bytes
-        [global::TUnit.Core.Arguments(0xDFFF, 3)] // surrogate end - 3 bytes
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0xD800, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0xD8FF, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0xDFFF, 3)]
         public async Task Utf8CharAcceptsSurrogateCodePointsLua53DataDriven(
+            LuaCompatibilityVersion version,
             int codePoint,
             int expectedByteLength
         )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53);
+            Script script = CreateScript(version);
 
             DynValue result = script.DoString($"return utf8.char(0x{codePoint:X})");
 
@@ -607,21 +843,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        // Data-driven tests for utf8.char acceptance in Lua 5.4
+        // Data-driven tests for utf8.char acceptance in Lua 5.4+
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(0xD800, 3)] // surrogate - 3 bytes (ED A0 80)
-        [global::TUnit.Core.Arguments(0xDFFF, 3)] // surrogate end - 3 bytes
-        [global::TUnit.Core.Arguments(0x110000, 4)] // above Unicode max - 4 bytes
-        [global::TUnit.Core.Arguments(0x1FFFFF, 4)] // max 4-byte extended UTF-8
-        [global::TUnit.Core.Arguments(0x200000, 5)] // starts 5-byte range
-        [global::TUnit.Core.Arguments(0x3FFFFFF, 5)] // max 5-byte extended UTF-8
-        [global::TUnit.Core.Arguments(0x4000000, 6)] // starts 6-byte range
+        // Lua 5.4
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0xD800, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0xDFFF, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x110000, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x1FFFFF, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x200000, 5)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x3FFFFFF, 5)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x4000000, 6)]
+        // Lua 5.5
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0xD800, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0xDFFF, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x110000, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x1FFFFF, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x200000, 5)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x3FFFFFF, 5)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x4000000, 6)]
         public async Task Utf8CharAcceptsExtendedCodePointsLua54DataDriven(
+            LuaCompatibilityVersion version,
             int codePoint,
             int expectedByteLength
         )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             DynValue result = script.DoString($"return utf8.char(0x{codePoint:X})");
 
@@ -632,25 +878,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        // Data-driven tests for utf8.char common valid code points (all versions)
+        // Data-driven tests for utf8.char common valid code points (all UTF8 versions)
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(0x00, 1)] // NUL - 1 byte
-        [global::TUnit.Core.Arguments(0x41, 1)] // 'A' - 1 byte
-        [global::TUnit.Core.Arguments(0x7F, 1)] // DEL - max 1-byte
-        [global::TUnit.Core.Arguments(0x80, 2)] // first 2-byte
-        [global::TUnit.Core.Arguments(0x7FF, 2)] // max 2-byte
-        [global::TUnit.Core.Arguments(0x800, 3)] // first 3-byte
-        [global::TUnit.Core.Arguments(0x20AC, 3)] // € - 3 bytes
-        [global::TUnit.Core.Arguments(0xFFFF, 3)] // max BMP (3-byte)
-        [global::TUnit.Core.Arguments(0x10000, 4)] // first 4-byte (first supplementary)
-        [global::TUnit.Core.Arguments(0x1F600, 4)] // 😀 - 4 bytes
-        [global::TUnit.Core.Arguments(0x10FFFF, 4)] // max Unicode - 4 bytes
+        // Lua 5.3
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x00, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x41, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x7F, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x80, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x7FF, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x800, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x20AC, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0xFFFF, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x10000, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x1F600, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 0x10FFFF, 4)]
+        // Lua 5.4
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x00, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x41, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x7F, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x80, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x7FF, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x800, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x20AC, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0xFFFF, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x10000, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x1F600, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 0x10FFFF, 4)]
+        // Lua 5.5
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x00, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x41, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x7F, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x80, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x7FF, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x800, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x20AC, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0xFFFF, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x10000, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x1F600, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 0x10FFFF, 4)]
         public async Task Utf8CharEncodesValidCodePointsCorrectly(
+            LuaCompatibilityVersion version,
             int codePoint,
             int expectedByteLength
         )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            Script script = CreateScript(version);
 
             DynValue result = script.DoString($"return utf8.char(0x{codePoint:X})");
 

@@ -14,10 +14,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
     public sealed class CoroutineModuleTUnitTests
     {
+        // =====================================================
+        // coroutine.running() Tests (Version-specific behavior)
+        // Lua 5.1: returns only the coroutine
+        // Lua 5.2+: returns (coroutine, isMain)
+        // =====================================================
+
+        /// <summary>
+        /// Verifies that Lua 5.2+ mode returns (coroutine, isMain) from coroutine.running() in main thread.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task RunningFromMainReturnsMainCoroutine()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningFromMainReturnsMainCoroutine(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue runningFunc = script.Globals.Get("coroutine").Table.Get("running");
 
             DynValue result = script.Call(runningFunc);
@@ -37,10 +50,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(isMain.Boolean).IsTrue().ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Verifies that Lua 5.2+ mode returns isMain=false inside a coroutine.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task RunningInsideCoroutineReturnsFalse()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RunningInsideCoroutineReturnsFalse(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function runningCheck()
@@ -57,10 +77,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
 
+        // =====================================================
+        // coroutine.status() Tests (All versions)
+        // =====================================================
+
         [global::TUnit.Core.Test]
-        public async Task StatusReflectsLifecycleAndForceSuspendedStates()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StatusReflectsLifecycleAndForceSuspendedStates(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function compute()
@@ -96,9 +127,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task StatusReturnsRunningForActiveCoroutine()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StatusReturnsRunningForActiveCoroutine(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function queryRunningStatus()
@@ -117,10 +153,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("running").ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that coroutine.status() on the main coroutine returns 'normal' when called from a child.
+        /// Note: This test requires Lua 5.2+ because coroutine.running() returns nil from main in Lua 5.1.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task StatusReturnsNormalWhenInspectingMainFromChild()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StatusReturnsNormalWhenInspectingMainFromChild(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 local mainCoroutine = select(1, coroutine.running())
@@ -139,9 +185,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task StatusThrowsForUnknownStates()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StatusThrowsForUnknownStates(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function idle()
@@ -165,10 +216,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        // =====================================================
+        // coroutine.wrap() and coroutine.create() Tests (All versions)
+        // =====================================================
+
         [global::TUnit.Core.Test]
-        public async Task WrapRequiresFunctionArgument()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WrapRequiresFunctionArgument(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue wrapFunc = script.Globals.Get("coroutine").Table.Get("wrap");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -182,9 +242,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CreateRequiresFunctionArgument()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CreateRequiresFunctionArgument(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue createFunc = script.Globals.Get("coroutine").Table.Get("create");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -198,9 +263,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task WrapReturnsFunctionThatResumesCoroutine()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WrapReturnsFunctionThatResumesCoroutine(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function buildWrapper()
@@ -228,10 +298,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(final.String).IsEqualTo("done").ConfigureAwait(false);
         }
 
+        // =====================================================
+        // coroutine.resume() Tests (All versions)
+        // =====================================================
+
         [global::TUnit.Core.Test]
-        public async Task ResumeFlattensResultsAndReportsSuccess()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeFlattensResultsAndReportsSuccess(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function generator()
@@ -258,9 +337,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeReportsErrorsAsFalseWithMessage()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeReportsErrorsAsFalseWithMessage(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function explode()
@@ -279,9 +363,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeRequiresThreadArgument()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeRequiresThreadArgument(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -294,10 +383,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that resume flattens nested tuple results. This test uses coroutine.running()
+        /// which returns 2 values in Lua 5.2+ (coroutine, isMain), so the total result is 4 values.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task ResumeFlattensNestedTupleResults()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeFlattensNestedTupleResults(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function returningTuple()
@@ -322,10 +419,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that resume flattens nested tuple results in Lua 5.1 mode.
+        /// In Lua 5.1, coroutine.running() returns only 1 value, so the total result is 3 values.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task ResumeDeeplyNestedTuplesAreFlattened()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task ResumeFlattensNestedTupleResultsLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                function returningTuple()
+                    return 'tag', coroutine.running()
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("returningTuple"));
+
+            DynValue result = script.Call(resumeFunc, coroutineValue);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            // Lua 5.1: coroutine.running() returns only 1 value (the coroutine)
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("tag").ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Type)
+                .IsEqualTo(DataType.Thread)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeDeeplyNestedTuplesAreFlattened(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function buildDeepCoroutine()
@@ -362,9 +497,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeForwardsArgumentsToCoroutine()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeForwardsArgumentsToCoroutine(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function sum(...)
@@ -395,9 +535,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeFlattensTrailingTupleResults()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeFlattensTrailingTupleResults(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.Globals["buildNestedResult"] = DynValue.NewCallback(
                 (_, _) =>
                 {
@@ -436,9 +581,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task WrapForwardsArgumentsToCoroutineFunction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WrapForwardsArgumentsToCoroutineFunction(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function buildConcatWrapper()
@@ -460,10 +610,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("alpha-beta-gamma").ConfigureAwait(false);
         }
 
+        // =====================================================
+        // coroutine.isyieldable() Tests (Lua 5.3+ only)
+        // This function was added in Lua 5.3
+        // =====================================================
+
+        /// <summary>
+        /// Tests that coroutine.isyieldable() returns false when called from the main coroutine.
+        /// This function was added in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task IsYieldableReturnsFalseOnMainCoroutine()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IsYieldableReturnsFalseOnMainCoroutine(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
 
             DynValue result = script.Call(isYieldableFunc);
@@ -472,10 +634,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that coroutine.isyieldable() is nil in Lua 5.1 and 5.2 (function doesn't exist).
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task IsYieldableReturnsTrueInsideCoroutine()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task IsYieldableShouldBeNilInPreLua53(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
+
+            await Assert.That(isYieldableFunc.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that coroutine.isyieldable() returns true when called inside a coroutine.
+        /// This function was added in Lua 5.3.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IsYieldableReturnsTrueInsideCoroutine(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function buildYieldableChecker()
@@ -494,10 +677,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
+        // =====================================================
+        // Error Propagation Tests (All versions)
+        // =====================================================
+
         [global::TUnit.Core.Test]
-        public async Task WrapPropagatesErrorsToCaller()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WrapPropagatesErrorsToCaller(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function buildErrorWrapper()
@@ -518,9 +710,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task WrapPropagatesErrorsAfterYield()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WrapPropagatesErrorsAfterYield(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function buildDelayedErrorWrapper()
@@ -545,10 +742,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(exception.Message).Contains("wrap later").ConfigureAwait(false);
         }
 
+        // =====================================================
+        // Force Suspend and Auto-Yield Tests (All versions)
+        // =====================================================
+
         [global::TUnit.Core.Test]
-        public async Task ResumeForceSuspendedCoroutineRejectsArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeForceSuspendedCoroutineRejectsArguments(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function heavy()
@@ -584,10 +792,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that coroutine.isyieldable() returns false inside a CLR callback.
+        /// This function was added in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task IsYieldableReturnsFalseInsideClrCallback()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IsYieldableReturnsFalseInsideClrCallback(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue isYieldableFunc = script.Globals.Get("coroutine").Table.Get("isyieldable");
 
             script.Globals["clrCheck"] = DynValue.NewCallback(
@@ -612,10 +827,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Boolean).IsFalse().ConfigureAwait(false);
         }
 
+        // =====================================================
+        // pcall/xpcall with Coroutines Tests (All versions, except isyieldable tests)
+        // =====================================================
+
         [global::TUnit.Core.Test]
-        public async Task WrapWithPcallCapturesErrors()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WrapWithPcallCapturesErrors(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function buildPcallWrapper()
@@ -640,9 +864,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task WrapWithPcallReturnsYieldedValues()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WrapWithPcallReturnsYieldedValues(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function buildYieldingWrapper()
@@ -669,10 +898,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(second.Tuple[2].Number).IsEqualTo(1d).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that coroutine.isyieldable() returns true inside pcall within a coroutine.
+        /// This function was added in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task IsYieldableInsidePcallWithinCoroutine()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IsYieldableInsidePcallWithinCoroutine(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function pcallyield()
@@ -701,9 +937,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task WrapWithPcallHandlesTailCalls()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WrapWithPcallHandlesTailCalls(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function tail_target(...)
@@ -735,10 +976,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that coroutine.isyieldable() returns false inside xpcall error handler.
+        /// This function was added in Lua 5.3.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task IsYieldableInsideXpcallErrorHandlerWithinCoroutine()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IsYieldableInsideXpcallErrorHandlerWithinCoroutine(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 handlerYieldable = nil
@@ -777,10 +1027,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(handlerYieldable.Boolean).IsFalse().ConfigureAwait(false);
         }
 
+        // =====================================================
+        // Nested Coroutines and Status Tests (All versions)
+        // =====================================================
+
         [global::TUnit.Core.Test]
-        public async Task CoroutineStatusRemainsAccurateAfterNestedResumes()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineStatusRemainsAccurateAfterNestedResumes(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 loggedStatuses = {}
@@ -842,10 +1103,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        // =====================================================
+        // Threading and Concurrency Tests (All versions)
+        // =====================================================
+
         [global::TUnit.Core.Test]
-        public async Task ResumeFromDifferentThreadThrowsInvalidOperation()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeFromDifferentThreadThrowsInvalidOperation(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             using ManualResetEventSlim entered = new(false);
             using ManualResetEventSlim allowCompletion = new(false);
             using DeferredActionScope completionScope = DeferredActionScope.Run(
@@ -894,9 +1166,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeDeadCoroutineReturnsErrorTuple()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeDeadCoroutineReturnsErrorTuple(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function finish()
@@ -920,10 +1197,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        // =====================================================
+        // coroutine.yield() Tests (All versions)
+        // =====================================================
+
         [global::TUnit.Core.Test]
-        public async Task YieldReturnsYieldRequestWithArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task YieldReturnsYieldRequestWithArguments(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue yieldFunc = script.Globals.Get("coroutine").Table.Get("yield");
 
             DynValue result = script.Call(
@@ -942,7 +1228,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         // =====================================================
-        // coroutine.running() Version Parity Tests
+        // coroutine.running() Version Parity Tests (Additional)
+        // These are duplicate/supplemental tests that already exist above
         // =====================================================
         // Lua 5.1: coroutine.running() returns only the coroutine
         // Lua 5.2+: coroutine.running() returns (coroutine, isMain)
@@ -951,9 +1238,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Verifies that Lua 5.1 mode returns only the coroutine from coroutine.running().
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task RunningReturnsOnlyCoroutineInLua51()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task RunningReturnsOnlyCoroutineInLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -979,9 +1267,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task RunningReturnsTupleInLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1004,9 +1293,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Verifies that Lua 5.1 mode's coroutine.running() returns the correct coroutine.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task RunningReturnsCorrectCoroutineInLua51()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task RunningReturnsCorrectCoroutineInLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1032,11 +1322,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task RunningReturnsIsMainFalseInsideCoroutineInLua52Plus(
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1061,11 +1352,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task RunningReturnsIsMainTrueInMainThreadInLua52Plus(
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString(
                 @"
@@ -1080,15 +1372,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         private static Script CreateScript()
         {
             return new Script(CoreModulePresets.Complete);
-        }
-
-        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
-        {
-            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
-            {
-                CompatibilityVersion = version,
-            };
-            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

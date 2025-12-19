@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -12,9 +13,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     public sealed class MathModuleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task LogUsesDefaultBaseWhenOmitted()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task LogUsesDefaultBaseWhenOmitted(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.log(8)");
 
             await Assert
@@ -25,9 +33,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LogSupportsCustomBase()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task LogSupportsCustomBase(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.log(8, 2)");
 
             await Assert.That(result.Number).IsEqualTo(3d).Within(1e-12).ConfigureAwait(false);
@@ -45,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
         public async Task PowHandlesLargeExponent(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.pow(10, 6)");
 
             await Assert
@@ -57,9 +69,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ModfSplitsIntegerAndFractionalComponents()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ModfSplitsIntegerAndFractionalComponents(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.modf(-3.25)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -72,18 +91,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task MaxAggregatesAcrossArguments()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task MaxAggregatesAcrossArguments(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.max(-1, 5, 12, 3)");
 
             await Assert.That(result.Number).IsEqualTo(12d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MinAggregatesAcrossArguments()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task MinAggregatesAcrossArguments(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.min(-1, 5, 12, 3)");
 
             await Assert.That(result.Number).IsEqualTo(-1d).ConfigureAwait(false);
@@ -94,7 +127,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// math.ldexp was deprecated in Lua 5.2 and removed in Lua 5.3.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task LdexpCombinesMantissaAndExponent()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task LdexpCombinesMantissaAndExponent(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.ldexp(0.5, 3)");
@@ -111,7 +151,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
         public async Task LdexpAvailableInLua51And52(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.ldexp(0.5, 3)");
 
             await Assert
@@ -131,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
         public async Task LdexpIsNilInLua53Plus(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.ldexp");
 
             await Assert
@@ -152,7 +192,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
         public async Task FrexpAvailableInLua51And52(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.frexp(8)");
 
             // math.frexp(8) returns m=0.5, e=4 (8 = 0.5 * 2^4)
@@ -179,7 +219,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
         public async Task FrexpIsNilInLua53Plus(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.frexp");
 
             await Assert
@@ -192,9 +232,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SqrtOfNegativeNumberReturnsNaN()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task SqrtOfNegativeNumberReturnsNaN(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.sqrt(-1)");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
@@ -213,7 +260,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.pow(10, 309)");
 
             await Assert
@@ -228,7 +275,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// In Lua 5.5, use the ^ operator instead: 10^6.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task PowIsNilInLua55()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task PowIsNilInLua55(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua55);
             DynValue result = script.DoString("return math.pow");
@@ -248,7 +300,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// This is the replacement for the deprecated math.pow function.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task ExponentiationOperatorWorksInLua55()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ExponentiationOperatorWorksInLua55(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua55);
             DynValue result = script.DoString("return 10 ^ 6");
@@ -262,9 +321,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomSeedProducesDeterministicSequence()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task RandomSeedProducesDeterministicSequence(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue firstSequence = script.DoString(
                 @"
@@ -295,9 +361,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TypeDistinguishesIntegersAndFloats()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task TypeDistinguishesIntegersAndFloats(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue tuple = script.DoString("return math.type(5), math.type(3.14)");
 
             await Assert.That(tuple.Tuple[0].String).IsEqualTo("integer").ConfigureAwait(false);
@@ -305,27 +376,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToIntegerConvertsNumericStrings()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ToIntegerConvertsNumericStrings(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.tointeger('42')");
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToIntegerReturnsNilWhenValueNotIntegral()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ToIntegerReturnsNilWhenValueNotIntegral(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.tointeger(3.5)");
 
             await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToIntegerThrowsWhenArgumentMissing()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ToIntegerThrowsWhenArgumentMissing(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return math.tointeger()")
@@ -335,12 +421,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToIntegerReturnsNilForUnsupportedType()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ToIntegerReturnsNilForUnsupportedType(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             // Per Lua 5.3+ spec, math.tointeger returns nil for non-number/non-string types
             // (boolean, table, function, userdata, etc.) - it does NOT throw an error.
             // Reference: Lua 5.3 Manual §6.7
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return math.tointeger(true)");
 
@@ -348,33 +439,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToIntegerReturnsNilForTable()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ToIntegerReturnsNilForTable(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.tointeger({})");
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToIntegerReturnsNilForFunction()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ToIntegerReturnsNilForFunction(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.tointeger(function() end)");
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToIntegerReturnsNilForNil()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ToIntegerReturnsNilForNil(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.tointeger(nil)");
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task UltPerformsUnsignedComparison()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task UltPerformsUnsignedComparison(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue tuple = script.DoString("return math.ult(0, -1), math.ult(-1, 0)");
 
             await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
@@ -386,7 +493,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task FrexpWithZeroReturnsZeroMantissaAndExponent()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FrexpWithZeroReturnsZeroMantissaAndExponent(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.frexp(0)");
@@ -401,7 +515,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task FrexpWithNegativeZeroReturnsZeroMantissaAndExponent()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FrexpWithNegativeZeroReturnsZeroMantissaAndExponent(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.frexp(-0.0)");
@@ -416,7 +537,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task FrexpWithNegativeNumberReturnsNegativeMantissa()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FrexpWithNegativeNumberReturnsNegativeMantissa(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.frexp(-8)");
@@ -438,7 +566,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task FrexpWithSubnormalNumberHandlesExponentCorrectly()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FrexpWithSubnormalNumberHandlesExponentCorrectly(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             // Subnormal (denormalized) numbers have exponent bits = 0
             // The smallest positive subnormal is approximately 4.94e-324
@@ -466,7 +601,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task FrexpWithPositiveNumberReturnsMantissaInExpectedRange()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FrexpWithPositiveNumberReturnsMantissaInExpectedRange(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString("return math.frexp(16)");
@@ -489,7 +631,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Both were deprecated in Lua 5.2 and removed in Lua 5.3.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task FrexpAndLdexpRoundTrip()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FrexpAndLdexpRoundTrip(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
             DynValue result = script.DoString(
@@ -507,9 +654,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // ========================================
 
         [global::TUnit.Core.Test]
-        public async Task FloorReturnsIntegerForPositiveFloat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorReturnsIntegerForPositiveFloat(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.floor(3.7)");
 
             await Assert.That(result.Number).IsEqualTo(3d).ConfigureAwait(false);
@@ -517,9 +669,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorReturnsIntegerForNegativeFloat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorReturnsIntegerForNegativeFloat(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.floor(-3.7)");
 
             await Assert.That(result.Number).IsEqualTo(-4d).ConfigureAwait(false);
@@ -527,9 +684,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorPreservesIntegerInput()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorPreservesIntegerInput(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.floor(42)");
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
@@ -537,18 +697,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorReturnsIntegerTypeReportedByMathType()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorReturnsIntegerTypeReportedByMathType(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.type(math.floor(3.7))");
 
             await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorHandlesInfinityAsFloat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorHandlesInfinityAsFloat(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.floor(1/0)");
 
             await Assert
@@ -559,9 +729,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorHandlesNaNAsFloat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorHandlesNaNAsFloat(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.floor(0/0)");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
@@ -569,9 +744,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorPreservesIntegerZero()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorPreservesIntegerZero(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.floor(0)");
 
             await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
@@ -579,9 +757,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorHandlesNegativeZeroAsInteger()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorHandlesNegativeZeroAsInteger(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.floor(-0.0)");
 
             // Negative zero floored is 0, which should be returned as integer
@@ -594,9 +777,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // ========================================
 
         [global::TUnit.Core.Test]
-        public async Task CeilReturnsIntegerForPositiveFloat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task CeilReturnsIntegerForPositiveFloat(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.ceil(3.2)");
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
@@ -604,9 +792,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CeilReturnsIntegerForNegativeFloat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task CeilReturnsIntegerForNegativeFloat(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.ceil(-3.2)");
 
             await Assert.That(result.Number).IsEqualTo(-3d).ConfigureAwait(false);
@@ -614,9 +807,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CeilPreservesIntegerInput()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task CeilPreservesIntegerInput(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.ceil(42)");
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
@@ -624,18 +820,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CeilReturnsIntegerTypeReportedByMathType()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task CeilReturnsIntegerTypeReportedByMathType(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.type(math.ceil(3.2))");
 
             await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task CeilHandlesInfinityAsFloat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task CeilHandlesInfinityAsFloat(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.ceil(1/0)");
 
             await Assert
@@ -646,9 +852,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CeilHandlesNaNAsFloat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task CeilHandlesNaNAsFloat(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.ceil(0/0)");
 
             await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
@@ -656,9 +867,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CeilPreservesIntegerZero()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task CeilPreservesIntegerZero(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.ceil(0)");
 
             await Assert.That(result.Number).IsEqualTo(0d).ConfigureAwait(false);
@@ -666,9 +880,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task CeilHandlesFloatPointFiveCorrectly()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task CeilHandlesFloatPointFiveCorrectly(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.ceil(0.5)");
 
             await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
@@ -676,12 +895,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorResultCanBeUsedInStringFormat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorResultCanBeUsedInStringFormat(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             // Verify integer promotion integrates with string.format %d for valid integer values.
             // Note: math.maxinteger + 0.5 rounds to 2^63 which is OUTSIDE integer range,
             // so we test with a valid case instead.
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%d', math.floor(3.7))");
 
             // math.floor(3.7) = 3 (promoted to integer subtype in Lua 5.3+)
@@ -690,12 +916,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorResultForMaxintegerPlusHalfThrowsInStringFormat()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task FloorResultForMaxintegerPlusHalfThrowsInStringFormat(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             // Verify that math.floor(math.maxinteger + 0.5) correctly returns a float
             // (not an integer), and that string.format('%d', ...) correctly rejects it.
             // Reference: Lua 5.4 Manual §6.7 - math.floor returns integer only when result fits.
-            Script script = CreateScript();
+            // Note: math.maxinteger only exists in Lua 5.3+
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.format('%d', math.floor(math.maxinteger + 0.5))")
@@ -725,8 +957,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(async () =>
@@ -747,8 +978,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(1.9) should truncate to 1, then return 1 (since random(1) returns 1)
             DynValue result = script.DoString("return math.random(1.9)");
@@ -764,8 +994,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
         public async Task RandomErrorsOnNaNLua53Plus(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(async () =>
@@ -788,8 +1017,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(async () =>
@@ -812,8 +1040,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(async () =>
@@ -828,11 +1055,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomAcceptsIntegralFloatLua53Plus()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Latest)]
+        public async Task RandomAcceptsIntegralFloat(Compatibility.LuaCompatibilityVersion version)
         {
             // Integral floats like 2.0 should be accepted in Lua 5.3+
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = Compatibility.LuaCompatibilityVersion.Lua54;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(1, 2.0) should work since 2.0 has integer representation
             DynValue result = script.DoString("return math.random(1, 2.0)");
@@ -853,8 +1083,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(async () =>
@@ -876,8 +1105,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // Should not throw in Lua 5.1-5.3
             DynValue result = script.DoString("math.randomseed(1.5); return true");
@@ -893,8 +1121,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(async () =>
@@ -922,8 +1149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Lua 5.1-5.3: math.random(0) throws "interval is empty"
             // Lua 5.4+: math.random(0) returns a random integer
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return math.random(0)")
@@ -940,8 +1166,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         )
         {
             // Lua 5.4+: math.random(0) returns a random integer (per Lua 5.4 §6.7)
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return math.random(0)");
             // Just verify it returns a number (the value is random)
@@ -949,10 +1174,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomWithNegativeUpperBoundThrowsError()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task RandomWithNegativeUpperBoundThrowsError(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             // All versions: math.random(-5) throws "interval is empty"
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return math.random(-5)")
@@ -961,9 +1193,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomWithInvertedRangeThrowsError()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task RandomWithInvertedRangeThrowsError(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return math.random(10, 5)")
@@ -972,9 +1211,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomWithSingleValueRangeReturnsValue()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task RandomWithSingleValueRangeReturnsValue(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(5, 5) should always return 5
             DynValue result = script.DoString("return math.random(5, 5)");
@@ -982,9 +1228,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomWithOneReturnsOne()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task RandomWithOneReturnsOne(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(1) should always return 1
             DynValue result = script.DoString("return math.random(1)");
@@ -992,9 +1243,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomWithNegativeRangeReturnsValueInRange()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task RandomWithNegativeRangeReturnsValueInRange(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(-10, -5) should return value in [-10, -5]
             DynValue result = script.DoString("return math.random(-10, -5)");
@@ -1003,9 +1261,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomWithSpanningZeroReturnsValueInRange()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task RandomWithSpanningZeroReturnsValueInRange(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random(-5, 5) should return value in [-5, 5]
             DynValue result = script.DoString("return math.random(-5, 5)");
@@ -1014,9 +1279,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomNoArgsReturnsFloatInZeroToOneRange()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task RandomNoArgsReturnsFloatInZeroToOneRange(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.random() should return a float in [0, 1)
             DynValue result = script.DoString("return math.random()");
@@ -1025,9 +1297,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RandomWithLargeRangeReturnsValueInRange()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task RandomWithLargeRangeReturnsValueInRange(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // Test with a large but valid range
             DynValue result = script.DoString("return math.random(1, 1000000)");
@@ -1113,8 +1392,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string luaExpression
         )
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(async () =>
@@ -1161,8 +1439,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string luaExpression
         )
         {
-            Script script = CreateScript();
-            script.Options.CompatibilityVersion = version;
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // Should not throw - expression should execute successfully
             ScriptRuntimeException caughtException = null;
@@ -1187,7 +1464,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Verified against reference Lua 5.1: math.log(100) == math.log(100, 10) == 4.605170...
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task LogIgnoresBaseInLua51()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task LogIgnoresBaseInLua51(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua51);
 
@@ -1220,7 +1502,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
         public async Task LogUsesBaseInLua52Plus(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.log(100, 10) should return log base 10 of 100 = 2
             DynValue result = script.DoString("return math.log(100, 10)");
@@ -1245,7 +1527,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
         public async Task Log10AvailableInAllVersions(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.log10(100)");
 
             await Assert
@@ -1260,9 +1542,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests that math.log10 returns correct results for various inputs.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task Log10ReturnsCorrectValues()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task Log10ReturnsCorrectValues(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             await Assert
                 .That(script.DoString("return math.log10(1)").Number)
@@ -1286,7 +1573,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Verified against reference Lua: math.mod exists in 5.1, nil in 5.2+.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task ModAvailableOnlyInLua51()
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        public async Task ModAvailableOnlyInLua51(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua51);
 
@@ -1311,7 +1603,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
         public async Task ModIsNilInLua52Plus(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.mod");
 
             await Assert
@@ -1333,7 +1625,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.modf(3.5) should return (3, 0.5) with 3 as integer subtype
             DynValue result = script.DoString(
@@ -1370,7 +1662,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.modf(3.5) should return (3.0, 0.5) both as floats
             DynValue result = script.DoString(
@@ -1406,7 +1698,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // math.modf(-3.5) should return (-3, -0.5) with -3 as integer subtype
             DynValue result = script.DoString(
@@ -1439,11 +1731,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         private static Script CreateScript(Compatibility.LuaCompatibilityVersion version)
         {
-            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
-            {
-                CompatibilityVersion = version,
-            };
-            return new Script(CoreModulePresets.Complete, options);
+            return new Script(version, CoreModulePresets.Complete);
         }
     }
 }

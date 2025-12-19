@@ -32,11 +32,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// 10. GlobalTable (with core modules)
         /// </summary>
         [Test]
-        public async Task AllConstructorPathsInitializeInSameOrder()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AllConstructorPathsInitializeInSameOrder(LuaCompatibilityVersion version)
         {
             // These all use the main constructor path Script(CoreModules, ScriptOptions)
             Script script1 = new Script();
-            Script script2 = new Script(CoreModulePresets.Complete);
+            Script script2 = new Script(version, CoreModulePresets.Complete);
             Script script3 = new Script(new ScriptOptions(Script.DefaultOptions));
             Script script4 = new Script(
                 CoreModulePresets.Complete,
@@ -82,6 +87,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
 
         /// <summary>
         /// When options is null, Script should inherit CompatibilityVersion from GlobalOptions.
+        /// The parameterless constructor and Script(CoreModules) use null options and inherit from GlobalOptions.
         /// </summary>
         [Test]
         public async Task NullOptionsInheritsGlobalOptionsCompatibilityVersion()
@@ -96,10 +102,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             await Assert
                 .That(script1.CompatibilityVersion)
                 .IsEqualTo(expected)
+                .Because($"Script() should inherit GlobalOptions.CompatibilityVersion ({expected})")
                 .ConfigureAwait(false);
             await Assert
                 .That(script2.CompatibilityVersion)
                 .IsEqualTo(expected)
+                .Because(
+                    $"Script(CoreModules) should inherit GlobalOptions.CompatibilityVersion ({expected})"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// When an explicit version is passed to the constructor, it should use that version, not GlobalOptions.
+        /// </summary>
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ExplicitVersionOverridesGlobalOptions(LuaCompatibilityVersion version)
+        {
+            // Script(version) and Script(version, CoreModules) explicitly set the version
+            Script script1 = new Script(version);
+            Script script2 = new Script(version, CoreModulePresets.Complete);
+
+            // Both should use the explicit version, NOT GlobalOptions.CompatibilityVersion
+            await Assert
+                .That(script1.CompatibilityVersion)
+                .IsEqualTo(version)
+                .Because(
+                    $"Script(version) should use explicit version ({version}), not GlobalOptions"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(script2.CompatibilityVersion)
+                .IsEqualTo(version)
+                .Because(
+                    $"Script(version, CoreModules) should use explicit version ({version}), not GlobalOptions"
+                )
                 .ConfigureAwait(false);
         }
 
@@ -108,7 +150,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// The user's ScriptOptions.CompatibilityVersion is used as-is.
         /// </summary>
         [Test]
-        public async Task ExplicitOptionsDoesNotInheritFromGlobalOptions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ExplicitOptionsDoesNotInheritFromGlobalOptions(
+            LuaCompatibilityVersion version
+        )
         {
             // Create options with a specific version
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
@@ -130,7 +179,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// which may differ from GlobalOptions.CompatibilityVersion if GlobalOptions was modified.
         /// </summary>
         [Test]
-        public async Task FreshScriptOptionsDefaultsToLatest()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FreshScriptOptionsDefaultsToLatest(LuaCompatibilityVersion version)
         {
             // A fresh ScriptOptions (not copied from DefaultOptions) uses Latest
             ScriptOptions fresh = new ScriptOptions();
@@ -145,7 +199,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// Documents the recommended pattern: copy from DefaultOptions to get GlobalOptions.CompatibilityVersion.
         /// </summary>
         [Test]
-        public async Task CopyFromDefaultOptionsGetsGlobalOptionsCompatibilityVersion()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CopyFromDefaultOptionsGetsGlobalOptionsCompatibilityVersion(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions copied = new ScriptOptions(Script.DefaultOptions);
 
@@ -166,7 +227,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// provider based on CompatibilityVersion.
         /// </summary>
         [Test]
-        public async Task RandomProviderSelectedBasedOnCompatibilityVersion()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RandomProviderSelectedBasedOnCompatibilityVersion(
+            LuaCompatibilityVersion version
+        )
         {
             // Lua 5.2 should get Lua51RandomProvider (LCG)
             ScriptOptions options52 = new ScriptOptions(Script.DefaultOptions)
@@ -197,7 +265,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// When a custom RandomProvider is specified, Script should use it regardless of version.
         /// </summary>
         [Test]
-        public async Task CustomRandomProviderIsRespected()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CustomRandomProviderIsRespected(LuaCompatibilityVersion version)
         {
             DeterministicRandomProvider customProvider = new DeterministicRandomProvider(12345);
 
@@ -219,7 +292,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// DeterministicRandomProvider produces reproducible sequences.
         /// </summary>
         [Test]
-        public async Task DeterministicRandomProviderProducesReproducibleSequences()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DeterministicRandomProviderProducesReproducibleSequences(
+            LuaCompatibilityVersion version
+        )
         {
             const int seed = 99999;
 
@@ -258,10 +338,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// Core modules are registered in a deterministic order defined by RegisterCoreModules.
         /// </summary>
         [Test]
-        public async Task CoreModuleRegistrationOrderIsDeterministic()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoreModuleRegistrationOrderIsDeterministic(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script1 = new Script(CoreModulePresets.Complete);
-            Script script2 = new Script(CoreModulePresets.Complete);
+            Script script1 = new Script(version, CoreModulePresets.Complete);
+            Script script2 = new Script(version, CoreModulePresets.Complete);
 
             // Both should have the same global functions available
             await Assert.That(script1.Globals["print"]).IsNotNull().ConfigureAwait(false);
@@ -281,7 +368,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// Different CoreModules configurations produce predictable global table contents.
         /// </summary>
         [Test]
-        public async Task CoreModulesConfigurationAffectsGlobalTable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoreModulesConfigurationAffectsGlobalTable(
+            LuaCompatibilityVersion version
+        )
         {
             // Minimal modules: only Basic
             Script minimal = new Script(CoreModules.Basic);
@@ -289,7 +383,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             await Assert.That(minimal.Globals["math"]).IsNull().ConfigureAwait(false);
 
             // Complete modules: everything
-            Script complete = new Script(CoreModulePresets.Complete);
+            Script complete = new Script(version, CoreModulePresets.Complete);
             await Assert.That(complete.Globals["print"]).IsNotNull().ConfigureAwait(false);
             await Assert.That(complete.Globals["math"]).IsNotNull().ConfigureAwait(false);
         }
@@ -302,9 +396,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// When no TimeProvider is specified, SystemTimeProvider.Instance is used.
         /// </summary>
         [Test]
-        public async Task DefaultTimeProviderIsSystemTimeProvider()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DefaultTimeProviderIsSystemTimeProvider(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             await Assert
                 .That(script.TimeProvider)
@@ -316,7 +415,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// Custom TimeProvider is respected.
         /// </summary>
         [Test]
-        public async Task CustomTimeProviderIsRespected()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CustomTimeProviderIsRespected(LuaCompatibilityVersion version)
         {
             DateTimeOffset fixedTime = new DateTimeOffset(2025, 1, 1, 12, 0, 0, TimeSpan.Zero);
             DeterministicTimeProvider customProvider = new DeterministicTimeProvider(fixedTime);
@@ -342,7 +446,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// StartTimeUtc is captured from TimeProvider at construction time.
         /// </summary>
         [Test]
-        public async Task StartTimeUtcIsCapturedAtConstruction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StartTimeUtcIsCapturedAtConstruction(LuaCompatibilityVersion version)
         {
             DateTimeOffset fixedTime = new DateTimeOffset(2025, 6, 15, 10, 30, 0, TimeSpan.Zero);
             DeterministicTimeProvider timeProvider = new DeterministicTimeProvider(fixedTime);
@@ -379,7 +488,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// AllocationTracker is only created when sandbox has memory or coroutine limits.
         /// </summary>
         [Test]
-        public async Task AllocationTrackerCreatedOnlyWithSandboxLimits()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AllocationTrackerCreatedOnlyWithSandboxLimits(
+            LuaCompatibilityVersion version
+        )
         {
             // No limits - no tracker
             Script noLimits = new Script();
@@ -410,7 +526,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// Script() is equivalent to Script(CoreModulePresets.Default, null).
         /// </summary>
         [Test]
-        public async Task DefaultConstructorEquivalentToExplicitDefault()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DefaultConstructorEquivalentToExplicitDefault(
+            LuaCompatibilityVersion version
+        )
         {
             Script default1 = new Script();
             Script default2 = new Script(CoreModulePresets.Default, null);
@@ -436,7 +559,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// Script(CoreModules) is equivalent to Script(CoreModules, null).
         /// </summary>
         [Test]
-        public async Task ModulesOnlyConstructorEquivalentToExplicitNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ModulesOnlyConstructorEquivalentToExplicitNull(
+            LuaCompatibilityVersion version
+        )
         {
             Script modules1 = new Script(CoreModulePresets.HardSandbox);
             Script modules2 = new Script(CoreModulePresets.HardSandbox, null);

@@ -1257,9 +1257,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     _hashCode = hash.ToHashCode();
                     break;
                 case DataType.UserData:
+                    if (UserData?.Object != null)
+                    {
+                        hash.AddInt(UserData.Object.GetHashCode());
+                    }
+                    else if (UserData != null)
+                    {
+                        hash.AddInt(UserData.ReferenceId);
+                    }
+                    _hashCode = hash.ToHashCode();
+                    break;
                 case DataType.Thread:
+                    if (Coroutine != null)
+                    {
+                        hash.AddInt(Coroutine.ReferenceId);
+                    }
+                    _hashCode = hash.ToHashCode();
+                    break;
                 default:
-                    _hashCode = 999;
+                    _hashCode = hash.ToHashCode();
                     break;
             }
 
@@ -1462,10 +1478,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Performs an assignment, overwriting the value with the specified one.
+        /// This method is internal to prevent external code from corrupting VM state.
+        /// External code should use <see cref="Clone"/> and variable assignment instead.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <exception cref="ScriptRuntimeException">If the value is readonly.</exception>
-        public void Assign(DynValue value)
+        internal void Assign(DynValue value)
         {
             if (value == null)
             {

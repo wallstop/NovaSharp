@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
@@ -17,21 +18,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         );
 
         [global::TUnit.Core.Test]
-        public Task JsonLuaFixtureEncodesAndDecodes()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task JsonLuaFixtureEncodesAndDecodes(LuaCompatibilityVersion version)
         {
-            return ExecuteFixtureAsync(Path.Combine("rxi-json", "json.lua"), ExerciseRxiJsonAsync);
+            return ExecuteFixtureAsync(
+                version,
+                Path.Combine("rxi-json", "json.lua"),
+                ExerciseRxiJsonAsync
+            );
         }
 
         [global::TUnit.Core.Test]
-        public Task InspectLuaFixtureFormatsTables()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public Task InspectLuaFixtureFormatsTables(LuaCompatibilityVersion version)
         {
             return ExecuteFixtureAsync(
+                version,
                 Path.Combine("kikito-inspect", "inspect.lua"),
                 ExerciseKikitoInspectAsync
             );
         }
 
         private static async Task ExecuteFixtureAsync(
+            LuaCompatibilityVersion version,
             string relativePath,
             Func<Script, DynValue, Task> exercise
         )
@@ -45,7 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             }
 
             string source = await File.ReadAllTextAsync(scriptPath).ConfigureAwait(false);
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue moduleValue = script.DoString(source);
 
             await Assert.That(moduleValue.IsNil()).IsFalse().ConfigureAwait(false);

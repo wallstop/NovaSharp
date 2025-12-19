@@ -1397,7 +1397,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             if (closure.UpValuesCount > 0 && closure.GetUpValueName(0) == WellKnownSymbols.ENV)
             {
-                DynValue upvalue = closure.GetUpValue(0);
+                DynValue upvalue = closure.GetUpValueMutable(0);
                 upvalue.Assign(DynValue.NewTable(newEnv));
             }
             else

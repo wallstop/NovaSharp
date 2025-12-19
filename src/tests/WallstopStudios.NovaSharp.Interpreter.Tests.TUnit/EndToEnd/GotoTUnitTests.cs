@@ -3,13 +3,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
 
+    /// <summary>
+    /// Tests for the goto statement, which was introduced in Lua 5.2.
+    /// All tests target Lua 5.2+ only.
+    /// </summary>
     public sealed class GotoTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task GotoSimpleForwardJump()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoSimpleForwardJump(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -23,12 +33,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return test()
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoSimpleBackwardJump()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoSimpleBackwardJump(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -42,17 +57,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return test()
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoUndefinedLabelThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoUndefinedLabelThrows(LuaCompatibilityVersion version)
         {
             string code = "goto there";
+            Script script = new Script(version, CoreModulePresets.Complete);
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
             {
-                Script.RunString(code);
+                script.DoString(code);
             });
 
             await Assert
@@ -62,19 +83,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoDoubleDefinedLabelThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoDoubleDefinedLabelThrows(LuaCompatibilityVersion version)
         {
             string code =
                 @"
                 ::label::
                 ::label::
                 ";
-            _ = Assert.Throws<SyntaxErrorException>(() => Script.RunString(code));
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoSupportsRedeclaringInsideBlock()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoSupportsRedeclaringInsideBlock(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -84,12 +114,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(code);
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoRedeclaredLabelAllowsJump()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoRedeclaredLabelAllowsJump(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -102,12 +137,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoUndefinedInnerLabelThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoUndefinedInnerLabelThrows(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -119,12 +159,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            _ = Assert.Throws<SyntaxErrorException>(() => Script.RunString(code));
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoCannotJumpOverLocalDeclarations()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoCannotJumpOverLocalDeclarations(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -133,12 +178,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 ::f::
                 ";
 
-            _ = Assert.Throws<SyntaxErrorException>(() => Script.RunString(code));
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoJumpOutOfBlocksReturnsValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoJumpOutOfBlocksReturnsValue(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -158,12 +208,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return 3
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoJumpOutOfScopesPreservesVariables()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GotoJumpOutOfScopesPreservesVariables(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -189,7 +244,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 67).ConfigureAwait(false);
         }
     }

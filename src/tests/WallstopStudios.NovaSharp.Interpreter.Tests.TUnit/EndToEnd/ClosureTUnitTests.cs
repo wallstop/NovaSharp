@@ -3,15 +3,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     public sealed class ClosureTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task ClosureOnParam()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClosureOnParam(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 local function g (z)
                     local function f(a)
@@ -21,44 +27,62 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 return g(3)(2);
                 ";
+            Script script = new Script(version, CoreModulePresets.Complete);
             await EndToEndDynValueAssert
-                .ExpectAsync(Script.RunString(script), 5)
+                .ExpectAsync(script.DoString(code), 5)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task LambdaFunctions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LambdaFunctions(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 g = |f, x|f(x, x+1)
                 f = |x, y, z|x*(y+z)
                 return g(|x,y|f(x,y,1), 2)
                 ";
+            Script script = new Script(version, CoreModulePresets.Complete);
             await EndToEndDynValueAssert
-                .ExpectAsync(Script.RunString(script), 8)
+                .ExpectAsync(script.DoString(code), 8)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClosureOnParamLambda()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClosureOnParamLambda(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 local function g (z)
                     return |a| a + z
                 end
                 return g(3)(2);
                 ";
+            Script script = new Script(version, CoreModulePresets.Complete);
             await EndToEndDynValueAssert
-                .ExpectAsync(Script.RunString(script), 5)
+                .ExpectAsync(script.DoString(code), 5)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClosuresCaptureIndependently()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClosuresCaptureIndependently(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 a = {}
                 x = 0
@@ -73,15 +97,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 x = 4000
                 return a[1](), a[2](), a[3](), a[4](), a[5]()
                 ";
+            Script script = new Script(version, CoreModulePresets.Complete);
             await EndToEndDynValueAssert
-                .ExpectAsync(Script.RunString(script), 201, 2001, 20001, 200001, 2000001)
+                .ExpectAsync(script.DoString(code), 201, 2001, 20001, 200001, 2000001)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClosuresWithLocalFunctions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClosuresWithLocalFunctions(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 a = {}
                 x = 0
@@ -97,15 +127,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 x = 4000
                 return a[1](), a[2](), a[3](), a[4](), a[5]()
                 ";
+            Script script = new Script(version, CoreModulePresets.Complete);
             await EndToEndDynValueAssert
-                .ExpectAsync(Script.RunString(script), 201, 2001, 20001, 200001, 2000001)
+                .ExpectAsync(script.DoString(code), 201, 2001, 20001, 200001, 2000001)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClosuresWithNamedFunctions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClosuresWithNamedFunctions(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 a = {}
                 x = 0
@@ -121,15 +157,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 x = 4000
                 return a[1](), a[2](), a[3](), a[4](), a[5]()
                 ";
+            Script script = new Script(version, CoreModulePresets.Complete);
             await EndToEndDynValueAssert
-                .ExpectAsync(Script.RunString(script), 201, 2001, 20001, 200001, 2000001)
+                .ExpectAsync(script.DoString(code), 201, 2001, 20001, 200001, 2000001)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClosureWithoutTableReuse()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClosureWithoutTableReuse(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 x = 0
                 function container()
@@ -144,15 +186,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 x = 4000
                 return a1(), a2(), a3(), a4(), a5()
                 ";
+            Script script = new Script(version, CoreModulePresets.Complete);
             await EndToEndDynValueAssert
-                .ExpectAsync(Script.RunString(script), 201, 2001, 20001, 200001, 2000001)
+                .ExpectAsync(script.DoString(code), 201, 2001, 20001, 200001, 2000001)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task NestedUpValues()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NestedUpValues(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 local x = 0;
                 local m = { };
@@ -166,15 +214,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 m:a();
                 return 10 * m.t.dojob();
                 ";
+            Script script = new Script(version, CoreModulePresets.Complete);
             await EndToEndDynValueAssert
-                .ExpectAsync(Script.RunString(script), 10)
+                .ExpectAsync(script.DoString(code), 10)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task NestedOutOfScopeUpValues()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NestedOutOfScopeUpValues(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 function X()
                     local x = 0;
@@ -192,14 +246,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 Q:a();
                 return 10 * Q.t.dojob();
                 ";
-            DynValue result = new Script(CoreModulePresets.HardSandbox).DoString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, 10).ConfigureAwait(false);
+            Script script = new Script(version, CoreModulePresets.HardSandbox);
+            await EndToEndDynValueAssert
+                .ExpectAsync(script.DoString(code), 10)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task LocalRedefinitionUsesLexicalScope()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LocalRedefinitionUsesLexicalScope(LuaCompatibilityVersion version)
         {
-            string script =
+            string code =
                 @"
                 result = ''
                 local hi = 'hello'
@@ -213,8 +274,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 test();
                 return result;
                 ";
-            DynValue result = new Script(CoreModulePresets.HardSandbox).DoString(script);
-            await EndToEndDynValueAssert.ExpectAsync(result, "helloXX").ConfigureAwait(false);
+            Script script = new Script(version, CoreModulePresets.HardSandbox);
+            await EndToEndDynValueAssert
+                .ExpectAsync(script.DoString(code), "helloXX")
+                .ConfigureAwait(false);
         }
     }
 }

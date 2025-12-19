@@ -15,9 +15,27 @@ dotnet tool restore
 echo "Installing TUnit templates..."
 dotnet new install TUnit.Templates || true
 
-# Install Python tooling dependencies
+# Create Python virtual environment for tooling (PEP 668 compliance)
+VENV_DIR="/workspaces/NovaSharp/.venv"
+echo "Setting up Python virtual environment at ${VENV_DIR}..."
+python3 -m venv "${VENV_DIR}"
+
+# Install Python tooling dependencies in the virtual environment
 echo "Installing Python tooling dependencies..."
-pip install --user -r requirements.tooling.txt
+"${VENV_DIR}/bin/pip" install --upgrade pip
+"${VENV_DIR}/bin/pip" install -r requirements.tooling.txt
+
+# Add venv to PATH for the current session and future terminals
+echo "Configuring PATH for virtual environment..."
+export PATH="${VENV_DIR}/bin:${PATH}"
+
+# Ensure venv is activated for future bash sessions
+BASHRC_MARKER="# NovaSharp Python venv activation"
+if ! grep -q "${BASHRC_MARKER}" ~/.bashrc 2>/dev/null; then
+    echo "" >> ~/.bashrc
+    echo "${BASHRC_MARKER}" >> ~/.bashrc
+    echo "export PATH=\"${VENV_DIR}/bin:\${PATH}\"" >> ~/.bashrc
+fi
 
 # Verify installations
 echo ""
@@ -41,8 +59,9 @@ verify_lua_version "lua5.5" "Lua 5.5"
 
 echo ""
 echo "=== Python Verification ==="
-echo -n "Python: " && python3 --version 2>&1
-echo -n "pip: " && pip --version 2>&1
+echo -n "Python: " && "${VENV_DIR}/bin/python3" --version 2>&1
+echo -n "pip: " && "${VENV_DIR}/bin/pip" --version 2>&1
+echo "Virtual environment: ${VENV_DIR}"
 
 echo ""
 echo "=== Dev Container Setup Complete ==="

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -12,9 +13,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     public sealed class JsonModuleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task EncodeProducesCanonicalObject()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EncodeProducesCanonicalObject(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             script.DoString(
                 "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
             );
@@ -39,9 +45,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DecodeBuildsLuaTable()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DecodeBuildsLuaTable(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             script.DoString(
                 "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
             );
@@ -58,9 +69,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ParseThrowsScriptRuntimeExceptionOnInvalidJson()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ParseThrowsScriptRuntimeExceptionOnInvalidJson(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             DynValue jsonModule = script.DoString("return require('json')");
             DynValue parse = jsonModule.Table.Get("parse");
 
@@ -71,9 +89,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SerializeThrowsScriptRuntimeExceptionOnNonTable()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SerializeThrowsScriptRuntimeExceptionOnNonTable(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             DynValue jsonModule = script.DoString("return require('json')");
             DynValue serialize = jsonModule.Table.Get("serialize");
 
@@ -84,9 +109,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task IsNullDetectsJsonNullAndNil()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IsNullDetectsJsonNullAndNil(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 @"
                 local json = require('json')
@@ -110,6 +140,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(value.Type).IsEqualTo(DataType.UserData);
             await Assert.That(JsonNull.IsJsonNull(value)).IsTrue();
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            return new Script(version, CoreModulePresets.Complete);
         }
     }
 }
