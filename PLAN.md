@@ -63,14 +63,14 @@ python3 scripts/lint/check-tunit-version-coverage.py --lua-only --fail-on-noncom
 
 ## 🔴 HIGH Priority: Test Data-Driving Helper Infrastructure (§8.42)
 
-**Status**: 📋 **PLANNED** — Create consolidated helpers to simplify multi-version, multi-input test combinations.
+**Status**: 🟡 **IN PROGRESS** — Core helper attributes landed (AllLuaVersions + range helpers + LuaTestMatrix); migration and enforcement remain.
 
 **Problem Statement**:
 NovaSharp tests require explicit manual `[Arguments]` entries for every combination of Lua version (5.1, 5.2, 5.3, 5.4, 5.5) and test input. This results in massive boilerplate — 5+ `[Arguments]` attributes per test method, multiplied by multiple input variations. The maintenance burden is unsustainable and error-prone.
 
 **Goal**: Provide simple, consolidated helpers that automatically expand Lua version combinations, reducing test boilerplate from 25+ lines of attributes to 1-2 lines while maintaining full version coverage.
 
-### Proposed Helpers
+### Current Helper Set
 
 | Helper | Description | Example Usage |
 |--------|-------------|---------------|
@@ -78,8 +78,8 @@ NovaSharp tests require explicit manual `[Arguments]` entries for every combinat
 | `[LuaVersionsFrom(5.3)]` | Versions from 5.3+ (inclusive) | For features introduced in 5.3 |
 | `[LuaVersionsUntil(5.2)]` | Versions up to 5.2 (inclusive) | For features removed/changed after 5.2 |
 | `[LuaVersionRange(5.2, 5.4)]` | Specific version range | For targeted version support |
-| `[AllLuaVersionsWith(...)]` | Combine versions with other test data | `[AllLuaVersionsWith("input1", "input2")]` |
 | `[LuaTestMatrix]` | Full Cartesian product of versions × inputs | For comprehensive edge-case testing |
+| *(Use nested arrays)* | Group additional arguments for `LuaTestMatrix` | `[LuaTestMatrix(new object[] { "input1", true }, "input2")]` |
 
 ### Example: Before vs After
 
@@ -108,17 +108,18 @@ public async Task TestFeature(LuaCompatibilityVersion version, string input) { .
 
 ### Implementation Tasks
 
-- [ ] **Phase 1: Design & Prototype** — Create helper attributes in test infrastructure
-  - [ ] Implement `AllLuaVersionsAttribute` using TUnit's `[MethodDataSource]` pattern
-  - [ ] Implement `LuaVersionsFromAttribute` and `LuaVersionsUntilAttribute`
-  - [ ] Implement `LuaTestMatrixAttribute` for Cartesian products
-  - [ ] Add compile-time validation for version range sanity
+- [x] **Phase 1: Design & Prototype** — Create helper attributes in test infrastructure
+  - [x] Implement `AllLuaVersionsAttribute`
+  - [x] Implement `LuaVersionsFromAttribute` and `LuaVersionsUntilAttribute`
+  - [x] Implement `LuaVersionRangeAttribute` for bounded spans
+  - [x] Implement `LuaTestMatrixAttribute` for Cartesian products (min/max gating supported)
+  - [x] Add validation for empty or invalid version ranges
 - [ ] **Phase 2: Migration** — Replace existing verbose `[Arguments]` patterns
   - [ ] Audit all TUnit test files for multi-version patterns
   - [ ] Create migration script to auto-convert common patterns
   - [ ] Manually review and convert complex cases
 - [ ] **Phase 3: Documentation & Enforcement**
-  - [ ] Update `.llm/context.md` with helper usage guidelines
+  - [x] Update `.llm/context.md` with helper usage guidelines
   - [ ] Update `docs/Testing.md` with examples
   - [ ] Add lint rule to flag verbose patterns that should use helpers
 - [ ] **Phase 4: Cleanup** — Remove redundant boilerplate from all tests

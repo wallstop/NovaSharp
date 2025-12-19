@@ -9,15 +9,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class MathModuleTUnitTests
     {
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task LogUsesDefaultBaseWhenOmitted(
             Compatibility.LuaCompatibilityVersion version
         )
@@ -33,10 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task LogSupportsCustomBase(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -51,10 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Use the ^ operator instead in Lua 5.5+.
         /// </summary>
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(Compatibility.LuaCompatibilityVersion.Lua54)]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
         public async Task PowHandlesLargeExponent(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);

@@ -180,7 +180,7 @@ bash ./scripts/coverage/coverage.sh
 
 **ALTERNATIVE**: Direct `dotnet run` with `--treenode-filter` (Microsoft.Testing.Platform syntax):
 
-```bash
+````bash
 # Filter by class name
 dotnet run --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --no-build -- --treenode-filter "/*/*/*MathModule*/**"
 
@@ -263,52 +263,37 @@ ______________________________________________________________________
 
 **NovaSharp supports Lua 5.1, 5.2, 5.3, 5.4, and 5.5.** All new TUnit tests MUST run against all applicable versions. **Tests without version coverage will be rejected.**
 
-**⚠️ PLANNED: Test Data-Driving Helpers (See PLAN.md §8.42)**
+**✅ Test Data-Driving Helpers (See PLAN.md §8.42)**
 
-Once implemented, use these consolidated helpers instead of manual `[Arguments]` enumeration:
+Use these consolidated helpers instead of manual `[Arguments]` enumeration:
 
 | Helper | Description | Use Case |
 |--------|-------------|----------|
-| `[AllLuaVersions]` | All 5 Lua versions | Universal features |
-| `[LuaVersionsFrom(5.3)]` | Versions from 5.3+ | Features introduced in 5.3 |
-| `[LuaVersionsUntil(5.2)]` | Versions up to 5.2 | Features removed/changed after 5.2 |
-| `[LuaTestMatrix(...)]` | Versions × inputs | Comprehensive edge-case testing |
+| `[AllLuaVersions]` | Expands to Lua 5.1–5.5 | Universal coverage |
+| `[LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]` | Versions from 5.3+ | Features introduced in 5.3 |
+| `[LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]` | Versions up to 5.2 | Features removed/changed after 5.2 |
+| `[LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua54)]` | Inclusive version window | Focused compatibility spans |
+| `[LuaTestMatrix("input1", "input2", MinimumVersion = LuaCompatibilityVersion.Lua53)]` | Versions × inputs (optional min/max gates) | Comprehensive edge-case testing |
 
-**PREFERRED (once helpers exist)**:
+**Preferred**:
 ```csharp
 [Test]
-[AllLuaVersions]  // Expands to all 5 versions automatically
+[AllLuaVersions]
 public async Task FeatureWorksAcrossAllVersions(LuaCompatibilityVersion version) { ... }
 
 [Test]
 [LuaTestMatrix("input1", "input2")]  // 5 versions × 2 inputs = 10 test cases
 public async Task FeatureWithInputs(LuaCompatibilityVersion version, string input) { ... }
-```
+````
 
-**CURRENT (until helpers are implemented)** — Use explicit `[Arguments]`:
-
-```csharp
-[Test]
-[Arguments(LuaCompatibilityVersion.Lua51)]
-[Arguments(LuaCompatibilityVersion.Lua52)]
-[Arguments(LuaCompatibilityVersion.Lua53)]
-[Arguments(LuaCompatibilityVersion.Lua54)]
-[Arguments(LuaCompatibilityVersion.Lua55)]
-public async Task FeatureWorksAcrossAllVersions(LuaCompatibilityVersion version)
-{
-    Script script = CreateScript(version);
-    // test code
-}
-```
+**Legacy**: Manual `[Arguments]` should only be used when a scenario cannot be expressed with the helpers.
 
 **For version-specific features, test BOTH positive and negative scenarios:**
 
 ```csharp
 // POSITIVE: Feature works in versions that support it
 [Test]
-[Arguments(LuaCompatibilityVersion.Lua53)]
-[Arguments(LuaCompatibilityVersion.Lua54)]
-[Arguments(LuaCompatibilityVersion.Lua55)]
+[LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
 public async Task MathTypeAvailableInLua53Plus(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
@@ -318,8 +303,7 @@ public async Task MathTypeAvailableInLua53Plus(LuaCompatibilityVersion version)
 
 // NEGATIVE: Feature is absent/nil in versions that don't support it
 [Test]
-[Arguments(LuaCompatibilityVersion.Lua51)]
-[Arguments(LuaCompatibilityVersion.Lua52)]
+[LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
 public async Task MathTypeShouldBeNilInPreLua53(LuaCompatibilityVersion version)
 {
     Script script = CreateScript(version);
@@ -394,6 +378,6 @@ ______________________________________________________________________
 
 ## Resources
 
-- [docs/lua-spec/](docs/lua-spec/) — Local Lua specs (primary reference)
-- [docs/Testing.md](docs/Testing.md) — Testing details
-- [PLAN.md](PLAN.md) — Current plan and known issues
+- [docs/lua-spec/](../docs/lua-spec/) — Local Lua specs (primary reference)
+- [docs/Testing.md](../docs/Testing.md) — Testing details
+- [PLAN.md](../PLAN.md) — Current plan and known issues
