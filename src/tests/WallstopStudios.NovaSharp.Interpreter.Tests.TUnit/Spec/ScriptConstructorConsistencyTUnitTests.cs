@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for Script constructor consistency (§8.2 from PLAN.md).
@@ -90,7 +91,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// The parameterless constructor and Script(CoreModules) use null options and inherit from GlobalOptions.
         /// </summary>
         [Test]
-        public async Task NullOptionsInheritsGlobalOptionsCompatibilityVersion()
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task NullOptionsInheritsGlobalOptionsCompatibilityVersion(
+            LuaCompatibilityVersion version
+        )
         {
             // Script() and Script(CoreModules) both pass null for options
             Script script1 = new Script();

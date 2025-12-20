@@ -13,6 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Options;
     using WallstopStudios.NovaSharp.Interpreter.Tests.TestUtilities;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ScriptOptionsTUnitTests
     {
@@ -122,9 +123,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallRecordsExecutionCounterWhenEnabled()
+        [AllLuaVersions]
+        public async Task CallRecordsExecutionCounterWhenEnabled(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             script.PerformanceStats.Enabled = true;
 
             script.DoString("function add(a, b) return a + b end");

@@ -4,21 +4,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Errors
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class SyntaxErrorExceptionTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task RethrowWrapsExceptionWhenGlobalOptionEnabled()
+        [AllLuaVersions]
+        public async Task RethrowWrapsExceptionWhenGlobalOptionEnabled(
+            LuaCompatibilityVersion version
+        )
         {
             using ScriptGlobalOptionsScope globalScope = ScriptGlobalOptionsScope.Override(
                 options => options.RethrowExceptionNested = true
             );
-            Script script = new();
+            Script script = new(version);
 
             SyntaxErrorException captured = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("function broken(")

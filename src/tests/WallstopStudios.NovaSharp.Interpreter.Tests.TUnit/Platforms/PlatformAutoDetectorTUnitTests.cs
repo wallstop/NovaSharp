@@ -10,11 +10,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [PlatformDetectorIsolation]
     public sealed class PlatformAutoDetectorTUnitTests
@@ -431,12 +433,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Design",
             "CA1031:Do not catch general exception types",
             Justification = "Testing that Script creation does not throw; any exception is a failure"
         )]
-        public async Task ExceptionThrowingProbeDoesNotAffectConcurrentScriptCreation()
+        public async Task ExceptionThrowingProbeDoesNotAffectConcurrentScriptCreation(
+            LuaCompatibilityVersion version
+        )
         {
             // This test reproduces the original bug where a test setting an exception-throwing
             // probe would leak to other tests creating Script instances concurrently.
@@ -479,11 +484,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Platforms
                 });
 
                 // A concurrent task creates a Script, which triggers AOT detection.
+                LuaCompatibilityVersion capturedVersion = version;
                 Task scriptCreationTask = Task.Run(() =>
                 {
                     try
                     {
-                        Script script = new Script(CoreModulePresets.HardSandbox);
+                        Script script = new Script(capturedVersion, CoreModulePresets.HardSandbox);
                         Interlocked.Increment(ref scriptCreationsSucceeded);
                     }
                     catch (Exception)

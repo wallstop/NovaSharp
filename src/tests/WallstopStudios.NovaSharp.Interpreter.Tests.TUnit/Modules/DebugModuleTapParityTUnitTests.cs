@@ -5,25 +5,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     [UserDataIsolation]
     public sealed class DebugModuleTapParityTUnitTests
     {
-        private static Script CreateScript()
+        private static Script CreateScript(LuaCompatibilityVersion version)
         {
-            return new Script(CoreModulePresets.Complete);
+            return new Script(version, CoreModulePresets.Complete);
         }
 
         [Test]
-        public async Task RequireDebugReturnsFunctionTable()
+        [AllLuaVersions]
+        public async Task RequireDebugReturnsFunctionTable(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue module = script.DoString("return require('debug')");
 
             await Assert.That(module.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
@@ -38,9 +41,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task RequireDebugReturnsSameInstanceAsGlobal()
+        [AllLuaVersions]
+        public async Task RequireDebugReturnsSameInstanceAsGlobal(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue tuple = script.DoString(
                 @"
                 local first = require('debug')
@@ -56,9 +60,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task GetInfoReturnsFunctionMetadata()
+        [AllLuaVersions]
+        public async Task GetInfoReturnsFunctionMetadata(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue info = script.DoString(
                 @"
                 local function sample()
@@ -80,18 +85,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task GetInfoLevelOutOfRangeReturnsNil()
+        [AllLuaVersions]
+        public async Task GetInfoLevelOutOfRangeReturnsNil(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue info = script.DoString("return debug.getinfo(999)");
 
             await Assert.That(info.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
-        public async Task GetInfoInvalidArgumentThrows()
+        [AllLuaVersions]
+        public async Task GetInfoInvalidArgumentThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
             {
@@ -105,9 +112,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task GetRegistryExposesLoadedTable()
+        [AllLuaVersions]
+        public async Task GetRegistryExposesLoadedTable(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue registry = script.DoString(
                 @"
                 local debug = require('debug')
@@ -122,9 +130,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task SetMetatableRoundTrips()
+        [AllLuaVersions]
+        public async Task SetMetatableRoundTrips(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 @"
                 local target = {}
@@ -138,9 +147,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task SetMetatableErrorMatchesLuaFormat()
+        [AllLuaVersions]
+        public async Task SetMetatableErrorMatchesLuaFormat(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 @"
                 local ok, err = pcall(function()
@@ -161,9 +171,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task SetUserValueRoundTrips()
+        [AllLuaVersions]
+        public async Task SetUserValueRoundTrips(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<TrackedHandle>(ensureUnregistered: true);
             registrationScope.RegisterType<TrackedHandle>();
@@ -181,9 +192,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task SetUserValueReturnsOriginalHandle()
+        [AllLuaVersions]
+        public async Task SetUserValueReturnsOriginalHandle(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<TrackedHandle>(ensureUnregistered: true);
             registrationScope.RegisterType<TrackedHandle>();
@@ -203,9 +215,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task SetUserValueRejectsNonTablesWithLuaMessage()
+        [AllLuaVersions]
+        public async Task SetUserValueRejectsNonTablesWithLuaMessage(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<TrackedHandle>(ensureUnregistered: true);
             registrationScope.RegisterType<TrackedHandle>();
@@ -234,9 +249,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task GetUpvalueReturnsTuple()
+        [AllLuaVersions]
+        public async Task GetUpvalueReturnsTuple(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue tuple = script.DoString(
                 @"
                 local function make()
@@ -257,9 +273,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task SetupValueUpdatesClosure()
+        [AllLuaVersions]
+        public async Task SetupValueUpdatesClosure(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 @"
                 local function make()
@@ -279,9 +296,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task UpvalueJoinSharesState()
+        [AllLuaVersions]
+        public async Task UpvalueJoinSharesState(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 @"
                 local function counter(start)
@@ -322,9 +340,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task UpvalueIdReturnsUserDataHandles()
+        [AllLuaVersions]
+        public async Task UpvalueIdReturnsUserDataHandles(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 @"
                 local function make()
@@ -347,9 +366,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task TracebackIncludesMessage()
+        [AllLuaVersions]
+        public async Task TracebackIncludesMessage(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue message = script.DoString("return debug.traceback('traceback message')");
 
             await Assert
@@ -359,9 +379,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task TracebackUsesLfLineEndings()
+        [AllLuaVersions]
+        public async Task TracebackUsesLfLineEndings(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue trace = script.DoString("return debug.traceback()");
 
             string payload = trace.String ?? string.Empty;

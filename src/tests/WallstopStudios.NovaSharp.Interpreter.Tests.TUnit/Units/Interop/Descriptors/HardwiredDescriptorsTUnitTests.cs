@@ -4,12 +4,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.HardwiredDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class HardwiredDescriptorsTUnitTests
@@ -17,9 +19,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         private TestHardwiredDescriptor _descriptor;
 
         [global::TUnit.Core.Test]
-        public async Task HardwiredMemberDescriptorSupportsReadAndWrite()
+        [AllLuaVersions]
+        public async Task HardwiredMemberDescriptorSupportsReadAndWrite(
+            LuaCompatibilityVersion version
+        )
         {
-            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
+            using UserDataRegistrationScope registrationScope = CreateScript(
+                out Script script,
+                version
+            );
             TestHost host = new();
             script.Globals["obj"] = UserData.Create(host);
 
@@ -30,9 +38,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task HardwiredMemberDescriptorRejectsWriteWhenAccessDenied()
+        [AllLuaVersions]
+        public async Task HardwiredMemberDescriptorRejectsWriteWhenAccessDenied(
+            LuaCompatibilityVersion version
+        )
         {
-            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
+            using UserDataRegistrationScope registrationScope = CreateScript(
+                out Script script,
+                version
+            );
             script.Globals["obj"] = UserData.Create(new TestHost());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -46,9 +60,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task HardwiredMemberDescriptorThrowsWhenInstanceMissing()
+        [AllLuaVersions]
+        public async Task HardwiredMemberDescriptorThrowsWhenInstanceMissing(
+            LuaCompatibilityVersion version
+        )
         {
-            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
+            using UserDataRegistrationScope registrationScope = CreateScript(
+                out Script script,
+                version
+            );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 _descriptor.Value.GetValue(script, null)
@@ -61,9 +81,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task HardwiredMethodDescriptorAppliesDefaultArguments()
+        [AllLuaVersions]
+        public async Task HardwiredMethodDescriptorAppliesDefaultArguments(
+            LuaCompatibilityVersion version
+        )
         {
-            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
+            using UserDataRegistrationScope registrationScope = CreateScript(
+                out Script script,
+                version
+            );
             TestHost host = new();
             script.Globals["obj"] = UserData.Create(host);
 
@@ -82,9 +108,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task HardwiredMethodDescriptorUsesProvidedArguments()
+        [AllLuaVersions]
+        public async Task HardwiredMethodDescriptorUsesProvidedArguments(
+            LuaCompatibilityVersion version
+        )
         {
-            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
+            using UserDataRegistrationScope registrationScope = CreateScript(
+                out Script script,
+                version
+            );
             TestHost host = new();
             script.Globals["obj"] = UserData.Create(host);
 
@@ -103,9 +135,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task HardwiredMethodDescriptorRejectsStaticInvocation()
+        [AllLuaVersions]
+        public async Task HardwiredMethodDescriptorRejectsStaticInvocation(
+            LuaCompatibilityVersion version
+        )
         {
-            using UserDataRegistrationScope registrationScope = CreateScript(out Script script);
+            using UserDataRegistrationScope registrationScope = CreateScript(
+                out Script script,
+                version
+            );
             script.Globals["TestHost"] = UserData.CreateStatic<TestHost>();
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -115,7 +153,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             await Assert.That(exception.Message).Contains("call").ConfigureAwait(false);
         }
 
-        private UserDataRegistrationScope CreateScript(out Script script)
+        private UserDataRegistrationScope CreateScript(
+            out Script script,
+            LuaCompatibilityVersion version
+        )
         {
             UserDataRegistrationScope scope = UserDataRegistrationScope.Track<TestHost>(
                 ensureUnregistered: true
@@ -123,7 +164,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             _descriptor = new TestHardwiredDescriptor();
             scope.RegisterType<TestHost>(_descriptor);
 
-            script = new(CoreModulePresets.Complete);
+            script = new(version, CoreModulePresets.Complete);
             script.Options.DebugPrint = _ => { };
             return scope;
         }

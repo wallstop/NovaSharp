@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -16,6 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class EventMemberDescriptorTUnitTests
     {
@@ -43,10 +45,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveCallbackWithoutExistingSubscriptionDoesNotUnregister()
+        [AllLuaVersions]
+        public async Task RemoveCallbackWithoutExistingSubscriptionDoesNotUnregister(
+            LuaCompatibilityVersion version
+        )
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             DynValue handler = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
@@ -62,10 +67,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetValueReturnsFacadeGrantingAddRemove()
+        [AllLuaVersions]
+        public async Task GetValueReturnsFacadeGrantingAddRemove(LuaCompatibilityVersion version)
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             EventMemberDescriptor descriptor = new(
                 typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
             );
@@ -78,11 +84,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task AddAndRemoveCallbacksManageDelegatesAndClosures()
+        [AllLuaVersions]
+        public async Task AddAndRemoveCallbacksManageDelegatesAndClosures(
+            LuaCompatibilityVersion version
+        )
         {
             const string HitsVariable = "hits";
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString($"{HitsVariable} = 0");
             DynValue handler1 = script.DoString(
                 $"return function(sender, arg) {HitsVariable} = {HitsVariable} + 1 end"
@@ -134,11 +143,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task StaticEventsDispatchHandlersAndTrackSubscriptions()
+        [AllLuaVersions]
+        [NotInParallel(nameof(StaticSampleEventSource))]
+        public async Task StaticEventsDispatchHandlersAndTrackSubscriptions(
+            LuaCompatibilityVersion version
+        )
         {
             const string HitsVariable = "staticHits";
             StaticSampleEventSource.Reset();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString($"{HitsVariable} = 0");
             DynValue handler = script.DoString(
                 $"return function(_, amount) {HitsVariable} = {HitsVariable} + amount end"
@@ -187,10 +200,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task EventDescriptorExposesNameAndGuardsAssignments()
+        [AllLuaVersions]
+        public async Task EventDescriptorExposesNameAndGuardsAssignments(
+            LuaCompatibilityVersion version
+        )
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             EventMemberDescriptor descriptor = new(
                 typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
             );
@@ -214,10 +230,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemovingSameCallbackTwiceDoesNotDetachDelegateAgain()
+        [AllLuaVersions]
+        public async Task RemovingSameCallbackTwiceDoesNotDetachDelegateAgain(
+            LuaCompatibilityVersion version
+        )
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             DynValue handler = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
@@ -237,11 +256,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemovingUnknownCallbackLeavesDelegateAttached()
+        [AllLuaVersions]
+        public async Task RemovingUnknownCallbackLeavesDelegateAttached(
+            LuaCompatibilityVersion version
+        )
         {
             const string HitsVariable = "unknownRemovalHits";
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString($"{HitsVariable} = 0");
             DynValue registered = script.DoString(
                 $"return function(_, amount) {HitsVariable} = {HitsVariable} + amount end"
@@ -269,10 +291,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task AddingSameClosureTwiceDoesNotRegisterDuplicateDelegates()
+        [AllLuaVersions]
+        public async Task AddingSameClosureTwiceDoesNotRegisterDuplicateDelegates(
+            LuaCompatibilityVersion version
+        )
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             DynValue handler = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
@@ -428,10 +453,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task DispatchEventInvokesZeroArgumentHandlers()
+        [AllLuaVersions]
+        public async Task DispatchEventInvokesZeroArgumentHandlers(LuaCompatibilityVersion version)
         {
             MultiSignatureEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString("hits = 0");
             DynValue handler = script.DoString("return function() hits = hits + 1 end");
 
@@ -453,10 +479,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task DispatchEventForwardsMultipleArguments()
+        [AllLuaVersions]
+        public async Task DispatchEventForwardsMultipleArguments(LuaCompatibilityVersion version)
         {
             MultiSignatureEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString("payload = nil");
             DynValue handler = script.DoString(
                 "return function(a, b, c) payload = table.concat({a, b, c}, \":\") end"
@@ -480,10 +507,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public async Task CreateDelegateHandlesWideRangeOfArgumentCounts()
+        [AllLuaVersions]
+        public async Task CreateDelegateHandlesWideRangeOfArgumentCounts(
+            LuaCompatibilityVersion version
+        )
         {
             MultiArityEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString("hits = {}");
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 

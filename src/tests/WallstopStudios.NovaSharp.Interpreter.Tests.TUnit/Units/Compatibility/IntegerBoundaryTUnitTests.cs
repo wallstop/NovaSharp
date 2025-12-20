@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Exhaustive tests for integer boundary conditions, precision preservation, and
@@ -238,30 +239,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// which is out of range, so it returns nil.
         /// </summary>
         [Test]
-        [Arguments("math.maxinteger", true, 9223372036854775807L, "maxinteger")]
-        [Arguments("math.mininteger", true, -9223372036854775808L, "mininteger")]
-        [Arguments("0", true, 0L, "zero")]
-        [Arguments("1", true, 1L, "one")]
-        [Arguments("-1", true, -1L, "negative one")]
-        [Arguments("2^63", false, 0L, "2^63 (overflow)")]
-        [Arguments("1/0", false, 0L, "infinity")]
-        [Arguments("-1/0", false, 0L, "negative infinity")]
-        [Arguments("0/0", false, 0L, "NaN")]
-        [Arguments("1.5", false, 0L, "fractional")]
-        [Arguments(
-            "math.mininteger + 0.0",
-            true,
-            -9223372036854775808L,
-            "mininteger as float (exactly representable)"
+        [LuaTestMatrix(
+            new object[] { "math.maxinteger", true, 9223372036854775807L, "maxinteger" },
+            new object[] { "math.mininteger", true, -9223372036854775808L, "mininteger" },
+            new object[] { "0", true, 0L, "zero" },
+            new object[] { "1", true, 1L, "one" },
+            new object[] { "-1", true, -1L, "negative one" },
+            new object[] { "2^63", false, 0L, "2^63 (overflow)" },
+            new object[] { "1/0", false, 0L, "infinity" },
+            new object[] { "-1/0", false, 0L, "negative infinity" },
+            new object[] { "0/0", false, 0L, "NaN" },
+            new object[] { "1.5", false, 0L, "fractional" },
+            new object[]
+            {
+                "math.mininteger + 0.0",
+                true,
+                -9223372036854775808L,
+                "mininteger as float (exactly representable)",
+            },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
         )]
         public async Task MathTointegerBoundaryValues(
+            LuaCompatibilityVersion version,
             string expression,
             bool shouldSucceed,
             long expectedValue,
             string description
         )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString($"return math.tointeger({expression})");
 
             if (shouldSucceed)
@@ -300,20 +306,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// loses precision and becomes 2^63, which is out of range.
         /// </summary>
         [Test]
-        [Arguments("'123'", true, 123L, "simple integer string")]
-        [Arguments("'-456'", true, -456L, "negative integer string")]
-        [Arguments("'  789  '", true, 789L, "whitespace padded")]
-        [Arguments("'1.5'", false, 0L, "fractional string")]
-        [Arguments("'abc'", false, 0L, "non-numeric string")]
-        [Arguments("'1e10'", true, 10000000000L, "scientific notation")]
+        [LuaTestMatrix(
+            new object[] { "'123'", true, 123L, "simple integer string" },
+            new object[] { "'-456'", true, -456L, "negative integer string" },
+            new object[] { "'  789  '", true, 789L, "whitespace padded" },
+            new object[] { "'1.5'", false, 0L, "fractional string" },
+            new object[] { "'abc'", false, 0L, "non-numeric string" },
+            new object[] { "'1e10'", true, 10000000000L, "scientific notation" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
         public async Task MathTointegerStringArguments(
+            LuaCompatibilityVersion version,
             string expression,
             bool shouldSucceed,
             long expectedValue,
             string description
         )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString($"return math.tointeger({expression})");
 
             if (shouldSucceed)
@@ -347,44 +357,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// Tests math.ult (unsigned less than) with boundary and edge case values.
         /// </summary>
         [Test]
-        [Arguments(
-            "math.maxinteger",
-            "math.mininteger",
-            true,
-            "maxinteger < mininteger (unsigned)"
-        )]
-        [Arguments(
-            "math.mininteger",
-            "math.maxinteger",
-            false,
-            "mininteger < maxinteger (unsigned)"
-        )]
-        [Arguments("0", "-1", true, "0 < -1 (unsigned, -1 is max)")]
-        [Arguments("-1", "0", false, "-1 < 0 (unsigned)")]
-        [Arguments("0", "1", true, "0 < 1")]
-        [Arguments("1", "0", false, "1 < 0")]
-        [Arguments("-1", "-2", false, "-1 < -2 (unsigned)")]
-        [Arguments("-2", "-1", true, "-2 < -1 (unsigned)")]
-        [Arguments("math.maxinteger", "math.maxinteger", false, "maxinteger < maxinteger")]
-        [Arguments("math.mininteger", "math.mininteger", false, "mininteger < mininteger")]
-        [Arguments("0", "0", false, "0 < 0")]
-        [Arguments("-1", "-1", false, "-1 < -1")]
-        [Arguments("1", "2", true, "1 < 2")]
-        [Arguments("math.maxinteger - 1", "math.maxinteger", true, "maxinteger-1 < maxinteger")]
-        [Arguments(
-            "math.mininteger",
-            "math.mininteger + 1",
-            true,
-            "mininteger < mininteger+1 (unsigned)"
+        [LuaTestMatrix(
+            new object[]
+            {
+                "math.maxinteger",
+                "math.mininteger",
+                true,
+                "maxinteger < mininteger (unsigned)",
+            },
+            new object[]
+            {
+                "math.mininteger",
+                "math.maxinteger",
+                false,
+                "mininteger < maxinteger (unsigned)",
+            },
+            new object[] { "0", "-1", true, "0 < -1 (unsigned, -1 is max)" },
+            new object[] { "-1", "0", false, "-1 < 0 (unsigned)" },
+            new object[] { "0", "1", true, "0 < 1" },
+            new object[] { "1", "0", false, "1 < 0" },
+            new object[] { "-1", "-2", false, "-1 < -2 (unsigned)" },
+            new object[] { "-2", "-1", true, "-2 < -1 (unsigned)" },
+            new object[] { "math.maxinteger", "math.maxinteger", false, "maxinteger < maxinteger" },
+            new object[] { "math.mininteger", "math.mininteger", false, "mininteger < mininteger" },
+            new object[] { "0", "0", false, "0 < 0" },
+            new object[] { "-1", "-1", false, "-1 < -1" },
+            new object[] { "1", "2", true, "1 < 2" },
+            new object[]
+            {
+                "math.maxinteger - 1",
+                "math.maxinteger",
+                true,
+                "maxinteger-1 < maxinteger",
+            },
+            new object[]
+            {
+                "math.mininteger",
+                "math.mininteger + 1",
+                true,
+                "mininteger < mininteger+1 (unsigned)",
+            },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
         )]
         public async Task MathUltBoundaryValues(
+            LuaCompatibilityVersion version,
             string left,
             string right,
             bool expected,
             string description
         )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString($"return math.ult({left}, {right})");
 
             await Assert
@@ -398,9 +421,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// This was the original bug: precision loss caused incorrect comparisons.
         /// </summary>
         [Test]
-        public async Task MathUltPreservesIntegerPrecision()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task MathUltPreservesIntegerPrecision(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             // Verify the values are stored correctly as integers
             DynValue maxInt = script.DoString("return math.maxinteger");
@@ -430,27 +454,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// Tests math.type correctly identifies integer vs float subtypes.
         /// </summary>
         [Test]
-        [Arguments("math.maxinteger", "integer", "maxinteger is integer")]
-        [Arguments("math.mininteger", "integer", "mininteger is integer")]
-        [Arguments("0", "integer", "zero literal is integer")]
-        [Arguments("1", "integer", "one literal is integer")]
-        [Arguments("-1", "integer", "negative one is integer")]
-        [Arguments("1.0", "float", "1.0 is float")]
-        [Arguments("0.0", "float", "0.0 is float")]
-        [Arguments("1/0", "float", "infinity is float")]
-        [Arguments("0/0", "float", "NaN is float")]
-        [Arguments("math.huge", "float", "huge is float")]
-        [Arguments("2^63", "float", "2^63 is float (overflow)")]
-        [Arguments("math.maxinteger + 0.0", "float", "maxinteger coerced to float")]
-        [Arguments("math.maxinteger + 1", "integer", "maxinteger + 1 wraps to integer")]
-        [Arguments("math.mininteger - 1", "integer", "mininteger - 1 wraps to integer")]
+        [LuaTestMatrix(
+            new object[] { "math.maxinteger", "integer", "maxinteger is integer" },
+            new object[] { "math.mininteger", "integer", "mininteger is integer" },
+            new object[] { "0", "integer", "zero literal is integer" },
+            new object[] { "1", "integer", "one literal is integer" },
+            new object[] { "-1", "integer", "negative one is integer" },
+            new object[] { "1.0", "float", "1.0 is float" },
+            new object[] { "0.0", "float", "0.0 is float" },
+            new object[] { "1/0", "float", "infinity is float" },
+            new object[] { "0/0", "float", "NaN is float" },
+            new object[] { "math.huge", "float", "huge is float" },
+            new object[] { "2^63", "float", "2^63 is float (overflow)" },
+            new object[] { "math.maxinteger + 0.0", "float", "maxinteger coerced to float" },
+            new object[] { "math.maxinteger + 1", "integer", "maxinteger + 1 wraps to integer" },
+            new object[] { "math.mininteger - 1", "integer", "mininteger - 1 wraps to integer" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
         public async Task MathTypeIdentifiesSubtype(
+            LuaCompatibilityVersion version,
             string expression,
             string expectedType,
             string description
         )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString($"return math.type({expression})");
 
             await Assert
@@ -467,25 +495,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// Tests integer arithmetic overflow wrapping behavior.
         /// </summary>
         [Test]
-        [Arguments(
-            "math.maxinteger + 1",
-            -9223372036854775808L,
-            "maxinteger + 1 wraps to mininteger"
+        [LuaTestMatrix(
+            new object[]
+            {
+                "math.maxinteger + 1",
+                -9223372036854775808L,
+                "maxinteger + 1 wraps to mininteger",
+            },
+            new object[]
+            {
+                "math.mininteger - 1",
+                9223372036854775807L,
+                "mininteger - 1 wraps to maxinteger",
+            },
+            new object[] { "math.maxinteger * 2", -2L, "maxinteger * 2 wraps" },
+            new object[]
+            {
+                "-math.mininteger",
+                -9223372036854775808L,
+                "negation of mininteger wraps",
+            },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
         )]
-        [Arguments(
-            "math.mininteger - 1",
-            9223372036854775807L,
-            "mininteger - 1 wraps to maxinteger"
-        )]
-        [Arguments("math.maxinteger * 2", -2L, "maxinteger * 2 wraps")]
-        [Arguments("-math.mininteger", -9223372036854775808L, "negation of mininteger wraps")]
         public async Task IntegerArithmeticOverflowWraps(
+            LuaCompatibilityVersion version,
             string expression,
             long expected,
             string description
         )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString($"return {expression}");
 
             await Assert
@@ -505,9 +544,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// would overflow. Lua correctly preserves this wrapping behavior.
         /// </summary>
         [Test]
-        public async Task MinintegerDividedByNegativeOneWrapsToMininteger()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task MinintegerDividedByNegativeOneWrapsToMininteger(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             // Per Lua 5.3/5.4 spec: mininteger // -1 = mininteger (wraps due to two's complement)
             DynValue result = script.DoString("return math.mininteger // -1");
@@ -535,31 +577,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// Tests bitwise operations preserve integer precision at boundaries.
         /// </summary>
         [Test]
-        [Arguments("math.maxinteger | 0", 9223372036854775807L, "maxinteger OR 0")]
-        [Arguments("math.mininteger | 0", -9223372036854775808L, "mininteger OR 0")]
-        [Arguments(
-            "math.maxinteger & math.maxinteger",
-            9223372036854775807L,
-            "maxinteger AND maxinteger"
+        [LuaTestMatrix(
+            new object[] { "math.maxinteger | 0", 9223372036854775807L, "maxinteger OR 0" },
+            new object[] { "math.mininteger | 0", -9223372036854775808L, "mininteger OR 0" },
+            new object[]
+            {
+                "math.maxinteger & math.maxinteger",
+                9223372036854775807L,
+                "maxinteger AND maxinteger",
+            },
+            new object[]
+            {
+                "math.mininteger & math.mininteger",
+                -9223372036854775808L,
+                "mininteger AND mininteger",
+            },
+            new object[]
+            {
+                "~math.mininteger",
+                9223372036854775807L,
+                "NOT mininteger = maxinteger",
+            },
+            new object[]
+            {
+                "~math.maxinteger",
+                -9223372036854775808L,
+                "NOT maxinteger = mininteger",
+            },
+            new object[] { "math.maxinteger ~ math.maxinteger", 0L, "maxinteger XOR maxinteger" },
+            new object[] { "1 << 63", -9223372036854775808L, "1 << 63 = mininteger" },
+            new object[] { "math.mininteger >> 63", 1L, "mininteger >> 63 (logical)" },
+            new object[] { "-1 >> 63", 1L, "-1 >> 63 (logical shift, not arithmetic)" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
         )]
-        [Arguments(
-            "math.mininteger & math.mininteger",
-            -9223372036854775808L,
-            "mininteger AND mininteger"
-        )]
-        [Arguments("~math.mininteger", 9223372036854775807L, "NOT mininteger = maxinteger")]
-        [Arguments("~math.maxinteger", -9223372036854775808L, "NOT maxinteger = mininteger")]
-        [Arguments("math.maxinteger ~ math.maxinteger", 0L, "maxinteger XOR maxinteger")]
-        [Arguments("1 << 63", -9223372036854775808L, "1 << 63 = mininteger")]
-        [Arguments("math.mininteger >> 63", 1L, "mininteger >> 63 (logical)")]
-        [Arguments("-1 >> 63", 1L, "-1 >> 63 (logical shift, not arithmetic)")]
         public async Task BitwiseOperationsPreservePrecision(
+            LuaCompatibilityVersion version,
             string expression,
             long expected,
             string description
         )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString($"return {expression}");
 
             await Assert
@@ -664,7 +722,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// Tests that values just beyond the 64-bit boundary are correctly rejected.
         /// </summary>
         [Test]
-        public async Task BeyondInt64Boundary()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task BeyondInt64Boundary(LuaCompatibilityVersion version)
         {
             // 2^63 = 9223372036854775808 (one beyond MaxValue)
             const double twoTo63 = 9223372036854775808.0;
@@ -678,7 +737,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
             await Assert.That(result).IsEqualTo(0L);
 
             // Also test via script
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue scriptResult = script.DoString("return math.tointeger(2^63)");
             await Assert.That(scriptResult.IsNil()).IsTrue();
         }
@@ -692,9 +751,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// These specific cases were failing before the fix.
         /// </summary>
         [Test]
-        public async Task OriginalArm64DiscrepancyFixed()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task OriginalArm64DiscrepancyFixed(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             // Original bug 1: math.ult(maxinteger, mininteger) returned false on x64
             // due to precision loss when converting to double before comparison.
@@ -723,9 +783,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         /// Verifies that maxinteger and mininteger are stored with full precision.
         /// </summary>
         [Test]
-        public async Task MaxMinIntegerStoredWithFullPrecision()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task MaxMinIntegerStoredWithFullPrecision(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             DynValue max = script.DoString("return math.maxinteger");
             DynValue min = script.DoString("return math.mininteger");
@@ -750,12 +811,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
 
         #region Helpers
 
-        private static Script CreateScript()
+        private static Script CreateScript(LuaCompatibilityVersion version)
         {
-            ScriptOptions options = new(Script.DefaultOptions)
-            {
-                CompatibilityVersion = LuaCompatibilityVersion.Lua54,
-            };
+            ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
             return new Script(CoreModulePresets.Complete, options);
         }
 

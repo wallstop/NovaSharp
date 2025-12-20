@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -12,6 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class ScriptRuntimeExceptionTUnitTests
@@ -28,9 +30,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task ArithmeticOnNonNumberReturnsExceptionWhenLeftIsNonNumeric()
+        [AllLuaVersions]
+        public async Task ArithmeticOnNonNumberReturnsExceptionWhenLeftIsNonNumeric(
+            LuaCompatibilityVersion version
+        )
         {
-            DynValue left = DynValue.NewTable(new Table(new Script()));
+            DynValue left = DynValue.NewTable(new Table(new Script(version)));
             ScriptRuntimeException ex = ScriptRuntimeException.ArithmeticOnNonNumber(left);
             await Assert
                 .That(ex.Message)
@@ -112,9 +117,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConcatOnNonStringReturnsExceptionWhenLeftIsNonConcatenable()
+        [AllLuaVersions]
+        public async Task ConcatOnNonStringReturnsExceptionWhenLeftIsNonConcatenable(
+            LuaCompatibilityVersion version
+        )
         {
-            DynValue left = DynValue.NewTable(new Table(new Script()));
+            DynValue left = DynValue.NewTable(new Table(new Script(version)));
             DynValue right = DynValue.NewString("abc");
             ScriptRuntimeException ex = ScriptRuntimeException.ConcatOnNonString(left, right);
             await Assert.That(ex.Message).IsEqualTo("attempt to concatenate a table value");

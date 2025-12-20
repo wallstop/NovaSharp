@@ -3,30 +3,33 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
     using System;
     using System.Collections.Generic;
     using global::TUnit.Core;
+    using global::TUnit.Core.Interfaces;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     public sealed class LuaTestMatrixAttribute : UntypedDataSourceGeneratorAttribute
     {
-        private readonly IReadOnlyList<object[]> _argumentSets;
+        private readonly object[][] _argumentSets;
 
         public LuaTestMatrixAttribute(params object[] argumentSets)
         {
-            if (argumentSets == null)
-            {
-                throw new ArgumentNullException(nameof(argumentSets));
-            }
+            ArgumentNullException.ThrowIfNull(argumentSets);
 
             _argumentSets = NormalizeArgumentSets(argumentSets);
+            ArgumentSets = argumentSets;
             MinimumVersion = LuaCompatibilityVersion.Lua51;
             MaximumVersion = LuaCompatibilityVersion.Lua55;
         }
+
+        public object[] ArgumentSets { get; }
 
         public LuaCompatibilityVersion MinimumVersion { get; set; }
 
         public LuaCompatibilityVersion MaximumVersion { get; set; }
 
-        protected override IEnumerable<Func<object[]>> GenerateDataSources()
+        protected override IEnumerable<Func<object[]>> GenerateDataSources(
+            DataGeneratorMetadata dataGeneratorMetadata
+        )
         {
             IReadOnlyList<LuaCompatibilityVersion> versions = LuaVersionData.Range(
                 MinimumVersion,
@@ -42,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
             }
         }
 
-        private static IReadOnlyList<object[]> NormalizeArgumentSets(object[] argumentSets)
+        private static object[][] NormalizeArgumentSets(object[] argumentSets)
         {
             if (argumentSets.Length == 0)
             {

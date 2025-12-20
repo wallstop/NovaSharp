@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Statements;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class AssignmentStatementTUnitTests
     {
@@ -90,9 +91,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignmentRequiresWritableVariables()
+        [AllLuaVersions]
+        public async Task AssignmentRequiresWritableVariables(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("1 = 2")

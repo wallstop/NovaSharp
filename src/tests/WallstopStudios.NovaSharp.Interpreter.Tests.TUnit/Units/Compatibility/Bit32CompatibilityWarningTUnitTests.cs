@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
+    using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -13,14 +14,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
     public sealed class Bit32CompatibilityWarningTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task RequireBit32InLua53EmitsWarningOnlyOnce()
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task RequireBit32InLua53EmitsWarningOnlyOnce(LuaCompatibilityVersion version)
         {
             List<string> warnings = new();
             Script script = new(
                 CoreModulePresets.Complete,
                 new ScriptOptions
                 {
-                    CompatibilityVersion = LuaCompatibilityVersion.Lua53,
+                    CompatibilityVersion = version,
                     DebugPrint = warnings.Add,
                     ScriptLoader = new NullModuleScriptLoader(),
                 }
@@ -40,14 +42,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Compatibility
         }
 
         [global::TUnit.Core.Test]
-        public async Task RequireBit32InLua52DoesNotEmitWarning()
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task RequireBit32InLua52DoesNotEmitWarning(LuaCompatibilityVersion version)
         {
             List<string> warnings = new();
             Script script = new(
                 CoreModulePresets.Complete,
                 new ScriptOptions
                 {
-                    CompatibilityVersion = LuaCompatibilityVersion.Lua52,
+                    CompatibilityVersion = version,
                     DebugPrint = warnings.Add,
                     ScriptLoader = new Bit32ModuleScriptLoader(),
                 }

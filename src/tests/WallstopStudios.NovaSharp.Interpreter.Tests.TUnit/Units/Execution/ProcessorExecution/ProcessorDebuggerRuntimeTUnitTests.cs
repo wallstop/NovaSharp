@@ -5,19 +5,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
     using static ProcessorDebuggerTestHelpers;
 
     public sealed class ProcessorDebuggerRuntimeTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task RefreshDebuggerThreadsUsesParentCoroutineStack()
+        [AllLuaVersions]
+        public async Task RefreshDebuggerThreadsUsesParentCoroutineStack(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             script.DoString("function idle() return 5 end");
 
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("idle"));
@@ -41,9 +46,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause()
+        [AllLuaVersions]
+        public async Task RuntimeExceptionRefreshesDebuggerWhenSignalRequestsPause(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             Processor processor = script.GetMainProcessorForTests();
             PrepareCallStack(processor);
 

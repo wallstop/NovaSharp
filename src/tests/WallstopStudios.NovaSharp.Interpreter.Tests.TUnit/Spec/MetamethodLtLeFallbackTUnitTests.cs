@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for the <c>__lt</c> metamethod fallback behavior when <c>__le</c> is not defined.
@@ -71,11 +72,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task LtFallbackToLeWorksInLatestMode()
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task LtFallbackToLeWorksInLatestMode(LuaCompatibilityVersion version)
         {
             // Latest mode follows the current NovaSharp target (Lua 5.4.x), which allows the fallback.
             // When NovaSharp targets Lua 5.5+, this test should be updated to expect failure.
-            Script script = new(LuaCompatibilityVersion.Latest);
+            Script script = new(version);
             DynValue result = script.DoString(ScriptWithOnlyLtMetamethod);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
@@ -139,7 +141,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task LtFallbackCorrectlyInvertsResult()
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua54)]
+        public async Task LtFallbackCorrectlyInvertsResult(LuaCompatibilityVersion version)
         {
             // When using __lt fallback for <=, the result should be: not (b < a)
             // So if a.value=2 and b.value=1, then a <= b should be false
@@ -155,7 +158,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 return a <= b  -- Should be false: not (1 < 2) = not true = false
                 ";
 
-            Script script = new(LuaCompatibilityVersion.Lua54);
+            Script script = new(version);
             DynValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
@@ -163,7 +166,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task LtFallbackHandlesEqualValues()
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua54)]
+        public async Task LtFallbackHandlesEqualValues(LuaCompatibilityVersion version)
         {
             // When a.value == b.value, a <= b should be true
             // Using fallback: not (b < a) = not (2 < 2) = not false = true
@@ -178,7 +182,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 return a <= b  -- Should be true: not (2 < 2) = not false = true
                 ";
 
-            Script script = new(LuaCompatibilityVersion.Lua54);
+            Script script = new(version);
             DynValue result = script.DoString(scriptCode);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);

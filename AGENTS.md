@@ -6,7 +6,7 @@
 
 1. **NEVER `git add` or `git commit`** — Leave version control to the human
 2. **NEVER use absolute paths** — Use relative paths from repo root only
-3. **NEVER discard output** — **NO `2>/dev/null`, `>/dev/null`, `&>/dev/null`, or `| head`/`| tail` without good reason.** Command output is essential for debugging. If a command produces too much output, use `--quiet` flags or filter with `grep`, but NEVER silently discard stderr.
+3. **NEVER discard output** — **NO redirects or pipes to `/dev/null`** (`>/dev/null`, `2>/dev/null`, `&>/dev/null`, `| cat >/dev/null`, etc.), **even in chained commands** (`cmd1 2>/dev/null && cmd2`). Command output is essential for debugging. If a command produces too much output, use `--quiet` flags or filter with `grep`, but NEVER silently discard stderr.
 4. **Lua Spec Compliance** — Fix production code when it differs from reference Lua, never tests
 5. **Always create `.lua` test files** — Every test/fix needs standalone Lua fixtures for cross-interpreter verification
 6. **Multi-Version Testing** — All tests must run across Lua 5.1, 5.2, 5.3, 5.4, 5.5; include positive AND negative tests for version-specific features

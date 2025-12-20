@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for <see cref="LuaVersionDefaults"/> centralized version resolution (§8.23 from PLAN.md).
@@ -137,14 +138,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task ScriptOptionsWithLatestBehavesIdenticallyToDefaultScript()
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ScriptOptionsWithLatestBehavesIdenticallyToDefaultScript(
+            LuaCompatibilityVersion version
+        )
         {
             // Script with explicit Latest
             Script scriptWithLatest = new Script(
-                new ScriptOptions(Script.DefaultOptions)
-                {
-                    CompatibilityVersion = LuaCompatibilityVersion.Latest,
-                }
+                new ScriptOptions(Script.DefaultOptions) { CompatibilityVersion = version }
             );
 
             // Script with no options (default)
@@ -158,14 +159,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task ScriptWithLatestUsesCorrectRngProvider()
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ScriptWithLatestUsesCorrectRngProvider(LuaCompatibilityVersion version)
         {
             // Script with explicit Latest
             Script scriptLatest = new Script(
-                new ScriptOptions(Script.DefaultOptions)
-                {
-                    CompatibilityVersion = LuaCompatibilityVersion.Latest,
-                }
+                new ScriptOptions(Script.DefaultOptions) { CompatibilityVersion = version }
             );
 
             // Script with explicit Lua54 (what Latest should resolve to)
@@ -190,13 +189,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task ScriptWithLatestHasCorrectMathRandomseedBehavior()
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task ScriptWithLatestHasCorrectMathRandomseedBehavior(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = new Script(
-                new ScriptOptions(Script.DefaultOptions)
-                {
-                    CompatibilityVersion = LuaCompatibilityVersion.Latest,
-                }
+                new ScriptOptions(Script.DefaultOptions) { CompatibilityVersion = version }
             );
 
             // Lua 5.4+ math.randomseed returns the seed tuple
@@ -212,7 +211,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task AllScriptConstructorsProduceSameCompatibilityVersion()
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task AllScriptConstructorsProduceSameCompatibilityVersion(
+            LuaCompatibilityVersion version
+        )
         {
             // Different constructor overloads
             Script script1 = new Script();
@@ -239,7 +241,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task AllScriptConstructorsProduceSameRngType()
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task AllScriptConstructorsProduceSameRngType(LuaCompatibilityVersion version)
         {
             Script script1 = new Script();
             Script script2 = new Script(CoreModulePresets.Complete);
@@ -266,12 +269,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task ScriptWithSameSeedProducesSameFirstRandomValue()
+        [AllLuaVersions]
+        public async Task ScriptWithSameSeedProducesSameFirstRandomValue(
+            LuaCompatibilityVersion version
+        )
         {
             const int seed = 54321;
 
-            Script script1 = new Script();
-            Script script2 = new Script();
+            Script script1 = new Script(version);
+            Script script2 = new Script(version);
 
             script1.DoString($"math.randomseed({seed})");
             script2.DoString($"math.randomseed({seed})");

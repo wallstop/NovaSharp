@@ -4,12 +4,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.ProxyObjects;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class ProxyUserDataDescriptorTUnitTests
@@ -17,7 +19,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         private static readonly string[] ExpectedMetaRequests = { "__tostring" };
 
         [global::TUnit.Core.Test]
-        public async Task IndexUsesProxyObjectBeforeDelegating()
+        [AllLuaVersions]
+        public async Task IndexUsesProxyObjectBeforeDelegating(LuaCompatibilityVersion version)
         {
             RecordingProxyFactory factory = new();
             RecordingDescriptor inner = new();
@@ -27,7 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             DynValue expected = DynValue.NewString("result");
             inner.IndexResult = expected;
 
-            DynValue value = descriptor.Index(new Script(), target, index, true);
+            DynValue value = descriptor.Index(new Script(version), target, index, true);
 
             await Assert.That(value).IsSameReferenceAs(expected);
             await Assert.That(factory.LastInput).IsSameReferenceAs(target);
@@ -38,7 +41,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetIndexReturnsInnerResult()
+        [AllLuaVersions]
+        public async Task SetIndexReturnsInnerResult(LuaCompatibilityVersion version)
         {
             RecordingProxyFactory factory = new();
             RecordingDescriptor inner = new();
@@ -48,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             DynValue value = DynValue.NewNumber(5);
             inner.SetIndexResult = true;
 
-            bool handled = descriptor.SetIndex(new Script(), target, index, value, false);
+            bool handled = descriptor.SetIndex(new Script(version), target, index, value, false);
 
             await Assert.That(handled).IsTrue();
             await Assert.That(inner.LastObject).IsTypeOf<Proxy>();
@@ -58,7 +62,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task IndexPassesThroughNullInstancesWithoutProxying()
+        [AllLuaVersions]
+        public async Task IndexPassesThroughNullInstancesWithoutProxying(
+            LuaCompatibilityVersion version
+        )
         {
             RecordingProxyFactory factory = new();
             RecordingDescriptor inner = new();
@@ -66,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             DynValue index = DynValue.NewString("noop");
             inner.IndexResult = DynValue.NewString("result");
 
-            DynValue value = descriptor.Index(new Script(), null, index, true);
+            DynValue value = descriptor.Index(new Script(version), null, index, true);
 
             await Assert.That(value.String).IsEqualTo("result");
             await Assert.That(factory.LastInput).IsNull();
@@ -74,7 +81,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetaIndexAndAsStringProxyValues()
+        [AllLuaVersions]
+        public async Task MetaIndexAndAsStringProxyValues(LuaCompatibilityVersion version)
         {
             RecordingProxyFactory factory = new();
             RecordingDescriptor inner = new();
@@ -84,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             inner.MetaIndexResult = expectedMeta;
             inner.AsStringResult = "proxied-meta";
 
-            DynValue metaResult = descriptor.MetaIndex(new Script(), target, "__tostring");
+            DynValue metaResult = descriptor.MetaIndex(new Script(version), target, "__tostring");
             string asString = descriptor.AsString(target);
 
             await Assert.That(metaResult).IsSameReferenceAs(expectedMeta);

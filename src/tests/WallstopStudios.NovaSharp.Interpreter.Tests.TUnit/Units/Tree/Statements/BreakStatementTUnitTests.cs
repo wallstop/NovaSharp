@@ -3,15 +3,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class BreakStatementTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task BreakOutsideLoopThrowsSyntaxError()
+        [AllLuaVersions]
+        public async Task BreakOutsideLoopThrowsSyntaxError(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("break")
@@ -24,9 +28,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         }
 
         [global::TUnit.Core.Test]
-        public async Task BreakInsideStandaloneFunctionTriggersLoopBoundaryGuard()
+        [AllLuaVersions]
+        public async Task BreakInsideStandaloneFunctionTriggersLoopBoundaryGuard(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = CreateScript(version);
             const string chunk =
                 @"
                 local function inner()
@@ -45,9 +52,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         }
 
         [global::TUnit.Core.Test]
-        public async Task BreakInsideNestedFunctionDefinedInLoopCannotEscapeOuterLoop()
+        [AllLuaVersions]
+        public async Task BreakInsideNestedFunctionDefinedInLoopCannotEscapeOuterLoop(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = CreateScript(version);
             const string chunk =
                 @"
                 for i = 1, 2 do
@@ -68,9 +78,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         }
 
         [global::TUnit.Core.Test]
-        public async Task MultipleBreakStatementsRespectInnermostLoopScope()
+        [AllLuaVersions]
+        public async Task MultipleBreakStatementsRespectInnermostLoopScope(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = CreateScript(version);
             const string chunk =
                 @"
                 local log = {}
@@ -101,9 +114,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         }
 
         [global::TUnit.Core.Test]
-        public async Task BreakOnlyExitsInnermostLoop()
+        [AllLuaVersions]
+        public async Task BreakOnlyExitsInnermostLoop(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
             const string chunk =
                 @"
                 local log = {}
@@ -123,6 +137,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
             await Assert.That(log.Get(1).String).IsEqualTo("1-1").ConfigureAwait(false);
             await Assert.That(log.Get(2).String).IsEqualTo("2-1").ConfigureAwait(false);
             await Assert.That(log.Get(3).String).IsEqualTo("3-1").ConfigureAwait(false);
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
+            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

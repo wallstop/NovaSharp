@@ -5,10 +5,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ModuleArgumentValidationTUnitTests
     {
@@ -26,9 +28,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
-        public async Task RequireExecutionContextReturnsProvidedContext()
+        [AllLuaVersions]
+        public async Task RequireExecutionContextReturnsProvidedContext(
+            LuaCompatibilityVersion version
+        )
         {
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             ScriptExecutionContext validated = ModuleArgumentValidation.RequireExecutionContext(
                 context,
@@ -75,9 +82,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
-        public async Task RequireTableReturnsProvidedTable()
+        [AllLuaVersions]
+        public async Task RequireTableReturnsProvidedTable(LuaCompatibilityVersion version)
         {
-            Table table = new(new Script());
+            Table table = new(new Script(version));
 
             Table validated = ModuleArgumentValidation.RequireTable(table, "table");
 

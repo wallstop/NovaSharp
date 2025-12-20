@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using global::TUnit.Core;
+    using global::TUnit.Core.Interfaces;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
 
     internal static class LuaVersionData
@@ -132,10 +133,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
 
         protected LuaVersionDataSourceAttributeBase(IReadOnlyList<LuaCompatibilityVersion> versions)
         {
-            if (versions == null)
-            {
-                throw new ArgumentNullException(nameof(versions));
-            }
+            ArgumentNullException.ThrowIfNull(versions);
 
             if (versions.Count == 0)
             {
@@ -148,7 +146,9 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
             _versions = versions;
         }
 
-        protected override IEnumerable<Func<object[]>> GenerateDataSources()
+        protected override IEnumerable<Func<object[]>> GenerateDataSources(
+            DataGeneratorMetadata dataGeneratorMetadata
+        )
         {
             foreach (LuaCompatibilityVersion version in _versions)
             {
@@ -168,14 +168,24 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
     public sealed class LuaVersionsFromAttribute : LuaVersionDataSourceAttributeBase
     {
         public LuaVersionsFromAttribute(LuaCompatibilityVersion minimumVersion)
-            : base(LuaVersionData.From(minimumVersion)) { }
+            : base(LuaVersionData.From(minimumVersion))
+        {
+            MinimumVersion = minimumVersion;
+        }
+
+        public LuaCompatibilityVersion MinimumVersion { get; }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
     public sealed class LuaVersionsUntilAttribute : LuaVersionDataSourceAttributeBase
     {
         public LuaVersionsUntilAttribute(LuaCompatibilityVersion maximumVersion)
-            : base(LuaVersionData.Until(maximumVersion)) { }
+            : base(LuaVersionData.Until(maximumVersion))
+        {
+            MaximumVersion = maximumVersion;
+        }
+
+        public LuaCompatibilityVersion MaximumVersion { get; }
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
@@ -185,6 +195,14 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit
             LuaCompatibilityVersion minimumVersion,
             LuaCompatibilityVersion maximumVersion
         )
-            : base(LuaVersionData.Range(minimumVersion, maximumVersion)) { }
+            : base(LuaVersionData.Range(minimumVersion, maximumVersion))
+        {
+            MinimumVersion = minimumVersion;
+            MaximumVersion = maximumVersion;
+        }
+
+        public LuaCompatibilityVersion MinimumVersion { get; }
+
+        public LuaCompatibilityVersion MaximumVersion { get; }
     }
 }

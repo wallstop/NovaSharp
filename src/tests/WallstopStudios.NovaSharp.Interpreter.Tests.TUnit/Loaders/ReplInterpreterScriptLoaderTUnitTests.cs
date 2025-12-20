@@ -4,10 +4,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
+    using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.REPL;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ReplInterpreterScriptLoaderTUnitTests
     {
@@ -17,7 +20,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
         private static readonly string[] LuaGlobalModulePaths = { "luaGlobal/?.lua" };
         private static readonly string[] DefaultModulePaths = { "?", "?.lua" };
 
-        [global::TUnit.Core.Test]
+        [Test]
         public async Task ConstructorPrefersNovaSharpPathEnvironmentVariable()
         {
             TestReplLoader loader = CreateLoader(
@@ -31,7 +34,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
                 .IsEqualTo(JoinPaths(NovaPreferredModulePaths));
         }
 
-        [global::TUnit.Core.Test]
+        [Test]
         public async Task ConstructorFallsBackToLuaPath52ThenLuaPath()
         {
             TestReplLoader loader = CreateLoader(
@@ -49,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
                 .IsEqualTo(JoinPaths(LuaGlobalModulePaths));
         }
 
-        [global::TUnit.Core.Test]
+        [Test]
         public async Task ConstructorIgnoresEmptyNovaSharpPathValue()
         {
             TestReplLoader loader = CreateLoader(
@@ -63,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
                 .IsEqualTo(JoinPaths(Lua52ModulePaths));
         }
 
-        [global::TUnit.Core.Test]
+        [Test]
         public async Task ConstructorFallsBackToDefaultPathWhenEnvironmentUnset()
         {
             TestReplLoader loader = CreateLoader();
@@ -73,61 +76,73 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Loaders
                 .IsEqualTo(JoinPaths(DefaultModulePaths));
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ResolveModuleNameUsesLuaPathGlobalWhenPresent()
+        [Test]
+        [AllLuaVersions]
+        public async Task ResolveModuleNameUsesLuaPathGlobalWhenPresent(
+            LuaCompatibilityVersion version
+        )
         {
             TestReplLoader loader = CreateLoader();
             loader.SetModulePaths("global/?.lua");
             loader.MarkExisting("lua_path/pkg/mod.lua");
 
-            Table globals = new(new Script());
+            Table globals = new(new Script(version));
             globals.Set("LUA_PATH", DynValue.NewString("lua_path/?.lua"));
 
             string result = loader.ResolveModuleName("pkg.mod", globals);
             await Assert.That(result).IsEqualTo("lua_path/pkg/mod.lua");
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ResolveModuleNameFallsBackToModulePathsWhenLuaPathMissing()
+        [Test]
+        [AllLuaVersions]
+        public async Task ResolveModuleNameFallsBackToModulePathsWhenLuaPathMissing(
+            LuaCompatibilityVersion version
+        )
         {
             TestReplLoader loader = CreateLoader();
             loader.SetModulePaths("global/?.lua");
             loader.MarkExisting("global/pkg/mod.lua");
 
-            Table globals = new(new Script());
+            Table globals = new(new Script(version));
 
             string result = loader.ResolveModuleName("pkg.mod", globals);
             await Assert.That(result).IsEqualTo("global/pkg/mod.lua");
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ResolveModuleNameIgnoresNonStringLuaPathGlobal()
+        [Test]
+        [AllLuaVersions]
+        public async Task ResolveModuleNameIgnoresNonStringLuaPathGlobal(
+            LuaCompatibilityVersion version
+        )
         {
             TestReplLoader loader = CreateLoader();
             loader.SetModulePaths("global/?.lua");
             loader.MarkExisting("global/pkg/mod.lua");
 
-            Table globals = new(new Script());
+            Table globals = new(new Script(version));
             globals.Set("LUA_PATH", DynValue.NewNumber(42));
 
             string result = loader.ResolveModuleName("pkg.mod", globals);
             await Assert.That(result).IsEqualTo("global/pkg/mod.lua");
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ResolveModuleNameReturnsNullWhenLuaPathCannotResolve()
+        [Test]
+        [AllLuaVersions]
+        public async Task ResolveModuleNameReturnsNullWhenLuaPathCannotResolve(
+            LuaCompatibilityVersion version
+        )
         {
             TestReplLoader loader = CreateLoader();
             loader.SetModulePaths("global/?.lua");
 
-            Table globals = new(new Script());
+            Table globals = new(new Script(version));
             globals.Set("LUA_PATH", DynValue.NewString("missing/?.lua"));
 
             string result = loader.ResolveModuleName("pkg.mod", globals);
             await Assert.That(result).IsNull();
         }
 
-        [global::TUnit.Core.Test]
+        [Test]
         public async Task ResolveModuleNameThrowsWhenGlobalContextIsNull()
         {
             TestReplLoader loader = CreateLoader();

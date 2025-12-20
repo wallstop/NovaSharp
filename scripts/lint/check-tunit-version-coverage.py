@@ -36,6 +36,7 @@ class TestMethod:
     version_arguments: list[str] = field(default_factory=list)
     has_methoddatasource: bool = False
     has_combineddatasources: bool = False
+    has_lua_version_helper: bool = False  # True if has [AllLuaVersions] or similar
     executes_lua: bool = False  # True if the test appears to execute Lua code
     method_body: str = ""  # The method body for detailed analysis
 
@@ -50,11 +51,11 @@ class TestFile:
 
     @property
     def compliant_methods(self) -> list[TestMethod]:
-        return [m for m in self.methods if m.has_version_argument or m.has_methoddatasource or m.has_combineddatasources]
+        return [m for m in self.methods if m.has_version_argument or m.has_methoddatasource or m.has_combineddatasources or m.has_lua_version_helper]
 
     @property
     def non_compliant_methods(self) -> list[TestMethod]:
-        return [m for m in self.methods if not m.has_version_argument and not m.has_methoddatasource and not m.has_combineddatasources]
+        return [m for m in self.methods if not m.has_version_argument and not m.has_methoddatasource and not m.has_combineddatasources and not m.has_lua_version_helper]
 
     @property
     def lua_execution_tests_needing_version(self) -> list[TestMethod]:
@@ -66,17 +67,24 @@ class TestFile:
         """Tests that don't appear to execute Lua code (infrastructure tests)."""
         return [m for m in self.non_compliant_methods if not m.executes_lua]
 
-
 # Lua versions that NovaSharp supports
 LUA_VERSIONS = ["Lua51", "Lua52", "Lua53", "Lua54", "Lua55", "Latest"]
 
 # Patterns to identify test methods and version arguments
 TEST_ATTRIBUTE_PATTERN = re.compile(r"^\s*\[(?:global::TUnit\.Core\.)?Test\]", re.MULTILINE)
+# Use re.DOTALL to match across newlines for multi-line Arguments attributes
 ARGUMENTS_PATTERN = re.compile(
-    r"\[(?:global::TUnit\.Core\.)?Arguments\(.*?(?:Compatibility\.)?LuaCompatibilityVersion\.(Lua\d+|Latest).*?\)\]"
+    r"\[(?:global::TUnit\.Core\.)?Arguments\(.*?(?:Compatibility\.)?LuaCompatibilityVersion\.(Lua\d+|Latest).*?\)\]",
+    re.DOTALL
 )
 METHODDATASOURCE_PATTERN = re.compile(r"\[(?:global::TUnit\.Core\.)?MethodDataSource")
 COMBINEDDATASOURCES_PATTERN = re.compile(r"\[(?:global::TUnit\.Core\.)?CombinedDataSources")
+# New helper attribute patterns for data-driven testing
+ALL_LUA_VERSIONS_PATTERN = re.compile(r"\[AllLuaVersions\]")
+LUA_VERSIONS_FROM_PATTERN = re.compile(r"\[LuaVersionsFrom\(")
+LUA_VERSIONS_UNTIL_PATTERN = re.compile(r"\[LuaVersionsUntil\(")
+LUA_VERSION_RANGE_PATTERN = re.compile(r"\[LuaVersionRange\(")
+LUA_TEST_MATRIX_PATTERN = re.compile(r"\[LuaTestMatrix\(")
 METHOD_PATTERN = re.compile(r"public\s+async\s+Task\s+(\w+)\s*\(")
 CLASS_PATTERN = re.compile(r"(?:public\s+)?(?:sealed\s+)?class\s+(\w+)")
 
@@ -211,6 +219,14 @@ def analyze_test_file(file_path: Path) -> Optional[TestFile]:
                 version_args = ARGUMENTS_PATTERN.findall(full_context)
                 has_methoddatasource = bool(METHODDATASOURCE_PATTERN.search(full_context))
                 has_combineddatasources = bool(COMBINEDDATASOURCES_PATTERN.search(full_context))
+                # Check for new data-driving helper attributes
+                has_lua_version_helper = (
+                    bool(ALL_LUA_VERSIONS_PATTERN.search(full_context)) or
+                    bool(LUA_VERSIONS_FROM_PATTERN.search(full_context)) or
+                    bool(LUA_VERSIONS_UNTIL_PATTERN.search(full_context)) or
+                    bool(LUA_VERSION_RANGE_PATTERN.search(full_context)) or
+                    bool(LUA_TEST_MATRIX_PATTERN.search(full_context))
+                )
 
                 test_method = TestMethod(
                     name=method_name,
@@ -221,6 +237,7 @@ def analyze_test_file(file_path: Path) -> Optional[TestFile]:
                     version_arguments=version_args,
                     has_methoddatasource=has_methoddatasource,
                     has_combineddatasources=has_combineddatasources,
+                    has_lua_version_helper=has_lua_version_helper,
                     executes_lua=executes_lua,
                     method_body=method_body,
                 )

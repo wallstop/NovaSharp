@@ -13,25 +13,37 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 ---
 
-## 🔴 HIGH Priority: TUnit Test Multi-Version Coverage Audit (§8.39)
+## 🟢 COMPLETED: TUnit Test Multi-Version Coverage Audit (§8.39)
 
-**Status**: 🟡 **PHASE 3 IN PROGRESS** — Bulk remediation ongoing. ~1,414 tests compliant out of ~3,568 total (2025-12-19).
+**Status**: ✅ **COMPLETE** — 1,985 tests compliant, **0 Lua execution tests remaining**.
 
 **Problem Statement**:
-NovaSharp supports Lua 5.1, 5.2, 5.3, 5.4, and 5.5. Every TUnit test MUST explicitly declare which `LuaCompatibilityVersion` values it targets via `[Arguments]` attributes. Tests without version coverage will be rejected. Additionally, version-specific features require BOTH positive tests (feature works in supported versions) AND negative tests (feature is unavailable/nil/errors in unsupported versions).
+NovaSharp supports Lua 5.1, 5.2, 5.3, 5.4, and 5.5. Every TUnit test MUST explicitly declare which `LuaCompatibilityVersion` values it targets via `[Arguments]` or helper attributes. Tests without version coverage will be rejected.
 
-### Audit Results (2025-12-19)
+### Final Metrics (Session 048)
 
 | Metric | Count |
 |--------|-------|
-| Files analyzed | 249 |
-| Total tests | ~3,568 |
-| Compliant tests | **1,414** |
-| **🔴 Lua execution tests needing version** | **424** |
-| ⚪ Infrastructure tests (no Lua) | ~1,730 |
-| **Compliance %** | **~39.6%** |
+| Files analyzed | 251 |
+| Total tests | ~3,669 |
+| Compliant tests | **1,985** |
+| **✅ Lua execution tests needing version** | **0** |
+| ⚪ Infrastructure tests (no Lua) | ~1,684 |
+| **Compliance %** | **54.1%** |
 
-### Audit Script Usage
+### Progress
+- Started with **357** non-compliant Lua execution tests
+- Session 047: Reduced to **24** non-compliant (93% reduction)
+- Session 048: Reduced to **0** non-compliant (**100% complete!**)
+
+### Completed Tasks (Session 048)
+- [x] Fixed lint script to handle multi-line Arguments attributes (added `re.DOTALL` flag)
+- [x] Fixed PlatformAutoDetectorTUnitTests (1 test)
+- [x] Fixed IntegerBoundaryTUnitTests (10 tests with `[LuaTestMatrix]` / `[LuaVersionsFrom]`)
+- [x] Fixed ScriptExecution tests (11 tests across 9 files)
+- [x] Fixed ScriptRunTUnitTests duplicate LuaTestMatrix attribute issue
+
+### Commands
 
 ```bash
 python3 scripts/lint/check-tunit-version-coverage.py
@@ -39,100 +51,67 @@ python3 scripts/lint/check-tunit-version-coverage.py --detailed  # Show all non-
 python3 scripts/lint/check-tunit-version-coverage.py --lua-only --fail-on-noncompliant  # CI mode
 ```
 
-### Implementation Tasks
+### Remaining Tasks
 
-- [x] **Phase 1: Automated Audit** — Script created ✅
-- [x] **Phase 2: Classification** — Tests categorized by module ✅
-- [x] **Phase 3: Bulk Remediation (Partial)** — 562 tests converted, 424 remaining
-- [ ] **Phase 3: Remediation (continued)** — Fix remaining 424 Lua execution tests
-- [ ] **Phase 3a: Version-Specific Fixes** — Fix tests that fail on wrong Lua versions
-- [ ] **Phase 4: Negative Test Gap Analysis** — Identify version-specific features missing negative tests
-- [ ] **Phase 5: CI Lint Rule** — Add CI check that rejects PRs with tests missing version coverage
-
-### Success Criteria
-
-- [ ] Every TUnit test file has version-specific `[Arguments]` attributes
-- [ ] Universal features have 5 `[Arguments]` (one per Lua version)
-- [ ] Version-specific features have BOTH positive AND negative test methods
-- [ ] CI lint rule prevents regression
+- [ ] Negative test gap analysis for version-specific features
+- [ ] Add CI lint rule that rejects PRs with tests missing version coverage
 
 **Owner**: Test infrastructure team
-**Priority**: 🔴 HIGH
+**Priority**: 🟢 LOW (audit complete, only CI integration remains)
 
 ---
 
-## 🔴 HIGH Priority: Test Data-Driving Helper Infrastructure (§8.42)
+## 🟡 MEDIUM Priority: Test Data-Driving Helper Migration (§8.42)
 
-**Status**: 🟡 **IN PROGRESS** — Core helper attributes landed (AllLuaVersions + range helpers + LuaTestMatrix); migration and enforcement remain.
+**Status**: 🟡 **IN PROGRESS** — Core helpers complete, migration ongoing.
 
 **Problem Statement**:
-NovaSharp tests require explicit manual `[Arguments]` entries for every combination of Lua version (5.1, 5.2, 5.3, 5.4, 5.5) and test input. This results in massive boilerplate — 5+ `[Arguments]` attributes per test method, multiplied by multiple input variations. The maintenance burden is unsustainable and error-prone.
+NovaSharp tests require explicit manual `[Arguments]` entries for every Lua version combination. The helper attributes reduce 5+ lines of attributes per test to a single line.
 
-**Goal**: Provide simple, consolidated helpers that automatically expand Lua version combinations, reducing test boilerplate from 25+ lines of attributes to 1-2 lines while maintaining full version coverage.
+### Available Helpers
 
-### Current Helper Set
+All helpers are in `src/tests/TestInfrastructure/TUnit/`:
 
-| Helper | Description | Example Usage |
-|--------|-------------|---------------|
-| `[AllLuaVersions]` | Expands to all 5 Lua versions (5.1-5.5) | Single attribute replaces 5 `[Arguments]` |
-| `[LuaVersionsFrom(5.3)]` | Versions from 5.3+ (inclusive) | For features introduced in 5.3 |
-| `[LuaVersionsUntil(5.2)]` | Versions up to 5.2 (inclusive) | For features removed/changed after 5.2 |
-| `[LuaVersionRange(5.2, 5.4)]` | Specific version range | For targeted version support |
-| `[LuaTestMatrix]` | Full Cartesian product of versions × inputs | For comprehensive edge-case testing |
-| *(Use nested arrays)* | Group additional arguments for `LuaTestMatrix` | `[LuaTestMatrix(new object[] { "input1", true }, "input2")]` |
+| Helper | Description |
+|--------|-------------|
+| `[AllLuaVersions]` | Expands to all 5 Lua versions (5.1-5.5) |
+| `[LuaVersionsFrom(5.3)]` | Versions from 5.3+ (inclusive) |
+| `[LuaVersionsUntil(5.2)]` | Versions up to 5.2 (inclusive) |
+| `[LuaVersionRange(5.2, 5.4)]` | Specific version range |
+| `[LuaTestMatrix]` | Full Cartesian product of versions × inputs |
 
-### Example: Before vs After
+### Migration Status
 
-**Before (Current Pattern)**:
-```csharp
-[Test]
-[Arguments(LuaCompatibilityVersion.Lua51, "test1")]
-[Arguments(LuaCompatibilityVersion.Lua52, "test1")]
-[Arguments(LuaCompatibilityVersion.Lua53, "test1")]
-[Arguments(LuaCompatibilityVersion.Lua54, "test1")]
-[Arguments(LuaCompatibilityVersion.Lua55, "test1")]
-[Arguments(LuaCompatibilityVersion.Lua51, "test2")]
-[Arguments(LuaCompatibilityVersion.Lua52, "test2")]
-[Arguments(LuaCompatibilityVersion.Lua53, "test2")]
-[Arguments(LuaCompatibilityVersion.Lua54, "test2")]
-[Arguments(LuaCompatibilityVersion.Lua55, "test2")]
-public async Task TestFeature(LuaCompatibilityVersion version, string input) { ... }
-```
+| Category | Converted | Remaining |
+|----------|-----------|-----------|
+| MathModule tests | ✅ ~60 | - |
+| Core EndToEnd (Simple, Closure, Coroutine, etc.) | ✅ ~145 | - |
+| DispatchingUserDataDescriptorTUnitTests | ✅ 22 | - |
+| StandardEnumUserDataDescriptorTUnitTests | ✅ 21 | - |
+| UserDataEventsTUnitTests | ✅ 7 | - |
+| ErrorHandlingModuleTUnitTests | ✅ 19 | - |
+| CoroutineLifecycleTUnitTests | ✅ 11 | - |
+| CompositeUserDataDescriptorTUnitTests | ✅ 8 | - |
+| UserDataMethodsTUnitTests | ✅ 6 | - |
+| UserDataMetaTUnitTests | ✅ 6 | - |
+| UserDataNestedTypesTUnitTests | ✅ 7 | - |
+| ProxyObjectsTUnitTests | ✅ 1 | - |
+| ProxyUserDataDescriptorTUnitTests | ✅ 4 | - |
+| DebugModuleTapParityTUnitTests | ✅ 17 | - |
+| IoStdHandleUserDataTUnitTests | ✅ 15 | - |
+| Other UserData tests | - | ~150+ |
+| Other EndToEnd tests | - | ~100+ |
 
-**After (With Helpers)**:
-```csharp
-[Test]
-[LuaTestMatrix("test1", "test2")]
-public async Task TestFeature(LuaCompatibilityVersion version, string input) { ... }
-```
+### Remaining Tasks
 
-### Implementation Tasks
-
-- [x] **Phase 1: Design & Prototype** — Create helper attributes in test infrastructure
-  - [x] Implement `AllLuaVersionsAttribute`
-  - [x] Implement `LuaVersionsFromAttribute` and `LuaVersionsUntilAttribute`
-  - [x] Implement `LuaVersionRangeAttribute` for bounded spans
-  - [x] Implement `LuaTestMatrixAttribute` for Cartesian products (min/max gating supported)
-  - [x] Add validation for empty or invalid version ranges
-- [ ] **Phase 2: Migration** — Replace existing verbose `[Arguments]` patterns
-  - [ ] Audit all TUnit test files for multi-version patterns
-  - [ ] Create migration script to auto-convert common patterns
-  - [ ] Manually review and convert complex cases
-- [ ] **Phase 3: Documentation & Enforcement**
-  - [x] Update `.llm/context.md` with helper usage guidelines
-  - [ ] Update `docs/Testing.md` with examples
-  - [ ] Add lint rule to flag verbose patterns that should use helpers
-- [ ] **Phase 4: Cleanup** — Remove redundant boilerplate from all tests
-
-### Success Criteria
-
-- [ ] All tests use consolidated helpers instead of manual version enumeration
-- [ ] New tests can specify version coverage in 1-2 lines
-- [ ] `.llm/context.md` documents helper usage for AI assistants
-- [ ] Lint rule prevents regression to verbose patterns
+- [ ] Migrate remaining UserData tests (Methods overload patterns, Properties, Fields)
+- [ ] Migrate remaining EndToEnd tests
+- [ ] Migrate Sandbox tests
+- [ ] Create automated migration script for common patterns
+- [ ] Add lint rule to flag verbose patterns
 
 **Owner**: Test infrastructure team
-**Priority**: 🔴 HIGH
+**Priority**: 🟡 MEDIUM
 
 ---
 
@@ -164,43 +143,6 @@ python3 scripts/tests/compare-lua-outputs.py --lua-version 5.4 --results-dir art
 
 **Owner**: Test infrastructure team
 **Priority**: 🔴 HIGH
-
----
-
-## ✅ COMPLETE: Remove NUnit Dependency from TUnit Project (§8.41)
-
-**Status**: ✅ **COMPLETE** — NUnit fully removed from TUnit project (2025-12-19).
-
-**Summary**:
-The TUnit test project (`WallstopStudios.NovaSharp.Interpreter.Tests.TUnit`) no longer depends on NUnit. All NUnit-style assertions have been converted to TUnit equivalents.
-
-### Migration Completed
-
-| Phase | Status | Details |
-|-------|--------|---------|
-| Phase 1: SimpleTUnitTests.cs | ✅ Complete | Converted all NUnit assertions to TUnit |
-| Phase 2: EventMemberDescriptorTUnitTests.cs | ✅ Complete | Fixed syntax error and all assertion patterns |
-| Phase 3: Assert.Throws conversions | ✅ Complete | All files converted |
-| Phase 4: Remove NUnit imports | ✅ Complete | No `using NUnit.Framework;` in any file |
-| Phase 5: Remove NUnit package | ✅ Complete | NUnit package reference removed from csproj |
-
-### Key Patterns Used
-
-| Pattern | TUnit Equivalent |
-|---------|------------------|
-| Exception testing | `T ex = Assert.Throws<T>(() => code)!;` (TUnit API) |
-| Equality | `await Assert.That(x).IsEqualTo(y).ConfigureAwait(false)` |
-| Not null | `await Assert.That(x).IsNotNull().ConfigureAwait(false)` |
-| Boolean | `await Assert.That(x).IsTrue().ConfigureAwait(false)` |
-| Contains | `await Assert.That(str).Contains("text").ConfigureAwait(false)` |
-
-### Verification
-
-- ✅ Build succeeds with 0 errors
-- ✅ No `using NUnit.Framework;` in any TUnit test file
-- ✅ No `.ThrowsException().OfType<>()` patterns
-- ✅ No `<PackageReference Include="NUnit"` in TUnit project csproj
-- ✅ 9,876 tests pass (23 pre-existing Lua version compatibility failures unrelated to migration)
 
 ---
 
@@ -259,14 +201,14 @@ Lua 5.3 introduced the concept of "integer representation" for numeric arguments
 
 **Build & Tests**:
 - Zero warnings with `<TreatWarningsAsErrors>true` enforced
-- **3,568** interpreter tests via TUnit (Microsoft.Testing.Platform)
+- **10,219** interpreter tests via TUnit (Microsoft.Testing.Platform)
 - Coverage: ~75.3% line / ~76.1% branch (gating targets at 90%)
 - CI: Tests on matrix of `[ubuntu-latest, windows-latest, macos-latest]`
 
 **TUnit Version Coverage Progress**:
-- **1,414** tests with explicit `[Arguments(LuaCompatibilityVersion.LuaXX)]` attributes (39.6% compliance)
-- **424** Lua execution tests still need version coverage
-- **1,730** infrastructure tests (no Lua execution, exempt from version requirement)
+- **1,985** tests with explicit version attributes (54.1% compliance)
+- ✅ **0 Lua execution tests** need version coverage (100% complete!)
+- **1,684** infrastructure tests (no Lua execution, exempt from version requirement)
 
 **Audits & Quality**:
 - `docs/audits/documentation_audit.log`, `docs/audits/naming_audit.log`, `docs/audits/spelling_audit.log` green
@@ -525,11 +467,9 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 
 ### 🔴 IMMEDIATE: High-Priority Test Infrastructure Items
 
-1. **TUnit Multi-Version Coverage Audit** (Section §8.39) — 🟡 **IN PROGRESS (39.6%)**
-   - Every TUnit test MUST specify target Lua versions via `[Arguments]` attributes
-   - **424 Lua execution tests** still need version coverage (down from 465)
-   - **Next**: Continue bulk remediation of non-compliant test files
-   - Create CI lint rule to enforce version coverage
+1. ✅ ~~**TUnit Multi-Version Coverage Audit** (Section §8.39)~~ — **COMPLETE**
+   - All Lua execution tests now have explicit version coverage
+   - **Next**: Add CI lint rule to enforce version coverage on new PRs
 
 2. **TUnit Lua Test Extraction Audit** (Section §8.40) — 📋 **AUDIT REQUIRED**
    - Extract ALL inline Lua code from TUnit tests into standalone `.lua` fixture files

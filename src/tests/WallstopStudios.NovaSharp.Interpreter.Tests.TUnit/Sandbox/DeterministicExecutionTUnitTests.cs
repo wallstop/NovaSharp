@@ -4,8 +4,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for deterministic execution mode using <see cref="DeterministicRandomProvider"/>
@@ -230,36 +232,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         // Script Integration Tests - RandomProvider
 
         [Test]
-        public async Task ScriptUsesProvidedRandomProvider()
+        [AllLuaVersions]
+        public async Task ScriptUsesProvidedRandomProvider(LuaCompatibilityVersion version)
         {
             DeterministicRandomProvider provider = new DeterministicRandomProvider(999);
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
             {
                 RandomProvider = provider,
             };
-            Script script = new Script(CoreModulePresets.Default, options);
+            Script script = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             bool isSame = ReferenceEquals(script.RandomProvider, provider);
             await Assert.That(isSame).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
-        public async Task ScriptCreatesLuaRandomProviderWhenNotProvided()
+        [AllLuaVersions]
+        public async Task ScriptCreatesDefaultRandomProviderWhenNotProvided(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
             {
                 RandomProvider = null,
+                CompatibilityVersion = version,
             };
             Script script = new Script(CoreModulePresets.Default, options);
 
-            await Assert
-                .That(script.RandomProvider)
-                .IsTypeOf<LuaRandomProvider>()
-                .ConfigureAwait(false);
+            // Lua 5.4+ uses xoshiro256** (LuaRandomProvider)
+            // Lua 5.1-5.3 uses LCG (Lua51RandomProvider)
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                await Assert
+                    .That(script.RandomProvider)
+                    .IsTypeOf<LuaRandomProvider>()
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert
+                    .That(script.RandomProvider)
+                    .IsTypeOf<Lua51RandomProvider>()
+                    .ConfigureAwait(false);
+            }
         }
 
         [Test]
-        public async Task MathRandomUsesDeterministicProvider()
+        [AllLuaVersions]
+        public async Task MathRandomUsesDeterministicProvider(LuaCompatibilityVersion version)
         {
             DeterministicRandomProvider provider = new DeterministicRandomProvider(12345);
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
@@ -267,8 +290,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 RandomProvider = provider,
             };
 
-            Script script1 = new Script(CoreModulePresets.Default, options);
-            Script script2 = new Script(CoreModulePresets.Default, options);
+            Script script1 = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
+            Script script2 = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             DataTypes.DynValue result1 = script1.DoString("return math.random()");
             provider.SetSeed(12345); // Reset to same seed
@@ -278,14 +307,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task MathRandomSeedResetsProviderSequence()
+        [AllLuaVersions]
+        public async Task MathRandomSeedResetsProviderSequence(LuaCompatibilityVersion version)
         {
             DeterministicRandomProvider provider = new DeterministicRandomProvider(42);
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
             {
                 RandomProvider = provider,
             };
-            Script script = new Script(CoreModulePresets.Default, options);
+            Script script = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // Get some random values
             script.DoString("r1 = math.random(); r2 = math.random(); r3 = math.random()");
@@ -307,14 +340,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task MathRandomWithRangeIsDeterministic()
+        [AllLuaVersions]
+        public async Task MathRandomWithRangeIsDeterministic(LuaCompatibilityVersion version)
         {
             DeterministicRandomProvider provider = new DeterministicRandomProvider(7777);
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
             {
                 RandomProvider = provider,
             };
-            Script script = new Script(CoreModulePresets.Default, options);
+            Script script = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             DataTypes.DynValue result = script.DoString(
                 @"
@@ -329,7 +366,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             // Reset and do it again
             provider.SetSeed(7777);
-            Script script2 = new Script(CoreModulePresets.Default, options);
+            Script script2 = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
             DataTypes.DynValue result2 = script2.DoString(
                 @"
                 local values = {}
@@ -347,28 +387,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         // Script Integration Tests - TimeProvider
 
         [Test]
-        public async Task ScriptUsesProvidedTimeProvider()
+        [AllLuaVersions]
+        public async Task ScriptUsesProvidedTimeProvider(LuaCompatibilityVersion version)
         {
             DeterministicTimeProvider provider = new DeterministicTimeProvider();
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
             {
                 TimeProvider = provider,
             };
-            Script script = new Script(CoreModulePresets.Default, options);
+            Script script = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             bool isSame = ReferenceEquals(script.TimeProvider, provider);
             await Assert.That(isSame).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
-        public async Task OsClockUsesDeterministicTimeProvider()
+        [AllLuaVersions]
+        public async Task OsClockUsesDeterministicTimeProvider(LuaCompatibilityVersion version)
         {
             DeterministicTimeProvider provider = new DeterministicTimeProvider();
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
             {
                 TimeProvider = provider,
             };
-            Script script = new Script(CoreModulePresets.Default, options);
+            Script script = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // os.clock returns time since script start, so advance by a known amount
             provider.AdvanceSeconds(5.5);
@@ -381,7 +429,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task OsTimeUsesDeterministicTimeProvider()
+        [AllLuaVersions]
+        public async Task OsTimeUsesDeterministicTimeProvider(LuaCompatibilityVersion version)
         {
             DateTimeOffset fixedTime = new DateTimeOffset(2020, 6, 15, 12, 0, 0, TimeSpan.Zero);
             DeterministicTimeProvider provider = new DeterministicTimeProvider(fixedTime);
@@ -389,7 +438,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 TimeProvider = provider,
             };
-            Script script = new Script(CoreModulePresets.Default, options);
+            Script script = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             DataTypes.DynValue result = script.DoString("return os.time()");
 
@@ -404,7 +456,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         // Full Deterministic Execution Tests
 
         [Test]
-        public async Task FullDeterministicExecutionProducesIdenticalResults()
+        [AllLuaVersions]
+        public async Task FullDeterministicExecutionProducesIdenticalResults(
+            LuaCompatibilityVersion version
+        )
         {
             // Set up identical deterministic providers
             DeterministicRandomProvider randomProvider1 = new DeterministicRandomProvider(123);
@@ -417,11 +472,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 RandomProvider = randomProvider1,
                 TimeProvider = timeProvider1,
+                CompatibilityVersion = version,
             };
             ScriptOptions options2 = new ScriptOptions(Script.DefaultOptions)
             {
                 RandomProvider = randomProvider2,
                 TimeProvider = timeProvider2,
+                CompatibilityVersion = version,
             };
 
             Script script1 = new Script(CoreModulePresets.Default, options1);
@@ -448,7 +505,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task DeterministicExecutionAcrossMultipleScripts()
+        [AllLuaVersions]
+        public async Task DeterministicExecutionAcrossMultipleScripts(
+            LuaCompatibilityVersion version
+        )
         {
             // Create a shared deterministic random provider
             DeterministicRandomProvider sharedRandom = new DeterministicRandomProvider(42);
@@ -458,8 +518,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             };
 
             // Multiple scripts sharing the same provider will advance the same sequence
-            Script script1 = new Script(CoreModulePresets.Default, options);
-            Script script2 = new Script(CoreModulePresets.Default, options);
+            Script script1 = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
+            Script script2 = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             DataTypes.DynValue r1 = script1.DoString("return math.random()");
             DataTypes.DynValue r2 = script2.DoString("return math.random()");
@@ -469,8 +535,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             // But resetting the seed should make it repeatable
             sharedRandom.SetSeed(42);
-            Script script3 = new Script(CoreModulePresets.Default, options);
-            Script script4 = new Script(CoreModulePresets.Default, options);
+            Script script3 = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
+            Script script4 = new Script(
+                CoreModulePresets.Default,
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             DataTypes.DynValue r3 = script3.DoString("return math.random()");
             DataTypes.DynValue r4 = script4.DoString("return math.random()");

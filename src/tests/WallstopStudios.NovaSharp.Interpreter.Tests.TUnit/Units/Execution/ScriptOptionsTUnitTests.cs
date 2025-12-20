@@ -520,24 +520,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         /// <summary>
-        /// Data-driven test for <see cref="Script.RunString"/> with various return values.
+        /// Data-driven test for <see cref="Script.DoString"/> with various return values.
         /// </summary>
         [global::TUnit.Core.Test]
-        [Arguments("return 42", DataType.Number, 42.0, null)]
-        [Arguments("return 'hello'", DataType.String, null, "hello")]
-        [Arguments("return true", DataType.Boolean, null, null)]
-        [Arguments("return false", DataType.Boolean, null, null)]
-        [Arguments("return nil", DataType.Nil, null, null)]
-        [Arguments("return 'foo' .. 'bar'", DataType.String, null, "foobar")]
-        [Arguments("return 10 / 2", DataType.Number, 5.0, null)]
+        [LuaTestMatrix(
+            new object[] { "return 42", DataType.Number, 42.0, null },
+            new object[] { "return 'hello'", DataType.String, null, "hello" },
+            new object[] { "return true", DataType.Boolean, null, null },
+            new object[] { "return false", DataType.Boolean, null, null },
+            new object[] { "return nil", DataType.Nil, null, null },
+            new object[] { "return 'foo' .. 'bar'", DataType.String, null, "foobar" },
+            new object[] { "return 10 / 2", DataType.Number, 5.0, null }
+        )]
         public async Task RunStringReturnsExpectedValueDataDriven(
+            LuaCompatibilityVersion version,
             string code,
             DataType expectedType,
             double? expectedNumber,
             string expectedString
         )
         {
-            DynValue result = Script.RunString(code);
+            Script script = new(version);
+            DynValue result = script.DoString(code);
 
             await Assert
                 .That(result.Type)

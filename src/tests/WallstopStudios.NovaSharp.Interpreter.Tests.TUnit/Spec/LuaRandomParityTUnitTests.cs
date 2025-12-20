@@ -4,11 +4,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for Lua version-specific random number generator behavior (§8.1 from PLAN.md).
@@ -230,9 +232,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task ScriptWithLua54UsesLuaRandomProvider()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task ScriptUsesLuaRandomProviderInLua54Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Default);
+            Script script = CreateScript(version, CoreModulePresets.Default);
 
             await Assert
                 .That(script.RandomProvider)
@@ -241,31 +244,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task ScriptWithLua55UsesLuaRandomProvider()
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task ScriptUsesLua51RandomProviderBeforeLua54(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Default);
-
-            await Assert
-                .That(script.RandomProvider)
-                .IsTypeOf<LuaRandomProvider>()
-                .ConfigureAwait(false);
-        }
-
-        [Test]
-        public async Task ScriptWithLatestUsesLuaRandomProvider()
-        {
-            Script script = CreateScript(LuaCompatibilityVersion.Latest, CoreModulePresets.Default);
-
-            await Assert
-                .That(script.RandomProvider)
-                .IsTypeOf<LuaRandomProvider>()
-                .ConfigureAwait(false);
-        }
-
-        [Test]
-        public async Task ScriptWithLua53UsesLua51RandomProvider()
-        {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModulePresets.Default);
+            Script script = CreateScript(version, CoreModulePresets.Default);
 
             await Assert
                 .That(script.RandomProvider)
@@ -274,23 +256,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task ScriptWithLua52UsesLua51RandomProvider()
-        {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52, CoreModulePresets.Default);
-
-            await Assert
-                .That(script.RandomProvider)
-                .IsTypeOf<Lua51RandomProvider>()
-                .ConfigureAwait(false);
-        }
-
-        [Test]
-        public async Task ScriptWithExplicitRandomProviderOverridesVersionSelection()
+        [AllLuaVersions]
+        public async Task ScriptWithExplicitRandomProviderOverridesVersionSelection(
+            LuaCompatibilityVersion version
+        )
         {
             DeterministicRandomProvider explicit_provider = new DeterministicRandomProvider(999);
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
             {
-                CompatibilityVersion = LuaCompatibilityVersion.Lua52,
+                CompatibilityVersion = version,
                 RandomProvider = explicit_provider,
             };
             Script script = new Script(CoreModulePresets.Default, options);
@@ -306,9 +280,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task MathRandomSeedLua54ReturnsSeeds()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task MathRandomSeedReturnsSeeds(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Default);
+            Script script = CreateScript(version, CoreModulePresets.Default);
 
             DynValue result = script.DoString("return math.randomseed(42)");
 
@@ -318,9 +293,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task MathRandomSeedLua54WithNoArgsReturnsSeeds()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task MathRandomSeedWithNoArgsReturnsSeeds(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Default);
+            Script script = CreateScript(version, CoreModulePresets.Default);
 
             DynValue result = script.DoString("return math.randomseed()");
 
@@ -330,9 +306,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task MathRandomSeedLua53ReturnsNothing()
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task MathRandomSeedReturnsNothing(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModulePresets.Default);
+            Script script = CreateScript(version, CoreModulePresets.Default);
 
             DynValue result = script.DoString("return math.randomseed(42)");
 
@@ -341,20 +318,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task MathRandomSeedLua52ReturnsNothing()
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task MathRandomSeedRequiresSeedBeforeLua54(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52, CoreModulePresets.Default);
-
-            DynValue result = script.DoString("return math.randomseed(42)");
-
-            // Lua 5.1-5.3 returns nothing (nil)
-            await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
-        }
-
-        [Test]
-        public async Task MathRandomSeedLua53RequiresSeed()
-        {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModulePresets.Default);
+            Script script = CreateScript(version, CoreModulePresets.Default);
 
             // Lua 5.1-5.3 requires a seed argument
             ScriptRuntimeException exception = null;
@@ -376,16 +343,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task SameSeededLua54ScriptsProduceSameRandomSequence()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task SameSeededScriptsProduceSameRandomSequence(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options1 = new ScriptOptions(Script.DefaultOptions)
             {
-                CompatibilityVersion = LuaCompatibilityVersion.Lua54,
+                CompatibilityVersion = version,
                 RandomProvider = new DeterministicRandomProvider(12345),
             };
             ScriptOptions options2 = new ScriptOptions(Script.DefaultOptions)
             {
-                CompatibilityVersion = LuaCompatibilityVersion.Lua54,
+                CompatibilityVersion = version,
                 RandomProvider = new DeterministicRandomProvider(12345),
             };
 
@@ -410,16 +380,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task SameSeededLua53ScriptsProduceSameRandomSequence()
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task SameSeededLua51ScriptsProduceSameRandomSequence(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options1 = new ScriptOptions(Script.DefaultOptions)
             {
-                CompatibilityVersion = LuaCompatibilityVersion.Lua53,
+                CompatibilityVersion = version,
                 RandomProvider = new Lua51RandomProvider(12345),
             };
             ScriptOptions options2 = new ScriptOptions(Script.DefaultOptions)
             {
-                CompatibilityVersion = LuaCompatibilityVersion.Lua53,
+                CompatibilityVersion = version,
                 RandomProvider = new Lua51RandomProvider(12345),
             };
 
@@ -444,52 +417,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task MathRandomIntegerRangeWorksForAllVersions()
+        [AllLuaVersions]
+        public async Task MathRandomIntegerRangeWorks(LuaCompatibilityVersion version)
         {
-            LuaCompatibilityVersion[] versions = new[]
-            {
-                LuaCompatibilityVersion.Lua52,
-                LuaCompatibilityVersion.Lua53,
-                LuaCompatibilityVersion.Lua54,
-                LuaCompatibilityVersion.Latest,
-            };
+            Script script = new Script(version, CoreModulePresets.Default);
 
-            foreach (LuaCompatibilityVersion version in versions)
-            {
-                Script script = new Script(version, CoreModulePresets.Default);
+            // Test math.random(n) returns integer in [1, n]
+            DynValue result = script.DoString("return math.random(100)");
+            double value = result.Number;
 
-                // Test math.random(n) returns integer in [1, n]
-                DynValue result = script.DoString("return math.random(100)");
-                double value = result.Number;
-
-                await Assert.That(value).IsGreaterThanOrEqualTo(1).ConfigureAwait(false);
-                await Assert.That(value).IsLessThanOrEqualTo(100).ConfigureAwait(false);
-                await Assert.That(value).IsEqualTo(Math.Floor(value)).ConfigureAwait(false); // Is integer
-            }
+            await Assert.That(value).IsGreaterThanOrEqualTo(1).ConfigureAwait(false);
+            await Assert.That(value).IsLessThanOrEqualTo(100).ConfigureAwait(false);
+            await Assert.That(value).IsEqualTo(Math.Floor(value)).ConfigureAwait(false); // Is integer
         }
 
         [Test]
-        public async Task MathRandomDoubleRangeWorksForAllVersions()
+        [AllLuaVersions]
+        public async Task MathRandomDoubleRangeWorks(LuaCompatibilityVersion version)
         {
-            LuaCompatibilityVersion[] versions = new[]
-            {
-                LuaCompatibilityVersion.Lua52,
-                LuaCompatibilityVersion.Lua53,
-                LuaCompatibilityVersion.Lua54,
-                LuaCompatibilityVersion.Latest,
-            };
+            Script script = new Script(version, CoreModulePresets.Default);
 
-            foreach (LuaCompatibilityVersion version in versions)
-            {
-                Script script = new Script(version, CoreModulePresets.Default);
+            // Test math.random() returns float in [0, 1)
+            DynValue result = script.DoString("return math.random()");
+            double value = result.Number;
 
-                // Test math.random() returns float in [0, 1)
-                DynValue result = script.DoString("return math.random()");
-                double value = result.Number;
-
-                await Assert.That(value).IsGreaterThanOrEqualTo(0.0).ConfigureAwait(false);
-                await Assert.That(value).IsLessThan(1.0).ConfigureAwait(false);
-            }
+            await Assert.That(value).IsGreaterThanOrEqualTo(0.0).ConfigureAwait(false);
+            await Assert.That(value).IsLessThan(1.0).ConfigureAwait(false);
         }
     }
 }

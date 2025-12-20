@@ -4,8 +4,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modding;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for the ModContainer and ModManager classes.
@@ -439,9 +441,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ModContainerReloadClearsOldState()
+        [AllLuaVersions]
+        public async Task ModContainerReloadClearsOldState(LuaCompatibilityVersion version)
         {
-            ModContainer mod = new ModContainer("test").AddEntryPoint("x = 1");
+            ModContainer mod = new ModContainer("test")
+            {
+                ScriptFactory = _ => new Script(version),
+            }.AddEntryPoint("x = 1");
 
             mod.Load();
             mod.DoString("x = 999");
@@ -487,9 +493,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         // ═══════════════════════════════════════════════════════════════════════════════
 
         [Test]
-        public async Task ModContainerDoStringExecutesCode()
+        [AllLuaVersions]
+        public async Task ModContainerDoStringExecutesCode(LuaCompatibilityVersion version)
         {
-            ModContainer mod = new ModContainer("test");
+            ModContainer mod = new ModContainer("test")
+            {
+                ScriptFactory = _ => new Script(version),
+            };
             mod.Load();
 
             DynValue result = mod.DoString("return 1 + 2");
@@ -498,9 +508,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ModContainerDoStringThrowsWhenNotLoaded()
+        [AllLuaVersions]
+        public async Task ModContainerDoStringThrowsWhenNotLoaded(LuaCompatibilityVersion version)
         {
-            ModContainer mod = new ModContainer("test");
+            ModContainer mod = new ModContainer("test")
+            {
+                ScriptFactory = _ => new Script(version),
+            };
 
             await Assert
                 .That(() => mod.DoString("return 1"))
@@ -572,7 +586,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         // ═══════════════════════════════════════════════════════════════════════════════
 
         [Test]
-        public async Task ModContainerScriptFactoryIsUsed()
+        [AllLuaVersions]
+        public async Task ModContainerScriptFactoryIsUsed(LuaCompatibilityVersion version)
         {
             bool factoryCalled = false;
             ModContainer mod = new ModContainer("test")
@@ -580,7 +595,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 ScriptFactory = container =>
                 {
                     factoryCalled = true;
-                    return new Script();
+                    return new Script(version);
                 },
             };
 
@@ -590,11 +605,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ModContainerScriptConfiguratorIsUsed()
+        [AllLuaVersions]
+        public async Task ModContainerScriptConfiguratorIsUsed(LuaCompatibilityVersion version)
         {
             bool configuratorCalled = false;
             ModContainer mod = new ModContainer("test")
             {
+                ScriptFactory = _ => new Script(version),
                 ScriptConfigurator = (container, script) =>
                 {
                     configuratorCalled = true;
@@ -939,11 +956,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ModManagerReloadAllReloadsAllMods()
+        [AllLuaVersions]
+        public async Task ModManagerReloadAllReloadsAllMods(LuaCompatibilityVersion version)
         {
             ModManager manager = new ModManager();
-            ModContainer mod1 = new ModContainer("mod1").AddEntryPoint("x = 1");
-            ModContainer mod2 = new ModContainer("mod2").AddEntryPoint("y = 2");
+            ModContainer mod1 = new ModContainer("mod1")
+            {
+                ScriptFactory = _ => new Script(version),
+            }.AddEntryPoint("x = 1");
+            ModContainer mod2 = new ModContainer("mod2")
+            {
+                ScriptFactory = _ => new Script(version),
+            }.AddEntryPoint("y = 2");
 
             manager.Register(mod1);
             manager.Register(mod2);

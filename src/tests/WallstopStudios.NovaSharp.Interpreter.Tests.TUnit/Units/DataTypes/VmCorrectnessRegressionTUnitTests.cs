@@ -5,10 +5,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Regression tests for VM correctness and state protection.
@@ -20,9 +22,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         /// Verifies that Closure.GetUpValue returns a readonly copy, not the mutable internal reference.
         /// </summary>
         [Test]
-        public async Task GetUpValueReturnsReadonlyCopy()
+        [AllLuaVersions]
+        public async Task GetUpValueReturnsReadonlyCopy(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 @"
                 local x = 10
@@ -55,9 +58,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         /// Verifies that SetUpValue correctly modifies closure upvalues.
         /// </summary>
         [Test]
-        public async Task SetUpValueModifiesClosureUpvalue()
+        [AllLuaVersions]
+        public async Task SetUpValueModifiesClosureUpvalue(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 @"
                 local x = 10
@@ -92,9 +96,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         /// Verifies that SetUpValue throws for invalid index.
         /// </summary>
         [Test]
-        public async Task SetUpValueThrowsForInvalidIndex()
+        [AllLuaVersions]
+        public async Task SetUpValueThrowsForInvalidIndex(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 1 end");
             Closure closure = function.Function;
 
@@ -114,9 +119,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         /// The first upvalue (index 1) is _ENV, the captured variable x is at index 2.
         /// </summary>
         [Test]
-        public async Task DebugSetUpValueStillWorks()
+        [AllLuaVersions]
+        public async Task DebugSetUpValueStillWorks(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local x = 10
@@ -137,9 +143,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         /// and just do a simple verification that debug module is loaded.
         /// </summary>
         [Test]
-        public async Task DebugSetLocalIsAvailable()
+        [AllLuaVersions]
+        public async Task DebugSetLocalIsAvailable(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             // Just verify debug.setlocal function exists
             DynValue result = script.DoString("return type(debug.setlocal)");
 
@@ -215,9 +222,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         /// Verifies that Thread (coroutine) hash codes don't all collide.
         /// </summary>
         [Test]
-        public async Task ThreadHashCodesAreDifferent()
+        [AllLuaVersions]
+        public async Task ThreadHashCodesAreDifferent(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             // Create two different coroutines
             DynValue co1 = script.DoString("return coroutine.create(function() end)");
@@ -267,9 +275,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         /// Two closures should see each other's changes to shared upvalues.
         /// </summary>
         [Test]
-        public async Task ClosureUpValueSharingStillWorks()
+        [AllLuaVersions]
+        public async Task ClosureUpValueSharingStillWorks(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local count = 0
@@ -289,9 +298,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         /// Verifies that debug.upvaluejoin function exists after the API changes.
         /// </summary>
         [Test]
-        public async Task DebugUpValueJoinIsAvailable()
+        [AllLuaVersions]
+        public async Task DebugUpValueJoinIsAvailable(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             // Just verify debug.upvaluejoin function exists
             DynValue result = script.DoString("return type(debug.upvaluejoin)");
 

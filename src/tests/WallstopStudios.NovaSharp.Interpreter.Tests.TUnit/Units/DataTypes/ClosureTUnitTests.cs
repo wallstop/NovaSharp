@@ -6,14 +6,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ClosureTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task GetUpValuesTypeReturnsEnvironmentWhenOnlyEnvIsCaptured()
+        [AllLuaVersions]
+        public async Task GetUpValuesTypeReturnsEnvironmentWhenOnlyEnvIsCaptured(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function(a) return a end");
 
             Closure closure = function.Function;
@@ -30,9 +35,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetadataPropertiesExposeScriptAndEntryPoint()
+        [AllLuaVersions]
+        public async Task MetadataPropertiesExposeScriptAndEntryPoint(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 42 end");
             Closure closure = function.Function;
 
@@ -44,9 +52,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetUpValuesTypeDetectsEnvironmentUpValue()
+        [AllLuaVersions]
+        public async Task GetUpValuesTypeDetectsEnvironmentUpValue(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return _ENV end");
 
             Closure closure = function.Function;
@@ -63,9 +72,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetUpValuesExposesCapturedSymbols()
+        [AllLuaVersions]
+        public async Task GetUpValuesExposesCapturedSymbols(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 @"
                 local x = 3
@@ -108,9 +118,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task DelegatesInvokeScriptFunction()
+        [AllLuaVersions]
+        public async Task DelegatesInvokeScriptFunction(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function(a, b) return a + b end");
             Closure closure = function.Function;
 
@@ -129,9 +140,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallOverloadsInvokeUnderlyingFunction()
+        [AllLuaVersions]
+        public async Task CallOverloadsInvokeUnderlyingFunction(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 "return function(a, b) return (a or 0) + (b or 0) end"
             );
@@ -165,9 +177,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task ContextPropertySurfacesCapturedUpValues()
+        [AllLuaVersions]
+        public async Task ContextPropertySurfacesCapturedUpValues(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 @"
                 local captured = 99

@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
@@ -64,9 +65,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         /// while scripts created outside use the original loader.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task ScriptsCreatedInsideScopeUsesScopedLoader()
+        [AllLuaVersions]
+        public async Task ScriptsCreatedInsideScopeUsesScopedLoader(LuaCompatibilityVersion version)
         {
-            Script scriptBefore = new();
+            Script scriptBefore = new(version);
             IScriptLoader originalLoader = scriptBefore.Options.ScriptLoader;
 
             TrackingScriptLoader customLoader = new();
@@ -74,10 +76,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             using (ScriptDefaultOptionsScope.OverrideScriptLoader(customLoader))
             {
-                scriptDuring = new Script();
+                scriptDuring = new Script(version);
             }
 
-            Script scriptAfter = new();
+            Script scriptAfter = new(version);
 
             // Script created during scope should use the custom loader
             await Assert
