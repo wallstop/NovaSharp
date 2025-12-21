@@ -7,94 +7,13 @@
 1. **NEVER discard output** — **NO redirects or pipes to `/dev/null`** (`>/dev/null`, `2>/dev/null`, `&>/dev/null`, `| cat >/dev/null`, etc.), **even in chained commands** (`cmd1 2>/dev/null && cmd2`). Command output is essential for debugging. If a command produces too much output, use `--quiet` flags or filter with `grep`, but NEVER silently discard stderr.
 1. **Lua Spec Compliance is HIGHEST PRIORITY** — When NovaSharp differs from reference Lua, fix production code, never tests
 1. **Always create `.lua` test files** — Every test/fix needs standalone Lua fixtures for cross-interpreter verification
-1. **Multi-Version Testing** — All TUnit tests MUST use `[Arguments(LuaCompatibilityVersion.LuaXX)]` attributes to run against all applicable Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
-
-## 🔴 Lua Spec Compliance
-
-**NovaSharp must match official Lua behavior.** When behavior differs from reference Lua:
-
-1. **ASSUME NOVASHARP IS WRONG** — verify against `lua5.1`, `lua5.3`, `lua5.4`, `lua5.5`
-1. **FIX PRODUCTION CODE** — never adjust tests to match buggy behavior
-1. **CREATE LUA TEST FILES** — every fix needs standalone `.lua` fixtures runnable against real Lua
-1. **UPDATE PLAN.md** — document fixes in §8.38
-
-**NEVER**:
-
-- Mark fixtures `@novasharp-only: true` (unless testing intentional extensions)
-- Change `@expects-error` to match NovaSharp's incorrect behavior
-- Skip, disable, or weaken tests
-
-**Verification**:
-
-```bash
-lua5.4 -e "print(your_test_code)"
-python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.4
-python3 scripts/tests/compare-lua-outputs.py --lua-version 5.4 --results-dir artifacts/lua-comparison-5.4
-```
-
-## 🔴 Testing: Always Create Lua Files
-
-**Every test, bug fix, or behavioral change MUST include standalone `.lua` files** that can be verified against real Lua interpreters.
-
-**Requirements**:
-
-1. Create `.lua` files in `LuaFixtures/<TestClass>/` directory
-1. One file per behavior variant (success, error, edge cases)
-1. Version-aware naming: `_51`, `_52`, `_53plus`, `_54plus` suffixes when behavior differs
-1. Files must run cleanly with `lua5.1`, `lua5.4`, etc.
-
-**Fixture Template** (harness-compatible metadata):
-
-```lua
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
--- @novasharp-only: false
--- @expects-error: false
--- @source: src/tests/.../TestClass.cs:123
--- @test: TestClass.TestMethod
--- @compat-notes: Optional notes about version-specific behavior
-
--- Test: <description>
--- Reference: <Lua spec §section>
-
-local result = ...  -- test code
-return result       -- or print(result)
-```
-
-**Metadata Fields** (required for comparison harness):
-
-| Field             | Description                                                              | Example                          |
-| ----------------- | ------------------------------------------------------------------------ | -------------------------------- |
-| `@lua-versions`   | Comma-separated compatible Lua versions; use `5.3+` for ranges           | `5.3, 5.4, 5.5` or `5.1+`        |
-| `@novasharp-only` | `true` if fixture uses NovaSharp extensions (CLR interop, `!=` operator) | `false`                          |
-| `@expects-error`  | `true` if the test expects a runtime error                               | `true`                           |
-| `@source`         | Relative path to C# source file with line number                         | `src/tests/.../MyTests.cs:42`    |
-| `@test`           | Test class and method name                                               | `MathModuleTUnitTests.TestFloor` |
-| `@compat-notes`   | Optional: version-specific behavior notes                                | `Lua 5.3+: integer division`     |
-
-**Error-expecting fixture example**:
-
-```lua
--- @lua-versions: 5.3, 5.4, 5.5
--- @novasharp-only: false
--- @expects-error: true
--- @source: src/tests/.../ErrorTests.cs:99
--- @test: ErrorTests.DivisionByZeroErrors
-
--- Test: Division by zero should error in integer mode
-return 1 // 0  -- integer division by zero
-```
-
-**Regenerate corpus after test changes**:
-
-```bash
-python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
-```
+1. **Multi-Version Testing** — All TUnit tests MUST run against all applicable Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
 
 ______________________________________________________________________
 
 ## Project Overview
 
-NovaSharp is a multi-version Lua interpreter (5.1, 5.2, 5.3, 5.4) in C# for .NET, Unity3D (IL2CPP/AOT), Mono, and Xamarin.
+NovaSharp is a multi-version Lua interpreter (5.1, 5.2, 5.3, 5.4, 5.5) in C# for .NET, Unity3D (IL2CPP/AOT), Mono, and Xamarin.
 
 **Repository Structure**:
 
@@ -122,8 +41,6 @@ ______________________________________________________________________
 ## Commands
 
 ### Quick Scripts (Recommended)
-
-Use these optimized scripts for fast, iterative development:
 
 ```bash
 # Quick build - interpreter only (3-5x faster than full solution)
@@ -167,49 +84,6 @@ dotnet csharpier format .
 bash ./scripts/coverage/coverage.sh
 ```
 
-### 🔴 Running Specific TUnit Tests
-
-**PREFERRED**: Use the quick test script for filtered test runs:
-
-```bash
-./scripts/test/quick.sh Floor              # Methods containing "Floor"
-./scripts/test/quick.sh -c MathModule      # Classes containing "MathModule"
-./scripts/test/quick.sh -c Math -m Floor   # Class AND method filter
-./scripts/test/quick.sh --no-build Floor   # Skip build step
-```
-
-**ALTERNATIVE**: Direct `dotnet run` with `--treenode-filter` (Microsoft.Testing.Platform syntax):
-
-````bash
-# Filter by class name
-dotnet run --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --no-build -- --treenode-filter "/*/*/*MathModule*/**"
-
-# Filter by method name
-dotnet run --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --no-build -- --treenode-filter "/*/*/*/*Floor*/**"
-
-# Class AND method filter
-dotnet run --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --no-build -- --treenode-filter "/*/*/*Math*/*Floor*/**"
-
-# List all tests
-dotnet run --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --no-build -- --list-tests
-**Treenode filter path format**: `/assembly/namespace/class/method/arguments`
-- Use `*` for wildcards (e.g., `*Floor*` matches any name containing "Floor")
-- Use `**` only at the end to match all remaining path segments
-
-**Common filter properties:**
-
-- `ClassName` — Test class name (without namespace)
-- `MethodName` — Test method name
-- `FullyQualifiedName` — Full namespace + class + method
-- `DisplayName` — Display name (includes argument values)
-
-**⚠️ Common mistakes to avoid:**
-
-1. **WRONG**: `dotnet test <csproj>` — Use `--project <csproj>` instead
-2. **WRONG**: `--filter "Name=TestMethod"` — Use `MethodName` not `Name`
-3. **WRONG**: `--filter TestMethod` — Must use property syntax like `MethodName=TestMethod`
-4. **WRONG**: Running without `-c Release` — Tests may behave differently in Debug
-
 ______________________________________________________________________
 
 ## Coding Style
@@ -241,132 +115,19 @@ ______________________________________________________________________
 ### Shell Commands
 
 - **Prefer `rg` (ripgrep) over `grep`** — Faster, respects `.gitignore`, better defaults
-- Example: `rg "\.Number" src/runtime/` instead of `grep -rn "\.Number" src/runtime/`
 
-______________________________________________________________________
+### High-Performance Code
 
-## Testing
+When writing new types and methods, prioritize minimal allocations:
 
-**Framework**: TUnit only (`global::TUnit.Core.Test`)
+- **Prefer `readonly struct`** for small, immutable data (≤64 bytes)
+- **Prefer `ref struct`** for types containing `Span<T>` or stack-only lifetimes
+- **Use `ZStringBuilder.Create()`** for string building, never `StringBuilder` or `$"..."` in hot paths
+- **Use `ArrayPool<T>.Shared`** or `stackalloc` instead of `new T[]` for temporary buffers
+- **Use `ReadOnlySpan<char>`** instead of `string.Substring()` for slicing
+- **Avoid boxing** — use generic constraints instead of interface parameters for value types
 
-**Requirements**:
-
-- Async assertions: `await Assert.That(...).ConfigureAwait(false)`
-- Method names: PascalCase, no underscores
-- Isolation: `[UserDataIsolation]`, `[ScriptGlobalOptionsIsolation]`, `[PlatformDetectorIsolation]`
-- Cleanup: Use `TempFileScope`, `SemaphoreSlimScope`, `ConsoleTestUtilities`
-- **Every test needs corresponding `.lua` files** for cross-interpreter verification
-
-**Data-driven tests**: `[Arguments]`, `[MethodDataSource]`, `[CombinedDataSources]`
-
-### 🔴 Multi-Version Testing Requirements
-
-**NovaSharp supports Lua 5.1, 5.2, 5.3, 5.4, and 5.5.** All new TUnit tests MUST run against all applicable versions. **Tests without version coverage will be rejected.**
-
-**✅ Test Data-Driving Helpers (See PLAN.md §8.42)**
-
-Use these consolidated helpers instead of manual `[Arguments]` enumeration:
-
-| Helper | Description | Use Case |
-|--------|-------------|----------|
-| `[AllLuaVersions]` | Expands to Lua 5.1–5.5 | Universal coverage |
-| `[LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]` | Versions from 5.3+ | Features introduced in 5.3 |
-| `[LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]` | Versions up to 5.2 | Features removed/changed after 5.2 |
-| `[LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua54)]` | Inclusive version window | Focused compatibility spans |
-| `[LuaTestMatrix("input1", "input2", MinimumVersion = LuaCompatibilityVersion.Lua53)]` | Versions × inputs (optional min/max gates) | Comprehensive edge-case testing |
-
-**Preferred**:
-```csharp
-[Test]
-[AllLuaVersions]
-public async Task FeatureWorksAcrossAllVersions(LuaCompatibilityVersion version) { ... }
-
-[Test]
-[LuaTestMatrix("input1", "input2")]  // 5 versions × 2 inputs = 10 test cases
-public async Task FeatureWithInputs(LuaCompatibilityVersion version, string input) { ... }
-````
-
-**Legacy**: Manual `[Arguments]` should only be used when a scenario cannot be expressed with the helpers.
-
-**For version-specific features, test BOTH positive and negative scenarios:**
-
-```csharp
-// POSITIVE: Feature works in versions that support it
-[Test]
-[LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
-public async Task MathTypeAvailableInLua53Plus(LuaCompatibilityVersion version)
-{
-    Script script = CreateScript(version);
-    DynValue result = script.DoString("return math.type(5)");
-    await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
-}
-
-// NEGATIVE: Feature is absent/nil in versions that don't support it
-[Test]
-[LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-public async Task MathTypeShouldBeNilInPreLua53(LuaCompatibilityVersion version)
-{
-    Script script = CreateScript(version);
-    DynValue result = script.DoString("return math.type");
-    await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
-}
-```
-
-**Version coverage checklist for every new test:**
-
-1. Does this feature exist in all versions? → Test ALL 5 versions
-1. Is this feature version-specific? → Test BOTH:
-   - **Positive**: Verify it works in supported versions
-   - **Negative**: Verify it's unavailable/nil/errors in unsupported versions
-1. Does behavior differ between versions? → Create separate tests per behavior variant
-
-**Test naming patterns:**
-
-- `FeatureWorksAcrossAllVersions` — Universal behavior
-- `FeatureAvailableInLua53Plus` — Positive test for newer versions
-- `FeatureShouldBeNilInPreLua53` — Negative test for older versions
-- `FeatureBehaviorDiffersInLua51` — Version-specific behavior
-
-**Lua fixture naming for version-specific behavior:**
-
-- `feature_test.lua` — Works in all versions
-- `feature_test_51.lua` — Lua 5.1 specific
-- `feature_test_53plus.lua` — Lua 5.3+
-- `feature_test_error_pre53.lua` — Expected error in pre-5.3
-
-**Lint guards** (run before push):
-
-```bash
-python scripts/lint/check-platform-testhooks.py
-python scripts/lint/check-console-capture-semaphore.py
-python scripts/lint/check-userdata-scope-usage.py
-python scripts/lint/check-test-finally.py
-python scripts/lint/check-temp-path-usage.py
-```
-
-______________________________________________________________________
-
-## Implementation Notes
-
-### VM
-
-- Per-function bytecode, stack frames via `CallStackItem`, tail call via `TailCallRequest`
-
-### Interop
-
-- Register types with `UserData.RegisterType<T>()` before use
-- `InteropAccessMode.LazyOptimized` for performance
-
-### Tables
-
-- 1-based indexing, metatables for operator overloading
-
-### Adding Opcodes
-
-1. Update `OpCode` enum
-1. Implement in `Processor.Processing_Loop()`
-1. Emit in AST node's `Compile()`
-1. Test execution and serialization
+See [skills/high-performance-csharp.md](skills/high-performance-csharp.md) for detailed guidelines.
 
 ______________________________________________________________________
 
@@ -375,6 +136,26 @@ ______________________________________________________________________
 - Concise, imperative: "Fix parser regression"
 - Prefixes when helpful: "debugger: Fix breakpoint handling"
 - Reference issues: "Fixes #123"
+
+______________________________________________________________________
+
+## Skills (Task-Specific Guides)
+
+Detailed guides for common tasks are in `.llm/skills/`:
+
+| Skill                                                        | When to Use                                                        |
+| ------------------------------------------------------------ | ------------------------------------------------------------------ |
+| [high-performance-csharp](skills/high-performance-csharp.md) | Writing new types/methods with minimal allocations                 |
+| [lua-fixture-creation](skills/lua-fixture-creation.md)       | Creating `.lua` test files with harness-compatible metadata        |
+| [tunit-test-writing](skills/tunit-test-writing.md)           | Writing multi-version TUnit tests with proper isolation            |
+| [lua-spec-verification](skills/lua-spec-verification.md)     | Investigating Lua spec compliance, verifying against reference Lua |
+| [adding-opcodes](skills/adding-opcodes.md)                   | Adding new bytecode instructions to the VM                         |
+| [debugging-interpreter](skills/debugging-interpreter.md)     | Debugging the Lexer → Parser → AST → VM pipeline                   |
+| [clr-interop](skills/clr-interop.md)                         | Exposing C# types to Lua, calling Lua from C#                      |
+| [coverage-analysis](skills/coverage-analysis.md)             | Running coverage, interpreting reports, finding gaps               |
+| [lua-comparison-harness](skills/lua-comparison-harness.md)   | Running fixtures against reference Lua interpreters                |
+
+______________________________________________________________________
 
 ## Resources
 

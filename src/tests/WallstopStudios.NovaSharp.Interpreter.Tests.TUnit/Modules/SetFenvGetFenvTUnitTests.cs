@@ -50,10 +50,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task GetFenvIsNilInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -64,10 +61,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task SetFenvIsNilInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);

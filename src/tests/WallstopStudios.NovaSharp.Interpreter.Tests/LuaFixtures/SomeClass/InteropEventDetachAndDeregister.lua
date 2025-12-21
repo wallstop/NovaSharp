@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataEventsTUnitTests.cs:197
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/UserDataEventsTUnitTests.cs:204
 -- @test: SomeClass.InteropEventDetachAndDeregister
--- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: myobj
+-- @compat-notes: Uses injected variable: myobj
 local invocationCount = 0
                     function handler(o, a)
                         invocationCount = invocationCount + 1;

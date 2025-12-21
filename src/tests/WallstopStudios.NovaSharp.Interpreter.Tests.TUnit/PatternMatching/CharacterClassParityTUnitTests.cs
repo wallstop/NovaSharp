@@ -10,6 +10,7 @@ using global::TUnit.Core;
 using WallstopStudios.NovaSharp.Interpreter.Compatibility;
 using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 using WallstopStudios.NovaSharp.Interpreter.Modules;
+using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
 /// <summary>
 /// Tests that NovaSharp's character class implementations in pattern matching
@@ -450,11 +451,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task AlphaClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -463,11 +460,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task ControlClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -476,11 +469,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task DigitClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -489,11 +478,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task LowerClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -502,11 +487,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task PunctClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -515,11 +496,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task SpaceClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -528,11 +505,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task UpperClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -541,11 +514,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task AlnumClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -554,11 +523,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task XdigitClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -570,10 +535,7 @@ public sealed class CharacterClassParityTUnitTests
     /// Tests %g (graph) character class - available in Lua 5.2+ only.
     /// </summary>
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
     public async Task GraphClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -586,11 +548,7 @@ public sealed class CharacterClassParityTUnitTests
     /// The uppercase version of a character class matches the complement of the lowercase.
     /// </summary>
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedAlphaClassMatchesComplement(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -600,11 +558,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedDigitClassMatchesComplement(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -614,11 +568,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedLowerClassMatchesComplement(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -628,11 +578,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedSpaceClassMatchesComplement(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -642,11 +588,7 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedUpperClassMatchesComplement(LuaCompatibilityVersion version)
     {
         Script script = new Script(version);
@@ -664,90 +606,20 @@ public sealed class CharacterClassParityTUnitTests
     /// in .NET (Char.IsPunctuation): $ + &lt; = &gt; ^ ` | ~
     /// </remarks>
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "!", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "@", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "#", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "%", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "&", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "*", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "(", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ")", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "-", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "_", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "[", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "]", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "{", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "}", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "\\", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "/", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ":", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ";", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "\"", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "'", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ",", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ".", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "?", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "Z", false)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua51, " ", false)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua52, " ", false)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua53, " ", false)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua54, " ", false)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua55, " ", false)]
+    [LuaTestMatrix(
+        new object[] { "$", true },
+        new object[] { "+", true },
+        new object[] { "<", true },
+        new object[] { "=", true },
+        new object[] { ">", true },
+        new object[] { "^", true },
+        new object[] { "`", true },
+        new object[] { "|", true },
+        new object[] { "~", true },
+        new object[] { "a", false },
+        new object[] { "0", false },
+        new object[] { " ", false }
+    )]
     public async Task PunctMatchesSpecificCharacters(
         LuaCompatibilityVersion version,
         string character,

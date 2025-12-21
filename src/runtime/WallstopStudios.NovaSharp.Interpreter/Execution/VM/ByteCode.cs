@@ -663,10 +663,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="index">Optional literal index.</param>
         /// <param name="isNameIndex">Whether the index is a string literal.</param>
         /// <param name="isExpList">Whether the index was produced by an expression list.</param>
+        /// <param name="baseName">Optional name of the base variable being indexed (for error messages).</param>
         public Instruction EmitIndex(
             DynValue index = null,
             bool isNameIndex = false,
-            bool isExpList = false
+            bool isExpList = false,
+            string baseName = null
         )
         {
             OpCode o;
@@ -684,7 +686,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             return AppendInstruction(
-                new Instruction(_currentSourceRef) { OpCode = o, Value = index }
+                new Instruction(_currentSourceRef)
+                {
+                    OpCode = o,
+                    Value = index,
+                    Name = baseName,
+                }
             );
         }
 
@@ -696,12 +703,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="index">Optional literal index.</param>
         /// <param name="isNameIndex">Whether the index is a string literal.</param>
         /// <param name="isExpList">Whether the index was produced by an expression list.</param>
+        /// <param name="baseName">Optional name of the base variable being indexed (for error messages).</param>
         public Instruction EmitIndexSet(
             int stackofs,
             int tupleidx,
             DynValue index = null,
             bool isNameIndex = false,
-            bool isExpList = false
+            bool isExpList = false,
+            string baseName = null
         )
         {
             OpCode o;
@@ -725,6 +734,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     NumVal = stackofs,
                     NumVal2 = tupleidx,
                     Value = index,
+                    Name = baseName,
                 }
             );
         }

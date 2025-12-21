@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsTimeModuleTUnitTests.cs:224
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsTimeModuleTUnitTests.cs:325
 -- @test: OsTimeModuleTUnitTests.DateSupportsOyModifier
+-- @compat-notes: Test targets Lua 5.1
 return os.date('!%Oy', 0)

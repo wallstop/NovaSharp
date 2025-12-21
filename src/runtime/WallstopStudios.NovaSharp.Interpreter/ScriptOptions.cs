@@ -21,6 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             RandomProvider = null; // null means create a new SystemRandomProvider per script
             ForceUtcDateTime = false;
             Sandbox = SandboxOptions.Unrestricted;
+            LuaCompatibleErrors = false;
         }
 
         public ScriptOptions(ScriptOptions defaults)
@@ -48,6 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             TimeProvider = defaults.TimeProvider;
             RandomProvider = defaults.RandomProvider;
             ForceUtcDateTime = defaults.ForceUtcDateTime;
+            LuaCompatibleErrors = defaults.LuaCompatibleErrors;
             Sandbox =
                 defaults.Sandbox == SandboxOptions.Unrestricted
                     ? SandboxOptions.Unrestricted
@@ -154,5 +156,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// recursion depth, and module/function access restrictions. Defaults to <see cref="SandboxOptions.Unrestricted"/>.
         /// </summary>
         public SandboxOptions Sandbox { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether error messages should include variable name information
+        /// to match Lua's error format. When enabled, errors like "attempt to index a nil value" will
+        /// include the variable name, e.g., "attempt to index a nil value (global 'foo')".
+        /// Defaults to <c>false</c> for backwards compatibility.
+        /// </summary>
+        public bool LuaCompatibleErrors { get; set; }
     }
 }

@@ -1,9 +1,9 @@
 -- @lua-versions: 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineCloseTUnitTests.cs:295
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:365
 -- @test: ProcessorCoroutineCloseTUnitTests.CoroutineCloseFlushesAllClosersEvenWhenOneRaises
--- @compat-notes: Lua 5.4: close attribute; Lua 5.3+: bitwise operators
+-- @compat-notes: Test targets Lua 5.4+; Lua 5.4: close attribute
 local log = {}
 
                 local function new_closable(name, should_error)

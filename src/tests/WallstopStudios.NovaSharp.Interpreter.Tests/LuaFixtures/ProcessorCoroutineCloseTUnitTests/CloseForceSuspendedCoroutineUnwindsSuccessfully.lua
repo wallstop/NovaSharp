@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineCloseTUnitTests.cs:229
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:293
 -- @test: ProcessorCoroutineCloseTUnitTests.CloseForceSuspendedCoroutineUnwindsSuccessfully
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Test targets Lua 5.1
 function heavy_close()
                     local total = 0
                     for i = 1, 500 do

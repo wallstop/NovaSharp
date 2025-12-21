@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\IoModuleTUnitTests.cs:720
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:998
 -- @test: IoModuleTUnitTests.CloseStdErrReturnsErrorTuple
+-- @compat-notes: Test targets Lua 5.1
 return io.close(io.stderr)

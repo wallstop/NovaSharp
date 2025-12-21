@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:1203
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:1802
 -- @test: StringModuleTUnitTests.FormatFloatWithPositiveSpace
+-- @compat-notes: Test targets Lua 5.1
 return string.format('% f', 3.14)

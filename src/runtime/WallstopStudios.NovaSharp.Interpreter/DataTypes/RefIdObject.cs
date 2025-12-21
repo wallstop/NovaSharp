@@ -29,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public string FormatTypeString(string typeString)
         {
-            return $"{typeString}: {_refId:X8}";
+            return $"{typeString}: 0x{_refId:x}";
         }
     }
 }

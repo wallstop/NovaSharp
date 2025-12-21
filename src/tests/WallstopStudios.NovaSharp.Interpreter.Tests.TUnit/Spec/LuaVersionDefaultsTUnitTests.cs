@@ -80,10 +80,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task ResolveConcreteVersionReturnsUnchanged(LuaCompatibilityVersion version)
         {
             LuaCompatibilityVersion result = LuaVersionDefaults.Resolve(version);
@@ -109,10 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task ResolveForHighestConcreteVersionReturnsUnchanged(
             LuaCompatibilityVersion version
         )
@@ -293,8 +287,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua53)]
         public async Task OlderVersionsUseLua51RandomProvider(LuaCompatibilityVersion version)
         {
             Script script = new Script(
@@ -308,9 +301,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task NewerVersionsUseLuaRandomProvider(LuaCompatibilityVersion version)
         {
             Script script = new Script(

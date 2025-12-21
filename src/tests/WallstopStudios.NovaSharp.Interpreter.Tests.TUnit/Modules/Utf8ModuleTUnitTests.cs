@@ -933,6 +933,216 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        #region Integer Representation Validation (Lua 5.3+)
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.char requires integer representation for all arguments.
+        /// Non-integer floats throw "number has no integer representation".
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CharRejectsNonIntegerFloat(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.char(65.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.char rejects NaN.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CharRejectsNaN(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.char(0/0)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.char rejects Infinity.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CharRejectsInfinity(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.char(1/0)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.char accepts floats that are exact integers.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CharAcceptsIntegerFloat(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            DynValue result = script.DoString("return utf8.char(65.0, 66.0)");
+
+            await Assert.That(result.String).IsEqualTo("AB").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.codepoint requires integer representation for start index.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodepointRejectsNonIntegerStartIndex(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.codepoint('abc', 1.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.codepoint requires integer representation for end index.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodepointRejectsNonIntegerEndIndex(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.codepoint('abc', 1, 2.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.len requires integer representation for start index.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8LenRejectsNonIntegerStartIndex(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.len('abc', 1.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.len requires integer representation for end index.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8LenRejectsNonIntegerEndIndex(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.len('abc', 1, 2.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.offset requires integer representation for n argument.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetRejectsNonIntegerN(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.offset('abc', 1.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Lua 5.3+ §6.5: utf8.offset requires integer representation for i argument.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8OffsetRejectsNonIntegerI(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return utf8.offset('abc', 1, 1.5)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
+        }
+
+        #endregion
+
         private static Script CreateScript(LuaCompatibilityVersion version)
         {
             ScriptOptions options = new ScriptOptions(Script.DefaultOptions)

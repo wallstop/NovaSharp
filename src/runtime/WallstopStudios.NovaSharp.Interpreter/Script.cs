@@ -1146,15 +1146,75 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             WarnIfBit32CompatibilityDisabled(modname);
 
-            string filename = Options.ScriptLoader.ResolveModuleName(modname, globals);
+            // Try to get detailed resolution result with searched paths for better error messages
+            IScriptLoader loader = Options.ScriptLoader;
+            string filename;
+            IReadOnlyList<string> searchedPaths = null;
+
+            if (loader is ScriptLoaderBase baseLoader)
+            {
+                ModuleResolutionResult result = baseLoader.TryResolveModuleName(modname, globals);
+                filename = result.ResolvedPath;
+                searchedPaths = result.SearchedPaths;
+            }
+            else
+            {
+                // Fallback for custom IScriptLoader implementations
+                filename = loader.ResolveModuleName(modname, globals);
+            }
 
             if (filename == null)
             {
-                throw new ScriptRuntimeException("module '{0}' not found", modname);
+                throw new ScriptRuntimeException(
+                    FormatModuleNotFoundError(modname, searchedPaths, Options.LuaCompatibleErrors)
+                );
             }
 
             DynValue func = LoadFile(filename, globalContext, filename);
             return func;
+        }
+
+        /// <summary>
+        /// Formats the "module not found" error message. When <paramref name="luaCompatibleErrors"/>
+        /// is enabled, lists all paths that were searched to match reference Lua behavior.
+        /// Otherwise, returns a simple message for backward compatibility.
+        /// </summary>
+        /// <param name="modname">The module name that was not found.</param>
+        /// <param name="searchedPaths">The list of paths that were searched.</param>
+        /// <param name="luaCompatibleErrors">Whether to include detailed search paths in the error.</param>
+        /// <returns>A formatted error message.</returns>
+        private static string FormatModuleNotFoundError(
+            string modname,
+            IReadOnlyList<string> searchedPaths,
+            bool luaCompatibleErrors
+        )
+        {
+            // When LuaCompatibleErrors is disabled, return a simple message for backward compatibility
+            if (!luaCompatibleErrors)
+            {
+                return $"module '{modname}' not found";
+            }
+
+            if (searchedPaths == null || searchedPaths.Count == 0)
+            {
+                return $"module '{modname}' not found:\n\tno field package.preload['{modname}']";
+            }
+
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+            sb.Append("module '");
+            sb.Append(modname);
+            sb.Append("' not found:\n\tno field package.preload['");
+            sb.Append(modname);
+            sb.Append("']");
+
+            foreach (string path in searchedPaths)
+            {
+                sb.Append("\n\tno file '");
+                sb.Append(path);
+                sb.Append('\'');
+            }
+
+            return sb.ToString();
         }
 
         private void WarnIfBit32CompatibilityDisabled(string moduleName)

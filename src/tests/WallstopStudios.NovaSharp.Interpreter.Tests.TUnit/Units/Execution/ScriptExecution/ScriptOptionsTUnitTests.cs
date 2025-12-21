@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Diagnostics;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Options;
@@ -144,6 +145,114 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             await Assert.That(stats).IsNotNull();
             await Assert.That(stats.Instances).IsGreaterThanOrEqualTo(1);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LuaCompatibleErrorsDefaultsToFalse()
+        {
+            ScriptOptions options = new ScriptOptions();
+            await Assert.That(options.LuaCompatibleErrors).IsFalse();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CopyConstructorCopiesLuaCompatibleErrors()
+        {
+            ScriptOptions defaults = new ScriptOptions { LuaCompatibleErrors = true };
+            ScriptOptions copy = new ScriptOptions(defaults);
+            await Assert.That(copy.LuaCompatibleErrors).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task IndexNilWithoutLuaCompatibleErrorsReturnsBasicMessage(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            script.Options.LuaCompatibleErrors = false;
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("local x = nil; x.foo = 1")
+            );
+
+            await Assert.That(ex.Message).Contains("attempt to index a nil value");
+            await Assert.That(ex.Message).DoesNotContain("local 'x'");
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task IndexNilWithLuaCompatibleErrorsReturnsLocalVariableName(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            script.Options.LuaCompatibleErrors = true;
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("local x = nil; x.foo = 1")
+            );
+
+            await Assert.That(ex.Message).Contains("attempt to index a nil value");
+            await Assert.That(ex.Message).Contains("local 'x'");
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task IndexNilWithLuaCompatibleErrorsReturnsGlobalVariableName(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            script.Options.LuaCompatibleErrors = true;
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("undeclared.field = 1")
+            );
+
+            await Assert.That(ex.Message).Contains("attempt to index a nil value");
+            await Assert.That(ex.Message).Contains("global 'undeclared'");
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task IndexNilWithLuaCompatibleErrorsReturnsUpvalueVariableName(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            script.Options.LuaCompatibleErrors = true;
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(
+                    @"
+                    local x = nil
+                    local function inner()
+                        x.foo = 1
+                    end
+                    inner()
+                    "
+                )
+            );
+
+            await Assert.That(ex.Message).Contains("attempt to index a nil value");
+            await Assert.That(ex.Message).Contains("upvalue 'x'");
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ReadNilWithLuaCompatibleErrorsReturnsVariableName(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            script.Options.LuaCompatibleErrors = true;
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("local x = nil; local y = x.foo")
+            );
+
+            await Assert.That(ex.Message).Contains("attempt to index a nil value");
+            await Assert.That(ex.Message).Contains("local 'x'");
         }
 
         private static TException ExpectException<TException>(Func<ScriptOptions> factory)

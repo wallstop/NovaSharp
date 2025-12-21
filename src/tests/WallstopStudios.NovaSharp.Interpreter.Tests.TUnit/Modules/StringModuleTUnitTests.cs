@@ -3,21 +3,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
+    using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class StringModuleTUnitTests
     {
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task CharProducesStringFromByteValues(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -26,12 +24,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("ABC").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task CharThrowsWhenArgumentCannotBeCoerced(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -43,12 +37,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task CharReturnsNullByteForZero(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -58,12 +48,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task CharReturnsMaxByteValue(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -73,12 +59,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String[0]).IsEqualTo((char)255).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task CharReturnsEmptyStringWhenNoArgumentsProvided(
             LuaCompatibilityVersion version
         )
@@ -89,12 +71,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task CharErrorsOnValuesOutsideByteRange(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -109,12 +87,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task CharAcceptsIntegralFloatValues(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -305,12 +279,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task LenReturnsStringLength(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -319,12 +289,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task LowerReturnsLowercaseString(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -333,12 +299,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("novasharp").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task UpperReturnsUppercaseString(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -347,12 +309,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("NOVASHARP").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task ByteReturnsByteCodesForSubstring(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -370,12 +328,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[3].Number).IsEqualTo(97d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task ByteDefaultsToFirstCharacter(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -384,12 +338,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsEqualTo(76d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task ByteSupportsNegativeIndices(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -398,12 +348,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsEqualTo(97d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task ByteReturnsNilWhenIndexPastEnd(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -412,12 +358,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task ByteReturnsNilWhenStartExceedsEnd(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -426,12 +368,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task ByteReturnsNilForEmptySource(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -440,12 +378,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task ByteAcceptsIntegralFloatIndices(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -458,9 +392,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.1/5.2: Silently truncates via floor (tested below)
         // Lua 5.3+: Throws "number has no integer representation" (tested below)
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task ByteTruncatesFloatIndicesLua51And52(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -473,11 +406,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteErrorsOnNonIntegerIndexLua53Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -493,11 +423,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteErrorsOnNaNIndexLua53Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -513,11 +440,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteErrorsOnInfinityIndexLua53Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -533,9 +457,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task ByteReturnsNilForNaNIndexLua51And52(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -549,9 +472,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task ByteNegativeFractionalIndexUsesFloorLua51And52(
             LuaCompatibilityVersion version
         )
@@ -568,11 +490,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteAcceptsLargeIntegerIndexLua53Plus(LuaCompatibilityVersion version)
         {
             // Large integer beyond double precision (2^53+1) but stored as integer is valid
@@ -589,11 +508,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteAcceptsMathMaxIntegerIndexLua53Plus(LuaCompatibilityVersion version)
         {
             // math.maxinteger (2^63-1) is valid when stored as integer
@@ -608,11 +524,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteErrorsOnLargeFloatIndexLua53Plus(LuaCompatibilityVersion version)
         {
             // 1e308 is a valid float but cannot be converted to integer
@@ -629,11 +542,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteAcceptsWholeNumberFloatIndexLua53Plus(LuaCompatibilityVersion version)
         {
             // 5.0 is a float with exact integer representation
@@ -648,11 +558,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteDistinguishesIntegerVsFloatForLargeValuesLua53Plus(
             LuaCompatibilityVersion version
         )
@@ -685,12 +592,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task UnicodeReturnsFullUnicodeCodePoints(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -706,11 +609,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].Number).IsEqualTo(256d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task RepSupportsSeparatorsLua52Plus(LuaCompatibilityVersion version)
         {
             // The separator parameter was added in Lua 5.2
@@ -720,8 +620,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(repeated.String).IsEqualTo("ab-ab-ab").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
         public async Task RepIgnoresSeparatorInLua51(LuaCompatibilityVersion version)
         {
             // Lua 5.1 doesn't support the separator parameter - it's ignored
@@ -731,12 +631,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(repeated.String).IsEqualTo("ababab").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task RepSupportsZeroCount(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -745,12 +641,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(zeroCount.String).IsEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FindReturnsMatchBoundaries(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -766,12 +658,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].Number).IsEqualTo(9d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task MatchReturnsFirstCapture(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -782,12 +670,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("1.2.3").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task ReverseReturnsEmptyStringForEmptyInput(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -796,12 +680,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task GSubAppliesGlobalReplacement(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -820,12 +700,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].Number).IsEqualTo(2d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task SubHandlesNegativeIndices(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -838,9 +714,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.1/5.2: Silently truncates via floor
         // Lua 5.3+: Throws "number has no integer representation"
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task SubTruncatesFloatIndicesLua51And52(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -853,11 +728,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task SubErrorsOnNonIntegerIndexLua53Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -877,9 +749,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.1/5.2: Silently truncates via floor
         // Lua 5.3+: Throws "number has no integer representation"
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task RepTruncatesFloatCountLua51And52(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -892,11 +763,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task RepErrorsOnNonIntegerCountLua53Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -912,12 +780,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatInterpolatesValues(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -926,12 +790,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("Value: 3.14").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task StartsWithEndsWithContainsTreatNilAsFalse(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -949,12 +809,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[2].Boolean).IsFalse().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task StartsWithEndsWithContainsReturnTrueWhenMatchesPresent(
             LuaCompatibilityVersion version
         )
@@ -974,12 +830,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task DumpPrependsNovaSharpBase64Header(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -996,12 +848,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task GMatchIteratesOverMatches(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1017,9 +865,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].String).IsEqualTo("two").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task GMatchWithInitParameterStartsAtSpecifiedPosition(
             LuaCompatibilityVersion version
         )
@@ -1040,10 +887,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("def,ghi").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
         public async Task GMatchIgnoresInitParameterInLuaBelow54(LuaCompatibilityVersion version)
         {
             // Lua 5.1-5.3 ignore the third argument to string.gmatch
@@ -1062,9 +907,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("abc,def,ghi").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task GMatchWithNegativeInitStartsFromEnd(LuaCompatibilityVersion version)
         {
             // Negative init means offset from end of string (Lua 5.4+)
@@ -1103,9 +947,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("world").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task GMatchWithInitBeyondStringLengthReturnsNoMatches(
             LuaCompatibilityVersion version
         )
@@ -1125,12 +968,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsEqualTo(0).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task DumpWrapsClrFunctionFailuresWithScriptRuntimeException(
             LuaCompatibilityVersion version
         )
@@ -1152,12 +991,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .IsGreaterThanOrEqualTo(0);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task NovaSharpInitRegistersStringMetatable(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1206,9 +1041,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.3+: These values throw "number has no integer representation"
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task CharHandlesNaNAsZeroLua51And52(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1218,9 +1052,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task CharHandlesPositiveInfinityAsZeroLua51And52(
             LuaCompatibilityVersion version
         )
@@ -1232,9 +1065,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task CharHandlesNegativeInfinityAsZeroLua51And52(
             LuaCompatibilityVersion version
         )
@@ -1246,9 +1078,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task CharTruncatesFloatValuesLua51And52(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1257,10 +1088,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("A").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task CharErrorsOnNaNLua53Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1275,10 +1104,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task CharErrorsOnPositiveInfinityLua53Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1293,10 +1120,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task CharErrorsOnNegativeInfinityLua53Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1311,10 +1136,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task CharErrorsOnNonIntegerFloatLua53Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1329,12 +1152,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task CharAcceptsNumericStringArguments(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1347,12 +1166,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Octal format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatOctalBasic(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1361,12 +1176,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("10").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatOctalWithAlternateFlag(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1375,12 +1186,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("010").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatOctalAlternateFlagWithZero(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1389,12 +1196,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("0").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatOctalWithFieldWidth(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1403,12 +1206,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("      10").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatOctalWithZeroPadding(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1417,12 +1216,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("00000010").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatOctalWithLeftAlign(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1431,12 +1226,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("10      ").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatOctalWithLeftAlignAndAlternate(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1445,12 +1236,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("010     ").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatOctalZeroPaddingWithAlternate(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1463,12 +1250,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Unsigned integer format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatUnsignedBasic(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1477,12 +1260,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatUnsignedWithFieldWidth(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1491,12 +1270,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("      42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatUnsignedWithZeroPadding(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1509,12 +1284,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Hex format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexLowercaseBasic(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1523,12 +1294,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexUppercaseBasic(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1537,12 +1304,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("FF").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexWithAlternateFlagLowercase(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1551,12 +1314,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("0xff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexWithAlternateFlagUppercase(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1565,12 +1324,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("0XFF").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexWithFieldWidth(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1579,12 +1334,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("      ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexWithZeroPadding(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1593,12 +1344,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("000000ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexWithLeftAlign(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1607,12 +1354,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("ff      ").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexWithPrecision(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1621,12 +1364,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("00ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexZeroPaddingWithAlternateLowercase(
             LuaCompatibilityVersion version
         )
@@ -1637,12 +1376,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("0x0000ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexZeroPaddingWithAlternateUppercase(
             LuaCompatibilityVersion version
         )
@@ -1653,12 +1388,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("0X0000FF").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexLeftAlignWithAlternate(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1671,12 +1402,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Integer format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatIntegerWithPositiveSign(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1685,12 +1412,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("+42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatIntegerWithPositiveSpace(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1699,12 +1422,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo(" 42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatIntegerPositiveSignOverridesSpace(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1713,12 +1432,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("+42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatNegativeIntegerWithPositiveSign(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1727,12 +1442,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("-42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatIntegerWithZeroPaddingAndPositiveSign(
             LuaCompatibilityVersion version
         )
@@ -1743,12 +1454,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("+0000042").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatNegativeIntegerWithZeroPadding(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1758,12 +1465,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("-00000042").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatLeftAlignOverridesZeroPadding(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1776,12 +1479,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Float format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatFloatWithPositiveSign(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1790,12 +1489,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).StartsWith("+3.14").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatFloatWithPositiveSpace(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1808,12 +1503,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Exponent format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatExponentLowercase(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1822,12 +1513,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).Contains("e").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatExponentUppercase(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1836,12 +1523,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).Contains("E").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatGeneralLowercase(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1850,12 +1533,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsNotEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatGeneralUppercase(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1864,12 +1543,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsNotEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatExponentWithPositiveSign(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1882,12 +1557,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Character format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatCharFromNumber(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1900,12 +1571,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - String format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatStringWithPrecision(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1914,12 +1581,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("Hel").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatStringWithFieldWidth(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1928,12 +1591,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("     Hello").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatStringWithLeftAlign(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1946,12 +1605,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Escape tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatPercentEscape(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1964,10 +1619,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Integer precision tests (Lua 5.3+ dual numeric type system)
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatDecimalPreservesMathMaxinteger(LuaCompatibilityVersion version)
         {
             // math.maxinteger = 9223372036854775807 (2^63 - 1)
@@ -1979,10 +1632,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatDecimalPreservesMathMininteger(LuaCompatibilityVersion version)
         {
             // math.mininteger = -9223372036854775808 (-2^63)
@@ -1995,10 +1646,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatIntegerSpecifierPreservesMathMaxinteger(
             LuaCompatibilityVersion version
         )
@@ -2010,10 +1659,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatHexPreservesLargeIntegers(LuaCompatibilityVersion version)
         {
             // math.maxinteger in hex should be 7fffffffffffffff
@@ -2023,10 +1670,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("7fffffffffffffff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatHexUppercasePreservesLargeIntegers(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -2035,10 +1680,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("7FFFFFFFFFFFFFFF").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatOctalPreservesLargeIntegers(LuaCompatibilityVersion version)
         {
             // math.maxinteger in octal
@@ -2051,10 +1694,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatDecimalWithIntegerLiteral(LuaCompatibilityVersion version)
         {
             // Large integer literals should preserve precision
@@ -2350,12 +1991,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [AllLuaVersions]
         public async Task FormatHexWithNegativeInteger(LuaCompatibilityVersion version)
         {
             // -1 as unsigned 64-bit integer is all 1s
@@ -2365,10 +2002,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("ffffffffffffffff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatHexWithMathMininteger(LuaCompatibilityVersion version)
         {
             // math.mininteger = -2^63 = 0x8000000000000000
@@ -2378,10 +2013,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("8000000000000000").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatDecimalWithBitwiseResult(LuaCompatibilityVersion version)
         {
             // Bitwise operations produce integer results - verify precision preserved through formatting
@@ -2393,10 +2026,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatDecimalWithMathTointeger(LuaCompatibilityVersion version)
         {
             // math.tointeger returns integer subtype - verify precision preserved
@@ -2408,10 +2039,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatUnsignedWithMathMaxinteger(LuaCompatibilityVersion version)
         {
             // %u format specifier with large positive integer

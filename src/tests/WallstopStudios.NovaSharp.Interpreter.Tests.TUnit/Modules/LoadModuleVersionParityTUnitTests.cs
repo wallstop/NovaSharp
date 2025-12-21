@@ -34,10 +34,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task LoadstringIsNilInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -151,10 +148,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // =============================================================================
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task LoadAcceptsStringsInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -168,10 +162,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task LoadAcceptsReaderFunctionInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -191,10 +182,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task LoadUsesEnvParameterInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -229,10 +217,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task LoadsafeAcceptsStringsInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -250,11 +235,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // =============================================================================
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task LoadRejectsNonFunctionNonStringInAllVersions(
             LuaCompatibilityVersion version
         )
@@ -272,11 +253,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task LoadWithReaderConcatenatesFragmentsInAllVersions(
             LuaCompatibilityVersion version
         )

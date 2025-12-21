@@ -589,12 +589,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Implements Lua `math.frexp`, decomposing a number into mantissa/exponent components (§6.7).
-        /// This function was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// Returns m and e such that x = m * 2^e, where m is in [0.5, 1) for non-zero values.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments providing the number to decompose.</param>
         /// <returns>Tuple {m, e} as defined by Lua.</returns>
-        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "frexp")]
         public static DynValue Frexp(
             ScriptExecutionContext executionContext,
@@ -667,12 +666,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Implements Lua `math.ldexp`, building a number from mantissa and exponent (§6.7).
-        /// This function was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// Returns mantissa * 2^exp, the inverse of <see cref="Frexp"/>.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments containing mantissa and exponent.</param>
         /// <returns>Result of <c>mantissa * 2^exp</c>.</returns>
-        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "ldexp")]
         public static DynValue Ldexp(
             ScriptExecutionContext executionContext,

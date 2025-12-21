@@ -6,14 +6,25 @@ set -euo pipefail
 
 echo "=== NovaSharp Dev Container Setup ==="
 
+cd /workspaces/NovaSharp
+
+# Clean stale obj/bin folders that may contain Windows-specific NuGet asset caches
+# This prevents "Unable to find fallback package folder" errors when opening in VS Code
+echo "Cleaning stale build artifacts..."
+find src -type d -name "obj" -exec rm -rf {} + 2>/dev/null || true
+find src -type d -name "bin" -exec rm -rf {} + 2>/dev/null || true
+
 # Restore dotnet tools
 echo "Restoring .NET tools..."
-cd /workspaces/NovaSharp
 dotnet tool restore
 
 # Install TUnit project templates for creating new test projects
 echo "Installing TUnit templates..."
 dotnet new install TUnit.Templates || true
+
+# Restore NuGet packages so C# extension loads without errors
+echo "Restoring NuGet packages..."
+dotnet restore src/NovaSharp.sln
 
 # Create Python virtual environment for tooling (PEP 668 compliance)
 VENV_DIR="/workspaces/NovaSharp/.venv"

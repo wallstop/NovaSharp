@@ -820,7 +820,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         {
             if (IsOpen())
             {
-                return $"file ({ReferenceId:X8})";
+                return $"file (0x{ReferenceId:x})";
             }
             else
             {

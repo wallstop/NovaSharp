@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:219
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:219
 -- @test: StreamFileUserDataBaseTUnitTests.SeekSupportsDifferentOrigins
--- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: file
+-- @compat-notes: Uses injected variable: file
 local f = file
                 local setPos = f:seek('set', 2)
                 local char = f:read(1)

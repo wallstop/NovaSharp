@@ -30,9 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         /// String-to-number coercion is built into the operators themselves.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
         public async Task StringMetatableHasNoArithmeticMetamethodsInPreLua54(
             LuaCompatibilityVersion version
         )
@@ -60,8 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         /// In Lua 5.4+, the string metatable should have arithmetic metamethods.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task StringMetatableHasArithmeticMetamethodsInLua54Plus(
             LuaCompatibilityVersion version
         )
@@ -103,11 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         /// The mechanism differs (built-in vs metamethod), but the result is the same.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task StringAdditionWorksInAllVersions(LuaCompatibilityVersion version)
         {
             Script script = new Script(version);
@@ -125,11 +118,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         /// Test all arithmetic operations with string operands.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task AllArithmeticOperationsWorkWithStrings(LuaCompatibilityVersion version)
         {
             Script script = new Script(version);
@@ -195,9 +184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         /// Floor division should work with strings in Lua 5.3+.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FloorDivisionWorksWithStrings(LuaCompatibilityVersion version)
         {
             Script script = new Script(version);
@@ -220,8 +207,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         /// This verifies that metamethods are used, not built-in coercion.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
         public async Task CustomStringMetamethodIsCalledInLua54Plus(LuaCompatibilityVersion version)
         {
             Script script = new Script(version);
@@ -259,9 +245,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         /// are NOT called because coercion is built into the operators.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
         public async Task CustomStringMetamethodNotCalledInPreLua54(LuaCompatibilityVersion version)
         {
             Script script = new Script(version);
@@ -304,11 +288,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         /// Non-numeric strings should cause arithmetic errors.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task NonNumericStringCausesArithmeticError(LuaCompatibilityVersion version)
         {
             Script script = new Script(version);

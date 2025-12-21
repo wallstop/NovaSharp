@@ -1,9 +1,8 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\MetatableTUnitTests.cs:87
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/MetatableTUnitTests.cs:93
 -- @test: MetatableTUnitTests.PairsMetamethodControlsIteration
--- @compat-notes: Lua 5.3+: bitwise operators
 subject = setmetatable({}, {
                     __pairs = function(self)
                         local yielded = false

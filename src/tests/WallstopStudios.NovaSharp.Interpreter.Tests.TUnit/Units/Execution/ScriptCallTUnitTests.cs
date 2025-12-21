@@ -633,6 +633,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 ResolveCalls++;
                 return ResolveReturnsNull ? null : modname;
             }
+
+            public override ModuleResolutionResult TryResolveModuleName(
+                string modname,
+                Table globalContext
+            )
+            {
+                string resolved = ResolveModuleName(modname, globalContext);
+                return resolved != null
+                    ? ModuleResolutionResult.Success(resolved, Array.Empty<string>())
+                    : ModuleResolutionResult.NotFound(Array.Empty<string>());
+            }
         }
     }
 }

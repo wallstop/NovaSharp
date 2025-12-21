@@ -1,8 +1,9 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:411
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:557
 -- @test: CoroutineModuleTUnitTests.ResumeFlattensTrailingTupleResults
+-- @compat-notes: Test targets Lua 5.1
 function invokeNestedBuilder()
                     return buildNestedResult()
                 end

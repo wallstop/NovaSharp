@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\LoadModuleTUnitTests.cs:193
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleTUnitTests.cs:289
 -- @test: LoadModuleTUnitTests.LoadSafeThrowsWhenEnvironmentCannotBeRetrieved
--- @compat-notes: Lua 5.3+: bitwise operators; Lua 5.2+: _ENV variable
+-- @compat-notes: Test targets Lua 5.1; Lua 5.2+: _ENV variable
 local original_env = _ENV
                 local ls = loadsafe
                 local pc = pcall

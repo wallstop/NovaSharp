@@ -35,6 +35,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `utf8.len`, returning the number of UTF-8 codepoints in a slice or the position of the first error.
         /// Lua 5.4+: An optional `lax` parameter allows decoding of surrogates and code points above 0x10FFFF.
         /// </summary>
+        /// <remarks>
+        /// Lua 5.3+ requires integer representation for index arguments. Non-integer floats,
+        /// NaN, and Infinity will throw "number has no integer representation".
+        /// </remarks>
         [NovaSharpModuleMethod(Name = "len")]
         public static DynValue Len(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -51,6 +55,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 lax = !laxArg.IsNil() && laxArg.Boolean;
             }
 
+            // utf8 module is Lua 5.3+ only - always require integer representation
+            Utilities.LuaNumberHelpers.ValidateIntegerArgument(version, start, "len", 2);
+            Utilities.LuaNumberHelpers.ValidateIntegerArgument(version, end, "len", 3);
+
             (int startIndex, int endExclusive) = NormalizeRange(value.String, start, end);
             DynValue result = CountRunesOrError(value.String, startIndex, endExclusive, lax);
 
@@ -61,6 +69,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `utf8.codepoint`, returning the code points within the requested range (§6.5).
         /// Lua 5.4+: An optional `lax` parameter allows decoding of surrogates and code points above 0x10FFFF.
         /// </summary>
+        /// <remarks>
+        /// Lua 5.3+ requires integer representation for index arguments. Non-integer floats,
+        /// NaN, and Infinity will throw "number has no integer representation".
+        /// </remarks>
         [NovaSharpModuleMethod(Name = "codepoint")]
         public static DynValue CodePoint(
             ScriptExecutionContext executionContext,
@@ -79,6 +91,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 DynValue laxArg = args.AsType(3, "utf8.codepoint", DataType.Boolean, true);
                 lax = !laxArg.IsNil() && laxArg.Boolean;
             }
+
+            // utf8 module is Lua 5.3+ only - always require integer representation
+            Utilities.LuaNumberHelpers.ValidateIntegerArgument(version, start, "codepoint", 2);
+            Utilities.LuaNumberHelpers.ValidateIntegerArgument(version, end, "codepoint", 3);
 
             int length = value.String.Length;
 
@@ -189,9 +205,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `utf8.char`, building a UTF-8 string from the provided scalar values (§6.5).
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Lua 5.4 accepts code points up to 0x7FFFFFFF (using extended UTF-8 encoding with 5-6 bytes).
         /// Lua 5.3 accepts code points 0-0x10FFFF (including surrogates).
         /// Both versions accept surrogate code points (0xD800-0xDFFF).
+        /// </para>
+        /// <para>
+        /// Lua 5.3+ requires integer representation for all arguments. Non-integer floats,
+        /// NaN, and Infinity will throw "number has no integer representation".
+        /// </para>
         /// </remarks>
         [NovaSharpModuleMethod(Name = "char")]
         public static DynValue Char(ScriptExecutionContext executionContext, CallbackArguments args)
@@ -204,8 +226,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             for (int i = 0; i < args.Count; i++)
             {
+                // utf8 module is Lua 5.3+ only - always require integer representation
+                DynValue argValue = args.AsType(i, "utf8.char", DataType.Number, false);
+                Utilities.LuaNumberHelpers.RequireIntegerRepresentation(
+                    argValue.LuaNumber,
+                    "utf8.char",
+                    i + 1
+                );
+
                 // Use long to handle values up to 0x7FFFFFFF
-                long codePoint = args.AsLong(i, "utf8.char");
+                long codePoint = (long)argValue.Number;
 
                 if (useLua54ExtendedRange)
                 {
@@ -327,15 +357,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `utf8.offset`, locating the byte offset of the nth code point relative to a position (§6.5).
         /// </summary>
+        /// <remarks>
+        /// Lua 5.3+ requires integer representation for n and i arguments. Non-integer floats,
+        /// NaN, and Infinity will throw "number has no integer representation".
+        /// </remarks>
         [NovaSharpModuleMethod(Name = "offset")]
         public static DynValue Offset(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
             DynValue value = args.AsType(0, "utf8.offset", DataType.String, false);
-            int n = args.AsInt(1, "utf8.offset");
+            DynValue nArg = args.AsType(1, "utf8.offset", DataType.Number, false);
             DynValue indexArg = args.AsType(2, "utf8.offset", DataType.Number, true);
+
+            // utf8 module is Lua 5.3+ only - always require integer representation
+            Utilities.LuaNumberHelpers.RequireIntegerRepresentation(nArg.LuaNumber, "offset", 2);
+            Utilities.LuaNumberHelpers.ValidateIntegerArgument(version, indexArg, "offset", 3);
+
+            int n = (int)nArg.Number;
 
             // Validate position (i) before normalizing - position 0 is never valid
             if (!indexArg.IsNil())

@@ -15,7 +15,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     public sealed class BinaryDumpTUnitTests
     {
         [Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task BinDumpChunkDump(LuaCompatibilityVersion version)
         {
             Script script = new(version);
@@ -29,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task BinDumpStringDump(LuaCompatibilityVersion version)
         {
             Script script = new(version);
@@ -214,7 +214,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task LoadChangeEnvWithDebugSetUpValue(LuaCompatibilityVersion version)
         {
             List<Table> captured = new();

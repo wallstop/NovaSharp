@@ -1,8 +1,9 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:328
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:464
 -- @test: CoroutineModuleTUnitTests.ResumeDeeplyNestedTuplesAreFlattened
+-- @compat-notes: Test targets Lua 5.1
 function buildDeepCoroutine()
                     local function deepest()
                         return 'deep', 'value'

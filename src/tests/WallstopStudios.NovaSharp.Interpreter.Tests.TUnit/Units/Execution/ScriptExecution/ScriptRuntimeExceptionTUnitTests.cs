@@ -191,6 +191,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        public async Task IndexTypeReturnsMessageWithoutVariableDescription()
+        {
+            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(DynValue.Nil);
+            await Assert
+                .That(ex.Message)
+                .IsEqualTo("attempt to index a nil value")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IndexTypeReturnsMessageWithVariableDescription()
+        {
+            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(
+                DynValue.Nil,
+                "global 'foo'"
+            );
+            await Assert
+                .That(ex.Message)
+                .IsEqualTo("attempt to index a nil value (global 'foo')")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IndexTypeIncludesLocalVariableDescription()
+        {
+            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(
+                DynValue.Nil,
+                "local 'bar'"
+            );
+            await Assert
+                .That(ex.Message)
+                .IsEqualTo("attempt to index a nil value (local 'bar')")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IndexTypeIncludesUpvalueVariableDescription()
+        {
+            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(
+                DynValue.Nil,
+                "upvalue 'baz'"
+            );
+            await Assert
+                .That(ex.Message)
+                .IsEqualTo("attempt to index a nil value (upvalue 'baz')")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task LoopInIndexReturnsStockMessage()
         {
             ScriptRuntimeException ex = ScriptRuntimeException.LoopInIndex();

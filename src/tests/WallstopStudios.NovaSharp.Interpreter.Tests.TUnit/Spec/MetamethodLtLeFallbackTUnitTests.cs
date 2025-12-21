@@ -43,10 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             ";
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua54)]
         public async Task LtFallbackToLeWorksInLua51Through54(LuaCompatibilityVersion version)
         {
             Script script = new(version);
@@ -85,12 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [AllLuaVersions]
         public async Task LeMetamethodWorksInAllVersions(LuaCompatibilityVersion version)
         {
             // When __le IS defined, it should work in all versions
@@ -113,12 +105,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [AllLuaVersions]
         public async Task LtMetamethodWorksInAllVersions(LuaCompatibilityVersion version)
         {
             // __lt should work in all versions (it's the < operator, not <=)

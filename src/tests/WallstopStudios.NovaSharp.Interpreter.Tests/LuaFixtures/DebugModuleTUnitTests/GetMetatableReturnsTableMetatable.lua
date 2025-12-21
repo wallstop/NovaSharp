@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:1187
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1653
 -- @test: DebugModuleTUnitTests.GetMetatableReturnsTableMetatable
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Test targets Lua 5.1
 local t = {}
                 local mt = { __index = function() return 42 end }
                 setmetatable(t, mt)

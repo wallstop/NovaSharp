@@ -50,6 +50,20 @@ DOSTRING_CALL_PATTERN = re.compile(
     re.DOTALL
 )
 
+# Pattern to find variable assignments like: string code = @"...";
+# Supports verbatim, regular, and raw string literals
+VAR_ASSIGNMENT_PATTERN = re.compile(
+    r'(?:string|var)\s+(?P<varname>\w+)\s*=\s*'
+    r'(?:'
+    r'@"(?P<verbatim>(?:[^"]|"")*)"|'  # Verbatim string @"..."
+    r'"(?P<regular>(?:[^"\\]|\\.)*)"|'  # Regular string "..."
+    r'"""(?P<raw>.*?)"""|'  # Raw string literal """..."""
+    r'\$@"(?P<interp_verbatim>(?:[^"]|"")*)"|'  # Interpolated verbatim $@"..."
+    r'\$"(?P<interp>(?:[^"\\]|\\.)*)"'  # Interpolated $"..."
+    r')\s*;',
+    re.DOTALL
+)
+
 # Pattern to match test method declarations
 # Matches [Test], [TUnit.Core.Test], [global::TUnit.Core.Test]
 TEST_METHOD_PATTERN = re.compile(
@@ -64,20 +78,19 @@ TEST_CLASS_PATTERN = re.compile(
 )
 
 # Lua version feature detection patterns
+# NOTE: goto and labels were introduced in Lua 5.2, not 5.4!
 LUA_54_FEATURES = [
     (r'<const>', 'const attribute'),
     (r'<close>', 'close attribute'),
     (r'\bwarn\s*\(', 'warn function'),
-    (r'goto\s+\w+', 'goto statement'),
-    (r'::\w+::', 'label'),
 ]
 
 LUA_53_FEATURES = [
-    (r'\b//\b', 'floor division'),
-    (r'[^~]=', 'bitwise operators'),
+    (r'(?<!/)//', 'floor division'),  # Match // but not in comments (preceded by /)
+    # Note: removed the incorrect bitwise operators pattern that matched regular assignments
     (r'&(?![&])', 'bitwise AND'),
     (r'\|(?!\|)', 'bitwise OR'),
-    (r'~(?!=)', 'bitwise XOR/NOT'),
+    (r'(?<![~=<>])~(?!=)', 'bitwise XOR/NOT'),  # ~ but not part of ~= or <=/>=/==
     (r'<<|>>', 'bit shift'),
     (r'utf8\.', 'utf8 library'),
     (r'table\.move\s*\(', 'table.move'),
@@ -92,6 +105,8 @@ LUA_53_FEATURES = [
 ]
 
 LUA_52_FEATURES = [
+    (r'goto\s+\w+', 'goto statement (5.2+)'),
+    (r'::\w+::', 'label (5.2+)'),
     (r'bit32\.', 'bit32 library'),
     (r'_ENV\b', '_ENV variable'),
     (r'package\.searchpath', 'package.searchpath'),
@@ -121,7 +136,8 @@ LUA_51_INCOMPATIBLE = [
     (r'\b//\b', 'floor division'),
     (r'&(?![&])', 'bitwise AND'),
     (r'\|(?!\|)', 'bitwise OR'),
-    (r'goto\s+\w+', 'goto'),
+    (r'goto\s+\w+', 'goto (5.2+)'),
+    (r'::\w+::', 'label (5.2+)'),
     (r'<const>', 'const attribute'),
     (r'<close>', 'close attribute'),
     (r'math\.tointeger\s*\(', 'math.tointeger (5.3+)'),
@@ -317,6 +333,60 @@ def unescape_csharp_string(content: str, is_verbatim: bool = False) -> str:
     return result
 
 
+def build_variable_lookup(content: str) -> dict[str, list[tuple[str, int]]]:
+    """Build a lookup table of variable assignments: varname -> list of (lua_code, position).
+    
+    Returns all assignments for each variable name, sorted by position.
+    This allows finding the closest preceding assignment for a DoString call.
+    """
+    variables: dict[str, list[tuple[str, int]]] = {}
+    for match in VAR_ASSIGNMENT_PATTERN.finditer(content):
+        varname = match.group('varname')
+        position = match.start()
+        
+        # Extract the string content
+        if match.group('verbatim') is not None:
+            lua_code = unescape_csharp_string(match.group('verbatim'), is_verbatim=True)
+        elif match.group('regular') is not None:
+            lua_code = unescape_csharp_string(match.group('regular'), is_verbatim=False)
+        elif match.group('raw') is not None:
+            lua_code = match.group('raw')
+        elif match.group('interp_verbatim') is not None:
+            lua_code = unescape_csharp_string(match.group('interp_verbatim'), is_verbatim=True)
+        elif match.group('interp') is not None:
+            lua_code = unescape_csharp_string(match.group('interp'), is_verbatim=False)
+        else:
+            continue
+        
+        if varname not in variables:
+            variables[varname] = []
+        variables[varname].append((lua_code, position))
+    
+    # Sort each variable's assignments by position
+    for varname in variables:
+        variables[varname].sort(key=lambda x: x[1])
+    
+    return variables
+
+
+def resolve_variable(varname: str, dostring_position: int, 
+                     var_lookup: dict[str, list[tuple[str, int]]]) -> str | None:
+    """Find the closest preceding variable assignment for a DoString call."""
+    if varname not in var_lookup:
+        return None
+    
+    assignments = var_lookup[varname]
+    # Find the last assignment that comes before the DoString position
+    best_match = None
+    for lua_code, pos in assignments:
+        if pos < dostring_position:
+            best_match = lua_code
+        else:
+            break  # Assignments are sorted, so we can stop here
+    
+    return best_match
+
+
 def extract_lua_from_match(match: re.Match) -> tuple[str, bool]:
     """Extract Lua code from a regex match, returning (code, is_variable)."""
     if match.group('verbatim') is not None:
@@ -480,10 +550,21 @@ def extract_snippets_from_file(file_path: Path) -> Iterator[LuaSnippet]:
         print(f"Warning: Could not read {file_path}: {e}", file=sys.stderr)
         return
     
+    # Build variable lookup table for resolving variable references
+    var_lookup = build_variable_lookup(content)
+    
     method_snippet_counts: dict[str, int] = {}
     
     for match in DOSTRING_CALL_PATTERN.finditer(content):
         lua_code, is_variable = extract_lua_from_match(match)
+        position = match.start()
+        
+        # Try to resolve variable references using position-aware lookup
+        if is_variable:
+            resolved = resolve_variable(lua_code, position, var_lookup)
+            if resolved is not None:
+                lua_code = resolved
+                is_variable = False
         
         if is_variable:
             continue
@@ -491,7 +572,6 @@ def extract_snippets_from_file(file_path: Path) -> Iterator[LuaSnippet]:
         if not lua_code.strip():
             continue
         
-        position = match.start()
         line_number = count_lines_before(content, position)
         test_class = find_containing_class(content, position)
         test_method = find_containing_method(content, position)

@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:1028
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1457
 -- @test: DebugModuleTUnitTests.SetHookAndGetHookWithCoroutineTarget
--- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: r
+-- @compat-notes: Test targets Lua 5.1; Uses injected variable: r
 local function hookfn() end
                 local co = coroutine.create(function()
                     debug.sethook(hookfn, 'r', 10)

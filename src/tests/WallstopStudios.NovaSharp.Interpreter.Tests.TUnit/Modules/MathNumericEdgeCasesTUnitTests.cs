@@ -23,9 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.maxinteger value in Lua 5.3+.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MaxintegerMatchesExpectedValue(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -39,9 +37,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.mininteger value in Lua 5.3+.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MinintegerMatchesExpectedValue(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -55,9 +51,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.type returns "integer" for math.maxinteger in Lua 5.3+.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MaxintegerIsInteger(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -70,9 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.type returns "integer" for math.mininteger in Lua 5.3+.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MinintegerIsInteger(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -85,8 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.maxinteger is nil in Lua 5.1 and 5.2 (not available until 5.3).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task MaxintegerNotAvailableInPreLua53(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -99,8 +90,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.mininteger is nil in Lua 5.1 and 5.2 (not available until 5.3).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task MinintegerNotAvailableInPreLua53(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -113,9 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests integer overflow wraps in two's complement (maxinteger + 1 = mininteger).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MaxintegerPlusOneWrapsToMininteger(LuaCompatibilityVersion version)
         {
             // Per Lua 5.3+ spec: integer overflow wraps in two's complement
@@ -132,9 +120,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests integer underflow wraps in two's complement (mininteger - 1 = maxinteger).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MinintegerMinusOneWrapsToMaxinteger(LuaCompatibilityVersion version)
         {
             // Per Lua 5.3+ spec: integer underflow wraps in two's complement
@@ -151,9 +137,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests bitwise OR with maxinteger preserves the value (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MaxintegerBitwiseOrReturnsSameValue(LuaCompatibilityVersion version)
         {
             // Now that LuaNumber stores integers natively, math.maxinteger is preserved exactly
@@ -168,9 +152,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests bitwise OR with mininteger works correctly (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MinintegerBitwiseOrWorksCorrectly(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -184,11 +166,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// This behavior is consistent across all Lua versions.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task FloatDivisionByZeroReturnsPositiveInfinity(
             LuaCompatibilityVersion version
         )
@@ -208,11 +186,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// This behavior is consistent across all Lua versions.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task FloatDivisionByNegativeZeroReturnsNegativeInfinity(
             LuaCompatibilityVersion version
         )
@@ -231,11 +205,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// This behavior is consistent across all Lua versions.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task NegativeFloatDivisionByZeroReturnsNegativeInfinity(
             LuaCompatibilityVersion version
         )
@@ -254,11 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// This behavior is consistent across all Lua versions.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task ZeroDividedByZeroReturnsNaN(LuaCompatibilityVersion version)
         {
             // Per IEEE 754 and Lua: 0/0 = NaN
@@ -273,9 +239,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// The // operator was introduced in Lua 5.3.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task IntegerDivisionByZeroThrowsError(LuaCompatibilityVersion version)
         {
             // Per Lua 5.3+ spec: integer floor division by zero throws "attempt to divide by zero"
@@ -292,9 +256,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// The // operator was introduced in Lua 5.3.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FloatIntegerDivisionByZeroReturnsInfinity(LuaCompatibilityVersion version)
         {
             // When operands are floats, // follows IEEE 754 (returns inf)
@@ -308,9 +270,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests integer modulo by zero throws error in Lua 5.3+.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task IntegerModuloByZeroThrowsError(LuaCompatibilityVersion version)
         {
             // Per Lua 5.3+ spec: integer modulo by zero throws "attempt to perform 'n%0'"
@@ -323,8 +283,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task IntegerModuloByZeroReturnsNaNInLua51And52(LuaCompatibilityVersion version)
         {
             // Per Lua 5.1/5.2 behavior: integer modulo by zero returns nan (promotes to float)
@@ -337,10 +296,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task IntegerModuloByZeroThrowsErrorInLua53Plus(LuaCompatibilityVersion version)
         {
             // Per Lua 5.3+ spec: integer modulo by zero throws "attempt to perform 'n%0'"
@@ -358,11 +314,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests float modulo by zero returns NaN in all Lua versions (IEEE 754 behavior).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task FloatModuloByZeroReturnsNaN(LuaCompatibilityVersion version)
         {
             // Float modulo by zero returns NaN in all Lua versions (IEEE 754)
@@ -376,11 +328,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests infinity + infinity = infinity (IEEE 754 behavior).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task InfinityPlusInfinityIsInfinity(LuaCompatibilityVersion version)
         {
             // math.huge is IEEE 754 positive infinity per Lua spec
@@ -397,11 +345,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests infinity - infinity = NaN (IEEE 754 behavior).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task InfinityMinusInfinityIsNaN(LuaCompatibilityVersion version)
         {
             // math.huge is IEEE 754 positive infinity per Lua spec
@@ -415,11 +359,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests infinity * 0 = NaN (IEEE 754 behavior).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task InfinityTimesZeroIsNaN(LuaCompatibilityVersion version)
         {
             // math.huge is IEEE 754 positive infinity per Lua spec
@@ -433,11 +373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests NaN != NaN (IEEE 754 behavior).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task NaNNotEqualToItself(LuaCompatibilityVersion version)
         {
             // Per IEEE 754: NaN ~= NaN
@@ -451,11 +387,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests NaN is not less than itself (IEEE 754 behavior).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task NaNNotLessThanItself(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -468,11 +400,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests NaN is not greater than itself (IEEE 754 behavior).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task NaNNotGreaterThanItself(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -485,9 +413,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.type returns "float" for NaN in Lua 5.3+.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MathTypeReturnsFloatForNaN(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -500,9 +426,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.type returns "float" for infinity in Lua 5.3+.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MathTypeReturnsFloatForInfinity(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -515,9 +439,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests bitwise negation of mininteger returns maxinteger (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task BitwiseNegationOfMinintegerWrapsToMaxinteger(
             LuaCompatibilityVersion version
         )
@@ -534,9 +456,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests negation of mininteger wraps to mininteger (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MinintegerNegationWrapsToMininteger(LuaCompatibilityVersion version)
         {
             // Per Lua 5.3+ spec: -mininteger wraps to mininteger (two's complement)
@@ -552,9 +472,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests maxinteger * 2 wraps in two's complement (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MaxintegerTimesTwoWraps(LuaCompatibilityVersion version)
         {
             // Per Lua 5.3+ spec: integer multiplication wraps in two's complement
@@ -570,9 +488,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests 1 &lt;&lt; 63 produces mininteger (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task IntegerLeftShiftOverflow(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -586,9 +502,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests shift by 64+ bits returns zero (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task IntegerLeftShiftBy64ReturnsZero(LuaCompatibilityVersion version)
         {
             // Shift by >= 64 bits returns 0
@@ -602,9 +516,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests right shift by 64+ bits returns zero (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task IntegerRightShiftBy64ReturnsZero(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -617,9 +529,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.type returns "float" for very large numbers (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task VeryLargeNumberIsFloat(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -632,11 +542,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests large integer literal is parsed correctly (all versions).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task LargeLiteralParsedCorrectly(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -649,11 +555,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests negative large integer literal is parsed correctly (all versions).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [AllLuaVersions]
         public async Task NegativeLargeLiteralParsedCorrectly(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -667,9 +569,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.maxinteger equals 9223372036854775807 (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MaxintegerEqualToLiteral(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -682,9 +582,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.mininteger equals -9223372036854775808 (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MinintegerEqualToLiteral(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -697,9 +595,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.tointeger returns maxinteger for maxinteger (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task TointegerOfMaxintegerReturnsMaxinteger(LuaCompatibilityVersion version)
         {
             // Now that LuaNumber stores integers natively, math.maxinteger is preserved exactly
@@ -714,9 +610,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.tointeger returns mininteger for mininteger (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task TointegerOfMinintegerReturnsMininteger(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -729,9 +623,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.tointeger returns nil for infinity (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task TointegerOfInfinityReturnsNil(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -744,9 +636,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.tointeger returns nil for NaN (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task TointegerOfNaNReturnsNil(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -759,9 +649,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.tointeger returns nil for overflow values (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task TointegerOfOverflowValueReturnsNil(LuaCompatibilityVersion version)
         {
             // Per Lua 5.3+ spec: math.tointeger returns nil for values outside integer range.
@@ -776,9 +664,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.ult compares maxinteger and mininteger correctly (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task UltWithMaxintegerAndMinintegerBehavior(LuaCompatibilityVersion version)
         {
             // math.maxinteger (0x7FFFFFFFFFFFFFFF) < math.mininteger (0x8000000000000000) as unsigned = true
@@ -792,9 +678,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.ult(0, -1) returns true (0 &lt; max unsigned) (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task UltWithZeroAndMinusOne(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -808,9 +692,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests math.ult(-1, 0) returns false (max unsigned is not &lt; 0) (Lua 5.3+).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task UltWithMinusOneAndZero(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);

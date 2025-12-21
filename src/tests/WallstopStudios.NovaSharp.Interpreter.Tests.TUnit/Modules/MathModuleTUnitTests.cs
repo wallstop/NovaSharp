@@ -103,7 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         /// <summary>
         /// Tests that math.ldexp correctly computes mantissa * 2^exp.
-        /// math.ldexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// math.ldexp is available in all Lua versions (5.1-5.5).
         /// </summary>
         [global::TUnit.Core.Test]
         [AllLuaVersions]
@@ -111,57 +111,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return math.ldexp(0.5, 3)");
 
             await Assert.That(result.Number).IsEqualTo(4d).Within(1e-12).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Tests that math.ldexp is available in Lua 5.1 and 5.2.
-        /// math.ldexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// Tests that math.frexp is available in all Lua versions (5.1-5.5).
         /// </summary>
         [global::TUnit.Core.Test]
-        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-        public async Task LdexpAvailableInLua51And52(Compatibility.LuaCompatibilityVersion version)
-        {
-            Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ldexp(0.5, 3)");
-
-            await Assert
-                .That(result.Number)
-                .IsEqualTo(4d)
-                .Within(1e-12)
-                .Because($"math.ldexp should be available in {version}")
-                .ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Tests that math.ldexp is NOT available in Lua 5.3+ (it was removed).
-        /// </summary>
-        [global::TUnit.Core.Test]
-        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
-        public async Task LdexpIsNilInLua53Plus(Compatibility.LuaCompatibilityVersion version)
-        {
-            Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.ldexp");
-
-            await Assert
-                .That(result.IsNil())
-                .IsTrue()
-                .Because(
-                    $"math.ldexp was removed in Lua 5.3+. Actual type: {result.Type}, value: {result}"
-                )
-                .ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Tests that math.frexp is available in Lua 5.1 and 5.2.
-        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
-        /// </summary>
-        [global::TUnit.Core.Test]
-        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-        public async Task FrexpAvailableInLua51And52(Compatibility.LuaCompatibilityVersion version)
+        [AllLuaVersions]
+        public async Task FrexpAvailableInAllVersions(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.frexp(8)");
@@ -178,25 +139,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .That(result.Tuple[1].Number)
                 .IsEqualTo(4d)
                 .Because($"math.frexp exponent should be 4 in {version}")
-                .ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Tests that math.frexp is NOT available in Lua 5.3+ (it was removed).
-        /// </summary>
-        [global::TUnit.Core.Test]
-        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
-        public async Task FrexpIsNilInLua53Plus(Compatibility.LuaCompatibilityVersion version)
-        {
-            Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return math.frexp");
-
-            await Assert
-                .That(result.IsNil())
-                .IsTrue()
-                .Because(
-                    $"math.frexp was removed in Lua 5.3+. Actual type: {result.Type}, value: {result}"
-                )
                 .ConfigureAwait(false);
         }
 
@@ -422,7 +364,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         /// <summary>
         /// Tests that math.frexp returns (0, 0) for input 0.
-        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// math.frexp is available in all Lua versions (5.1-5.5).
         /// </summary>
         [global::TUnit.Core.Test]
         [AllLuaVersions]
@@ -430,7 +372,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return math.frexp(0)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -440,7 +382,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         /// <summary>
         /// Tests that math.frexp returns (0, 0) for input -0.0.
-        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// math.frexp is available in all Lua versions (5.1-5.5).
         /// </summary>
         [global::TUnit.Core.Test]
         [AllLuaVersions]
@@ -448,7 +390,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return math.frexp(-0.0)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -458,7 +400,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         /// <summary>
         /// Tests that math.frexp returns negative mantissa for negative input.
-        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// math.frexp is available in all Lua versions (5.1-5.5).
         /// </summary>
         [global::TUnit.Core.Test]
         [AllLuaVersions]
@@ -466,7 +408,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return math.frexp(-8)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -483,7 +425,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         /// <summary>
         /// Tests that math.frexp handles subnormal (denormalized) numbers correctly.
-        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// math.frexp is available in all Lua versions (5.1-5.5).
         /// </summary>
         [global::TUnit.Core.Test]
         [AllLuaVersions]
@@ -493,7 +435,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             // Subnormal (denormalized) numbers have exponent bits = 0
             // The smallest positive subnormal is approximately 4.94e-324
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
+            Script script = CreateScript(version);
             double subnormal = double.Epsilon; // Smallest positive subnormal
             script.Globals["subnormal"] = subnormal;
             DynValue result = script.DoString("return math.frexp(subnormal)");
@@ -514,7 +456,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         /// <summary>
         /// Tests that math.frexp returns mantissa in [0.5, 1) for positive numbers.
-        /// math.frexp was deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// math.frexp is available in all Lua versions (5.1-5.5).
         /// </summary>
         [global::TUnit.Core.Test]
         [AllLuaVersions]
@@ -522,7 +464,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return math.frexp(16)");
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
@@ -540,13 +482,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         /// <summary>
         /// Tests that frexp and ldexp are inverse operations.
-        /// Both were deprecated in Lua 5.2 and removed in Lua 5.3.
+        /// Both functions are available in all Lua versions (5.1-5.5).
         /// </summary>
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task FrexpAndLdexpRoundTrip(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua52);
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 @"
                 local m, e = math.frexp(123.456)

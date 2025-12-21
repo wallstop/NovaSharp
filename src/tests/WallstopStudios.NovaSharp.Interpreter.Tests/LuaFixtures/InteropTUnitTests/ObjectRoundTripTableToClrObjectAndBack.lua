@@ -1,6 +1,6 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Interop\InteropTUnitTests.cs:80
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Interop/InteropTUnitTests.cs:86
 -- @test: InteropTUnitTests.ObjectRoundTripTableToClrObjectAndBack
 return echo(payload)

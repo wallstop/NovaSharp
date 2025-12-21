@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ScriptExecution\ScriptLoadTUnitTests.cs:255
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ScriptExecution/ScriptLoadTUnitTests.cs:347
 -- @test: ScriptLoadTUnitTests.CallInvokesMetamethodWhenValueIsCallable
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Test targets Lua 5.1
 local t = {}
                 setmetatable(t, { __call = function(_, value) return value * 2 end })
                 return t

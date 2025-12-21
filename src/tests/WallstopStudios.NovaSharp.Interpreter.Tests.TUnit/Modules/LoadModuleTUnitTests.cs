@@ -66,6 +66,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RequireErrorListsSearchedPathsWhenLuaCompatibleErrorsEnabled(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Test that when LuaCompatibleErrors is enabled and a module is not found,
+            // the error message lists all searched paths matching reference Lua behavior
+            Script script = CreateScriptWithVersion(version);
+            script.Options.LuaCompatibleErrors = true;
+            script.Options.ScriptLoader = new PathListingScriptLoader();
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return require('nonexistent_module')")
+            );
+
+            // Verify the error message format matches reference Lua:
+            // module 'foo' not found:
+            //     no field package.preload['foo']
+            //     no file './foo.lua'
+            //     ...
+            await Assert.That(exception.Message).Contains("module 'nonexistent_module' not found:");
+            await Assert
+                .That(exception.Message)
+                .Contains("no field package.preload['nonexistent_module']");
+            await Assert.That(exception.Message).Contains("no file './nonexistent_module.lua'");
+            await Assert
+                .That(exception.Message)
+                .Contains("no file '/usr/share/lua/nonexistent_module.lua'");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RequireErrorShowsSimpleMessageWhenLuaCompatibleErrorsDisabled(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Test that when LuaCompatibleErrors is disabled (default), the error message
+            // is simple for backward compatibility
+            Script script = CreateScriptWithVersion(version);
+            script.Options.LuaCompatibleErrors = false;
+            script.Options.ScriptLoader = new PathListingScriptLoader();
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return require('nonexistent_module')")
+            );
+
+            // Verify the error message is simple (no search paths listed)
+            await Assert.That(exception.Message).IsEqualTo("module 'nonexistent_module' not found");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task LoadReturnsTupleWithErrorWhenReaderYieldsNonString(
             LuaCompatibilityVersion version
         )
@@ -580,6 +639,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             public string ResolveModuleName(string modname, Table globalContext)
             {
                 return modname;
+            }
+        }
+
+        /// <summary>
+        /// A script loader that extends ScriptLoaderBase to test path listing in error messages.
+        /// All files are reported as non-existent to trigger the "module not found" error.
+        /// </summary>
+        private sealed class PathListingScriptLoader : ScriptLoaderBase
+        {
+            public PathListingScriptLoader()
+            {
+                ModulePaths = new[]
+                {
+                    "./?.lua",
+                    "/usr/share/lua/?.lua",
+                    "/usr/local/lib/lua/?.lua",
+                };
+            }
+
+            public override object LoadFile(string file, Table globalContext)
+            {
+                throw new InvalidOperationException(
+                    "LoadFile should not be invoked for non-existent modules."
+                );
+            }
+
+            public override bool ScriptFileExists(string name)
+            {
+                // All files are reported as non-existent to trigger the error
+                return false;
             }
         }
 

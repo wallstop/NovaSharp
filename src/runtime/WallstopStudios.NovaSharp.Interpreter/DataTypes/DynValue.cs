@@ -1152,7 +1152,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     // JoinTupleStrings already uses notNested: false so recursive calls are safe.
                     return ZString.Concat("\"", String, "\"");
                 case DataType.Function:
-                    return ZString.Format("(Function {0:X8})", Function.EntryPointByteCodeLocation);
+                    return ZString.Format(
+                        "(Function 0x{0:x})",
+                        Function.EntryPointByteCodeLocation
+                    );
                 case DataType.ClrFunction:
                     return "(Function CLR)";
                 case DataType.Table:
@@ -1167,7 +1170,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.UserData:
                     return "(UserData)";
                 case DataType.Thread:
-                    return ZString.Format("(Coroutine {0:X8})", Coroutine.ReferenceId);
+                    return ZString.Format("(Coroutine 0x{0:x})", Coroutine.ReferenceId);
                 default:
                     return "(???)";
             }

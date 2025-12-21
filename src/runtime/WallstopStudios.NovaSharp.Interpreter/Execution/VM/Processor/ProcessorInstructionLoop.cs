@@ -2143,7 +2143,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     if (h == null || h.IsNil())
                     {
-                        throw ScriptRuntimeException.IndexType(obj);
+                        string varDesc = _script.Options.LuaCompatibleErrors ? i.Name : null;
+                        throw ScriptRuntimeException.IndexType(obj, varDesc);
                     }
                 }
 
@@ -2248,7 +2249,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     if (h == null || h.IsNil())
                     {
-                        throw ScriptRuntimeException.IndexType(obj);
+                        string varDesc = _script.Options.LuaCompatibleErrors ? i.Name : null;
+                        throw ScriptRuntimeException.IndexType(obj, varDesc);
                     }
                 }
 

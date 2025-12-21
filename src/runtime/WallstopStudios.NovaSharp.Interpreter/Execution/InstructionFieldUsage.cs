@@ -102,7 +102,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     return InstructionFieldUsage.Symbol
                         | InstructionFieldUsage.Value
                         | InstructionFieldUsage.NumVal
-                        | InstructionFieldUsage.NumVal2;
+                        | InstructionFieldUsage.NumVal2
+                        | InstructionFieldUsage.Name;
                 case OpCode.StoreLcl:
                 case OpCode.StoreUpv:
                     return InstructionFieldUsage.Symbol
@@ -112,7 +113,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 case OpCode.IndexL:
                 case OpCode.IndexN:
                 case OpCode.Literal:
-                    return InstructionFieldUsage.Value;
+                    return InstructionFieldUsage.Value | InstructionFieldUsage.Name;
                 case OpCode.Args:
                     return InstructionFieldUsage.SymbolList;
                 case OpCode.BeginFn:

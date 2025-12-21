@@ -1,7 +1,6 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
--- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Interop\Descriptors\EventMemberDescriptorTUnitTests.cs:432
+-- @expects-error: true
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Interop/Descriptors/EventMemberDescriptorTUnitTests.cs:461
 -- @test: EventMemberDescriptorTUnitTests.DispatchEventInvokesZeroArgumentHandlers
--- @compat-notes: Lua 5.3+: bitwise operators
 hits = 0

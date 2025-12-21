@@ -502,15 +502,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task GetUserValueReturnsNilForNonUserData(LuaCompatibilityVersion version)
+        public async Task GetUserValueReturnsNilForNonUserDataPre54(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
 
+            // In Lua 5.1-5.3, getuservalue returns just nil for non-userdata
             DynValue result = script.DoString("return debug.getuservalue('string')");
 
             await Assert.That(result.IsNil()).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUserValueReturnsNilFalseForNonUserData54Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            // In Lua 5.4+, getuservalue returns (nil, false) for non-userdata
+            DynValue result = script.DoString("return debug.getuservalue('string')");
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsEqualTo(2);
+            await Assert.That(tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple[1].CastToBool()).IsFalse();
         }
 
         [global::TUnit.Core.Test]
@@ -561,6 +578,186 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
             await Assert.That(tuple[0].CastToBool()).IsFalse();
             await Assert.That(tuple[1].String).Contains("bad argument #2");
+        }
+
+        // ========================
+        // Lua 5.4+ Multi-User-Value Tests
+        // ========================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUserValueLua54ReturnsTwoValuesForUserData(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            UserData.RegisterType<DmTestUserDataClass>();
+            DmTestUserDataClass obj = new();
+            script.Globals["ud"] = UserData.Create(obj);
+
+            // In Lua 5.4+, getuservalue returns (value, hasValue) tuple
+            DynValue result = script.DoString(
+                @"
+                local val, hasVal = debug.getuservalue(ud, 1)
+                return val, hasVal
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsEqualTo(2);
+            // Default user value is nil
+            await Assert.That(tuple[0].IsNil()).IsTrue();
+            // But the slot exists (hasValue = true)
+            await Assert.That(tuple[1].CastToBool()).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUserValueLua54ReturnsFalseForInvalidSlot(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            UserData.RegisterType<DmTestUserDataClass>();
+            DmTestUserDataClass obj = new();
+            script.Globals["ud"] = UserData.Create(obj);
+
+            // NovaSharp only supports slot 1; slot 2 should return nil, false
+            DynValue result = script.DoString(
+                @"
+                local val, hasVal = debug.getuservalue(ud, 2)
+                return val, hasVal
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsEqualTo(2);
+            await Assert.That(tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple[1].CastToBool()).IsFalse();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUserValueLua54ReturnsFalseForNonUserData(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            // In Lua 5.4+, non-userdata returns (nil, false)
+            DynValue result = script.DoString(
+                @"
+                local val, hasVal = debug.getuservalue('not userdata', 1)
+                return val, hasVal
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple.Length).IsEqualTo(2);
+            await Assert.That(tuple[0].IsNil()).IsTrue();
+            await Assert.That(tuple[1].CastToBool()).IsFalse();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetUserValueLua54WithNParameterSlot1Works(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            UserData.RegisterType<DmTestUserDataClass>();
+            DmTestUserDataClass obj = new();
+            script.Globals["ud"] = UserData.Create(obj);
+
+            DynValue result = script.DoString(
+                @"
+                local payload = { test = 'value' }
+                local ret = debug.setuservalue(ud, payload, 1)
+                local val, hasVal = debug.getuservalue(ud, 1)
+                return ret == ud, val and val.test, hasVal
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].CastToBool()).IsTrue();
+            await Assert.That(tuple[1].String).IsEqualTo("value");
+            await Assert.That(tuple[2].CastToBool()).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetUserValueLua54WithInvalidSlotReturnsNil(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            UserData.RegisterType<DmTestUserDataClass>();
+            DmTestUserDataClass obj = new();
+            script.Globals["ud"] = UserData.Create(obj);
+
+            // NovaSharp only supports slot 1; slot 2 should return nil (fail)
+            DynValue result = script.DoString(
+                @"
+                local ret = debug.setuservalue(ud, { test = 'value' }, 2)
+                return ret
+                "
+            );
+
+            await Assert.That(result.IsNil()).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUserValueLua54DefaultNParameterIsOne(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            UserData.RegisterType<DmTestUserDataClass>();
+            DmTestUserDataClass obj = new();
+            script.Globals["ud"] = UserData.Create(obj);
+
+            // Set a value, then get it without specifying n (should default to 1)
+            DynValue result = script.DoString(
+                @"
+                debug.setuservalue(ud, { label = 'default' })
+                local val, hasVal = debug.getuservalue(ud)
+                return val and val.label, hasVal
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert.That(tuple[0].String).IsEqualTo("default");
+            await Assert.That(tuple[1].CastToBool()).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task GetUserValueLua53ReturnsOnlyOneValue(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            UserData.RegisterType<DmTestUserDataClass>();
+            DmTestUserDataClass obj = new();
+            script.Globals["ud"] = UserData.Create(obj);
+
+            // In Lua 5.1-5.3, getuservalue returns only one value
+            DynValue result = script.DoString(
+                @"
+                debug.setuservalue(ud, { value = 42 })
+                local results = {debug.getuservalue(ud)}
+                return #results, results[1] and results[1].value, results[2]
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            // Should return only 1 value in Lua 5.3 and earlier
+            await Assert.That(tuple[0].Number).IsEqualTo(1);
+            await Assert.That(tuple[1].Number).IsEqualTo(42);
+            await Assert.That(tuple[2].IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
@@ -792,6 +989,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // using ReplInterpreter within a running script context triggers a VM state issue
         // (ArgumentOutOfRangeException in ProcessingLoop). This is a pre-existing limitation
         // documented in PLAN.md. The DebugInput check and null-exits-loop paths are covered above.
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DebugDebugUsesLuaDebugPrompt(LuaCompatibilityVersion version)
+        {
+            // Verify debug.debug() uses "lua_debug> " as the prompt (per reference Lua behavior)
+            string capturedPrompt = null;
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                DebugInput = prompt =>
+                {
+                    capturedPrompt = prompt;
+                    return null; // Exit the debug loop immediately
+                },
+                DebugPrint = _ => { },
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+
+            script.DoString("debug.debug()");
+
+            await Assert.That(capturedPrompt).IsEqualTo("lua_debug> ").ConfigureAwait(false);
+        }
 
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]

@@ -1357,7 +1357,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task VarArgsSum(LuaCompatibilityVersion version)
         {
             string script =
@@ -1384,7 +1384,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task VarArgsSum2(LuaCompatibilityVersion version)
         {
             string script =
@@ -1602,7 +1602,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task VarArgsSumMainChunk(LuaCompatibilityVersion version)
         {
             string script =

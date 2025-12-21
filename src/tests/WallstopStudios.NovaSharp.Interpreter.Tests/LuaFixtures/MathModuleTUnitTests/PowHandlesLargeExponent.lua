@@ -1,7 +1,7 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:40
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:52
 -- @test: MathModuleTUnitTests.PowHandlesLargeExponent
--- Note: math.pow was deprecated in Lua 5.3 and removed in Lua 5.5. Use x^y instead.
+-- @compat-notes: Test targets Lua 5.1
 return math.pow(10, 6)

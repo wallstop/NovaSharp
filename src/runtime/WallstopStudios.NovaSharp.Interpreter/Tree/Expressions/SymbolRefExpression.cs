@@ -93,6 +93,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         }
 
         /// <summary>
+        /// Gets the underlying symbol reference for this expression.
+        /// </summary>
+        /// <returns>The <see cref="SymbolRef" /> associated with this expression, or null if not available.</returns>
+        internal SymbolRef GetSymbolRef()
+        {
+            return _ref;
+        }
+
+        /// <summary>
         /// Resolves the symbol reference when compiling a dynamic expression.
         /// </summary>
         /// <param name="context">Execution context used to look up the symbol.</param>

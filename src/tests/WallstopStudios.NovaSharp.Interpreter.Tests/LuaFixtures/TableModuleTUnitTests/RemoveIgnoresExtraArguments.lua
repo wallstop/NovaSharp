@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1, 5.5
 -- @novasharp-only: false
--- @expects-error: true
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\TableModuleTUnitTests.cs:188
+-- @expects-error: false
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:237
 -- @test: TableModuleTUnitTests.RemoveIgnoresExtraArguments
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Test targets Lua 5.1
 local values = { 1, 2, 3, 4, 5 }
                 local removed = table.remove(values, 1, 'extra', 'args', 999)
                 return removed, #values, values[1]
