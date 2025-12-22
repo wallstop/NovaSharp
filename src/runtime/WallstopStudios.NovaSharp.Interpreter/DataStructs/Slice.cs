@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// A struct-based enumerator for <see cref="Slice{T}"/> to avoid heap allocation during foreach iteration.
@@ -104,7 +105,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <returns></returns>
         public T this[int index]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _sourceList[CalcRealIndex(index)]; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { _sourceList[CalcRealIndex(index)] = value; }
         }
 
@@ -139,6 +142,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <summary>
         /// Calculates the real index in the underlying collection
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int CalcRealIndex(int index)
         {
             if (index < 0 || index >= _length)

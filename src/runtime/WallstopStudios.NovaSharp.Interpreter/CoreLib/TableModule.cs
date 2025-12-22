@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -17,6 +18,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule(Namespace = "table")]
     public static class TableModule
     {
+        /// <summary>
+        /// Struct-based comparer for table.sort to avoid closure allocations (Initiative 12 Phase 4).
+        /// </summary>
+        private readonly struct LuaSortComparer : IComparer<DynValue>
+        {
+            private readonly ScriptExecutionContext _ctx;
+            private readonly DynValue _lt;
+
+            public LuaSortComparer(ScriptExecutionContext ctx, DynValue lt)
+            {
+                _ctx = ctx;
+                _lt = lt;
+            }
+
+            public int Compare(DynValue a, DynValue b) => SortComparer(_ctx, a, b, _lt);
+        }
+
         /// <summary>
         /// Implements Lua `table.unpack`, returning a tuple of array elements between the provided indices (§6.6).
         /// This function was added in Lua 5.2, replacing the global <c>unpack</c> function from Lua 5.1.
@@ -100,7 +118,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             double maxKey = 0;
 
-            foreach (TablePair pair in table.Pairs)
+            foreach (TablePair pair in table.GetPairsEnumerator())
             {
                 if (pair.Key.Type == DataType.Number)
                 {
@@ -173,7 +191,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 try
                 {
-                    values.Sort((a, b) => SortComparer(executionContext, a, b, lt));
+                    // Use struct comparer with boxing-free pdqsort (Initiative 16)
+                    values.Sort<DynValue, LuaSortComparer>(
+                        new LuaSortComparer(executionContext, lt)
+                    );
                 }
                 catch (InvalidOperationException ex)
                 {
@@ -201,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             if (lt == null || lt.IsNil())
             {
-                lt = executionContext.GetBinaryMetamethod(a, b, "__lt");
+                lt = executionContext.GetBinaryMetamethod(a, b, Metamethods.Lt);
 
                 if (lt == null || lt.IsNil())
                 {
@@ -234,6 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int LuaComparerToClrComparer(DynValue dynValue1, DynValue dynValue2)
         {
             bool v1 = dynValue1.CastToBool();
@@ -517,7 +539,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static int GetTableLength(ScriptExecutionContext executionContext, DynValue vlist)
         {
-            DynValue len = executionContext.GetMetamethod(vlist, "__len");
+            DynValue len = executionContext.GetMetamethod(vlist, Metamethods.Len);
 
             if (len != null)
             {

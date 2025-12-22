@@ -20,9 +20,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         public SymbolRefExpression(Token t, ScriptLoadingContext lcontext)
             : base(lcontext)
         {
-            _varName = t.Text;
+            _varName = t.text;
 
-            if (t.Type == TokenType.VarArgs)
+            if (t.type == TokenType.VarArgs)
             {
                 _ref = lcontext.Scope.Find(WellKnownSymbols.VARARGS);
 

@@ -18,7 +18,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         [global::TUnit.Core.Test]
         public async Task LocalAssignmentAcceptsConstAndCloseAttributes()
         {
-            ScriptLoadingContext context = CreateContext("local resource <const><close> = 1");
+            Script script = new(LuaCompatibilityVersion.Lua54);
+            ScriptLoadingContext context = CreateContext(
+                "local resource <const><close> = 1",
+                script
+            );
             Token localToken = context.Lexer.Current;
             context.Lexer.Next();
 
@@ -35,8 +39,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         [global::TUnit.Core.Test]
         public async Task LocalAssignmentRejectsDuplicateAttributes()
         {
+            Script script = new(LuaCompatibilityVersion.Lua54);
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
-                ParseLocalAssignment("local duplicate <const><const> = 1")
+                ParseLocalAssignment("local duplicate <const><const> = 1", script)
             )!;
 
             await Assert

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Extension methods used in the whole project.
@@ -16,17 +17,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <param name="dictionary">The dictionary.</param>
         /// <param name="key">The key.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static TValue GetOrDefault<TKey, TValue>(
             this Dictionary<TKey, TValue> dictionary,
             TKey key
         )
         {
-            if (dictionary.TryGetValue(key, out TValue v))
-            {
-                return v;
-            }
-
-            return default(TValue);
+            return dictionary.TryGetValue(key, out TValue v) ? v : default(TValue);
         }
 
         /// <summary>

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -753,6 +754,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return previousIndex + width;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int NormalizeBoundary(string value, int position)
         {
             int length = value.Length;
@@ -776,6 +778,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return normalized - 1;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsRuneBoundary(string value, int boundary)
         {
             if (boundary <= 0 || boundary >= value.Length)

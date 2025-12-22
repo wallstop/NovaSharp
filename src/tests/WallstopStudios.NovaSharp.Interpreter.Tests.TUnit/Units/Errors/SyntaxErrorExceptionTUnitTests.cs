@@ -66,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Errors
             )!;
 
             await Assert.That(nested).IsNotSameReferenceAs(exception).ConfigureAwait(false);
-            await Assert.That(nested.Token).IsSameReferenceAs(token).ConfigureAwait(false);
+            await Assert.That(nested.Token).IsEqualTo(token).ConfigureAwait(false);
             await Assert
                 .That(nested.InnerException)
                 .IsSameReferenceAs(exception)
@@ -78,11 +78,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Errors
         {
             Script script = CreateScriptWithNamedSource("decorated", out int sourceId);
             Token token = CreateToken(sourceId);
-            SyntaxErrorException exception = new(token, "unexpected '{0}'", token.Text);
+            SyntaxErrorException exception = new(token, "unexpected '{0}'", token.text);
 
             exception.DecorateMessage(script);
 
-            await Assert.That(exception.Token).IsSameReferenceAs(token).ConfigureAwait(false);
+            await Assert.That(exception.Token).IsEqualTo(token).ConfigureAwait(false);
             await Assert
                 .That(exception.DecoratedMessage)
                 .StartsWith("decorated:")
@@ -182,7 +182,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Errors
 
         private static Token CreateToken(int sourceId = 0)
         {
-            return new Token(TokenType.Name, sourceId, 1, 1, 1, 3, 1, 0) { Text = "value" };
+            return new Token(TokenType.Name, sourceId, 1, 1, 1, 3, 1, 0, "value");
         }
     }
 }

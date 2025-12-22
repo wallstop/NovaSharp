@@ -35,7 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             }
 
             // eat away all superfluous ';'s
-            while (lcontext.Lexer.Current.Type == TokenType.SemiColon)
+            while (lcontext.Lexer.Current.type == TokenType.SemiColon)
             {
                 lcontext.Lexer.Next();
             }

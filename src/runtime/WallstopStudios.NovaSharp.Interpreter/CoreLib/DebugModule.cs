@@ -78,7 +78,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 ReadOnlySpan<char> trimmedInput = input.AsSpan().TrimWhitespace();
 
-                if (trimmedInput.Equals("return".AsSpan(), StringComparison.OrdinalIgnoreCase))
+                if (
+                    trimmedInput.Equals(
+                        LuaKeywords.Return.AsSpan(),
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
                 {
                     break;
                 }
@@ -1064,7 +1069,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            string name = frame.Name ?? "function";
+            string name = frame.Name ?? LuaKeywords.Function;
             return DynValue.NewString($"function: {name}");
         }
 

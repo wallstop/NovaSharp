@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using IO;
     using Platforms;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -44,7 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue index = DynValue.NewCallback(
                 new CallbackFunction(__index_callback, "__index_callback")
             );
-            meta.Set("__index", index);
+            meta.Set(Metamethods.Index, index);
             ioTable.MetaTable = meta;
 
             SetStandardFile(

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     using System;
     using System.Linq;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -497,7 +498,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
         /// <returns></returns>
         public override DynValue MetaIndex(Script script, object obj, string metaname)
         {
-            if (metaname == "__concat" && IsFlags)
+            if (metaname == Metamethods.Concat && IsFlags)
             {
                 return DynValue.NewCallback(CallbackOr);
             }

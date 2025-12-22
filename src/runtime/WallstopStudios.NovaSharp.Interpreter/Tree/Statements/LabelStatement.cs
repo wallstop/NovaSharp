@@ -56,7 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             CheckTokenType(lcontext, TokenType.DoubleColon);
 
             SourceRef = NameToken.GetSourceRef();
-            Label = NameToken.Text;
+            Label = NameToken.text;
 
             lcontext.Scope.DefineLabel(this);
         }

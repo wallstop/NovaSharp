@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
 {
     using System;
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -99,6 +100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
         /// Computes the Lua-style length for the range (End - Start + 1).
         /// </summary>
         /// <returns>Length represented by this range.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Length()
         {
             return (End - Start) + 1;

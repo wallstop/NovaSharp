@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -48,9 +49,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         public const long MININTEGER = long.MinValue;
 
+        // Cached static delegates to avoid allocations in hot paths (Initiative 12 Phase 4)
+        private static readonly Func<double, double, double> Atan2Op = Math.Atan2;
+        private static readonly Func<double, double, double> IEEERemainderOp = Math.IEEERemainder;
+        private static readonly Func<double, double, double> LdexpOp = (d1, d2) =>
+            d1 * Math.Pow(2, d2);
+        private static readonly Func<double, double, double> MaxOp = Math.Max;
+        private static readonly Func<double, double, double> MinOp = Math.Min;
+        private static readonly Func<double, double, double> PowOp = Math.Pow;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetIntegerFromDouble(double number, out long value) =>
             LuaIntegerHelper.TryGetInteger(number, out value);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetIntegerFromDynValue(DynValue value, out long integer)
         {
             return LuaIntegerHelper.TryGetInteger(value, out integer);
@@ -372,7 +384,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "atan2", (d1, d2) => Math.Atan2(d1, d2));
+            return Exec2(args, "atan2", Atan2Op);
         }
 
         /// <summary>
@@ -563,7 +575,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "fmod", (d1, d2) => Math.IEEERemainder(d1, d2));
+            return Exec2(args, "fmod", IEEERemainderOp);
         }
 
         /// <summary>
@@ -584,7 +596,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "mod", (d1, d2) => Math.IEEERemainder(d1, d2));
+            return Exec2(args, "mod", IEEERemainderOp);
         }
 
         /// <summary>
@@ -681,7 +693,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "ldexp", (d1, d2) => d1 * Math.Pow(2, d2));
+            return Exec2(args, "ldexp", LdexpOp);
         }
 
         /// <summary>
@@ -761,7 +773,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Execaccum(args, "max", (d1, d2) => Math.Max(d1, d2));
+            return Execaccum(args, "max", MaxOp);
         }
 
         /// <summary>
@@ -777,7 +789,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Execaccum(args, "min", (d1, d2) => Math.Min(d1, d2));
+            return Execaccum(args, "min", MinOp);
         }
 
         /// <summary>
@@ -852,7 +864,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             // Exponentiation always returns float per Lua spec (§3.4.1)
-            return Exec2Float(args, "pow", (d1, d2) => Math.Pow(d1, d2));
+            return Exec2Float(args, "pow", PowOp);
         }
 
         /// <summary>

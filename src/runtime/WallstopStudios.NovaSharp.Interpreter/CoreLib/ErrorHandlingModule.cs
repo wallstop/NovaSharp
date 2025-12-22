@@ -257,7 +257,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgument(
                     1,
                     "xpcall",
-                    "function",
+                    LuaKeywords.Function,
                     "no value",
                     false
                 );
@@ -275,7 +275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgument(
                     1,
                     "xpcall",
-                    "function",
+                    LuaKeywords.Function,
                     handlerArg.Type.ToLuaTypeString(),
                     false
                 );

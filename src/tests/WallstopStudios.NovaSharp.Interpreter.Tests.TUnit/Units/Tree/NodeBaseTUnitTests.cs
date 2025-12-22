@@ -20,9 +20,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
 
             Token token = TestNode.CallCheckTokenType(context, TokenType.Name);
 
-            await Assert.That(token.Text).IsEqualTo("identifier").ConfigureAwait(false);
+            await Assert.That(token.text).IsEqualTo("identifier").ConfigureAwait(false);
             await Assert
-                .That(context.Lexer.Current.Type)
+                .That(context.Lexer.Current.type)
                 .IsEqualTo(TokenType.Eof)
                 .ConfigureAwait(false);
         }
@@ -52,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
 
             Token token = TestNode.CallCheckTokenType(context, TokenType.True, TokenType.False);
 
-            await Assert.That(token.Type).IsEqualTo(TokenType.True).ConfigureAwait(false);
+            await Assert.That(token.type).IsEqualTo(TokenType.True).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -67,18 +67,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
                 TokenType.ElseIf
             );
 
-            await Assert.That(token.Type).IsEqualTo(TokenType.ElseIf).ConfigureAwait(false);
+            await Assert.That(token.type).IsEqualTo(TokenType.ElseIf).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         public async Task CheckTokenTypeNotNextDoesNotAdvanceLexer()
         {
             ScriptLoadingContext context = CreateContext("name");
-            string original = context.Lexer.Current.Text;
+            string original = context.Lexer.Current.text;
 
             TestNode.CallCheckTokenTypeNotNext(context, TokenType.Name);
 
-            await Assert.That(context.Lexer.Current.Text).IsEqualTo(original).ConfigureAwait(false);
+            await Assert.That(context.Lexer.Current.text).IsEqualTo(original).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -151,11 +151,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
             Token closing = TestNode.CallCheckMatch(context, opening, TokenType.BrkCloseRound, ")");
 
             await Assert
-                .That(closing.Type)
+                .That(closing.type)
                 .IsEqualTo(TokenType.BrkCloseRound)
                 .ConfigureAwait(false);
             await Assert
-                .That(context.Lexer.Current.Type)
+                .That(context.Lexer.Current.type)
                 .IsEqualTo(TokenType.Eof)
                 .ConfigureAwait(false);
         }

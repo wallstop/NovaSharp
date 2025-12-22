@@ -867,7 +867,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
             {
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, "__call");
+                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
 
                 if (metafunction != null)
                 {

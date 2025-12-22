@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -49,6 +50,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             0x7FFFFFFF,
             0xFFFFFFFF,
         };
+
+        // Cached static delegates to avoid allocations in hot paths (Initiative 12 Phase 4)
+        private static readonly Func<uint, uint, uint> BitAndOp = (x, y) => x & y;
+        private static readonly Func<uint, uint, uint> BitOrOp = (x, y) => x | y;
+        private static readonly Func<uint, uint, uint> BitXorOp = (x, y) => x ^ y;
 
         /// <summary>
         /// The modulus used for 32-bit unsigned integer wrapping (2^32).
@@ -105,6 +111,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// returns values in (-y/2, y/2] and can produce negative results that cast to 0).
         /// This overload is for internal use where version validation has already been performed.
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static uint ToUInt32(DynValue v)
         {
             // Use LuaNumber for proper value extraction
@@ -168,6 +175,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Converts a Lua number to a signed 32-bit integer using Lua's conversion semantics.
         /// This overload is for internal use where version validation has already been performed.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int ToInt32(DynValue v)
         {
             // Use LuaNumber for proper value extraction
@@ -190,6 +198,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return (int)d;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static uint NBitMask(int bits)
         {
             if (bits <= 0)
@@ -522,7 +531,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return DynValue.NewNumber(
-                Bitwise(executionContext.Script.CompatibilityVersion, "band", args, (x, y) => x & y)
+                Bitwise(executionContext.Script.CompatibilityVersion, "band", args, BitAndOp)
             );
         }
 
@@ -545,13 +554,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return DynValue.FromBoolean(
-                0
-                    != Bitwise(
-                        executionContext.Script.CompatibilityVersion,
-                        "btest",
-                        args,
-                        (x, y) => x & y
-                    )
+                0 != Bitwise(executionContext.Script.CompatibilityVersion, "btest", args, BitAndOp)
             );
         }
 
@@ -571,7 +574,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return DynValue.NewNumber(
-                Bitwise(executionContext.Script.CompatibilityVersion, "bor", args, (x, y) => x | y)
+                Bitwise(executionContext.Script.CompatibilityVersion, "bor", args, BitOrOp)
             );
         }
 
@@ -612,7 +615,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             return DynValue.NewNumber(
-                Bitwise(executionContext.Script.CompatibilityVersion, "bxor", args, (x, y) => x ^ y)
+                Bitwise(executionContext.Script.CompatibilityVersion, "bxor", args, BitXorOp)
             );
         }
 

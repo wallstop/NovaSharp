@@ -53,7 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 
             SourceRef = GotoToken.GetSourceRef(name);
 
-            Label = name.Text;
+            Label = name.text;
 
             lcontext.Scope.RegisterGoto(this);
         }

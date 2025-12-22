@@ -1635,7 +1635,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
         private static Token CreateToken(TokenType type, string text)
         {
-            return new Token(type, 0, 0, 0, 0, 0, 0, 0) { Text = text };
+            return new Token(type, 0, 0, 0, 0, 0, 0, 0, text);
         }
 
         private sealed class StubExpression : Expression

@@ -37,13 +37,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             //	for namelist in explist do block end |
 
             List<string> names = new();
-            names.Add(firstNameToken.Text);
+            names.Add(firstNameToken.text);
 
-            while (lcontext.Lexer.Current.Type == TokenType.Comma)
+            while (lcontext.Lexer.Current.type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 Token name = CheckTokenType(lcontext, TokenType.Name);
-                names.Add(name.Text);
+                names.Add(name.text);
             }
 
             CheckTokenType(lcontext, TokenType.In);

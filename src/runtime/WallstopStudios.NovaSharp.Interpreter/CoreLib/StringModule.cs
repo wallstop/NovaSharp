@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
     using System;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -38,7 +39,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             Script script = globalTable.OwnerScript;
             Table stringMetatable = new(script);
-            stringMetatable.Set("__index", DynValue.NewTable(stringTable));
+            stringMetatable.Set(Metamethods.Index, DynValue.NewTable(stringTable));
 
             // Lua 5.4+: String-to-number coercion was removed from the arithmetic operators themselves.
             // Instead, the string metatable provides arithmetic metamethods that perform the coercion.
@@ -64,45 +65,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             // __add: a + b
             stringMetatable.Set(
-                "__add",
+                Metamethods.Add,
                 DynValue.NewCallback(
-                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__add", LuaNumber.Add)
+                    (ctx, args) => StringBinaryArithmetic(ctx, args, Metamethods.Add, LuaNumber.Add)
                 )
             );
 
             // __sub: a - b
             stringMetatable.Set(
-                "__sub",
+                Metamethods.Sub,
                 DynValue.NewCallback(
-                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__sub", LuaNumber.Subtract)
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.Sub, LuaNumber.Subtract)
                 )
             );
 
             // __mul: a * b
             stringMetatable.Set(
-                "__mul",
+                Metamethods.Mul,
                 DynValue.NewCallback(
-                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__mul", LuaNumber.Multiply)
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.Mul, LuaNumber.Multiply)
                 )
             );
 
             // __div: a / b
             stringMetatable.Set(
-                "__div",
+                Metamethods.Div,
                 DynValue.NewCallback(
-                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__div", LuaNumber.Divide)
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.Div, LuaNumber.Divide)
                 )
             );
 
             // __mod: a % b
             stringMetatable.Set(
-                "__mod",
+                Metamethods.Mod,
                 DynValue.NewCallback(
                     (ctx, args) =>
                         StringBinaryArithmetic(
                             ctx,
                             args,
-                            "__mod",
+                            Metamethods.Mod,
                             (a, b) => LuaNumber.Modulo(a, b, LuaCompatibilityVersion.Lua54)
                         )
                 )
@@ -110,24 +114,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             // __pow: a ^ b
             stringMetatable.Set(
-                "__pow",
+                Metamethods.Pow,
                 DynValue.NewCallback(
-                    (ctx, args) => StringBinaryArithmetic(ctx, args, "__pow", LuaNumber.Power)
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.Pow, LuaNumber.Power)
                 )
             );
 
             // __idiv: a // b (floor division)
             stringMetatable.Set(
-                "__idiv",
+                Metamethods.IDiv,
                 DynValue.NewCallback(
                     (ctx, args) =>
-                        StringBinaryArithmetic(ctx, args, "__idiv", LuaNumber.FloorDivide)
+                        StringBinaryArithmetic(ctx, args, Metamethods.IDiv, LuaNumber.FloorDivide)
                 )
             );
 
             // __unm: -a (unary minus)
             stringMetatable.Set(
-                "__unm",
+                Metamethods.Unm,
                 DynValue.NewCallback(
                     (ctx, args) =>
                     {
@@ -196,6 +201,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Coerces a DynValue to a LuaNumber for string arithmetic metamethods.
         /// Returns null if the value cannot be coerced.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static LuaNumber? CoerceToLuaNumber(DynValue value)
         {
             if (value.Type == DataType.Number)
@@ -466,6 +472,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return DynValue.NewTuple(rets);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int NormalizeByte(double value)
         {
             if (double.IsNaN(value) || double.IsInfinity(value))

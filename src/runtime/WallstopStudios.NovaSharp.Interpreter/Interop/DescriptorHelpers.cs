@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -86,6 +87,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <summary>
         /// Determines whether the supplied type derives from <see cref="Delegate"/>.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsDelegateType(this Type t)
         {
             return Framework.Do.IsAssignableFrom(typeof(Delegate), t);

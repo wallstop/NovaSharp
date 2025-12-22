@@ -113,15 +113,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         {
             Statement s = new CompositeStatement(lcontext);
 
-            if (lcontext.Lexer.Current.Type != TokenType.End)
+            if (lcontext.Lexer.Current.type != TokenType.End)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
                     "'end' expected near '{0}'",
-                    lcontext.Lexer.Current.Text
+                    lcontext.Lexer.Current.text
                 )
                 {
-                    IsPrematureStreamTermination = (lcontext.Lexer.Current.Type == TokenType.Eof),
+                    IsPrematureStreamTermination = (lcontext.Lexer.Current.type == TokenType.Eof),
                 };
             }
 
@@ -148,15 +148,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 paramnames.Add("self");
             }
 
-            while (lcontext.Lexer.Current.Type != closeToken)
+            while (lcontext.Lexer.Current.type != closeToken)
             {
                 Token t = lcontext.Lexer.Current;
 
-                if (t.Type == TokenType.Name)
+                if (t.type == TokenType.Name)
                 {
-                    paramnames.Add(t.Text);
+                    paramnames.Add(t.text);
                 }
-                else if (t.Type == TokenType.VarArgs)
+                else if (t.type == TokenType.VarArgs)
                 {
                     _hasVarArgs = true;
                     paramnames.Add(WellKnownSymbols.VARARGS);
@@ -170,7 +170,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
                 t = lcontext.Lexer.Current;
 
-                if (t.Type == TokenType.Comma)
+                if (t.type == TokenType.Comma)
                 {
                     lcontext.Lexer.Next();
                 }
@@ -181,7 +181,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 }
             }
 
-            if (lcontext.Lexer.Current.Type == closeToken)
+            if (lcontext.Lexer.Current.type == closeToken)
             {
                 lcontext.Lexer.Next();
             }

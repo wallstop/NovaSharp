@@ -32,7 +32,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         public FunctionDefinitionStatement(
             ScriptLoadingContext lcontext,
             bool local,
-            Token localToken
+            Token? localToken
         )
             : base(lcontext)
         {
@@ -45,29 +45,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             if (_local)
             {
                 Token name = CheckTokenType(lcontext, TokenType.Name);
-                _funcSymbol = lcontext.Scope.TryDefineLocal(name.Text);
-                _friendlyName = $"{name.Text} (local)";
+                _funcSymbol = lcontext.Scope.TryDefineLocal(name.text);
+                _friendlyName = $"{name.text} (local)";
                 _sourceRef = funcKeyword.GetSourceRef(name);
             }
             else
             {
                 Token name = CheckTokenType(lcontext, TokenType.Name);
-                string firstName = name.Text;
+                string firstName = name.text;
 
                 _sourceRef = funcKeyword.GetSourceRef(name);
 
                 _funcSymbol = lcontext.Scope.Find(firstName);
                 _friendlyName = firstName;
 
-                if (lcontext.Lexer.Current.Type != TokenType.BrkOpenRound)
+                if (lcontext.Lexer.Current.type != TokenType.BrkOpenRound)
                 {
                     _tableAccessors = new List<string>();
 
-                    while (lcontext.Lexer.Current.Type != TokenType.BrkOpenRound)
+                    while (lcontext.Lexer.Current.type != TokenType.BrkOpenRound)
                     {
                         Token separator = lcontext.Lexer.Current;
 
-                        if (separator.Type != TokenType.Colon && separator.Type != TokenType.Dot)
+                        if (separator.type != TokenType.Colon && separator.type != TokenType.Dot)
                         {
                             UnexpectedTokenType(separator);
                         }
@@ -76,18 +76,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 
                         Token field = CheckTokenType(lcontext, TokenType.Name);
 
-                        _friendlyName += separator.Text + field.Text;
+                        _friendlyName += separator.text + field.text;
                         _sourceRef = funcKeyword.GetSourceRef(field);
 
-                        if (separator.Type == TokenType.Colon)
+                        if (separator.type == TokenType.Colon)
                         {
-                            _methodName = field.Text;
+                            _methodName = field.text;
                             _isMethodCallingConvention = true;
                             break;
                         }
                         else
                         {
-                            _tableAccessors.Add(field.Text);
+                            _tableAccessors.Add(field.text);
                         }
                     }
 

@@ -727,6 +727,265 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCachePopulatedAfterFirstCall(LuaCompatibilityVersion version)
+        {
+            // Verify that the last-call cache is populated after the first method call
+            // Note: Caching only kicks in when there are multiple overloads (or extension methods)
+            Script script = new(version);
+            OverloadedMethodMemberDescriptor descriptor = new(
+                "MultiOverload",
+                typeof(CacheTestClass)
+            );
+
+            // Add multiple overloads to exercise the caching path
+            MethodInfo method1 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(int) }
+            );
+            MethodInfo method2 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(string) }
+            );
+            descriptor.AddOverload(new MethodMemberDescriptor(method1));
+            descriptor.AddOverload(new MethodMemberDescriptor(method2));
+
+            // Verify no cached method initially
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.HasLastCallCached(descriptor))
+                .IsFalse()
+                .ConfigureAwait(false);
+
+            CacheTestClass instance = new();
+            CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
+
+            // Make a call with int argument
+            DynValue result = script.Call(callback, DynValue.NewNumber(42));
+
+            // Verify cache is now populated
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.HasLastCallCached(descriptor))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.GetLastCallArgCount(descriptor))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheHitOnRepeatedIdenticalCalls(LuaCompatibilityVersion version)
+        {
+            // Repeated calls with the same signature should hit the last-call cache
+            Script script = new(version);
+            UserData.RegisterType<CacheTestClass>();
+            script.Globals["TestClass"] = typeof(CacheTestClass);
+
+            // Multiple calls with same signature in a loop
+            DynValue result = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                local total = 0
+                for i = 1, 100 do
+                    total = total + obj.WithInt(i)
+                end
+                return total
+                "
+            );
+
+            // Sum of 1 to 100 = 5050
+            await Assert.That(result.Number).IsEqualTo(5050).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheMissOnDifferentArgCount(LuaCompatibilityVersion version)
+        {
+            // Cache should miss when argument count changes
+            Script script = new(version);
+            OverloadedMethodMemberDescriptor descriptor = new(
+                "MultiOverload",
+                typeof(CacheTestClass)
+            );
+
+            MethodInfo method1 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(int) }
+            );
+            MethodInfo method2 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(string) }
+            );
+            descriptor.AddOverload(new MethodMemberDescriptor(method1));
+            descriptor.AddOverload(new MethodMemberDescriptor(method2));
+
+            CacheTestClass instance = new();
+            CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
+
+            // First call with one int argument
+            DynValue result1 = script.Call(callback, DynValue.NewNumber(42));
+            await Assert.That(result1.Number).IsEqualTo(42).ConfigureAwait(false);
+
+            // Second call with string - different type, should resolve correctly
+            DynValue result2 = script.Call(callback, DynValue.NewString("hello"));
+            await Assert.That(result2.Number).IsEqualTo(5).ConfigureAwait(false);
+
+            // Third call with int again - should work
+            DynValue result3 = script.Call(callback, DynValue.NewNumber(99));
+            await Assert.That(result3.Number).IsEqualTo(99).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClearLastCallCacheResetsCache(LuaCompatibilityVersion version)
+        {
+            // Note: Caching only kicks in when there are multiple overloads
+            Script script = new(version);
+            OverloadedMethodMemberDescriptor descriptor = new(
+                "MultiOverload",
+                typeof(CacheTestClass)
+            );
+
+            // Add multiple overloads to exercise the caching path
+            MethodInfo method1 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(int) }
+            );
+            MethodInfo method2 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(string) }
+            );
+            descriptor.AddOverload(new MethodMemberDescriptor(method1));
+            descriptor.AddOverload(new MethodMemberDescriptor(method2));
+
+            CacheTestClass instance = new();
+            CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
+
+            // Make a call to populate cache
+            script.Call(callback, DynValue.NewNumber(42));
+
+            // Verify cache is populated
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.HasLastCallCached(descriptor))
+                .IsTrue()
+                .ConfigureAwait(false);
+
+            // Clear the cache
+            OverloadedMethodMemberDescriptor.TestHooks.ClearLastCallCache(descriptor);
+
+            // Verify cache is cleared
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.HasLastCallCached(descriptor))
+                .IsFalse()
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheWithZeroArguments(LuaCompatibilityVersion version)
+        {
+            // Test last-call cache with zero arguments
+            Script script = new(version);
+            UserData.RegisterType<TestOverloadClass>();
+            script.Globals["TestClass"] = typeof(TestOverloadClass);
+
+            // Multiple calls with no arguments
+            DynValue result = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                local total = 0
+                for i = 1, 10 do
+                    obj.NoArgs()
+                    total = total + 1
+                end
+                return total
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(10).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheWithThreeArguments(LuaCompatibilityVersion version)
+        {
+            // Test last-call cache with three arguments (maximum inline)
+            Script script = new(version);
+            UserData.RegisterType<MultiArgClass>();
+            script.Globals["TestClass"] = typeof(MultiArgClass);
+
+            DynValue result = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                local total = 0
+                for i = 1, 10 do
+                    total = total + obj.ThreeArgs(1, 2, 3)
+                end
+                return total
+                "
+            );
+
+            // 1+2+3 = 6, repeated 10 times = 60
+            await Assert.That(result.Number).IsEqualTo(60).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheFallsThroughForFourPlusArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Test that 4+ argument calls fall through to full cache
+            Script script = new(version);
+            UserData.RegisterType<MultiArgClass>();
+            script.Globals["TestClass"] = typeof(MultiArgClass);
+
+            DynValue result = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                local total = 0
+                for i = 1, 10 do
+                    total = total + obj.FourArgs(1, 2, 3, 4)
+                end
+                return total
+                "
+            );
+
+            // 1+2+3+4 = 10, repeated 10 times = 100
+            await Assert.That(result.Number).IsEqualTo(100).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task PrepareForWiringWithNonWireableOverload(LuaCompatibilityVersion version)
         {
             // Test that PrepareForWiring handles non-wireable descriptors gracefully
@@ -1228,6 +1487,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             {
                 ArgumentNullException.ThrowIfNull(args);
                 return args.Count;
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1034:Nested types should not be visible",
+            Justification = "Test helper class must be public for UserData registration."
+        )]
+        public sealed class MultiArgClass
+        {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int ThreeArgs(int a, int b, int c)
+            {
+                return a + b + c;
+            }
+
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int FourArgs(int a, int b, int c, int d)
+            {
+                return a + b + c + d;
             }
         }
     }

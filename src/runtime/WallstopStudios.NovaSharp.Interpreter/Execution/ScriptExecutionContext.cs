@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using System;
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -256,7 +257,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
                 while (maxloops > 0)
                 {
-                    DynValue v = GetMetamethod(func, "__call");
+                    DynValue v = GetMetamethod(func, Metamethods.Call);
 
                     if (v == null || v.IsNil())
                     {

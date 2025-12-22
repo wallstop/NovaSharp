@@ -38,7 +38,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 SymbolRefAttributes flags = ParseLocalAttributes(lcontext);
                 locals.Add((nameToken, flags));
 
-                if (lcontext.Lexer.Current.Type != TokenType.Comma)
+                if (lcontext.Lexer.Current.type != TokenType.Comma)
                 {
                     break;
                 }
@@ -46,7 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 lcontext.Lexer.Next();
             }
 
-            if (lcontext.Lexer.Current.Type == TokenType.OpAssignment)
+            if (lcontext.Lexer.Current.type == TokenType.OpAssignment)
             {
                 CheckTokenType(lcontext, TokenType.OpAssignment);
                 _rValues = Expression.ExprList(lcontext);
@@ -58,7 +58,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 
             foreach ((Token nameToken, SymbolRefAttributes flags) in locals)
             {
-                SymbolRef localVar = lcontext.Scope.TryDefineLocal(nameToken.Text, flags);
+                SymbolRef localVar = lcontext.Scope.TryDefineLocal(nameToken.text, flags);
                 SymbolRefExpression symbol = new(lcontext, localVar);
                 _lValues.Add(symbol);
             }
@@ -83,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         {
             _lValues.Add(CheckVar(lcontext, firstExpression));
 
-            while (lcontext.Lexer.Current.Type == TokenType.Comma)
+            while (lcontext.Lexer.Current.type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 Expression e = Expression.PrimaryExp(lcontext);
@@ -147,21 +147,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 lcontext.Script ?? throw new InvalidOperationException("Missing Script instance.");
             LuaCompatibilityProfile profile = script.CompatibilityProfile;
 
-            while (lcontext.Lexer.Current.Type == TokenType.OpLessThan)
+            while (lcontext.Lexer.Current.type == TokenType.OpLessThan)
             {
                 lcontext.Lexer.Next();
 
                 Token attr = CheckTokenType(lcontext, TokenType.Name);
-                SymbolRefAttributes attrFlag = attr.Text switch
+                SymbolRefAttributes attrFlag = attr.text switch
                 {
                     "const" => GetConstAttribute(attr, profile),
                     "close" => GetCloseAttribute(attr, profile),
-                    _ => throw new SyntaxErrorException(attr, "unknown attribute '{0}'", attr.Text),
+                    _ => throw new SyntaxErrorException(attr, "unknown attribute '{0}'", attr.text),
                 };
 
                 if ((flags & attrFlag) != 0)
                 {
-                    throw new SyntaxErrorException(attr, "duplicate attribute '{0}'", attr.Text);
+                    throw new SyntaxErrorException(attr, "duplicate attribute '{0}'", attr.text);
                 }
 
                 CheckTokenType(lcontext, TokenType.OpGreaterThan);
@@ -212,7 +212,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             throw new SyntaxErrorException(
                 attributeToken,
                 "'{0}' attribute requires Lua 5.4+ compatibility ({1}). Set Script.Options.CompatibilityVersion accordingly.",
-                attributeToken.Text,
+                attributeToken.text,
                 manualSection
             );
         }

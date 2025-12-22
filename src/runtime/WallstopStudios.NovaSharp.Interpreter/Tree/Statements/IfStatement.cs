@@ -46,14 +46,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             : base(lcontext)
         {
             while (
-                lcontext.Lexer.Current.Type != TokenType.Else
-                && lcontext.Lexer.Current.Type != TokenType.End
+                lcontext.Lexer.Current.type != TokenType.Else
+                && lcontext.Lexer.Current.type != TokenType.End
             )
             {
                 _ifs.Add(CreateIfBlock(lcontext));
             }
 
-            if (lcontext.Lexer.Current.Type == TokenType.Else)
+            if (lcontext.Lexer.Current.type == TokenType.Else)
             {
                 _else = CreateElseBlock(lcontext);
             }

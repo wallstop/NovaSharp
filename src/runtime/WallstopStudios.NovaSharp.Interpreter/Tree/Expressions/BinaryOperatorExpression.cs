@@ -341,7 +341,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
         private static Operator ParseBinaryOperator(Token token)
         {
-            switch (token.Type)
+            switch (token.type)
             {
                 case TokenType.Or:
                     return Operator.Or;
@@ -388,7 +388,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 default:
                     throw new InternalErrorException(
                         "Unexpected binary operator '{0}'",
-                        token.Text
+                        token.text
                     );
             }
         }

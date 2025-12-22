@@ -88,12 +88,34 @@ ______________________________________________________________________
 
 ## Coding Style
 
-- **Formatting**: 4-space indent, Allman braces, run `dotnet csharpier format .`
-- **Naming**: PascalCase types/methods, `_camelCase` private fields
-- **Types**: Explicit types preferred; no `var` unless required (anonymous types)
-- **Nullable**: Never use `#nullable`, `string?`, `?.`, `null!`
-- **Regions**: Never use `#region`/`#endregion`
-- **Internals**: Prefer `internal` + `InternalsVisibleTo` over reflection
+### File Structure
+
+- **`using` directives INSIDE namespace** — Never at file top
+- **One type per file** — Match filename to type name
+
+### Formatting
+
+- 4-space indent, Allman braces
+- Run `dotnet csharpier format .` before commits
+
+### Naming
+
+- **PascalCase**: Types, methods, properties, constants
+- **`_camelCase`**: Private fields
+- **NO underscores in method names** — Including tests: `FeatureWorksCorrectly` not `Feature_Works_Correctly`
+
+### Types & Variables
+
+- **Explicit types always** — Never use `var` (exception: anonymous types where required)
+- **NEVER use nullable reference types** — No `#nullable`, `string?`, `?.`, `??`, `null!`
+- **NEVER use `#region`/`#endregion`**
+- **Prefer `internal`** + `InternalsVisibleTo` over reflection
+
+### Comments
+
+- **Minimal comments** — Write self-documenting code with clear naming
+- **No obvious comments** — Don't explain what code does; explain *why* if non-obvious
+- **XML docs only for public API** — Not internal implementation
 
 ### Enums
 
@@ -123,7 +145,11 @@ When writing new types and methods, prioritize minimal allocations:
 - **Prefer `readonly struct`** for small, immutable data (≤64 bytes)
 - **Prefer `ref struct`** for types containing `Span<T>` or stack-only lifetimes
 - **Use `ZStringBuilder.Create()`** for string building, never `StringBuilder` or `$"..."` in hot paths
-- **Use `ArrayPool<T>.Shared`** or `stackalloc` instead of `new T[]` for temporary buffers
+- **Use `HashCodeHelper.HashCode()`** for `GetHashCode()` — never bespoke `hash * 31` patterns or `HashCode.Combine()`
+- **Array pooling** — choose the right pool:
+  - `DynValueArrayPool`/`ObjectArrayPool` for fixed exact-size arrays (VM frames, reflection)
+  - `ArrayPool<T>.Shared` for variable-size buffers (track actual usage separately)
+  - `stackalloc` for small compile-time-constant sizes
 - **Use `ReadOnlySpan<char>`** instead of `string.Substring()` for slicing
 - **Avoid boxing** — use generic constraints instead of interface parameters for value types
 

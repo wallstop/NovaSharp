@@ -101,27 +101,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.1/5.2: Float truncation (tested in CharTruncatesFloatValuesLua51And52)
         // Lua 5.3+: Throws error (tested in CharErrorsOnNonIntegerFloatLua53Plus)
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, -1, "negative value")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 256, "value above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 300, "value well above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, -100, "large negative value")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, -1, "negative value")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 256, "value above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 300, "value well above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, -100, "large negative value")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, -1, "negative value")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 256, "value above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 300, "value well above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, -100, "large negative value")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, -1, "negative value")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 256, "value above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 300, "value well above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, -100, "large negative value")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, -1, "negative value")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 256, "value above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 300, "value well above 255")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, -100, "large negative value")]
+        [Test]
+        [LuaTestMatrix(
+            new object[] { -1, "negative value" },
+            new object[] { 256, "value above 255" },
+            new object[] { 300, "value well above 255" },
+            new object[] { -100, "large negative value" }
+        )]
         public async Task CharErrorsOnOutOfRangeValue(
             LuaCompatibilityVersion version,
             int value,
@@ -141,126 +127,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua51,
-            0,
-            '\0',
-            "zero produces null byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua51,
-            255,
-            (char)255,
-            "255 produces max byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua51,
-            1,
-            (char)1,
-            "one produces SOH"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua51,
-            127,
-            (char)127,
-            "127 produces DEL"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua52,
-            0,
-            '\0',
-            "zero produces null byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua52,
-            255,
-            (char)255,
-            "255 produces max byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua52,
-            1,
-            (char)1,
-            "one produces SOH"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua52,
-            127,
-            (char)127,
-            "127 produces DEL"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua53,
-            0,
-            '\0',
-            "zero produces null byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua53,
-            255,
-            (char)255,
-            "255 produces max byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua53,
-            1,
-            (char)1,
-            "one produces SOH"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua53,
-            127,
-            (char)127,
-            "127 produces DEL"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua54,
-            0,
-            '\0',
-            "zero produces null byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua54,
-            255,
-            (char)255,
-            "255 produces max byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua54,
-            1,
-            (char)1,
-            "one produces SOH"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua54,
-            127,
-            (char)127,
-            "127 produces DEL"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua55,
-            0,
-            '\0',
-            "zero produces null byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua55,
-            255,
-            (char)255,
-            "255 produces max byte"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua55,
-            1,
-            (char)1,
-            "one produces SOH"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua55,
-            127,
-            (char)127,
-            "127 produces DEL"
+        [Test]
+        [LuaTestMatrix(
+            new object[] { 0, '\0', "zero produces null byte" },
+            new object[] { 255, (char)255, "255 produces max byte" },
+            new object[] { 1, (char)1, "one produces SOH" },
+            new object[] { 127, (char)127, "127 produces DEL" }
         )]
         public async Task CharAcceptsBoundaryValues(
             LuaCompatibilityVersion version,
@@ -1705,99 +1577,59 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, "123", false)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, "123", false)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, null, true)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, null, true)]
-        public async Task FormatDecimalWithFloatBehaviorByVersion(
-            LuaCompatibilityVersion version,
-            string expectedResult,
-            bool expectsError
-        )
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatDecimalTruncatesFloatInLua51And52(LuaCompatibilityVersion version)
         {
             // Lua 5.1/5.2: Float values are converted to integer (truncated)
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.format('%d', 123.456)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("123")
+                .Because($"Lua {version} should truncate float to integer for %d")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatDecimalErrorsOnFloatInLua53Plus(LuaCompatibilityVersion version)
+        {
             // Lua 5.3+: Float values that don't have integer representation throw an error
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            if (expectsError)
-            {
-                ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                    script.DoString("return string.format('%d', 123.456)")
-                );
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.format('%d', 123.456)")
+            );
 
-                await Assert
-                    .That(exception)
-                    .IsNotNull()
-                    .Because(
-                        $"Lua {version} should throw 'number has no integer representation' for %d with 123.456"
-                    )
-                    .ConfigureAwait(false);
-                await Assert
-                    .That(exception.Message)
-                    .Contains("number has no integer representation")
-                    .ConfigureAwait(false);
-            }
-            else
-            {
-                DynValue result = script.DoString("return string.format('%d', 123.456)");
-                await Assert
-                    .That(result.String)
-                    .IsEqualTo(expectedResult)
-                    .Because($"Lua {version} should truncate float to integer for %d")
-                    .ConfigureAwait(false);
-            }
+            await Assert
+                .That(exception)
+                .IsNotNull()
+                .Because(
+                    $"Lua {version} should throw 'number has no integer representation' for %d with 123.456"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
         }
 
         /// <summary>
         /// Tests that string.format with %d accepts exact integer values in Lua 5.3+.
         /// </summary>
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "123", "123")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "0", "0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "-456", "-456")]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua53,
-            "math.maxinteger",
-            "9223372036854775807"
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "123", "123" },
+            new object[] { "0", "0" },
+            new object[] { "-456", "-456" },
+            new object[] { "math.maxinteger", "9223372036854775807" },
+            new object[] { "math.mininteger", "-9223372036854775808" },
+            new object[] { "42.0", "42" },
+            new object[] { "-1.0", "-1" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
         )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua53,
-            "math.mininteger",
-            "-9223372036854775808"
-        )]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "42.0", "42")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "-1.0", "-1")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "123", "123")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "0", "0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "-456", "-456")]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua54,
-            "math.maxinteger",
-            "9223372036854775807"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua54,
-            "math.mininteger",
-            "-9223372036854775808"
-        )]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "42.0", "42")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "-1.0", "-1")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "123", "123")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "0", "0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "-456", "-456")]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua55,
-            "math.maxinteger",
-            "9223372036854775807"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua55,
-            "math.mininteger",
-            "-9223372036854775808"
-        )]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "42.0", "42")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "-1.0", "-1")]
         public async Task FormatDecimalAcceptsIntegerValues(
             LuaCompatibilityVersion version,
             string luaExpression,
@@ -1817,66 +1649,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// <summary>
         /// Tests that string.format with %d rejects non-integer values in Lua 5.3+.
         /// </summary>
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "0.5", "fractional")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "-0.5", "negative fractional")]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua53,
-            "1e100",
-            "large float beyond integer range"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua53,
-            "-1e100",
-            "large negative float"
-        )]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "0/0", "NaN")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "1/0", "positive infinity")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "-1/0", "negative infinity")]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua53,
-            "math.maxinteger + 0.5",
-            "maxinteger plus fractional"
-        )]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "0.5", "fractional")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "-0.5", "negative fractional")]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua54,
-            "1e100",
-            "large float beyond integer range"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua54,
-            "-1e100",
-            "large negative float"
-        )]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "0/0", "NaN")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "1/0", "positive infinity")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "-1/0", "negative infinity")]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua54,
-            "math.maxinteger + 0.5",
-            "maxinteger plus fractional"
-        )]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "0.5", "fractional")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "-0.5", "negative fractional")]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua55,
-            "1e100",
-            "large float beyond integer range"
-        )]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua55,
-            "-1e100",
-            "large negative float"
-        )]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "0/0", "NaN")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "1/0", "positive infinity")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "-1/0", "negative infinity")]
-        [global::TUnit.Core.Arguments(
-            LuaCompatibilityVersion.Lua55,
-            "math.maxinteger + 0.5",
-            "maxinteger plus fractional"
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "0.5", "fractional" },
+            new object[] { "-0.5", "negative fractional" },
+            new object[] { "1e100", "large float beyond integer range" },
+            new object[] { "-1e100", "large negative float" },
+            new object[] { "0/0", "NaN" },
+            new object[] { "1/0", "positive infinity" },
+            new object[] { "-1/0", "negative infinity" },
+            new object[] { "math.maxinteger + 0.5", "maxinteger plus fractional" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
         )]
         public async Task FormatDecimalRejectsNonIntegerValues(
             LuaCompatibilityVersion version,
@@ -1907,22 +1690,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// <summary>
         /// Tests other integer format specifiers (%i, %o, %u, %x, %X) with non-integer values in Lua 5.3+.
         /// </summary>
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "%i")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "%o")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "%u")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "%x")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "%X")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "%i")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "%o")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "%u")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "%x")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "%X")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "%i")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "%o")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "%u")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "%x")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "%X")]
+        [Test]
+        [LuaTestMatrix(
+            "%i",
+            "%o",
+            "%u",
+            "%x",
+            "%X",
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
         public async Task FormatIntegerSpecifiersRejectFloatValues(
             LuaCompatibilityVersion version,
             string specifier
@@ -1948,27 +1724,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// <summary>
         /// Tests that %f (float) specifier works with any numeric value (no integer constraint).
         /// </summary>
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, "123.456", "123")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, "0.5", "0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, "-0.5", "-0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, "42", "42")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, "123.456", "123")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, "0.5", "0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, "-0.5", "-0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, "42", "42")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "123.456", "123")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "0.5", "0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "-0.5", "-0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, "42", "42")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "123.456", "123")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "0.5", "0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "-0.5", "-0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, "42", "42")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "123.456", "123")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "0.5", "0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "-0.5", "-0")]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, "42", "42")]
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "123.456", "123" },
+            new object[] { "0.5", "0" },
+            new object[] { "-0.5", "-0" },
+            new object[] { "42", "42" }
+        )]
         public async Task FormatFloatAcceptsAnyNumericValue(
             LuaCompatibilityVersion version,
             string luaValue,

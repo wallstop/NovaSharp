@@ -331,11 +331,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 toLine: 1,
                 toCol: 1,
                 prevLine: 1,
-                prevCol: 1
-            )
-            {
-                Text = text,
-            };
+                prevCol: 1,
+                text: text
+            );
         }
     }
 }

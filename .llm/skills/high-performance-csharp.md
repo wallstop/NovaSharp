@@ -4,13 +4,51 @@ When writing new code for NovaSharp, prioritize **minimal allocations** and **ma
 
 ______________________________________________________________________
 
+## 🔴 Unity Compatibility Requirements
+
+NovaSharp targets **Unity3D (IL2CPP/AOT), Mono, and Xamarin** in addition to .NET. This imposes strict API constraints:
+
+### ❌ APIs NOT AVAILABLE in Unity (DO NOT USE)
+
+| API                                            | Reason                     | Alternative                                 |
+| ---------------------------------------------- | -------------------------- | ------------------------------------------- |
+| `CollectionsMarshal.AsSpan<T>(List<T>)`        | .NET 5+ only, not in Unity | Use `list.ToArray()` or manual array access |
+| `CollectionsMarshal.GetValueRefOrAddDefault()` | .NET 6+ only               | Use standard dictionary operations          |
+| `List<T>.EnsureCapacity()`                     | .NET Core 2.1+ only        | Use constructor with capacity               |
+| `Span<T>` fields in non-ref structs            | Requires runtime support   | Use `ref struct` or arrays                  |
+| `[SkipLocalsInit]`                             | Requires runtime support   | Unavailable                                 |
+| `half` (Half-precision float)                  | .NET 5+ only               | Use `float`                                 |
+| `nint` / `nuint`                               | .NET 5+ only               | Use `IntPtr` / `UIntPtr`                    |
+| Generic math interfaces (`INumber<T>`)         | .NET 7+ only               | Use explicit type overloads                 |
+
+### ✅ Unity-Compatible Performance Patterns
+
+```csharp
+// ✅ Get raw array access for List<T> in Unity
+// Option 1: Pre-size and use array directly
+List<T> list = new List<T>(capacity);
+// ... populate ...
+T[] underlying = list.ToArray();  // One allocation, then work with array
+
+// Option 2: Use array from the start if size is known
+T[] array = ArrayPool<T>.Shared.Rent(capacity);
+
+// Option 3: For fixed-size pools, use NovaSharp's pooling
+using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(size, out DynValue[] array);
+```
+
+______________________________________________________________________
+
 ## 🔴 Core Principles
 
 1. **Prefer value types (structs) over reference types (classes)** when data is small and short-lived
 1. **Avoid allocations in hot paths** — use pooling, stack allocation, or spans
 1. **Use `readonly struct` for immutable value types** — enables compiler optimizations
 1. **Prefer `ref struct` for stack-only types** — enables `Span<T>` fields and prevents heap escape
+1. **NEVER capture variables in closures/lambdas in hot paths** — closures allocate; use static lambdas or pass state explicitly
+1. **NEVER use LINQ in hot paths** — causes allocations (enumerators, delegates); use explicit loops
 1. **Always measure** — use BenchmarkDotNet before/after for performance-critical changes
+1. **Always verify Unity compatibility** — check APIs against the forbidden list above
 
 ______________________________________________________________________
 
@@ -51,6 +89,58 @@ return "Error: " + message;
 ```csharp
 // OK for 2-3 element concatenation (still zero-alloc)
 return ZString.Concat("\"", input, "\"");
+```
+
+______________________________________________________________________
+
+## Closures and Lambdas
+
+### ❌ DON'T: Capture variables in closures (allocates)
+
+```csharp
+// BAD: Captures 'threshold' - allocates closure object
+int threshold = 10;
+List<int> filtered = items.Where(x => x > threshold).ToList();
+
+// BAD: Captures 'prefix' - allocates closure
+string prefix = "Error: ";
+Action<string> log = msg => Console.WriteLine(prefix + msg);
+```
+
+### ✅ DO: Use static lambdas or pass state explicitly
+
+```csharp
+// ✅ Good: Static lambda - no capture, no allocation
+items.Where(static x => x > 0);
+
+// ✅ Good: Pass state explicitly via overload
+items.Where((x, state) => x > state.Threshold, new { Threshold = 10 });
+
+// ✅ Good: Use explicit loop instead of LINQ
+List<int> filtered = new List<int>();
+foreach (int item in items)
+{
+    if (item > threshold)
+        filtered.Add(item);
+}
+
+// ✅ Good: Pre-allocated delegate for repeated use
+private static readonly Func<int, bool> IsPositive = static x => x > 0;
+```
+
+### LINQ Allocation Traps
+
+```csharp
+// BAD: LINQ allocates enumerator + delegate
+int sum = items.Where(x => x > 0).Sum();
+
+// GOOD: Explicit loop - zero allocations
+int sum = 0;
+foreach (int item in items)
+{
+    if (item > 0)
+        sum += item;
+}
 ```
 
 ______________________________________________________________________
@@ -143,16 +233,33 @@ ______________________________________________________________________
 
 ## Array and Buffer Pooling
 
-### ✅ DO: Use ArrayPool for temporary arrays
+NovaSharp has TWO array pooling strategies with different use cases:
+
+### NovaSharp's Fixed-Size Pools (`DynValueArrayPool`, `ObjectArrayPool`)
+
+Use these when you need **exact-size arrays** (e.g., reflection `MethodInfo.Invoke` requires exact parameter count):
+
+```csharp
+// Thread-local caching for small arrays (≤8 elements), exact sizes only
+using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(5, out DynValue[] array);
+// array.Length == 5 (exact)
+
+using PooledResource<object[]> pooled = ObjectArrayPool.Get(3, out object[] array);
+// array.Length == 3 (exact, required for reflection)
+```
+
+### `System.Buffers.ArrayPool<T>` (Variable-Size Buffers)
+
+Use when you can work with **"at least" the requested size** and track actual usage:
 
 ```csharp
 using System.Buffers;
 
-// Rent from pool
+// Rent from pool - may return larger array!
 char[] buffer = ArrayPool<char>.Shared.Rent(256);
 try
 {
-    // Use buffer...
+    // IMPORTANT: Track actual usage, don't use buffer.Length
     int written = FormatValue(value, buffer);
     return new string(buffer, 0, written);
 }
@@ -160,6 +267,42 @@ finally
 {
     ArrayPool<char>.Shared.Return(buffer);
 }
+```
+
+### When to Use Which
+
+| Scenario                                     | Pool to Use           | Why                            |
+| -------------------------------------------- | --------------------- | ------------------------------ |
+| Reflection invoke (`MethodInfo.Invoke`)      | `ObjectArrayPool`     | Requires exact parameter count |
+| VM call frames (fixed arity)                 | `DynValueArrayPool`   | Known compile-time sizes       |
+| String pattern matching buffers              | `ArrayPool<T>.Shared` | Variable sizes, smarter reuse  |
+| Parsing/formatting temporary buffers         | `ArrayPool<T>.Shared` | Size varies by input           |
+| Table operations with dynamic element counts | `SystemArrayPool<T>`  | Unknown count until runtime    |
+
+### `SystemArrayPool<T>` — Variable-Size Array Pooling
+
+Wraps `ArrayPool<T>.Shared` with `PooledResource<T>` disposal semantics:
+
+```csharp
+// RAII pattern (recommended) — automatic cleanup
+using PooledResource<char[]> pooled = SystemArrayPool<char>.Get(256, out char[] buffer);
+// buffer.Length >= 256 (may be larger!)
+int written = FormatValue(value, buffer);
+return new string(buffer, 0, written);
+// Automatically returned to pool when disposed
+
+// With clearing control (disable for performance when buffer will be overwritten)
+using PooledResource<int[]> pooled = SystemArrayPool<int>.Get(1000, clearOnReturn: false, out int[] array);
+
+// Manual lifecycle (when disposal timing is complex)
+char[] buffer = SystemArrayPool<char>.Rent(256);
+try { /* ... */ }
+finally { SystemArrayPool<char>.Return(buffer); }
+
+// Extract exact-size copy and return pooled array
+char[] buffer = SystemArrayPool<char>.Rent(1024);
+int actualLength = Fill(buffer);
+return SystemArrayPool<char>.ToArrayAndReturn(buffer, actualLength);
 ```
 
 ### ✅ DO: Use stackalloc for small, fixed-size buffers
@@ -185,6 +328,282 @@ char[] buffer = new char[256];
 // BAD: ToArray() allocates
 return list.ToArray();
 ```
+
+______________________________________________________________________
+
+## Thread-Local Caching (`[ThreadStatic]`)
+
+For **fixed-size objects or arrays** that are frequently allocated and discarded in hot paths, use `[ThreadStatic]` caching to allocate once per thread and reuse indefinitely.
+
+### When to Use Thread-Local Caching
+
+| Scenario                                            | Good Candidate? | Why                                              |
+| --------------------------------------------------- | --------------- | ------------------------------------------------ |
+| Fixed-size buffers (known at compile time)          | ✅ Yes          | Same size every call, reuse is trivial           |
+| Complex state objects with `Reset()` method         | ✅ Yes          | Single allocation per thread, reset between uses |
+| Variable-size buffers                               | ❌ No           | Use `ArrayPool<T>.Shared` instead                |
+| Objects with reference semantics (identity matters) | ❌ No           | Reuse would cause aliasing bugs                  |
+| Short-lived call-stack-only data                    | ❌ No           | Use `stackalloc` instead                         |
+
+### ✅ DO: Cache fixed-size arrays with `[ThreadStatic]`
+
+```csharp
+// Thread-local cached buffers — allocated once per thread, reused forever
+[ThreadStatic]
+private static char[] t_formatFormBuffer;  // MaxFormat size (constant)
+
+[ThreadStatic]
+private static char[] t_formatBuffBuffer;  // MAX_ITEM size (constant)
+
+private static void GetFormatBuffers(out char[] formBuffer, out char[] buffBuffer)
+{
+    // Null-coalescing assignment: allocate on first use per thread
+    formBuffer = t_formatFormBuffer ??= new char[MaxFormat];
+    buffBuffer = t_formatBuffBuffer ??= new char[MAX_ITEM];
+}
+
+// Usage in hot path:
+GetFormatBuffers(out char[] formBuffer, out char[] buffBuffer);
+// Use formBuffer and buffBuffer...
+// No cleanup needed — buffers persist for thread lifetime
+```
+
+### ✅ DO: Pool complex objects with state reset
+
+```csharp
+// Thread-local pooled object with Reset() for reuse
+[ThreadStatic]
+private static MatchState t_cachedMatchState;
+
+private static MatchState RentMatchState()
+{
+    MatchState ms = t_cachedMatchState;
+    if (ms != null)
+    {
+        t_cachedMatchState = null!;  // Take ownership
+        ms.Reset();                   // Clear state for reuse
+        return ms;
+    }
+    return new MatchState();  // First call on this thread
+}
+
+private static void ReturnMatchState(MatchState ms)
+{
+    ms.Reset();  // Clear references to allow GC of captured data
+    t_cachedMatchState = ms;  // Return to cache
+}
+
+// Usage pattern:
+MatchState ms = RentMatchState();
+try
+{
+    // Use ms...
+}
+finally
+{
+    ReturnMatchState(ms);
+}
+```
+
+### ❌ DON'T: Allocate per-call when size is constant
+
+```csharp
+// BAD: Allocates 540 bytes every call
+public static int Format(string fmt, ...)
+{
+    char[] form = new char[25];   // ← Constant size!
+    char[] buff = new char[512];  // ← Constant size!
+    // ...
+}
+```
+
+### Thread-Local vs Object Pooling
+
+| Pattern                          | Use When                                                | Example                      |
+| -------------------------------- | ------------------------------------------------------- | ---------------------------- |
+| `[ThreadStatic]` caching         | Single instance needed per thread, no contention        | `MatchState`, format buffers |
+| `ObjectPool<T>` / `ArrayPool<T>` | Variable sizes, or multiple concurrent instances needed | `ArrayPool<char>.Shared`     |
+| `stackalloc`                     | Small, known size, call-stack lifetime only             | `stackalloc char[64]`        |
+
+______________________________________________________________________
+
+## Class-to-Struct Conversion
+
+Converting frequently-allocated short-lived classes to `readonly struct` is one of the **highest-impact optimizations** for reducing GC pressure.
+
+### Impact Example: KopiLua `CharPtr`
+
+Converting `CharPtr` from a class to `readonly struct` achieved:
+
+- **58-85% allocation reduction** across pattern matching scenarios
+- **24-63% latency improvement** due to reduced GC pressure
+- Eliminated ~50+ heap allocations per pattern match operation
+
+### When to Convert Class → Struct
+
+| Criterion                                               | Good Candidate |
+| ------------------------------------------------------- | -------------- |
+| Small size (≤64 bytes)                                  | ✅             |
+| Short-lived (created and discarded in same method/loop) | ✅             |
+| Immutable or has clear copy semantics                   | ✅             |
+| Created frequently in hot paths                         | ✅             |
+| Needs reference identity (same instance check)          | ❌             |
+| Inherited from or inherits other types                  | ❌             |
+| Contains large arrays or many reference fields          | ❌             |
+
+### ✅ DO: Convert pointer-like/slice types to struct
+
+```csharp
+// BEFORE: Class — every pointer arithmetic allocates
+public class CharPtr
+{
+    public char[] chars;
+    public int index;
+    
+    public CharPtr Next() => new CharPtr(chars, index + 1);  // Allocation!
+}
+
+// AFTER: Struct — pointer arithmetic is free (stack copy)
+public readonly struct CharPtr : IEquatable<CharPtr>
+{
+    public readonly char[] chars;
+    public readonly int index;
+    
+    public CharPtr Next() => new CharPtr(chars, index + 1);  // No allocation!
+    
+    // Required: IEquatable<T>, Equals, GetHashCode, ==, !=
+}
+```
+
+### ✅ DO: Convert inner state types to struct
+
+```csharp
+// BEFORE: Class — 32 allocations per MatchState
+public class Capture
+{
+    public CharPtr Init;
+    public int Len;
+}
+public class MatchState
+{
+    public Capture[] capture = new Capture[32];  // 32 class instances!
+}
+
+// AFTER: Struct — single contiguous array, no inner allocations
+public struct Capture
+{
+    public CharPtr Init;
+    public int Len;
+}
+public class MatchState
+{
+    public Capture[] capture = new Capture[32];  // 32 structs inline in array
+}
+```
+
+### Conversion Checklist
+
+When converting a class to struct:
+
+- [ ] Add `readonly` modifier if all fields can be readonly
+- [ ] Implement `IEquatable<T>` (required by code analysis)
+- [ ] Implement `Equals(object)` and `GetHashCode()` using `HashCodeHelper`
+- [ ] Implement `==` and `!=` operators (required by CA1815)
+- [ ] Replace `null` checks with a static `Null` or `Empty` sentinel
+- [ ] Update all code that checks `== null` to use the sentinel
+- [ ] Consider adding `IsNull` or `IsValid` property for clarity
+- [ ] Run full test suite — struct semantics differ from class semantics
+
+______________________________________________________________________
+
+## Pre-Computed Lookup Tables
+
+For operations that repeatedly compute the same values (especially string formatting), use **pre-computed arrays** instead of runtime computation.
+
+### ✅ DO: Pre-compute escape sequences
+
+```csharp
+// Pre-computed at class initialization — zero per-character allocation
+private static readonly string[] EscapeSequences3Digit = new string[16]
+{
+    "\\000", "\\001", "\\002", "\\003", "\\004", "\\005", "\\006", "\\007",
+    "\\008", "\\009", "\\010", "\\011", "\\012", "\\013", "\\014", "\\015",
+};
+
+// Usage: array lookup instead of string interpolation
+string escaped = EscapeSequences3Digit[charValue];
+```
+
+### ❌ DON'T: Use string interpolation in hot loops
+
+```csharp
+// BAD: String interpolation allocates per character
+for (int i = 0; i < length; i++)
+{
+    char c = input[i];
+    if (NeedsEscape(c))
+        output.Append($"\\{(int)c:D3}");  // Allocation every iteration!
+}
+```
+
+### When to Pre-Compute
+
+| Pattern                                            | Pre-compute?                    |
+| -------------------------------------------------- | ------------------------------- |
+| Fixed set of escape sequences                      | ✅ Yes                          |
+| Character class membership (`IsDigit`, `IsLetter`) | ✅ Yes (256-element bool array) |
+| Small enum-to-string mappings                      | ✅ Yes                          |
+| Dynamic values based on runtime input              | ❌ No                           |
+
+______________________________________________________________________
+
+## Sorting Lists and Arrays
+
+### ❌ DON'T: Use List<T>.Sort with struct comparers (boxes)
+
+```csharp
+// BAD: Boxes DynValueComparer on every Sort call
+readonly struct DynValueComparer : IComparer<DynValue> { /* ... */ }
+list.Sort(new DynValueComparer(script));
+
+// BAD: Array.Sort also boxes struct comparers
+Array.Sort(array, new DynValueComparer(script));
+```
+
+### ✅ DO: Use IListSortExtensions with generic constraints
+
+```csharp
+using WallstopStudios.NovaSharp.Interpreter.DataStructs;
+
+// ✅ Good: Zero-allocation with struct comparer
+readonly struct DynValueComparer : IComparer<DynValue> { /* ... */ }
+list.Sort(new DynValueComparer(script));  // Extension method, no boxing!
+
+// ✅ Good: Sort a range
+list.Sort(startIndex, count, new DynValueComparer(script));
+
+// ✅ Good: Works with arrays too (via IList<T>)
+((IList<DynValue>)array).Sort(new DynValueComparer(script));
+```
+
+### Algorithm Details
+
+`IListSortExtensions.Sort<T, TComparer>()` uses **pattern-defeating quicksort (pdqsort)**:
+
+- O(n log n) average and worst case
+- Insertion sort for small arrays (≤24 elements)
+- Heapsort fallback when bad pivot sequences detected
+- Handles adversarial patterns (sorted, reverse, repeated elements)
+- Zero allocations with struct comparers
+
+### When to Use
+
+| Scenario                           | Use                                               |
+| ---------------------------------- | ------------------------------------------------- |
+| Sorting with struct comparer       | `IListSortExtensions.Sort`                        |
+| Sorting with class comparer        | `List<T>.Sort` (no boxing benefit)                |
+| Sorting primitives (default order) | `List<T>.Sort()` (no comparer)                    |
+| Performance-critical sorting       | `IListSortExtensions.Sort` (pdqsort is excellent) |
 
 ______________________________________________________________________
 
@@ -250,6 +669,96 @@ internal readonly struct PooledBuffer
 
 ______________________________________________________________________
 
+## Hash Code Implementation
+
+**ALWAYS use `HashCodeHelper`** for `GetHashCode()` implementations. Never use bespoke `hash * 31 + value` patterns, `HashCode.Combine()`, or `System.HashCode`.
+
+### Why HashCodeHelper?
+
+1. **Deterministic**: Unlike `System.HashCode`, results are stable across process boundaries and .NET versions
+1. **Efficient**: Uses FNV-1a algorithm with aggressive inlining and cached type traits
+1. **Zero-allocation**: No boxing for value types; uses `EqualityComparer<T>.Default` caching
+1. **Centralized**: Single source of truth for hash code composition
+
+### ✅ DO: Use HashCodeHelper for GetHashCode
+
+```csharp
+// ✅ Good: Simple multi-field hash (up to 8 parameters)
+public override int GetHashCode()
+{
+    return HashCodeHelper.HashCode(_field1, _field2, _field3);
+}
+
+// ✅ Good: Use DeterministicHashBuilder for complex/conditional hashing
+public override int GetHashCode()
+{
+    DeterministicHashBuilder hash = default;
+    hash.AddInt((int)Type);
+    
+    if (HasValue)
+    {
+        hash.Add(Value);
+    }
+    
+    return hash.ToHashCode();
+}
+
+// ✅ Good: Optimized primitive methods avoid boxing
+DeterministicHashBuilder hash = default;
+hash.AddInt(intValue);      // No boxing
+hash.AddLong(longValue);    // No boxing
+hash.AddDouble(doubleValue); // No boxing
+return hash.ToHashCode();
+
+// ✅ Good: Span-based hashing for collections
+public override int GetHashCode()
+{
+    return HashCodeHelper.SpanHashCode(items.AsSpan());
+}
+
+// ✅ Good: Enumerable hashing when span not available
+public override int GetHashCode()
+{
+    return HashCodeHelper.EnumerableHashCode(items);
+}
+```
+
+### ❌ DON'T: Use bespoke hash algorithms
+
+```csharp
+// BAD: Manual hash computation (inconsistent, error-prone)
+public override int GetHashCode()
+{
+    unchecked
+    {
+        int hash = 17;
+        hash = hash * 31 + _field1;
+        hash = hash * 31 + _field2.GetHashCode();
+        return hash;
+    }
+}
+
+// BAD: System.HashCode (non-deterministic across processes)
+public override int GetHashCode()
+{
+    return HashCode.Combine(_field1, _field2);
+}
+
+// BAD: Inline string hashing (use HashCodeHelper instead)
+public override int GetHashCode()
+{
+    return Text != null ? StringComparer.Ordinal.GetHashCode(Text) : 0;
+}
+```
+
+### Location
+
+- [`DataStructs/HashCodeHelper.cs`](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/HashCodeHelper.cs) — Main helper class
+- `DeterministicHashBuilder` — Struct for incremental hash building
+- `TypeTraits<T>` — Cached type metadata for efficient hashing
+
+______________________________________________________________________
+
 ## Common Patterns in NovaSharp
 
 ### Module Resolution Results
@@ -299,13 +808,25 @@ ______________________________________________________________________
 
 Before submitting new types, verify:
 
+- [ ] **Using explicit types everywhere?** — Never use `var`
 - [ ] **Could this be a `readonly struct`?** (Small, immutable, value semantics)
 - [ ] **If struct, did you add `IEquatable<T>`, `Equals`, `GetHashCode`, `==`, `!=`?** (Required by CA1815)
+- [ ] **Using `HashCodeHelper` for `GetHashCode()`?** → Never use bespoke `hash * 31` patterns or `HashCode.Combine()`
 - [ ] **Does it contain Span<T>?** → Use `ref struct`
 - [ ] **Am I building strings?** → Use `ZStringBuilder.Create()`
-- [ ] **Am I allocating temporary arrays?** → Use `ArrayPool<T>` or `stackalloc`
+- [ ] **Am I allocating temporary arrays?** → Choose the right pool:
+  - Fixed exact size needed (reflection, VM frames)? → `DynValueArrayPool`/`ObjectArrayPool`
+  - Fixed size, hot path, reusable across calls? → `[ThreadStatic]` cached arrays
+  - Variable/dynamic sizes? → `ArrayPool<T>.Shared` (track actual usage separately)
+  - Small, known compile-time size? → `stackalloc`
+- [ ] **Am I creating complex state objects repeatedly?** → Consider `[ThreadStatic]` pooling with `Reset()`
+- [ ] **Am I sorting with a struct comparer?** → Use `IListSortExtensions.Sort<T, TComparer>()`
 - [ ] **Am I slicing strings?** → Use `ReadOnlySpan<char>` instead
 - [ ] **Am I passing structs to interface parameters?** → Avoid boxing
+- [ ] **Am I using closures/lambdas?** → Use static lambdas or explicit state passing
+- [ ] **Am I using LINQ?** → Replace with explicit loops in hot paths
+- [ ] **Am I computing the same values repeatedly?** → Pre-compute lookup tables
+- [ ] **Is this a frequently-allocated short-lived class?** → Consider converting to `readonly struct`
 - [ ] **Is this on a hot path?** → Benchmark before/after
 - [ ] **Using `string.GetHashCode()`?** → Use `GetHashCode(StringComparison.Ordinal)` (Required by CA1307)
 
@@ -315,4 +836,13 @@ ______________________________________________________________________
 
 - [docs/performance/optimization-opportunities.md](../../docs/performance/optimization-opportunities.md) — Detailed allocation analysis
 - [docs/performance/high-performance-libraries-research.md](../../docs/performance/high-performance-libraries-research.md) — Library research
+- [progress/session-075-kopilua-charptr-struct.md](../../progress/session-075-kopilua-charptr-struct.md) — CharPtr class→struct conversion (58-85% allocation reduction)
+- [progress/session-076-kopilua-phase3-optimization.md](../../progress/session-076-kopilua-phase3-optimization.md) — Thread-local caching, pre-computed tables
 - [DataStructs/ZStringBuilder.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/ZStringBuilder.cs) — ZString wrapper
+- [DataStructs/DynValueArrayPool.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/DynValueArrayPool.cs) — Fixed-size DynValue array pool
+- [DataStructs/ObjectArrayPool.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/ObjectArrayPool.cs) — Fixed-size object array pool (reflection)
+- [DataStructs/SystemArrayPool.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/SystemArrayPool.cs) — Variable-size array pool wrapper
+- [DataStructs/PooledResource.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/PooledResource.cs) — Disposable pool wrapper struct
+- [DataStructs/IListSortExtensions.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/IListSortExtensions.cs) — Boxing-free pdqsort for IList<T>
+- [DataStructs/HashCodeHelper.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/HashCodeHelper.cs) — Deterministic FNV-1a hash code composition
+- [LuaPort/KopiLuaStringLib.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/LuaPort/KopiLuaStringLib.cs) — Example: thread-local caching, struct conversion

@@ -8,7 +8,8 @@ ______________________________________________________________________
 
 - **Framework**: TUnit only (`global::TUnit.Core.Test`)
 - **Async assertions**: `await Assert.That(...).ConfigureAwait(false)`
-- **Method names**: PascalCase, no underscores
+- **Method names**: PascalCase, **NO underscores** — `FeatureWorksCorrectly` not `Feature_Works_Correctly`
+- **Explicit types**: Never use `var` — always declare types explicitly
 
 ______________________________________________________________________
 

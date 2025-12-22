@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -39,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             DynValue meta = executionContext.GetMetamethodTailCall(
                 table,
-                "__ipairs",
+                Metamethods.IPairs,
                 args.GetArray()
             );
 
@@ -72,7 +73,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             DynValue meta = executionContext.GetMetamethodTailCall(
                 table,
-                "__pairs",
+                Metamethods.Pairs,
                 args.GetArray()
             );
 

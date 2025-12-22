@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -223,7 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             DynValue v = args[0];
-            DynValue tail = executionContext.GetMetamethodTailCall(v, "__tostring", v);
+            DynValue tail = executionContext.GetMetamethodTailCall(v, Metamethods.ToStringMeta, v);
 
             if (tail == null || tail.IsNil())
             {
@@ -234,7 +235,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             tail.TailCallData.Continuation = new CallbackFunction(
                 ToStringContinuation,
-                "__tostring"
+                Metamethods.ToStringMeta
             );
 
             return tail;
@@ -520,6 +521,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int GetDigitValue(char candidate)
         {
             if (candidate >= '0' && candidate <= '9')
@@ -922,11 +924,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsHexDigit(char c)
         {
             return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int HexDigitToValue(char c)
         {
             if (c >= '0' && c <= '9')
@@ -1247,7 +1251,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     // of the running thread. We approximate this by setting _G on the script.
                     // This is a simplified implementation - full thread support would require more infrastructure.
                     executionContext.Script.Globals.MetaTable = newEnv.MetaTable;
-                    foreach (TablePair pair in newEnv.Pairs)
+                    foreach (TablePair pair in newEnv.GetPairsEnumerator())
                     {
                         executionContext.Script.Globals.Set(pair.Key, pair.Value);
                     }

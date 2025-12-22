@@ -342,11 +342,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
         {
             Lexer l = new(0, json, false);
 
-            if (l.Current.Type == TokenType.BrkOpenCurly)
+            if (l.Current.type == TokenType.BrkOpenCurly)
             {
                 return ParseJsonObject(l, script);
             }
-            else if (l.Current.Type == TokenType.BrkOpenSquare)
+            else if (l.Current.type == TokenType.BrkOpenSquare)
             {
                 return ParseJsonArray(l, script);
             }
@@ -355,19 +355,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
                 throw new SyntaxErrorException(
                     l.Current,
                     "Unexpected token : '{0}'",
-                    l.Current.Text
+                    l.Current.text
                 );
             }
         }
 
         private static void AssertToken(Lexer l, TokenType type)
         {
-            if (l.Current.Type != type)
+            if (l.Current.type != type)
             {
                 throw new SyntaxErrorException(
                     l.Current,
                     "Unexpected token : '{0}'",
-                    l.Current.Text
+                    l.Current.text
                 );
             }
         }
@@ -378,13 +378,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
 
             l.Next();
 
-            while (l.Current.Type != TokenType.BrkCloseSquare)
+            while (l.Current.type != TokenType.BrkCloseSquare)
             {
                 DynValue v = ParseJsonValue(l, script);
                 t.Append(v);
                 l.Next();
 
-                if (l.Current.Type == TokenType.Comma)
+                if (l.Current.type == TokenType.Comma)
                 {
                     l.Next();
                 }
@@ -399,10 +399,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
 
             l.Next();
 
-            while (l.Current.Type != TokenType.BrkCloseCurly)
+            while (l.Current.type != TokenType.BrkCloseCurly)
             {
                 AssertToken(l, TokenType.String);
-                string key = l.Current.Text;
+                string key = l.Current.text;
                 l.Next();
                 AssertToken(l, TokenType.Colon);
                 l.Next();
@@ -410,7 +410,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
                 t.Set(key, v);
                 l.Next();
 
-                if (l.Current.Type == TokenType.Comma)
+                if (l.Current.type == TokenType.Comma)
                 {
                     l.Next();
                 }
@@ -421,33 +421,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
 
         private static DynValue ParseJsonValue(Lexer l, Script script)
         {
-            if (l.Current.Type == TokenType.BrkOpenCurly)
+            if (l.Current.type == TokenType.BrkOpenCurly)
             {
                 Table t = ParseJsonObject(l, script);
                 return DynValue.NewTable(t);
             }
-            else if (l.Current.Type == TokenType.BrkOpenSquare)
+            else if (l.Current.type == TokenType.BrkOpenSquare)
             {
                 Table t = ParseJsonArray(l, script);
                 return DynValue.NewTable(t);
             }
-            else if (l.Current.Type == TokenType.String)
+            else if (l.Current.type == TokenType.String)
             {
-                return DynValue.NewString(l.Current.Text);
+                return DynValue.NewString(l.Current.text);
             }
-            else if (l.Current.Type == TokenType.Number || l.Current.Type == TokenType.OpMinusOrSub)
+            else if (l.Current.type == TokenType.Number || l.Current.type == TokenType.OpMinusOrSub)
             {
                 return ParseJsonNumberValue(l, script);
             }
-            else if (l.Current.Type == TokenType.True)
+            else if (l.Current.type == TokenType.True)
             {
                 return DynValue.True;
             }
-            else if (l.Current.Type == TokenType.False)
+            else if (l.Current.type == TokenType.False)
             {
                 return DynValue.False;
             }
-            else if (l.Current.Type == TokenType.Name && l.Current.Text == "null")
+            else if (l.Current.type == TokenType.Name && l.Current.text == "null")
             {
                 return JsonNull.Create();
             }
@@ -456,7 +456,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
                 throw new SyntaxErrorException(
                     l.Current,
                     "Unexpected token : '{0}'",
-                    l.Current.Text
+                    l.Current.text
                 );
             }
         }
@@ -464,7 +464,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
         private static DynValue ParseJsonNumberValue(Lexer l, Script script)
         {
             bool negative;
-            if (l.Current.Type == TokenType.OpMinusOrSub)
+            if (l.Current.type == TokenType.OpMinusOrSub)
             {
                 // Negative number consists of 2 tokens.
                 l.Next();
@@ -474,12 +474,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
             {
                 negative = false;
             }
-            if (l.Current.Type != TokenType.Number)
+            if (l.Current.type != TokenType.Number)
             {
                 throw new SyntaxErrorException(
                     l.Current,
                     "Unexpected token : '{0}'",
-                    l.Current.Text
+                    l.Current.text
                 );
             }
             double numberValue = l.Current.GetNumberValue();

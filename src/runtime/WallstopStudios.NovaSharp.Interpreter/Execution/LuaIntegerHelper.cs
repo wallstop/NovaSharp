@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using System.Globalization;
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -18,6 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// to 2^63, which is actually out of range. Without this, values like 2^63 would pass the
         /// range check but produce undefined behavior when cast to long.
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryGetInteger(double number, out long value)
         {
             if (double.IsNaN(number) || double.IsInfinity(number))
@@ -92,6 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <summary>
         /// Performs a Lua-style left shift, clamping large shifts to zero.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long ShiftLeft(long value, long shift)
         {
             if (shift < 0)
@@ -114,6 +117,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// Per Lua 5.3/5.4 specification (§3.4.2), right shifts are logical (unsigned),
         /// not arithmetic. Shifts by >= 64 bits always return 0.
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static long ShiftRight(long value, long shift)
         {
             if (shift < 0)

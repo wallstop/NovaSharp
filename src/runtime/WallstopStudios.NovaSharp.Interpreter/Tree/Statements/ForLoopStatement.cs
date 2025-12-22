@@ -46,7 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             CheckTokenType(lcontext, TokenType.Comma);
             _end = Expression.Expr(lcontext);
 
-            if (lcontext.Lexer.Current.Type == TokenType.Comma)
+            if (lcontext.Lexer.Current.type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 _step = Expression.Expr(lcontext);
@@ -57,7 +57,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             }
 
             lcontext.Scope.PushBlock();
-            _varName = lcontext.Scope.DefineLocal(nameToken.Text);
+            _varName = lcontext.Scope.DefineLocal(nameToken.text);
             _refFor = forToken.GetSourceRef(CheckTokenType(lcontext, TokenType.Do));
             _innerBlock = new CompositeStatement(lcontext);
             _refEnd = CheckTokenType(lcontext, TokenType.End).GetSourceRef();

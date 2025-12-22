@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -356,6 +357,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </summary>
         /// <param name="exactName">Name of the member.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasMember(string exactName)
         {
             return _members.ContainsKey(exactName);
@@ -366,6 +368,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </summary>
         /// <param name="exactName">Name of the meta-member.</param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasMetaMember(string exactName)
         {
             return _metaMembers.ContainsKey(exactName);
@@ -737,31 +740,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 
             switch (metaname)
             {
-                case "__add":
+                case Metamethods.Add:
                     return DispatchMetaOnMethod(script, obj, "op_Addition");
-                case "__sub":
+                case Metamethods.Sub:
                     return DispatchMetaOnMethod(script, obj, "op_Subtraction");
-                case "__mul":
+                case Metamethods.Mul:
                     return DispatchMetaOnMethod(script, obj, "op_Multiply");
-                case "__div":
+                case Metamethods.Div:
                     return DispatchMetaOnMethod(script, obj, "op_Division");
-                case "__mod":
+                case Metamethods.Mod:
                     return DispatchMetaOnMethod(script, obj, "op_Modulus");
-                case "__unm":
+                case Metamethods.Unm:
                     return DispatchMetaOnMethod(script, obj, "op_UnaryNegation");
-                case "__eq":
+                case Metamethods.Eq:
                     return MultiDispatchEqual(script, obj);
-                case "__lt":
+                case Metamethods.Lt:
                     return MultiDispatchLessThan(script, obj);
-                case "__le":
+                case Metamethods.Le:
                     return MultiDispatchLessThanOrEqual(script, obj);
-                case "__len":
+                case Metamethods.Len:
                     return TryDispatchLength(script, obj);
-                case "__tonumber":
+                case Metamethods.ToNumber:
                     return TryDispatchToNumber(script, obj);
-                case "__tobool":
+                case Metamethods.ToBool:
                     return TryDispatchToBool(script, obj);
-                case "__iterator":
+                case Metamethods.Iterator:
                     return ClrToScriptConversions.EnumerationToDynValue(script, obj);
                 default:
                     return null;

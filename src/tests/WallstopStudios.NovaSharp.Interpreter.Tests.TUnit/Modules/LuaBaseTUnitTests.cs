@@ -365,7 +365,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             CharPtr memSource = new("hello");
             CharPtr firstL = LuaBaseProxy.MemoryCharacter(memSource, 'l', 5);
             await Assert.That(firstL.ToString()).IsEqualTo("llo");
-            await Assert.That(LuaBaseProxy.MemoryCharacter(memSource, 'z', 5)).IsNull();
+            await Assert.That(LuaBaseProxy.MemoryCharacter(memSource, 'z', 5).IsNull).IsTrue();
 
             CharPtr strpbrk = LuaBaseProxy.StringBreak(new CharPtr("abcdef"), new CharPtr("xyde"));
             await Assert.That(strpbrk.ToString()).IsEqualTo("def");
@@ -398,7 +398,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             CharPtr str = new("foobar");
             await Assert.That(LuaBaseProxy.StringChar(str, 'b').ToString()).IsEqualTo("bar");
-            await Assert.That(LuaBaseProxy.StringChar(str, 'z')).IsNull();
+            await Assert.That(LuaBaseProxy.StringChar(str, 'z').IsNull).IsTrue();
 
             char[] copyDestination = new char[10];
             CharPtr destinationPtr = new(copyDestination);

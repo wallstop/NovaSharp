@@ -1142,9 +1142,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.Void:
                     return "void";
                 case DataType.Nil:
-                    return "nil";
+                    return LuaKeywords.Nil;
                 case DataType.Boolean:
-                    return Boolean ? "true" : "false";
+                    return Boolean ? LuaKeywords.True : LuaKeywords.False;
                 case DataType.Number:
                     return Number.ToString(CultureInfo.InvariantCulture);
                 case DataType.String:

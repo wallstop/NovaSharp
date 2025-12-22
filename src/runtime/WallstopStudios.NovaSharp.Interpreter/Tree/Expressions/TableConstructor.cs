@@ -23,15 +23,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             // here lexer is at the '{', go on
             CheckTokenType(lcontext, TokenType.BrkOpenCurly, TokenType.BrkOpenCurlyShared);
 
-            while (lcontext.Lexer.Current.Type != TokenType.BrkCloseCurly)
+            while (lcontext.Lexer.Current.type != TokenType.BrkCloseCurly)
             {
-                switch (lcontext.Lexer.Current.Type)
+                switch (lcontext.Lexer.Current.type)
                 {
                     case TokenType.Name:
                         {
                             Token assign = lcontext.Lexer.PeekNext();
 
-                            if (assign.Type == TokenType.OpAssignment)
+                            if (assign.type == TokenType.OpAssignment)
                             {
                                 StructField(lcontext);
                             }
@@ -51,7 +51,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
                 Token curr = lcontext.Lexer.Current;
 
-                if (curr.Type == TokenType.Comma || curr.Type == TokenType.SemiColon)
+                if (curr.type == TokenType.Comma || curr.type == TokenType.SemiColon)
                 {
                     lcontext.Lexer.Next();
                 }
@@ -83,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         {
             Expression key = new LiteralExpression(
                 lcontext,
-                DynValue.NewString(lcontext.Lexer.Current.Text)
+                DynValue.NewString(lcontext.Lexer.Current.text)
             );
             lcontext.Lexer.Next();
 

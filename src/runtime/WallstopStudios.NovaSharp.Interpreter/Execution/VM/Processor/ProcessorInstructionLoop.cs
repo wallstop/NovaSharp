@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -580,6 +581,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             slot.Assign(value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsSymbolToBeClosed(CallStackItem stackframe, int index)
         {
             return stackframe.ToBeClosedIndices != null
@@ -629,6 +631,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             ClearBlockData(i);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool ShouldIgnoreToBeClosedValue(DynValue value)
         {
             return value == null
@@ -645,7 +648,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            DynValue metamethod = GetMetamethodRaw(candidate, "__close");
+            DynValue metamethod = GetMetamethodRaw(candidate, Metamethods.Close);
 
             if (metamethod == null || metamethod.IsNil())
             {
@@ -662,7 +665,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            DynValue metamethod = GetMetamethodRaw(scalar, "__close");
+            DynValue metamethod = GetMetamethodRaw(scalar, Metamethods.Close);
 
             if (metamethod == null || metamethod.IsNil())
             {
@@ -777,6 +780,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             v.Assign(value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ExecSwap(Instruction i)
         {
             DynValue v1 = _valueStack.Peek(i.NumVal);
@@ -786,6 +790,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _valueStack.Set(i.NumVal2, v1);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private DynValue GetStoreValue(Instruction i)
         {
             int stackofs = i.NumVal;
@@ -818,6 +823,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private DynValue GetUpValueSymbol(SymbolRef s)
         {
             if (s.Type == SymbolRefType.Local)
@@ -901,7 +907,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (f.Type != DataType.Function && f.Type != DataType.ClrFunction)
             {
-                DynValue meta = GetMetamethod(f, "__iterator");
+                DynValue meta = GetMetamethod(f, Metamethods.Iterator);
 
                 if (meta != null && !meta.IsNil())
                 {
@@ -923,7 +929,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else if (f.Type == DataType.Table)
                 {
-                    DynValue callmeta = GetMetamethod(f, "__call");
+                    DynValue callmeta = GetMetamethod(f, Metamethods.Call);
 
                     if (callmeta == null || callmeta.IsNil())
                     {
@@ -1049,6 +1055,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ExecNot(Instruction i)
         {
             DynValue v = _valueStack.Pop().ToScalar();
@@ -1126,6 +1133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private CallStackItem PopToBasePointer()
         {
             CallStackItem csi = _executionStack.Pop();
@@ -1137,6 +1145,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return csi;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int PopExecStackAndCheckVStack(int vstackguard)
         {
             CallStackItem xs = _executionStack.Pop();
@@ -1342,7 +1351,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             // fallback to __call metamethod
-            DynValue m = GetMetamethod(fn, "__call");
+            DynValue m = GetMetamethod(fn, Metamethods.Call);
 
             if (m != null && m.IsNotNil())
             {
@@ -1484,6 +1493,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return instructionPtr;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int JumpBool(Instruction i, bool expectedValueForJump, int instructionPtr)
         {
             DynValue op = _valueStack.Pop().ToScalar();
@@ -1528,7 +1538,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__add", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Add, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1555,7 +1565,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__sub", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Sub, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1582,7 +1592,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__mul", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Mul, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1613,7 +1623,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__mod", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Mod, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1641,7 +1651,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__div", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Div, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1671,7 +1681,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__idiv", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.IDiv, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1699,7 +1709,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__pow", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Pow, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1715,21 +1725,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
-            return ExecBitwiseBinary(l, r, "__band", (x, y) => x & y, instructionPtr);
+            return ExecBitwiseBinary(l, r, Metamethods.Band, (x, y) => x & y, instructionPtr);
         }
 
         private int ExecBitOr(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
-            return ExecBitwiseBinary(l, r, "__bor", (x, y) => x | y, instructionPtr);
+            return ExecBitwiseBinary(l, r, Metamethods.Bor, (x, y) => x | y, instructionPtr);
         }
 
         private int ExecBitXor(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
-            return ExecBitwiseBinary(l, r, "__bxor", (x, y) => x ^ y, instructionPtr);
+            return ExecBitwiseBinary(l, r, Metamethods.Bxor, (x, y) => x ^ y, instructionPtr);
         }
 
         private int ExecShiftLeft(Instruction i, int instructionPtr)
@@ -1739,7 +1749,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return ExecBitwiseBinary(
                 l,
                 r,
-                "__shl",
+                Metamethods.Shl,
                 (x, y) => LuaIntegerHelper.ShiftLeft(x, y),
                 instructionPtr
             );
@@ -1752,7 +1762,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return ExecBitwiseBinary(
                 l,
                 r,
-                "__shr",
+                Metamethods.Shr,
                 (x, y) => LuaIntegerHelper.ShiftRight(x, y),
                 instructionPtr
             );
@@ -1768,7 +1778,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return instructionPtr;
             }
 
-            int ip = InternalInvokeUnaryMetaMethod(value, "__bnot", instructionPtr);
+            int ip = InternalInvokeUnaryMetaMethod(value, Metamethods.Bnot, instructionPtr);
             if (ip >= 0)
             {
                 return ip;
@@ -1816,7 +1826,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeUnaryMetaMethod(r, "__unm", instructionPtr);
+                int ip = InternalInvokeUnaryMetaMethod(r, Metamethods.Unm, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1843,7 +1853,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // then if they are userdatas, attempt meta
             if (l.Type == DataType.UserData || r.Type == DataType.UserData)
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__eq", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Eq, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1875,7 +1885,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 && (GetMetatable(l) == GetMetatable(r))
             )
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__eq", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Eq, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1904,7 +1914,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__lt", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Lt, instructionPtr);
                 if (ip < 0)
                 {
                     throw ScriptRuntimeException.CompareInvalidType(l, r);
@@ -1942,7 +1952,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 int ip = InternalInvokeBinaryMetaMethod(
                     l,
                     r,
-                    "__le",
+                    Metamethods.Le,
                     instructionPtr,
                     DynValue.False
                 );
@@ -1963,7 +1973,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         ip = InternalInvokeBinaryMetaMethod(
                             r,
                             l,
-                            "__lt",
+                            Metamethods.Lt,
                             instructionPtr,
                             DynValue.True
                         );
@@ -1997,7 +2007,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeUnaryMetaMethod(r, "__len", instructionPtr);
+                int ip = InternalInvokeUnaryMetaMethod(r, Metamethods.Len, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -2030,7 +2040,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__concat", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Concat, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -2100,7 +2110,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         }
                     }
 
-                    h = GetMetamethodRaw(obj, "__newindex");
+                    h = GetMetamethodRaw(obj, Metamethods.NewIndex);
 
                     if (h == null || h.IsNil())
                     {
@@ -2139,7 +2149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else
                 {
-                    h = GetMetamethodRaw(obj, "__newindex");
+                    h = GetMetamethodRaw(obj, Metamethods.NewIndex);
 
                     if (h == null || h.IsNil())
                     {
@@ -2206,7 +2216,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         }
                     }
 
-                    h = GetMetamethodRaw(obj, "__index");
+                    h = GetMetamethodRaw(obj, Metamethods.Index);
 
                     if (h == null || h.IsNil())
                     {
@@ -2245,7 +2255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else
                 {
-                    h = GetMetamethodRaw(obj, "__index");
+                    h = GetMetamethodRaw(obj, Metamethods.Index);
 
                     if (h == null || h.IsNil())
                     {

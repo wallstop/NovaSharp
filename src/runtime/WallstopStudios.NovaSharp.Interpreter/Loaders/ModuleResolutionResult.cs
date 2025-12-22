@@ -80,19 +80,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Loaders
         /// <inheritdoc />
         public override int GetHashCode()
         {
-            unchecked
-            {
-                int hash = 17;
-                hash =
-                    hash * 31
-                    + (
-                        ResolvedPath != null
-                            ? ResolvedPath.GetHashCode(StringComparison.Ordinal)
-                            : 0
-                    );
-                hash = hash * 31 + (SearchedPaths != null ? SearchedPaths.GetHashCode() : 0);
-                return hash;
-            }
+            return DataStructs.HashCodeHelper.HashCode(ResolvedPath, SearchedPaths);
         }
 
         /// <summary>

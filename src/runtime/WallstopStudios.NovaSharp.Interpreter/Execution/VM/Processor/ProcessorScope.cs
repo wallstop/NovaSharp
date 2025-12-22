@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -55,7 +56,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     )
                     {
                         List<SymbolRef> list = stackframe.BlocksToClose[listIndex];
-                        int foundIndex = list.FindIndex(s => s.IndexValue == sym.IndexValue);
+                        int foundIndex = -1;
+                        for (int i = 0; i < list.Count; i++)
+                        {
+                            if (list[i].IndexValue == sym.IndexValue)
+                            {
+                                foundIndex = i;
+                                break;
+                            }
+                        }
+
                         if (foundIndex >= 0)
                         {
                             list.RemoveAt(foundIndex);
@@ -102,6 +112,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static DynValue GetGlobalSymbol(DynValue dynValue, string name)
         {
             if (dynValue.Type != DataType.Table)
@@ -112,6 +123,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return dynValue.Table.Get(name);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void SetGlobalSymbol(DynValue dynValue, string name, DynValue value)
         {
             if (dynValue.Type != DataType.Table)
