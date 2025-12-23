@@ -58,7 +58,7 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 **Status**: Phases 1-2 (Metamethods + Keywords) complete. Incremental enforcement during code changes.
 
 **Completed**:
-- ✅ **Phase 1: Metamethods** — Created `Metamethods` static class with 25 `const string` fields.
+- ✅ **Phase 1: Metamethods** — Created `Metamethods` static class with 25 `const string` fields. See [progress/session-085-magic-string-consolidation.md](progress/session-085-magic-string-consolidation.md).
 - ✅ **Phase 2: Lua Keywords** — Created `LuaKeywords` static class with 22 `const string` fields. Pre-interned in `LuaStringPool`.
 
 **Remaining Areas to Consolidate** (Lower Priority):
@@ -87,7 +87,7 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 - 🔲 **Phase 4**: String and pattern matching optimizations
 - 🔲 **Phase 5**: Benchmark validation and documentation
 
-See local progress reports: session-086 (script compilation cache), session-087 (VM execution pooling), session-088 (lazy line splitting), session-092 (ipairs metamethod parity).
+See progress reports: [session-086](progress/session-086-script-compilation-cache.md), [session-087](progress/session-087-vm-execution-pooling-phase2.md), [session-088](progress/session-088-lazy-line-splitting.md), [session-092](progress/session-092-ipairs-metamethod-parity.md).
 
 ---
 
@@ -466,18 +466,18 @@ The following initiatives have been fully completed and their detailed documenta
 | Initiative | Description | Completed | Progress Report |
 |------------|-------------|-----------|-----------------|
 | **9** | Version-Aware Lua Standard Library Parity | 2025-12-22 | Multiple sessions |
-| **10** | KopiLua Performance Hyper-Optimization | 2025-12-21 | session-074 - session-076 |
-| **11** | Comprehensive Helper Performance Audit | 2025-12-22 | session-079 - session-082 |
-| **12** | Deep Codebase Allocation Analysis | 2025-12-22 | session-083 |
-| **14** | SystemArrayPool Abstraction | 2025-12-21 | session-063 |
-| **15** | Boxing-Free IList Sort Extensions | 2025-12-21 | session-066 |
-| **16** | Boxing-Free pdqsort Integration | 2025-12-21 | session-067 |
-| **17** | Metamethod Enum Optimization | ❌ Closed | session-069 (Not beneficial) |
-| **18** | Large Script Load/Compile Memory | 2025-12-22 | session-070 - session-084 |
-| **19** | HashCodeHelper Migration | 2025-12-21 | session-072 |
-| **20** | NLua Architecture Investigation | 2025-12-21 | session-077 |
-| **22** | ZString Migration | 2025-12-22 | session-089 |
-| **23** | Span-Based Array Operation Migration | 2025-12-22 | session-090 |
+| **10** | KopiLua Performance Hyper-Optimization | 2025-12-21 | [session-074](progress/session-074-kopilua-optimization-phase1.md) - [session-076](progress/session-076-kopilua-phase3-optimization.md) |
+| **11** | Comprehensive Helper Performance Audit | 2025-12-22 | [session-079](progress/session-079-helper-performance-audit.md) - [session-082](progress/session-082-helper-performance-audit-phase4.md) |
+| **12** | Deep Codebase Allocation Analysis | 2025-12-22 | [session-083](progress/session-083-initiative12-phase5-validation.md) |
+| **14** | SystemArrayPool Abstraction | 2025-12-21 | [session-063](progress/session-063-system-array-pool-abstraction.md) |
+| **15** | Boxing-Free IList Sort Extensions | 2025-12-21 | [session-066](progress/session-066-pdqsort-implementation.md) |
+| **16** | Boxing-Free pdqsort Integration | 2025-12-21 | [session-067](progress/session-067-pdqsort-integration.md) |
+| **17** | Metamethod Enum Optimization | ❌ Closed | [session-069](progress/session-069-metamethod-enum-investigation.md) (Not beneficial) |
+| **18** | Large Script Load/Compile Memory | 2025-12-22 | [session-070](progress/session-070-compiler-memory-investigation.md) - [session-084](progress/session-084-initiative18-phase3-investigation.md) |
+| **19** | HashCodeHelper Migration | 2025-12-21 | [session-072](progress/session-072-hashcode-helper-migration.md) |
+| **20** | NLua Architecture Investigation | 2025-12-21 | [session-077](progress/session-077-nlua-investigation.md) |
+| **22** | ZString Migration | 2025-12-22 | [session-089](progress/session-089-zstring-migration-complete.md) |
+| **23** | Span-Based Array Operation Migration | 2025-12-22 | [session-090](progress/session-090-span-array-migration-phase1.md) |
 
 ---
 
