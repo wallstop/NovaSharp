@@ -419,7 +419,24 @@ jobs:
       - name: Install Lua ${{ matrix.lua-version }}
         run: |
           sudo apt-get update
-          sudo apt-get install -y lua${{ matrix.lua-version }}
+          if apt-cache show "lua${{ matrix.lua-version }}" > /dev/null 2>&1; then
+            sudo apt-get install -y lua${{ matrix.lua-version }}
+          else
+            echo "lua${{ matrix.lua-version }} not in apt, building from source..."
+            sudo apt-get install -y build-essential libreadline-dev
+            LUA_VERSION="${{ matrix.lua-version }}"
+            # Determine the full version (latest patch release)
+            case "$LUA_VERSION" in
+              5.5) FULL_VERSION="5.5.0" ;;
+              *) echo "Unknown version $LUA_VERSION"; exit 1 ;;
+            esac
+            curl -fsSL "https://www.lua.org/ftp/lua-${FULL_VERSION}.tar.gz" | tar xz
+            cd "lua-${FULL_VERSION}"
+            make linux
+            sudo make install INSTALL_TOP=/usr/local
+            sudo ln -sf /usr/local/bin/lua /usr/local/bin/lua${LUA_VERSION}
+            echo "/usr/local/bin" >> $GITHUB_PATH
+          fi
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
