@@ -1101,6 +1101,327 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
         /* valid flags in a format specification */
         public const string FLAGS = "-+ #0";
 
+        /// <summary>
+        /// Formats a double as a hexadecimal floating-point string per Lua's %a/%A specifier.
+        /// Format: [-]0xh.hhhhp±d where h.hhhh is the significand in hexadecimal
+        /// and p±d is the exponent as a signed decimal.
+        /// </summary>
+        /// <param name="value">The double value to format.</param>
+        /// <param name="precision">The number of hex digits after the decimal point (-1 for default).</param>
+        /// <param name="uppercase">True for %A (uppercase hex), false for %a (lowercase).</param>
+        /// <param name="flags">Format flags parsed from the format string.</param>
+        /// <param name="width">Minimum field width (-1 if not specified).</param>
+        /// <returns>The formatted hex float string.</returns>
+        private static string FormatHexFloat(
+            double value,
+            int precision,
+            bool uppercase,
+            string flags,
+            int width
+        )
+        {
+            // Handle special cases first
+            if (double.IsNaN(value))
+            {
+                string nanStr = uppercase ? "-NAN" : "-nan";
+                return ApplyFieldWidth(nanStr, width, flags);
+            }
+
+            if (double.IsPositiveInfinity(value))
+            {
+                string infStr = uppercase ? "INF" : "inf";
+                string prefix = GetSignPrefix(false, flags);
+                return ApplyFieldWidth(prefix + infStr, width, flags);
+            }
+
+            if (double.IsNegativeInfinity(value))
+            {
+                string infStr = uppercase ? "-INF" : "-inf";
+                return ApplyFieldWidth(infStr, width, flags);
+            }
+
+            bool negative = value < 0 || (value == 0 && double.IsNegativeInfinity(1.0 / value));
+            double absValue = Math.Abs(value);
+
+            // Handle zero specially
+            if (absValue == 0)
+            {
+                string zeroResult = FormatHexFloatZero(negative, precision, uppercase, flags);
+                return ApplyFieldWidth(zeroResult, width, flags);
+            }
+
+            // Extract mantissa and exponent using IEEE 754 representation
+            long bits = BitConverter.DoubleToInt64Bits(absValue);
+            int rawExponent = (int)((bits >> 52) & 0x7FF);
+            long mantissa = bits & 0xFFFFFFFFFFFFF; // 52-bit mantissa
+
+            int exponent;
+            long significand;
+
+            if (rawExponent == 0)
+            {
+                // Denormalized number: implicit leading bit is 0
+                // Find the actual exponent by normalizing
+                exponent = -1022;
+                significand = mantissa;
+
+                // Normalize the significand
+                while ((significand & (1L << 52)) == 0 && significand != 0)
+                {
+                    significand <<= 1;
+                    exponent--;
+                }
+            }
+            else
+            {
+                // Normalized number: implicit leading bit is 1
+                exponent = rawExponent - 1023;
+                significand = mantissa | (1L << 52); // Add implicit leading 1
+            }
+
+            // Build the result
+            string hexChars = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
+            string expChar = uppercase ? "P" : "p";
+            string hexPrefix = uppercase ? "0X" : "0x";
+
+            // The significand has 53 bits (52 mantissa + 1 implicit)
+            // We output it as 1.xxxxx where xxxxx is the fractional part in hex
+            // The high nibble of the integral part is always 1 for normalized numbers
+
+            // Get the integer part (always 1 for normalized, 0 for denormalized with leading zeros)
+            int intPart;
+            long fracBits;
+
+            if (rawExponent == 0 && mantissa != 0)
+            {
+                // Denormalized: find the leading 1 bit
+                intPart = 0;
+                fracBits = mantissa;
+
+                // Shift until we have a leading 1
+                int shift = 0;
+                while ((fracBits & (1L << 51)) == 0 && fracBits != 0)
+                {
+                    fracBits <<= 1;
+                    shift++;
+                }
+
+                if (fracBits != 0)
+                {
+                    intPart = 1;
+                    fracBits = (fracBits << 1) & 0xFFFFFFFFFFFFF; // Remove the leading 1
+                    exponent = -1022 - shift - 1;
+                }
+            }
+            else
+            {
+                intPart = 1;
+                fracBits = mantissa;
+            }
+
+            // Build the fractional hex digits (13 hex digits = 52 bits)
+            char[] fracDigits = new char[13];
+            long tempFrac = fracBits;
+            for (int i = 0; i < 13; i++)
+            {
+                int nibble = (int)((tempFrac >> (48 - i * 4)) & 0xF);
+                fracDigits[i] = hexChars[nibble];
+            }
+
+            // Apply precision
+            string fracPart;
+            if (precision < 0)
+            {
+                // Default: strip trailing zeros
+                int lastNonZero = 12;
+                while (lastNonZero >= 0 && fracDigits[lastNonZero] == '0')
+                {
+                    lastNonZero--;
+                }
+
+                fracPart = lastNonZero >= 0 ? new string(fracDigits, 0, lastNonZero + 1) : "";
+            }
+            else if (precision == 0)
+            {
+                fracPart = "";
+            }
+            else
+            {
+                // Round and truncate to specified precision
+                if (precision < 13)
+                {
+                    // Check if we need to round
+                    int nextNibble = (int)((fracBits >> (48 - precision * 4)) & 0xF);
+                    bool roundUp = nextNibble >= 8;
+
+                    if (roundUp)
+                    {
+                        // Perform rounding by adding 1 to the last digit we keep
+                        long roundMask = 1L << (52 - precision * 4);
+                        fracBits += roundMask;
+
+                        // Check for overflow into integer part
+                        if ((fracBits & (1L << 52)) != 0)
+                        {
+                            intPart++;
+                            fracBits &= 0xFFFFFFFFFFFFF;
+                            if (intPart > 1)
+                            {
+                                intPart = 1;
+                                exponent++;
+                            }
+                        }
+
+                        // Recalculate fractional digits
+                        tempFrac = fracBits;
+                        for (int i = 0; i < precision; i++)
+                        {
+                            int nibble = (int)((tempFrac >> (48 - i * 4)) & 0xF);
+                            fracDigits[i] = hexChars[nibble];
+                        }
+                    }
+
+                    fracPart = new string(fracDigits, 0, precision);
+                }
+                else
+                {
+                    // Pad with zeros if precision > 13
+                    fracPart = new string(fracDigits) + new string('0', precision - 13);
+                }
+            }
+
+            // Check for '#' flag (alternate form) - always include decimal point
+            bool alternateForm = flags.Contains('#', StringComparison.Ordinal);
+
+            string signStr = negative ? "-" : GetSignPrefix(false, flags);
+            string intStr = hexChars[intPart].ToString();
+            string expSign = exponent >= 0 ? "+" : "";
+            string expStr = exponent.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            string result;
+            if (string.IsNullOrEmpty(fracPart) && !alternateForm)
+            {
+                result = signStr + hexPrefix + intStr + expChar + expSign + expStr;
+            }
+            else
+            {
+                result = signStr + hexPrefix + intStr + "." + fracPart + expChar + expSign + expStr;
+            }
+
+            return ApplyFieldWidth(result, width, flags);
+        }
+
+        /// <summary>
+        /// Formats a zero value in hex float format.
+        /// </summary>
+        private static string FormatHexFloatZero(
+            bool negative,
+            int precision,
+            bool uppercase,
+            string flags
+        )
+        {
+            string hexPrefix = uppercase ? "0X" : "0x";
+            string expChar = uppercase ? "P" : "p";
+            string signStr = negative ? "-" : GetSignPrefix(false, flags);
+            bool alternateForm = flags.Contains('#', StringComparison.Ordinal);
+
+            string fracPart;
+            if (precision < 0)
+            {
+                fracPart = "";
+            }
+            else if (precision == 0)
+            {
+                fracPart = "";
+            }
+            else
+            {
+                fracPart = new string('0', precision);
+            }
+
+            if (string.IsNullOrEmpty(fracPart) && !alternateForm)
+            {
+                return signStr + hexPrefix + "0" + expChar + "+0";
+            }
+            else
+            {
+                return signStr + hexPrefix + "0." + fracPart + expChar + "+0";
+            }
+        }
+
+        /// <summary>
+        /// Gets the sign prefix based on flags ('+' or ' ' for positive numbers).
+        /// </summary>
+        private static string GetSignPrefix(bool negative, string flags)
+        {
+            if (negative)
+            {
+                return "-";
+            }
+
+            if (flags.Contains('+', StringComparison.Ordinal))
+            {
+                return "+";
+            }
+
+            if (flags.Contains(' ', StringComparison.Ordinal))
+            {
+                return " ";
+            }
+
+            return "";
+        }
+
+        /// <summary>
+        /// Applies field width to a formatted string with padding.
+        /// </summary>
+        private static string ApplyFieldWidth(string value, int width, string flags)
+        {
+            if (width <= 0 || value.Length >= width)
+            {
+                return value;
+            }
+
+            bool leftAlign = flags.Contains('-', StringComparison.Ordinal);
+            bool zeroPad = flags.Contains('0', StringComparison.Ordinal) && !leftAlign;
+
+            int padCount = width - value.Length;
+
+            if (leftAlign)
+            {
+                return value + new string(' ', padCount);
+            }
+
+            if (zeroPad)
+            {
+                // For zero padding, we need to insert zeros after the sign and 0x prefix
+                int insertPos = 0;
+
+                // Skip sign
+                if (value.Length > 0 && (value[0] == '-' || value[0] == '+' || value[0] == ' '))
+                {
+                    insertPos = 1;
+                }
+
+                // Skip 0x/0X prefix
+                if (
+                    value.Length > insertPos + 1
+                    && value[insertPos] == '0'
+                    && (value[insertPos + 1] == 'x' || value[insertPos + 1] == 'X')
+                )
+                {
+                    insertPos += 2;
+                }
+
+                return value.Substring(0, insertPos)
+                    + new string('0', padCount)
+                    + value.Substring(insertPos);
+            }
+
+            return new string(' ', padCount) + value;
+        }
+
         /*
         ** maximum size of each format specification (such as '%-099.99d')
         ** (+10 accounts for %99.99x plus margin of error)
@@ -1372,6 +1693,94 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         case 'G':
                         {
                             StringFormat(buff, form, (double)LuaLCheckNumber(l, arg));
+                            break;
+                        }
+                        case 'a':
+                        case 'A':
+                        {
+                            // Hex float format specifier - only available in Lua 5.2+
+                            if (version < LuaCompatibilityVersion.Lua52)
+                            {
+                                return LuaLError(
+                                    l,
+                                    "invalid option "
+                                        + LuaQuoteLiteral("%" + ch)
+                                        + " to "
+                                        + LuaQuoteLiteral("format"),
+                                    strfrmt[-1]
+                                );
+                            }
+
+                            double value = (double)LuaLCheckNumber(l, arg);
+                            bool uppercase = (ch == 'A');
+
+                            // Parse flags and precision from the format string
+                            string formStr = form.ToString();
+                            string flags = "";
+                            int width = -1;
+                            int precision = -1;
+
+                            // Parse the format string to extract flags, width, and precision
+                            // Format is like: %[-+ #0][width][.precision]a
+                            int pos = 1; // Skip the '%'
+                            while (
+                                pos < formStr.Length - 1
+                                && FLAGS.Contains(formStr[pos], StringComparison.Ordinal)
+                            )
+                            {
+                                flags += formStr[pos];
+                                pos++;
+                            }
+
+                            // Parse width
+                            int widthStart = pos;
+                            while (pos < formStr.Length - 1 && char.IsDigit(formStr[pos]))
+                            {
+                                pos++;
+                            }
+                            if (pos > widthStart)
+                            {
+                                width = int.Parse(
+                                    formStr.Substring(widthStart, pos - widthStart),
+                                    System.Globalization.CultureInfo.InvariantCulture
+                                );
+                            }
+
+                            // Parse precision
+                            if (pos < formStr.Length - 1 && formStr[pos] == '.')
+                            {
+                                pos++;
+                                int precStart = pos;
+                                while (pos < formStr.Length - 1 && char.IsDigit(formStr[pos]))
+                                {
+                                    pos++;
+                                }
+                                if (pos > precStart)
+                                {
+                                    precision = int.Parse(
+                                        formStr.Substring(precStart, pos - precStart),
+                                        System.Globalization.CultureInfo.InvariantCulture
+                                    );
+                                }
+                                else
+                                {
+                                    precision = 0; // "%.a" means precision of 0
+                                }
+                            }
+
+                            string hexFloatStr = FormatHexFloat(
+                                value,
+                                precision,
+                                uppercase,
+                                flags,
+                                width
+                            );
+                            // Copy result to buff
+                            for (int i = 0; i < hexFloatStr.Length && i < MAX_ITEM - 1; i++)
+                            {
+                                buff[i] = hexFloatStr[i];
+                            }
+                            buff[Math.Min(hexFloatStr.Length, MAX_ITEM - 1)] = '\0';
                             break;
                         }
                         case 'q':

@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -50,9 +51,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     string name = symbol.Name;
                     return symbol.Type switch
                     {
-                        SymbolRefType.Global => $"global '{name}'",
-                        SymbolRefType.Local => $"local '{name}'",
-                        SymbolRefType.UpValue => $"upvalue '{name}'",
+                        SymbolRefType.Global => ZString.Concat("global '", name, "'"),
+                        SymbolRefType.Local => ZString.Concat("local '", name, "'"),
+                        SymbolRefType.UpValue => ZString.Concat("upvalue '", name, "'"),
                         _ => null,
                     };
                 }

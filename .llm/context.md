@@ -8,6 +8,7 @@
 1. **Lua Spec Compliance is HIGHEST PRIORITY** — When NovaSharp differs from reference Lua, fix production code, never tests
 1. **Always create `.lua` test files** — Every test/fix needs standalone Lua fixtures for cross-interpreter verification
 1. **Multi-Version Testing** — All TUnit tests MUST run against all applicable Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
+1. **Lua Fixture Metadata** — ONLY use `@lua-versions`, `@novasharp-only`, `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description` are **NOT parsed** by the harness and will be silently ignored
 
 ______________________________________________________________________
 
@@ -123,6 +124,23 @@ ______________________________________________________________________
 - `None = 0` or `Unknown = 0` sentinel (obsolete) except for Lua interop enums
 - **Flag enums**: Combined values (`|`, `&`) must be external helper constants, not enum members
 - Invalid values: throw `InvalidEnumArgumentException`
+- **NEVER call `.ToString()` on enums** — Use cached string lookups instead (see below)
+
+### Enum String Caching
+
+Calling `.ToString()` on enums allocates a new string every time. Use dedicated cache classes:
+
+```csharp
+// ❌ BAD: Allocates on every call
+sb.Append(tokenType.ToString());
+
+// ✅ GOOD: Zero allocation
+sb.Append(TokenTypeStrings.GetName(tokenType));
+sb.Append(OpCodeStrings.GetUpperName(opCode));  // Pre-cached uppercase
+sb.Append(dataType.ToLuaDebuggerString());      // Extension method
+```
+
+Available caches: `TokenTypeStrings`, `OpCodeStrings`, `SymbolRefTypeStrings`, `ModLoadStateStrings`, `DebuggerActionTypeStrings`, and `EnumStringCache<TEnum>` for other enums.
 
 ### LuaNumber
 
@@ -145,15 +163,20 @@ When writing new types and methods, prioritize minimal allocations:
 - **Prefer `readonly struct`** for small, immutable data (≤64 bytes)
 - **Prefer `ref struct`** for types containing `Span<T>` or stack-only lifetimes
 - **Use `ZStringBuilder.Create()`** for string building, never `StringBuilder` or `$"..."` in hot paths
-- **Use `HashCodeHelper.HashCode()`** for `GetHashCode()` — never bespoke `hash * 31` patterns or `HashCode.Combine()`
-- **Array pooling** — choose the right pool:
-  - `DynValueArrayPool`/`ObjectArrayPool` for fixed exact-size arrays (VM frames, reflection)
-  - `ArrayPool<T>.Shared` for variable-size buffers (track actual usage separately)
-  - `stackalloc` for small compile-time-constant sizes
+- **Use `ZString.Concat()`** for simple 2-4 element concatenation
+- **Use span-based parsing** instead of `string.Split()` — see [span-optimization](skills/span-optimization.md)
 - **Use `ReadOnlySpan<char>`** instead of `string.Substring()` for slicing
+- **Reuse existing objects as locks** — never allocate `new object()` for locking; use an existing field
+- **Use `HashCodeHelper.HashCode()`** for `GetHashCode()` — never bespoke `hash * 31` patterns or `HashCode.Combine()`
+- **Pooled resources** — **ALWAYS use `using` with `Get()`, NEVER manual `Rent()`/`Return()`**:
+  - `ListPool<T>.Get()`, `HashSetPool<T>.Get()`, `DictionaryPool<K,V>.Get()` for collections
+  - `DynValueArrayPool.Get()`/`ObjectArrayPool.Get()` for fixed exact-size arrays (VM frames, reflection)
+  - `SystemArrayPool<T>.Get()` for variable-size buffers
+  - `stackalloc` for small compile-time-constant sizes (no pool needed)
+  - If type owns pooled resources, implement `IDisposable` and store `PooledResource<T>` as field
 - **Avoid boxing** — use generic constraints instead of interface parameters for value types
 
-See [skills/high-performance-csharp.md](skills/high-performance-csharp.md) for detailed guidelines.
+See [skills/high-performance-csharp.md](skills/high-performance-csharp.md), [skills/zstring-migration.md](skills/zstring-migration.md), and [skills/span-optimization.md](skills/span-optimization.md) for detailed guidelines.
 
 ______________________________________________________________________
 
@@ -172,6 +195,8 @@ Detailed guides for common tasks are in `.llm/skills/`:
 | Skill                                                        | When to Use                                                        |
 | ------------------------------------------------------------ | ------------------------------------------------------------------ |
 | [high-performance-csharp](skills/high-performance-csharp.md) | Writing new types/methods with minimal allocations                 |
+| [zstring-migration](skills/zstring-migration.md)             | Migrating string interpolation/concat to zero-allocation ZString   |
+| [span-optimization](skills/span-optimization.md)             | Replacing Split/Substring/ToArray with span-based alternatives     |
 | [lua-fixture-creation](skills/lua-fixture-creation.md)       | Creating `.lua` test files with harness-compatible metadata        |
 | [tunit-test-writing](skills/tunit-test-writing.md)           | Writing multi-version TUnit tests with proper isolation            |
 | [lua-spec-verification](skills/lua-spec-verification.md)     | Investigating Lua spec compliance, verifying against reference Lua |

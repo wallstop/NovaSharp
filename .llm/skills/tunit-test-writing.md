@@ -2,6 +2,8 @@
 
 **When to use**: Writing or modifying TUnit tests for the interpreter.
 
+**Related Skills**: [lua-fixture-creation](lua-fixture-creation.md) (creating .lua fixtures for tests), [lua-spec-verification](lua-spec-verification.md) (verifying behavior)
+
 ______________________________________________________________________
 
 ## Framework Basics
@@ -145,19 +147,4 @@ ______________________________________________________________________
 
 ## Running Tests
 
-```bash
-# All tests
-./scripts/test/quick.sh
-
-# Filter by method name
-./scripts/test/quick.sh Floor
-
-# Filter by class name
-./scripts/test/quick.sh -c MathModule
-
-# Combined filter
-./scripts/test/quick.sh -c Math -m Floor
-
-# Skip build
-./scripts/test/quick.sh --no-build Floor
-```
+See [context.md Quick Scripts](../context.md) for test commands (`./scripts/test/quick.sh`).

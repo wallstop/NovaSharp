@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Modding
 {
     using System;
+    using Cysharp.Text;
 
     /// <summary>
     /// Represents the result of a mod operation (load, unload, reload).
@@ -86,16 +87,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <inheritdoc/>
         public override string ToString()
         {
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
             if (Success)
             {
-                return string.IsNullOrEmpty(Message)
-                    ? $"Success (State={State})"
-                    : $"Success (State={State}): {Message}";
+                sb.Append("Success (State=");
+                sb.Append(ModLoadStateStrings.GetName(State));
+                sb.Append(')');
+                if (!string.IsNullOrEmpty(Message))
+                {
+                    sb.Append(": ");
+                    sb.Append(Message);
+                }
+                return sb.ToString();
             }
 
-            return Error != null
-                ? $"Failed (State={State}): {Message} [{Error.GetType().Name}]"
-                : $"Failed (State={State}): {Message}";
+            sb.Append("Failed (State=");
+            sb.Append(ModLoadStateStrings.GetName(State));
+            sb.Append("): ");
+            sb.Append(Message);
+            if (Error != null)
+            {
+                sb.Append(" [");
+                sb.Append(Error.GetType().Name);
+                sb.Append(']');
+            }
+            return sb.ToString();
         }
     }
 }

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
 {
     using System;
     using System.Reflection;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -165,7 +166,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
         /// </returns>
         public override string ToString()
         {
-            return $"{Type.Name} {Name}{(HasDefaultValue ? " = ..." : "")}";
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+            sb.Append(Type.Name);
+            sb.Append(' ');
+            sb.Append(Name);
+            if (HasDefaultValue)
+            {
+                sb.Append(" = ...");
+            }
+            return sb.ToString();
         }
 
         /// <summary>

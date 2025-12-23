@@ -97,6 +97,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.StringLib
         }
 
         /// <summary>
+        /// Applies the range to a string using Lua's substring semantics (1-based, inclusive, clamped),
+        /// returning a span instead of allocating a new string. Useful for iteration-only scenarios
+        /// like <c>string.byte()</c>.
+        /// </summary>
+        /// <param name="value">Target string.</param>
+        /// <returns>Span over the substring defined by the range.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ReadOnlySpan<char> ApplyToSpan(string value)
+        {
+            int i = Start < 0 ? Start + value.Length + 1 : Start;
+            int j = End < 0 ? End + value.Length + 1 : End;
+
+            if (i < 1)
+            {
+                i = 1;
+            }
+
+            if (j > value.Length)
+            {
+                j = value.Length;
+            }
+
+            if (i > j)
+            {
+                return ReadOnlySpan<char>.Empty;
+            }
+
+            return value.AsSpan(i - 1, j - i + 1);
+        }
+
+        /// <summary>
         /// Computes the Lua-style length for the range (End - Start + 1).
         /// </summary>
         /// <returns>Length represented by this range.</returns>

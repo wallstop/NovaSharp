@@ -331,25 +331,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     // NaN, Infinity, and non-integer floats all error
                     if (double.IsNaN(d) || double.IsInfinity(d))
                     {
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'char' (number has no integer representation)"
-                        );
+                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
+                        errSb.Append("bad argument #");
+                        errSb.Append(i + 1);
+                        errSb.Append(" to 'char' (number has no integer representation)");
+                        throw new ScriptRuntimeException(errSb.ToString());
                     }
 
                     double floored = Math.Floor(d);
                     if (floored != d)
                     {
                         // Non-integer float (e.g., 65.5)
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'char' (number has no integer representation)"
-                        );
+                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
+                        errSb.Append("bad argument #");
+                        errSb.Append(i + 1);
+                        errSb.Append(" to 'char' (number has no integer representation)");
+                        throw new ScriptRuntimeException(errSb.ToString());
                     }
 
                     if (floored < 0 || floored > 255)
                     {
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'char' (value out of range)"
-                        );
+                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
+                        errSb.Append("bad argument #");
+                        errSb.Append(i + 1);
+                        errSb.Append(" to 'char' (value out of range)");
+                        throw new ScriptRuntimeException(errSb.ToString());
                     }
 
                     charValue = (int)floored;
@@ -364,9 +370,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     }
                     else if (floored < 0 || floored > 255)
                     {
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'char' (value out of range)"
-                        );
+                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
+                        errSb.Append("bad argument #");
+                        errSb.Append(i + 1);
+                        errSb.Append(" to 'char' (value out of range)");
+                        throw new ScriptRuntimeException(errSb.ToString());
                     }
                     else
                     {
@@ -447,9 +455,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             StringRange range = StringRange.FromLuaRange(vi, vj, null);
-            string s = range.ApplyToString(vs.String);
+            ReadOnlySpan<char> span = range.ApplyToSpan(vs.String);
 
-            int length = s.Length;
+            int length = span.Length;
 
             if (length == 0)
             {
@@ -459,14 +467,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Fast path for single character - avoid array allocation
             if (length == 1)
             {
-                return DynValue.NewNumber(filter((int)s[0]));
+                return DynValue.NewNumber(filter(span[0]));
             }
 
             DynValue[] rets = new DynValue[length];
 
             for (int i = 0; i < length; ++i)
             {
-                rets[i] = DynValue.NewNumber(filter((int)s[i]));
+                rets[i] = DynValue.NewNumber(filter(span[i]));
             }
 
             return DynValue.NewTuple(rets);
@@ -738,16 +746,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS = args.AsType(0, "reverse", DataType.String, false);
+            string str = argS.String;
 
-            if (String.IsNullOrEmpty(argS.String))
+            if (String.IsNullOrEmpty(str))
             {
                 return DynValue.EmptyString;
             }
 
-            char[] elements = argS.String.ToCharArray();
-            Array.Reverse(elements);
+            // Use stackalloc for common small strings to avoid heap allocation
+            const int StackAllocThreshold = 256;
 
-            return DynValue.NewString(new String(elements));
+            if (str.Length <= StackAllocThreshold)
+            {
+                Span<char> buffer = stackalloc char[str.Length];
+                str.AsSpan().CopyTo(buffer);
+                buffer.Reverse();
+                return DynValue.NewString(new string(buffer));
+            }
+            else
+            {
+                // Fallback to heap allocation for large strings
+                char[] elements = str.ToCharArray();
+                Array.Reverse(elements);
+                return DynValue.NewString(new string(elements));
+            }
         }
 
         /// <summary>

@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Globalization;
     using System.Runtime.InteropServices;
     using Compatibility;
+    using Cysharp.Text;
     using DataStructs;
 
     /// <summary>
@@ -624,7 +625,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             throw new Errors.ScriptRuntimeException(
-                $"number has no integer representation (in '{operation}')"
+                ZString.Concat("number has no integer representation (in '", operation, "')")
             );
         }
 

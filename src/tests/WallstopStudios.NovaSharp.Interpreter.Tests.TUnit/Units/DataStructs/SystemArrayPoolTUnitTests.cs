@@ -84,7 +84,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         public async Task RentReturnsArrayOfAtLeastRequestedLength(int minimumLength)
         {
             int[] array = SystemArrayPool<int>.Rent(minimumLength);
-            using PooledResource<int[]> _ = new(array, SystemArrayPool<int>.Return);
+            using PooledResource<int[]> _ = new(array, arr => SystemArrayPool<int>.Return(arr));
 
             await Assert.That(array).IsNotNull().ConfigureAwait(false);
             await Assert
@@ -415,7 +415,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
                             byte[] array = SystemArrayPool<byte>.Rent(128);
                             using PooledResource<byte[]> _ = new(
                                 array,
-                                SystemArrayPool<byte>.Return
+                                arr => SystemArrayPool<byte>.Return(arr)
                             );
 
                             // Write some data

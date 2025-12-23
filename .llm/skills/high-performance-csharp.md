@@ -2,6 +2,114 @@
 
 When writing new code for NovaSharp, prioritize **minimal allocations** and **maximum efficiency**. This interpreter runs hot paths millions of times—every allocation and boxing operation has measurable impact.
 
+**Related Skills**: [zstring-migration](zstring-migration.md) (detailed ZString patterns), [span-optimization](span-optimization.md) (detailed Span patterns)
+
+______________________________________________________________________
+
+## 🔴 CRITICAL: Apply These Patterns to ALL New Code
+
+These guidelines apply to **ALL new code**, not just identified "hot paths". When writing a new class or method:
+
+1. **Default to zero-allocation patterns** — Use pooled buffers, spans, and stackalloc by default
+1. **Use `List<T>` only when necessary** — Prefer pooled arrays for accumulation
+1. **Never allocate inside loops** — Move allocations outside loops or use pooling
+1. **Test with a memory profiler** — Validate your assumptions about allocations
+
+### Common Mistakes in New Code
+
+```csharp
+// ❌ BAD: List<byte> allocates backing array AND grows (allocates more)
+List<byte> result = new List<byte>(64);
+for (...) { result.Add(b); }  // May reallocate multiple times!
+return BytesToString(result); // Allocates char[] inside
+
+// ✅ GOOD: Pooled buffer with known/estimated capacity
+using PooledResource<byte[]> pooled = SystemArrayPool<byte>.Get(estimatedSize, clearOnReturn: false, out byte[] buffer);
+int written = 0;
+for (...) { buffer[written++] = b; }
+// If buffer too small, rent larger and copy
+return CreateStringFromBytes(buffer, written);  // Use stackalloc for char[] if small
+
+// ❌ BAD: Allocates byte[] inside method called many times
+private static double ReadDouble(string data, ref int pos)
+{
+    byte[] bytes = new byte[8];  // ALLOCATION!
+    // ...
+}
+
+// ✅ GOOD: Use stackalloc for small fixed-size buffers
+private static double ReadDouble(ReadOnlySpan<char> data, ref int pos)
+{
+    Span<byte> bytes = stackalloc byte[8];
+    // ...
+}
+
+// ❌ BAD: Allocates new List<T> every call
+List<DynValue> results = new List<DynValue>();
+// ... add items ...
+return DynValue.NewTuple(results.ToArray());  // ToArray() allocates AGAIN!
+
+// ✅ GOOD: Pool the DynValue array directly
+using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(maxItems, out DynValue[] results);
+int count = 0;
+// ... populate results[count++] ...
+DynValue[] final = new DynValue[count];
+Array.Copy(results, final, count);
+return DynValue.NewTuple(final);
+```
+
+### Module Implementation Pattern
+
+When implementing new Lua modules (like `string.pack`), follow this pattern:
+
+```csharp
+[NovaSharpModule(Namespace = "string")]
+internal static class ExampleModule
+{
+    // Thread-static buffers for fixed-size temporary data
+    [ThreadStatic]
+    private static byte[] t_tempBuffer;
+    
+    private static byte[] GetTempBuffer(int minSize)
+    {
+        byte[] buffer = t_tempBuffer;
+        if (buffer == null || buffer.Length < minSize)
+        {
+            buffer = new byte[Math.Max(minSize, 256)];
+            t_tempBuffer = buffer;
+        }
+        return buffer;
+    }
+    
+    // For variable-size output, estimate and use pooling
+    [NovaSharpModuleMethod(Name = "example")]
+    public static DynValue Example(ScriptExecutionContext ctx, CallbackArguments args)
+    {
+        // Estimate output size based on input
+        int estimatedSize = CalculateEstimate(args);
+        
+        // Use pooled buffer
+        using PooledResource<byte[]> pooled = SystemArrayPool<byte>.Get(
+            estimatedSize, clearOnReturn: false, out byte[] buffer);
+        
+        int written = ProcessData(args, buffer);
+        
+        // Handle buffer overflow: rent larger buffer
+        if (written < 0)
+        {
+            // written is negative, indicating needed size
+            int needed = -written;
+            using PooledResource<byte[]> largerPooled = SystemArrayPool<byte>.Get(
+                needed, clearOnReturn: false, out byte[] largerBuffer);
+            written = ProcessData(args, largerBuffer);
+            return CreateResult(largerBuffer, written);
+        }
+        
+        return CreateResult(buffer, written);
+    }
+}
+```
+
 ______________________________________________________________________
 
 ## 🔴 Unity Compatibility Requirements
@@ -54,42 +162,20 @@ ______________________________________________________________________
 
 ## String Building
 
-### ✅ DO: Use ZString for string concatenation
+See [zstring-migration.md](zstring-migration.md) for detailed patterns. Quick reference:
 
 ```csharp
-using Cysharp.Text;
-
 // Safe for nested/recursive calls (uses ArrayPool)
 using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 sb.Append("Error at line ");
 sb.Append(lineNumber);
-sb.Append(": ");
-sb.Append(message);
 return sb.ToString();
 
-// Hot non-nested paths only (ThreadStatic buffer)
-using Utf16ValueStringBuilder sb = ZStringBuilder.CreateNonNested();
-```
-
-### ❌ DON'T: Use StringBuilder or string concatenation
-
-```csharp
-// BAD: StringBuilder allocates
-var sb = new StringBuilder();
-
-// BAD: String interpolation allocates
-return $"Error at line {lineNumber}: {message}";
-
-// BAD: String.Concat allocates
-return "Error: " + message;
-```
-
-### Exception: ZString.Concat for simple cases
-
-```csharp
-// OK for 2-3 element concatenation (still zero-alloc)
+// Simple 2-3 element concatenation
 return ZString.Concat("\"", input, "\"");
 ```
+
+**NEVER** use `StringBuilder`, `$"..."` interpolation, or `+` concatenation in hot paths.
 
 ______________________________________________________________________
 
@@ -231,6 +317,115 @@ internal sealed class Table { /* ... */ }
 
 ______________________________________________________________________
 
+## 🔴 CRITICAL: Pool Usage Pattern
+
+**ALWAYS use `using` with `Get()` instead of manual `Rent()`/`Return()` calls.**
+
+Manual rent/return is error-prone and leaks resources on exceptions:
+
+```csharp
+// ❌ BAD: Manual rent/return — leaks on exception!
+List<Instruction> jumps = ListPool<Instruction>.Rent();
+DoSomethingThatMightThrow();  // If this throws, jumps is never returned!
+ListPool<Instruction>.Return(jumps);
+
+// ✅ GOOD: RAII pattern — automatic cleanup even on exception
+using (ListPool<Instruction>.Get(out List<Instruction> jumps))
+{
+    DoSomethingThatMightThrow();  // jumps is returned even if this throws
+}
+
+// ✅ GOOD: using declaration (C# 8+) for cleaner code
+using PooledResource<List<int>> pooled = ListPool<int>.Get(out List<int> items);
+// items is automatically returned when pooled goes out of scope
+```
+
+### When `using` Isn't Possible
+
+Some scenarios require manual lifetime management (e.g., resources stored in fields that outlive a single method). In these cases:
+
+1. **Make the containing type `IDisposable`** and return pooled resources in `Dispose()`
+1. **Use `PooledResource<T>` as a field** instead of the raw resource type
+1. **Document clearly** that the caller is responsible for cleanup
+
+```csharp
+// ✅ GOOD: Type owns pooled resource via IDisposable
+internal sealed class Loop : IDisposable
+{
+    private PooledResource<List<Instruction>> _pooledBreakJumps = ListPool<Instruction>.Get(out _);
+    private bool _disposed;
+
+    public List<Instruction> BreakJumps => _pooledBreakJumps.Resource;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _pooledBreakJumps.Dispose();
+    }
+}
+
+// Usage: the containing type is used with `using`
+using (Loop l = new() { Scope = stackFrame })
+{
+    // l.BreakJumps is automatically returned when l is disposed
+}
+```
+
+### Pool Types and Their Disposable APIs
+
+All NovaSharp pools provide `Get()` methods that return `PooledResource<T>`:
+
+| Pool                  | Get Method                                          | Resource Type     |
+| --------------------- | --------------------------------------------------- | ----------------- |
+| `ListPool<T>`         | `ListPool<T>.Get(out List<T> list)`                 | `List<T>`         |
+| `HashSetPool<T>`      | `HashSetPool<T>.Get(out HashSet<T> set)`            | `HashSet<T>`      |
+| `DictionaryPool<K,V>` | `DictionaryPool<K,V>.Get(out Dictionary<K,V> d)`    | `Dictionary<K,V>` |
+| `DynValueArrayPool`   | `DynValueArrayPool.Get(int size, out DynValue[] a)` | `DynValue[]`      |
+| `ObjectArrayPool`     | `ObjectArrayPool.Get(int size, out object[] a)`     | `object[]`        |
+| `SystemArrayPool<T>`  | `SystemArrayPool<T>.Get(int size, out T[] a)`       | `T[]`             |
+| `CallStackItemPool`   | `CallStackItemPool.Get(out CallStackItem item)`     | `CallStackItem`   |
+
+### PooledResource\<T> API
+
+```csharp
+internal struct PooledResource<T> : IDisposable
+{
+    public T Resource { get; }         // The pooled resource
+    public void SuppressReturn();      // Prevent return to pool (ownership transfer)
+    public void Dispose();             // Return resource to pool (unless suppressed)
+}
+```
+
+### Ownership Transfer Pattern
+
+When returning a pooled resource to a caller who takes ownership:
+
+```csharp
+// Method that creates a result the caller will own
+public PooledResource<List<int>> GetResults()
+{
+    using PooledResource<List<int>> pooled = ListPool<int>.Get(out List<int> list);
+    list.Add(1);
+    list.Add(2);
+    
+    // Transfer ownership to caller — don't return to pool here
+    pooled.SuppressReturn();
+    return pooled;
+}
+
+// Caller is responsible for disposal
+using (PooledResource<List<int>> results = GetResults())
+{
+    foreach (int item in results.Resource)
+    {
+        Console.WriteLine(item);
+    }
+} // Returned to pool here
+```
+
+______________________________________________________________________
+
 ## Array and Buffer Pooling
 
 NovaSharp has TWO array pooling strategies with different use cases:
@@ -240,7 +435,7 @@ NovaSharp has TWO array pooling strategies with different use cases:
 Use these when you need **exact-size arrays** (e.g., reflection `MethodInfo.Invoke` requires exact parameter count):
 
 ```csharp
-// Thread-local caching for small arrays (≤8 elements), exact sizes only
+// ✅ GOOD: Always use Get() with using
 using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(5, out DynValue[] array);
 // array.Length == 5 (exact)
 
@@ -255,18 +450,12 @@ Use when you can work with **"at least" the requested size** and track actual us
 ```csharp
 using System.Buffers;
 
-// Rent from pool - may return larger array!
-char[] buffer = ArrayPool<char>.Shared.Rent(256);
-try
-{
-    // IMPORTANT: Track actual usage, don't use buffer.Length
-    int written = FormatValue(value, buffer);
-    return new string(buffer, 0, written);
-}
-finally
-{
-    ArrayPool<char>.Shared.Return(buffer);
-}
+// ✅ GOOD: Use SystemArrayPool wrapper for RAII pattern
+using PooledResource<char[]> pooled = SystemArrayPool<char>.Get(256, out char[] buffer);
+// buffer.Length >= 256 (may be larger!)
+int written = FormatValue(value, buffer);
+return new string(buffer, 0, written);
+// Automatically returned to pool when disposed
 ```
 
 ### When to Use Which
@@ -557,6 +746,85 @@ for (int i = 0; i < length; i++)
 
 ______________________________________________________________________
 
+## Enum String Caching
+
+### 🔴 NEVER call `.ToString()` on enums in hot paths
+
+Enum `.ToString()` allocates a new string every call. Use cached string lookups instead.
+
+### ❌ DON'T: Call enum.ToString()
+
+```csharp
+// BAD: Allocates every call
+sb.Append(tokenType.ToString());
+sb.Append(opCode.ToString().ToUpperInvariant());  // Double allocation!
+```
+
+### ✅ DO: Use cached string lookups
+
+NovaSharp provides dedicated string cache classes for common enums:
+
+```csharp
+using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
+using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
+using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+
+// ✅ Good: Zero allocation
+sb.Append(TokenTypeStrings.GetName(tokenType));
+sb.Append(OpCodeStrings.GetUpperName(opCode));  // Pre-cached uppercase
+sb.Append(SymbolRefTypeStrings.GetName(symbolType));
+sb.Append(ModLoadStateStrings.GetName(state));
+sb.Append(DebuggerActionTypeStrings.GetName(action));
+
+// ✅ Good: DataType has an existing extension method
+sb.Append(dataType.ToLuaDebuggerString());
+```
+
+### Available String Caches
+
+| Enum                        | Cache Class                 | Methods                       |
+| --------------------------- | --------------------------- | ----------------------------- |
+| `TokenType`                 | `TokenTypeStrings`          | `GetName()`                   |
+| `OpCode`                    | `OpCodeStrings`             | `GetName()`, `GetUpperName()` |
+| `SymbolRefType`             | `SymbolRefTypeStrings`      | `GetName()`                   |
+| `ModLoadState`              | `ModLoadStateStrings`       | `GetName()`                   |
+| `DebuggerAction.ActionType` | `DebuggerActionTypeStrings` | `GetName()`                   |
+| `DataType`                  | `LuaTypeExtensions`         | `ToLuaDebuggerString()`       |
+
+### Generic Enum Cache (for other enums)
+
+For enums not in the above list, use the generic cache:
+
+```csharp
+using WallstopStudios.NovaSharp.Interpreter.DataStructs;
+
+// Generic cache with automatic contiguous optimization
+string name = EnumStringCache<MyEnum>.GetName(value);
+
+// Lowercase variant (Lua-style output)
+string lower = EnumStringCache<MyEnum>.GetNameLowerInvariant(value);
+```
+
+### Creating New Enum String Caches
+
+When adding a new enum that will be converted to strings frequently, create a dedicated cache:
+
+```csharp
+// For contiguous enums (values 0, 1, 2, ... N), use static array
+internal static class MyEnumStrings
+{
+    private static readonly string[] Names = { "Value0", "Value1", "Value2" };
+    
+    public static string GetName(MyEnum value)
+    {
+        int index = (int)value;
+        return index >= 0 && index < Names.Length ? Names[index] : value.ToString();
+    }
+}
+```
+
+______________________________________________________________________
+
 ## Sorting Lists and Arrays
 
 ### ❌ DON'T: Use List<T>.Sort with struct comparers (boxes)
@@ -814,11 +1082,13 @@ Before submitting new types, verify:
 - [ ] **Using `HashCodeHelper` for `GetHashCode()`?** → Never use bespoke `hash * 31` patterns or `HashCode.Combine()`
 - [ ] **Does it contain Span<T>?** → Use `ref struct`
 - [ ] **Am I building strings?** → Use `ZStringBuilder.Create()`
-- [ ] **Am I allocating temporary arrays?** → Choose the right pool:
-  - Fixed exact size needed (reflection, VM frames)? → `DynValueArrayPool`/`ObjectArrayPool`
+- [ ] **Am I using pooled resources?** → **ALWAYS use `using` with `Get()`, NEVER manual `Rent()`/`Return()`**
+  - Fixed exact size needed (reflection, VM frames)? → `DynValueArrayPool.Get()`/`ObjectArrayPool.Get()`
+  - Collections (List, HashSet, Dictionary)? → `ListPool<T>.Get()`, `HashSetPool<T>.Get()`, etc.
+  - Variable/dynamic size arrays? → `SystemArrayPool<T>.Get()`
+  - Small, known compile-time size? → `stackalloc` (no pool needed)
   - Fixed size, hot path, reusable across calls? → `[ThreadStatic]` cached arrays
-  - Variable/dynamic sizes? → `ArrayPool<T>.Shared` (track actual usage separately)
-  - Small, known compile-time size? → `stackalloc`
+- [ ] **Does my type own pooled resources?** → Implement `IDisposable` and store `PooledResource<T>` as field
 - [ ] **Am I creating complex state objects repeatedly?** → Consider `[ThreadStatic]` pooling with `Reset()`
 - [ ] **Am I sorting with a struct comparer?** → Use `IListSortExtensions.Sort<T, TComparer>()`
 - [ ] **Am I slicing strings?** → Use `ReadOnlySpan<char>` instead
@@ -839,10 +1109,11 @@ ______________________________________________________________________
 - [progress/session-075-kopilua-charptr-struct.md](../../progress/session-075-kopilua-charptr-struct.md) — CharPtr class→struct conversion (58-85% allocation reduction)
 - [progress/session-076-kopilua-phase3-optimization.md](../../progress/session-076-kopilua-phase3-optimization.md) — Thread-local caching, pre-computed tables
 - [DataStructs/ZStringBuilder.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/ZStringBuilder.cs) — ZString wrapper
+- [DataStructs/PooledResource.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/PooledResource.cs) — **Disposable pool wrapper struct (RAII pattern)**
+- [DataStructs/CollectionPools.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/CollectionPools.cs) — **ListPool, HashSetPool, DictionaryPool, etc.**
 - [DataStructs/DynValueArrayPool.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/DynValueArrayPool.cs) — Fixed-size DynValue array pool
 - [DataStructs/ObjectArrayPool.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/ObjectArrayPool.cs) — Fixed-size object array pool (reflection)
 - [DataStructs/SystemArrayPool.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/SystemArrayPool.cs) — Variable-size array pool wrapper
-- [DataStructs/PooledResource.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/PooledResource.cs) — Disposable pool wrapper struct
 - [DataStructs/IListSortExtensions.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/IListSortExtensions.cs) — Boxing-free pdqsort for IList<T>
 - [DataStructs/HashCodeHelper.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/HashCodeHelper.cs) — Deterministic FNV-1a hash code composition
 - [LuaPort/KopiLuaStringLib.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/LuaPort/KopiLuaStringLib.cs) — Example: thread-local caching, struct conversion

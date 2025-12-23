@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.FastInterface
 {
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -105,10 +106,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.FastInterface
                 )
                 using (bytecode.EnterSource(null))
                 {
-                    bytecode.EmitNop($"Begin chunk {source.Name}");
+                    bytecode.EmitNop(ZString.Concat("Begin chunk ", source.Name));
                     beginIp = bytecode.GetJumpPointForLastInstruction();
                     stat.Compile(bytecode);
-                    bytecode.EmitNop($"End chunk {source.Name}");
+                    bytecode.EmitNop(ZString.Concat("End chunk ", source.Name));
                 }
 
                 //Debug_DumpByteCode(bytecode, source.SourceID);
@@ -168,9 +169,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.FastInterface
                     )
                 )
                 {
-                    bytecode.EmitNop($"Begin function {source.Name}");
+                    bytecode.EmitNop(ZString.Concat("Begin function ", source.Name));
                     beginIp = fnx.CompileBody(bytecode, source.Name);
-                    bytecode.EmitNop($"End function {source.Name}");
+                    bytecode.EmitNop(ZString.Concat("End function ", source.Name));
                 }
 
                 //Debug_DumpByteCode(bytecode, source.SourceID);

@@ -22,14 +22,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
         public string Code { get; private set; }
 
         /// <summary>
-        /// Gets the source code lines.
+        /// Lazily-initialized source code lines (including synthetic header).
+        /// Null until first access, then cached.
         /// </summary>
-        private string[] _lines = Array.Empty<string>();
+        private volatile string[] _lines;
 
         /// <summary>
         /// Gets the cached lines (including the synthetic header) for quick snippet extraction.
+        /// Lines are computed lazily on first access to reduce compile-time allocations.
         /// </summary>
-        public IReadOnlyList<string> Lines => _lines;
+        public IReadOnlyList<string> Lines
+        {
+            get
+            {
+                // Fast path: already initialized
+                string[] lines = _lines;
+                if (lines != null)
+                {
+                    return lines;
+                }
+
+                // Slow path: double-checked locking for thread-safe lazy init
+                // Use Refs as lock object to avoid allocating a separate lock object
+                lock (Refs)
+                {
+                    lines = _lines;
+                    if (lines == null)
+                    {
+                        lines = BuildLines();
+                        _lines = lines;
+                    }
+
+                    return lines;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the script owning this resource.
@@ -49,20 +76,63 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
         internal SourceCode(string name, string code, int sourceId, Script ownerScript)
         {
             Refs = new List<SourceRef>();
-
-            List<string> lines = new();
-
             Name = name;
             Code = code;
-
-            lines.Add($"-- Begin of chunk : {name} ");
-
-            lines.AddRange(Code.Split('\n'));
-
-            _lines = lines.ToArray();
-
             OwnerScript = ownerScript;
             SourceId = sourceId;
+            // Lines are now lazily initialized on first access
+        }
+
+        /// <summary>
+        /// Builds the lines array from the source code.
+        /// Called lazily on first access to <see cref="Lines"/>.
+        /// Uses span-based line enumeration to avoid intermediate allocations.
+        /// </summary>
+        private string[] BuildLines()
+        {
+            ReadOnlySpan<char> codeSpan = Code.AsSpan();
+
+            // Count lines: start with 1 for synthetic header, plus 1 for initial line
+            // Each '\n' adds one more line (the line after the newline)
+            int lineCount = 2; // 1 header + 1 code line minimum
+            foreach (char c in codeSpan)
+            {
+                if (c == '\n')
+                {
+                    lineCount++;
+                }
+            }
+
+            string[] result = new string[lineCount];
+
+            // Synthetic header line at index 0
+            using (Utf16ValueStringBuilder sb = ZStringBuilder.Create())
+            {
+                sb.Append("-- Begin of chunk : ");
+                sb.Append(Name);
+                sb.Append(' ');
+                result[0] = sb.ToString();
+            }
+
+            // Extract lines using span slicing (avoids Split allocation)
+            int lineIndex = 1;
+            int start = 0;
+            for (int i = 0; i < codeSpan.Length; i++)
+            {
+                if (codeSpan[i] == '\n')
+                {
+                    result[lineIndex++] = codeSpan.Slice(start, i - start).ToString();
+                    start = i + 1;
+                }
+            }
+
+            // Handle final line (after last newline or if no newlines)
+            if (lineIndex < result.Length)
+            {
+                result[lineIndex] = codeSpan.Slice(start).ToString();
+            }
+
+            return result;
         }
 
         /// <summary>

@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -120,6 +121,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         // __next_i (table [, index])
         // -------------------------------------------------------------------------------------------------------------------
         // Allows a program to traverse all fields of an array. index is an integer number
+        // Lua 5.3+: ipairs respects __index metamethod (uses metamethod-aware indexing)
+        // Lua 5.1/5.2: ipairs uses raw access (ignores __index metamethod)
         /// <summary>
         /// Internal helper that drives the array-style iterator used by `ipairs`.
         /// </summary>
@@ -137,7 +140,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue index = args.AsType(1, "!!next_i!!", DataType.Number);
 
             int idx = ((int)index.Number) + 1;
-            DynValue val = table.Table.Get(idx);
+
+            // Lua 5.3+: ipairs respects __index metamethod
+            // Lua 5.1/5.2: ipairs uses raw access (ignores __index)
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            DynValue val;
+            if (version >= LuaCompatibilityVersion.Lua53)
+            {
+                val = GetTableValueWithMetamethods(executionContext, table, idx);
+            }
+            else
+            {
+                val = table.Table.Get(idx);
+            }
 
             if (val.Type != DataType.Nil)
             {
@@ -147,6 +164,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.Nil;
             }
+        }
+
+        /// <summary>
+        /// Gets a value from a table, respecting __index metamethods.
+        /// This mimics the VM's index operation for metamethod-aware access.
+        /// </summary>
+        /// <param name="executionContext">The execution context for calling metamethods.</param>
+        /// <param name="table">The table DynValue to index.</param>
+        /// <param name="key">The integer key to look up.</param>
+        /// <returns>The value at the given key, or DynValue.Nil if not found.</returns>
+        private static DynValue GetTableValueWithMetamethods(
+            ScriptExecutionContext executionContext,
+            DynValue table,
+            int key
+        )
+        {
+            const int MaxMetamethodDepth = 10;
+            DynValue current = table;
+            DynValue keyValue = DynValue.FromNumber(key);
+
+            for (int depth = 0; depth < MaxMetamethodDepth; depth++)
+            {
+                if (current.Type == DataType.Table)
+                {
+                    // First try raw access
+                    DynValue rawVal = current.Table.Get(key);
+                    if (!rawVal.IsNil())
+                    {
+                        return rawVal;
+                    }
+
+                    // Raw value is nil, check for __index metamethod
+                    DynValue indexMeta = executionContext.GetMetamethod(current, Metamethods.Index);
+                    if (indexMeta == null || indexMeta.IsNil())
+                    {
+                        // No __index metamethod, return nil
+                        return DynValue.Nil;
+                    }
+
+                    if (
+                        indexMeta.Type == DataType.Function
+                        || indexMeta.Type == DataType.ClrFunction
+                    )
+                    {
+                        // __index is a function: call it with (table, key)
+                        return executionContext.Call(indexMeta, current, keyValue);
+                    }
+                    else
+                    {
+                        // __index is a table (or other value): continue lookup in that table
+                        current = indexMeta;
+                    }
+                }
+                else
+                {
+                    // Non-table value encountered in chain, return nil
+                    return DynValue.Nil;
+                }
+            }
+
+            // Max depth exceeded, prevent infinite loops
+            throw new ScriptRuntimeException("'__index' chain too long; possible loop");
         }
     }
 }

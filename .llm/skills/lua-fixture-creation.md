@@ -2,11 +2,15 @@
 
 **When to use**: Creating `.lua` test files for cross-interpreter verification.
 
+**Related Skills**: [lua-comparison-harness](lua-comparison-harness.md) (running fixtures), [lua-spec-verification](lua-spec-verification.md) (verifying compliance), [tunit-test-writing](tunit-test-writing.md) (corresponding C# tests)
+
 ______________________________________________________________________
 
 ## 🔴 Critical: Required Metadata Header
 
 Every `.lua` fixture file **MUST** start with a metadata block for the test runner to parse it correctly. Files without this header will not be properly filtered or may produce false comparison failures.
+
+**⚠️ WARNING**: The harness ONLY parses `@lua-versions`, `@novasharp-only`, and `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description`, `@expected-output`, `@error-pattern` are **NOT recognized** and will be silently ignored! See the "INVALID Metadata" section below.
 
 ### Minimal Required Template
 
@@ -39,6 +43,49 @@ print(result)  -- Output: 3
 
 ______________________________________________________________________
 
+## 🔴 INVALID Metadata (DO NOT USE)
+
+The harness **ONLY** parses the three required fields (`@lua-versions`, `@novasharp-only`, `@expects-error`). Any other metadata tags are **silently ignored** and will cause fixtures to run incorrectly or be skipped entirely.
+
+### ❌ NEVER Use These (they are NOT parsed):
+
+```lua
+-- ❌ WRONG: @min-version is NOT recognized
+-- @min-version: 5.3
+
+-- ❌ WRONG: @max-version is NOT recognized
+-- @max-version: 5.2
+
+-- ❌ WRONG: @versions is NOT recognized
+-- @versions: 5.2, 5.3
+
+-- ❌ WRONG: @name is NOT recognized
+-- @name: SomeTestName
+
+-- ❌ WRONG: @description is NOT recognized
+-- @description: This test does something
+
+-- ❌ WRONG: @expected-output is NOT recognized
+-- @expected-output: 42
+
+-- ❌ WRONG: @error-pattern is NOT recognized
+-- @error-pattern: some error message
+```
+
+### ✅ CORRECT Equivalents:
+
+| ❌ Invalid                     | ✅ Correct Replacement                          |
+| ------------------------------ | ----------------------------------------------- |
+| `@min-version: 5.3`            | `@lua-versions: 5.3, 5.4, 5.5` (or `5.3+`)      |
+| `@max-version: 5.2`            | `@lua-versions: 5.1, 5.2`                       |
+| `@versions: 5.2, 5.3`          | `@lua-versions: 5.2, 5.3`                       |
+| `@lua-versions: 5.2, 5.5`      | `@lua-versions: 5.2, 5.3, 5.4, 5.5` (list ALL!) |
+| `@error-pattern: ...`          | `@expects-error: true` (pattern not checked)    |
+| `@name: X` / `@description: Y` | Use `@test:` and a `-- Test:` comment instead   |
+| `@expected-output: X`          | Use `assert()` or `print()` in the Lua code     |
+
+______________________________________________________________________
+
 ## Metadata Fields Reference
 
 ### Required Fields (parsed by test runner)
@@ -54,15 +101,26 @@ ______________________________________________________________________
 
 ### `@lua-versions` Format
 
+**⚠️ IMPORTANT**: `@lua-versions` must list **ALL** versions where the fixture is valid, not a range with just endpoints. For features introduced in a specific version, list every version from introduction through the latest.
+
 ```lua
 -- All versions (comma-separated list):
 -- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
 
--- Range syntax (version and above):
+-- Range syntax (version and above) - expands to all versions from N to 5.5:
 -- @lua-versions: 5.3+
+-- (equivalent to: 5.3, 5.4, 5.5)
 
--- Specific versions only:
--- @lua-versions: 5.2, 5.3
+-- Feature introduced in 5.2 (must list ALL supported versions, not just 5.2):
+-- @lua-versions: 5.2, 5.3, 5.4, 5.5
+-- (or use shorthand: 5.2+)
+
+-- ❌ WRONG: Only listing first and last version
+-- @lua-versions: 5.2, 5.5
+-- (This SKIPS 5.3 and 5.4 testing!)
+
+-- Specific versions only (when feature was removed or changed):
+-- @lua-versions: 5.1, 5.2
 
 -- NovaSharp-only (skip reference Lua comparison):
 -- @lua-versions: novasharp-only

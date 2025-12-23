@@ -46,35 +46,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         /// </summary>
         public override void Compile(ByteCode bc)
         {
-            Loop l = new() { Scope = _stackFrame };
-
-            bc.PushSourceRef(_repeat);
-
-            bc.LoopTracker.Loops.Push(l);
-
-            int start = bc.GetJumpPointForNextInstruction();
-
-            bc.EmitEnter(_stackFrame);
-            _block.Compile(bc);
-
-            bc.PopSourceRef();
-            bc.PushSourceRef(_until);
-            bc.EmitDebug("..end");
-
-            _condition.Compile(bc);
-            bc.EmitLeave(_stackFrame);
-            bc.EmitJump(OpCode.Jf, start);
-
-            bc.LoopTracker.Loops.Pop();
-
-            int exitpoint = bc.GetJumpPointForNextInstruction();
-
-            foreach (Instruction i in l.BreakJumps)
+            using (Loop l = new() { Scope = _stackFrame })
             {
-                i.NumVal = exitpoint;
-            }
+                bc.PushSourceRef(_repeat);
 
-            bc.PopSourceRef();
+                bc.LoopTracker.Loops.Push(l);
+
+                int start = bc.GetJumpPointForNextInstruction();
+
+                bc.EmitEnter(_stackFrame);
+                _block.Compile(bc);
+
+                bc.PopSourceRef();
+                bc.PushSourceRef(_until);
+                bc.EmitDebug("..end");
+
+                _condition.Compile(bc);
+                bc.EmitLeave(_stackFrame);
+                bc.EmitJump(OpCode.Jf, start);
+
+                bc.LoopTracker.Loops.Pop();
+
+                int exitpoint = bc.GetJumpPointForNextInstruction();
+
+                foreach (Instruction i in l.BreakJumps)
+                {
+                    i.NumVal = exitpoint;
+                }
+
+                bc.PopSourceRef();
+            }
         }
     }
 }

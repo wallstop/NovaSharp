@@ -10,6 +10,7 @@
 1. **Lua Spec Compliance** — Fix production code when it differs from reference Lua, never tests
 1. **Always create `.lua` test files** — Every test/fix needs standalone Lua fixtures for cross-interpreter verification
 1. **Multi-Version Testing** — All tests must run across Lua 5.1, 5.2, 5.3, 5.4, 5.5; include positive AND negative tests for version-specific features
+1. **Lua Fixture Metadata** — ONLY use `@lua-versions`, `@novasharp-only`, `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description` are **NOT parsed** by the harness and will be silently ignored
 
 ## 🔴 Build & Test Commands
 

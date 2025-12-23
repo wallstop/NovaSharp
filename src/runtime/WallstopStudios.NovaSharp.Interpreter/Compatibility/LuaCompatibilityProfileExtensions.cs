@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
 {
     using System;
+    using Cysharp.Text;
 
     /// <summary>
     /// Extension helpers for <see cref="LuaCompatibilityProfile"/>.
@@ -17,7 +18,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
                 throw new ArgumentNullException(nameof(profile));
             }
 
-            return $"{profile.DisplayName} (bitwise {FormatFlag(profile.SupportsBitwiseOperators)}, bit32 {FormatFlag(profile.SupportsBit32Library)}, utf8 {FormatFlag(profile.SupportsUtf8Library)}, table.move {FormatFlag(profile.SupportsTableMove)}, <const> {FormatFlag(profile.SupportsConstLocals)}, <close> {FormatFlag(profile.SupportsToBeClosedVariables)}, warn {FormatFlag(profile.SupportsWarnFunction)})";
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+            sb.Append(profile.DisplayName);
+            sb.Append(" (bitwise ");
+            sb.Append(FormatFlag(profile.SupportsBitwiseOperators));
+            sb.Append(", bit32 ");
+            sb.Append(FormatFlag(profile.SupportsBit32Library));
+            sb.Append(", utf8 ");
+            sb.Append(FormatFlag(profile.SupportsUtf8Library));
+            sb.Append(", table.move ");
+            sb.Append(FormatFlag(profile.SupportsTableMove));
+            sb.Append(", <const> ");
+            sb.Append(FormatFlag(profile.SupportsConstLocals));
+            sb.Append(", <close> ");
+            sb.Append(FormatFlag(profile.SupportsToBeClosedVariables));
+            sb.Append(", warn ");
+            sb.Append(FormatFlag(profile.SupportsWarnFunction));
+            sb.Append(')');
+            return sb.ToString();
         }
 
         private static string FormatFlag(bool value)

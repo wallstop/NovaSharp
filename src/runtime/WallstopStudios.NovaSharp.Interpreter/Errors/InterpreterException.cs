@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using Cysharp.Text;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)
@@ -122,7 +123,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
                 }
                 else
                 {
-                    DecoratedMessage = $"bytecode:{ip}: {Message}";
+                    DecoratedMessage = ZString.Concat("bytecode:", ip, ": ", Message);
                 }
             }
         }
@@ -149,7 +150,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
             }
 
             LuaCompatibilityProfile profile = script.CompatibilityProfile;
-            DecoratedMessage = $"{DecoratedMessage} [compatibility: {profile.DisplayName}]";
+            DecoratedMessage = ZString.Concat(
+                DecoratedMessage,
+                " [compatibility: ",
+                profile.DisplayName,
+                "]"
+            );
         }
 
         private static string FormatInvariant(string format, object[] args)

@@ -167,7 +167,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         {
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
-            string tokenTypeStr = type.ToString();
+            string tokenTypeStr = TokenTypeStrings.GetName(type);
             sb.Append(tokenTypeStr);
             int tokenTypePadding = 16 - tokenTypeStr.Length;
             if (tokenTypePadding > 0)

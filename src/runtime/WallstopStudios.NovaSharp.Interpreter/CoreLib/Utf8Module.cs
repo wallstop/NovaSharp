@@ -243,9 +243,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     // Lua 5.4: accept 0 to 0x7FFFFFFF (no surrogate check)
                     if (codePoint < 0 || codePoint > Lua54MaxUtf)
                     {
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'utf8.char' (value out of range)"
-                        );
+                        using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                        sb.Append("bad argument #");
+                        sb.Append(i + 1);
+                        sb.Append(" to 'utf8.char' (value out of range)");
+                        throw new ScriptRuntimeException(sb.ToString());
                     }
 
                     EncodeExtendedUtf8(codePoint, bytes);
@@ -256,9 +258,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     // The only difference from 5.4 is the maximum code point value
                     if (codePoint < 0 || codePoint > UnicodeMaxCodePoint)
                     {
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'utf8.char' (value out of range)"
-                        );
+                        using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                        sb.Append("bad argument #");
+                        sb.Append(i + 1);
+                        sb.Append(" to 'utf8.char' (value out of range)");
+                        throw new ScriptRuntimeException(sb.ToString());
                     }
 
                     EncodeExtendedUtf8(codePoint, bytes);

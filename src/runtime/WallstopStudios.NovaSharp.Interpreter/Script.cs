@@ -51,6 +51,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private readonly IRandomProvider _randomProvider;
         private readonly DateTime _startTimeUtc;
         private readonly Sandboxing.AllocationTracker _allocationTracker;
+        private readonly Execution.ScriptCompilationCache _compilationCache;
         private bool _bit32CompatibilityWarningEmitted;
         private static ScriptGlobalOptions GlobalOptionsSnapshot;
         private static readonly AsyncLocal<GlobalOptionsScope> ScopedGlobalOptions = new();
@@ -176,6 +177,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (Options.Sandbox.HasMemoryLimit || Options.Sandbox.HasCoroutineLimit)
             {
                 _allocationTracker = new Sandboxing.AllocationTracker();
+            }
+
+            // Initialize compilation cache if enabled
+            if (Options.EnableScriptCaching)
+            {
+                _compilationCache = new Execution.ScriptCompilationCache(
+                    Options.CompatibilityVersion,
+                    Options.ScriptCacheMaxEntries
+                );
             }
 
             PerformanceStats = new PerformanceStatistics(
@@ -309,6 +319,21 @@ namespace WallstopStudios.NovaSharp.Interpreter
         internal DateTime StartTimeUtc => _startTimeUtc;
 
         /// <summary>
+        /// Gets the approximate number of compiled scripts currently in the cache.
+        /// Returns 0 if caching is disabled via <see cref="ScriptOptions.EnableScriptCaching"/>.
+        /// </summary>
+        public int CompilationCacheCount => _compilationCache?.ApproximateCount ?? 0;
+
+        /// <summary>
+        /// Clears the script compilation cache, forcing subsequent <see cref="LoadString"/> calls
+        /// to perform full compilation. Has no effect if caching is disabled.
+        /// </summary>
+        public void ClearCompilationCache()
+        {
+            _compilationCache?.Clear();
+        }
+
+        /// <summary>
         /// Gets the default global table for this script. Unless a different table is intentionally passed (or setfenv has been used)
         /// execution uses this table.
         /// </summary>
@@ -334,8 +359,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(globalTable);
 
-            string chunkName =
-                $"libfunc_{funcFriendlyName ?? _sources.Count.ToString(CultureInfo.InvariantCulture)}";
+            string chunkName = ZString.Concat(
+                "libfunc_",
+                funcFriendlyName ?? _sources.Count.ToString(CultureInfo.InvariantCulture)
+            );
 
             SourceCode source = new(chunkName, code, _sources.Count, this);
 
@@ -410,8 +437,26 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     return LoadStream(ms, globalTable, codeFriendlyName);
                 }
 
+                // Try to use cached compilation if available
+                // Only use cache when no custom friendly name is specified (for proper debug tracking)
+                if (
+                    _compilationCache != null
+                    && codeFriendlyName == null
+                    && _compilationCache.TryGet(code, out Execution.CachedChunk cached)
+                )
+                {
+                    // Cache hit: reuse the previously compiled bytecode
+                    // The SourceCode is already in _sources at cached.SourceId
+                    // Just create a new closure pointing to the cached entry point
+                    return MakeClosure(cached._entryPointAddress, globalTable ?? _globalTable);
+                }
+
                 string chunkName =
-                    $"{codeFriendlyName ?? "chunk_" + _sources.Count.ToString(CultureInfo.InvariantCulture)}";
+                    codeFriendlyName
+                    ?? ZString.Concat(
+                        "chunk_",
+                        _sources.Count.ToString(CultureInfo.InvariantCulture)
+                    );
 
                 SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
 
@@ -421,6 +466,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
                 SignalSourceCodeChange(source);
                 SignalByteCodeChange();
+
+                // Store in cache for future reuse (only when no custom friendly name)
+                if (_compilationCache != null && codeFriendlyName == null)
+                {
+                    _compilationCache.Store(code, address, source.SourceId);
+                }
 
                 return MakeClosure(address, globalTable ?? _globalTable);
             });
@@ -461,11 +512,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 else
                 {
                     string chunkName =
-                        $"{codeFriendlyName ?? "dump_" + _sources.Count.ToString(CultureInfo.InvariantCulture)}";
+                        codeFriendlyName
+                        ?? ZString.Concat(
+                            "dump_",
+                            _sources.Count.ToString(CultureInfo.InvariantCulture)
+                        );
 
                     SourceCode source = new(
                         codeFriendlyName ?? chunkName,
-                        $"-- This script was decoded from a binary dump - dump_{_sources.Count}",
+                        ZString.Concat(
+                            "-- This script was decoded from a binary dump - dump_",
+                            _sources.Count
+                        ),
                         _sources.Count,
                         this
                     );
@@ -604,7 +662,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 else
                 {
                     throw new InvalidCastException(
-                        $"Unsupported return type from IScriptLoader.LoadFile : {code.GetType()}"
+                        ZString.Concat(
+                            "Unsupported return type from IScriptLoader.LoadFile : ",
+                            code.GetType()
+                        )
                     );
                 }
             }
@@ -1192,12 +1253,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
             // When LuaCompatibleErrors is disabled, return a simple message for backward compatibility
             if (!luaCompatibleErrors)
             {
-                return $"module '{modname}' not found";
+                return ZString.Concat("module '", modname, "' not found");
             }
 
             if (searchedPaths == null || searchedPaths.Count == 0)
             {
-                return $"module '{modname}' not found:\n\tno field package.preload['{modname}']";
+                using Utf16ValueStringBuilder sb0 = ZString.CreateStringBuilder();
+                sb0.Append("module '");
+                sb0.Append(modname);
+                sb0.Append("' not found:\n\tno field package.preload['");
+                sb0.Append(modname);
+                sb0.Append("']");
+                return sb0.ToString();
             }
 
             using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
@@ -1234,8 +1301,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return;
             }
 
-            string message =
-                $"[compatibility] require('bit32') is only available when targeting Lua 5.2. Active profile: {profile.DisplayName}. Update Script.Options.CompatibilityVersion or ship a custom bit32 module.";
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+            sb.Append(
+                "[compatibility] require('bit32') is only available when targeting Lua 5.2. Active profile: "
+            );
+            sb.Append(profile.DisplayName);
+            sb.Append(
+                ". Update Script.Options.CompatibilityVersion or ship a custom bit32 module."
+            );
+            string message = sb.ToString();
 
             Action<string> sink = Options.DebugPrint ?? Script.GlobalOptions.Platform.DefaultPrint;
             sink(message);
@@ -1299,7 +1373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynamicExpression CreateDynamicExpression(string code)
         {
             int sourceId = _sources.Count;
-            SourceCode source = new($"__dynamic_{sourceId}", code, sourceId, this);
+            SourceCode source = new(ZString.Concat("__dynamic_", sourceId), code, sourceId, this);
             _sources.Add(source);
 
             try

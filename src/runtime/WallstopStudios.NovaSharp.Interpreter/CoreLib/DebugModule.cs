@@ -94,20 +94,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                     if (result != null && result.Type != DataType.Void)
                     {
-                        script.Options.DebugPrint($"{result}");
+                        script.Options.DebugPrint(result.ToString());
                     }
                 }
                 catch (InterpreterException ex)
                 {
-                    script.Options.DebugPrint($"{ex.DecoratedMessage ?? ex.Message}");
+                    script.Options.DebugPrint(ex.DecoratedMessage ?? ex.Message);
                 }
                 catch (InvalidOperationException ex)
                 {
-                    script.Options.DebugPrint($"{ex.Message}");
+                    script.Options.DebugPrint(ex.Message);
                 }
                 catch (ArgumentException ex)
                 {
-                    script.Options.DebugPrint($"{ex.Message}");
+                    script.Options.DebugPrint(ex.Message);
                 }
             }
 
@@ -257,7 +257,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgument(
                     1,
                     "setuservalue",
-                    FormattableString.Invariant($"table expected, got {got}")
+                    ZString.Concat("table expected, got ", got)
                 );
             }
 
@@ -1064,13 +1064,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             if (frame.Address >= 0)
             {
-                return DynValue.NewString(
-                    FormattableString.Invariant($"function: 0x{frame.Address:x}")
-                );
+                using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                sb.Append("function: 0x");
+                sb.Append(frame.Address.ToString("x", CultureInfo.InvariantCulture));
+                return DynValue.NewString(sb.ToString());
             }
 
             string name = frame.Name ?? LuaKeywords.Function;
-            return DynValue.NewString($"function: {name}");
+            return DynValue.NewString(ZString.Concat("function: ", name));
         }
 
         private static void SetSourceFields(
@@ -1223,7 +1224,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return DynValue.Nil;
             }
 
-            string placeholderName = FormattableString.Invariant($"(*function-local {index})");
+            using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+            sb.Append("(*function-local ");
+            sb.Append(index);
+            sb.Append(')');
+            string placeholderName = sb.ToString();
             return DynValue.NewTuple(DynValue.NewString(placeholderName), DynValue.Nil);
         }
 
@@ -1367,7 +1372,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             public override string ToString()
             {
-                return FormattableString.Invariant($"upvalue: 0x{ReferenceId:X}");
+                using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                sb.Append("upvalue: 0x");
+                sb.Append(ReferenceId.ToString("X", CultureInfo.InvariantCulture));
+                return sb.ToString();
             }
         }
 

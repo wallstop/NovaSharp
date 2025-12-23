@@ -2,6 +2,8 @@
 
 **When to use**: Investigating whether NovaSharp behavior matches reference Lua.
 
+**Related Skills**: [lua-fixture-creation](lua-fixture-creation.md) (creating test fixtures), [lua-comparison-harness](lua-comparison-harness.md) (running fixtures)
+
 ______________________________________________________________________
 
 ## Core Principle
@@ -32,13 +34,7 @@ lua5.1 path/to/fixture.lua
 
 ### Run comparison harness
 
-```bash
-# Run all fixtures against a Lua version
-python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.4
-
-# Compare outputs
-python3 scripts/tests/compare-lua-outputs.py --lua-version 5.4 --results-dir artifacts/lua-comparison-5.4
-```
+See [lua-comparison-harness](lua-comparison-harness.md) for full harness usage.
 
 ______________________________________________________________________
 
@@ -82,18 +78,7 @@ Local specs are in `docs/lua-spec/`:
 
 ### 4. Create a fixture to document expected behavior
 
-```lua
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
--- @novasharp-only: false
--- @expects-error: false
--- @source: src/tests/.../MathTests.cs:42
--- @test: MathTests.FloorNegativeHalf
-
--- Test: math.floor with negative half
--- Reference: Lua 5.4 manual §6.7
-
-print(math.floor(-0.5))  -- Expected: -1
-```
+See [lua-fixture-creation](lua-fixture-creation.md) for complete fixture template and metadata requirements.
 
 ### 5. Fix NovaSharp production code
 

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
 {
     using System;
     using System.Collections.Generic;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -41,9 +42,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// <param name="name">Original name of the local.</param>
         internal void Rename(string name)
         {
-            SymbolRef sref = _definedNames[name];
-            _definedNames.Remove(name);
-            _definedNames.Add($"@{name}_{Guid.NewGuid().ToString("N")}", sref);
+            if (!_definedNames.Remove(name, out SymbolRef sref))
+            {
+                return;
+            }
+
+            using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+            sb.Append('@');
+            sb.Append(name);
+            sb.Append('_');
+            sb.Append(Guid.NewGuid().ToString("N"));
+            _definedNames[sb.ToString()] = sref;
         }
 
         /// <summary>

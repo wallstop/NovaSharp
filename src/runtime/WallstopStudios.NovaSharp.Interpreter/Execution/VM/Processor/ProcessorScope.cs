@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using Cysharp.Text;
     using Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -117,7 +118,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             if (dynValue.Type != DataType.Table)
             {
-                throw new InvalidOperationException($"_ENV is not a table but a {dynValue.Type}");
+                throw new InvalidOperationException(
+                    ZString.Concat("_ENV is not a table but a ", dynValue.Type)
+                );
             }
 
             return dynValue.Table.Get(name);
@@ -128,7 +131,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             if (dynValue.Type != DataType.Table)
             {
-                throw new InvalidOperationException($"_ENV is not a table but a {dynValue.Type}");
+                throw new InvalidOperationException(
+                    ZString.Concat("_ENV is not a table but a ", dynValue.Type)
+                );
             }
 
             dynValue.Table.Set(name, value ?? DynValue.Nil);

@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 {
     using System.Collections.Generic;
+    using Cysharp.Text;
     using Debugging;
     using Expressions;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -46,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             {
                 Token name = CheckTokenType(lcontext, TokenType.Name);
                 _funcSymbol = lcontext.Scope.TryDefineLocal(name.text);
-                _friendlyName = $"{name.text} (local)";
+                _friendlyName = ZString.Concat(name.text, " (local)");
                 _sourceRef = funcKeyword.GetSourceRef(name);
             }
             else

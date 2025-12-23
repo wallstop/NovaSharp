@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
     using System.IO;
     using System.Text.Json;
     using System.Text.Json.Serialization;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
 
     /// <summary>
@@ -134,7 +135,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                     BuildCompatibilityWarning(
                         requested,
                         effectiveHost,
-                        string.IsNullOrWhiteSpace(Name) ? "mod" : $"mod \"{Name}\""
+                        string.IsNullOrWhiteSpace(Name)
+                            ? "mod"
+                            : ZString.Concat("mod \"", Name, "\"")
                     )
                 );
             }
@@ -165,7 +168,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             if (digitsOnly.Length == 0)
             {
                 throw new InvalidDataException(
-                    $"Unable to parse luaCompatibility value \"{raw}\". Expected examples: \"Lua54\", \"5.4\", \"latest\"."
+                    ZString.Concat(
+                        "Unable to parse luaCompatibility value \"",
+                        raw,
+                        "\". Expected examples: \"Lua54\", \"5.4\", \"latest\"."
+                    )
                 );
             }
 
@@ -177,7 +184,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             }
 
             throw new InvalidDataException(
-                $"Unable to parse luaCompatibility value \"{raw}\". Expected examples: \"Lua54\", \"5.4\", \"latest\"."
+                ZString.Concat(
+                    "Unable to parse luaCompatibility value \"",
+                    raw,
+                    "\". Expected examples: \"Lua54\", \"5.4\", \"latest\"."
+                )
             );
         }
 
@@ -220,7 +231,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             string requestedDisplay = LuaCompatibilityProfile.ForVersion(requested).DisplayName;
             string hostDisplay = LuaCompatibilityProfile.ForVersion(host).DisplayName;
 
-            return $"{manifestLabel} targets {requestedDisplay}, but the host default is {hostDisplay}.";
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+            sb.Append(manifestLabel);
+            sb.Append(" targets ");
+            sb.Append(requestedDisplay);
+            sb.Append(", but the host default is ");
+            sb.Append(hostDisplay);
+            sb.Append('.');
+            return sb.ToString();
         }
 
         private sealed class ManifestModel

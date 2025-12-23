@@ -74,47 +74,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         {
             bc.PushSourceRef(_refFor);
 
-            Loop l = new() { Scope = _stackFrame };
-
-            bc.LoopTracker.Loops.Push(l);
-
-            _end.Compile(bc);
-            bc.EmitToNum(3);
-            _step.Compile(bc);
-            bc.EmitToNum(2);
-            _start.Compile(bc);
-            bc.EmitToNum(1);
-
-            int start = bc.GetJumpPointForNextInstruction();
-            Instruction jumpend = bc.EmitJump(OpCode.JFor, -1);
-            bc.EmitEnter(_stackFrame);
-            //bc.Emit_SymStorN(_VarName);
-
-            bc.EmitStore(_varName, 0, 0);
-
-            _innerBlock.Compile(bc);
-
-            bc.PopSourceRef();
-            bc.PushSourceRef(_refEnd);
-
-            bc.EmitDebug("..end");
-            bc.EmitLeave(_stackFrame);
-            bc.EmitIncr(1);
-            bc.EmitJump(OpCode.Jump, start);
-
-            bc.LoopTracker.Loops.Pop();
-
-            int exitpoint = bc.GetJumpPointForNextInstruction();
-
-            foreach (Instruction i in l.BreakJumps)
+            using (Loop l = new() { Scope = _stackFrame })
             {
-                i.NumVal = exitpoint;
+                bc.LoopTracker.Loops.Push(l);
+
+                _end.Compile(bc);
+                bc.EmitToNum(3);
+                _step.Compile(bc);
+                bc.EmitToNum(2);
+                _start.Compile(bc);
+                bc.EmitToNum(1);
+
+                int start = bc.GetJumpPointForNextInstruction();
+                Instruction jumpend = bc.EmitJump(OpCode.JFor, -1);
+                bc.EmitEnter(_stackFrame);
+                //bc.Emit_SymStorN(_VarName);
+
+                bc.EmitStore(_varName, 0, 0);
+
+                _innerBlock.Compile(bc);
+
+                bc.PopSourceRef();
+                bc.PushSourceRef(_refEnd);
+
+                bc.EmitDebug("..end");
+                bc.EmitLeave(_stackFrame);
+                bc.EmitIncr(1);
+                bc.EmitJump(OpCode.Jump, start);
+
+                bc.LoopTracker.Loops.Pop();
+
+                int exitpoint = bc.GetJumpPointForNextInstruction();
+
+                foreach (Instruction i in l.BreakJumps)
+                {
+                    i.NumVal = exitpoint;
+                }
+
+                jumpend.NumVal = exitpoint;
+                bc.EmitPop(3);
+
+                bc.PopSourceRef();
             }
-
-            jumpend.NumVal = exitpoint;
-            bc.EmitPop(3);
-
-            bc.PopSourceRef();
         }
     }
 }

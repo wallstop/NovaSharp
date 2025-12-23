@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System.Collections.Concurrent;
     using System.Diagnostics.CodeAnalysis;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -156,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.TailCallRequest:
                 case DataType.YieldRequest:
                 default:
-                    return $"internal<{type.ToLuaDebuggerString()}>";
+                    return ZString.Concat("internal<", type.ToLuaDebuggerString(), ">");
             }
         }
 

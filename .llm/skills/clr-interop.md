@@ -2,6 +2,8 @@
 
 **When to use**: Exposing C# types/methods to Lua or calling Lua from C#.
 
+**Related Skills**: [lua-fixture-creation](lua-fixture-creation.md) (creating `@novasharp-only` fixtures for interop tests), [tunit-test-writing](tunit-test-writing.md) (isolation attributes)
+
 ______________________________________________________________________
 
 ## Overview

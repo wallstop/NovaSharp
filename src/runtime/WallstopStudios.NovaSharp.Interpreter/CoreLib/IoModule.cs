@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System.IO;
     using System.Security;
     using System.Text;
+    using Cysharp.Text;
     using IO;
     using Platforms;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -546,7 +547,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (ex is FileNotFoundException)
             {
-                return $"{filename}: No such file or directory";
+                using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                sb.Append(filename);
+                sb.Append(": No such file or directory");
+                return sb.ToString();
             }
             else
             {

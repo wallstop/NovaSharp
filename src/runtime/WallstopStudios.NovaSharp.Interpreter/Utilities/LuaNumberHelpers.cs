@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Utilities
 {
     using System;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -50,7 +51,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
             if (double.IsNaN(floatValue) || double.IsInfinity(floatValue))
             {
                 throw new ScriptRuntimeException(
-                    $"bad argument #{argIndex} to '{functionName}' (number has no integer representation)"
+                    ZString.Concat(
+                        "bad argument #",
+                        argIndex,
+                        " to '",
+                        functionName,
+                        "' (number has no integer representation)"
+                    )
                 );
             }
 
@@ -59,7 +66,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
             if (floored != floatValue)
             {
                 throw new ScriptRuntimeException(
-                    $"bad argument #{argIndex} to '{functionName}' (number has no integer representation)"
+                    ZString.Concat(
+                        "bad argument #",
+                        argIndex,
+                        " to '",
+                        functionName,
+                        "' (number has no integer representation)"
+                    )
                 );
             }
 
@@ -79,7 +92,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
             {
                 // Outside valid long range
                 throw new ScriptRuntimeException(
-                    $"bad argument #{argIndex} to '{functionName}' (number has no integer representation)"
+                    ZString.Concat(
+                        "bad argument #",
+                        argIndex,
+                        " to '",
+                        functionName,
+                        "' (number has no integer representation)"
+                    )
                 );
             }
 
@@ -91,7 +110,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
             if ((double)asLong != floatValue)
             {
                 throw new ScriptRuntimeException(
-                    $"bad argument #{argIndex} to '{functionName}' (number has no integer representation)"
+                    ZString.Concat(
+                        "bad argument #",
+                        argIndex,
+                        " to '",
+                        functionName,
+                        "' (number has no integer representation)"
+                    )
                 );
             }
         }

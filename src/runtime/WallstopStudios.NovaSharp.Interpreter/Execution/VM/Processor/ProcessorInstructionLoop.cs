@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using Cysharp.Text;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -375,10 +376,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                             break;
                         case OpCode.Invalid:
-                            throw new NotImplementedException($"Invalid opcode : {i.Name}");
+                            throw new NotImplementedException(
+                                ZString.Concat("Invalid opcode : ", i.Name)
+                            );
                         default:
                             throw new NotImplementedException(
-                                $"Execution for {i.OpCode} not implemented yet!"
+                                ZString.Concat("Execution for ", i.OpCode, " not implemented yet!")
                             );
                     }
 
@@ -598,16 +601,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (stackframe.BlocksToClose == null)
             {
-                stackframe.BlocksToClose = new List<List<SymbolRef>>();
+                stackframe.BlocksToClose = ListPool<List<SymbolRef>>.Rent();
             }
 
-            stackframe.BlocksToClose.Add(new List<SymbolRef>(closers));
+            List<SymbolRef> closersList = ListPool<SymbolRef>.Rent(closers.Length);
+            for (int idx = 0; idx < closers.Length; idx++)
+            {
+                closersList.Add(closers[idx]);
+            }
+            stackframe.BlocksToClose.Add(closersList);
 
             if (closers.Length > 0)
             {
                 if (stackframe.ToBeClosedIndices == null)
                 {
-                    stackframe.ToBeClosedIndices = new HashSet<int>();
+                    stackframe.ToBeClosedIndices = HashSetPool<int>.Rent();
                 }
 
                 foreach (SymbolRef sym in closers)
@@ -689,6 +697,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (closers.Count == 0)
             {
+                ListPool<SymbolRef>.Return(closers);
                 return;
             }
 
@@ -712,6 +721,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     slot.Assign(DynValue.Nil);
                 }
             }
+
+            ListPool<SymbolRef>.Return(closers);
         }
 
         private void CloseAllPendingBlocks(CallStackItem stackframe, DynValue error)
@@ -736,6 +747,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 if (closers.Count == 0)
                 {
+                    ListPool<SymbolRef>.Return(closers);
                     continue;
                 }
 
@@ -751,6 +763,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         slot.Assign(DynValue.Nil);
                     }
                 }
+
+                ListPool<SymbolRef>.Return(closers);
             }
 
             stackframe.ToBeClosedIndices?.Clear();
@@ -1067,22 +1081,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem cur = _executionStack.Peek();
 
             cur.DebugSymbols = i.SymbolList;
-            cur.LocalScope = new DynValue[i.NumVal];
+            cur.LocalScope = DynValueArrayPool.Rent(i.NumVal);
+            cur._localScopeSize = i.NumVal;
 
             ClearBlockData(i);
 
             if (cur.BlocksToClose == null)
             {
-                cur.BlocksToClose = new List<List<SymbolRef>>();
+                cur.BlocksToClose = ListPool<List<SymbolRef>>.Rent();
             }
             else
             {
+                // Return all inner lists before clearing the outer list
+                foreach (List<SymbolRef> innerList in cur.BlocksToClose)
+                {
+                    ListPool<SymbolRef>.Return(innerList);
+                }
                 cur.BlocksToClose.Clear();
             }
 
             if (cur.ToBeClosedIndices == null)
             {
-                cur.ToBeClosedIndices = new HashSet<int>();
+                cur.ToBeClosedIndices = HashSetPool<int>.Rent();
             }
             else
             {
@@ -1112,7 +1132,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     && symbol.IndexValue <= rootBlockLastIndex
                 )
                 {
-                    rootClosers ??= new List<SymbolRef>();
+                    rootClosers ??= ListPool<SymbolRef>.Rent();
                     rootClosers.Add(symbol);
                     cur.ToBeClosedIndices.Add(symbol.IndexValue);
                 }
@@ -1122,13 +1142,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 cur.BlocksToClose.Add(rootClosers);
             }
-            else if (cur.BlocksToClose.Count == 0)
+            else
             {
-                cur.BlocksToClose = null;
+                // Return unused pooled list if we allocated one but it's empty
+                ListPool<SymbolRef>.Return(rootClosers);
+                if (cur.BlocksToClose.Count == 0)
+                {
+                    ListPool<List<SymbolRef>>.Return(cur.BlocksToClose);
+                    cur.BlocksToClose = null;
+                }
             }
 
             if (cur.ToBeClosedIndices.Count == 0)
             {
+                HashSetPool<int>.Return(cur.ToBeClosedIndices);
                 cur.ToBeClosedIndices = null;
             }
         }
@@ -1215,13 +1242,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 )
                 {
                     int len = argsList.Count - i;
-                    DynValue[] varargs = new DynValue[len];
+                    DynValue[] pooledVarargs = DynValueArrayPool.Rent(len);
 
                     for (int ii = 0; ii < len; ii++, i++)
                     {
-                        varargs[ii] = argsList[i].ToScalar().CloneAsWritable();
+                        pooledVarargs[ii] = argsList[i].ToScalar().CloneAsWritable();
                     }
 
+                    DynValue[] varargs = DynValueArrayPool.ToArrayAndReturn(pooledVarargs, len);
                     AssignLocal(
                         instruction.SymbolList[^1],
                         DynValue.NewTuple(InternalAdjustTuple(varargs))

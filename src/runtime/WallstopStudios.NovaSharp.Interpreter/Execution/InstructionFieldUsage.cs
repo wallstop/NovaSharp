@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using System;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
 
     /// <summary>
@@ -137,7 +138,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         | InstructionFieldUsage.Name;
                 default:
                     throw new NotImplementedException(
-                        $"InstructionFieldUsage for instruction {(int)op}"
+                        ZString.Concat("InstructionFieldUsage for instruction ", (int)op)
                     );
             }
         }

@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
     using BasicDescriptors;
     using Compatibility;
     using Converters;
+    using Cysharp.Text;
     using DataTypes;
     using Errors;
     using Execution;
@@ -846,7 +847,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                     mst.Table.Set(
                         ++i,
                         DynValue.NewString(
-                            $"unsupported - {m.GetType().FullName} is not serializable"
+                            ZString.Concat(
+                                "unsupported - ",
+                                m.GetType().FullName,
+                                " is not serializable"
+                            )
                         )
                     );
                 }

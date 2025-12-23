@@ -555,6 +555,100 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        // Tests for os.time integer return type in Lua 5.3+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeReturnsIntegerInLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                "return math.type(os.time({year=2000, month=1, day=1, hour=0, min=0, sec=0}))"
+            );
+
+            await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
+        }
+
+        // Tests for os.date format specifiers matching reference Lua output
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatC(LuaCompatibilityVersion version)
+        {
+            // %c format should match Lua's "ddd MMM dd HH:mm:ss yyyy" format
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%c', 0)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("Thu Jan  1 00:00:00 1970")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatX(LuaCompatibilityVersion version)
+        {
+            // %x format should match Lua's "MM/DD/YY" format
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%x', 0)");
+
+            await Assert.That(result.String).IsEqualTo("01/01/70").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatZForUtc(LuaCompatibilityVersion version)
+        {
+            // %z format for UTC should return +0000 (without colon)
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%z', 0)");
+
+            await Assert.That(result.String).IsEqualTo("+0000").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatZCapitalForUtc(LuaCompatibilityVersion version)
+        {
+            // %Z format for UTC should return "GMT"
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%Z', 0)");
+
+            await Assert.That(result.String).IsEqualTo("GMT").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatCombined(LuaCompatibilityVersion version)
+        {
+            // Combined format string test
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%Y-%m-%d %H:%M:%S', 0)");
+
+            await Assert.That(result.String).IsEqualTo("1970-01-01 00:00:00").ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModulePresets.Complete);

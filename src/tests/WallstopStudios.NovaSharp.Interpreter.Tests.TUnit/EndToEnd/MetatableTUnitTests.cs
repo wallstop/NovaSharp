@@ -262,5 +262,126 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             await Assert.That(exception).IsNull().ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// Verifies that ipairs respects __index metamethod in Lua 5.3+ (function form).
+        /// In Lua 5.3+, ipairs uses metamethod-aware indexing, calling __index for missing keys.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua53, LuaCompatibilityVersion.Lua55)]
+        public async Task IpairsRespectsIndexMetamethodFunction53Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            string script =
+                @"
+                local underlying = {10, 20, 30}
+                local proxy = {}
+                setmetatable(proxy, {
+                    __index = function(t, k)
+                        return underlying[k]
+                    end
+                })
+                local result = ''
+                for i, v in ipairs(proxy) do
+                    result = result .. i .. ':' .. v .. ' '
+                end
+                return result
+                ";
+
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, "1:10 2:20 3:30 ")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that ipairs respects __index metamethod in Lua 5.3+ (table form).
+        /// When __index is a table, ipairs follows the chain to find values.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua53, LuaCompatibilityVersion.Lua55)]
+        public async Task IpairsRespectsIndexMetamethodTable53Plus(LuaCompatibilityVersion version)
+        {
+            string script =
+                @"
+                local underlying = {100, 200, 300, 400}
+                local proxy = {}
+                setmetatable(proxy, {
+                    __index = underlying
+                })
+                local result = ''
+                for i, v in ipairs(proxy) do
+                    result = result .. i .. ':' .. v .. ' '
+                end
+                return result
+                ";
+
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, "1:100 2:200 3:300 4:400 ")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that ipairs uses raw access (ignores __index) in Lua 5.1/5.2.
+        /// Prior to Lua 5.3, ipairs did not respect metamethods for indexing.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
+        public async Task IpairsIgnoresIndexMetamethod51And52(LuaCompatibilityVersion version)
+        {
+            string script =
+                @"
+                local underlying = {10, 20, 30}
+                local proxy = {}
+                setmetatable(proxy, {
+                    __index = function(t, k)
+                        return underlying[k]
+                    end
+                })
+                local result = ''
+                for i, v in ipairs(proxy) do
+                    result = result .. i .. ':' .. v .. ' '
+                end
+                return result
+                ";
+
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            // In Lua 5.1/5.2, ipairs uses raw access, so the empty proxy table yields no iteration
+            await EndToEndDynValueAssert.ExpectAsync(result, "").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that ipairs with mixed raw and __index values works correctly in Lua 5.3+.
+        /// Raw values should be found first; __index is used as fallback for missing keys.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua53, LuaCompatibilityVersion.Lua55)]
+        public async Task IpairsMixedRawAndIndexMetamethod53Plus(LuaCompatibilityVersion version)
+        {
+            string script =
+                @"
+                local underlying = {'a', 'b', 'c', 'd', 'e'}
+                local proxy = {nil, 'B', nil}
+                setmetatable(proxy, {
+                    __index = underlying
+                })
+                local result = ''
+                for i, v in ipairs(proxy) do
+                    result = result .. i .. ':' .. v .. ' '
+                end
+                return result
+                ";
+
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            // Index 1: raw nil -> __index returns 'a'
+            // Index 2: raw 'B' -> used directly
+            // Index 3: raw nil -> __index returns 'c'
+            // etc.
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, "1:a 2:B 3:c 4:d 5:e ")
+                .ConfigureAwait(false);
+        }
     }
 }

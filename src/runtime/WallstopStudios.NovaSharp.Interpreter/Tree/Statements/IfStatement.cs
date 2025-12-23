@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
     using System.Collections.Generic;
     using Debugging;
     using Execution.Scopes;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
@@ -102,51 +103,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         /// </summary>
         public override void Compile(ByteCode bc)
         {
-            List<Instruction> endJumps = new();
-
-            Instruction lastIfJmp = null;
-
-            foreach (IfBlock ifblock in _ifs)
+            using (ListPool<Instruction>.Get(out List<Instruction> endJumps))
             {
-                using (bc.EnterSource(ifblock.Source))
+                Instruction lastIfJmp = null;
+
+                foreach (IfBlock ifblock in _ifs)
                 {
-                    if (lastIfJmp != null)
+                    using (bc.EnterSource(ifblock.Source))
                     {
-                        lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
+                        if (lastIfJmp != null)
+                        {
+                            lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
+                        }
+
+                        ifblock.Condition.Compile(bc);
+                        lastIfJmp = bc.EmitJump(OpCode.Jf, -1);
+                        bc.EmitEnter(ifblock.StackFrame);
+                        ifblock.Body.Compile(bc);
                     }
 
-                    ifblock.Condition.Compile(bc);
-                    lastIfJmp = bc.EmitJump(OpCode.Jf, -1);
-                    bc.EmitEnter(ifblock.StackFrame);
-                    ifblock.Body.Compile(bc);
+                    using (bc.EnterSource(_end))
+                    {
+                        bc.EmitLeave(ifblock.StackFrame);
+                    }
+
+                    endJumps.Add(bc.EmitJump(OpCode.Jump, -1));
                 }
 
-                using (bc.EnterSource(_end))
+                lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
+
+                if (_else != null)
                 {
-                    bc.EmitLeave(ifblock.StackFrame);
+                    using (bc.EnterSource(_else.Source))
+                    {
+                        bc.EmitEnter(_else.StackFrame);
+                        _else.Body.Compile(bc);
+                    }
+
+                    {
+                        bc.EmitLeave(_else.StackFrame);
+                    }
                 }
 
-                endJumps.Add(bc.EmitJump(OpCode.Jump, -1));
-            }
-
-            lastIfJmp.NumVal = bc.GetJumpPointForNextInstruction();
-
-            if (_else != null)
-            {
-                using (bc.EnterSource(_else.Source))
+                foreach (Instruction endjmp in endJumps)
                 {
-                    bc.EmitEnter(_else.StackFrame);
-                    _else.Body.Compile(bc);
+                    endjmp.NumVal = bc.GetJumpPointForNextInstruction();
                 }
-
-                {
-                    bc.EmitLeave(_else.StackFrame);
-                }
-            }
-
-            foreach (Instruction endjmp in endJumps)
-            {
-                endjmp.NumVal = bc.GetJumpPointForNextInstruction();
             }
         }
     }

@@ -2,6 +2,8 @@
 
 **When to use**: Running fixtures against reference Lua interpreters to verify NovaSharp compliance.
 
+**Related Skills**: [lua-fixture-creation](lua-fixture-creation.md) (creating fixtures), [lua-spec-verification](lua-spec-verification.md) (investigating differences)
+
 ______________________________________________________________________
 
 ## Overview
@@ -104,7 +106,7 @@ lua5.4 LuaFixtures/TestClass/fixture_name.lua
 ### 3. Run manually against NovaSharp
 
 ```bash
-dotnet run --project src/tooling/NovaSharp.Cli -- LuaFixtures/TestClass/fixture_name.lua
+dotnet run -c Release --project src/tooling/WallstopStudios.NovaSharp.Cli -- LuaFixtures/TestClass/fixture_name.lua
 ```
 
 ### 4. Compare outputs side-by-side
@@ -191,7 +193,4 @@ ______________________________________________________________________
 
 ## Adding New Fixtures
 
-1. Create `.lua` file with proper metadata header
-1. Verify it runs with reference Lua: `lua5.4 your_fixture.lua`
-1. Run the harness: `python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.4`
-1. Check results in `artifacts/lua-comparison-5.4/`
+See [lua-fixture-creation](lua-fixture-creation.md) for complete fixture creation guidelines including required metadata headers, version-specific naming conventions, and validation checklist.

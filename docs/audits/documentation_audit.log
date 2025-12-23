@@ -8,19 +8,19 @@ Found 65 undocumented public/internal type declarations.
   - line 9: missing XML docs for `class ComVisibleAttribute`
   - line 14: missing XML docs for `class GuidAttribute`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/DebugModule.cs
-  - line 1351: missing XML docs for `Function`
-  - line 1352: missing XML docs for `Mask`
-  - line 1353: missing XML docs for `Count`
-  - line 1364: missing XML docs for `Upvalue`
-  - line 1366: missing XML docs for `ReferenceId`
-  - line 1368: missing XML docs for `ToString()`
-  - line 1376: missing XML docs for `Name`
-  - line 1378: missing XML docs for `Type`
-  - line 1380: missing XML docs for `Index()`
-  - line 1385: missing XML docs for `SetIndex()`
-  - line 1396: missing XML docs for `AsString()`
-  - line 1406: missing XML docs for `MetaIndex()`
-  - line 1411: missing XML docs for `IsTypeCompatible()`
+  - line 1356: missing XML docs for `Function`
+  - line 1357: missing XML docs for `Mask`
+  - line 1358: missing XML docs for `Count`
+  - line 1369: missing XML docs for `Upvalue`
+  - line 1371: missing XML docs for `ReferenceId`
+  - line 1373: missing XML docs for `ToString()`
+  - line 1384: missing XML docs for `Name`
+  - line 1386: missing XML docs for `Type`
+  - line 1388: missing XML docs for `Index()`
+  - line 1393: missing XML docs for `SetIndex()`
+  - line 1404: missing XML docs for `AsString()`
+  - line 1414: missing XML docs for `MetaIndex()`
+  - line 1419: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
   - line 20: missing XML docs for `Name`
   - line 22: missing XML docs for `Type`
@@ -43,8 +43,8 @@ Found 65 undocumented public/internal type declarations.
   - line 96: missing XML docs for `Clone()`
   - line 313: missing XML docs for `EnterIsolationScope()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
-  - line 279: missing XML docs for `BeginDefaultOptionsScope()`
-  - line 1483: missing XML docs for `Dispose()`
+  - line 289: missing XML docs for `BeginDefaultOptionsScope()`
+  - line 1557: missing XML docs for `Dispose()`
 - src/tooling/WallstopStudios.NovaSharp.Cli/ArgumentValidation.cs
   - line 10: missing XML docs for `ThrowIfNull()`
 - src/tooling/WallstopStudios.NovaSharp.Cli/CliArgumentRegistry.cs

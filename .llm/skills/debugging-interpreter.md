@@ -2,15 +2,13 @@
 
 **When to use**: Investigating bugs in lexing, parsing, compilation, or execution.
 
+**Related Skills**: [lua-spec-verification](lua-spec-verification.md) (comparing with reference Lua), [lua-fixture-creation](lua-fixture-creation.md) (creating test cases), [tunit-test-writing](tunit-test-writing.md) (minimal reproduction tests)
+
 ______________________________________________________________________
 
 ## Pipeline Overview
 
-```
-Lua Source → Lexer → Parser → AST → Compiler → Bytecode → VM → Execution
-```
-
-Each stage can be debugged independently.
+See [context.md](../context.md) Architecture section for the full pipeline diagram. Each stage can be debugged independently.
 
 ______________________________________________________________________
 
@@ -185,7 +183,7 @@ public async Task MinimalReproduction()
 lua5.4 -e "print(<test code>)"
 
 # Run in NovaSharp CLI
-dotnet run --project src/tooling/NovaSharp.Cli -e "print(<test code>)"
+dotnet run -c Release --project src/tooling/WallstopStudios.NovaSharp.Cli -e "print(<test code>)"
 ```
 
 ### 3. Binary search the problem

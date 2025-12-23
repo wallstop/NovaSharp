@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
 {
     using System.Collections.Generic;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -39,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// </summary>
         public override string ToString()
         {
-            return $"ScopeFrame : #{Count}";
+            return ZString.Concat("ScopeFrame : #", Count);
         }
     }
 }

@@ -1,7 +1,9 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System.IO;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -459,14 +461,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             catch (System.IO.FileNotFoundException ex)
             {
                 // Per Lua spec: loadfile returns (nil, error_message) when file cannot be opened
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(
-                        ex.FileName != null
-                            ? $"cannot open {ex.FileName}: No such file or directory"
-                            : ex.Message
-                    )
-                );
+                string errorMessage;
+                if (ex.FileName != null)
+                {
+                    using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                    sb.Append("cannot open ");
+                    sb.Append(ex.FileName);
+                    sb.Append(": No such file or directory");
+                    errorMessage = sb.ToString();
+                }
+                else
+                {
+                    errorMessage = ex.Message;
+                }
+                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(errorMessage));
             }
             catch (System.IO.IOException ex)
             {

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -448,7 +449,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 catch (Exception ex)
                 {
                     // Store error as string for debugging
-                    results[modId] = DynValue.NewString($"Error: {ex.Message}");
+                    results[modId] = DynValue.NewString(ZString.Concat("Error: ", ex.Message));
                 }
             }
 

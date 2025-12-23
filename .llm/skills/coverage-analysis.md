@@ -2,6 +2,8 @@
 
 **When to use**: Running code coverage, interpreting reports, finding coverage gaps.
 
+**Related Skills**: [tunit-test-writing](tunit-test-writing.md) (adding tests for gaps), [lua-fixture-creation](lua-fixture-creation.md) (creating .lua fixtures)
+
 ______________________________________________________________________
 
 ## Running Coverage
@@ -190,12 +192,3 @@ ______________________________________________________________________
 1. **Parser/Lexer** — Syntax handling
 1. **Interop** — C#/Lua bridge
 1. **Utilities** — Helpers, converters
-
-______________________________________________________________________
-
-## Key Scripts
-
-| Script                          | Purpose                      |
-| ------------------------------- | ---------------------------- |
-| `scripts/coverage/coverage.sh`  | Main coverage runner (bash)  |
-| `scripts/coverage/coverage.ps1` | Coverage runner (PowerShell) |

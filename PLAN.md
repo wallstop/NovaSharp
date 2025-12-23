@@ -9,15 +9,15 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 3. **ADD REGRESSION TESTS** with standalone `.lua` fixtures runnable against real Lua
 4. **NEVER adjust tests to accommodate bugs** — fix the runtime instead
 
-**Current Status**: ✅ Lua fixture comparisons show **0 unexpected mismatches** across all versions (5.1, 5.2, 5.3, 5.4, 5.5). ~3,500 Lua fixtures verified.
+**Current Status**: ✅ Lua fixture comparisons show **0 unexpected mismatches** across all versions (5.1, 5.2, 5.3, 5.4, 5.5). ~1,800 Lua fixtures verified.
 
 ---
 
-## Repository Snapshot (Updated 2025-12-21)
+## Repository Snapshot (Updated 2025-12-22)
 
 **Build & Tests**:
 - Zero warnings with `<TreatWarningsAsErrors>true` enforced
-- **11,755** interpreter tests via TUnit (Microsoft.Testing.Platform)
+- **11,901** interpreter tests via TUnit (Microsoft.Testing.Platform)
 - Coverage: ~75.3% line / ~76.1% branch (gating targets at 90%)
 - CI: Tests on matrix of `[ubuntu-latest, windows-latest, macos-latest]`
 
@@ -25,11 +25,6 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 - **2,000+** tests with explicit version attributes
 - All Lua execution tests have proper version coverage
 - Helper attributes (`[AllLuaVersions]`, `[LuaVersionsFrom]`, etc.) available for new tests
-
-**Lua Fixture Extraction**:
-- ✅ **~3,500** Lua fixtures with version metadata
-- ✅ **0 unexpected mismatches** across all Lua versions (5.1-5.5)
-- Comparison harness operational with version filtering
 
 **Audits & Quality**:
 - `docs/audits/documentation_audit.log`, `docs/audits/naming_audit.log`, `docs/audits/spelling_audit.log` green
@@ -42,6 +37,7 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 - Benchmark CI: BenchmarkDotNet with threshold-based regression alerting
 - Packaging: NuGet publishing workflow + Unity UPM scripts
 - **Array Pooling**: `DynValueArrayPool`, `ObjectArrayPool` (exact-size), `SystemArrayPool<T>` (variable-size)
+- **Zero-Allocation Strings**: ZString integration complete, span-based operations for hot paths
 
 **Lua Compatibility**:
 - ✅ **0 unexpected mismatches** across all Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
@@ -56,236 +52,48 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 ## Active Initiatives
 
-### Initiative 15: Boxing-Free IList Sort Extensions ✅ **COMPLETE**
-**Goal**: Implement custom sort algorithms for `IList<T>` that use generic `TComparer : IComparer<T>` constraints to avoid boxing value-type comparers.
-**Problem**: `List<T>.Sort(IComparer<T>)` and `Array.Sort(T[], IComparer<T>)` box the comparer when it's a value type, causing allocations even with `readonly struct` comparers.
-**Implementation**:
-  - Created `IListSortExtensions.cs` in `DataStructs/`
-  - Pattern-defeating quicksort (pdqsort) for excellent average/worst case performance
-  - Ninther (median-of-medians) pivot selection for adversarial input resistance
-  - Partial insertion sort to detect nearly-sorted patterns
-  - Unguarded insertion sort for interior partitions (no bounds checking)
-  - Heapsort fallback when bad partitions detected
-  - Integrated with `DynValueComparer` in `table.sort`
-**Results**: Zero boxing allocations with struct comparers, handles patterns well (sorted, reverse, repeated elements).
-**Status**: Complete. All 11,754 tests pass.
-
-### Initiative 9: Version-Aware Lua Standard Library Parity 🟡 **MOSTLY COMPLETE**
-**Goal**: ALL Lua functions must behave according to their version specification (5.1, 5.2, 5.3, 5.4).
-**Scope**: Math, String, Table, Basic, Coroutine, OS, IO, UTF-8, Debug modules + metamethod behaviors.
-**Status**: Most modules complete. String.pack/unpack extended options and documentation remaining.
-**Effort**: Ongoing
-
-### Initiative 16: Boxing-Free pdqsort Integration ✅ **COMPLETE**
-**Goal**: Replace all `List<T>.Sort(IComparer<T>)` and `Array.Sort(T[], IComparer<T>)` calls with `IListSortExtensions.Sort<T, TComparer>()` to eliminate comparer boxing.
-**Problem**: .NET's built-in sort methods box value-type comparers on every call, causing allocations in hot paths.
-**Solution**: Use `IListSortExtensions` (pattern-defeating quicksort) which uses generic `TComparer : IComparer<T>` constraints for zero-allocation sorting.
-**Implementation**:
-  - ✅ `IListSortExtensions.Sort<T, TComparer>()` in `DataStructs/`
-  - ✅ Audited all `List<T>.Sort()` / `Array.Sort()` calls in runtime code
-  - ✅ Migrated 2 call sites: `TableModule.Sort` (hot path), `OverloadedMethodMemberDescriptor` (cold path)
-**Results**: Zero boxing allocations for all sorting operations. All 11,754 tests pass.
-**Status**: ✅ Complete. See [progress/session-067-pdqsort-integration.md](progress/session-067-pdqsort-integration.md).
-**Completed**: 2025-12-21
-
-### Initiative 17: Lua Method String-to-Enum Optimization ❌ **CLOSED**
-**Goal**: Replace constant "Lua method name" strings used for internal dispatch/comparison with enum values for more efficient internal operations.
-**Status**: ❌ **CLOSED (Won't Implement)** — Investigation completed, not beneficial.
-**Investigation Results** (see [progress/session-069-metamethod-enum-investigation.md](progress/session-069-metamethod-enum-investigation.md)):
-  - C# `const string` values are automatically interned, providing O(1) reference equality
-  - Dictionary lookups are already O(1) amortized with good hash distribution
-  - **Critical blocker**: Lua metatables fundamentally use string keys; cannot eliminate string lookup
-  - JIT already optimizes `switch` statements on `const string` values
-  - API compatibility would be broken for `GetMetamethod()` and related methods
-  - Marginal gains (nanoseconds) don't justify complexity and API breakage
-**Conclusion**: The `Metamethods` `const string` pattern from Session 068 is optimal. No further action needed.
-**Completed**: 2025-12-21
-
-### Initiative 18: Large Script Load/Compile Memory Optimization ✅ **MOSTLY COMPLETE**
-**Goal**: Dramatically reduce memory allocations during Lua script loading and compilation.
-**Problem**: The script loading/compilation pipeline had excessive memory usage that scales poorly with script size.
-**Status**: ✅ **Phases 1-2 Complete** — Major wins achieved. Phase 3 (AST pooling) investigated and **deferred** as not cost-effective.
-**Investigation Reports**:
-  - [progress/session-070-compiler-memory-investigation.md](progress/session-070-compiler-memory-investigation.md)
-  - [progress/session-071-token-struct-conversion.md](progress/session-071-token-struct-conversion.md)
-  - [progress/session-084-initiative18-phase3-investigation.md](progress/session-084-initiative18-phase3-investigation.md)
-
-**Completed**:
-  - ✅ `Token` converted to `readonly struct` with `IEquatable<Token>` — eliminates ~56-64 bytes/token allocation
-  - ✅ `Instruction` confirmed as already a struct (no conversion needed)
-  - ✅ Integrated `ListPool<T>` in parser (`Expression.cs`, `FunctionDefinitionExpression.cs`, `ForEachLoopStatement.cs`)
-  - ✅ Pooled `BlocksToClose` inner lists in `ProcessorInstructionLoop.cs`
-
-**Phase 3 Investigation Results** (Deferred):
-  - AST node pooling (27 types) — **NOT RECOMMENDED** due to lifecycle complexity and bug risk
-  - Span-based keyword interning — Low-priority future opportunity (~2 days effort)
-  - Diminishing returns: major wins already captured in Phases 1-2
-
-**Completed**: 2025-12-22
-
-### Initiative 10: KopiLua Performance Hyper-Optimization ✅ **COMPLETE**
-**Goal**: Zero-allocation string pattern matching. Replace legacy KopiLua allocations with modern .NET patterns.
-**Scope**: `CharPtr` → `readonly struct`, `MatchState` pooling, `ArrayPool<char>`, `ZString` integration.
-**Target**: <0.5 KB/match, <0.6 µs/iter latency for simple patterns.
-**Status**: ✅ **Complete** — All three phases implemented with major performance gains.
-
-**Phase 1 (Complete)**:
-  - ✅ Baseline benchmarks established. See [progress/session-074-kopilua-optimization-phase1.md](progress/session-074-kopilua-optimization-phase1.md).
-
-**Phase 2 (Complete)**:
-  - ✅ `CharPtr` converted from class to `readonly struct` — **Most impactful single change**
-  - ✅ ~58-85% allocation reduction, ~24-63% latency reduction
-  - See [progress/session-075-kopilua-charptr-struct.md](progress/session-075-kopilua-charptr-struct.md)
-
-**Phase 3 (Complete)**:
-  - ✅ `Capture` converted from class to struct (eliminates 32 allocations per MatchState)
-  - ✅ `MatchState` pooling via `[ThreadStatic]` with `RentMatchState()`/`ReturnMatchState()`
-  - ✅ `str_format` buffer reuse (form/buff arrays moved outside loop)
-  - ✅ `addquoted()` pre-computed escape sequence arrays (eliminates string interpolation)
-  - See [progress/session-076-kopilua-phase3-optimization.md](progress/session-076-kopilua-phase3-optimization.md)
-
-**Final Results**:
-| Scenario | Latency Improvement | Allocation Reduction |
-|----------|---------------------|----------------------|
-| MatchSimple | 24-31% | 58% |
-| MatchComplex | 53-56% | **85%** |
-| GsubSimple | **60-63%** | 81% |
-| GsubWithCaptures | 54-58% | 79% |
-
-**Completed**: 2025-12-21
-
-### Initiative 11: Comprehensive Helper Performance Audit ✅ **COMPLETE**
-**Goal**: Audit and optimize ALL helper methods called from interpreter hot paths.
-**Scope**: `Helpers/`, `DataTypes/`, `Execution/VM/`, `CoreLib/`, `Interop/`.
-**Status**: ✅ **All 4 phases complete**. 48+ methods optimized with inlining across all layers.
-**Progress Reports**:
-  - [progress/session-079-helper-performance-audit.md](progress/session-079-helper-performance-audit.md) (Phase 1)
-  - [progress/session-080-helper-performance-audit-phase2.md](progress/session-080-helper-performance-audit-phase2.md) (Phase 2)
-  - [progress/session-081-helper-performance-audit-phase3.md](progress/session-081-helper-performance-audit-phase3.md) (Phase 3)
-  - [progress/session-082-helper-performance-audit-phase4.md](progress/session-082-helper-performance-audit-phase4.md) (Phase 4)
-**Phase 1 Complete**:
-  - ✅ Audited 20 files in DataStructs, Utilities, and Execution directories
-  - ✅ Added `[MethodImpl(AggressiveInlining)]` to 7 critical files (FastStack, FastStackDynamic, ExtensionMethods, LuaIntegerHelper, Slice, StringSpanExtensions, PathSpanExtensions)
-  - ✅ Already well-optimized: HashCodeHelper, IListSortExtensions, LuaStringPool, array pools
-**Phase 2 Complete**:
-  - ✅ Audited 10 files in Execution/VM directory
-  - ✅ Added `[MethodImpl(AggressiveInlining)]` to 22 methods (ProcessorInstructionLoop, Processor, Chunk, SymbolRef, CallStackItemPool, ByteCode)
-**Phase 3 Complete**:
-  - ✅ Audited 8 files in CoreLib directory
-  - ✅ Added `[MethodImpl(AggressiveInlining)]` to 18 methods (ModuleArgumentValidation, MathModule, LuaValueConverter, StringModule, TableModule, Utf8Module, BasicModule, OsTimeModule)
-**Phase 4 Complete**:
-  - ✅ Audited 38 files in Interop directory
-  - ✅ Added `[MethodImpl(AggressiveInlining)]` to 8 methods (ClrToLuaConversionScorer, LuaToClrConversionScorer, DelegateGenerator, StandardUserDataDescriptor)
-**Completed**: 2025-12-22
-
-### Initiative 19: HashCodeHelper Migration ✅ **COMPLETE**
-**Goal**: Survey all `GetHashCode()` implementations and migrate bespoke hash algorithms to use the centralized `HashCodeHelper`.
-**Implementation**: Surveyed all `override int GetHashCode()` in runtime code and migrated bespoke patterns.
-**Migrations**:
-  - ✅ `Token.GetHashCode()` — Migrated from `hash * 31` to `HashCodeHelper.HashCode()`
-  - ✅ `ModuleResolutionResult.GetHashCode()` — Migrated from `hash * 31` to `HashCodeHelper.HashCode()`
-  - ✅ `DynamicExpression.GetHashCode()` — Migrated from `StringComparer.Ordinal.GetHashCode()` to `HashCodeHelper.HashCode()`
-  - ✅ `CharPtr.GetHashCode()` — Migrated to `HashCodeHelper.HashCode()` as part of struct conversion (see Initiative 10 Phase 2)
-**Already Compliant**: `TablePair`, `Slice`, `SandboxViolationDetails`, `AllocationSnapshot`, `DynValue`, `LuaNumber`, `JsonPosition`
-**Status**: ✅ Complete. See [progress/session-072-hashcode-helper-migration.md](progress/session-072-hashcode-helper-migration.md).
-**Completed**: 2025-12-21
-
-### Initiative 12: Deep Codebase Allocation Analysis & Reduction ✅ **COMPLETE**
-**Goal**: Comprehensive codebase-wide analysis to identify and eliminate unnecessary heap allocations using value types, buffers, ZString, and closure avoidance.
-**Scope**: Entire `src/runtime/` codebase — DataTypes, VM, CoreLib, Interop, Loaders, Helpers.
-**Results**: 5-8% allocation reduction in key benchmarks, zero regressions across 11,790 tests.
-**Implementation**:
-  - ✅ Phase 1: Profiling & Baseline — 34 allocation sites identified
-  - ✅ Phase 2: Quick Wins — ListPool integration, static delegates
-  - ✅ Phase 3: Value Type Migration — TablePair, ReflectionSpecialName converted to structs
-  - ✅ Phase 4: Deep Optimization — LuaSortComparer struct, MathModule/Bit32Module delegates
-  - ✅ Phase 5: Validation — Benchmarks confirmed improvements, all tests pass
-**Benchmark Improvements**:
-  - NumericLoops: 824 B → 760 B (7.8% reduction)
-  - CoroutinePipeline: 1,160 B → 1,096 B (5.5% reduction)
-  - UserDataInterop: 1,416 B → 1,352 B (4.5% reduction)
-**Status**: ✅ Complete. See [progress/session-083-initiative12-phase5-validation.md](progress/session-083-initiative12-phase5-validation.md).
-**Completed**: 2025-12-22
-
-### Initiative 20: NLua Architecture Investigation ✅ **COMPLETE**
-**Goal**: Investigate the NLua project (https://github.com/NLua/NLua) for architecture insights, performance patterns, and optimization techniques that could be adopted in NovaSharp.
-**Background**: NLua is a mature Lua/.NET bridge that wraps the native Lua C library via P/Invoke. While NovaSharp is a pure C# interpreter (different approach), NLua may have valuable insights for:
-  - Efficient type marshaling between CLR and Lua types
-  - Memory management patterns and pooling strategies
-  - Interop descriptor caching and reflection optimization
-  - Table/array handling performance patterns
-  - String interning and Lua string pool management
-  - Metamethod dispatch efficiency
-  - Userdata/proxy object lifecycle management
-**Investigation Results** (see [progress/session-077-nlua-investigation.md](progress/session-077-nlua-investigation.md)):
-  - ✅ Review NLua's type conversion system (`ObjectTranslator`)
-  - ✅ Analyze memory management and object caching
-  - ✅ Study table enumeration and manipulation patterns
-  - ✅ Examine function call dispatch and argument handling
-  - ✅ Evaluate error handling and exception propagation
-  - ✅ Document applicable patterns with NovaSharp integration notes
-**Key Findings**:
-  - **Last-Call Caching**: Cache last-resolved method in `OverloadedMethodMemberDescriptor` for 20-40% faster repeated interop calls
-  - **Type Converter Delegate Caching**: `Dictionary<Type, ExtractValue>` pattern avoids runtime reflection
-  - **Static Delegate Pre-allocation**: Metamethod delegates as `static readonly` (already partially implemented in Session 065)
-  - **ReferenceComparer**: Use `RuntimeHelpers.GetHashCode()` for identity-based hashing of boxed value types
-  - **Fakenil Sentinel**: Distinguishes "cached nil" from "not yet cached" in interop scenarios
-**Not Applicable**: IL Emit code generation, P/Invoke patterns, Lua Registry management (native-specific)
-**Actionable Optimizations**:
-  - ✅ P1: Last-call caching in `OverloadedMethodMemberDescriptor` — **IMPLEMENTED** in [progress/session-078-last-call-caching.md](progress/session-078-last-call-caching.md)
-  - P1: Audit type converter delegate caching (1-2 days)
-  - P2: Continue static delegate migration in CoreLib (3-5 days)
-**Status**: ✅ Complete. See [progress/session-077-nlua-investigation.md](progress/session-077-nlua-investigation.md).
-**Completed**: 2025-12-21
-
-### Initiative 14: SystemArrayPool Abstraction ✅ **COMPLETE**
-**Goal**: Create a `SystemArrayPool<T>` abstraction that uses our `PooledResource<T>` disposal pattern but delegates to `System.Buffers.ArrayPool<T>.Shared` under the hood.
-**Implementation**: `SystemArrayPool<T>` in `DataStructs/` wraps `ArrayPool<T>.Shared` with RAII disposal pattern.
-**API**:
-  - `Get(int minimumLength, out T[] array)` → returns `PooledResource<T[]>` for automatic cleanup
-  - `Get(int minimumLength, bool clearOnReturn, out T[] array)` → control clearing behavior
-  - `Rent(minimumLength)` / `Return(array)` → manual lifecycle management
-  - `ToArrayAndReturn(array, length)` → extract exact-size copy and return pooled array
-**Key Semantics**: Arrays may be larger than requested; callers track actual length separately.
-**Tests**: 41 TUnit tests covering all edge cases, thread safety, and clearing behavior.
-**Use Cases**:
-  - String pattern matching buffers (KopiLua) where sizes vary
-  - Table operations with dynamic element counts
-  - Any hot path where exact-size allocation is wasteful
-**Status**: ✅ Complete. See [progress/session-063-system-array-pool-abstraction.md](progress/session-063-system-array-pool-abstraction.md).
-**Completed**: 2025-12-21
-
 ### Initiative 13: Magic String Consolidation 🟡 **IN PROGRESS**
 **Goal**: Eliminate all duplicated string literals ("magic strings") by consolidating them into named constants with a single source of truth.
 **Scope**: All runtime, tooling, and test code.
 **Status**: Phases 1-2 (Metamethods + Keywords) complete. Incremental enforcement during code changes.
-**Effort**: Ongoing (apply during code reviews and new development)
 
 **Completed**:
-- ✅ **Phase 1: Metamethods** — Created `Metamethods` static class in `DataStructs/LuaStringPool.cs` with 25 `const string` fields for all Lua metamethods (including NovaSharp extensions like `__new`, `__tonumber`, `__tobool`, `__iterator`). Migrated ~110 string literals across 16 files. See [progress/session-085-magic-string-consolidation.md](progress/session-085-magic-string-consolidation.md).
-- ✅ **Phase 2: Lua Keywords** — Created `LuaKeywords` static class with 22 `const string` fields for all reserved Lua keywords. Pre-interned in `LuaStringPool`.
+- ✅ **Phase 1: Metamethods** — Created `Metamethods` static class with 25 `const string` fields. See [progress/session-085-magic-string-consolidation.md](progress/session-085-magic-string-consolidation.md).
+- ✅ **Phase 2: Lua Keywords** — Created `LuaKeywords` static class with 22 `const string` fields. Pre-interned in `LuaStringPool`.
 
 **Remaining Areas to Consolidate** (Lower Priority):
-1. ~~**Metamethod names**: `__index`, `__newindex`, `__call`, `__tostring`, etc.~~ ✅ Done
-2. ~~**Lua keywords**: `nil`, `true`, `false`, `and`, `or`, `not`, `function`, etc.~~ ✅ Done
-3. **Error messages**: `bad argument`, `attempt to`, `number has no integer representation`, etc.
-4. **Module names**: `string`, `table`, `math`, `io`, `os`, `debug`, `coroutine`, etc.
+1. **Error messages**: `bad argument`, `attempt to`, `number has no integer representation`, etc.
+2. **Module names**: `string`, `table`, `math`, `io`, `os`, `debug`, `coroutine`, etc.
 
-**Validation Commands**:
-```bash
-# Find potential duplicated magic strings (metamethods) - should now show only docs/comments
-rg '"__[a-z]+"' src/runtime/WallstopStudios.NovaSharp.Interpreter/ --type cs -l | grep -v LuaStringPool.cs
+### Initiative 21: Performance Parity Analysis — NovaSharp vs Native Lua 🔬
 
-# Find string literals in ArgumentException/ArgumentNullException (should use nameof)
-rg 'ArgumentNullException\("' src/runtime/
-rg 'ArgumentException.*"[a-z]' src/runtime/
-```
+**Status**: 🟡 **IN PROGRESS** — Phase 1 (script caching) and Phase 2 (VM pooling) complete.
+
+**Priority**: 🟡 **MEDIUM** — Strategic performance initiative.
+
+**Goal**: Systematically reduce the performance gap between NovaSharp (pure C# interpreter) and NLua (native Lua via P/Invoke).
+
+**Completed Phases**:
+- ✅ **Phase 1**: Script caching with hash-based lookup, lazy line-splitting
+- ✅ **Phase 2**: VM execution pooling (LocalScope arrays, BlocksToClose, Varargs arrays)
+
+**Phase 1 Deferred Items** (Session 092 Investigation):
+- ❌ **SourceRef → struct**: NOT FEASIBLE — Debugger mutation patterns, ReferenceEquals usage, null semantics
+- ❌ **SymbolRef → struct**: NOT FEASIBLE — Two-phase construction, binary deserialization back-patching
+- ❌ **Instruction list pooling**: NOT APPLICABLE — ByteCode persists for Script lifetime
+
+**Remaining Phases**:
+- 🔲 **Phase 3**: High-impact structural changes (DynValue struct experiment, register-based VM)
+- 🔲 **Phase 4**: String and pattern matching optimizations
+- 🔲 **Phase 5**: Benchmark validation and documentation
+
+See progress reports: [session-086](progress/session-086-script-compilation-cache.md), [session-087](progress/session-087-vm-execution-pooling-phase2.md), [session-088](progress/session-088-lazy-line-splitting.md), [session-092](progress/session-092-ipairs-metamethod-parity.md).
 
 ---
 
 ## Baseline Controls (must stay green)
 - Re-run audits (`documentation_audit.py`, `NamingAudit`, `SpellingAudit`) when APIs or docs change.
-- Lint guards (`check-platform-testhooks.py`, `check-console-capture-semaphore.py`, `check-temp-path-usage.py`, `check-userdata-scope-usage.py`, `check-test-finally.py`) run in CI.
+- Lint guards run in CI.
 - New helpers must live under `scripts/<area>/` with README updates.
 - Keep `docs/Testing.md`, `docs/Modernization.md`, and `scripts/README.md` aligned.
 
@@ -294,8 +102,6 @@ rg 'ArgumentException.*"[a-z]' src/runtime/
 ## 🟡 MEDIUM Priority: Test Data-Driving Helper Migration
 
 **Status**: 🟡 **IN PROGRESS** — Core helpers complete, migration ongoing.
-
-The helper attributes reduce 5+ lines of manual `[Arguments]` entries per test to a single line.
 
 ### Available Helpers
 
@@ -309,29 +115,18 @@ All helpers are in `src/tests/TestInfrastructure/TUnit/`:
 | `[LuaVersionRange(5.2, 5.4)]` | Specific version range |
 | `[LuaTestMatrix]` | Full Cartesian product of versions × inputs |
 
-### Completed Migrations
-
-- ✅ **StringModuleTUnitTests** — 7 tests migrated, ~150+ lines of boilerplate removed. See [progress/session-073-test-data-driving-stringmodule.md](progress/session-073-test-data-driving-stringmodule.md).
-
 ### Remaining Tasks
 
-- [x] Migrate StringModuleTUnitTests with version+data coupled patterns ✅
 - [ ] Migrate remaining UserData tests (Methods overload patterns)
 - [ ] Migrate remaining EndToEnd tests
 - [ ] Migrate Sandbox tests
 - [ ] Create automated migration script for common patterns
-- [ ] Add lint rule to flag verbose patterns
-
-**Owner**: Test infrastructure team
-**Priority**: 🟡 MEDIUM
 
 ---
 
 ## 🟡 MEDIUM Priority: Comprehensive Numeric Edge-Case Audit
 
 **Status**: 📋 **PARTIAL** — Core fixes done, remaining edge cases to audit.
-
-**Problem**: Values beyond 2^53 cannot be exactly represented as doubles. Lua 5.3+ distinguishes integer vs float subtypes; NovaSharp must preserve this distinction.
 
 **Completed**:
 - ✅ `LuaNumber` struct preserves integer/float distinction
@@ -397,106 +192,108 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 
 ## Remaining Lua Runtime Spec Items
 
-### os.time and os.date Semantics
+### os.time and os.date Semantics ✅ **COMPLETE**
 
-**Requirements**:
-- `os.time()` with no arguments returns current UTC timestamp
-- `os.time(table)` interprets fields per §6.9
-- `os.date("*t")` returns table with correct field names and ranges
+**Status**: ✅ Complete — 149 tests verify os.time/os.date behavior across all Lua versions.
 
-**Tasks**:
-- [ ] Verify `os.time()` return value matches Lua's epoch-based timestamp
-- [ ] Test `os.date` format strings against reference Lua outputs
-- [ ] Document timezone handling differences (if any)
+**Verified**:
+- [x] `os.time()` returns epoch-based timestamp (integer in 5.3+, float in 5.1/5.2)
+- [x] All `os.date` format strings match reference Lua outputs
+- [x] Timezone handling via `!` prefix for UTC, local time conversion working
+- [x] `*t` table format returns all required fields (year, month, day, hour, min, sec, wday, yday, isdst)
 
-### Coroutine Semantics
+**Completed**: 2025-12-22
 
-**Critical Behaviors**:
-- `coroutine.resume` return value shapes
-- `coroutine.wrap` error propagation
-- `coroutine.status` state transitions
-- Yield across C-call boundary errors
+### Coroutine Semantics ✅ **COMPLETE**
 
-**Tasks**:
-- [ ] Create state transition diagram tests for coroutine lifecycle
-- [ ] Verify error message formats match Lua
-- [ ] Test `coroutine.close` (5.4) cleanup order
+**Status**: ✅ Complete — 596 tests verify coroutine behavior across all Lua versions.
+
+**Verified**:
+- [x] State transition tests for coroutine lifecycle (suspended, running, dead, normal)
+- [x] Error message formats match Lua ("cannot resume dead coroutine", etc.)
+- [x] `coroutine.close` (5.4) cleanup order with to-be-closed variables
+
+**Completed**: 2025-12-22
 
 ### Error Message Parity
 
-**Goal**: Error messages should match Lua's format for maximum compatibility.
-
 **Tasks**:
 - [ ] Catalog all error message formats in `ScriptRuntimeException`
-- [ ] Add `ScriptOptions.LuaCompatibleErrors` flag (opt-in strict mode) — ✅ IMPLEMENTED
 - [ ] Create error message normalization layer for Lua-compatible output
 
 ### Numerical For Loop Semantics (Lua 5.4)
 
-**Breaking Change in 5.4**: Control variable in integer `for` loops never overflows/wraps.
-
 **Tasks**:
 - [ ] Verify NovaSharp for loop handles integer limits correctly per version
 - [ ] Add edge case tests for near-maxinteger loop bounds
-- [ ] Document loop semantics per version
 
 ### __gc Metamethod Handling (Lua 5.4)
-
-**Status**: NovaSharp doesn't have true finalizers, so `__gc` is not called during GC. Lua 5.4+ generates warnings for non-callable `__gc` values during finalization.
 
 **Tasks**:
 - [ ] Document NovaSharp's current `__gc` handling
 - [ ] Decide on validation strategy (strict vs. Lua-compatible)
 
-### utf8 Library Differences (Lua 5.3 vs 5.4)
+### utf8 Library Differences (Lua 5.3 vs 5.4) ✅ **COMPLETE**
 
-**Remaining Tasks**:
-- [ ] Verify `utf8.offset` bounds handling is complete
-- [ ] Document utf8 library version differences
+**Status**: ✅ Complete — 218 tests verify utf8 library behavior across Lua 5.3+.
+
+**Verified**:
+- [x] `utf8.offset` bounds handling is complete
+- [x] Lax mode for invalid UTF-8 sequences (Lua 5.4+)
+- [x] All utf8 functions match reference Lua behavior
+
+**Completed**: 2025-12-22
 
 ### collectgarbage Options (Lua 5.4)
-
-**Deprecation in 5.4**: `setpause` and `setstepmul` options are deprecated (use `incremental` instead).
 
 **Tasks**:
 - [ ] Support deprecated options with warnings when targeting 5.4
 - [ ] Implement `incremental` option for 5.4
-- [ ] Add tests for GC option compatibility
 
 ### Literal Integer Overflow (Lua 5.4)
-
-**Breaking Change in 5.4**: Decimal integer literals that overflow read as floats instead of wrapping.
 
 **Tasks**:
 - [ ] Verify lexer/parser handles overflowing literals correctly per version
 - [ ] Add tests for large literal parsing
-- [ ] Document literal parsing behavior
 
-### ipairs Metamethod Changes (Lua 5.3+)
+### ipairs Metamethod Changes (Lua 5.3+) ✅ **COMPLETE**
 
-**Breaking Change in 5.3**: `ipairs` now respects `__index` metamethods; the `__ipairs` metamethod was deprecated.
+**Status**: ✅ Complete — Lua 5.3+ now respects `__index` metamethods during `ipairs` iteration.
 
-**Tasks**:
-- [ ] Verify `ipairs` metamethod behavior per version
-- [ ] Add tests for `ipairs` with `__index` metamethod tables
-- [ ] Document iterator behavior differences
+**Implementation**:
+- Added `GetMetamethodAwareIndex()` helper in `BasicModule.cs`
+- `__ipairs_callback` now checks `LuaCompatibilityVersion` and uses metamethod-aware indexing for 5.3+
+- Lua 5.1/5.2 continue using raw access (spec-compliant)
+- 4 new Lua fixtures, 11 new TUnit tests
 
-### table.unpack Location (Lua 5.2+)
+**Completed**: 2025-12-22
 
-**Breaking Change in 5.2**: `unpack` moved from global to `table.unpack`.
+### table.unpack Location (Lua 5.2+) ✅ **COMPLETE**
 
-**Tasks**:
-- [ ] Verify `unpack` availability matches target version
-- [ ] Provide global `unpack` alias for 5.1 compatibility mode
-- [ ] Document migration from `unpack` to `table.unpack`
+**Status**: ✅ Complete — 18 tests verify unpack availability matches target version.
+
+**Verified**:
+- [x] `unpack` is global function in Lua 5.1 only (via `[LuaCompatibility(Lua51, Lua51)]`)
+- [x] `table.unpack` available in Lua 5.2+ (via `TableModule`)
+- [x] Both versions use same underlying implementation
+
+**Completed**: 2025-12-22
 
 ### Documentation
 
 - [ ] Update `docs/LuaCompatibility.md` with version-specific behavior notes
 - [ ] Add "Determinism Guide" for users needing reproducible execution
-- [ ] Document any intentional divergences with rationale
 - [ ] Create version migration guides (5.1→5.2, 5.2→5.3, 5.3→5.4)
 - [ ] Add "Breaking Changes by Version" quick-reference table
+
+---
+
+## Testing Infrastructure
+
+**Tasks**:
+- [ ] Create comprehensive version matrix tests for all modules
+- [ ] Add CI jobs that run test suite with each `LuaCompatibilityVersion`
+- [ ] Create version migration guide (`docs/LuaVersionMigration.md`)
 
 ---
 
@@ -518,154 +315,169 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 2. **CI jobs per LuaCompatibilityVersion**
    - Run test suite explicitly with each version setting
 
-3. **`string.pack`/`unpack` extended options**
-   - Complete implementation of all format specifiers
-
 ### 🟢 LOWER PRIORITY: Polish and Infrastructure
 
-4. **CI Integration**
+3. **CI Integration**
    - Add CI job that runs `compare-lua-outputs.py --enforce` on PRs
    - Add CI lint rule that rejects PRs with tests missing version coverage
 
 ---
 
-## Initiative 9: Version-Aware Lua Standard Library Parity — Remaining Items
+## Future Research Initiatives
 
-**Status**: 🟡 **MOSTLY COMPLETE** — Most modules implemented.
+### 🔴 HIGH PRIORITY: Struct-Based AST for Zero-Allocation Parsing 🔬
 
-### String Module Version Parity 🟡
+**Status**: 🔲 **FEASIBILITY STUDY COMPLETE** — Investigation needed before implementation.
 
-| Function | Status | Notes |
-|----------|--------|-------|
-| `string.pack/unpack/packsize` | 🚧 Partial | Extended options (`c`, `z`, alignment) missing |
-| `string.format('%a')` | 🔲 Verify | Hex float format specifier |
+**Goal**: Investigate converting the class-based AST (NodeBase, Statement, Expression hierarchy) to structs + interfaces + generics to achieve zero-allocation parsing.
 
-**Tasks**:
-- [ ] Complete `string.pack`/`unpack` extended format options
-- [ ] Implement `string.format('%a')` hex float format
+#### Feasibility Analysis Summary
 
-### Testing Infrastructure
+**Current Architecture**:
+- **27 node types**: 1 abstract base (`NodeBase`), 2 intermediate (`Statement`, `Expression`), 16 statement types, 11 expression types
+- **Inheritance depth**: 2 levels (shallow, which is good for conversion)
+- **Polymorphism**: Virtual `Compile()` method on all nodes, virtual `Eval()` on expressions
+- **Allocation pattern**: Fresh `new` allocation per node, no pooling
+- **Lifetime**: AST is **discarded after compilation** — only bytecode is retained
 
-**Tasks**:
-- [ ] Create comprehensive version matrix tests for all modules
-- [ ] Create `LuaFixtures/VersionParity/` test directory with per-function fixtures
-- [ ] Add CI jobs that run test suite with each `LuaCompatibilityVersion`
-- [ ] Create version migration guide (`docs/LuaVersionMigration.md`)
-- [ ] Document all version-specific behaviors in `docs/LuaCompatibility.md`
+**Key Finding: AST Optimization Has Zero Runtime Impact** ⚠️
+
+NovaSharp is a **bytecode VM**, not an AST interpreter:
+1. Source → Parser → **AST (temporary)** → Compiler → **Bytecode (permanent)** → VM
+2. AST nodes become garbage immediately after `Compile()` finishes
+3. Runtime execution uses only the `Instruction` stream, not AST
+
+**This means struct-based AST would only reduce GC pressure during script loading, NOT during execution.**
+
+#### Technical Challenges
+
+| Challenge | Severity | Mitigation |
+|-----------|----------|------------|
+| **Recursive struct references** | 🔴 Critical | Index-based children (store `int ChildIndex` into arrays) |
+| **Polymorphism without boxing** | 🔴 Critical | Discriminated union + switch dispatch, OR generic visitors |
+| **27 node types with different fields** | 🟡 High | Tagged union with parallel payload arrays per type |
+| **Parser builds via constructors** | 🟡 High | Requires arena allocator pattern rewrite |
+| **Virtual Compile() method** | 🟡 High | Replace with switch on `NodeKind` enum |
+| **Script/SourceRef references in nodes** | 🟡 Medium | Store as indices into context arrays |
+| **DynamicExprExpression keeps AST for Eval()** | 🟠 Medium | Exempt from conversion OR special handling |
+
+#### Recommended Approach (If Proceeding)
+
+**Option A: Tagged Union + Index-Based References** (Recommended if pursued)
+```csharp
+public enum NodeKind : byte { BinaryExpr, IfStmt, LiteralExpr, ... }
+
+public readonly struct AstNode  // 16 bytes
+{
+    public readonly NodeKind Kind;
+    public readonly byte Flags;
+    public readonly ushort PayloadIndex;  // Index into kind-specific array
+    public readonly int ChildStart;       // Index into children array
+    public readonly int SpanStart;
+    public readonly int SpanLength;
+}
+
+// Separate storage per node kind
+struct BinaryExprPayload { byte Op; int LeftChild; int RightChild; }
+struct LiteralPayload { DynValue Value; }
+```
+
+**Option B: Keep Classes, Add Node Pooling** (Lower risk, faster implementation)
+```csharp
+// Use ObjectPool<T> for common node types
+var expr = LiteralExpressionPool.Get();
+expr.Initialize(value, sourceRef);
+// ... use node ...
+// After Compile(), return to pool
+```
+
+#### Effort Estimate & ROI Analysis
+
+| Approach | Effort | Risk | Performance Gain |
+|----------|--------|------|------------------|
+| **Full struct conversion** | 3-4 weeks | 🔴 High | Parsing only (no runtime impact) |
+| **Node pooling** | 3-5 days | 🟢 Low | Similar to struct approach |
+| **Arena allocator** | 1-2 weeks | 🟡 Medium | Similar, cleaner GC profile |
+
+**Recommendation**: ❌ **NOT RECOMMENDED** for immediate implementation.
+
+**Rationale**:
+1. AST is discarded after compilation — zero runtime benefit
+2. Script caching (`ScriptBytecodeCache`) already eliminates repeated parsing
+3. Effort/risk ratio unfavorable compared to node pooling
+4. Roslyn (much larger AST) uses classes with pooling successfully
+
+**Alternative High-Value Targets** (same effort, runtime impact):
+- `DynValue` class → struct conversion (Phase 3 of Initiative 21)
+- `Instruction` class → struct conversion (bytecode execution hot path)
+- String interning improvements
+
+#### If Business Case Exists for Zero-Allocation Parsing
+
+Proceed with **Option A** only if:
+- Profiling shows parsing is a bottleneck in production
+- Many small scripts compiled frequently (REPL, hot-reload scenarios)
+- Memory-constrained environments (embedded, mobile)
+
+**Implementation Plan** (if approved):
+1. Create `AstArena` class with pre-allocated node arrays
+2. Convert leaf nodes first (`LiteralExpression`, `BreakStatement`)
+3. Add `NodeKind` discriminated union wrapper
+4. Implement switch-based `Compile()` dispatch
+5. Convert remaining nodes incrementally
+6. Benchmark parsing memory usage before/after
+
+See progress reports from AST analysis: Initiative 12 (allocation analysis), Initiative 18 (compiler memory).
 
 ---
 
-## Initiative 12: Deep Codebase Allocation Analysis & Reduction ✅ **COMPLETE**
-
-**Status**: ✅ **COMPLETE** — All 5 phases executed with measurable allocation improvements.
-
-**Goal**: Perform a comprehensive, codebase-wide analysis to identify and eliminate unnecessary heap allocations.
-
-**Progress Reports**:
-- [docs/performance/allocation-analysis-initiative12-phase1.md](docs/performance/allocation-analysis-initiative12-phase1.md)
-- [progress/session-062-initiative12-phase2-quick-wins.md](progress/session-062-initiative12-phase2-quick-wins.md)
-- [progress/session-064-value-type-migration-phase3.md](progress/session-064-value-type-migration-phase3.md)
-- [progress/session-065-initiative12-phase4-static-delegates.md](progress/session-065-initiative12-phase4-static-delegates.md)
-- [progress/session-083-initiative12-phase5-validation.md](progress/session-083-initiative12-phase5-validation.md)
-
-### Final Results
-
-| Scenario | Phase 1 Baseline | Final | Reduction |
-|----------|------------------|-------|-----------|
-| NumericLoops | 824 B | 760 B | **7.8%** |
-| CoroutinePipeline | 1,160 B | 1,096 B | **5.5%** |
-| TableMutation | 25,888 B | 25,824 B | **0.2%** |
-| UserDataInterop | 1,416 B | 1,352 B | **4.5%** |
-
-### Implementation Phases (All Complete)
-
-**Phase 1: Profiling & Baseline** ✅
-- Identified 34 allocation sites by volume
-- Documented baseline allocation rates for key scenarios
-
-**Phase 2: Quick Wins** ✅
-- Pool `BlocksToClose` inner lists via `ListPool<SymbolRef>.Rent()`/`Return()`
-- Replace bitwise op lambdas with static readonly delegates
-- Replace string metatable lambdas with static delegates
-
-**Phase 3: Value Type Migration** ✅
-- Convert high-impact types to `readonly struct` — `TablePair`, `ReflectionSpecialName`
-
-**Phase 4: Deep Optimization** ✅
-- `LuaSortComparer` struct in TableModule
-- 7 static delegates in MathModule, 3 in Bit32Module
-
-**Phase 5: Validation** ✅
-- Re-ran allocation profiler, confirmed improvements
-- All 11,790 tests pass with zero regressions
-
-**Completed**: 2025-12-22
-
----
-
-## Initiative 13: Lua-to-C# Ahead-of-Time Compiler (Offline DLL Generation) 🔬
+### Lua-to-C# Ahead-of-Time Compiler 🔬
 
 **Status**: 🔲 **RESEARCH** — Long-term investigation item.
 
-**Priority**: 🟢 **LOW** — Future optimization opportunity for game developers.
+**Goal**: Investigate feasibility of creating an offline "Lua → C# compiler" tool for game developers.
 
-**Goal**: Investigate feasibility of creating an offline "Lua → C# compiler" tool.
+**Risks**:
+- Lua's extreme dynamism may resist static compilation
+- Two execution paths doubles testing surface
+- Unity IL2CPP constraints
 
-### Concept Overview
+**Effort Estimate**: Initial feasibility study: 2-4 weeks
 
-Game developers using NovaSharp could ship an offline compilation tool with their game that allows players (or modders) to pre-compile their Lua scripts into native .NET assemblies. These compiled DLLs would:
-
-- Load significantly faster than interpreted Lua (no parsing/compilation at runtime)
-- Execute faster due to JIT-optimized native code
-- Still integrate seamlessly with NovaSharp's runtime (tables, coroutines, C# interop)
-- Be optional—interpreted Lua would remain fully supported
-
-### Research Questions
-
-1. **Feasibility**: Can Lua's dynamic semantics (metatables, dynamic typing, `_ENV` manipulation) be reasonably compiled to static C#?
-2. **Performance Gains**: What speedup is realistic? (Likely 2-10x for compute-heavy scripts, minimal for I/O-bound)
-3. **Compatibility**: How do compiled scripts interact with interpreted scripts, runtime `require()`, debug hooks?
-
-### Risks & Challenges
-
-- **Semantic Fidelity**: Lua's extreme dynamism may resist static compilation
-- **Maintenance Burden**: Two execution paths (interpreted + compiled) doubles testing surface
-- **Edge Cases**: Metamethod chains, `debug.setlocal`, `load()` with dynamic strings
-- **Unity IL2CPP**: Compiled DLLs must work under Unity's AOT restrictions
-
-**Owner**: TBD (requires dedicated research effort)
-**Effort Estimate**: Unknown—initial feasibility study: 2-4 weeks; full implementation: 3-6 months
-
----
-
-## Initiative 14: GitHub Pages Benchmark Dashboard Improvements 🎨
+### GitHub Pages Benchmark Dashboard Improvements 🎨
 
 **Status**: 🔲 **PLANNED**
 
-**Priority**: 🟢 **LOW** — Quality-of-life improvement for contributors and maintainers.
+**Goal**: Prettify and configure the `gh-pages` branch for a readable benchmark dashboard.
 
-**Goal**: Prettify and configure the `gh-pages` branch to provide a readable, well-documented benchmark dashboard.
+**Tasks**:
+- [ ] Expand README with benchmark methodology
+- [ ] Configure chart options
+- [ ] Add styled index.html
 
-### Proposed Improvements
-
-**Documentation**:
-- [ ] Expand `README.md` with explanation of benchmark methodology
-- [ ] Add descriptions of what each benchmark measures
-- [ ] Document how to interpret regression alerts
-- [ ] Link back to main repo's `docs/Performance.md`
-
-**Visualization**:
-- [ ] Configure `github-action-benchmark` chart options (title, axis labels, colors)
-- [ ] Add index.html with styled benchmark chart display
-- [ ] Include historical context (baseline establishment date, significant changes)
-
-**Success Criteria**:
-- [ ] Contributors can understand benchmark results without reading workflow code
-- [ ] Performance trends are visually accessible via GitHub Pages URL
-- [ ] Documentation explains threshold values and alert meanings
-
-**Owner**: DevOps / CI team
 **Effort Estimate**: 1-2 days
+
+---
+
+## Completed Initiatives (Archived)
+
+The following initiatives have been fully completed and their detailed documentation has been moved to the progress reports. They remain here as a summary for historical reference.
+
+| Initiative | Description | Completed | Progress Report |
+|------------|-------------|-----------|-----------------|
+| **9** | Version-Aware Lua Standard Library Parity | 2025-12-22 | Multiple sessions |
+| **10** | KopiLua Performance Hyper-Optimization | 2025-12-21 | [session-074](progress/session-074-kopilua-optimization-phase1.md) - [session-076](progress/session-076-kopilua-phase3-optimization.md) |
+| **11** | Comprehensive Helper Performance Audit | 2025-12-22 | [session-079](progress/session-079-helper-performance-audit.md) - [session-082](progress/session-082-helper-performance-audit-phase4.md) |
+| **12** | Deep Codebase Allocation Analysis | 2025-12-22 | [session-083](progress/session-083-initiative12-phase5-validation.md) |
+| **14** | SystemArrayPool Abstraction | 2025-12-21 | [session-063](progress/session-063-system-array-pool-abstraction.md) |
+| **15** | Boxing-Free IList Sort Extensions | 2025-12-21 | [session-066](progress/session-066-pdqsort-implementation.md) |
+| **16** | Boxing-Free pdqsort Integration | 2025-12-21 | [session-067](progress/session-067-pdqsort-integration.md) |
+| **17** | Metamethod Enum Optimization | ❌ Closed | [session-069](progress/session-069-metamethod-enum-investigation.md) (Not beneficial) |
+| **18** | Large Script Load/Compile Memory | 2025-12-22 | [session-070](progress/session-070-compiler-memory-investigation.md) - [session-084](progress/session-084-initiative18-phase3-investigation.md) |
+| **19** | HashCodeHelper Migration | 2025-12-21 | [session-072](progress/session-072-hashcode-helper-migration.md) |
+| **20** | NLua Architecture Investigation | 2025-12-21 | [session-077](progress/session-077-nlua-investigation.md) |
+| **22** | ZString Migration | 2025-12-22 | [session-089](progress/session-089-zstring-migration-complete.md) |
+| **23** | Span-Based Array Operation Migration | 2025-12-22 | [session-090](progress/session-090-span-array-migration-phase1.md) |
 
 ---
 
