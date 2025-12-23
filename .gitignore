@@ -39,8 +39,6 @@ coverage_output.txt
 {escapedPath}
 {escapePath}
 
-progress/**
-
 # Remove generated docs
 
 src/NovaSharp.Documentation/Help/html/
