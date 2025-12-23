@@ -1673,7 +1673,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                                     form,
                                     num.IsInteger
                                         ? (UNSIGNED_LUA_INTFRM_T)(ulong)num.AsInteger
-                                        : (UNSIGNED_LUA_INTFRM_T)num.ToDouble
+                                        : (UNSIGNED_LUA_INTFRM_T)(long)num.ToDouble
                                 );
                             }
                             else
@@ -1681,7 +1681,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                                 StringFormat(
                                     buff,
                                     form,
-                                    (UNSIGNED_LUA_INTFRM_T)LuaLCheckNumber(l, arg)
+                                    (UNSIGNED_LUA_INTFRM_T)(LUA_INTFRM_T)LuaLCheckNumber(l, arg)
                                 );
                             }
                             break;
