@@ -167,25 +167,34 @@ The semantic mode applies these normalizations:
 
 ## CI Integration
 
-The `lua-comparison` job in `.github/workflows/tests.yml` runs a **matrix** of Lua versions:
+The `lua-comparison` job in `.github/workflows/tests.yml` runs a **matrix** of Lua versions across all supported platforms:
 
 ```yaml
 strategy:
   matrix:
-    lua-version: ['5.1', '5.2', '5.3', '5.4']
+    os: [ubuntu-latest, windows-latest, macos-latest]
+    lua-version: ['5.1', '5.2', '5.3', '5.4', '5.5']
 ```
 
 Each matrix job:
 
-1. Installs the specific Lua version (`lua5.1`, `lua5.2`, etc.)
+1. Installs the specific Lua version using platform-appropriate methods
 1. Builds NovaSharp CLI
 1. Runs all compatible fixtures through both interpreters
 1. Compares outputs with semantic normalization
-1. Uploads version-specific artifacts (e.g., `lua-5.4-comparison-results`)
+1. Uploads version and platform-specific artifacts (e.g., `lua-comparison-5.4-ubuntu-latest`)
+
+### Platform-Specific Lua Installation
+
+| Platform | Method                                                          |
+| -------- | --------------------------------------------------------------- |
+| Linux    | `apt-get install lua5.x` or build from source for 5.5           |
+| macOS    | Homebrew (`brew install lua` or `lua@5.x`) or build from source |
+| Windows  | LuaBinaries prebuilt binaries from SourceForge                  |
 
 ### CI Gating
 
-Currently in `warn` mode—discrepancies are reported but don't fail the build. Promote to `enforce` once the baseline is fully validated.
+Currently in `enforce` mode—discrepancies are reported and fail the build to ensure specification compliance.
 
 ## Performance Optimization
 
@@ -260,8 +269,9 @@ The batch runner has a 5-second timeout per script. Scripts waiting for stdin or
 
 - [x] Phase 1: Lua snippet extraction infrastructure (`lua_corpus_extractor_v2.py`)
 - [x] Phase 2: Multi-version Lua execution harness (`run-lua-fixtures.sh`, `compare-lua-outputs.py`)
-- [x] Phase 3: CI integration (matrix job for 5.1–5.4)
+- [x] Phase 3: CI integration (matrix job for 5.1–5.5)
 - [x] Phase 4: Performance optimization (`NovaSharp.LuaBatchRunner`)
-- [ ] Phase 5: File-first test authoring pattern (migrate existing tests)
+- [x] Phase 5: Multi-platform CI (ubuntu, windows, macos)
+- [ ] Phase 6: File-first test authoring pattern (migrate existing tests)
 
 See `PLAN.md` → "Reference Lua comparison harness" for the implementation timeline.

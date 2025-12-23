@@ -9402,7 +9402,7 @@
         "5.1",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -9413,7 +9413,7 @@
         "5.1",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -9424,7 +9424,7 @@
         "5.1",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -9435,7 +9435,7 @@
         "5.1",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {

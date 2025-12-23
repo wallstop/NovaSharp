@@ -15,9 +15,6 @@ local ok, err = pcall(function()
     setfenv(100, newenv)
 end)
 
-if not ok then
-    -- Expected error
-    print("PASS: setfenv threw error for invalid level: " .. tostring(err))
-else
-    print("ERROR: setfenv should have thrown error for invalid level")
-end
+assert(not ok, "setfenv(100, {}) should throw error")
+assert(err:find("invalid level"), "Error should mention 'invalid level', got: " .. tostring(err))
+print("PASS")

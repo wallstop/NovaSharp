@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1, 5.5
--- @novasharp-only: false
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/LuaVersionGlobalTUnitTests.cs:131
 -- @test: LuaVersionGlobalTUnitTests.NovaSharpTableContainsVersionInfo
--- @compat-notes: Test targets Lua 5.1
+-- @compat-notes: _NovaSharp is a NovaSharp-specific global; not comparable against native Lua
 return _NovaSharp.version

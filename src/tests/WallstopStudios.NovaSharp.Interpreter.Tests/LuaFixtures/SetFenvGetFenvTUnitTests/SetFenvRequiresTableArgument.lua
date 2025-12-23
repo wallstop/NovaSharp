@@ -15,9 +15,6 @@ local ok, err = pcall(function()
     setfenv(testfn, 42)
 end)
 
-if not ok then
-    -- Expected error about bad argument
-    print("PASS: setfenv threw error for non-table: " .. tostring(err))
-else
-    print("ERROR: setfenv should have thrown error for non-table second argument")
-end
+assert(not ok, "setfenv(f, 42) should throw error")
+assert(err:find("table expected"), "Error should mention 'table expected', got: " .. tostring(err))
+print("PASS")

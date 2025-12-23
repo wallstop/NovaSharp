@@ -1,7 +1,8 @@
 -- bit32_available_52.lua
--- @version: 5.2
--- @description: Verifies bit32 library is available as a global in Lua 5.2
--- @expected-result: returns true
+-- @lua-versions: 5.2
+-- @novasharp-only: false
+-- @expects-error: false
+-- Verifies bit32 library is available as a global in Lua 5.2
 
 -- In Lua 5.2, bit32 is part of the standard library
 -- bit32 should be a table with the bitwise operation functions

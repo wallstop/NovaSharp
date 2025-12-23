@@ -1223,7 +1223,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             for (int i = 0; i < ConcurrentScripts; i++)
             {
                 int scriptIndex = i;
-                tasks[i] = Task.Run(async () =>
+                tasks[i] = Task.Run(() =>
                 {
                     try
                     {

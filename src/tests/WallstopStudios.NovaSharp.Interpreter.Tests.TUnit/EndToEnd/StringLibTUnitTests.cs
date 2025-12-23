@@ -253,9 +253,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task StringGSubRejectsPercentEscapes(LuaCompatibilityVersion version)
         {
+            // Lua 5.2+ rejects invalid % escapes in replacement strings; Lua 5.1 treats them as literals
             string code = "string.gsub('hello world', '%w+', '%e')";
 
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -265,6 +266,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             });
 
             await Assert.That(exception.Message).Contains("invalid use of '%'");
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
+        public async Task StringGSubTreatsUnknownPercentEscapesAsLiteralInLua51(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1 treats unknown %escapes (like %e) as literal characters
+            // Lua 5.2+ rejects such escapes with "invalid use of '%' in replacement string"
+            string code =
+                @"
+                local result, count = string.gsub('hello world', '%w+', '%e')
+                return result, count
+            ";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(2);
+            await Assert.That(result.Tuple[0].String).IsEqualTo("e e");
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(2);
         }
 
         [global::TUnit.Core.Test]

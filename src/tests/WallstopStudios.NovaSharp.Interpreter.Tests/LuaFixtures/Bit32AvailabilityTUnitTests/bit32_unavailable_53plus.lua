@@ -1,8 +1,9 @@
 -- bit32_unavailable_53plus.lua
--- @version: 5.3, 5.4, 5.5
--- @description: Verifies bit32 library is NOT available in Lua 5.3+ (deprecated)
--- @expected-result: returns true
--- @compat-notes: In Lua 5.3, bit32 was deprecated in favor of native bitwise operators.
+-- @lua-versions: 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- Verifies bit32 library is NOT available in Lua 5.3+ (deprecated)
+-- In Lua 5.3, bit32 was deprecated in favor of native bitwise operators.
 --                The library was removed from the default standard library.
 --                In Lua 5.4+, bit32 was removed entirely.
 --                NovaSharp follows reference Lua behavior: bit32 is not in globals for 5.3+.

@@ -32,13 +32,32 @@ RUN apt-get update && apt-get install -y ripgrep \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Lua 5.1-5.5
+# Install Lua 5.1-5.4 from apt (these are available in Debian repos)
 RUN apt-get update && apt-get install -y \
     lua5.1 \
     lua5.2 \
     lua5.3 \
     lua5.4 \
-    lua5.5 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Lua 5.5 - try apt first, fall back to building from source
+# Lua 5.5 is not yet in apt repositories as of December 2025
+RUN apt-get update \
+    && if apt-cache show lua5.5 >/dev/null 2>&1; then \
+        echo "Installing lua5.5 from apt..." \
+        && apt-get install -y lua5.5; \
+    else \
+        echo "lua5.5 not in apt, building from source..." \
+        && apt-get install -y build-essential libreadline-dev \
+        && curl -fsSL "https://www.lua.org/ftp/lua-5.5.0.tar.gz" | tar xz \
+        && cd lua-5.5.0 \
+        && make linux \
+        && make install INSTALL_TOP=/usr/local \
+        && ln -sf /usr/local/bin/lua /usr/local/bin/lua5.5 \
+        && cd .. \
+        && rm -rf lua-5.5.0; \
+    fi \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

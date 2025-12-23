@@ -961,7 +961,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                     {
                         if (news[i] != L_ESC)
                         {
-                            LuaLError(ms.l, "invalid use of '%' in replacement string");
+                            // Lua 5.2+ rejects invalid % escapes; Lua 5.1 treats them as literal chars
+                            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                                ms.l.ExecutionContext.Script.CompatibilityVersion
+                            );
+                            if (version >= LuaCompatibilityVersion.Lua52)
+                            {
+                                LuaLError(ms.l, "invalid use of '%' in replacement string");
+                            }
                         }
                         LuaLAddChar(b, news[i]);
                     }
