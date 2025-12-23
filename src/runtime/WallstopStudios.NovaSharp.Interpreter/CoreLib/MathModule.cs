@@ -933,23 +933,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // One argument
             if (n.IsNil())
             {
-                // Lua 5.1/5.2: infinity/NaN silently produces a random result (no error)
-                // This is because (long)inf = Long.MinValue, which would cause "interval is empty"
-                // but reference Lua 5.1/5.2 doesn't throw - it returns a random value
-                LuaCompatibilityVersion effectiveVersionForInfCheck = LuaVersionDefaults.Resolve(
-                    version
-                );
-                if (effectiveVersionForInfCheck < LuaCompatibilityVersion.Lua53)
-                {
-                    double mFloat = m.LuaNumber.AsFloat;
-                    if (double.IsNaN(mFloat) || double.IsInfinity(mFloat))
-                    {
-                        // Reference Lua 5.1/5.2 behavior: return random integer
-                        return DynValue.NewNumber(r.NextLong(1, long.MaxValue));
-                    }
-                }
-
                 // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+                // In Lua 5.1/5.2, (long)infinity and (long)NaN produce platform-dependent results
+                // On most platforms (including macOS), this results in LONG_MIN, which then fails
+                // the "interval is empty" check since LONG_MIN < 1
                 long mVal = Utilities.LuaNumberHelpers.ToLongWithValidation(
                     version,
                     m,

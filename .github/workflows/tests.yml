@@ -486,22 +486,21 @@ jobs:
         shell: bash
 
       # ========== Windows Lua Installation ==========
+      # Build from official lua.org source using MSVC (most reliable approach).
+      # SourceForge downloads are unreliable and often return HTML instead of zip files.
       - name: Install Lua ${{ matrix.lua-version }} (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $LuaVersion = "${{ matrix.lua-version }}"
           
-          # Map version to full version and download URL
-          # LuaBinaries uses different URL patterns for different versions:
-          # - 5.1.5: /5.1.5/Tools%20Executables/lua5_1_5_Win64_bin.zip (underscores in filename)
-          # - 5.2+:  /5.x.x/Tools%20Executables/lua-5.x.x_Win64_bin.zip (dashes in filename)
+          # Map version to full patch version
           $VersionMap = @{
-            "5.1" = @{ Full = "5.1.5"; Tag = "v5.1.5"; FileName = "lua5_1_5_Win64_bin.zip" }
-            "5.2" = @{ Full = "5.2.4"; Tag = "v5.2.4"; FileName = "lua-5.2.4_Win64_bin.zip" }
-            "5.3" = @{ Full = "5.3.6"; Tag = "v5.3.6"; FileName = "lua-5.3.6_Win64_bin.zip" }
-            "5.4" = @{ Full = "5.4.7"; Tag = "v5.4.7"; FileName = "lua-5.4.7_Win64_bin.zip" }
-            "5.5" = @{ Full = "5.5.0"; Tag = "v5.5.0"; FileName = "lua-5.5.0_Win64_bin.zip" }
+            "5.1" = "5.1.5"
+            "5.2" = "5.2.4"
+            "5.3" = "5.3.6"
+            "5.4" = "5.4.7"
+            "5.5" = "5.5.0"
           }
           
           if (-not $VersionMap.ContainsKey($LuaVersion)) {
@@ -509,120 +508,89 @@ jobs:
             exit 1
           }
           
-          $FullVersion = $VersionMap[$LuaVersion].Full
-          $Tag = $VersionMap[$LuaVersion].Tag
-          $FileName = $VersionMap[$LuaVersion].FileName
-          
-          # Create installation directory
+          $FullVersion = $VersionMap[$LuaVersion]
           $LuaDir = "C:\Lua\$LuaVersion"
           New-Item -ItemType Directory -Force -Path $LuaDir | Out-Null
           
-          # Try LuaBinaries project first (prebuilt Windows binaries)
-          # https://luabinaries.sourceforge.net/
-          # URL format: /files/{version}/Tools%20Executables/{filename}/download
-          $LuaBinUrl = "https://sourceforge.net/projects/luabinaries/files/$FullVersion/Tools%20Executables/$FileName/download"
+          # Download official Lua source from lua.org (always works, no SourceForge issues)
+          $LuaSrcUrl = "https://www.lua.org/ftp/lua-$FullVersion.tar.gz"
+          Write-Host "Downloading Lua $FullVersion source from $LuaSrcUrl..."
+          Invoke-WebRequest -Uri $LuaSrcUrl -OutFile "$env:TEMP\lua.tar.gz" -UseBasicParsing
           
-          Write-Host "Downloading Lua $FullVersion for Windows from LuaBinaries..."
-          Write-Host "URL: $LuaBinUrl"
-          $downloaded = $false
-          try {
-            Invoke-WebRequest -Uri $LuaBinUrl -OutFile "$env:TEMP\lua.zip" -MaximumRedirection 10 -UseBasicParsing
-            $downloaded = $true
-          }
-          catch {
-            Write-Host "Primary LuaBinaries URL failed: $_"
-          }
+          # Extract using tar (available on Windows 10+)
+          Push-Location $env:TEMP
+          tar -xzf lua.tar.gz
+          Pop-Location
           
-          # Fallback: try alternative URL pattern (some versions use different folder structure)
-          if (-not $downloaded) {
-            $AltUrl = "https://sourceforge.net/projects/luabinaries/files/$FullVersion/$FileName/download"
-            Write-Host "Trying alternative URL: $AltUrl"
-            try {
-              Invoke-WebRequest -Uri $AltUrl -OutFile "$env:TEMP\lua.zip" -MaximumRedirection 10 -UseBasicParsing
-              $downloaded = $true
-            }
-            catch {
-              Write-Host "Alternative URL also failed: $_"
-            }
-          }
+          # Build with MSVC (cl.exe is available on GitHub Windows runners via VS build tools)
+          $SrcDir = "$env:TEMP\lua-$FullVersion\src"
+          Write-Host "Building Lua from source in $SrcDir..."
+          Push-Location $SrcDir
           
-          if ($downloaded) {
-            Write-Host "Download succeeded, extracting..."
-            Expand-Archive -Path "$env:TEMP\lua.zip" -DestinationPath $LuaDir -Force
-            
-            # Create versioned alias (lua5.4.exe -> lua.exe)
-            $LuaExe = Join-Path $LuaDir "lua.exe"
-            # Some LuaBinaries packages have lua54.exe instead of lua.exe
-            if (-not (Test-Path $LuaExe)) {
-              $ShortVersion = $LuaVersion -replace '\.', ''
-              $AltExe = Join-Path $LuaDir "lua$ShortVersion.exe"
-              if (Test-Path $AltExe) {
-                Copy-Item $AltExe $LuaExe -Force
-                Write-Host "Created lua.exe from lua$ShortVersion.exe"
-              }
-            }
-            $LuaVersionedExe = Join-Path $LuaDir "lua$LuaVersion.exe"
-            if (Test-Path $LuaExe) {
-              Copy-Item $LuaExe $LuaVersionedExe -Force
-            }
-          }
-          else {
-            Write-Host "LuaBinaries download failed, trying official Lua source with MSVC build..."
-            
-            # Download Lua source
-            $LuaSrcUrl = "https://www.lua.org/ftp/lua-$FullVersion.tar.gz"
-            Write-Host "Downloading Lua source from $LuaSrcUrl..."
-            Invoke-WebRequest -Uri $LuaSrcUrl -OutFile "$env:TEMP\lua.tar.gz" -UseBasicParsing
-            
-            # Extract using tar (available on Windows 10+)
-            Push-Location $env:TEMP
-            tar -xzf lua.tar.gz
-            Pop-Location
-            
-            # Build with MSVC (cl.exe is available on GitHub Windows runners)
-            $SrcDir = "$env:TEMP\lua-$FullVersion\src"
-            Write-Host "Building Lua from source in $SrcDir..."
-            Push-Location $SrcDir
-            
-            # Compile core files
-            $CoreFiles = @("lapi.c", "lcode.c", "lctype.c", "ldebug.c", "ldo.c", "ldump.c", 
-                          "lfunc.c", "lgc.c", "llex.c", "lmem.c", "lobject.c", "lopcodes.c",
-                          "lparser.c", "lstate.c", "lstring.c", "ltable.c", "ltm.c", 
-                          "lundump.c", "lvm.c", "lzio.c")
-            $LibFiles = @("lauxlib.c", "lbaselib.c", "lcorolib.c", "ldblib.c", "liolib.c",
-                         "lmathlib.c", "loadlib.c", "loslib.c", "lstrlib.c", "ltablib.c",
-                         "lutf8lib.c", "linit.c")
-            
-            # Not all files exist in all versions, filter to existing
-            $AllCFiles = ($CoreFiles + $LibFiles) | Where-Object { Test-Path $_ }
-            
-            # Compile all .c files to .obj
-            foreach ($f in $AllCFiles) {
-              & cl.exe /c /O2 /MD /DLUA_BUILD_AS_DLL $f 2>&1 | Out-Null
-            }
-            
-            # Compile lua.c for the interpreter
-            & cl.exe /c /O2 /MD lua.c 2>&1 | Out-Null
-            
-            # Link the interpreter
-            $ObjFiles = (Get-ChildItem -Filter "*.obj" | Where-Object { $_.Name -ne "lua.obj" }).Name
-            & cl.exe /Fe:lua.exe lua.obj $ObjFiles 2>&1 | Out-Null
-            
-            if (Test-Path "lua.exe") {
-              Copy-Item "lua.exe" $LuaDir -Force
-              Write-Host "Successfully built lua.exe"
-            }
-            else {
-              Write-Error "Failed to build Lua from source"
+          # Define source files (common to all versions)
+          $CoreFiles = @(
+            "lapi.c", "lcode.c", "ldebug.c", "ldo.c", "ldump.c", 
+            "lfunc.c", "lgc.c", "llex.c", "lmem.c", "lobject.c", "lopcodes.c",
+            "lparser.c", "lstate.c", "lstring.c", "ltable.c", "ltm.c", 
+            "lundump.c", "lvm.c", "lzio.c"
+          )
+          # lctype.c added in 5.2+
+          $LibFiles = @(
+            "lauxlib.c", "lbaselib.c", "ldblib.c", "liolib.c",
+            "lmathlib.c", "loadlib.c", "loslib.c", "lstrlib.c", "ltablib.c", "linit.c"
+          )
+          # Version-specific files
+          # lcorolib.c (coroutine library as separate file): 5.2+
+          # lutf8lib.c (utf8 library): 5.3+
+          # lctype.c: 5.2+
+          
+          # Filter to existing files (handles version differences automatically)
+          $AllCFiles = ($CoreFiles + $LibFiles + @("lctype.c", "lcorolib.c", "lutf8lib.c")) | Where-Object { Test-Path $_ }
+          
+          Write-Host "Compiling $($AllCFiles.Count) source files..."
+          
+          # Compile all library .c files to .obj
+          foreach ($f in $AllCFiles) {
+            $output = & cl.exe /c /O2 /MD /W3 /nologo $f 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "Failed to compile ${f}:"
+              Write-Host $output
               exit 1
             }
-            Pop-Location
-            
-            # Create versioned alias
-            $LuaExe = Join-Path $LuaDir "lua.exe"
-            $LuaVersionedExe = Join-Path $LuaDir "lua$LuaVersion.exe"
-            Copy-Item $LuaExe $LuaVersionedExe -Force
           }
+          
+          # Compile lua.c for the interpreter
+          $output = & cl.exe /c /O2 /MD /W3 /nologo lua.c 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Failed to compile lua.c:"
+            Write-Host $output
+            exit 1
+          }
+          
+          # Link the interpreter (all .obj files including lua.obj)
+          $ObjFiles = (Get-ChildItem -Filter "*.obj").Name
+          Write-Host "Linking $($ObjFiles.Count) object files..."
+          $output = & cl.exe /nologo /Fe:lua.exe $ObjFiles 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Failed to link:"
+            Write-Host $output
+            exit 1
+          }
+          
+          if (Test-Path "lua.exe") {
+            Copy-Item "lua.exe" $LuaDir -Force
+            Write-Host "Successfully built lua.exe"
+          }
+          else {
+            Write-Error "lua.exe not found after build"
+            exit 1
+          }
+          Pop-Location
+          
+          # Create versioned alias (lua5.4.exe -> lua.exe)
+          $LuaExe = Join-Path $LuaDir "lua.exe"
+          $LuaVersionedExe = Join-Path $LuaDir "lua$LuaVersion.exe"
+          Copy-Item $LuaExe $LuaVersionedExe -Force
           
           # Add to PATH for this job
           Write-Host "Adding $LuaDir to PATH"

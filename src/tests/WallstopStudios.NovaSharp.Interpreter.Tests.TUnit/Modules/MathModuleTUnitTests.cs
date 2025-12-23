@@ -807,45 +807,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         [global::TUnit.Core.Test]
         [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-        public async Task RandomAcceptsInfinityLua51And52(
+        public async Task RandomErrorsOnInfinityLua51And52(
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            // Lua 5.1/5.2: math.random(inf) does NOT throw - it silently handles infinity
+            // Lua 5.1/5.2: math.random(inf) THROWS because (long)infinity produces LONG_MIN,
+            // which fails the interval check (LONG_MIN < 1)
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            // Should NOT throw - returns a random number
-            DynValue result = script.DoString("return math.random(1/0)");
-
-            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(1/0)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert.That(ex.Message).Contains("interval is empty").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-        public async Task RandomAcceptsNegativeInfinityLua51And52(
+        public async Task RandomErrorsOnNegativeInfinityLua51And52(
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            // Lua 5.1/5.2: math.random(-inf) does NOT throw - it silently handles infinity
+            // Lua 5.1/5.2: math.random(-inf) THROWS because (long)-infinity produces LONG_MIN,
+            // which fails the interval check (LONG_MIN < 1)
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            // Should NOT throw - returns a random number
-            DynValue result = script.DoString("return math.random(-1/0)");
-
-            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(-1/0)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert.That(ex.Message).Contains("interval is empty").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
         [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-        public async Task RandomAcceptsNaNLua51And52(Compatibility.LuaCompatibilityVersion version)
+        public async Task RandomErrorsOnNaNLua51And52(Compatibility.LuaCompatibilityVersion version)
         {
-            // Lua 5.1/5.2: math.random(nan) does NOT throw - it silently handles NaN
+            // Lua 5.1/5.2: math.random(nan) THROWS because (long)NaN produces LONG_MIN,
+            // which fails the interval check (LONG_MIN < 1)
             Script script = new Script(version, CoreModulePresets.Complete);
 
-            // Should NOT throw - returns a random number
-            DynValue result = script.DoString("return math.random(0/0)");
-
-            await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(0/0)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert.That(ex.Message).Contains("interval is empty").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1526,6 +1538,78 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .Contains("number has no integer representation")
                 .Because(
                     $"Expression '{luaExpression}' ({description}) should throw integer representation error in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for math.random() edge cases that SHOULD throw in Lua 5.1/5.2.
+        /// In Lua 5.1/5.2, the C implementation casts infinity/NaN to (long), which produces
+        /// LONG_MIN on most platforms. This results in "interval is empty" errors.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "math.random(1/0)", "positive infinity in single arg" },
+            new object[] { "math.random(-1/0)", "negative infinity in single arg" },
+            new object[] { "math.random(0/0)", "NaN in single arg" },
+            new object[] { "math.random(1, 1/0)", "positive infinity in second arg" },
+            new object[] { "math.random(1, -1/0)", "negative infinity in second arg" },
+            new object[] { "math.random(1, 0/0)", "NaN in second arg" },
+            MaximumVersion = LuaCompatibilityVersion.Lua52
+        )]
+        public async Task RandomErrorsOnIntervalEmptyLua51And52(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString($"return {luaExpression}"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ex.Message)
+                .Contains("interval is empty")
+                .Because(
+                    $"Expression '{luaExpression}' ({description}) should throw interval empty error in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.random(inf, n) SUCCEEDS in Lua 5.1/5.2 because (long)inf = LONG_MIN,
+        /// and LONG_MIN &lt;= n is valid, producing a random number in the valid range.
+        /// This is platform-dependent C behavior that NovaSharp matches for compatibility.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "math.random(1/0, 10)", "positive infinity first, 10 second" },
+            new object[] { "math.random(-1/0, 10)", "negative infinity first, 10 second" },
+            new object[] { "math.random(0/0, 10)", "NaN first, 10 second" },
+            MaximumVersion = LuaCompatibilityVersion.Lua52
+        )]
+        public async Task RandomSucceedsWithInfinityNaNFirstArgLua51And52(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description
+        )
+        {
+            // In Lua 5.1/5.2, (long)infinity = (long)NaN = LONG_MIN, so math.random(inf, 10)
+            // becomes math.random(LONG_MIN, 10), which is a valid interval
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            DynValue result = script.DoString($"return {luaExpression}");
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(DataType.Number)
+                .Because(
+                    $"Expression '{luaExpression}' ({description}) should succeed and return a number in {version}"
                 )
                 .ConfigureAwait(false);
         }

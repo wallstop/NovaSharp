@@ -233,8 +233,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// is NaN, Infinity, or a non-integral float. Integral floats are allowed.
         /// </para>
         /// <para>
-        /// <b>Lua 5.1/5.2</b>: Silently truncates via floor. NaN becomes 0 (due to (long) cast behavior),
-        /// Infinity causes overflow behavior.
+        /// <b>Lua 5.1/5.2</b>: Silently truncates via floor. Reference Lua's C implementation
+        /// uses (long) cast on the result of floor(), which produces platform-dependent results
+        /// for NaN and Infinity. On most platforms (including macOS), this produces LONG_MIN
+        /// for both infinity and NaN. NovaSharp matches this behavior for cross-platform consistency.
         /// </para>
         /// </remarks>
         public static long ToLongWithValidation(
@@ -259,8 +261,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
                 return luaNum.AsInteger;
             }
 
-            // For floats, floor and convert (Lua 5.1/5.2 behavior, or validated integral float in 5.3+)
-            return (long)Math.Floor(luaNum.AsFloat);
+            // For floats, floor and convert
+            double floored = Math.Floor(luaNum.AsFloat);
+
+            // In Lua 5.1/5.2, the C implementation casts infinity/NaN to (long), which produces
+            // platform-dependent results. On most platforms (including macOS), this produces
+            // LONG_MIN for any infinity or NaN value. .NET's (long)cast produces different
+            // results (LONG_MAX for +inf, LONG_MIN for -inf, 0 for NaN), so we explicitly
+            // match the reference C Lua behavior.
+            if (resolved < LuaCompatibilityVersion.Lua53)
+            {
+                if (double.IsNaN(floored) || double.IsInfinity(floored))
+                {
+                    return long.MinValue;
+                }
+            }
+
+            return (long)floored;
         }
     }
 }

@@ -926,15 +926,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         [Test]
         [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-        public async Task CharHandlesPositiveInfinityAsZeroLua51And52(
-            LuaCompatibilityVersion version
-        )
+        public async Task CharErrorsOnPositiveInfinityLua51And52(LuaCompatibilityVersion version)
         {
+            // In Lua 5.1/5.2, positive infinity throws "invalid value" error
+            // (unlike NaN and negative infinity, which are silently treated as 0)
             Script script = new Script(version, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return string.char(1/0)");
 
-            await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
-            await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.char(1/0)")
+            );
+
+            await Assert.That(exception.Message).Contains("invalid value").ConfigureAwait(false);
         }
 
         [Test]
@@ -1810,6 +1812,124 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue result = script.DoString("return string.format('%u', math.maxinteger)");
 
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
+        }
+
+        // ==========================================================================
+        // Data-driven tests for string.char infinity/NaN edge cases
+        // ==========================================================================
+
+        /// <summary>
+        /// Data-driven test for string.char() edge cases that SHOULD throw in Lua 5.3+.
+        /// In Lua 5.3+, infinity and NaN have no integer representation and must throw
+        /// with a specific error message.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[]
+            {
+                "string.char(1/0)",
+                "positive infinity",
+                "number has no integer representation",
+            },
+            new object[]
+            {
+                "string.char(-1/0)",
+                "negative infinity",
+                "number has no integer representation",
+            },
+            new object[] { "string.char(0/0)", "NaN", "number has no integer representation" },
+            new object[]
+            {
+                "string.char(65, 1/0, 66)",
+                "positive infinity as second arg",
+                "number has no integer representation",
+            },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task CharRejectsInfinityAndNaNLua53Plus(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description,
+            string expectedError
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString($"return {luaExpression}")
+            );
+
+            await Assert
+                .That(ex.Message)
+                .Contains(expectedError)
+                .Because(
+                    $"Expression '{luaExpression}' ({description}) should throw '{expectedError}' in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for string.char() edge cases in Lua 5.1/5.2.
+        /// In Lua 5.1/5.2:
+        /// - Positive infinity throws "invalid value"
+        /// - Negative infinity and NaN are silently converted to 0 (null byte)
+        /// </summary>
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task CharErrorsOnPositiveInfinityLua51And52DataDriven(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Positive infinity throws "invalid value" in Lua 5.1/5.2
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.char(1/0)")
+            );
+
+            await Assert
+                .That(ex.Message)
+                .Contains("invalid value")
+                .Because(
+                    $"string.char(1/0) (positive infinity) should throw 'invalid value' in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for string.char() values that SHOULD succeed in Lua 5.1/5.2.
+        /// NaN and negative infinity are silently converted to 0 (null byte).
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "string.char(0/0)", "NaN", '\0' },
+            new object[] { "string.char(-1/0)", "negative infinity", '\0' },
+            MaximumVersion = LuaCompatibilityVersion.Lua52
+        )]
+        public async Task CharTreatsNaNAndNegativeInfinityAsZeroLua51And52(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description,
+            char expectedChar
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return {luaExpression}");
+
+            await Assert
+                .That(result.String.Length)
+                .IsEqualTo(1)
+                .Because(
+                    $"Expression '{luaExpression}' ({description}) should produce a single character"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.String[0])
+                .IsEqualTo(expectedChar)
+                .Because(
+                    $"Expression '{luaExpression}' ({description}) should produce '{expectedChar}' (char code {(int)expectedChar}) in {version}"
+                )
+                .ConfigureAwait(false);
         }
 
         private static Script CreateScript()
