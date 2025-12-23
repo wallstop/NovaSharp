@@ -474,7 +474,7 @@ ______________________________________________________________________
 
 ## Related Documents
 
-- [PLAN.md Initiative 18](../../PLAN.md#initiative-18-large-script-loadcompile-memory-optimization--high)
-- [Session 070: Compiler Memory Investigation](../../progress/session-070-compiler-memory-investigation.md)
+- [PLAN.md Initiative 18](../../PLAN.md)
+- Session 070: Compiler Memory Investigation (local progress)
 - [Initiative 12: Allocation Analysis](allocation-analysis-initiative12-phase5-validation.md)
 - [Optimization Opportunities](optimization-opportunities.md)

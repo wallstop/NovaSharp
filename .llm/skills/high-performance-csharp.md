@@ -1106,8 +1106,6 @@ ______________________________________________________________________
 
 - [docs/performance/optimization-opportunities.md](../../docs/performance/optimization-opportunities.md) — Detailed allocation analysis
 - [docs/performance/high-performance-libraries-research.md](../../docs/performance/high-performance-libraries-research.md) — Library research
-- [progress/session-075-kopilua-charptr-struct.md](../../progress/session-075-kopilua-charptr-struct.md) — CharPtr class→struct conversion (58-85% allocation reduction)
-- [progress/session-076-kopilua-phase3-optimization.md](../../progress/session-076-kopilua-phase3-optimization.md) — Thread-local caching, pre-computed tables
 - [DataStructs/ZStringBuilder.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/ZStringBuilder.cs) — ZString wrapper
 - [DataStructs/PooledResource.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/PooledResource.cs) — **Disposable pool wrapper struct (RAII pattern)**
 - [DataStructs/CollectionPools.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/CollectionPools.cs) — **ListPool, HashSetPool, DictionaryPool, etc.**

@@ -208,8 +208,8 @@ ______________________________________________________________________
 ## Related Documents
 
 - [Phase 1 Analysis](allocation-analysis-initiative12-phase1.md)
-- [Session 061: Phase 1 Profiling](../../progress/session-061-allocation-analysis-phase1.md)
-- [Session 062: Phase 2 Quick Wins](../../progress/session-062-initiative12-phase2-quick-wins.md)
-- [Session 064: Phase 3 Value Type Migration](../../progress/session-064-value-type-migration-phase3.md)
-- [Session 065: Phase 4 Static Delegates](../../progress/session-065-initiative12-phase4-static-delegates.md)
-- [Session 067: PDQSort Integration](../../progress/session-067-pdqsort-integration.md)
+- Session 061: Phase 1 Profiling (local progress)
+- Session 062: Phase 2 Quick Wins (local progress)
+- Session 064: Phase 3 Value Type Migration (local progress)
+- Session 065: Phase 4 Static Delegates (local progress)
+- Session 067: PDQSort Integration (local progress)
