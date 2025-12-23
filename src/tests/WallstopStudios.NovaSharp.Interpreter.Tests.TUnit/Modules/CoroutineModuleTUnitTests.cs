@@ -1011,24 +1011,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Threading and Concurrency Tests (All versions)
         // =====================================================
 
+        /// <summary>
+        /// Tests that attempting to resume a coroutine from a different thread while it's
+        /// already running throws InvalidOperationException. This validates thread-safety
+        /// guarantees of the interpreter.
+        /// </summary>
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task ResumeFromDifferentThreadThrowsInvalidOperation(
             LuaCompatibilityVersion version
         )
         {
-            Script script = new Script(version, CoreModulePresets.Complete);
-            using ManualResetEventSlim entered = new(false);
-            using ManualResetEventSlim allowCompletion = new(false);
-            using DeferredActionScope completionScope = DeferredActionScope.Run(
-                allowCompletion.Set
+            // Use TaskCompletionSource for async signaling without blocking threads
+            TaskCompletionSource<bool> callbackEntered = new(
+                TaskCreationOptions.RunContinuationsAsynchronously
             );
+            TaskCompletionSource<bool> allowCompletion = new(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
+
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             script.Globals["waitForSignal"] = DynValue.NewCallback(
                 (_, _) =>
                 {
-                    entered.Set();
-                    allowCompletion.Wait();
+                    callbackEntered.TrySetResult(true);
+                    // Block until we're allowed to complete
+                    allowCompletion.Task.GetAwaiter().GetResult();
                     return DynValue.Nil;
                 }
             );
@@ -1045,24 +1054,238 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("pause"));
 
+            // Start background task - use ConfigureAwait(false) to ensure continuation runs on thread pool
             Task<DynValue> background = Task.Run(() => script.Call(resumeFunc, coroutineValue));
 
-            await Assert.That(entered.Wait(TimeSpan.FromSeconds(2))).IsTrue().ConfigureAwait(false);
+            // Wait for the callback to be invoked with timeout
+            using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
+            try
+            {
+                await callbackEntered.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // Cleanup and fail with diagnostic info
+                allowCompletion.TrySetResult(true);
+                throw new TimeoutException(
+                    $"Timeout waiting for callback. Background task status: {background.Status}"
+                );
+            }
 
+            // Now try to resume from this thread - should throw
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                 script.Call(resumeFunc, coroutineValue)
             );
 
             await Assert
                 .That(exception.Message)
-                .Contains("Cannot enter the same NovaSharp processor");
+                .Contains("Cannot enter the same NovaSharp processor")
+                .ConfigureAwait(false);
 
-            completionScope.Dispose();
+            // Allow the background task to complete
+            allowCompletion.TrySetResult(true);
 
             DynValue result = await background.ConfigureAwait(false);
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Tuple[1].String).IsEqualTo("done").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that multiple concurrent threads trying to resume the same coroutine
+        /// results in only one succeeding and the others throwing InvalidOperationException.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task MultipleConcurrentResumeAttemptsOnlyOneSucceeds(
+            LuaCompatibilityVersion version
+        )
+        {
+            const int ConcurrentThreads = 4;
+
+            TaskCompletionSource<bool> callbackEntered = new(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
+            TaskCompletionSource<bool> allowCompletion = new(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
+            TaskCompletionSource<bool> startSignal = new(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            script.Globals["waitForSignal"] = DynValue.NewCallback(
+                (_, _) =>
+                {
+                    callbackEntered.TrySetResult(true);
+                    allowCompletion.Task.GetAwaiter().GetResult();
+                    return DynValue.Nil;
+                }
+            );
+
+            script.DoString(
+                @"
+                function pause()
+                    waitForSignal()
+                    return 'done'
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("pause"));
+
+            int successCount = 0;
+            int failureCount = 0;
+            InvalidOperationException caughtException = null;
+            int readyCount = 0;
+
+            Task[] tasks = new Task[ConcurrentThreads];
+            for (int i = 0; i < ConcurrentThreads; i++)
+            {
+                tasks[i] = Task.Run(async () =>
+                {
+                    Interlocked.Increment(ref readyCount);
+                    await startSignal.Task.ConfigureAwait(false);
+
+                    try
+                    {
+                        script.Call(resumeFunc, coroutineValue);
+                        Interlocked.Increment(ref successCount);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        Interlocked.Increment(ref failureCount);
+                        Interlocked.CompareExchange(ref caughtException, ex, null);
+                    }
+                });
+            }
+
+            // Wait for all threads to be ready (simple spin-wait for task startup)
+            using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
+            while (Volatile.Read(ref readyCount) < ConcurrentThreads)
+            {
+                cts.Token.ThrowIfCancellationRequested();
+                await Task.Yield();
+            }
+
+            // Release all threads simultaneously
+            startSignal.TrySetResult(true);
+
+            // Wait for the callback to be invoked with timeout
+            await callbackEntered.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+
+            // Allow completion
+            allowCompletion.TrySetResult(true);
+
+            // Wait for all tasks to complete
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            // Exactly one thread should have succeeded
+            await Assert
+                .That(successCount)
+                .IsEqualTo(1)
+                .Because(
+                    $"Expected exactly one thread to succeed, but {successCount} succeeded and {failureCount} failed"
+                )
+                .ConfigureAwait(false);
+
+            // All other threads should have failed with InvalidOperationException
+            await Assert.That(failureCount).IsEqualTo(ConcurrentThreads - 1).ConfigureAwait(false);
+
+            // Verify the exception message
+            await Assert.That(caughtException).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(caughtException.Message)
+                .Contains("Cannot enter the same NovaSharp processor")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that separate Script instances can execute concurrently on different threads
+        /// without interference. Each script has its own processor and state.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task SeparateScriptInstancesCanRunConcurrently(LuaCompatibilityVersion version)
+        {
+            const int ConcurrentScripts = 4;
+
+            TaskCompletionSource<bool> proceedSignal = new(
+                TaskCreationOptions.RunContinuationsAsynchronously
+            );
+            int readyCount = 0;
+            int completionCount = 0;
+            ScriptRuntimeException caughtException = null;
+
+            Task<int>[] tasks = new Task<int>[ConcurrentScripts];
+            for (int i = 0; i < ConcurrentScripts; i++)
+            {
+                int scriptIndex = i;
+                tasks[i] = Task.Run(async () =>
+                {
+                    try
+                    {
+                        Script script = new Script(version, CoreModulePresets.Complete);
+                        script.Globals["scriptIndex"] = DynValue.NewNumber(scriptIndex);
+                        script.Globals["waitForProceed"] = DynValue.NewCallback(
+                            (_, _) =>
+                            {
+                                Interlocked.Increment(ref readyCount);
+                                proceedSignal.Task.GetAwaiter().GetResult();
+                                return DynValue.Nil;
+                            }
+                        );
+
+                        DynValue result = script.DoString(
+                            @"
+                            waitForProceed()
+                            local sum = 0
+                            for i = 1, 100 do
+                                sum = sum + i
+                            end
+                            return scriptIndex * 1000 + sum
+                        "
+                        );
+
+                        Interlocked.Increment(ref completionCount);
+                        return (int)result.Number;
+                    }
+                    catch (ScriptRuntimeException ex)
+                    {
+                        Interlocked.CompareExchange(ref caughtException, ex, null);
+                        return -1;
+                    }
+                });
+            }
+
+            // Wait for all scripts to reach the synchronization point
+            using CancellationTokenSource cts = new(TimeSpan.FromSeconds(10));
+            while (Volatile.Read(ref readyCount) < ConcurrentScripts)
+            {
+                cts.Token.ThrowIfCancellationRequested();
+                await Task.Delay(1, cts.Token).ConfigureAwait(false);
+            }
+
+            // Release all scripts to proceed
+            proceedSignal.TrySetResult(true);
+
+            // Wait for all tasks to complete
+            int[] results = await Task.WhenAll(tasks).ConfigureAwait(false);
+
+            // All scripts should have completed successfully
+            await Assert.That(completionCount).IsEqualTo(ConcurrentScripts).ConfigureAwait(false);
+
+            await Assert.That(caughtException).IsNull().ConfigureAwait(false);
+
+            // Verify each script computed the correct result
+            // sum(1..100) = 5050, so result = scriptIndex * 1000 + 5050
+            for (int i = 0; i < ConcurrentScripts; i++)
+            {
+                int expectedResult = i * 1000 + 5050;
+                await Assert.That(results[i]).IsEqualTo(expectedResult).ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
