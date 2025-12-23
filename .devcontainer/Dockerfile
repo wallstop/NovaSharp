@@ -32,34 +32,15 @@ RUN apt-get update && apt-get install -y ripgrep \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Lua 5.1-5.4 and build dependencies for Lua 5.5
+# Install Lua 5.1-5.5
 RUN apt-get update && apt-get install -y \
     lua5.1 \
     lua5.2 \
     lua5.3 \
     lua5.4 \
-    build-essential \
-    libreadline-dev \
-    curl \
+    lua5.5 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-# Build and install Lua 5.5 from source
-ARG LUA55_TARBALL_VERSION="5.5.0-rc2"
-ARG LUA55_EXTRACT_DIR="lua-5.5.0"
-ARG LUA55_URL="https://www.lua.org/work/lua-${LUA55_TARBALL_VERSION}.tar.gz"
-ARG LUA55_INSTALL_PREFIX="/usr/local/lua55"
-
-RUN cd /tmp \
-    && curl -L -o "lua-${LUA55_TARBALL_VERSION}.tar.gz" "${LUA55_URL}" \
-    && tar xzf "lua-${LUA55_TARBALL_VERSION}.tar.gz" \
-    && cd "${LUA55_EXTRACT_DIR}" \
-    && make linux \
-    && make install INSTALL_TOP="${LUA55_INSTALL_PREFIX}" \
-    && ln -sf "${LUA55_INSTALL_PREFIX}/bin/lua" /usr/local/bin/lua5.5 \
-    && ln -sf "${LUA55_INSTALL_PREFIX}/bin/luac" /usr/local/bin/luac5.5 \
-    && cd / \
-    && rm -rf /tmp/lua-*
 
 # Install CSharpier globally
 RUN dotnet tool install --global csharpier
