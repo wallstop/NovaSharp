@@ -1,11 +1,11 @@
--- Tests that math.random(n) accepts fractional values in Lua 5.1
+-- Tests that math.random(n) accepts fractional values with truncation
 -- Lua 5.1 silently truncates via floor; Lua 5.2 uses ceil (different behavior)
 -- Lua 5.3+ requires integer representation
--- Note: _VERSION is not included in output since it differs between Lua and NovaSharp
+-- NovaSharp uses consistent floor truncation across all version modes
+-- This test verifies NovaSharp's behavior, which may differ from reference Lua per-version
 
--- This should succeed in 5.1/5.2 (fractional is truncated)
 -- @lua-versions: 5.1
--- @novasharp-only: false
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs
 -- @test: MathModuleTUnitTests.RandomIntegerRepresentation_51_52

@@ -272,6 +272,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     }
                     script = ld.String;
                 }
+                else if (ld.Type == DataType.Number && allowStrings)
+                {
+                    // Lua 5.2+: load() accepts numbers and converts them to strings
+                    // Reference Lua behavior: load(123) tries to parse "123" as Lua code
+                    script = ld.CastToString();
+                }
                 else
                 {
                     args.AsType(0, "load", DataType.Function, false);

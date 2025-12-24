@@ -1,9 +1,10 @@
 -- @lua-versions: 5.2, 5.3, 5.4, 5.5
--- @novasharp-only: false
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:50
 -- @test: LoadModuleVersionParityTUnitTests.LoadstringIsNilInLua52Plus
 -- @compat-notes: loadstring was removed in Lua 5.2 - use load() instead
+-- @divergence: Reference Lua 5.2 keeps loadstring (deprecated but present); NovaSharp removes it entirely in 5.2+ mode as a stricter implementation
 
 -- Test: loadstring should be nil in Lua 5.2+
 -- Reference: Lua 5.2+ Reference Manual - loadstring removed

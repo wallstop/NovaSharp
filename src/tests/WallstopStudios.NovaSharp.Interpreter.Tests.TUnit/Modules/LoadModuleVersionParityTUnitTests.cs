@@ -235,15 +235,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // =============================================================================
 
         [Test]
-        [AllLuaVersions]
-        public async Task LoadRejectsNonFunctionNonStringInAllVersions(
-            LuaCompatibilityVersion version
-        )
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
+        public async Task LoadRejectsNonFunctionNonStringInLua51(LuaCompatibilityVersion version)
         {
+            // Lua 5.1's load() only accepts functions, not strings or numbers
             Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("load(123)")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("function expected")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task LoadAcceptsNumberArgumentInLua52Plus(LuaCompatibilityVersion version)
+        {
+            // Lua 5.2+: load() accepts numbers and converts them to strings
+            // load(123) tries to parse "123" as Lua code, which fails
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            DynValue result = script.DoString("return load(123)");
+
+            // Should return (nil, error_message) tuple, not throw
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Type)
+                .IsEqualTo(DataType.String)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
+        public async Task LoadRejectsNonFunctionNonStringNonNumberInAllVersions(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Tables and other types should always be rejected
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("load({})")
             );
 
             await Assert
