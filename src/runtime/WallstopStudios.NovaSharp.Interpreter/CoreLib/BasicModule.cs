@@ -614,6 +614,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 )
             )
             {
+                // Lua 5.2+ does NOT accept "nan" or "inf" string literals (returns nil)
+                // Lua 5.1 accepts them via C's strtod
+                if (
+                    resolved >= LuaCompatibilityVersion.Lua52
+                    && (double.IsNaN(doubleValue) || double.IsInfinity(doubleValue))
+                )
+                {
+                    return false;
+                }
+
                 // Use LuaNumber.FromDouble to auto-promote whole numbers to integers
                 value = LuaNumber.FromDouble(doubleValue);
                 return true;

@@ -1797,12 +1797,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         }
                         case 's':
                         {
-                            CharPtr s = LuaLCheckLString(l, arg, out uint localLength);
+                            // Lua 5.2+ converts non-string values via tostring
+                            // Lua 5.1 requires string type
+                            DynValue argValue = GetArgument(l, arg);
+                            string s;
+                            if (argValue.Type == DataType.String)
+                            {
+                                s = argValue.String;
+                            }
+                            else if (version >= LuaCompatibilityVersion.Lua52)
+                            {
+                                // Lua 5.2+ coerces to string via tostring()
+                                s = argValue.ToPrintString(version);
+                            }
+                            else
+                            {
+                                // Lua 5.1 requires a string argument
+                                ArgAsType(l, arg, DataType.String, false);
+                                s = argValue.String; // Won't reach here - ArgAsType throws
+                            }
+
+                            uint localLength = (uint)s.Length;
                             if ((StringFindCharacter(form, '.').IsNull) && localLength >= 100)
                             {
                                 /* no precision and string is too long to be formatted;
                                    keep original string */
-                                LuaPushValue(l, arg);
+                                LuaPushLiteral(l, s);
                                 LuaLAddValue(b);
                                 continue; /* skip the `addsize' at the end */
                             }

@@ -51,11 +51,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         // Cached static delegates to avoid allocations in hot paths (Initiative 12 Phase 4)
         private static readonly Func<double, double, double> Atan2Op = Math.Atan2;
-        private static readonly Func<double, double, double> IEEERemainderOp = Math.IEEERemainder;
+
+        // Use % operator (C's fmod) NOT IEEERemainder - fmod truncates toward zero, IEEERemainder rounds to nearest
+        private static readonly Func<double, double, double> FmodOp = (d1, d2) => d1 % d2;
         private static readonly Func<double, double, double> LdexpOp = (d1, d2) =>
             d1 * Math.Pow(2, d2);
-        private static readonly Func<double, double, double> MaxOp = Math.Max;
-        private static readonly Func<double, double, double> MinOp = Math.Min;
+
+        // Lua max/min use standard comparison which makes NaN comparisons always false
+        // This means NaN values are effectively "skipped" - the non-NaN value wins
+        // Do NOT use Math.Max/Math.Min which propagate NaN per IEEE 754
+        private static readonly Func<double, double, double> MaxOp = (d1, d2) => d2 > d1 ? d2 : d1;
+        private static readonly Func<double, double, double> MinOp = (d1, d2) => d2 < d1 ? d2 : d1;
         private static readonly Func<double, double, double> PowOp = Math.Pow;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -565,17 +571,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `math.fmod`, returning the remainder of division with sign matching the dividend (§6.7).
         /// </summary>
+        /// <remarks>
+        /// <para><b>Lua 5.3+:</b> Throws error when divisor is zero.</para>
+        /// <para><b>Lua 5.1/5.2:</b> Returns NaN when divisor is zero.</para>
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments supplying dividend and divisor.</param>
         /// <returns>Remainder value.</returns>
         [NovaSharpModuleMethod(Name = "fmod")]
         public static DynValue Fmod(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            ModuleArgumentValidation.RequireExecutionContext(
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "fmod", IEEERemainderOp);
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg1 = args.AsType(0, "fmod", DataType.Number, false);
+            DynValue arg2 = args.AsType(1, "fmod", DataType.Number, false);
+
+            double divisor = arg2.Number;
+
+            // Lua 5.3+ throws error when divisor is zero
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            if (version >= LuaCompatibilityVersion.Lua53 && divisor == 0.0)
+            {
+                throw new ScriptRuntimeException("bad argument #2 to 'fmod' (zero)");
+            }
+
+            // Use % operator (C's fmod) - sign matches dividend, truncates toward zero
+            return DynValue.NewNumber(arg1.Number % divisor);
         }
 
         /// <summary>
@@ -596,7 +623,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "mod", IEEERemainderOp);
+            // Lua 5.1 only - no zero divisor check
+            return Exec2(args, "mod", FmodOp);
         }
 
         /// <summary>
@@ -815,7 +843,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             double value = arg.Number;
             double integerPart = Math.Truncate(value);
-            double fractionalPart = value - integerPart;
+            double fractionalPart;
+
+            // Special case: infinity - fractional part is 0, not NaN
+            // (inf - inf = NaN, but Lua defines modf(inf) to have fractional part of 0)
+            if (double.IsInfinity(value))
+            {
+                // Use copysign to preserve the sign (-0 for -inf, +0 for +inf)
+                fractionalPart = value > 0 ? 0.0 : -0.0;
+            }
+            else
+            {
+                fractionalPart = value - integerPart;
+            }
 
             // Check version for integer promotion behavior
             LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
