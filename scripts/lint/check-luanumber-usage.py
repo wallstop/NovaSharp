@@ -242,7 +242,7 @@ def print_report(issues: list[Issue], detailed: bool = False) -> None:
     print()
 
     if not issues:
-        print("✅ No issues found.")
+        print("[OK] No issues found.")
         return
 
     warnings = [i for i in issues if i.severity == "warning"]
@@ -264,9 +264,9 @@ def print_report(issues: list[Issue], detailed: bool = False) -> None:
         for file_path, file_issues in sorted(by_file.items()):
             print(f"\n{file_path}:")
             for issue in file_issues:
-                severity_icon = "⚠️" if issue.severity == "warning" else "❌"
+                severity_icon = "[WARN]" if issue.severity == "warning" else "[ERR]"
                 print(f"  {severity_icon} Line {issue.line_number}: {issue.description}")
-                print(f"      {issue.line_content[:80]}...")
+                print(f"         {issue.line_content[:80]}...")
         print()
 
     print("-" * 70)

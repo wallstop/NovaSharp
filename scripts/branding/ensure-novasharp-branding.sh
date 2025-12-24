@@ -27,6 +27,7 @@ readarray -t allowlist <<'EOF'
 :(exclude)src/tooling/WallstopStudios.NovaSharp.Comparison
 :(exclude)src/tooling/WallstopStudios.NovaSharp.Comparison/**
 :(exclude)PLAN.md
+:(exclude).devcontainer/devcontainer.json
 EOF
 
 if git grep -n --color=never "${pattern}" -- . "${allowlist[@]}"; then

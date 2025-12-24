@@ -1,0 +1,41 @@
+# Docker build context exclusions for NovaSharp
+# Prevents Windows-specific build artifacts from being copied into containers
+
+# Visual Studio caches (contain Windows paths)
+src/.vs/
+.vs/
+
+# Build outputs
+**/bin/
+**/obj/
+[Bb]in/
+[Oo]bj/
+
+# NuGet packages (will be restored fresh in container)
+packages/
+
+# Git directory
+.git/
+
+# IDE settings
+.idea/
+.vscode/
+
+# Artifacts and scratch
+artifacts/
+scratch/
+BenchmarkDotNet.Artifacts/
+
+# Test results
+**/TestResults/
+
+# Coverage outputs
+docs/coverage/latest/
+
+# Python virtual environment
+.venv/
+
+# OS-specific files
+Thumbs.db
+.DS_Store
+Desktop.ini

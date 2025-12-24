@@ -528,21 +528,21 @@ def main():
     if args.monitor:
         # Monitor mode: always succeed but report status
         if stats['mismatch'] > 0:
-            print(f"\n📊 MONITOR MODE: {stats['mismatch']} mismatch(es) found (not failing)")
+            print(f"\n[INFO] MONITOR MODE: {stats['mismatch']} mismatch(es) found (not failing)")
             print("This is expected for experimental Lua versions like 5.5.")
         else:
-            print("\n✅ MONITOR MODE: All comparable fixtures match.")
+            print("\n[OK] MONITOR MODE: All comparable fixtures match.")
         sys.exit(0)
     elif args.enforce and stats['mismatch'] > 0:
-        print(f"\n❌ ENFORCE MODE: {stats['mismatch']} unexpected mismatch(es) found!")
+        print(f"\n[FAIL] ENFORCE MODE: {stats['mismatch']} unexpected mismatch(es) found!")
         print("Add to KNOWN_DIVERGENCES in compare-lua-outputs.py if these are expected,")
         print("or fix the divergence in NovaSharp runtime.")
         sys.exit(1)
     elif stats['mismatch'] > 0:
-        print(f"\n⚠️  {stats['mismatch']} mismatch(es) found (warn mode, not failing)")
+        print(f"\n[WARN] {stats['mismatch']} mismatch(es) found (warn mode, not failing)")
         sys.exit(0)
     else:
-        print("\n✅ All comparable fixtures match (or are documented divergences).")
+        print("\n[OK] All comparable fixtures match (or are documented divergences).")
         sys.exit(0)
 
 

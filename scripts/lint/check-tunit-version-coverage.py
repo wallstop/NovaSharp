@@ -329,8 +329,8 @@ def print_report(report: dict, detailed: bool = False) -> None:
     print(f"Non-compliant tests: {summary['non_compliant_tests']}")
     print()
     print("Non-compliant breakdown:")
-    print(f"  🔴 Lua execution tests needing version: {summary['lua_execution_needing_version']}")
-    print(f"  ⚪ Infrastructure tests (no Lua): {summary['infrastructure_tests']}")
+    print(f"  [!] Lua execution tests needing version: {summary['lua_execution_needing_version']}")
+    print(f"  [ ] Infrastructure tests (no Lua): {summary['infrastructure_tests']}")
     print()
     print(f"Compliance: {summary['compliance_percentage']}%")
     print()
@@ -342,7 +342,7 @@ def print_report(report: dict, detailed: bool = False) -> None:
 
     if detailed and report["lua_execution_details"]:
         print("-" * 70)
-        print("🔴 HIGH PRIORITY: Lua execution tests missing version coverage:")
+        print("[!] HIGH PRIORITY: Lua execution tests missing version coverage:")
         print("-" * 70)
 
         # Group by file
@@ -365,7 +365,7 @@ def print_report(report: dict, detailed: bool = False) -> None:
 
     if detailed and report["infrastructure_details"]:
         print("-" * 70)
-        print("⚪ LOW PRIORITY: Infrastructure tests (no Lua execution detected):")
+        print("[ ] LOW PRIORITY: Infrastructure tests (no Lua execution detected):")
         print("-" * 70)
 
         # Group by directory
@@ -387,8 +387,8 @@ def print_report(report: dict, detailed: bool = False) -> None:
 
     if summary["lua_execution_needing_version"] > 0:
         print("=" * 70)
-        print("⚠️  ACTION REQUIRED: Add [Arguments(LuaCompatibilityVersion.LuaXX)]")
-        print(f"   attributes to {summary['lua_execution_needing_version']} Lua execution tests.")
+        print("[WARN] ACTION REQUIRED: Add [Arguments(LuaCompatibilityVersion.LuaXX)]")
+        print(f"       attributes to {summary['lua_execution_needing_version']} Lua execution tests.")
         print("=" * 70)
 
 

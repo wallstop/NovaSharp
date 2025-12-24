@@ -1,79 +1,95 @@
 #!/usr/bin/env bash
 # Post-create script for NovaSharp dev container
-# Restores .NET tools and Python dependencies (Lua versions are pre-installed via Dockerfile)
+# NOTE: NuGet restore is done in on-create.sh (before extensions load)
+# This script handles remaining setup: Python environment, hooks, verification
 
 set -euo pipefail
 
-echo "=== NovaSharp Dev Container Setup ==="
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║           NovaSharp Post-Create Setup                          ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
 
 cd /workspaces/NovaSharp
 
-# Clean stale obj/bin folders that may contain Windows-specific NuGet asset caches
-# This prevents "Unable to find fallback package folder" errors when opening in VS Code
-echo "Cleaning stale build artifacts..."
-find src -type d -name "obj" -exec rm -rf {} + 2>/dev/null || true
-find src -type d -name "bin" -exec rm -rf {} + 2>/dev/null || true
+# ============================================================================
+# STEP 1: Install TUnit templates
+# ============================================================================
+echo "📦 Step 1/4: Installing TUnit templates..."
+dotnet new install TUnit.Templates --force 2>/dev/null || true
 
-# Restore dotnet tools
-echo "Restoring .NET tools..."
-dotnet tool restore
+# ============================================================================
+# STEP 2: Setup Python environment
+# ============================================================================
+echo ""
+echo "🐍 Step 2/4: Setting up Python environment..."
 
-# Install TUnit project templates for creating new test projects
-echo "Installing TUnit templates..."
-dotnet new install TUnit.Templates || true
-
-# Restore NuGet packages so C# extension loads without errors
-echo "Restoring NuGet packages..."
-dotnet restore src/NovaSharp.sln
-
-# Create Python virtual environment for tooling (PEP 668 compliance)
 VENV_DIR="/workspaces/NovaSharp/.venv"
-echo "Setting up Python virtual environment at ${VENV_DIR}..."
 python3 -m venv "${VENV_DIR}"
+"${VENV_DIR}/bin/pip" install --upgrade pip --quiet
+"${VENV_DIR}/bin/pip" install -r requirements.tooling.txt --quiet
 
-# Install Python tooling dependencies in the virtual environment
-echo "Installing Python tooling dependencies..."
-"${VENV_DIR}/bin/pip" install --upgrade pip
-"${VENV_DIR}/bin/pip" install -r requirements.tooling.txt
-
-# Add venv to PATH for the current session and future terminals
-echo "Configuring PATH for virtual environment..."
-export PATH="${VENV_DIR}/bin:${PATH}"
-
-# Ensure venv is activated for future bash sessions
+# Ensure venv is on PATH for future sessions
 BASHRC_MARKER="# NovaSharp Python venv activation"
 if ! grep -q "${BASHRC_MARKER}" ~/.bashrc 2>/dev/null; then
-    echo "" >> ~/.bashrc
-    echo "${BASHRC_MARKER}" >> ~/.bashrc
-    echo "export PATH=\"${VENV_DIR}/bin:\${PATH}\"" >> ~/.bashrc
+    {
+        echo ""
+        echo "${BASHRC_MARKER}"
+        echo "export PATH=\"${VENV_DIR}/bin:\${PATH}\""
+    } >> ~/.bashrc
 fi
 
-# Verify installations
-echo ""
-echo "=== Lua Version Verification ==="
+echo "   Virtual environment: ${VENV_DIR}"
 
-verify_lua_version() {
-    local cmd=$1
-    local label=$2
+# ============================================================================
+# STEP 3: Install pre-commit hooks
+# ============================================================================
+echo ""
+echo "🪝 Step 3/4: Installing pre-commit hooks..."
+if [ -f "scripts/dev/install-hooks.sh" ]; then
+    bash scripts/dev/install-hooks.sh 2>/dev/null || echo "   (hooks may already be installed)"
+else
+    echo "   Skipped (install-hooks.sh not found)"
+fi
+
+# ============================================================================
+# STEP 4: Verification
+# ============================================================================
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║           Environment Verification                             ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
+
+echo "📌 .NET SDKs:"
+dotnet --list-sdks | sed 's/^/   /'
+
+echo ""
+echo "📌 Lua Interpreters:"
+for v in 5.1 5.2 5.3 5.4 5.5; do
+    cmd="lua${v}"
     if command -v "$cmd" &> /dev/null; then
-        echo -n "${label}: " && $cmd -v 2>&1 | head -1
+        printf "   %-10s %s\n" "Lua ${v}:" "$($cmd -v 2>&1 | head -1)"
     else
-        echo "${label}: NOT INSTALLED"
+        printf "   %-10s %s\n" "Lua ${v}:" "NOT FOUND"
     fi
-}
-
-verify_lua_version "lua5.1" "Lua 5.1"
-verify_lua_version "lua5.2" "Lua 5.2"
-verify_lua_version "lua5.3" "Lua 5.3"
-verify_lua_version "lua5.4" "Lua 5.4"
-verify_lua_version "lua5.5" "Lua 5.5"
+done
 
 echo ""
-echo "=== Python Verification ==="
-echo -n "Python: " && "${VENV_DIR}/bin/python3" --version 2>&1
-echo -n "pip: " && "${VENV_DIR}/bin/pip" --version 2>&1
-echo "Virtual environment: ${VENV_DIR}"
+echo "📌 Global Tools:"
+echo "   CSharpier:        $(csharpier --version 2>/dev/null || echo 'not found')"
+echo "   ReportGenerator:  $(reportgenerator --version 2>/dev/null | head -1 || echo 'not found')"
 
 echo ""
-echo "=== Dev Container Setup Complete ==="
-echo "All Lua versions and tooling ready for specification comparison testing."
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║           ✅ Setup Complete!                                    ║"
+echo "╠════════════════════════════════════════════════════════════════╣"
+echo "║  Quick commands:                                               ║"
+echo "║    ./scripts/build/quick.sh      - Build interpreter           ║"
+echo "║    ./scripts/test/quick.sh       - Run all tests               ║"
+echo "║    ./scripts/test/quick.sh Floor - Run tests matching 'Floor'  ║"
+echo "║                                                                ║"
+echo "║  IntelliSense will load automatically via OmniSharp.           ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
