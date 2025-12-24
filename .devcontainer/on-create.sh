@@ -14,6 +14,17 @@ echo ""
 cd /workspaces/NovaSharp
 
 # ============================================================================
+# STEP 0: Create placeholder for Razor OmniSharp to prevent extension errors
+# ============================================================================
+# The C# extension looks for .razoromnisharp directory even when Razor is disabled.
+# Creating an empty directory prevents the "directory was not found" error.
+CSHARP_EXT_DIR=$(find /home/vscode/.vscode-server/extensions -maxdepth 1 -name "ms-dotnettools.csharp-*" -type d 2>/dev/null | head -1)
+if [ -n "$CSHARP_EXT_DIR" ] && [ ! -d "$CSHARP_EXT_DIR/.razoromnisharp" ]; then
+    mkdir -p "$CSHARP_EXT_DIR/.razoromnisharp"
+    echo "📁 Created placeholder: $CSHARP_EXT_DIR/.razoromnisharp"
+fi
+
+# ============================================================================
 # STEP 1: Clean stale build artifacts
 # ============================================================================
 echo "📦 Step 1/3: Cleaning stale build artifacts..."
