@@ -539,18 +539,19 @@ jobs:
             "lparser.c", "lstate.c", "lstring.c", "ltable.c", "ltm.c", 
             "lundump.c", "lvm.c", "lzio.c"
           )
-          # lctype.c added in 5.2+
           $LibFiles = @(
             "lauxlib.c", "lbaselib.c", "ldblib.c", "liolib.c",
             "lmathlib.c", "loadlib.c", "loslib.c", "lstrlib.c", "ltablib.c", "linit.c"
           )
-          # Version-specific files
-          # lcorolib.c (coroutine library as separate file): 5.2+
-          # lutf8lib.c (utf8 library): 5.3+
-          # lctype.c: 5.2+
+          # Version-specific files (filtered to existing files below):
+          # - lctype.c: 5.2+ (character type functions)
+          # - lbitlib.c: 5.2-5.3 (bit32 library, removed in 5.4)
+          # - lcorolib.c: 5.2+ (coroutine library as separate file)
+          # - lutf8lib.c: 5.3+ (utf8 library)
+          $VersionSpecificFiles = @("lctype.c", "lbitlib.c", "lcorolib.c", "lutf8lib.c")
           
           # Filter to existing files (handles version differences automatically)
-          $AllCFiles = ($CoreFiles + $LibFiles + @("lctype.c", "lcorolib.c", "lutf8lib.c")) | Where-Object { Test-Path $_ }
+          $AllCFiles = ($CoreFiles + $LibFiles + $VersionSpecificFiles) | Where-Object { Test-Path $_ }
           
           Write-Host "Compiling $($AllCFiles.Count) source files..."
           
@@ -645,16 +646,32 @@ jobs:
         run: |
           LUA_VERSION="${{ matrix.lua-version }}"
           
-          # Try versioned command first, then unversioned
-          if command -v "lua${LUA_VERSION}" &> /dev/null; then
-            LUA_CMD="lua${LUA_VERSION}"
-          elif command -v "lua$LUA_VERSION" &> /dev/null; then
-            LUA_CMD="lua$LUA_VERSION"
-          elif command -v lua &> /dev/null; then
-            LUA_CMD="lua"
+          # On Windows, Lua was installed to C:\Lua\<version>\lua<version>.exe
+          # The PATH update from GITHUB_PATH is available, but we need to check explicitly
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            # Windows path with versioned executable
+            WIN_LUA_DIR="/c/Lua/${LUA_VERSION}"
+            if [[ -f "${WIN_LUA_DIR}/lua${LUA_VERSION}.exe" ]]; then
+              LUA_CMD="${WIN_LUA_DIR}/lua${LUA_VERSION}.exe"
+            elif [[ -f "${WIN_LUA_DIR}/lua.exe" ]]; then
+              LUA_CMD="${WIN_LUA_DIR}/lua.exe"
+            else
+              echo "Error: Lua not found in ${WIN_LUA_DIR}"
+              ls -la "${WIN_LUA_DIR}" || echo "Directory does not exist"
+              exit 1
+            fi
           else
-            echo "Warning: Lua command not found in PATH"
-            LUA_CMD="lua"
+            # Unix: Try versioned command first, then unversioned
+            if command -v "lua${LUA_VERSION}" &> /dev/null; then
+              LUA_CMD="lua${LUA_VERSION}"
+            elif command -v "lua$LUA_VERSION" &> /dev/null; then
+              LUA_CMD="lua$LUA_VERSION"
+            elif command -v lua &> /dev/null; then
+              LUA_CMD="lua"
+            else
+              echo "Warning: Lua command not found in PATH"
+              LUA_CMD="lua"
+            fi
           fi
           
           echo "lua_cmd=$LUA_CMD" >> "$GITHUB_OUTPUT"
