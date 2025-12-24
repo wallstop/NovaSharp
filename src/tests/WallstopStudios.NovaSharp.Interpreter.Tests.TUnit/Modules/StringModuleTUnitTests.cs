@@ -1476,6 +1476,149 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         // ========================================
+        // string.format - %s type coercion tests (version-specific behavior)
+        // ========================================
+
+        /// <summary>
+        /// Tests that string.format("%s", value) auto-converts non-string values via tostring in Lua 5.2+.
+        /// </summary>
+        /// <remarks>
+        /// Fixture: <c>LuaFixtures/StringModuleTUnitTests/FormatSCoercesToStringLua52Plus.lua</c>
+        /// </remarks>
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatSCoercesToStringLua52Plus(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            // Boolean true
+            DynValue result = script.DoString("return string.format('%s', true)");
+            await Assert
+                .That(result.String)
+                .IsEqualTo("true")
+                .Because("%s should auto-convert boolean true to 'true' in Lua 5.2+")
+                .ConfigureAwait(false);
+
+            // Boolean false
+            result = script.DoString("return string.format('%s', false)");
+            await Assert
+                .That(result.String)
+                .IsEqualTo("false")
+                .Because("%s should auto-convert boolean false to 'false' in Lua 5.2+")
+                .ConfigureAwait(false);
+
+            // nil
+            result = script.DoString("return string.format('%s', nil)");
+            await Assert
+                .That(result.String)
+                .IsEqualTo("nil")
+                .Because("%s should auto-convert nil to 'nil' in Lua 5.2+")
+                .ConfigureAwait(false);
+
+            // table (result contains "table:" prefix)
+            result = script.DoString("return string.format('%s', {})");
+            await Assert
+                .That(result.String)
+                .StartsWith("table:")
+                .Because("%s should auto-convert table to 'table:...' in Lua 5.2+")
+                .ConfigureAwait(false);
+
+            // function (result contains "function:" prefix)
+            result = script.DoString("return string.format('%s', function() end)");
+            await Assert
+                .That(result.String)
+                .StartsWith("function:")
+                .Because("%s should auto-convert function to 'function:...' in Lua 5.2+")
+                .ConfigureAwait(false);
+
+            // Multiple non-string arguments
+            result = script.DoString("return string.format('%s %s %s', true, false, nil)");
+            await Assert
+                .That(result.String)
+                .IsEqualTo("true false nil")
+                .Because("%s should auto-convert multiple non-string arguments in Lua 5.2+")
+                .ConfigureAwait(false);
+
+            // Mixed format with %s accepting non-strings
+            result = script.DoString("return string.format('%s %d %s', 'a', 42, true)");
+            await Assert
+                .That(result.String)
+                .IsEqualTo("a 42 true")
+                .Because("mixed format with %s should accept boolean in Lua 5.2+")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that string.format("%s", value) requires string/number arguments in Lua 5.1.
+        /// Booleans, nil, tables, and functions are rejected with "string expected" errors.
+        /// </summary>
+        /// <remarks>
+        /// Fixture: <c>LuaFixtures/StringModuleTUnitTests/FormatSRequiresStringLua51.lua</c>
+        /// </remarks>
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSRequiresStringLua51(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            // Numbers should work in 5.1
+            DynValue result = script.DoString("return string.format('%s', 123)");
+            await Assert
+                .That(result.String)
+                .IsEqualTo("123")
+                .Because("%s should accept numbers in Lua 5.1")
+                .ConfigureAwait(false);
+
+            // Strings should work in 5.1
+            result = script.DoString("return string.format('%s', 'hello')");
+            await Assert
+                .That(result.String)
+                .IsEqualTo("hello")
+                .Because("%s should accept strings in Lua 5.1")
+                .ConfigureAwait(false);
+
+            // Boolean should fail in 5.1
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.format('%s', true)")
+            );
+            await Assert
+                .That(ex.Message)
+                .Contains("string expected")
+                .Because("%s should reject boolean with 'string expected' in Lua 5.1")
+                .ConfigureAwait(false);
+
+            // nil should fail in 5.1
+            ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.format('%s', nil)")
+            );
+            await Assert
+                .That(ex.Message)
+                .Contains("string expected")
+                .Because("%s should reject nil with 'string expected' in Lua 5.1")
+                .ConfigureAwait(false);
+
+            // table should fail in 5.1
+            ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.format('%s', {})")
+            );
+            await Assert
+                .That(ex.Message)
+                .Contains("string expected")
+                .Because("%s should reject table with 'string expected' in Lua 5.1")
+                .ConfigureAwait(false);
+
+            // function should fail in 5.1
+            ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.format('%s', function() end)")
+            );
+            await Assert
+                .That(ex.Message)
+                .Contains("string expected")
+                .Because("%s should reject function with 'string expected' in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        // ========================================
         // string.format - Escape tests
         // ========================================
 

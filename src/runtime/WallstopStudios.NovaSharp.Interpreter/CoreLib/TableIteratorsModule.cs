@@ -45,8 +45,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 args.GetArray()
             );
 
-            return meta
-                ?? DynValue.NewTuple(CachedNextArrayCallback, table, DynValue.FromNumber(0));
+            if (meta != null)
+            {
+                return meta;
+            }
+
+            // Per Lua spec: ipairs requires a table argument when no __ipairs metamethod exists
+            if (table.Type != DataType.Table)
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    0,
+                    "ipairs",
+                    DataType.Table,
+                    table.Type,
+                    false
+                );
+            }
+
+            return DynValue.NewTuple(CachedNextArrayCallback, table, DynValue.FromNumber(0));
         }
 
         // pairs (t)
@@ -78,7 +94,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 args.GetArray()
             );
 
-            return meta ?? DynValue.NewTuple(CachedNextCallback, table);
+            if (meta != null)
+            {
+                return meta;
+            }
+
+            // Per Lua spec: pairs requires a table argument when no __pairs metamethod exists
+            if (table.Type != DataType.Table)
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    0,
+                    "pairs",
+                    DataType.Table,
+                    table.Type,
+                    false
+                );
+            }
+
+            return DynValue.NewTuple(CachedNextCallback, table);
         }
 
         // next (table [, index])

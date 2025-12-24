@@ -574,6 +574,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 throw new ScriptRuntimeException(ex);
             }
+            catch (System.IO.FileNotFoundException ex)
+            {
+                // Per Lua spec: dofile propagates errors - convert .NET exception to Lua error
+                string errorMessage;
+                if (ex.FileName != null)
+                {
+                    using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                    sb.Append("cannot open ");
+                    sb.Append(ex.FileName);
+                    sb.Append(": No such file or directory");
+                    errorMessage = sb.ToString();
+                }
+                else
+                {
+                    errorMessage = ex.Message;
+                }
+                throw new ScriptRuntimeException(errorMessage);
+            }
+            catch (System.IO.IOException ex)
+            {
+                // Per Lua spec: dofile propagates errors - convert .NET exception to Lua error
+                throw new ScriptRuntimeException(ex.Message);
+            }
+            catch (System.UnauthorizedAccessException ex)
+            {
+                // Per Lua spec: dofile propagates errors - convert .NET exception to Lua error
+                throw new ScriptRuntimeException(ex.Message);
+            }
         }
 
         //require (modname)
