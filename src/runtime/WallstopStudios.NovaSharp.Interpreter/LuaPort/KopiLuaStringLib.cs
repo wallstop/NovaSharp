@@ -1798,7 +1798,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         case 's':
                         {
                             // Lua 5.2+ converts non-string values via tostring
-                            // Lua 5.1 requires string type (but auto-converts numbers)
+                            // Lua 5.1 requires string type
                             DynValue argValue = GetArgument(l, arg);
                             string s;
                             if (argValue.Type == DataType.String)
@@ -1812,12 +1812,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             }
                             else
                             {
-                                // Lua 5.1 requires a string argument (numbers are auto-converted)
-                                // ArgAsType with AutoConvert will:
-                                // - Convert numbers to strings and return the converted value
-                                // - Throw for booleans, nil, tables, functions (no conversion available)
-                                DynValue converted = ArgAsType(l, arg, DataType.String, false);
-                                s = converted.String;
+                                // Lua 5.1 requires a string argument
+                                ArgAsType(l, arg, DataType.String, false);
+                                s = argValue.String; // Won't reach here - ArgAsType throws
                             }
 
                             uint localLength = (uint)s.Length;

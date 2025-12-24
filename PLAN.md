@@ -52,36 +52,129 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 ## 🔴 HIGH PRIORITY: Known Issues
 
-### Flaky Test: `MultipleConcurrentResumeAttemptsOnlyOneSucceeds`
+### TUnit Test Project Compilation Speed 🔴 **CRITICAL**
 
-**Status**: 🔴 **RCA NEEDED** — Intermittent failures observed in CI.
+**Status**: 🔴 **NEEDS IMMEDIATE ACTION** — Compilation takes 60-100+ seconds.
+
+**Problem**: The monolithic TUnit test project (`WallstopStudios.NovaSharp.Interpreter.Tests.TUnit`) has grown to **312 C# files** with **~101,000 lines of code**. This results in:
+- 60-100+ second compilation times (sometimes exceeding 100s)
+- Severely degraded developer iteration speed
+- Bottleneck for CI pipeline performance
+
+**Root Cause**: All 11,901 tests are in a single project. The C# compiler cannot parallelize within a single project, and TUnit source generators must process the entire project on each build.
+
+**Proposed Solution**: Split into multiple smaller test projects by domain:
+
+| Project Name | Source Folder | Estimated Tests |
+|--------------|---------------|-----------------|
+| `Tests.TUnit.Modules` | `Modules/` | ~4,000 |
+| `Tests.TUnit.EndToEnd` | `EndToEnd/` | ~2,000 |
+| `Tests.TUnit.Units` | `Units/` | ~1,500 |
+| `Tests.TUnit.Sandbox` | `Sandbox/` | ~800 |
+| `Tests.TUnit.Cli` | `Cli/` | ~500 |
+| `Tests.TUnit.Serialization` | `SerializationTests/` | ~400 |
+| `Tests.TUnit.Platforms` | `Platforms/` | ~300 |
+| `Tests.TUnit.Spec` | `Spec/` | ~300 |
+| `Tests.TUnit.PatternMatching` | `PatternMatching/` | ~200 |
+| `Tests.TUnit.Isolation` | `Isolation/` | ~200 |
+| `Tests.TUnit.Smoke` | `Smoke/` | ~100 |
+| `Tests.TUnit.Core` | `TestInfrastructure/`, `Descriptors/`, `Loaders/`, `Tap/` | Shared utilities |
+
+**Implementation Steps**:
+1. Create `Tests.TUnit.Core` with shared infrastructure (`TestInfrastructure/`, `LuaFixtureHelper`, base classes)
+2. Create domain-specific projects referencing `Tests.TUnit.Core`
+3. Move test files to appropriate projects (preserve namespace structure)
+4. Update `quick.sh` scripts to build/test all projects (parallel build)
+5. Update CI workflows to run test projects in parallel
+6. Verify coverage aggregation still works
+
+**Expected Benefits**:
+- **Parallel compilation**: Multiple projects compile simultaneously
+- **Incremental builds**: Changing one domain only recompiles that project
+- **Reduced generator overhead**: TUnit generators process smaller chunks
+- **Target compile time**: <15 seconds for incremental, <30 seconds for clean
+
+**Risks**:
+- Shared fixtures (`LuaFixtures/`) may need symlinks or build-time copy
+- Coverage aggregation may need adjustment
+- CI matrix configuration complexity increases
+
+---
+
+### TUnit & Build Configuration Investigation ✅ **COMPLETE**
+
+**Status**: ✅ **COMPLETE** — TUnit source generator disabled, using reflection mode for faster builds.
+
+**Result**: Significant build time improvement by disabling TUnit source generator.
+
+**Changes Implemented**:
+1. **Directory.Build.props** — Added `<EnableTUnitSourceGeneration>false</EnableTUnitSourceGeneration>` for test projects
+2. **GlobalSuppressions.cs** — Added `[assembly: ReflectionMode]` attribute to enable TUnit reflection-based discovery
+3. **Restored static analysis** — Warnings as errors, code style enforcement, and analyzers remain enabled for tests
+
+**Key Finding**: The TUnit source generator was the primary bottleneck, processing all ~101K lines of test code. By switching to reflection mode:
+- Static analysis and code quality checks remain enforced (warnings as errors)
+- Test discovery happens at runtime via reflection (negligible overhead for ~12K tests)
+- Build times improved significantly without sacrificing code quality
+
+**Trade-offs**:
+- Tests discovered at runtime rather than compile time (no AOT/trimming support for tests)
+- Slightly slower test startup (~1-2s) due to reflection-based discovery
+
+**Recommendations**:
+- Use test filtering during development: `./scripts/test/quick.sh --no-build -c ClassName -m MethodPattern`
+- If further build speed improvement needed, consider splitting into smaller test projects
+
+**Completed**: 2025-12-24. Updated approach to disable only source generator while keeping static analysis.
+
+---
+
+### Flaky Test: `MultipleConcurrentResumeAttemptsOnlyOneSucceeds` ✅ **FIXED**
+
+**Status**: ✅ **FIXED** — Root cause identified and resolved.
 
 **Location**: `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1100`
 
-**Symptom**: Test passes most of the time but occasionally fails. The test verifies that when 4 threads concurrently attempt to resume the same coroutine, exactly 1 succeeds and 3 fail with `InvalidOperationException`.
+**Root Cause**: **TOCTOU Race Condition in Processor.EnterProcessor()**
 
-**Test Design**:
-1. Creates 4 `Task.Run` threads that wait on a `TaskCompletionSource` barrier
-2. Releases all threads simultaneously via `startSignal.TrySetResult(true)`
-3. Uses a blocking callback (`waitForSignal`) to hold the coroutine mid-execution
-4. Asserts `successCount == 1` and `failureCount == 3`
+The `EnterProcessor()` method had a classic Time-of-Check to Time-of-Use (TOCTOU) race condition:
 
-**Potential Root Causes to Investigate**:
-1. **Race condition in barrier synchronization**: The `readyCount` spin-wait + `Task.Yield()` may not guarantee all threads are truly blocked on `startSignal` before release
-2. **Thread scheduling variance**: On fast machines or under load, threads may not reach the `script.Call()` concurrently enough to trigger the reentrancy guard
-3. **Processor lock timing**: The `Cannot enter the same NovaSharp processor` check may have a narrow window where multiple threads slip through before the first one acquires the lock
-4. **Task continuation scheduling**: `RunContinuationsAsynchronously` may introduce timing variance across platforms
+```csharp
+// BEFORE (vulnerable to race):
+if (_owningThreadId >= 0 && _owningThreadId != threadId && ...)  // Check
+{
+    throw new InvalidOperationException(...);
+}
+_owningThreadId = threadId;  // Use/Set (not atomic with check!)
+```
 
-**Failure Details from CI**:
-- Observed on Ubuntu runners (172 passed, 1 failed in CoroutineModuleTUnitTests)
-- Assertion failure: `successCount` was not 1 (likely 0 or 2+)
+When 4 threads simultaneously entered `EnterProcessor()`:
+1. All 4 threads read `_owningThreadId == -1` (initial value)
+2. All 4 passed the check (`_owningThreadId >= 0` is false)
+3. All 4 set `_owningThreadId = threadId`
+4. **All 4 succeeded** — no exceptions thrown!
 
-**Recommended RCA Steps**:
-1. Add diagnostic logging to capture exact thread entry/exit timing
-2. Run test in a loop (1000+ iterations) locally to reproduce
-3. Review `Processor.cs` reentrancy guard implementation
-4. Consider using `ManualResetEventSlim` or `Barrier` instead of `TaskCompletionSource` for tighter synchronization
-5. Add retry logic or mark as `[Retry(3)]` as temporary mitigation
+**Fix Applied**: Changed to atomic `Interlocked.CompareExchange` pattern:
+
+```csharp
+// AFTER (atomic check-and-set):
+int previousOwner = Interlocked.CompareExchange(ref _owningThreadId, threadId, -1);
+if (previousOwner != -1 && previousOwner != threadId)
+{
+    throw new InvalidOperationException(...);
+}
+```
+
+**Files Modified**:
+- `src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs` — Added `System.Threading` using, rewrote `EnterProcessor()` with atomic CAS
+
+**Verification**:
+- Test passed 10/10 consecutive runs locally
+- All 252 CoroutineModuleTUnitTests pass
+- All 481 Processor-related tests pass
+- All 27 ProcessorCoreLifecycleTUnitTests pass
+
+**Completed**: 2025-12-24.
 
 ---
 

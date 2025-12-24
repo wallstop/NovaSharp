@@ -59,6 +59,31 @@
         <Version Condition="'$(Version)' == ''">3.0.0</Version>
     </PropertyGroup>
 
+    <!-- ========================================================================
+         TEST PROJECT BUILD SETTINGS
+         Applied only to IsTestProject=true projects.
+         ======================================================================== -->
+    <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+        <!-- Disable TUnit source generator for faster builds - use reflection instead -->
+        <EnableTUnitSourceGeneration>false</EnableTUnitSourceGeneration>
+
+        <!-- Skip documentation file generation for tests -->
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+        <!-- Skip reference assembly generation (not needed for test projects) -->
+        <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+
+        <!-- Use shared Roslyn compilation server for faster builds -->
+        <UseSharedCompilation>true</UseSharedCompilation>
+
+        <!-- Skip NRT analysis for test projects (already disabled globally) -->
+        <Nullable>disable</Nullable>
+
+        <!-- Skip SourceLink for tests (not packaged) -->
+        <EmbedUntrackedSources>false</EmbedUntrackedSources>
+        <IncludeSymbols>false</IncludeSymbols>
+    </PropertyGroup>
+
     <!-- SourceLink package for GitHub -->
     <ItemGroup Condition="'$(IsPackable)' != 'false'">
         <PackageReference

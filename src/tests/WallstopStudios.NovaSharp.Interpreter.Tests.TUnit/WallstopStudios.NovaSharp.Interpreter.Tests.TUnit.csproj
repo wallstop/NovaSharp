@@ -8,6 +8,19 @@
         <Nullable>disable</Nullable>
         <UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
         <DefineConstants>$(DefineConstants);DOTNET_CORE</DefineConstants>
+
+        <!-- Build optimizations for faster compilation -->
+        <!-- Skip optimizations for faster compile (tests don't need production perf) -->
+        <Optimize>false</Optimize>
+        <!-- Portable PDB with minimal info for faster compilation -->
+        <DebugType>portable</DebugType>
+        <DebugSymbols>true</DebugSymbols>
+        <!-- Disable implicit framework refs check (already handled by SDK) -->
+        <DisableImplicitFrameworkReferences>false</DisableImplicitFrameworkReferences>
+        <!-- Use deterministic builds for better caching -->
+        <Deterministic>true</Deterministic>
+        <!-- Enable shared compilation server -->
+        <UseSharedCompilation>true</UseSharedCompilation>
     </PropertyGroup>
 
     <ItemGroup>
