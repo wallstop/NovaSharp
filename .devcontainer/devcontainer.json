@@ -186,9 +186,10 @@
     },
     // Port forwarding (if running test servers)
     "forwardPorts": [],
-    // Clean stale Windows build artifacts before container setup
+    // Clean stale Windows build artifacts and fix line endings before container setup
     // This runs on the HOST before the container is created, cleaning mounted volumes
-    "initializeCommand": "bash -c 'cd \"${localWorkspaceFolder}\" && find src -type d \\( -name obj -o -name bin \\) -exec rm -rf {} + || true; rm -rf src/.vs || true'",
+    // Also ensures shell scripts have Unix line endings (fixes Windows git autocrlf issues)
+    "initializeCommand": "bash -c 'cd \"${localWorkspaceFolder}\" && find src -type d \\( -name obj -o -name bin \\) -exec rm -rf {} + || true; rm -rf src/.vs || true; for f in .devcontainer/*.sh; do [ -f \"$f\" ] && sed -i \"s/\\r$//\" \"$f\" 2>/dev/null || true; done'",
     // onCreateCommand runs BEFORE extensions are activated - critical for preventing MSB1009 errors
     // This ensures NuGet packages are restored before C# Dev Kit tries to load projects
     "onCreateCommand": "bash .devcontainer/on-create.sh",
