@@ -174,6 +174,14 @@ LUA_51_ONLY_FEATURES = [
     (r'table\.foreachi\s*\(', 'table.foreachi (5.1 only, deprecated)'),
 ]
 
+# Lua 5.5 specific features (currently Lua 5.5 is backward compatible with 5.4)
+# As Lua 5.5 finalizes, add any 5.5-only features here
+LUA_55_FEATURES = [
+    # Lua 5.5 is still in development - features may be added here
+    # Currently NovaSharp treats 5.5 as backward compatible with 5.4
+    # (r'table\.create\s*\(', 'table.create (5.5+)'),  # Proposed feature
+]
+
 NOVASHARP_SPECIFIC_PATTERNS = [
     (r'\b!=\b', 'C-style not-equal'),
     (r'_NOVASHARP', 'NovaSharp global'),
@@ -459,6 +467,7 @@ def analyze_version_compatibility(lua_code: str, surrounding_context: str, test_
         compat.lua_52 = False
         compat.lua_53 = False
         compat.lua_54 = False
+        compat.lua_55 = False
         compat.reasons.append("Test targets Lua 5.1")
     elif 'Lua52' in surrounding_context or 'CompatibilityVersion.Lua_5_2' in surrounding_context:
         compat.lua_51 = False
@@ -472,6 +481,12 @@ def analyze_version_compatibility(lua_code: str, surrounding_context: str, test_
         compat.lua_52 = False
         compat.lua_53 = False
         compat.reasons.append("Test targets Lua 5.4+")
+    elif 'Lua55' in surrounding_context or 'CompatibilityVersion.Lua_5_5' in surrounding_context:
+        compat.lua_51 = False
+        compat.lua_52 = False
+        compat.lua_53 = False
+        compat.lua_54 = False
+        compat.reasons.append("Test targets Lua 5.5+")
     
     # If NovaSharp-only, skip further analysis
     if compat.novasharp_only:
@@ -483,7 +498,8 @@ def analyze_version_compatibility(lua_code: str, surrounding_context: str, test_
             compat.lua_51 = False
             compat.lua_52 = False
             compat.lua_53 = False
-            compat.reasons.append(f"Lua 5.4: {reason}")
+            # Note: Lua 5.5 is expected to support 5.4 features (backward compatible)
+            compat.reasons.append(f"Lua 5.4+: {reason}")
     
     # Check for Lua 5.3+ features (bitwise operators, floor division, utf8)
     for pattern, reason in LUA_53_FEATURES:
@@ -504,6 +520,25 @@ def analyze_version_compatibility(lua_code: str, surrounding_context: str, test_
             if compat.lua_51:
                 compat.lua_51 = False
                 compat.reasons.append(f"Not Lua 5.1: {reason}")
+    
+    # Check for Lua 5.1-only features (deprecated in 5.2+)
+    # When these are used, code is 5.1-only and won't work in any later version
+    for pattern, reason in LUA_51_ONLY_FEATURES:
+        if re.search(pattern, lua_code):
+            compat.lua_52 = False
+            compat.lua_53 = False
+            compat.lua_54 = False
+            compat.lua_55 = False
+            compat.reasons.append(f"Lua 5.1 only: {reason}")
+    
+    # Check for Lua 5.5 specific features (forward compatibility)
+    for pattern, reason in LUA_55_FEATURES:
+        if re.search(pattern, lua_code):
+            compat.lua_51 = False
+            compat.lua_52 = False
+            compat.lua_53 = False
+            compat.lua_54 = False
+            compat.reasons.append(f"Lua 5.5+: {reason}")
     
     # Check if test uses undefined globals (likely interop tests)
     # Common interop variable names - variables typically injected by C# test code

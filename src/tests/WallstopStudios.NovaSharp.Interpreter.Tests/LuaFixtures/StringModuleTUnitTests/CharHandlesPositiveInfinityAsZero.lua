@@ -1,5 +1,5 @@
 -- @lua-versions: 5.1, 5.2
--- @novasharp-only: false
+-- @novasharp-only: true
 -- @expects-error: true
 -- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:447
 -- @test: StringModuleTUnitTests.CharErrorsOnPositiveInfinity

@@ -50,6 +50,41 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 ---
 
+## 🔴 HIGH PRIORITY: Known Issues
+
+### Flaky Test: `MultipleConcurrentResumeAttemptsOnlyOneSucceeds`
+
+**Status**: 🔴 **RCA NEEDED** — Intermittent failures observed in CI.
+
+**Location**: `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1100`
+
+**Symptom**: Test passes most of the time but occasionally fails. The test verifies that when 4 threads concurrently attempt to resume the same coroutine, exactly 1 succeeds and 3 fail with `InvalidOperationException`.
+
+**Test Design**:
+1. Creates 4 `Task.Run` threads that wait on a `TaskCompletionSource` barrier
+2. Releases all threads simultaneously via `startSignal.TrySetResult(true)`
+3. Uses a blocking callback (`waitForSignal`) to hold the coroutine mid-execution
+4. Asserts `successCount == 1` and `failureCount == 3`
+
+**Potential Root Causes to Investigate**:
+1. **Race condition in barrier synchronization**: The `readyCount` spin-wait + `Task.Yield()` may not guarantee all threads are truly blocked on `startSignal` before release
+2. **Thread scheduling variance**: On fast machines or under load, threads may not reach the `script.Call()` concurrently enough to trigger the reentrancy guard
+3. **Processor lock timing**: The `Cannot enter the same NovaSharp processor` check may have a narrow window where multiple threads slip through before the first one acquires the lock
+4. **Task continuation scheduling**: `RunContinuationsAsynchronously` may introduce timing variance across platforms
+
+**Failure Details from CI**:
+- Observed on Ubuntu runners (172 passed, 1 failed in CoroutineModuleTUnitTests)
+- Assertion failure: `successCount` was not 1 (likely 0 or 2+)
+
+**Recommended RCA Steps**:
+1. Add diagnostic logging to capture exact thread entry/exit timing
+2. Run test in a loop (1000+ iterations) locally to reproduce
+3. Review `Processor.cs` reentrancy guard implementation
+4. Consider using `ManualResetEventSlim` or `Barrier` instead of `TaskCompletionSource` for tighter synchronization
+5. Add retry logic or mark as `[Retry(3)]` as temporary mitigation
+
+---
+
 ## Active Initiatives
 
 ### Initiative 13: Magic String Consolidation 🟡 **IN PROGRESS**

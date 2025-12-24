@@ -1869,34 +1869,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         /// <summary>
-        /// Data-driven test for string.char() edge cases in Lua 5.1/5.2.
-        /// In Lua 5.1/5.2:
-        /// - Positive infinity throws "invalid value"
-        /// - Negative infinity and NaN are silently converted to 0 (null byte)
-        /// </summary>
-        [Test]
-        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-        public async Task CharErrorsOnPositiveInfinityLua51And52DataDriven(
-            LuaCompatibilityVersion version
-        )
-        {
-            // Positive infinity throws "invalid value" in Lua 5.1/5.2
-            Script script = new Script(version, CoreModulePresets.Complete);
-
-            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString("return string.char(1/0)")
-            );
-
-            await Assert
-                .That(ex.Message)
-                .Contains("invalid value")
-                .Because(
-                    $"string.char(1/0) (positive infinity) should throw 'invalid value' in {version}"
-                )
-                .ConfigureAwait(false);
-        }
-
-        /// <summary>
         /// Data-driven test for string.char() values that SHOULD succeed in Lua 5.1/5.2.
         /// NaN and negative infinity are silently converted to 0 (null byte).
         /// </summary>

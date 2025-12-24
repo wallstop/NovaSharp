@@ -488,6 +488,11 @@ jobs:
       # ========== Windows Lua Installation ==========
       # Build from official lua.org source using MSVC (most reliable approach).
       # SourceForge downloads are unreliable and often return HTML instead of zip files.
+      # We need to set up the Visual Studio Developer environment first to make cl.exe available.
+      - name: Setup MSVC Developer Command Prompt (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Install Lua ${{ matrix.lua-version }} (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -522,7 +527,7 @@ jobs:
           tar -xzf lua.tar.gz
           Pop-Location
           
-          # Build with MSVC (cl.exe is available on GitHub Windows runners via VS build tools)
+          # Build with MSVC (cl.exe is now available via msvc-dev-cmd action)
           $SrcDir = "$env:TEMP\lua-$FullVersion\src"
           Write-Host "Building Lua from source in $SrcDir..."
           Push-Location $SrcDir
