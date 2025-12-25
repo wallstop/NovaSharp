@@ -1973,6 +1973,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             ScriptRuntimeException ex = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(async () =>
                     await Task.FromResult(script.DoString(@"return string.format('%s', {})"))
+                        .ConfigureAwait(false)
                 )
                 .ConfigureAwait(false);
 
