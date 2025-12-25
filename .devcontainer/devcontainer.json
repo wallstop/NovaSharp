@@ -56,10 +56,14 @@
                 // Disable Razor support completely (not needed for this project)
                 // This prevents the "Cannot load Razor OmniSharp language server" error
                 "razor.disabled": true,
+                "razor.server.trace": "Off",
                 // Don't download/install Razor components at all
                 "csharp.suppressRazorDesignTimeWarning": true,
                 // Suppress the "Razor is disabled" notification
                 "razor.server.suppressRazorDisabledMessage": true,
+                // Prevent Razor from loading by disabling its features explicitly
+                "razor.format.enable": false,
+                "razor.completion.commitCharactersOverride": [],
                 // Prevent downloading Razor Language Server components
                 "dotnet.server.componentPaths": {},
                 // IntelliSense settings
