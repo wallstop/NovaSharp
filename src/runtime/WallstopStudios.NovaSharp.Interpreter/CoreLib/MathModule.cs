@@ -855,6 +855,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             else
             {
                 fractionalPart = value - integerPart;
+                // Preserve negative zero: if fractional part is zero but original value was
+                // negative, use -0.0. This matches Lua behavior where math.modf(-5) returns
+                // (-5, -0) not (-5, 0). IEEE 754 subtraction (-5.0 - -5.0) produces +0.0,
+                // so we need to explicitly restore the sign.
+                if (fractionalPart == 0.0 && double.IsNegative(value))
+                {
+                    fractionalPart = -0.0;
+                }
             }
 
             // Check version for integer promotion behavior

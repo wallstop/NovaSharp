@@ -1659,6 +1659,92 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ModfPreservesNegativeZeroForNegativeIntegers(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            // math.modf(-5) should return (-5, -0), not (-5, 0)
+            // The fractional part should be negative zero to preserve the sign
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local int_part, frac_part = math.modf(-5)
+                -- Check if fractional part is negative zero (1/-0 = -inf)
+                local is_neg_zero = (frac_part == 0 and 1/frac_part == -math.huge)
+                return int_part, frac_part, is_neg_zero
+            "
+            );
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(-5d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Boolean)
+                .IsTrue()
+                .Because($"math.modf(-5) fractional part should be -0 (negative zero) in {version}")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ModfPreservesPositiveZeroForPositiveIntegers(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            // math.modf(5) should return (5, +0)
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local int_part, frac_part = math.modf(5)
+                -- Check if fractional part is positive zero (1/+0 = +inf)
+                local is_pos_zero = (frac_part == 0 and 1/frac_part == math.huge)
+                return int_part, frac_part, is_pos_zero
+            "
+            );
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Boolean)
+                .IsTrue()
+                .Because($"math.modf(5) fractional part should be +0 (positive zero) in {version}")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ModfNegativeInfinityFractionalPartIsNegativeZero(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            // math.modf(-inf) should return (-inf, -0)
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local int_part, frac_part = math.modf(-math.huge)
+                local is_neg_zero = (frac_part == 0 and 1/frac_part == -math.huge)
+                return int_part, frac_part, is_neg_zero
+            "
+            );
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert
+                .That(double.IsNegativeInfinity(result.Tuple[0].Number))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Boolean)
+                .IsTrue()
+                .Because(
+                    $"math.modf(-inf) fractional part should be -0 (negative zero) in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModulePresets.Complete);

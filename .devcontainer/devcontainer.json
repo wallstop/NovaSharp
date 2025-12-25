@@ -6,12 +6,6 @@
         "dockerfile": "Dockerfile",
         "context": "."
     },
-    // Container resource configuration for smooth IntelliSense
-    "hostRequirements": {
-        "cpus": 4,
-        "memory": "8gb",
-        "storage": "32gb"
-    },
     // Mount configuration for better performance
     "mounts": [
         // Cache NuGet packages in a named volume for persistence across rebuilds

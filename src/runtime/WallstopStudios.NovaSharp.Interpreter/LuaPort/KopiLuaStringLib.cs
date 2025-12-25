@@ -1812,9 +1812,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             }
                             else
                             {
-                                // Lua 5.1 requires a string argument
-                                ArgAsType(l, arg, DataType.String, false);
-                                s = argValue.String; // Won't reach here - ArgAsType throws
+                                // Lua 5.1 coerces numbers to strings, but rejects other types
+                                // ArgAsType returns a NEW DynValue with the converted string
+                                // when AutoConvert is enabled (which is the default).
+                                // For non-convertible types (table, function, etc.), it throws.
+                                DynValue converted = ArgAsType(l, arg, DataType.String, false);
+                                s = converted.String;
                             }
 
                             uint localLength = (uint)s.Length;

@@ -1904,6 +1904,105 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSAcceptsIntegersInLua51(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.1, string.format("%s", number) auto-coerces numbers to strings
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(@"return string.format('%s', 123)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("123")
+                .Because("string.format('%s', 123) should return '123' in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSAcceptsFloatsInLua51(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.1, string.format("%s", number) auto-coerces numbers to strings
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(@"return string.format('%s', 123.456)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("123.456")
+                .Because("string.format('%s', 123.456) should return '123.456' in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSAcceptsNegativeNumbersInLua51(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.1, string.format("%s", number) auto-coerces numbers to strings
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(@"return string.format('%s', -42)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("-42")
+                .Because("string.format('%s', -42) should return '-42' in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSAcceptsZeroInLua51(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(@"return string.format('%s', 0)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("0")
+                .Because("string.format('%s', 0) should return '0' in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSRejectsTablesInLua51(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.1, string.format("%s", table) should error (tables are not coercible)
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString(@"return string.format('%s', {})"))
+                )
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ex.Message)
+                .Contains("string expected")
+                .Because("string.format('%s', {}) should error in Lua 5.1 for non-coercible types")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatSAcceptsAnyTypeInLua52Plus(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.2+, string.format("%s", value) uses tostring() for all types
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            // Number should work
+            DynValue numResult = script.DoString(@"return string.format('%s', 123)");
+            await Assert.That(numResult.String).IsEqualTo("123").ConfigureAwait(false);
+
+            // Boolean should work (Lua 5.2+)
+            DynValue boolResult = script.DoString(@"return string.format('%s', true)");
+            await Assert.That(boolResult.String).IsEqualTo("true").ConfigureAwait(false);
+
+            // Nil should work (Lua 5.2+)
+            DynValue nilResult = script.DoString(@"return string.format('%s', nil)");
+            await Assert.That(nilResult.String).IsEqualTo("nil").ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModulePresets.Complete);
