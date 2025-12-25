@@ -7,8 +7,5 @@
     "FormattingOptions": {
         "enableEditorConfigSupport": true,
         "organizeImports": true
-    },
-    "RazorSupport": {
-        "disabled": true
     }
 }

@@ -17,7 +17,7 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                // C# Development (using OmniSharp - no C# Dev Kit to avoid MSB1009 bugs)
+                // C# Development (Roslyn LSP - modern, stable)
                 "ms-dotnettools.csharp",
                 // Testing
                 "bits.csharp-test-filter",
@@ -36,46 +36,40 @@
             ],
             "settings": {
                 // ============================================================
-                // C# / OmniSharp Settings - Auto-loads solution, no manual steps
+                // C# / Roslyn Language Server Settings
                 // ============================================================
-                // Using OmniSharp instead of C# Dev Kit to avoid MSB1009 bugs
-                // Use OmniSharp language server (stable, no MSB1009 issues)
-                "dotnet.server.useOmnisharp": true,
-                // Point to omnisharp.json for additional configuration (disables Razor)
-                "omnisharp.path": "latest",
-                // Auto-load the solution file - OmniSharp handles this correctly
-                "omnisharp.defaultLaunchSolution": "src/NovaSharp.sln",
-                "omnisharp.projectLoadTimeout": 120,
-                // Enable automatic features (safe with OmniSharp)
-                "omnisharp.enableRoslynAnalyzers": true,
-                "omnisharp.enableEditorConfigSupport": true,
-                "omnisharp.enableImportCompletion": true,
-                "omnisharp.enableAsyncCompletion": true,
-                // Organize imports on save
-                "omnisharp.organizeImportsOnFormat": true,
-                // Disable Razor support completely (not needed for this project)
-                // This prevents the "Cannot load Razor OmniSharp language server" error
-                "razor.disabled": true,
-                "razor.server.trace": "Off",
-                // Don't download/install Razor components at all
-                "csharp.suppressRazorDesignTimeWarning": true,
-                // Suppress the "Razor is disabled" notification
-                "razor.server.suppressRazorDisabledMessage": true,
-                // Prevent Razor from loading by disabling its features explicitly
-                "razor.format.enable": false,
-                "razor.completion.commitCharactersOverride": [],
-                // Prevent downloading Razor Language Server components
-                "dotnet.server.componentPaths": {},
+                // Use the modern Roslyn language server (default, stable, no Razor issues)
+                // Do NOT use OmniSharp - it has the "Cannot load Razor OmniSharp" bug
+                "dotnet.server.useOmnisharp": false,
+                // Auto-load the solution file
+                "dotnet.defaultSolution": "src/NovaSharp.sln",
+                // Enable Roslyn analyzers for code quality
+                "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
+                "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",
                 // IntelliSense settings
-                "csharp.inlayHints.parameters.enabled": true,
-                "csharp.inlayHints.types.enabled": true,
+                "dotnet.inlayHints.enableInlayHintsForParameters": true,
+                "dotnet.inlayHints.enableInlayHintsForLiteralParameters": true,
+                "dotnet.inlayHints.enableInlayHintsForObjectCreationParameters": true,
+                "dotnet.inlayHints.enableInlayHintsForIndexerParameters": false,
+                "dotnet.inlayHints.enableInlayHintsForOtherParameters": false,
+                "dotnet.inlayHints.suppressInlayHintsForParametersThatMatchMethodIntent": true,
+                "dotnet.inlayHints.suppressInlayHintsForParametersThatDifferOnlyBySuffix": true,
+                "dotnet.inlayHints.enableInlayHintsForTypes": true,
+                "dotnet.inlayHints.enableInlayHintsForImplicitVariableTypes": true,
+                "dotnet.inlayHints.enableInlayHintsForLambdaParameterTypes": true,
+                "dotnet.inlayHints.enableInlayHintsForImplicitObjectCreation": true,
+                // Completion settings
+                "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+                "dotnet.completion.provideRegexCompletions": true,
                 // ============================================================
                 // Editor Settings
                 // ============================================================
                 "editor.formatOnSave": true,
                 "editor.formatOnPaste": false,
                 "editor.formatOnType": false,
-                "editor.defaultFormatter": "ms-dotnettools.csharp",
+                "[csharp]": {
+                    "editor.defaultFormatter": "ms-dotnettools.csharp"
+                },
                 "editor.bracketPairColorization.enabled": true,
                 "editor.guides.bracketPairs": "active",
                 "editor.stickyScroll.enabled": true,
@@ -192,8 +186,8 @@
     // This runs on the HOST before the container is created, cleaning mounted volumes
     // Using external script for stability (prevents VS Code from detecting "config changes")
     "initializeCommand": "bash .devcontainer/init-host.sh \"${localWorkspaceFolder}\"",
-    // onCreateCommand runs BEFORE extensions are activated - critical for preventing MSB1009 errors
-    // This ensures NuGet packages are restored before C# Dev Kit tries to load projects
+    // onCreateCommand runs BEFORE extensions are activated
+    // This ensures NuGet packages are restored before C# extension tries to load projects
     "onCreateCommand": "bash .devcontainer/on-create.sh",
     // postCreateCommand runs after container is created but extensions may still race
     "postCreateCommand": "bash .devcontainer/post-create.sh",
