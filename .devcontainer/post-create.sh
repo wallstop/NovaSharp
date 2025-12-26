@@ -57,6 +57,20 @@ fi
 # STEP 4: Verification
 # ============================================================================
 echo ""
+# ============================================================================
+# STEP 4: Pre-warm build cache
+# ============================================================================
+echo ""
+echo "🔥 Step 4/5: Pre-warming build cache (background)..."
+# Build in background to warm the Roslyn compilation server and create obj/bin caches
+# This makes subsequent edit-build-test cycles much faster
+(dotnet build src/NovaSharp.sln -c Release -m --verbosity quiet &>/dev/null &)
+echo "   Build started in background (Roslyn server warming up)"
+
+# ============================================================================
+# ENVIRONMENT VERIFICATION
+# ============================================================================
+echo ""
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║           Environment Verification                             ║"
 echo "╚════════════════════════════════════════════════════════════════╝"

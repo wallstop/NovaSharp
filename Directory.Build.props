@@ -49,6 +49,12 @@
         <!-- Opt into NuGet lock files so setup-dotnet cache keys stay deterministic -->
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 
+        <!-- Build performance optimizations -->
+        <!-- Use shared compilation server for all projects (warm Roslyn process) -->
+        <UseSharedCompilation>true</UseSharedCompilation>
+        <!-- Enable graph-based restore for faster dependency resolution -->
+        <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
+
         <!-- Enable SourceLink for debuggable NuGet packages -->
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -72,9 +78,6 @@
 
         <!-- Skip reference assembly generation (not needed for test projects) -->
         <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-
-        <!-- Use shared Roslyn compilation server for faster builds -->
-        <UseSharedCompilation>true</UseSharedCompilation>
 
         <!-- Skip NRT analysis for test projects (already disabled globally) -->
         <Nullable>disable</Nullable>

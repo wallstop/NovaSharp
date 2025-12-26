@@ -34,6 +34,7 @@ Options:
   --class, -c PATTERN  Filter by class name (classes containing PATTERN)
   --method, -m PATTERN Filter by method name (methods containing PATTERN)
   --no-build, -n       Skip build step (use with pre-built binaries)
+  --full, -f           Force full build including test project (slow, use when tests changed)
   --debug, -d          Run Debug configuration tests
   --list               List all available tests
   -h, --help           Show this help message
@@ -43,9 +44,12 @@ Examples:
   ./scripts/test/quick.sh -c MathModule            # All tests in classes containing "MathModule"
   ./scripts/test/quick.sh -m TestFloor             # Methods containing "TestFloor"
   ./scripts/test/quick.sh -c Math -m Floor         # Classes containing "Math" AND methods containing "Floor"
+  ./scripts/test/quick.sh --full Floor             # Rebuild tests, then run matching "Floor"
   ./scripts/test/quick.sh --list                   # List all test names
 
 Performance Tips:
+  - Default mode only rebuilds interpreter (~5s), not tests (~40s)
+  - Use --full when you've modified test code itself
   - Use --no-build when iterating on tests without code changes
   - Use specific filters to run fewer tests
   - Tests run in parallel by default (TUnit auto-parallelizes)
@@ -57,6 +61,7 @@ EOF
 }
 
 LIST_TESTS=0
+FULL_BUILD=0
 
 # Parse arguments
 POSITIONAL=()
@@ -72,6 +77,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-build|-n)
             BUILD=0
+            shift
+            ;;
+        --full|-f)
+            FULL_BUILD=1
             shift
             ;;
         --debug|-d)
@@ -120,9 +129,23 @@ fi
 
 # Build if requested
 if (( BUILD )); then
-    echo "🔨 Building tests..."
-    if ! dotnet build "$TEST_PROJECT" -c "$CONFIGURATION" -m --no-restore --verbosity quiet 2>/dev/null; then
-        dotnet build "$TEST_PROJECT" -c "$CONFIGURATION" -m --verbosity quiet
+    # Smart build strategy: only rebuild what's needed
+    # The test project source gen is slow (~40s), but we can skip it if only runtime code changed
+    INTERPRETER_CSPROJ="src/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj"
+    TEST_DLL="src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/bin/$CONFIGURATION/net8.0/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.dll"
+    
+    if (( FULL_BUILD )) || [[ ! -f "$TEST_DLL" ]]; then
+        # Full build requested or no test DLL - need full build including test project (~50s)
+        echo "🔨 Building solution (includes test project)..."
+        if ! dotnet build "$TEST_PROJECT" -c "$CONFIGURATION" -m --no-restore --verbosity quiet 2>/dev/null; then
+            dotnet build "$TEST_PROJECT" -c "$CONFIGURATION" -m --verbosity quiet
+        fi
+    else
+        # Test DLL exists - just rebuild interpreter (fast ~5s)
+        echo "🔨 Building interpreter only (test project cached, use --full to rebuild tests)..."
+        if ! dotnet build "$INTERPRETER_CSPROJ" -c "$CONFIGURATION" -m --no-restore --verbosity quiet 2>/dev/null; then
+            dotnet build "$INTERPRETER_CSPROJ" -c "$CONFIGURATION" -m --verbosity quiet
+        fi
     fi
 fi
 

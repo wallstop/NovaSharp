@@ -11,7 +11,10 @@
         // Cache NuGet packages in a named volume for persistence across rebuilds
         "source=novasharp-nuget-cache,target=/home/vscode/.nuget,type=volume",
         // Cache dotnet tools
-        "source=novasharp-dotnet-tools,target=/home/vscode/.dotnet/tools,type=volume"
+        "source=novasharp-dotnet-tools,target=/home/vscode/.dotnet/tools,type=volume",
+        // RAM disk for build artifacts - dramatically speeds up compilation I/O
+        // Uses tmpfs for obj/ and bin/ directories (persisted within session, not across rebuilds)
+        "source=novasharp-build-cache,target=/workspaces/NovaSharp/artifacts/build-cache,type=volume"
     ],
     // VS Code customizations
     "customizations": {
@@ -24,6 +27,7 @@
                 // Code Quality
                 "usernamehw.errorlens",
                 "editorconfig.editorconfig",
+                "DavidAnson.vscode-markdownlint",
                 // Git
                 "eamodio.gitlens",
                 "mhutchie.git-graph",
@@ -32,7 +36,10 @@
                 // Productivity
                 "streetsidesoftware.code-spell-checker",
                 "gruntfuggly.todo-tree",
-                "aaron-bond.better-comments"
+                "aaron-bond.better-comments",
+                // AI / Copilot
+                "github.copilot",
+                "github.copilot-chat"
             ],
             "settings": {
                 // ============================================================
@@ -119,6 +126,9 @@
                 "terminal.integrated.defaultProfile.linux": "bash",
                 "terminal.integrated.scrollback": 10000,
                 "terminal.integrated.enablePersistentSessions": false,
+                // Shell integration - auto-enabled via /etc/bash.bashrc in Dockerfile
+                "terminal.integrated.shellIntegration.enabled": true,
+                "terminal.integrated.shellIntegration.decorationsEnabled": "both",
                 // ============================================================
                 // Git Settings
                 // ============================================================

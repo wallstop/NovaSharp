@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 65 undocumented public/internal type declarations.
+Found 74 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -45,6 +45,18 @@ Found 65 undocumented public/internal type declarations.
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
   - line 289: missing XML docs for `BeginDefaultOptionsScope()`
   - line 1557: missing XML docs for `Dispose()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
+  - line 198: missing XML docs for `FromT0()`
+  - line 211: missing XML docs for `FromT1()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf3.cs
+  - line 280: missing XML docs for `FromT0()`
+  - line 293: missing XML docs for `FromT1()`
+  - line 306: missing XML docs for `FromT2()`
+- src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf4.cs
+  - line 366: missing XML docs for `FromT0()`
+  - line 379: missing XML docs for `FromT1()`
+  - line 392: missing XML docs for `FromT2()`
+  - line 405: missing XML docs for `FromT3()`
 - src/tooling/WallstopStudios.NovaSharp.Cli/ArgumentValidation.cs
   - line 10: missing XML docs for `ThrowIfNull()`
 - src/tooling/WallstopStudios.NovaSharp.Cli/CliArgumentRegistry.cs

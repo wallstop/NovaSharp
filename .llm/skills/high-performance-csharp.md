@@ -6,6 +6,59 @@ When writing new code for NovaSharp, prioritize **minimal allocations** and **ma
 
 ______________________________________________________________________
 
+## 🔴 Pool Selection Flowchart
+
+```text
+What kind of buffer do you need?
+│
+├─ DynValue array (VM frames, Lua calls)?
+│  └─ Use DynValueArrayPool.Get(exactSize, out array)
+│
+├─ Object array (reflection, interop)?
+│  └─ Use ObjectArrayPool.Get(exactSize, out array)
+│
+├─ Generic array?
+│  ├─ Size is compile-time constant (8, 16, 64)?
+│  │  └─ Use stackalloc T[size] (if small) or create pool
+│  └─ Size varies at runtime (list.Count, user input)?
+│     └─ Use SystemArrayPool<T>.Get(size, out array)
+│        ⚠️ Use pooled.Length, NOT array.Length!
+│
+├─ List<T>, HashSet<T>, Dictionary<K,V>?
+│  └─ Use ListPool<T>.Get(), HashSetPool<T>.Get(), DictionaryPool<K,V>.Get()
+│
+└─ StringBuilder?
+   └─ Use ZStringBuilder.Create() (zero-alloc) or Buffers pattern
+```
+
+______________________________________________________________________
+
+## 🔴 Quick Audit Checklist
+
+| ❌ Pattern                        | Problem                        | ✅ Fix                         |
+| --------------------------------- | ------------------------------ | ------------------------------ |
+| `.Where()`, `.Select()`, `.Any()` | Iterator + delegate allocation | `for` loop                     |
+| `new List<T>()` in method         | Heap allocation                | `ListPool<T>.Get()`            |
+| `=> localVar` in lambda           | Closure allocation             | Static lambda or explicit loop |
+| `$"text {var}"` in hot path       | String allocation              | `ZString.Concat()`             |
+| `.ToString()` on enum             | String allocation              | Cached string lookup           |
+| `new T[]` with variable size      | Array allocation               | `SystemArrayPool<T>.Get()`     |
+| Boxing struct to object           | Box allocation                 | Generic methods                |
+
+______________________________________________________________________
+
+## 🔴 Common Mistakes in New Code
+
+| Mistake                                                 | Why It's Bad                             | Correct Pattern                          |
+| ------------------------------------------------------- | ---------------------------------------- | ---------------------------------------- |
+| `List<byte> result = new()` then `result.Add()` in loop | Reallocates backing array multiple times | Rent pooled array, track written count   |
+| `return list.ToArray()`                                 | Allocates new array                      | Return pooled array or use out parameter |
+| `byte[] bytes = new byte[8]` in hot method              | Allocates every call                     | `stackalloc byte[8]` or ThreadStatic     |
+| Using `var` instead of explicit type                    | Hides allocation intent, violates style  | Always use explicit types                |
+| Forgetting `using` on pooled resources                  | Memory leak, pool exhaustion             | Always `using PooledResource<T>`         |
+
+______________________________________________________________________
+
 ## 🔴 CRITICAL: Apply These Patterns to ALL New Code
 
 These guidelines apply to **ALL new code**, not just identified "hot paths". When writing a new class or method:
@@ -1099,6 +1152,96 @@ Before submitting new types, verify:
 - [ ] **Is this a frequently-allocated short-lived class?** → Consider converting to `readonly struct`
 - [ ] **Is this on a hot path?** → Benchmark before/after
 - [ ] **Using `string.GetHashCode()`?** → Use `GetHashCode(StringComparison.Ordinal)` (Required by CA1307)
+
+______________________________________________________________________
+
+## Quick Wins: Common Allocation Patterns
+
+Reference table of allocation-heavy patterns and their zero-allocation replacements:
+
+| Pattern                             | Replacement                            |
+| ----------------------------------- | -------------------------------------- |
+| `.Where(x => ...).ToList()`         | `for` loop with `ListPool<T>.Get()`    |
+| `.Where(x => ...).FirstOrDefault()` | `for` loop with early `break`          |
+| `.Any(x => ...)`                    | `for` loop with early `return`         |
+| `.Select(x => ...).ToArray()`       | Pre-sized array with `for` loop        |
+| `.Count(x => ...)`                  | `for` loop with counter                |
+| `.Sum(x => ...)`                    | `for` loop with accumulator            |
+| `.OrderBy(...).ToList()`            | `ListPool<T>.Get()` + `Sort()`         |
+| `new List<T>()` in method           | `ListPool<T>.Get()`                    |
+| `new HashSet<T>()` in method        | `HashSetPool<T>.Get()`                 |
+| `new Dictionary<K,V>()` in method   | `DictionaryPool<K,V>.Get()`            |
+| `new T[n]` (variable n)             | `SystemArrayPool<T>.Get()`             |
+| `new T[n]` (small constant n ≤256)  | `stackalloc T[n]`                      |
+| `$"..."` in hot path                | `ZStringBuilder.Create()`              |
+| `string + string` in loop           | `ZStringBuilder.Create()`              |
+| `string.Format()`                   | `ZString.Concat()` or `ZStringBuilder` |
+| Lambda capturing local              | Static lambda or explicit loop         |
+| Lambda capturing `this`             | Explicit loop or pass state            |
+
+______________________________________________________________________
+
+## Allocation Verification
+
+### Test Pattern for Zero-Allocation Verification
+
+Use `GC.GetAllocatedBytesForCurrentThread()` to verify methods don't allocate in steady state:
+
+```csharp
+[Test]
+public void MethodName_ShouldNotAllocate_InSteadyState()
+{
+    // Warm up - first call may allocate (JIT, static init)
+    target.Method();
+    
+    // Measure steady state
+    long before = GC.GetAllocatedBytesForCurrentThread();
+    
+    for (int i = 0; i < 1000; i++)
+    {
+        target.Method();
+    }
+    
+    long after = GC.GetAllocatedBytesForCurrentThread();
+    long allocated = after - before;
+    
+    Assert.That(allocated, Is.EqualTo(0), $"Method allocated {allocated} bytes in steady state");
+}
+```
+
+### Regex Patterns to Search for Allocations
+
+Use these patterns with grep/search tools to identify potential allocation sites in the codebase:
+
+```regex
+# LINQ allocations
+\.Where\(|\.Select\(|\.Any\(|\.First\(|\.ToList\(|\.ToArray\(|\.OrderBy\(
+
+# Collection allocations  
+new List<|new Dictionary<|new HashSet<|new Queue<|new Stack<
+
+# Array allocations (review each - some may be necessary)
+new \w+\[\w+\]
+
+# Potential closures (lambdas that might capture)
+=>\s*[^;{]+[^static]
+
+# String allocations in potential hot paths
+\$"|string\.Format|\.ToString\(\)
+```
+
+### Using grep_search in Codebase
+
+```bash
+# Find LINQ usage in interpreter
+grep -rE '\.Where\(|\.Select\(|\.Any\(|\.ToList\(' src/runtime/
+
+# Find collection allocations
+grep -rE 'new List<|new Dictionary<|new HashSet<' src/runtime/
+
+# Find string interpolation in hot paths
+grep -rE '\$"' src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/
+```
 
 ______________________________________________________________________
 

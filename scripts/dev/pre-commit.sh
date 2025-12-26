@@ -9,15 +9,123 @@ warn() {
   printf '%s\n' "[pre-commit] WARNING: $1" >&2
 }
 
+# Cleans up stale git index.lock files left by crashed/killed processes.
+# A lock is considered stale if:
+#   1. The lock file exists, AND
+#   2. No process has the lock file open (checked via lsof/fuser)
+#
+# This handles scenarios where:
+#   - A git process was killed (Ctrl+C, OOM, etc.) before cleanup
+#   - IDE git integration (GitLens, git-graph) crashed mid-operation
+#   - Terminal was closed while git was running
+#   - lazygit/tig/gitui was force-quit
+#
+# Returns: 0 if lock was cleaned or didn't exist, 1 if lock is legitimately held
+cleanup_stale_index_lock() {
+  lock_file=".git/index.lock"
+  
+  # No lock file = nothing to clean
+  if [ ! -f "$lock_file" ]; then
+    return 0
+  fi
+  
+  # Check if any process has the lock file open
+  # Try lsof first (most common), fall back to fuser
+  lock_is_held=0
+  
+  if command -v lsof >/dev/null 2>&1; then
+    if lsof "$lock_file" >/dev/null 2>&1; then
+      lock_is_held=1
+    fi
+  elif command -v fuser >/dev/null 2>&1; then
+    if fuser "$lock_file" >/dev/null 2>&1; then
+      lock_is_held=1
+    fi
+  else
+    # No lsof or fuser available - check lock file age as fallback
+    # If lock is older than 30 seconds, assume it's stale
+    if command -v stat >/dev/null 2>&1; then
+      # Get lock file modification time (seconds since epoch)
+      lock_mtime=$(stat -c %Y "$lock_file" 2>/dev/null || stat -f %m "$lock_file" 2>/dev/null || echo 0)
+      current_time=$(date +%s)
+      lock_age=$((current_time - lock_mtime))
+      
+      if [ "$lock_age" -lt 30 ]; then
+        # Lock is recent, assume it's held
+        lock_is_held=1
+      fi
+    else
+      # Can't determine - assume held to be safe
+      lock_is_held=1
+    fi
+  fi
+  
+  if [ "$lock_is_held" -eq 1 ]; then
+    # Lock is legitimately held by another process
+    return 1
+  fi
+  
+  # Lock file exists but no process has it open - it's stale, clean it up
+  warn "Cleaning up stale git index.lock (no process has it open)"
+  rm -f "$lock_file"
+  return 0
+}
+
 # Runs git add with retry logic to handle index.lock contention.
+# Enhanced with polling, exponential backoff, and jitter.
 # Usage: git_add_with_retry [file ...]
 git_add_with_retry() {
-  max_retries=5
-  retry_delay=1
+  max_retries=30
+  retry_delay_ms=50
+  max_delay_ms=3000
+  lock_poll_interval_ms=50
+  lock_timeout_ms=5000
   attempt=0
 
+  # Helper: sleep for milliseconds (POSIX-compatible)
+  sleep_ms() {
+    _ms="$1"
+    # Use awk for float division since POSIX sh lacks floating point
+    _secs=$(awk "BEGIN { printf \"%.3f\", $_ms / 1000 }")
+    sleep "$_secs"
+  }
+
+  # Helper: generate random jitter 0-50ms
+  random_jitter_ms() {
+    # Use awk with systime seed for randomness, fallback to $$ if needed
+    awk "BEGIN { srand($$ + $(date +%s 2>/dev/null || echo 0)); printf \"%d\", int(rand() * 51) }"
+  }
+
+  # Helper: wait for index.lock to be released (with timeout)
+  wait_for_lock_release() {
+    _waited_ms=0
+    while [ -f ".git/index.lock" ] && [ "$_waited_ms" -lt "$lock_timeout_ms" ]; do
+      sleep_ms "$lock_poll_interval_ms"
+      _waited_ms=$((_waited_ms + lock_poll_interval_ms))
+    done
+    # Return success if lock is gone, failure if still locked
+    [ ! -f ".git/index.lock" ]
+  }
+
   while [ "$attempt" -lt "$max_retries" ]; do
-    if git add -- "$@" 2>/dev/null; then
+    # Clean up stale locks before attempting (no process owns them)
+    cleanup_stale_index_lock
+    
+    # Wait for any existing lock to be released before attempting
+    if [ -f ".git/index.lock" ]; then
+      if ! wait_for_lock_release; then
+        # Lock still exists after timeout - try stale cleanup again
+        if cleanup_stale_index_lock; then
+          # Lock was stale and cleaned, continue
+          :
+        else
+          warn "git index.lock still present after ${lock_timeout_ms}ms wait (held by another process)"
+        fi
+      fi
+    fi
+
+    # Attempt the git add
+    if git add -- "$@"; then
       return 0
     fi
 
@@ -25,10 +133,13 @@ git_add_with_retry() {
     if [ -f ".git/index.lock" ]; then
       attempt=$((attempt + 1))
       if [ "$attempt" -lt "$max_retries" ]; then
-        warn "git index.lock contention detected, retrying in ${retry_delay}s (attempt $attempt/$max_retries)..."
-        sleep "$retry_delay"
-        # Exponential backoff with jitter
-        retry_delay=$((retry_delay * 2))
+        # Add jitter to prevent thundering herd
+        jitter_ms=$(random_jitter_ms)
+        total_delay_ms=$((retry_delay_ms + jitter_ms))
+        warn "git index.lock contention detected, retrying in ${total_delay_ms}ms (attempt $attempt/$max_retries)..."
+        sleep_ms "$total_delay_ms"
+        # Exponential backoff: multiply by 1.4, cap at max_delay_ms
+        retry_delay_ms=$(awk "BEGIN { v = int($retry_delay_ms * 1.4); if (v > $max_delay_ms) v = $max_delay_ms; print v }")
       fi
     else
       # Some other error occurred, fail immediately
@@ -362,6 +473,12 @@ if [ -z "$repo_root" ]; then
 fi
 
 cd "$repo_root"
+
+# === Stale Lock Cleanup ===
+# Clean up any orphaned index.lock files left by crashed git processes
+# This prevents "Unable to create index.lock: File exists" errors when
+# using lazygit, GitLens, or other concurrent git tools
+cleanup_stale_index_lock
 
 ensure_tool_on_path "git" "Git"
 ensure_tool_on_path "dotnet" ".NET SDK"

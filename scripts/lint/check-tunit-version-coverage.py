@@ -24,6 +24,15 @@ from pathlib import Path
 from typing import Optional
 
 
+def is_ci() -> bool:
+    return os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI") == "true"
+
+
+def emit_warning(file_path: str, line_number: int, message: str) -> None:
+    if is_ci():
+        print(f"::warning file={file_path},line={line_number}::{message}")
+
+
 @dataclass
 class TestMethod:
     """Represents a single test method with its version coverage."""
@@ -361,6 +370,12 @@ def print_report(report: dict, detailed: bool = False) -> None:
             print(f"\n{rel_path}:")
             for method in methods:
                 print(f"  Line {method['line']}: {method['class']}.{method['method']}")
+                # Emit CI annotation for each Lua execution test missing version coverage
+                emit_warning(
+                    rel_path,
+                    method["line"],
+                    f"Test {method['class']}.{method['method']} missing LuaCompatibilityVersion argument",
+                )
         print()
 
     if detailed and report["infrastructure_details"]:

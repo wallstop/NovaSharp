@@ -16,23 +16,27 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 ## Repository Snapshot (Updated 2025-12-22)
 
 **Build & Tests**:
+
 - Zero warnings with `<TreatWarningsAsErrors>true` enforced
 - **11,901** interpreter tests via TUnit (Microsoft.Testing.Platform)
 - Coverage: ~75.3% line / ~76.1% branch (gating targets at 90%)
 - CI: Tests on matrix of `[ubuntu-latest, windows-latest, macos-latest]`
 
 **TUnit Version Coverage Progress**:
+
 - **2,000+** tests with explicit version attributes
 - All Lua execution tests have proper version coverage
 - Helper attributes (`[AllLuaVersions]`, `[LuaVersionsFrom]`, etc.) available for new tests
 
 **Audits & Quality**:
+
 - `docs/audits/documentation_audit.log`, `docs/audits/naming_audit.log`, `docs/audits/spelling_audit.log` green
 - Runtime/tooling/tests remain region-free
 - DAP golden tests: 20 tests validating VS Code debugger payloads
 - LuaNumber lint script (`check-luanumber-usage.py`) passing
 
 **Infrastructure**:
+
 - Sandbox: Complete with instruction/memory/coroutine limits, per-mod isolation
 - Benchmark CI: BenchmarkDotNet with threshold-based regression alerting
 - Packaging: NuGet publishing workflow + Unity UPM scripts
@@ -40,6 +44,7 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 - **Zero-Allocation Strings**: ZString integration complete, span-based operations for hot paths
 
 **Lua Compatibility**:
+
 - ✅ **0 unexpected mismatches** across all Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
 - Bytecode format version `0x151` preserves integer/float subtype
 - JSON/bytecode serialization preserves integer/float subtype
@@ -57,6 +62,7 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 **Status**: 🔴 **NEEDS IMMEDIATE ACTION** — Compilation takes 60-100+ seconds.
 
 **Problem**: The monolithic TUnit test project (`WallstopStudios.NovaSharp.Interpreter.Tests.TUnit`) has grown to **312 C# files** with **~101,000 lines of code**. This results in:
+
 - 60-100+ second compilation times (sometimes exceeding 100s)
 - Severely degraded developer iteration speed
 - Bottleneck for CI pipeline performance
@@ -81,6 +87,7 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 | `Tests.TUnit.Core` | `TestInfrastructure/`, `Descriptors/`, `Loaders/`, `Tap/` | Shared utilities |
 
 **Implementation Steps**:
+
 1. Create `Tests.TUnit.Core` with shared infrastructure (`TestInfrastructure/`, `LuaFixtureHelper`, base classes)
 2. Create domain-specific projects referencing `Tests.TUnit.Core`
 3. Move test files to appropriate projects (preserve namespace structure)
@@ -89,15 +96,114 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 6. Verify coverage aggregation still works
 
 **Expected Benefits**:
+
 - **Parallel compilation**: Multiple projects compile simultaneously
 - **Incremental builds**: Changing one domain only recompiles that project
 - **Reduced generator overhead**: TUnit generators process smaller chunks
 - **Target compile time**: <15 seconds for incremental, <30 seconds for clean
 
 **Risks**:
+
 - Shared fixtures (`LuaFixtures/`) may need symlinks or build-time copy
 - Coverage aggregation may need adjustment
 - CI matrix configuration complexity increases
+
+---
+
+### 🆕 Data Structures from Unity-Helpers 🟡 **EVALUATION**
+
+**Status**: 🟡 **EVALUATION NEEDED** — Identified high-value components from MIT-licensed sibling repository.
+
+**Source**: [wallstop/unity-helpers](https://github.com/wallstop/unity-helpers) (MIT License, same author as NovaSharp)
+**Context**: [llms.txt](https://github.com/wallstop/unity-helpers/blob/main/llms.txt) | [Data Structures Docs](https://github.com/wallstop/unity-helpers/blob/main/docs/features/utilities/data-structures.md)
+
+#### High-Value Components to Port
+
+| Component | Source File | Use Case in NovaSharp | Priority |
+|-----------|-------------|----------------------|----------|
+| **Trie** | [Trie.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Trie.cs) | Lexer keyword lookup, string interning, autocomplete | 🔴 HIGH |
+| **LevenshteinDistance** | [StringExtensions.cs#L213](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/Extension/StringExtensions.cs#L213) | "Did you mean 'print'?" error messages | 🔴 HIGH |
+| **BitSet** | [BitSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/BitSet.cs) | Upvalue tracking, scope flags, VM state | 🟡 MEDIUM |
+| **Deque&lt;T&gt;** | [Deque.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Deque.cs) | VM execution stack, double-ended operations | 🟡 MEDIUM |
+| **SparseSet** | [SparseSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/SparseSet.cs) | O(1) membership with dense iteration for active tracking | 🟢 LOW |
+
+#### Trie Details (Highest Value)
+
+The unity-helpers `Trie` is an **array-backed, allocation-free prefix tree** optimized for:
+
+- O(m) lookup where m = key length (faster than repeated hash lookups for small sets)
+- Zero-allocation prefix search (results returned via caller-provided buffer)
+- Immutable post-construction (build once, query many)
+
+**Use Cases for NovaSharp**:
+
+1. **Lexer Keyword Table**: Replace `Dictionary<string, TokenType>` for reserved words (`if`, `then`, `while`, `function`, `local`, etc.). Trie gives predictable per-character traversal.
+2. **String Interning**: Fast lookup for commonly-used Lua strings in the interpreter.
+3. **"Did You Mean" Suggestions**: `GetWordsWithPrefix()` for autocomplete-style error hints.
+
+**API Example**:
+
+```csharp
+// Words only
+Trie keywords = new Trie(new[] { "if", "then", "else", "while", "function", "local", ... });
+bool isKeyword = keywords.Contains(tokenText);  // O(m)
+
+// With values
+Trie<TokenType> keywordTypes = new Trie<TokenType>(new Dictionary<string, TokenType> {
+    ["if"] = TokenType.If,
+    ["then"] = TokenType.Then,
+    ...
+});
+if (keywordTypes.TryGetValue(tokenText, out TokenType type)) { ... }
+```
+
+#### LevenshteinDistance Details
+
+Zero-allocation edit distance using pooled arrays:
+
+```csharp
+// From StringExtensions.cs
+public static int LevenshteinDistance(this string source1, string source2)
+{
+    using PooledArray<int> prevLease = SystemArrayPool<int>.Get(len2 + 1, out int[] prev);
+    using PooledArray<int> currLease = SystemArrayPool<int>.Get(len2 + 1, out int[] curr);
+    // ... O(n*m) dynamic programming with swap optimization
+}
+```
+
+**Use in NovaSharp**: Better error messages:
+
+```
+attempt to call a nil value (global 'pirnt')
+Did you mean: 'print'?
+```
+
+#### Implementation Steps
+
+**Phase 1: Trie (Immediate Value)**
+
+1. Copy [Trie.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Trie.cs) to `src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/Trie.cs`
+2. Remove Unity dependencies (`using UnityEngine;`, `Mathf.Max` → `Math.Max`)
+3. Replace `Buffers.GetStringBuilder` with NovaSharp's `ZStringBuilder.Create()` or equivalent
+4. Add TUnit tests adapted from [TrieTests.cs](https://github.com/wallstop/unity-helpers/blob/main/Tests/Runtime/DataStructures/TrieTests.cs)
+5. Evaluate replacing `Lexer.KeywordTable` with `Trie<TokenType>`
+
+**Phase 2: LevenshteinDistance (Quick Win)**
+
+1. Add `LevenshteinDistance` extension to `src/runtime/.../Extension/StringExtensions.cs`
+2. Already uses `SystemArrayPool<int>` pattern compatible with NovaSharp
+3. Integrate into error message generation for undefined globals/functions
+
+**Phase 3: BitSet/Deque (Evaluate Need)**
+
+1. Profile current implementations for bottlenecks
+2. Port if performance analysis indicates value
+
+#### Considerations
+
+- **No Unity dependencies**: All unity-helpers data structures use Unity only for `Mathf` helpers — trivial to replace with `System.Math`
+- **Same coding style**: Same author, same `using` inside namespace, same pooling patterns
+- **Well-tested**: 3,000+ tests in unity-helpers cover edge cases
 
 ---
 
@@ -108,20 +214,24 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 **Result**: Significant build time improvement by disabling TUnit source generator.
 
 **Changes Implemented**:
+
 1. **Directory.Build.props** — Added `<EnableTUnitSourceGeneration>false</EnableTUnitSourceGeneration>` for test projects
 2. **GlobalSuppressions.cs** — Added `[assembly: ReflectionMode]` attribute to enable TUnit reflection-based discovery
 3. **Restored static analysis** — Warnings as errors, code style enforcement, and analyzers remain enabled for tests
 
 **Key Finding**: The TUnit source generator was the primary bottleneck, processing all ~101K lines of test code. By switching to reflection mode:
+
 - Static analysis and code quality checks remain enforced (warnings as errors)
 - Test discovery happens at runtime via reflection (negligible overhead for ~12K tests)
 - Build times improved significantly without sacrificing code quality
 
 **Trade-offs**:
+
 - Tests discovered at runtime rather than compile time (no AOT/trimming support for tests)
 - Slightly slower test startup (~1-2s) due to reflection-based discovery
 
 **Recommendations**:
+
 - Use test filtering during development: `./scripts/test/quick.sh --no-build -c ClassName -m MethodPattern`
 - If further build speed improvement needed, consider splitting into smaller test projects
 
@@ -149,6 +259,7 @@ _owningThreadId = threadId;  // Use/Set (not atomic with check!)
 ```
 
 When 4 threads simultaneously entered `EnterProcessor()`:
+
 1. All 4 threads read `_owningThreadId == -1` (initial value)
 2. All 4 passed the check (`_owningThreadId >= 0` is false)
 3. All 4 set `_owningThreadId = threadId`
@@ -166,9 +277,11 @@ if (previousOwner != -1 && previousOwner != threadId)
 ```
 
 **Files Modified**:
+
 - `src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/Processor.cs` — Added `System.Threading` using, rewrote `EnterProcessor()` with atomic CAS
 
 **Verification**:
+
 - Test passed 10/10 consecutive runs locally
 - All 252 CoroutineModuleTUnitTests pass
 - All 481 Processor-related tests pass
@@ -181,15 +294,18 @@ if (previousOwner != -1 && previousOwner != threadId)
 ## Active Initiatives
 
 ### Initiative 13: Magic String Consolidation 🟡 **IN PROGRESS**
+
 **Goal**: Eliminate all duplicated string literals ("magic strings") by consolidating them into named constants with a single source of truth.
 **Scope**: All runtime, tooling, and test code.
 **Status**: Phases 1-2 (Metamethods + Keywords) complete. Incremental enforcement during code changes.
 
 **Completed**:
+
 - ✅ **Phase 1: Metamethods** — Created `Metamethods` static class with 25 `const string` fields. See [progress/session-085-magic-string-consolidation.md](progress/session-085-magic-string-consolidation.md).
 - ✅ **Phase 2: Lua Keywords** — Created `LuaKeywords` static class with 22 `const string` fields. Pre-interned in `LuaStringPool`.
 
 **Remaining Areas to Consolidate** (Lower Priority):
+
 1. **Error messages**: `bad argument`, `attempt to`, `number has no integer representation`, etc.
 2. **Module names**: `string`, `table`, `math`, `io`, `os`, `debug`, `coroutine`, etc.
 
@@ -202,15 +318,18 @@ if (previousOwner != -1 && previousOwner != threadId)
 **Goal**: Systematically reduce the performance gap between NovaSharp (pure C# interpreter) and NLua (native Lua via P/Invoke).
 
 **Completed Phases**:
+
 - ✅ **Phase 1**: Script caching with hash-based lookup, lazy line-splitting
 - ✅ **Phase 2**: VM execution pooling (LocalScope arrays, BlocksToClose, Varargs arrays)
 
 **Phase 1 Deferred Items** (Session 092 Investigation):
+
 - ❌ **SourceRef → struct**: NOT FEASIBLE — Debugger mutation patterns, ReferenceEquals usage, null semantics
 - ❌ **SymbolRef → struct**: NOT FEASIBLE — Two-phase construction, binary deserialization back-patching
 - ❌ **Instruction list pooling**: NOT APPLICABLE — ByteCode persists for Script lifetime
 
 **Remaining Phases**:
+
 - 🔲 **Phase 3**: High-impact structural changes (DynValue struct experiment, register-based VM)
 - 🔲 **Phase 4**: String and pattern matching optimizations
 - 🔲 **Phase 5**: Benchmark validation and documentation
@@ -220,6 +339,7 @@ See progress reports: [session-086](progress/session-086-script-compilation-cach
 ---
 
 ## Baseline Controls (must stay green)
+
 - Re-run audits (`documentation_audit.py`, `NamingAudit`, `SpellingAudit`) when APIs or docs change.
 - Lint guards run in CI.
 - New helpers must live under `scripts/<area>/` with README updates.
@@ -257,11 +377,13 @@ All helpers are in `src/tests/TestInfrastructure/TUnit/`:
 **Status**: 📋 **PARTIAL** — Core fixes done, remaining edge cases to audit.
 
 **Completed**:
+
 - ✅ `LuaNumber` struct preserves integer/float distinction
 - ✅ Core validation uses `LuaNumber` not `double`
 - ✅ Lint script prevents `DynValue.Number` usage in CoreLib
 
 **Remaining**:
+
 - [ ] Audit `Interop/Converters/*.cs` for precision loss patterns
 - [ ] Create `NumericEdgeCaseTUnitTests.cs` with boundary values
 - [ ] Document version-specific behavior in `docs/testing/numeric-edge-cases.md`
@@ -271,6 +393,7 @@ All helpers are in `src/tests/TestInfrastructure/TUnit/`:
 ## Coverage Improvement Opportunities
 
 Current coverage (~75% line, ~76% branch) has significant room for improvement. Key areas with low coverage include:
+
 - **NovaSharp.Hardwire** (~54.8% line): Many generator code paths untested
 - **CLI components**: Some command implementations have partial coverage
 - **DebugModule**: REPL loop branches not easily testable
@@ -279,6 +402,7 @@ Current coverage (~75% line, ~76% branch) has significant room for improvement. 
 ---
 
 ## Codebase Organization (future)
+
 - Consider splitting into feature-scoped projects if warranted (e.g., separate Interop, Debugging assemblies)
 - Restructure test tree by domain (`Runtime/VM`, `Runtime/Modules`, `Tooling/Cli`)
 - Add guardrails so new code lands in correct folders with consistent namespaces
@@ -286,12 +410,14 @@ Current coverage (~75% line, ~76% branch) has significant room for improvement. 
 ---
 
 ## Tooling, Docs, and Contributor Experience
+
 - Roslyn source generators/analyzers for NovaSharp descriptors.
 - DocFX (or similar) for API documentation.
 
 ---
 
 ## Concurrency Improvements (optional)
+
 - Consider `System.Threading.Lock` (.NET 9+) for cleaner lock semantics.
 - Split debugger locks for reduced contention.
 - Add timeout to `BlockingChannel`.
@@ -305,6 +431,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 ### Official Lua Specifications (Local Reference)
 
 **IMPORTANT**: For all Lua compatibility work, consult the local specification documents first:
+
 - [`docs/lua-spec/lua-5.1-spec.md`](docs/lua-spec/lua-5.1-spec.md) — Lua 5.1 Reference Manual
 - [`docs/lua-spec/lua-5.2-spec.md`](docs/lua-spec/lua-5.2-spec.md) — Lua 5.2 Reference Manual
 - [`docs/lua-spec/lua-5.3-spec.md`](docs/lua-spec/lua-5.3-spec.md) — Lua 5.3 Reference Manual
@@ -312,6 +439,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 - [`docs/lua-spec/lua-5.5-spec.md`](docs/lua-spec/lua-5.5-spec.md) — Lua 5.5 (Work in Progress)
 
 ### Reference Lua comparison harness
+
 - **Status**: Fully implemented. CI runs matrix tests against Lua 5.1, 5.2, 5.3, 5.4.
 - **Gating**: `enforce` mode. Known divergences documented in `docs/testing/lua-divergences.md`.
 - **Test authoring pattern**: Use `LuaFixtureHelper` to load `.lua` files from `LuaFixtures/` directory.
@@ -325,6 +453,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 **Status**: ✅ Complete — 149 tests verify os.time/os.date behavior across all Lua versions.
 
 **Verified**:
+
 - [x] `os.time()` returns epoch-based timestamp (integer in 5.3+, float in 5.1/5.2)
 - [x] All `os.date` format strings match reference Lua outputs
 - [x] Timezone handling via `!` prefix for UTC, local time conversion working
@@ -337,6 +466,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 **Status**: ✅ Complete — 596 tests verify coroutine behavior across all Lua versions.
 
 **Verified**:
+
 - [x] State transition tests for coroutine lifecycle (suspended, running, dead, normal)
 - [x] Error message formats match Lua ("cannot resume dead coroutine", etc.)
 - [x] `coroutine.close` (5.4) cleanup order with to-be-closed variables
@@ -346,18 +476,21 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 ### Error Message Parity
 
 **Tasks**:
+
 - [ ] Catalog all error message formats in `ScriptRuntimeException`
 - [ ] Create error message normalization layer for Lua-compatible output
 
 ### Numerical For Loop Semantics (Lua 5.4)
 
 **Tasks**:
+
 - [ ] Verify NovaSharp for loop handles integer limits correctly per version
 - [ ] Add edge case tests for near-maxinteger loop bounds
 
 ### __gc Metamethod Handling (Lua 5.4)
 
 **Tasks**:
+
 - [ ] Document NovaSharp's current `__gc` handling
 - [ ] Decide on validation strategy (strict vs. Lua-compatible)
 
@@ -366,6 +499,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 **Status**: ✅ Complete — 218 tests verify utf8 library behavior across Lua 5.3+.
 
 **Verified**:
+
 - [x] `utf8.offset` bounds handling is complete
 - [x] Lax mode for invalid UTF-8 sequences (Lua 5.4+)
 - [x] All utf8 functions match reference Lua behavior
@@ -375,12 +509,14 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 ### collectgarbage Options (Lua 5.4)
 
 **Tasks**:
+
 - [ ] Support deprecated options with warnings when targeting 5.4
 - [ ] Implement `incremental` option for 5.4
 
 ### Literal Integer Overflow (Lua 5.4)
 
 **Tasks**:
+
 - [ ] Verify lexer/parser handles overflowing literals correctly per version
 - [ ] Add tests for large literal parsing
 
@@ -389,6 +525,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 **Status**: ✅ Complete — Lua 5.3+ now respects `__index` metamethods during `ipairs` iteration.
 
 **Implementation**:
+
 - Added `GetMetamethodAwareIndex()` helper in `BasicModule.cs`
 - `__ipairs_callback` now checks `LuaCompatibilityVersion` and uses metamethod-aware indexing for 5.3+
 - Lua 5.1/5.2 continue using raw access (spec-compliant)
@@ -401,6 +538,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 **Status**: ✅ Complete — 18 tests verify unpack availability matches target version.
 
 **Verified**:
+
 - [x] `unpack` is global function in Lua 5.1 only (via `[LuaCompatibility(Lua51, Lua51)]`)
 - [x] `table.unpack` available in Lua 5.2+ (via `TableModule`)
 - [x] Both versions use same underlying implementation
@@ -419,6 +557,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 ## Testing Infrastructure
 
 **Tasks**:
+
 - [ ] Create comprehensive version matrix tests for all modules
 - [ ] Add CI jobs that run test suite with each `LuaCompatibilityVersion`
 - [ ] Create version migration guide (`docs/LuaVersionMigration.md`)
@@ -426,6 +565,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 ---
 
 ## Long-horizon Ideas
+
 - Property and fuzz testing for lexer, parser, VM.
 - CLI output golden tests.
 - Native AOT/trimming validation.
@@ -445,7 +585,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 
 ### 🟢 LOWER PRIORITY: Polish and Infrastructure
 
-3. **CI Integration**
+1. **CI Integration**
    - Add CI job that runs `compare-lua-outputs.py --enforce` on PRs
    - Add CI lint rule that rejects PRs with tests missing version coverage
 
@@ -462,6 +602,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 #### Feasibility Analysis Summary
 
 **Current Architecture**:
+
 - **27 node types**: 1 abstract base (`NodeBase`), 2 intermediate (`Statement`, `Expression`), 16 statement types, 11 expression types
 - **Inheritance depth**: 2 levels (shallow, which is good for conversion)
 - **Polymorphism**: Virtual `Compile()` method on all nodes, virtual `Eval()` on expressions
@@ -471,6 +612,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 **Key Finding: AST Optimization Has Zero Runtime Impact** ⚠️
 
 NovaSharp is a **bytecode VM**, not an AST interpreter:
+
 1. Source → Parser → **AST (temporary)** → Compiler → **Bytecode (permanent)** → VM
 2. AST nodes become garbage immediately after `Compile()` finishes
 3. Runtime execution uses only the `Instruction` stream, not AST
@@ -492,6 +634,7 @@ NovaSharp is a **bytecode VM**, not an AST interpreter:
 #### Recommended Approach (If Proceeding)
 
 **Option A: Tagged Union + Index-Based References** (Recommended if pursued)
+
 ```csharp
 public enum NodeKind : byte { BinaryExpr, IfStmt, LiteralExpr, ... }
 
@@ -511,6 +654,7 @@ struct LiteralPayload { DynValue Value; }
 ```
 
 **Option B: Keep Classes, Add Node Pooling** (Lower risk, faster implementation)
+
 ```csharp
 // Use ObjectPool<T> for common node types
 var expr = LiteralExpressionPool.Get();
@@ -530,12 +674,14 @@ expr.Initialize(value, sourceRef);
 **Recommendation**: ❌ **NOT RECOMMENDED** for immediate implementation.
 
 **Rationale**:
+
 1. AST is discarded after compilation — zero runtime benefit
 2. Script caching (`ScriptBytecodeCache`) already eliminates repeated parsing
 3. Effort/risk ratio unfavorable compared to node pooling
 4. Roslyn (much larger AST) uses classes with pooling successfully
 
 **Alternative High-Value Targets** (same effort, runtime impact):
+
 - `DynValue` class → struct conversion (Phase 3 of Initiative 21)
 - `Instruction` class → struct conversion (bytecode execution hot path)
 - String interning improvements
@@ -543,11 +689,13 @@ expr.Initialize(value, sourceRef);
 #### If Business Case Exists for Zero-Allocation Parsing
 
 Proceed with **Option A** only if:
+
 - Profiling shows parsing is a bottleneck in production
 - Many small scripts compiled frequently (REPL, hot-reload scenarios)
 - Memory-constrained environments (embedded, mobile)
 
 **Implementation Plan** (if approved):
+
 1. Create `AstArena` class with pre-allocated node arrays
 2. Convert leaf nodes first (`LiteralExpression`, `BreakStatement`)
 3. Add `NodeKind` discriminated union wrapper
@@ -566,6 +714,7 @@ See progress reports from AST analysis: Initiative 12 (allocation analysis), Ini
 **Goal**: Investigate feasibility of creating an offline "Lua → C# compiler" tool for game developers.
 
 **Risks**:
+
 - Lua's extreme dynamism may resist static compilation
 - Two execution paths doubles testing surface
 - Unity IL2CPP constraints
@@ -579,6 +728,7 @@ See progress reports from AST analysis: Initiative 12 (allocation analysis), Ini
 **Goal**: Prettify and configure the `gh-pages` branch for a readable benchmark dashboard.
 
 **Tasks**:
+
 - [ ] Expand README with benchmark methodology
 - [ ] Configure chart options
 - [ ] Add styled index.html

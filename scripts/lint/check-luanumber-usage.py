@@ -26,6 +26,16 @@ from pathlib import Path
 from typing import Optional
 
 
+def is_ci() -> bool:
+    return os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI") == "true"
+
+
+def emit_issue(file_path: str, line_number: int, severity: str, message: str) -> None:
+    annotation_type = "error" if severity == "error" else "warning"
+    if is_ci():
+        print(f"::{annotation_type} file={file_path},line={line_number}::{message}")
+
+
 @dataclass
 class Issue:
     """Represents a potential LuaNumber usage issue."""
@@ -252,6 +262,10 @@ def print_report(issues: list[Issue], detailed: bool = False) -> None:
     print(f"  Warnings: {len(warnings)}")
     print(f"  Errors: {len(errors)}")
     print()
+
+    # Emit CI annotations for all issues
+    for issue in issues:
+        emit_issue(issue.file_path, issue.line_number, issue.severity, issue.description)
 
     if detailed:
         # Group by file

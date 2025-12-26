@@ -5,9 +5,20 @@ Fails when tests bypass TempFileScope/TempDirectoryScope and call Path.GetTempPa
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Iterable
+
+
+def is_ci() -> bool:
+    return os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI") == "true"
+
+
+def emit_error(file_path: str, line_number: int, message: str) -> None:
+    if is_ci():
+        print(f"::error file={file_path},line={line_number}::{message}")
+    print(f"{file_path}:{line_number}: {message}", file=sys.stderr)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TESTS_ROOT = REPO_ROOT / "src/tests"
@@ -47,7 +58,7 @@ def main() -> int:
             file=sys.stderr,
         )
         for token, relative, line_number, text in violations:
-            print(f"- {relative}:{line_number} :: {token} :: {text}", file=sys.stderr)
+            emit_error(relative, line_number, f"{token} :: {text}")
         return 1
 
     return 0

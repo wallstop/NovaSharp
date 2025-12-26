@@ -806,19 +806,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-        public async Task RandomSucceedsOnInfinityLua51And52(
+        public async Task RandomSucceedsOnInfinityLua52Only(
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            // Lua 5.1/5.2: math.random(inf) SUCCEEDS because the floating-point comparison
+            // Lua 5.2 ONLY: math.random(inf) SUCCEEDS because the floating-point comparison
             // 1.0 <= inf is TRUE per IEEE 754, so the interval check passes.
             // The result is garbage due to integer overflow, but no error is thrown.
+            //
+            // Lua 5.1 is DIFFERENT: it converts to integer FIRST via luaL_checkint(), so
+            // inf → LONG_MIN, then 1 <= LONG_MIN is FALSE → error
             Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return math.random(1/0)");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
+        public async Task RandomErrorsOnInfinityLua51(Compatibility.LuaCompatibilityVersion version)
+        {
+            // Lua 5.1: math.random(inf) ERRORS because luaL_checkint() converts to integer FIRST,
+            // so inf → LONG_MIN, then 1 <= LONG_MIN is FALSE → error.
+            //
+            // This is different from Lua 5.2 which compares floats first.
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(1/0)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert.That(ex.Message).Contains("interval is empty").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1585,31 +1608,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         /// <summary>
-        /// Tests that math.random with infinity SUCCEEDS in Lua 5.1/5.2 when the IEEE 754
-        /// floating-point comparison passes. The result is garbage due to integer overflow.
+        /// Tests that math.random with infinity SUCCEEDS when the interval check passes.
+        ///
+        /// IMPORTANT: Lua 5.1 and 5.2 have DIFFERENT behaviors due to order of operations:
+        /// - Lua 5.1: converts to integer FIRST via luaL_checkint(), THEN checks m &lt;= n on integers
+        /// - Lua 5.2: checks m &lt;= n on floats FIRST, THEN converts to integer
+        ///
+        /// This means:
+        /// - math.random(-1/0, 10): Succeeds in BOTH (5.1: LONG_MIN &lt;= 10; 5.2: -inf &lt;= 10)
+        /// - math.random(1, 1/0): Succeeds ONLY in 5.2 (5.2: 1 &lt;= inf; 5.1: 1 &lt;= LONG_MIN = FALSE)
         /// </summary>
         [global::TUnit.Core.Test]
         [LuaTestMatrix(
             new object[]
             {
-                "math.random(1, 1/0)",
-                "positive infinity second arg (1 <= inf is TRUE)",
-            },
-            new object[]
-            {
                 "math.random(-1/0, 10)",
-                "negative infinity first (-inf <= 10 is TRUE)",
+                "negative infinity first - Both: -inf <= 10 (5.2) and LONG_MIN <= 10 (5.1) are TRUE",
             },
             MaximumVersion = LuaCompatibilityVersion.Lua52
         )]
-        public async Task RandomSucceedsWithInfinityValidComparisonLua51And52(
+        public async Task RandomSucceedsWithNegativeInfinityFirstArgLua51And52(
             LuaCompatibilityVersion version,
             string luaExpression,
             string description
         )
         {
-            // In Lua 5.1/5.2, IEEE 754 comparison is done before integer conversion.
-            // When the comparison passes, execution continues but produces garbage results.
+            // Both Lua 5.1 and 5.2 succeed here because:
+            // - Lua 5.1: -inf → LONG_MIN, then LONG_MIN <= 10 is TRUE
+            // - Lua 5.2: -inf <= 10 is TRUE per IEEE 754
             Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString($"return {luaExpression}");
@@ -1624,23 +1650,77 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         /// <summary>
-        /// Tests that math.random(inf, n) and math.random(nan, n) ERROR in Lua 5.1/5.2 because
+        /// Tests that math.random(1, 1/0) SUCCEEDS in Lua 5.2 only.
+        /// Lua 5.2 compares floats first: 1 &lt;= inf is TRUE.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task RandomSucceedsWithPositiveInfinitySecondArgLua52Only(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.2: compares floats first, 1 <= inf is TRUE → succeeds
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            DynValue result = script.DoString("return math.random(1, 1/0)");
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(DataType.Number)
+                .Because("math.random(1, 1/0) should succeed in Lua 5.2 because 1 <= inf is TRUE")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.random(1, 1/0) ERRORS in Lua 5.1.
+        /// Lua 5.1 converts to integer first: inf → LONG_MIN, then 1 &lt;= LONG_MIN is FALSE.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
+        public async Task RandomErrorsWithPositiveInfinitySecondArgLua51(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1: converts to integer FIRST, inf → LONG_MIN, then 1 <= LONG_MIN is FALSE → error
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(1, 1/0)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ex.Message)
+                .Contains("interval is empty")
+                .Because(
+                    "math.random(1, 1/0) should error in Lua 5.1 because 1 <= LONG_MIN is FALSE"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.random(inf, n) and math.random(nan, n) ERROR in Lua 5.2 because
         /// inf &lt;= 10 is FALSE and nan &lt;= 10 is FALSE per IEEE 754.
+        ///
+        /// Lua 5.1 is DIFFERENT: it converts to integer FIRST, so LONG_MIN &lt;= 10 is TRUE (no error).
         /// </summary>
         [global::TUnit.Core.Test]
         [LuaTestMatrix(
             new object[] { "math.random(1/0, 10)", "positive infinity first (inf <= 10 is FALSE)" },
             new object[] { "math.random(0/0, 10)", "NaN first (nan <= 10 is FALSE)" },
+            MinimumVersion = LuaCompatibilityVersion.Lua52,
             MaximumVersion = LuaCompatibilityVersion.Lua52
         )]
-        public async Task RandomErrorsWithInfinityNaNFirstArgLua51And52(
+        public async Task RandomErrorsWithInfinityNaNFirstArgLua52Only(
             LuaCompatibilityVersion version,
             string luaExpression,
             string description
         )
         {
-            // In Lua 5.1/5.2, inf <= 10 is FALSE and nan <= 10 is FALSE per IEEE 754,
-            // so the interval check fails with "interval is empty".
+            // Lua 5.2: compares floats first, inf <= 10 is FALSE and nan <= 10 is FALSE per IEEE 754
             Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException ex = await Assert
@@ -1655,6 +1735,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .Contains("interval is empty")
                 .Because(
                     $"Expression '{luaExpression}' ({description}) should throw interval empty error in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.random(inf, n) and math.random(nan, n) SUCCEED in Lua 5.1.
+        /// Lua 5.1 converts to integer FIRST via luaL_checkint(), so inf/nan → LONG_MIN,
+        /// and LONG_MIN &lt;= 10 is TRUE (no error, produces garbage).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[]
+            {
+                "math.random(1/0, 10)",
+                "positive infinity first → LONG_MIN <= 10 is TRUE",
+            },
+            new object[] { "math.random(0/0, 10)", "NaN first → LONG_MIN <= 10 is TRUE" },
+            MaximumVersion = LuaCompatibilityVersion.Lua51
+        )]
+        public async Task RandomSucceedsWithInfinityNaNFirstArgLua51(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description
+        )
+        {
+            // Lua 5.1: converts to integer FIRST, inf/nan → LONG_MIN, then LONG_MIN <= 10 is TRUE
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            DynValue result = script.DoString($"return {luaExpression}");
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(DataType.Number)
+                .Because(
+                    $"Expression '{luaExpression}' ({description}) should succeed and return a number in {version}"
                 )
                 .ConfigureAwait(false);
         }

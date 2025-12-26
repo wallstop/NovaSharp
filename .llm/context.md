@@ -154,7 +154,53 @@ Available caches: `TokenTypeStrings`, `OpCodeStrings`, `SymbolRefTypeStrings`, `
 
 ### Shell Commands
 
-- **Prefer `rg` (ripgrep) over `grep`** — Faster, respects `.gitignore`, better defaults
+Modern CLI tools are pre-installed in the devcontainer. Use these instead of legacy tools:
+
+| Modern Tool | Replaces      | Key Flags for Agentic Use                          |
+| ----------- | ------------- | -------------------------------------------------- |
+| `rg`        | `grep`        | None needed (pipe-friendly)                        |
+| `fd`        | `find`        | `--max-results N` to limit output                  |
+| `bat`       | `cat`         | **`--paging=never`** (CRITICAL - prevents hanging) |
+| `eza`       | `ls`          | None needed                                        |
+| `sd`        | `sed`         | None needed (pipe-friendly)                        |
+| `dust`      | `du`          | `-d N` for depth limit                             |
+| `procs`     | `ps`          | `--no-header` for parsing                          |
+| `duf`       | `df`          | `--only local` to filter                           |
+| `delta`     | `diff`        | `--no-gitconfig` for predictable output            |
+| `tokei`     | `cloc`        | `--sort lines` for ordering                        |
+| `lychee`    | link checkers | `--no-progress` for CI/agentic use                 |
+
+**⚠️ CRITICAL: `bat` without `--paging=never` will HANG waiting for keyboard input!**
+
+#### Common Modern CLI Examples
+
+```bash
+# Find all C# files
+fd "\.cs$"
+
+# Search for a pattern in C# files
+rg "DynValue" --type cs
+
+# View file with syntax highlighting (MUST use --paging=never in scripts/agents)
+bat --paging=never src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/DynValue.cs
+
+# Tree view of directory
+eza --tree src/runtime/
+
+# Replace text in file
+sd 'OldName' 'NewName' filename.cs
+
+# Code statistics
+tokei src/
+
+# Check links in documentation (--no-progress for CI)
+lychee --no-progress docs/**/*.md
+
+# Disk usage (limit depth)
+dust -d 2 src/
+```
+
+**Note:** `zoxide` (`z` command) requires shell initialization and learns from usage. In fresh containers, use `cd` or `zoxide query` directly.
 
 ### High-Performance Code
 
@@ -176,6 +222,37 @@ When writing new types and methods, prioritize minimal allocations:
   - If type owns pooled resources, implement `IDisposable` and store `PooledResource<T>` as field
 - **Avoid boxing** — use generic constraints instead of interface parameters for value types
 
+### Closure Elimination
+
+Closures allocate heap objects. In hot paths, eliminate them:
+
+```csharp
+// ❌ BAD: Captures 'threshold' - allocates closure object
+int threshold = 10;
+Item found = list.Find(item => item.Value > threshold);
+
+// ✅ GOOD: Explicit loop - zero allocation
+Item found = null;
+for (int i = 0; i < list.Count; i++)
+{
+    if (list[i].Value > threshold)
+    {
+        found = list[i];
+        break;
+    }
+}
+
+// ✅ GOOD: Static lambda when no capture needed
+private static readonly Func<Item, bool> IsValid = static item => item.Value > 0;
+```
+
+Common closure traps:
+
+- Lambdas capturing local variables (`x => x > localVar`)
+- Lambdas capturing `this` implicitly (`x => x.Id == this.Id`)
+- LINQ with predicates (`items.Where(x => x.Value > threshold)`)
+- List methods like `Find`, `FindAll`, `RemoveAll` with capturing lambdas
+
 See [skills/high-performance-csharp.md](skills/high-performance-csharp.md), [skills/zstring-migration.md](skills/zstring-migration.md), and [skills/span-optimization.md](skills/span-optimization.md) for detailed guidelines.
 
 ______________________________________________________________________
@@ -195,8 +272,11 @@ Detailed guides for common tasks are in `.llm/skills/`:
 | Skill                                                        | When to Use                                                        |
 | ------------------------------------------------------------ | ------------------------------------------------------------------ |
 | [high-performance-csharp](skills/high-performance-csharp.md) | Writing new types/methods with minimal allocations                 |
+| [performance-audit](skills/performance-audit.md)             | Quick checklist for reviewing performance-sensitive code           |
+| [refactor-to-zero-alloc](skills/refactor-to-zero-alloc.md)   | Converting allocating code to zero-allocation patterns             |
 | [zstring-migration](skills/zstring-migration.md)             | Migrating string interpolation/concat to zero-allocation ZString   |
 | [span-optimization](skills/span-optimization.md)             | Replacing Split/Substring/ToArray with span-based alternatives     |
+| [use-extension-methods](skills/use-extension-methods.md)     | Available extension methods and utilities in NovaSharp             |
 | [lua-fixture-creation](skills/lua-fixture-creation.md)       | Creating `.lua` test files with harness-compatible metadata        |
 | [tunit-test-writing](skills/tunit-test-writing.md)           | Writing multi-version TUnit tests with proper isolation            |
 | [lua-spec-verification](skills/lua-spec-verification.md)     | Investigating Lua spec compliance, verifying against reference Lua |
@@ -205,6 +285,63 @@ Detailed guides for common tasks are in `.llm/skills/`:
 | [clr-interop](skills/clr-interop.md)                         | Exposing C# types to Lua, calling Lua from C#                      |
 | [coverage-analysis](skills/coverage-analysis.md)             | Running coverage, interpreting reports, finding gaps               |
 | [lua-comparison-harness](skills/lua-comparison-harness.md)   | Running fixtures against reference Lua interpreters                |
+
+______________________________________________________________________
+
+## Key Utilities Quick Reference
+
+### Pooling (Zero-Allocation Collections)
+
+```csharp
+using PooledResource<List<T>> lease = ListPool<T>.Get();
+using PooledResource<HashSet<T>> lease = HashSetPool<T>.Get();
+using PooledResource<Dictionary<K,V>> lease = DictionaryPool<K,V>.Get();
+using PooledResource<DynValue[]> lease = DynValueArrayPool.Get(size, out DynValue[] arr);
+using PooledResource<T[]> lease = SystemArrayPool<T>.Get(size, out T[] arr);
+```
+
+### String Building (ZString)
+
+```csharp
+using ZStringBuilder sb = ZStringBuilder.Create();
+sb.Append("text"); sb.Append(number);
+string result = sb.ToString();
+// Or for simple concat:
+string s = ZString.Concat("a", "b", value);
+```
+
+### Discriminated Unions (FastOneOf)
+
+```csharp
+FastOneOf<Success, Error> result = DoOperation();
+result.Match(
+    success => HandleSuccess(success),
+    error => HandleError(error)
+);
+// Or conditional extraction:
+if (result.TryGetT0(out Success s)) { ... }
+```
+
+### Timed Caching
+
+```csharp
+TimedCache<ExpensiveResult> cache = new TimedCache<ExpensiveResult>(
+    () => ComputeExpensiveResult(),
+    TimeSpan.FromSeconds(5),
+    useJitter: true  // Prevent thundering herd
+);
+ExpensiveResult value = cache.Value;  // Recomputes if expired
+```
+
+### Enum String Caching
+
+```csharp
+// ❌ BAD: Allocates on every call
+string s = myEnum.ToString();
+// ✅ GOOD: Zero allocation
+string s = TokenTypeStrings.GetName(tokenType);
+string s = OpCodeStrings.GetUpperName(opCode);
+```
 
 ______________________________________________________________________
 

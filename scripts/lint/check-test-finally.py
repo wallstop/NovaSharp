@@ -3,10 +3,21 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 import re
 import sys
 from typing import Iterable, Tuple
+
+
+def is_ci() -> bool:
+    return os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI") == "true"
+
+
+def emit_error(file_path: str, line_number: int, message: str) -> None:
+    if is_ci():
+        print(f"::error file={file_path},line={line_number}::{message}")
+    print(f"{file_path}:{line_number}: {message}")
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 TEST_ROOT = REPO_ROOT / "src" / "tests"
@@ -37,17 +48,18 @@ def iter_matches() -> Iterable[Tuple[pathlib.Path, str]]:
 
 
 def main() -> int:
-    violations = [
-        f"{path.as_posix()}:{line}"
-        for path, line in iter_matches()
-    ]
+    violations = list(iter_matches())
 
     if violations:
         print(
             "Tests must use the shared scope helpers instead of manual try/finally cleanup blocks.\n"
         )
-        for entry in violations:
-            print(entry)
+        message = "Use scope helpers instead of manual try/finally cleanup blocks"
+        for path, line_info in violations:
+            # line_info is "line_num:content", extract line number
+            line_num_str = line_info.split(":")[0]
+            line_num = int(line_num_str) if line_num_str.isdigit() else 1
+            emit_error(path.as_posix(), line_num, message)
         print(
             "\nReplace the finally block with the appropriate scope (TempFileScope, SemaphoreSlimScope, DeferredActionScope, etc.).",
             file=sys.stderr,
