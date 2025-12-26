@@ -279,4 +279,3 @@ ______________________________________________________________________
 
 - [scripts/dev/pre-commit.sh](../../scripts/dev/pre-commit.sh) — Reference implementation of `cleanup_stale_index_lock` and `git_add_with_retry`
 - [.githooks/pre-commit](../../.githooks/pre-commit) — Hook that delegates to the dev script
-- [.vscode/settings.json](../../.vscode/settings.json) — IDE configuration
