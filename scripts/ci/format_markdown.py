@@ -22,6 +22,10 @@ EXCLUDE_DIRS = (
     "docs/coverage",
     "node_modules",
     ".git",
+    ".pytest_cache",
+    ".venv",
+    "BenchmarkDotNet.Artifacts",
+    "progress",
 )
 SKIP_FILES = {
     "AGENTS.md",
