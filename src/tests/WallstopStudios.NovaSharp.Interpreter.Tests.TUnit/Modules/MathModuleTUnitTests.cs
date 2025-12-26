@@ -806,8 +806,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
-        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua52)]
         public async Task RandomSucceedsOnInfinityLua52Only(
             Compatibility.LuaCompatibilityVersion version
         )
@@ -1620,11 +1619,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// </summary>
         [global::TUnit.Core.Test]
         [LuaTestMatrix(
-            new object[]
-            {
-                "math.random(-1/0, 10)",
-                "negative infinity first - Both: -inf <= 10 (5.2) and LONG_MIN <= 10 (5.1) are TRUE",
-            },
+            (object)
+                new object[]
+                {
+                    "math.random(-1/0, 10)",
+                    "negative infinity first - Both: -inf <= 10 (5.2) and LONG_MIN <= 10 (5.1) are TRUE",
+                },
             MaximumVersion = LuaCompatibilityVersion.Lua52
         )]
         public async Task RandomSucceedsWithNegativeInfinityFirstArgLua51And52(
@@ -1654,8 +1654,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Lua 5.2 compares floats first: 1 &lt;= inf is TRUE.
         /// </summary>
         [global::TUnit.Core.Test]
-        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
-        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua52)]
         public async Task RandomSucceedsWithPositiveInfinitySecondArgLua52Only(
             LuaCompatibilityVersion version
         )
@@ -1856,6 +1855,188 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .IsTrue()
                 .Because(
                     $"math.modf(-inf) fractional part should be -0 (negative zero) in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        // ==========================================================================
+        // Comprehensive data-driven math.random edge case tests
+        // These tests consolidate various edge cases with improved diagnostics
+        // ==========================================================================
+
+        /// <summary>
+        /// Data-driven test for math.random expressions that should SUCCEED across all Lua versions.
+        /// Each test case includes the expression to evaluate and expected numeric result type.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "math.random()", "returns float in [0,1)" },
+            new object[] { "math.random(1)", "returns 1 (single value)" },
+            new object[] { "math.random(100)", "returns integer in [1,100]" },
+            new object[] { "math.random(5, 5)", "returns 5 (single value range)" },
+            new object[] { "math.random(-10, -5)", "returns integer in [-10,-5]" },
+            new object[] { "math.random(-5, 5)", "returns integer in [-5,5]" },
+            new object[] { "math.random(1, 1000000)", "returns integer in large range" }
+        )]
+        public async Task RandomSucceedsDataDriven(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            DynValue result = script.DoString($"return {luaExpression}");
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(DataType.Number)
+                .Because($"'{luaExpression}' ({description}) should return a number in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for math.random expressions that should ERROR with "interval is empty"
+        /// in Lua 5.1 and 5.2. These versions use integer conversion first, which can cause
+        /// different behavior than Lua 5.3+ which validates integer representation upfront.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "math.random(10, 5)", "reversed range (10 > 5)" },
+            new object[] { "math.random(-1/0)", "negative infinity single arg" },
+            new object[] { "math.random(0/0)", "NaN single arg" },
+            MaximumVersion = LuaCompatibilityVersion.Lua52
+        )]
+        public async Task RandomErrorsIntervalEmptyLua51And52DataDriven(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString($"return {luaExpression}"))
+                        .ConfigureAwait(false)
+                )
+                .Because($"'{luaExpression}' ({description}) should throw in {version}")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ex.Message)
+                .Contains("interval is empty")
+                .Because(
+                    $"'{luaExpression}' error message should indicate interval is empty in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for math.random expressions that should ERROR with
+        /// "number has no integer representation" in Lua 5.3+.
+        /// Lua 5.3+ validates integer representation before performing range checks.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "math.random(1.5)", "non-integral float single arg" },
+            new object[] { "math.random(0/0)", "NaN single arg" },
+            new object[] { "math.random(1/0)", "positive infinity single arg" },
+            new object[] { "math.random(-1/0)", "negative infinity single arg" },
+            new object[] { "math.random(1, 2.5)", "non-integral float second arg" },
+            new object[] { "math.random(1.5, 10)", "non-integral float first arg" },
+            new object[] { "math.random(1, 0/0)", "NaN second arg" },
+            new object[] { "math.random(0/0, 10)", "NaN first arg" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task RandomErrorsNoIntegerRepresentationLua53PlusDataDriven(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString($"return {luaExpression}"))
+                        .ConfigureAwait(false)
+                )
+                .Because($"'{luaExpression}' ({description}) should throw in {version}")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .Because(
+                    $"'{luaExpression}' error message should indicate no integer representation in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for math.randomseed expressions that should ERROR in Lua 5.4+.
+        /// Lua 5.4 introduced integer requirement for randomseed first argument.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "math.randomseed(1.5)", "non-integral float" },
+            new object[] { "math.randomseed(0/0)", "NaN" },
+            new object[] { "math.randomseed(1/0)", "positive infinity" },
+            new object[] { "math.randomseed(-1/0)", "negative infinity" },
+            MinimumVersion = LuaCompatibilityVersion.Lua54
+        )]
+        public async Task RandomseedErrorsNoIntegerRepresentationLua54PlusDataDriven(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString(luaExpression)).ConfigureAwait(false)
+                )
+                .Because($"'{luaExpression}' ({description}) should throw in {version}")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ex.Message)
+                .Contains("number has no integer representation")
+                .Because(
+                    $"'{luaExpression}' error message should indicate no integer representation in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for math.randomseed expressions that should SUCCEED in Lua 5.1-5.3.
+        /// These versions accept non-integer arguments to randomseed.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "math.randomseed(1.5)", "non-integral float" },
+            new object[] { "math.randomseed(1/0)", "positive infinity" },
+            new object[] { "math.randomseed(-1/0)", "negative infinity" },
+            MaximumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task RandomseedSucceedsLua51To53DataDriven(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            // Should not throw - returns nothing (nil)
+            DynValue result = script.DoString($"{luaExpression}; return true");
+
+            await Assert
+                .That(result.Boolean)
+                .IsTrue()
+                .Because(
+                    $"'{luaExpression}' ({description}) should succeed without error in {version}"
                 )
                 .ConfigureAwait(false);
         }
