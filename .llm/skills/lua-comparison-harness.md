@@ -194,3 +194,8 @@ ______________________________________________________________________
 ## Adding New Fixtures
 
 See [lua-fixture-creation](lua-fixture-creation.md) for complete fixture creation guidelines including required metadata headers, version-specific naming conventions, and validation checklist.
+
+**Remember**: Every new fixture requires:
+
+1. A corresponding C# TUnit test (see [tunit-test-writing](tunit-test-writing.md))
+1. Corpus regeneration: `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`

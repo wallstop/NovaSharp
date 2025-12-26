@@ -6,6 +6,31 @@
 
 ______________________________________________________________________
 
+## 🔴 Critical: Complete Test Workflow
+
+Every new test requires **THREE deliverables**:
+
+1. **C# TUnit test** — Runs against NovaSharp runtime (this skill)
+1. **`.lua` fixture file** — Standalone Lua for cross-interpreter verification (see [lua-fixture-creation](lua-fixture-creation.md))
+1. **Regenerate corpus** — Run `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py` after adding fixtures
+
+### Workflow Order
+
+```bash
+# 1. Create C# test (this skill)
+# 2. Create .lua fixture with metadata header (see lua-fixture-creation skill)
+# 3. Verify fixture runs against reference Lua
+lua5.4 path/to/fixture.lua
+
+# 4. Regenerate corpus to sync fixtures
+python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
+
+# 5. Run tests to verify everything works
+./scripts/test/quick.sh TestMethodName
+```
+
+______________________________________________________________________
+
 ## Framework Basics
 
 - **Framework**: TUnit only (`global::TUnit.Core.Test`)
@@ -141,6 +166,28 @@ python scripts/lint/check-console-capture-semaphore.py
 python scripts/lint/check-userdata-scope-usage.py
 python scripts/lint/check-test-finally.py
 python scripts/lint/check-temp-path-usage.py
+```
+
+______________________________________________________________________
+
+## After Creating C# Tests
+
+### 1. Create corresponding `.lua` fixture
+
+Every C# test should have a matching `.lua` fixture for cross-interpreter verification. See [lua-fixture-creation](lua-fixture-creation.md) for details.
+
+### 2. Regenerate corpus (REQUIRED)
+
+**Always run this after adding or modifying tests/fixtures:**
+
+```bash
+python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
+```
+
+### 3. Run tests
+
+```bash
+./scripts/test/quick.sh TestMethodName
 ```
 
 ______________________________________________________________________

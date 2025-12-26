@@ -6,7 +6,7 @@
 1. **NEVER use absolute paths** — All paths must be relative to repo root (no `D:/Code`, `/Users/...`, etc.)
 1. **NEVER discard output** — **NO redirects or pipes to `/dev/null`** (`>/dev/null`, `2>/dev/null`, `&>/dev/null`, `| cat >/dev/null`, etc.), **even in chained commands** (`cmd1 2>/dev/null && cmd2`). Command output is essential for debugging. If a command produces too much output, use `--quiet` flags or filter with `grep`, but NEVER silently discard stderr.
 1. **Lua Spec Compliance is HIGHEST PRIORITY** — When NovaSharp differs from reference Lua, fix production code, never tests
-1. **Always create `.lua` test files** — Every test/fix needs standalone Lua fixtures for cross-interpreter verification
+1. **Always create BOTH C# tests AND `.lua` fixtures** — Every test/fix needs: (1) TUnit C# tests for NovaSharp runtime, (2) standalone `.lua` fixtures for cross-interpreter verification, (3) regenerate corpus with `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`
 1. **Multi-Version Testing** — All TUnit tests MUST run against all applicable Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
 1. **Lua Fixture Metadata** — ONLY use `@lua-versions`, `@novasharp-only`, `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description` are **NOT parsed** by the harness and will be silently ignored
 

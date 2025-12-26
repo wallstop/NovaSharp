@@ -984,13 +984,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 // Resolve version for proper comparison
                 LuaCompatibilityVersion effectiveVersion = LuaVersionDefaults.Resolve(version);
 
-                // In Lua 5.1/5.2, the interval check happens on the float value BEFORE conversion.
-                // Reference Lua checks: (lua_Number)1.0 <= u
-                // - math.random(inf): 1.0 <= inf is TRUE → no error (produces garbage)
-                // - math.random(nan): 1.0 <= nan is FALSE → error
-                // - math.random(-1): 1.0 <= -1 is FALSE → error
-                if (effectiveVersion < LuaCompatibilityVersion.Lua53)
+                // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+                // For Lua 5.1, this must happen BEFORE the interval check because reference Lua
+                // uses luaL_checkint() which converts to int first, then checks l <= u on integers.
+                long mVal = Utilities.LuaNumberHelpers.ToLongWithValidation(
+                    version,
+                    m,
+                    "random",
+                    1
+                );
+
+                if (effectiveVersion == LuaCompatibilityVersion.Lua51)
                 {
+                    // Lua 5.1: interval check on INTEGER values AFTER conversion
+                    // Reference Lua 5.1 lmathlib.c uses luaL_checkint() which does (long) cast first.
+                    // For NaN/Infinity: (long)nan = LONG_MIN, (long)inf = LONG_MIN
+                    // So math.random(nan): 1 <= LONG_MIN is FALSE → error
+                    // And math.random(inf): 1 <= LONG_MIN is FALSE → error
+                    // But math.random(-inf): 1 <= LONG_MIN is FALSE → error
+                    // Note: All out-of-range values become LONG_MIN via ToLongWithValidation
+                    if (!(1L <= mVal))
+                    {
+                        throw new ScriptRuntimeException(
+                            "bad argument #1 to 'random' (interval is empty)"
+                        );
+                    }
+                }
+                else if (effectiveVersion == LuaCompatibilityVersion.Lua52)
+                {
+                    // Lua 5.2: interval check on FLOAT values BEFORE conversion
+                    // Reference Lua 5.2 lmathlib.c uses luaL_checknumber() keeping the float.
+                    // - math.random(inf): 1.0 <= inf is TRUE → no error (produces garbage)
+                    // - math.random(nan): 1.0 <= nan is FALSE → error
+                    // - math.random(-inf): 1.0 <= -inf is FALSE → error
+                    // - math.random(-1): 1.0 <= -1 is FALSE → error
                     double mFloat = m.LuaNumber.AsFloat;
                     // NaN comparisons: !(1.0 <= nan) is true, so we use negated form
                     if (!(1.0 <= mFloat))
@@ -1000,14 +1027,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         );
                     }
                 }
-
-                // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
-                long mVal = Utilities.LuaNumberHelpers.ToLongWithValidation(
-                    version,
-                    m,
-                    "random",
-                    1
-                );
 
                 // math.random(0): return integer with all bits pseudo-random (Lua 5.4+ only, §6.7)
                 // In Lua 5.1-5.3, math.random(0) throws "interval is empty"
@@ -1032,8 +1051,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     );
                 }
 
-                // For Lua 5.1/5.2: If the float check passed but integer conversion produced
-                // an invalid value (e.g., math.random(inf) becomes math.random(LONG_MIN)),
+                // For Lua 5.1/5.2: If the interval check passed but integer conversion produced
+                // an invalid value (e.g., Lua 5.2 math.random(inf) becomes math.random(LONG_MIN)),
                 // reference Lua would compute garbage via floor(r*u) + 1 with overflowing
                 // arithmetic. We match this by producing a deterministic garbage result.
                 if (effectiveVersion < LuaCompatibilityVersion.Lua53 && mVal < 1)
@@ -1046,23 +1065,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             // Two arguments: math.random(m, n) returns integer in [m, n]
-            // Reference Lua 5.2 checks the interval using floating-point comparison BEFORE
-            // converting to integers. This matters for NaN/infinity:
-            // - math.random(nan, 10): nan <= 10 is FALSE (NaN comparisons always false) → ERROR
-            // - math.random(inf, 10): inf <= 10 is FALSE → ERROR
-            // - math.random(1, inf): 1 <= inf is TRUE → NO ERROR (but produces garbage result)
-            // NovaSharp matches this behavior for Lua 5.1/5.2 compatibility.
             LuaCompatibilityVersion effectiveVersionForInterval = LuaVersionDefaults.Resolve(
                 version
             );
-            if (effectiveVersionForInterval < LuaCompatibilityVersion.Lua53)
+
+            // Convert to integers first (needed for all versions)
+            // For Lua 5.1, this happens BEFORE the interval check per reference lmathlib.c
+            long mValue = Utilities.LuaNumberHelpers.ToLongWithValidation(version, m, "random", 1);
+            long nValue = Utilities.LuaNumberHelpers.ToLongWithValidation(version, n, "random", 2);
+
+            if (effectiveVersionForInterval == LuaCompatibilityVersion.Lua51)
             {
-                // Lua 5.1/5.2: Compare raw floating-point values before integer conversion
-                // This matches reference Lua's lmathlib.c which does: luaL_argcheck(L, l <= u, ...)
+                // Lua 5.1: interval check on INTEGER values AFTER conversion
+                // Reference Lua 5.1 lmathlib.c uses luaL_checkint() for both args, then checks l <= u.
+                // For NaN first arg: (long)nan = LONG_MIN, so LONG_MIN <= 10 is TRUE → no error
+                // For Infinity second arg: 1 <= (long)inf = LONG_MIN is FALSE → error
+                // For NaN second arg: 1 <= (long)nan = LONG_MIN is FALSE → error
+                if (!(mValue <= nValue))
+                {
+                    throw new ScriptRuntimeException(
+                        "bad argument #2 to 'random' (interval is empty)"
+                    );
+                }
+            }
+            else if (effectiveVersionForInterval == LuaCompatibilityVersion.Lua52)
+            {
+                // Lua 5.2: interval check on FLOAT values BEFORE conversion
+                // Reference Lua 5.2 lmathlib.c uses luaL_checknumber() keeping floats, then checks l <= u.
+                // - math.random(nan, 10): nan <= 10 is FALSE → error
+                // - math.random(inf, 10): inf <= 10 is FALSE → error
+                // - math.random(1, inf): 1 <= inf is TRUE → no error (produces garbage)
+                // - math.random(1, nan): 1 <= nan is FALSE → error
                 double mFloat = m.LuaNumber.AsFloat;
                 double nFloat = n.LuaNumber.AsFloat;
-                // NaN comparisons: !(NaN <= x) is always true, so we use negated form
-                // This correctly fails for NaN in either argument
+                // NaN comparisons: !(m <= n) catches NaN in either argument
                 if (!(mFloat <= nFloat))
                 {
                     throw new ScriptRuntimeException(
@@ -1071,24 +1107,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
             }
 
-            long mValue = Utilities.LuaNumberHelpers.ToLongWithValidation(version, m, "random", 1);
-            long nValue = Utilities.LuaNumberHelpers.ToLongWithValidation(version, n, "random", 2);
-
             // For Lua 5.3+, check after conversion (integers are required anyway)
             if (effectiveVersionForInterval >= LuaCompatibilityVersion.Lua53 && mValue > nValue)
             {
                 throw new ScriptRuntimeException("bad argument #2 to 'random' (interval is empty)");
             }
 
-            // For Lua 5.1/5.2: If the float check passed but integer conversion produced an
-            // invalid range (e.g., math.random(1, inf) becomes math.random(1, LONG_MIN)),
+            // For Lua 5.1/5.2: If the interval check passed but integer values form an
+            // invalid range (e.g., Lua 5.2 math.random(1, inf) becomes math.random(1, LONG_MIN)),
             // reference Lua would compute garbage via floor(r*(u-l+1)) + l with overflowing
             // arithmetic. We match this by producing a deterministic garbage result.
             if (effectiveVersionForInterval < LuaCompatibilityVersion.Lua53 && mValue > nValue)
             {
                 // Return a garbage result similar to what reference Lua would produce
-                // when the interval arithmetic overflows. This matches reference behavior
-                // where math.random(1, inf) succeeds but produces nonsensical output.
+                // when the interval arithmetic overflows.
                 return DynValue.NewNumber(r.NextLong(nValue, mValue));
             }
 

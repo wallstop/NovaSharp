@@ -1,5 +1,11 @@
--- Test: Address format should match Lua's 0x prefix style
--- This test verifies that tostring() produces Lua-compatible address formats.
+-- @lua-versions: 5.1+
+-- @novasharp-only: true
+-- @expects-error: false
+-- @test: BasicModuleTUnitTests.AddressFormatMatch
+-- @compat-notes: Tests NovaSharp's normalized address format (0x prefix, lowercase hex). Windows Lua uses different format (no 0x prefix, uppercase hex).
+
+-- Test: Address format should match NovaSharp's normalized style
+-- This test verifies that tostring() produces the expected NovaSharp format.
 -- Expected format: "type: 0x[hex]" (lowercase hex, no fixed padding)
 
 -- Test table address format
@@ -7,7 +13,7 @@ local t = {}
 local ts = tostring(t)
 assert(ts:match("^table: 0x%x+$"), "table format should be 'table: 0x<hex>' but got: " .. ts)
 
--- Test function address format  
+-- Test function address format
 local f = function() end
 local fs = tostring(f)
 assert(fs:match("^function: 0x%x+$"), "function format should be 'function: 0x<hex>' but got: " .. fs)

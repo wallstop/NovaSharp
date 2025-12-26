@@ -6,6 +6,31 @@
 
 ______________________________________________________________________
 
+## 🔴 Critical: Complete Test Workflow
+
+Every new test requires **THREE deliverables**:
+
+1. **C# TUnit test** — Runs against NovaSharp runtime (see [tunit-test-writing](tunit-test-writing.md))
+1. **`.lua` fixture file** — Standalone Lua for cross-interpreter verification
+1. **Regenerate corpus** — Run `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py` after adding fixtures
+
+### Workflow Order
+
+```bash
+# 1. Create C# test in src/tests/.../TUnit/ (see tunit-test-writing skill)
+# 2. Create .lua fixture with metadata header (see below)
+# 3. Verify fixture runs against reference Lua
+lua5.4 path/to/fixture.lua
+
+# 4. Regenerate corpus to sync fixtures
+python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
+
+# 5. Run tests to verify everything works
+./scripts/test/quick.sh TestMethodName
+```
+
+______________________________________________________________________
+
 ## 🔴 Critical: Required Metadata Header
 
 Every `.lua` fixture file **MUST** start with a metadata block for the test runner to parse it correctly. Files without this header will not be properly filtered or may produce false comparison failures.
@@ -344,7 +369,11 @@ ______________________________________________________________________
 
 ## After Creating Fixtures
 
-### Verify against reference Lua
+### 1. Ensure corresponding C# test exists
+
+Every `.lua` fixture should have a matching C# TUnit test. See [tunit-test-writing](tunit-test-writing.md) for details.
+
+### 2. Verify against reference Lua
 
 ```bash
 # Single file
@@ -354,14 +383,24 @@ lua5.4 path/to/fixture.lua
 python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.4
 ```
 
-### Compare with NovaSharp
+### 3. Regenerate corpus (REQUIRED)
+
+**Always run this after adding or modifying fixtures:**
+
+```bash
+python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
+```
+
+This syncs the fixture manifest and ensures CI can discover all fixtures.
+
+### 4. Compare with NovaSharp
 
 ```bash
 python3 scripts/tests/compare-lua-outputs.py --lua-version 5.4
 ```
 
-### Regenerate corpus (if modifying existing tests)
+### 5. Run C# tests
 
 ```bash
-python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
+./scripts/test/quick.sh TestMethodName
 ```
