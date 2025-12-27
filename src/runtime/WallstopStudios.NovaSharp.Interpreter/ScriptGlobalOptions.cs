@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 {
     using Platforms;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Options;
 
@@ -13,6 +14,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
     {
         internal ScriptGlobalOptions()
         {
+            // Initialize ZString enum formatters for zero-allocation enum appending
+            ZStringEnumFormatters.Initialize();
+
             Platform = PlatformAutoDetector.GetDefaultPlatform();
             CustomConverters = new CustomConverterRegistry();
             FuzzySymbolMatching =

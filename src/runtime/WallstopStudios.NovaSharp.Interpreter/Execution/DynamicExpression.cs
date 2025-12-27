@@ -99,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// </returns>
         public override int GetHashCode()
         {
-            return ExpressionCode != null ? StringComparer.Ordinal.GetHashCode(ExpressionCode) : 0;
+            return DataStructs.HashCodeHelper.HashCode(ExpressionCode);
         }
 
         /// <summary>

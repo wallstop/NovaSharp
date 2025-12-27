@@ -1,191 +1,109 @@
 #!/usr/bin/env bash
 # Post-create script for NovaSharp dev container
-# Installs all Lua versions (5.1, 5.2, 5.3, 5.4, 5.5) for specification comparison testing
-#
-# Supported platforms:
-#   - Linux (apt-based: Debian, Ubuntu)
-#   - macOS (via Homebrew)
-#   - Windows (via MSYS2/Git Bash - limited support)
+# NOTE: NuGet restore is done in on-create.sh (before extensions load)
+# This script handles remaining setup: Python environment, hooks, verification
 
 set -euo pipefail
 
-echo "=== NovaSharp Dev Container Setup ==="
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║           NovaSharp Post-Create Setup                          ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
 
-# Detect operating system
-detect_os() {
-    case "$(uname -s)" in
-        Linux*)     echo "linux";;
-        Darwin*)    echo "macos";;
-        CYGWIN*|MINGW*|MSYS*) echo "windows";;
-        *)          echo "unknown";;
-    esac
-}
+cd /workspaces/NovaSharp
 
-OS=$(detect_os)
-echo "Detected OS: $OS"
+# ============================================================================
+# STEP 1: Install TUnit templates
+# ============================================================================
+echo "📦 Step 1/4: Installing TUnit templates..."
+dotnet new install TUnit.Templates --force 2>/dev/null || true
 
-# Install Lua 5.1-5.4 based on platform
-install_lua_from_package_manager() {
-    case "$OS" in
-        linux)
-            echo "Installing Lua 5.1-5.4 from apt..."
-            sudo apt-get update
-            sudo apt-get install -y lua5.1 lua5.2 lua5.3 lua5.4 build-essential libreadline-dev curl
-            ;;
-        macos)
-            echo "Installing Lua 5.1-5.4 from Homebrew..."
-            # Ensure Homebrew is available
-            if ! command -v brew &> /dev/null; then
-                echo "Error: Homebrew not found. Please install Homebrew first."
-                exit 1
-            fi
-            # Install dependencies and Lua versions
-            brew install readline curl
-            # Note: Homebrew typically only has the latest Lua version
-            # For multiple versions, we may need to build from source or use luaenv
-            brew install lua@5.1 lua@5.3 lua@5.4 || true
-            # Create versioned symlinks if they don't exist
-            for ver in 5.1 5.3 5.4; do
-                if [[ -f "/usr/local/opt/lua@${ver}/bin/lua" ]] && ! command -v "lua${ver}" &> /dev/null; then
-                    sudo ln -sf "/usr/local/opt/lua@${ver}/bin/lua" "/usr/local/bin/lua${ver}"
-                fi
-                if [[ -f "/opt/homebrew/opt/lua@${ver}/bin/lua" ]] && ! command -v "lua${ver}" &> /dev/null; then
-                    sudo ln -sf "/opt/homebrew/opt/lua@${ver}/bin/lua" "/usr/local/bin/lua${ver}"
-                fi
-            done
-            ;;
-        windows)
-            echo "Windows detected. Please install Lua versions manually or via Chocolatey/Scoop."
-            echo "Skipping package manager installation..."
-            ;;
-        *)
-            echo "Unknown OS. Skipping package manager installation..."
-            ;;
-    esac
-}
+# ============================================================================
+# STEP 2: Setup Python environment
+# ============================================================================
+echo ""
+echo "🐍 Step 2/4: Setting up Python environment..."
 
-# Build Lua 5.5 from source (works on Linux and macOS)
-build_lua55_from_source() {
-    echo "Building Lua 5.5 from source..."
-    
-    # Version info - the tarball name includes "-rc2" but extracts to just the base version
-    local LUA55_TARBALL_VERSION="5.5.0-rc2"
-    local LUA55_EXTRACT_DIR="lua-5.5.0"  # Directory name after extraction (without -rc2)
-    local LUA55_URL="https://www.lua.org/work/lua-${LUA55_TARBALL_VERSION}.tar.gz"
-    local LUA55_INSTALL_PREFIX="/usr/local/lua55"
+VENV_DIR="/workspaces/NovaSharp/.venv"
+python3 -m venv "${VENV_DIR}"
+"${VENV_DIR}/bin/pip" install --upgrade pip --quiet
+"${VENV_DIR}/bin/pip" install -r requirements.tooling.txt --quiet
 
-    # Determine make target based on OS
-    local MAKE_TARGET
-    case "$OS" in
-        linux)
-            MAKE_TARGET="linux"
-            ;;
-        macos)
-            MAKE_TARGET="macosx"
-            ;;
-        windows)
-            echo "Building Lua 5.5 from source is not supported on Windows via this script."
-            echo "Please use pre-built binaries or build manually with MinGW/MSVC."
-            return 1
-            ;;
-        *)
-            echo "Unknown OS. Attempting generic build..."
-            MAKE_TARGET="generic"
-            ;;
-    esac
-
-    # Create temp directory for build
-    local BUILD_DIR
-    BUILD_DIR=$(mktemp -d)
-    cd "$BUILD_DIR"
-
-    # Download and extract
-    echo "Downloading Lua ${LUA55_TARBALL_VERSION}..."
-    curl -L -o "lua-${LUA55_TARBALL_VERSION}.tar.gz" "$LUA55_URL"
-    tar xzf "lua-${LUA55_TARBALL_VERSION}.tar.gz"
-    
-    # Find the extracted directory (handle potential naming variations)
-    local EXTRACTED_DIR
-    if [[ -d "$LUA55_EXTRACT_DIR" ]]; then
-        EXTRACTED_DIR="$LUA55_EXTRACT_DIR"
-    elif [[ -d "lua-${LUA55_TARBALL_VERSION}" ]]; then
-        EXTRACTED_DIR="lua-${LUA55_TARBALL_VERSION}"
-    else
-        # Fallback: find any lua-5.5* directory
-        EXTRACTED_DIR=$(find . -maxdepth 1 -type d -name "lua-5.5*" | head -1)
-        if [[ -z "$EXTRACTED_DIR" ]]; then
-            echo "Error: Could not find extracted Lua 5.5 directory"
-            ls -la
-            return 1
-        fi
-    fi
-    
-    echo "Extracted to: $EXTRACTED_DIR"
-    cd "$EXTRACTED_DIR"
-
-    # Build for the detected platform
-    echo "Compiling Lua 5.5 with target: ${MAKE_TARGET}..."
-    make "$MAKE_TARGET"
-
-    # Install to dedicated prefix to avoid conflicts
-    echo "Installing Lua 5.5 to ${LUA55_INSTALL_PREFIX}..."
-    sudo make install INSTALL_TOP="$LUA55_INSTALL_PREFIX"
-
-    # Create symlinks for lua5.5 command
-    sudo ln -sf "${LUA55_INSTALL_PREFIX}/bin/lua" /usr/local/bin/lua5.5
-    sudo ln -sf "${LUA55_INSTALL_PREFIX}/bin/luac" /usr/local/bin/luac5.5
-
-    # Cleanup
-    cd /
-    rm -rf "$BUILD_DIR"
-    
-    echo "Lua 5.5 installation complete."
-}
-
-# Install packages from package manager
-install_lua_from_package_manager
-
-# Build Lua 5.5 from source
-if [[ "$OS" != "windows" ]]; then
-    build_lua55_from_source
-else
-    echo "Skipping Lua 5.5 build on Windows. Please install manually."
+# Ensure venv is on PATH for future sessions
+BASHRC_MARKER="# NovaSharp Python venv activation"
+if ! grep -q "${BASHRC_MARKER}" ~/.bashrc 2>/dev/null; then
+    {
+        echo ""
+        echo "${BASHRC_MARKER}"
+        echo "export PATH=\"${VENV_DIR}/bin:\${PATH}\""
+    } >> ~/.bashrc
 fi
 
-# Restore dotnet tools
-echo "Restoring .NET tools..."
-cd /workspaces/NovaSharp
-dotnet tool restore
+echo "   Virtual environment: ${VENV_DIR}"
 
-# Install Python tooling dependencies
-echo "Installing Python tooling dependencies..."
-pip install --user -r requirements.tooling.txt
-
-# Verify installations
+# ============================================================================
+# STEP 3: Install pre-commit hooks
+# ============================================================================
 echo ""
-echo "=== Lua Version Verification ==="
+echo "🪝 Step 3/4: Installing pre-commit hooks..."
+if [ -f "scripts/dev/install-hooks.sh" ]; then
+    bash scripts/dev/install-hooks.sh 2>/dev/null || echo "   (hooks may already be installed)"
+else
+    echo "   Skipped (install-hooks.sh not found)"
+fi
 
-verify_lua_version() {
-    local cmd=$1
-    local label=$2
+# ============================================================================
+# STEP 4: Verification
+# ============================================================================
+echo ""
+# ============================================================================
+# STEP 4: Pre-warm build cache
+# ============================================================================
+echo ""
+echo "🔥 Step 4/5: Pre-warming build cache (background)..."
+# Build in background to warm the Roslyn compilation server and create obj/bin caches
+# This makes subsequent edit-build-test cycles much faster
+(dotnet build src/NovaSharp.sln -c Release -m --verbosity quiet &>/dev/null &)
+echo "   Build started in background (Roslyn server warming up)"
+
+# ============================================================================
+# ENVIRONMENT VERIFICATION
+# ============================================================================
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║           Environment Verification                             ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
+
+echo "📌 .NET SDKs:"
+dotnet --list-sdks | sed 's/^/   /'
+
+echo ""
+echo "📌 Lua Interpreters:"
+for v in 5.1 5.2 5.3 5.4 5.5; do
+    cmd="lua${v}"
     if command -v "$cmd" &> /dev/null; then
-        echo -n "${label}: " && $cmd -v 2>&1 | head -1
+        printf "   %-10s %s\n" "Lua ${v}:" "$($cmd -v 2>&1 | head -1)"
     else
-        echo "${label}: NOT INSTALLED"
+        printf "   %-10s %s\n" "Lua ${v}:" "NOT FOUND"
     fi
-}
-
-verify_lua_version "lua5.1" "Lua 5.1"
-verify_lua_version "lua5.2" "Lua 5.2"
-verify_lua_version "lua5.3" "Lua 5.3"
-verify_lua_version "lua5.4" "Lua 5.4"
-verify_lua_version "lua5.5" "Lua 5.5"
+done
 
 echo ""
-echo "=== Python Verification ==="
-echo -n "Python: " && python3 --version 2>&1
-echo -n "pip: " && pip --version 2>&1
+echo "📌 Global Tools:"
+echo "   CSharpier:        $(csharpier --version 2>/dev/null || echo 'not found')"
+echo "   ReportGenerator:  $(reportgenerator --version 2>/dev/null | head -1 || echo 'not found')"
 
 echo ""
-echo "=== Dev Container Setup Complete ==="
-echo "All available Lua versions installed and ready for specification comparison testing."
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║           ✅ Setup Complete!                                    ║"
+echo "╠════════════════════════════════════════════════════════════════╣"
+echo "║  Quick commands:                                               ║"
+echo "║    ./scripts/build/quick.sh      - Build interpreter           ║"
+echo "║    ./scripts/test/quick.sh       - Run all tests               ║"
+echo "║    ./scripts/test/quick.sh Floor - Run tests matching 'Floor'  ║"
+echo "║                                                                ║"
+echo "║  IntelliSense will load automatically via Roslyn LSP.          ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""

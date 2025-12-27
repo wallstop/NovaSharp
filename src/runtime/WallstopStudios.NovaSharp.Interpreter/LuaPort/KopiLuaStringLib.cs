@@ -89,30 +89,91 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
         public const int CAP_UNFINISHED = (-1);
         public const int CAP_POSITION = (-2);
 
-        public class MatchState
+        /// <summary>
+        /// Capture data for pattern matching. Converted from class to struct to eliminate
+        /// 32 heap allocations per MatchState instance.
+        /// </summary>
+        public struct Capture
         {
-            public MatchState()
-            {
-                for (int i = 0; i < LuaPatternMaxCaptures; i++)
-                {
-                    capture[i] = new Capture();
-                }
-            }
+            public CharPtr init;
+            public ptrdiff_t len;
+        }
 
+        /// <summary>
+        /// State for pattern matching operations. Uses thread-local pooling to avoid
+        /// repeated allocations during string.find, string.match, string.gmatch, and string.gsub.
+        /// </summary>
+        public sealed class MatchState
+        {
             public int matchdepth; /* control for recursive depth (to avoid C stack overflow) */
             public CharPtr srcInit; /* init of source string */
             public CharPtr srcEnd; /* end (`\0') of source string */
             public LuaState l;
             public int level; /* total number of captures (finished or unfinished) */
 
-            public class Capture
-            {
-                public CharPtr init;
-                public ptrdiff_t len;
-            };
-
+            // Struct array - no per-element heap allocation needed
             public Capture[] capture = new Capture[LuaPatternMaxCaptures];
-        };
+
+            /// <summary>
+            /// Resets the MatchState for reuse. Called when renting from the pool.
+            /// </summary>
+            public void Reset()
+            {
+                matchdepth = 0;
+                srcInit = CharPtr.Null;
+                srcEnd = CharPtr.Null;
+                l = null!;
+                level = 0;
+                // Clear capture array to prevent holding references to old CharPtr data
+                Array.Clear(capture, 0, capture.Length);
+            }
+        }
+
+        // Thread-local pool for MatchState instances to avoid allocations in pattern matching
+        [ThreadStatic]
+        private static MatchState t_cachedMatchState;
+
+        /// <summary>
+        /// Gets a MatchState instance, either from thread-local cache or newly allocated.
+        /// </summary>
+        private static MatchState RentMatchState()
+        {
+            MatchState ms = t_cachedMatchState;
+            if (ms != null)
+            {
+                t_cachedMatchState = null!;
+                ms.Reset();
+                return ms;
+            }
+            return new MatchState();
+        }
+
+        /// <summary>
+        /// Returns a MatchState instance to the thread-local cache for reuse.
+        /// </summary>
+        private static void ReturnMatchState(MatchState ms)
+        {
+            // Clear references to allow GC of the LuaState and source string
+            ms.Reset();
+            t_cachedMatchState = ms;
+        }
+
+        // Thread-local cached buffers for str_format to avoid allocations
+        // These are fixed-size arrays reused across format calls on the same thread
+        [ThreadStatic]
+        private static char[] t_formatFormBuffer; // MaxFormat size
+
+        [ThreadStatic]
+        private static char[] t_formatBuffBuffer; // MAX_ITEM size
+
+        /// <summary>
+        /// Gets cached format buffers for str_format, allocating only on first use per thread.
+        /// </summary>
+        private static void GetFormatBuffers(out char[] formBuffer, out char[] buffBuffer)
+        {
+            formBuffer = t_formatFormBuffer ??= new char[MaxFormat];
+            buffBuffer = t_formatBuffBuffer ??= new char[MAX_ITEM];
+        }
 
         public const int MAXCCALLS = 200;
         public const char L_ESC = '%';
@@ -297,7 +358,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
 
             if (s[0] != p[0])
             {
-                return null;
+                return CharPtr.Null;
             }
             else
             {
@@ -319,7 +380,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                     }
                 }
             }
-            return null; /* string ends out of balance */
+            return CharPtr.Null; /* string ends out of balance */
         }
 
         private static CharPtr max_expand(MatchState ms, CharPtr s, CharPtr p, CharPtr ep)
@@ -334,14 +395,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             while (i >= 0)
             {
                 CharPtr res = Match(ms, (s + i), ep + 1);
-                if (res != null)
+                if (!res.IsNull)
                 {
                     return res;
                 }
 
                 i--; /* else didn't match; reduce 1 repetition to try again */
             }
-            return null;
+            return CharPtr.Null;
         }
 
         private static CharPtr min_expand(MatchState ms, CharPtr s, CharPtr p, CharPtr ep)
@@ -349,7 +410,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             for (; ; )
             {
                 CharPtr res = Match(ms, s, ep + 1);
-                if (res != null)
+                if (!res.IsNull)
                 {
                     return res;
                 }
@@ -359,7 +420,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                 }
                 else
                 {
-                    return null;
+                    return CharPtr.Null;
                 }
             }
         }
@@ -376,7 +437,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             ms.capture[level].init = s;
             ms.capture[level].len = what;
             ms.level = level + 1;
-            if ((res = Match(ms, s, p)) == null) /* match failed? */
+            if ((res = Match(ms, s, p)).IsNull) /* match failed? */
             {
                 ms.level--; /* undo capture */
             }
@@ -389,7 +450,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             int l = capture_to_close(ms);
             CharPtr res;
             ms.capture[l].len = s - ms.capture[l].init; /* close capture */
-            if ((res = Match(ms, s, p)) == null) /* match failed? */
+            if ((res = Match(ms, s, p)).IsNull) /* match failed? */
             {
                 ms.capture[l].len = CAP_UNFINISHED; /* undo capture */
             }
@@ -408,7 +469,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             }
             else
             {
-                return null;
+                return CharPtr.Null;
             }
         }
 
@@ -446,9 +507,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         case 'b':
                         { /* balanced string? */
                             s = Matchbalance(ms, s, p + 2);
-                            if (s == null)
+                            if (s.IsNull)
                             {
-                                return null;
+                                return CharPtr.Null;
                             }
 
                             p += 4;
@@ -478,7 +539,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                                 || (Matchbracketclass((byte)(s[0]), p, ep - 1) == 0)
                             )
                             {
-                                return null;
+                                return CharPtr.Null;
                             }
 
                             p = ep;
@@ -489,9 +550,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             if (IsDigit((char)(p[1])))
                             { /* capture results (%0-%9)? */
                                 s = match_capture(ms, s, (byte)(p[1]));
-                                if (s == null)
+                                if (s.IsNull)
                                 {
-                                    return null;
+                                    return CharPtr.Null;
                                 }
 
                                 p += 2;
@@ -509,7 +570,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                                     case '?':
                                     { /* optional */
                                         CharPtr res;
-                                        if ((m != 0) && ((res = Match(ms, s + 1, ep + 1)) != null))
+                                        if ((m != 0) && (!(res = Match(ms, s + 1, ep + 1)).IsNull))
                                         {
                                             return res;
                                         }
@@ -523,7 +584,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                                     }
                                     case '+':
                                     { /* 1 or more repetitions */
-                                        return ((m != 0) ? max_expand(ms, s + 1, p, ep) : null);
+                                        return ((m != 0) ? max_expand(ms, s + 1, p, ep) : CharPtr.Null);
                                     }
                                     case '-':
                                     { /* 0 or more repetitions (minimum) */
@@ -533,7 +594,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                                     {
                                         if (m == 0)
                                         {
-                                            return null;
+                                            return CharPtr.Null;
                                         }
 
                                         s = s.Next();
@@ -554,7 +615,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                 {
                     if (p[1] == '\0') /* is the `$' the last char in pattern? */
                     {
-                        return (s == ms.srcEnd) ? s : null; /* check end of string */
+                        return (s == ms.srcEnd) ? s : CharPtr.Null; /* check end of string */
                     }
                     else
                     {
@@ -571,7 +632,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             case '?':
                             { /* optional */
                                 CharPtr res;
-                                if ((m != 0) && ((res = Match(ms, s + 1, ep + 1)) != null))
+                                if ((m != 0) && (!(res = Match(ms, s + 1, ep + 1)).IsNull))
                                 {
                                     return res;
                                 }
@@ -585,7 +646,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             }
                             case '+':
                             { /* 1 or more repetitions */
-                                return ((m != 0) ? max_expand(ms, s + 1, p, ep) : null);
+                                return ((m != 0) ? max_expand(ms, s + 1, p, ep) : CharPtr.Null);
                             }
                             case '-':
                             { /* 0 or more repetitions (minimum) */
@@ -595,7 +656,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             {
                                 if (m == 0)
                                 {
-                                    return null;
+                                    return CharPtr.Null;
                                 }
 
                                 s = s.Next();
@@ -615,14 +676,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             }
             else if (l2 > l1)
             {
-                return null; /* avoids a negative `l1' */
+                return CharPtr.Null; /* avoids a negative `l1' */
             }
             else
             {
                 CharPtr init; /* to search for a `*s2' inside `s1' */
                 l2--; /* 1st char will be checked by `memchr' */
                 l1 = l1 - l2; /* `s2' cannot be found after that */
-                while (l1 > 0 && (init = MemoryFindCharacter(s1, s2[0], l1)) != null)
+                while (l1 > 0 && !(init = MemoryFindCharacter(s1, s2[0], l1)).IsNull)
                 {
                     init = init.Next(); /* 1st char is already checked */
                     if (MemoryCompare(init, s2 + 1, l2) == 0)
@@ -635,7 +696,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         s1 = init;
                     }
                 }
-                return null; /* not found */
+                return CharPtr.Null; /* not found */
             }
         }
 
@@ -674,7 +735,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
         private static int push_captures(MatchState ms, CharPtr s, CharPtr e)
         {
             int i;
-            int nlevels = ((ms.level == 0) && (s != null)) ? 1 : ms.level;
+            int nlevels = ((ms.level == 0) && (!s.IsNull)) ? 1 : ms.level;
             LuaLCheckStack(ms.l, nlevels, "too many captures");
             for (i = 0; i < nlevels; i++)
             {
@@ -704,13 +765,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                 && (
                     (LuaToBoolean(l, 4) != 0)
                     || /* explicit request? */
-                    StringFindAny(p, SPECIALS) == null
+                    StringFindAny(p, SPECIALS).IsNull
                 )
             )
             { /* or no special characters? */
                 /* do a plain search */
                 CharPtr s2 = Lmemfind(s + init, (uint)(l1 - init), p, (uint)(l2));
-                if (s2 != null)
+                if (!s2.IsNull)
                 {
                     LuaPushInteger(l, s2 - s + 1);
                     LuaPushInteger(l, (int)(s2 - s + l2));
@@ -719,38 +780,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             }
             else
             {
-                MatchState ms = new();
-                int anchor = 0;
-                if (p[0] == '^')
+                MatchState ms = RentMatchState();
+                try
                 {
-                    p = p.Next();
-                    anchor = 1;
-                }
-                CharPtr s1 = s + init;
-                ms.l = l;
-                ms.matchdepth = MAXCCALLS;
-                ms.srcInit = s;
-                ms.srcEnd = s + l1;
-                do
-                {
-                    CharPtr res;
-                    ms.level = 0;
-                    // LuaAssert(ms.matchdepth == MAXCCALLS);
-                    ms.matchdepth = MAXCCALLS;
-                    if ((res = Match(ms, s1, p)) != null)
+                    int anchor = 0;
+                    if (p[0] == '^')
                     {
-                        if (find != 0)
-                        {
-                            LuaPushInteger(l, s1 - s + 1); /* start */
-                            LuaPushInteger(l, res - s); /* end */
-                            return push_captures(ms, null, null) + 2;
-                        }
-                        else
-                        {
-                            return push_captures(ms, s1, res);
-                        }
+                        p = p.Next();
+                        anchor = 1;
                     }
-                } while (((s1 = s1.Next()) <= ms.srcEnd) && (anchor == 0));
+                    CharPtr s1 = s + init;
+                    ms.l = l;
+                    ms.matchdepth = MAXCCALLS;
+                    ms.srcInit = s;
+                    ms.srcEnd = s + l1;
+                    do
+                    {
+                        CharPtr res;
+                        ms.level = 0;
+                        // LuaAssert(ms.matchdepth == MAXCCALLS);
+                        ms.matchdepth = MAXCCALLS;
+                        if (!(res = Match(ms, s1, p)).IsNull)
+                        {
+                            if (find != 0)
+                            {
+                                LuaPushInteger(l, s1 - s + 1); /* start */
+                                LuaPushInteger(l, res - s); /* end */
+                                return push_captures(ms, CharPtr.Null, CharPtr.Null) + 2;
+                            }
+                            else
+                            {
+                                return push_captures(ms, s1, res);
+                            }
+                        }
+                    } while (((s1 = s1.Next()) <= ms.srcEnd) && (anchor == 0));
+                }
+                finally
+                {
+                    ReturnMatchState(ms);
+                }
             }
             LuaPushNil(l); /* not found */
             return 1;
@@ -776,35 +844,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
 
         private static int gmatch_aux(LuaState l, GMatchAuxData auxdata)
         {
-            MatchState ms = new();
-            uint ls = auxdata.ls;
-            CharPtr s = auxdata.s;
-            CharPtr p = auxdata.p;
-            CharPtr src;
-            ms.l = l;
-            ms.matchdepth = MAXCCALLS;
-            ms.srcInit = s;
-            ms.srcEnd = s + ls;
-            for (src = s + auxdata.pos; src <= ms.srcEnd; src = src.Next())
+            MatchState ms = RentMatchState();
+            try
             {
-                CharPtr e;
-                ms.level = 0;
-                //LuaAssert(ms.matchdepth == MAXCCALLS);
+                uint ls = auxdata.ls;
+                CharPtr s = auxdata.s;
+                CharPtr p = auxdata.p;
+                CharPtr src;
+                ms.l = l;
                 ms.matchdepth = MAXCCALLS;
-
-                if ((e = Match(ms, src, p)) != null)
+                ms.srcInit = s;
+                ms.srcEnd = s + ls;
+                for (src = s + auxdata.pos; src <= ms.srcEnd; src = src.Next())
                 {
-                    lua_Integer newstart = e - s;
-                    if (e == src)
-                    {
-                        newstart++; /* empty match? go at least one position */
-                    }
+                    CharPtr e;
+                    ms.level = 0;
+                    //LuaAssert(ms.matchdepth == MAXCCALLS);
+                    ms.matchdepth = MAXCCALLS;
 
-                    auxdata.pos = (uint)newstart;
-                    return push_captures(ms, src, e);
+                    if (!(e = Match(ms, src, p)).IsNull)
+                    {
+                        lua_Integer newstart = e - s;
+                        if (e == src)
+                        {
+                            newstart++; /* empty match? go at least one position */
+                        }
+
+                        auxdata.pos = (uint)newstart;
+                        return push_captures(ms, src, e);
+                    }
                 }
+                return 0; /* not found */
             }
-            return 0; /* not found */
+            finally
+            {
+                ReturnMatchState(ms);
+            }
         }
 
         private static DynValue gmatch_aux_2(
@@ -825,12 +900,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             string s = ArgAsType(l, 1, DataType.String, false).String;
             string p = PatchPattern(ArgAsType(l, 2, DataType.String, false).String);
 
+            // Lua 5.4 added optional 'init' parameter (§6.4.1)
+            uint startPos = 0;
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                l.ExecutionContext.Script.CompatibilityVersion
+            );
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                // Get init parameter (default 1 in Lua terms = position 0 in C# terms)
+                ptrdiff_t init = Posrelat(LuaLOptInteger(l, 3, 1), (uint)s.Length) - 1;
+                if (init < 0)
+                {
+                    init = 0;
+                }
+                else if (init > s.Length)
+                {
+                    init = s.Length;
+                }
+                startPos = (uint)init;
+            }
+            // For Lua 5.1-5.3, the third argument is ignored (always starts at position 0)
+
             c.AdditionalData = new GMatchAuxData()
             {
                 s = new CharPtr(s),
                 p = new CharPtr(p),
                 ls = (uint)s.Length,
-                pos = 0,
+                pos = startPos,
             };
 
             l.Push(DynValue.NewCallback(c));
@@ -865,7 +961,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                     {
                         if (news[i] != L_ESC)
                         {
-                            LuaLError(ms.l, "invalid use of '%' in replacement string");
+                            // Lua 5.2+ rejects invalid % escapes; Lua 5.1 treats them as literal chars
+                            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                                ms.l.ExecutionContext.Script.CompatibilityVersion
+                            );
+                            if (version >= LuaCompatibilityVersion.Lua52)
+                            {
+                                LuaLError(ms.l, "invalid use of '%' in replacement string");
+                            }
                         }
                         LuaLAddChar(b, news[i]);
                     }
@@ -935,59 +1038,66 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                 anchor = 1;
             }
             int n = 0;
-            MatchState ms = new();
-            LuaLBuffer b = new(l);
-            LuaLArgCheck(
-                l,
-                tr == LuaTypeNumber
-                    || tr == LuaTypeString
-                    || tr == LuaTypeFunction
-                    || tr == LuaTypeTable
-                    || tr == LuaTypeUserData,
-                3,
-                "string/function/table expected"
-            );
-            LuaLBuffInit(l, b);
-            ms.l = l;
-            ms.matchdepth = MAXCCALLS;
-            ms.srcInit = src;
-            ms.srcEnd = src + srcl;
-            while (n < maxS)
+            MatchState ms = RentMatchState();
+            try
             {
-                CharPtr e;
-                ms.level = 0;
-                //LuaAssert(ms.matchdepth == MAXCCALLS);
+                LuaLBuffer b = new(l);
+                LuaLArgCheck(
+                    l,
+                    tr == LuaTypeNumber
+                        || tr == LuaTypeString
+                        || tr == LuaTypeFunction
+                        || tr == LuaTypeTable
+                        || tr == LuaTypeUserData,
+                    3,
+                    "string/function/table expected"
+                );
+                LuaLBuffInit(l, b);
+                ms.l = l;
                 ms.matchdepth = MAXCCALLS;
-                e = Match(ms, src, p);
-                if (e != null)
+                ms.srcInit = src;
+                ms.srcEnd = src + srcl;
+                while (n < maxS)
                 {
-                    n++;
-                    add_value(ms, b, src, e);
-                }
-                if ((e != null) && e > src) /* non empty match? */
-                {
-                    src = e; /* skip it */
-                }
-                else if (src < ms.srcEnd)
-                {
-                    char c = src[0];
-                    src = src.Next();
-                    LuaLAddChar(b, c);
-                }
-                else
-                {
-                    break;
-                }
+                    CharPtr e;
+                    ms.level = 0;
+                    //LuaAssert(ms.matchdepth == MAXCCALLS);
+                    ms.matchdepth = MAXCCALLS;
+                    e = Match(ms, src, p);
+                    if (!e.IsNull)
+                    {
+                        n++;
+                        add_value(ms, b, src, e);
+                    }
+                    if ((!e.IsNull) && e > src) /* non empty match? */
+                    {
+                        src = e; /* skip it */
+                    }
+                    else if (src < ms.srcEnd)
+                    {
+                        char c = src[0];
+                        src = src.Next();
+                        LuaLAddChar(b, c);
+                    }
+                    else
+                    {
+                        break;
+                    }
 
-                if (anchor != 0)
-                {
-                    break;
+                    if (anchor != 0)
+                    {
+                        break;
+                    }
                 }
+                LuaLAddLString(b, src, (uint)(ms.srcEnd - src));
+                LuaLPushResult(b);
+                LuaPushInteger(l, n); /* number of substitutions */
+                return 2;
             }
-            LuaLAddLString(b, src, (uint)(ms.srcEnd - src));
-            LuaLPushResult(b);
-            LuaPushInteger(l, n); /* number of substitutions */
-            return 2;
+            finally
+            {
+                ReturnMatchState(ms);
+            }
         }
 
         /* }====================================================== */
@@ -998,12 +1108,376 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
         /* valid flags in a format specification */
         public const string FLAGS = "-+ #0";
 
+        /// <summary>
+        /// Formats a double as a hexadecimal floating-point string per Lua's %a/%A specifier.
+        /// Format: [-]0xh.hhhhp±d where h.hhhh is the significand in hexadecimal
+        /// and p±d is the exponent as a signed decimal.
+        /// </summary>
+        /// <param name="value">The double value to format.</param>
+        /// <param name="precision">The number of hex digits after the decimal point (-1 for default).</param>
+        /// <param name="uppercase">True for %A (uppercase hex), false for %a (lowercase).</param>
+        /// <param name="flags">Format flags parsed from the format string.</param>
+        /// <param name="width">Minimum field width (-1 if not specified).</param>
+        /// <returns>The formatted hex float string.</returns>
+        private static string FormatHexFloat(
+            double value,
+            int precision,
+            bool uppercase,
+            string flags,
+            int width
+        )
+        {
+            // Handle special cases first
+            if (double.IsNaN(value))
+            {
+                string nanStr = uppercase ? "-NAN" : "-nan";
+                return ApplyFieldWidth(nanStr, width, flags);
+            }
+
+            if (double.IsPositiveInfinity(value))
+            {
+                string infStr = uppercase ? "INF" : "inf";
+                string prefix = GetSignPrefix(false, flags);
+                return ApplyFieldWidth(prefix + infStr, width, flags);
+            }
+
+            if (double.IsNegativeInfinity(value))
+            {
+                string infStr = uppercase ? "-INF" : "-inf";
+                return ApplyFieldWidth(infStr, width, flags);
+            }
+
+            bool negative = value < 0 || (value == 0 && double.IsNegativeInfinity(1.0 / value));
+            double absValue = Math.Abs(value);
+
+            // Handle zero specially
+            if (absValue == 0)
+            {
+                string zeroResult = FormatHexFloatZero(negative, precision, uppercase, flags);
+                return ApplyFieldWidth(zeroResult, width, flags);
+            }
+
+            // Extract mantissa and exponent using IEEE 754 representation
+            long bits = BitConverter.DoubleToInt64Bits(absValue);
+            int rawExponent = (int)((bits >> 52) & 0x7FF);
+            long mantissa = bits & 0xFFFFFFFFFFFFF; // 52-bit mantissa
+
+            int exponent;
+            long significand;
+
+            if (rawExponent == 0)
+            {
+                // Denormalized number: implicit leading bit is 0
+                // Find the actual exponent by normalizing
+                exponent = -1022;
+                significand = mantissa;
+
+                // Normalize the significand
+                while ((significand & (1L << 52)) == 0 && significand != 0)
+                {
+                    significand <<= 1;
+                    exponent--;
+                }
+            }
+            else
+            {
+                // Normalized number: implicit leading bit is 1
+                exponent = rawExponent - 1023;
+                significand = mantissa | (1L << 52); // Add implicit leading 1
+            }
+
+            // Build the result
+            string hexChars = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
+            string expChar = uppercase ? "P" : "p";
+            string hexPrefix = uppercase ? "0X" : "0x";
+
+            // The significand has 53 bits (52 mantissa + 1 implicit)
+            // We output it as 1.xxxxx where xxxxx is the fractional part in hex
+            // The high nibble of the integral part is always 1 for normalized numbers
+
+            // Get the integer part (always 1 for normalized, 0 for denormalized with leading zeros)
+            int intPart;
+            long fracBits;
+
+            if (rawExponent == 0 && mantissa != 0)
+            {
+                // Denormalized: find the leading 1 bit
+                intPart = 0;
+                fracBits = mantissa;
+
+                // Shift until we have a leading 1
+                int shift = 0;
+                while ((fracBits & (1L << 51)) == 0 && fracBits != 0)
+                {
+                    fracBits <<= 1;
+                    shift++;
+                }
+
+                if (fracBits != 0)
+                {
+                    intPart = 1;
+                    fracBits = (fracBits << 1) & 0xFFFFFFFFFFFFF; // Remove the leading 1
+                    exponent = -1022 - shift - 1;
+                }
+            }
+            else
+            {
+                intPart = 1;
+                fracBits = mantissa;
+            }
+
+            // Build the fractional hex digits (13 hex digits = 52 bits)
+            char[] fracDigits = new char[13];
+            long tempFrac = fracBits;
+            for (int i = 0; i < 13; i++)
+            {
+                int nibble = (int)((tempFrac >> (48 - i * 4)) & 0xF);
+                fracDigits[i] = hexChars[nibble];
+            }
+
+            // Apply precision
+            string fracPart;
+            if (precision < 0)
+            {
+                // Default: strip trailing zeros
+                int lastNonZero = 12;
+                while (lastNonZero >= 0 && fracDigits[lastNonZero] == '0')
+                {
+                    lastNonZero--;
+                }
+
+                fracPart = lastNonZero >= 0 ? new string(fracDigits, 0, lastNonZero + 1) : "";
+            }
+            else if (precision == 0)
+            {
+                fracPart = "";
+            }
+            else
+            {
+                // Round and truncate to specified precision
+                if (precision < 13)
+                {
+                    // Check if we need to round
+                    int nextNibble = (int)((fracBits >> (48 - precision * 4)) & 0xF);
+                    bool roundUp = nextNibble >= 8;
+
+                    if (roundUp)
+                    {
+                        // Perform rounding by adding 1 to the last digit we keep
+                        long roundMask = 1L << (52 - precision * 4);
+                        fracBits += roundMask;
+
+                        // Check for overflow into integer part
+                        if ((fracBits & (1L << 52)) != 0)
+                        {
+                            intPart++;
+                            fracBits &= 0xFFFFFFFFFFFFF;
+                            if (intPart > 1)
+                            {
+                                intPart = 1;
+                                exponent++;
+                            }
+                        }
+
+                        // Recalculate fractional digits
+                        tempFrac = fracBits;
+                        for (int i = 0; i < precision; i++)
+                        {
+                            int nibble = (int)((tempFrac >> (48 - i * 4)) & 0xF);
+                            fracDigits[i] = hexChars[nibble];
+                        }
+                    }
+
+                    fracPart = new string(fracDigits, 0, precision);
+                }
+                else
+                {
+                    // Pad with zeros if precision > 13
+                    fracPart = new string(fracDigits) + new string('0', precision - 13);
+                }
+            }
+
+            // Check for '#' flag (alternate form) - always include decimal point
+            bool alternateForm = flags.Contains('#', StringComparison.Ordinal);
+
+            string signStr = negative ? "-" : GetSignPrefix(false, flags);
+            string intStr = hexChars[intPart].ToString();
+            string expSign = exponent >= 0 ? "+" : "";
+            string expStr = exponent.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            string result;
+            if (string.IsNullOrEmpty(fracPart) && !alternateForm)
+            {
+                result = signStr + hexPrefix + intStr + expChar + expSign + expStr;
+            }
+            else
+            {
+                result = signStr + hexPrefix + intStr + "." + fracPart + expChar + expSign + expStr;
+            }
+
+            return ApplyFieldWidth(result, width, flags);
+        }
+
+        /// <summary>
+        /// Formats a zero value in hex float format.
+        /// </summary>
+        private static string FormatHexFloatZero(
+            bool negative,
+            int precision,
+            bool uppercase,
+            string flags
+        )
+        {
+            string hexPrefix = uppercase ? "0X" : "0x";
+            string expChar = uppercase ? "P" : "p";
+            string signStr = negative ? "-" : GetSignPrefix(false, flags);
+            bool alternateForm = flags.Contains('#', StringComparison.Ordinal);
+
+            string fracPart;
+            if (precision < 0)
+            {
+                fracPart = "";
+            }
+            else if (precision == 0)
+            {
+                fracPart = "";
+            }
+            else
+            {
+                fracPart = new string('0', precision);
+            }
+
+            if (string.IsNullOrEmpty(fracPart) && !alternateForm)
+            {
+                return signStr + hexPrefix + "0" + expChar + "+0";
+            }
+            else
+            {
+                return signStr + hexPrefix + "0." + fracPart + expChar + "+0";
+            }
+        }
+
+        /// <summary>
+        /// Gets the sign prefix based on flags ('+' or ' ' for positive numbers).
+        /// </summary>
+        private static string GetSignPrefix(bool negative, string flags)
+        {
+            if (negative)
+            {
+                return "-";
+            }
+
+            if (flags.Contains('+', StringComparison.Ordinal))
+            {
+                return "+";
+            }
+
+            if (flags.Contains(' ', StringComparison.Ordinal))
+            {
+                return " ";
+            }
+
+            return "";
+        }
+
+        /// <summary>
+        /// Applies field width to a formatted string with padding.
+        /// </summary>
+        private static string ApplyFieldWidth(string value, int width, string flags)
+        {
+            if (width <= 0 || value.Length >= width)
+            {
+                return value;
+            }
+
+            bool leftAlign = flags.Contains('-', StringComparison.Ordinal);
+            bool zeroPad = flags.Contains('0', StringComparison.Ordinal) && !leftAlign;
+
+            int padCount = width - value.Length;
+
+            if (leftAlign)
+            {
+                return value + new string(' ', padCount);
+            }
+
+            if (zeroPad)
+            {
+                // For zero padding, we need to insert zeros after the sign and 0x prefix
+                int insertPos = 0;
+
+                // Skip sign
+                if (value.Length > 0 && (value[0] == '-' || value[0] == '+' || value[0] == ' '))
+                {
+                    insertPos = 1;
+                }
+
+                // Skip 0x/0X prefix
+                if (
+                    value.Length > insertPos + 1
+                    && value[insertPos] == '0'
+                    && (value[insertPos + 1] == 'x' || value[insertPos + 1] == 'X')
+                )
+                {
+                    insertPos += 2;
+                }
+
+                return value.Substring(0, insertPos)
+                    + new string('0', padCount)
+                    + value.Substring(insertPos);
+            }
+
+            return new string(' ', padCount) + value;
+        }
+
         /*
         ** maximum size of each format specification (such as '%-099.99d')
         ** (+10 accounts for %99.99x plus margin of error)
         */
         public static readonly int MaxFormat =
             (FLAGS.Length + 1) + (LuaIntegerFormatLength.Length + 1) + 10;
+
+        // Pre-computed escape sequences for characters 0-15 to avoid allocations in Addquoted
+        // These are the 3-digit versions (e.g., "\000", "\001", ..., "\015") for when followed by a digit
+        private static readonly string[] EscapeSequences3Digit =
+        {
+            "\\000",
+            "\\001",
+            "\\002",
+            "\\003",
+            "\\004",
+            "\\005",
+            "\\006",
+            "\\007",
+            "\\008",
+            "\\009",
+            "\\010",
+            "\\011",
+            "\\012",
+            "\\013",
+            "\\014",
+            "\\015",
+        };
+
+        // These are the minimal versions (e.g., "\0", "\1", ..., "\15") for when not followed by a digit
+        private static readonly string[] EscapeSequencesMinimal =
+        {
+            "\\0",
+            "\\1",
+            "\\2",
+            "\\3",
+            "\\4",
+            "\\5",
+            "\\6",
+            "\\7",
+            "\\8",
+            "\\9",
+            "\\10",
+            "\\11",
+            "\\12",
+            "\\13",
+            "\\14",
+            "\\15",
+        };
 
         private static void Addquoted(LuaState l, LuaLBuffer b, int arg)
         {
@@ -1030,23 +1504,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                     {
                         if (s[0] < (char)16)
                         {
-                            bool isfollowedbynum = false;
+                            int charValue = (int)s[0];
+                            bool isfollowedbynum = length >= 1 && char.IsNumber(s[1]);
 
-                            if (length >= 1)
-                            {
-                                if (char.IsNumber(s[1]))
-                                {
-                                    isfollowedbynum = true;
-                                }
-                            }
-
+                            // Use pre-computed escape sequences to avoid string allocations
                             if (isfollowedbynum)
                             {
-                                LuaLAddString(b, $"\\{(int)s[0]:000}");
+                                LuaLAddString(b, EscapeSequences3Digit[charValue]);
                             }
                             else
                             {
-                                LuaLAddString(b, $"\\{(int)s[0]}");
+                                LuaLAddString(b, EscapeSequencesMinimal[charValue]);
                             }
                         }
                         else
@@ -1064,7 +1532,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
         private static CharPtr Scanformat(LuaState l, CharPtr strfrmt, CharPtr form)
         {
             CharPtr p = strfrmt;
-            while (p[0] != '\0' && StringFindCharacter(FLAGS, p[0]) != null)
+            while (p[0] != '\0' && !StringFindCharacter(FLAGS, p[0]).IsNull)
             {
                 p = p.Next(); /* skip flags */
             }
@@ -1134,6 +1602,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             );
             bool supportsIntegerPrecision = version >= LuaCompatibilityVersion.Lua53;
 
+            // Get cached thread-local buffers to avoid allocations
+            // These are reused across all str_format calls on this thread
+            GetFormatBuffers(out char[] formBuffer, out char[] buffBuffer);
+
             while (strfrmt < strfrmtEnd)
             {
                 if (strfrmt[0] != L_ESC)
@@ -1149,8 +1621,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                 else
                 { /* format item */
                     strfrmt = strfrmt.Next();
-                    CharPtr form = new char[MaxFormat]; /* to store the format (`%...') */
-                    CharPtr buff = new char[MAX_ITEM]; /* to store the formatted item */
+                    // Reuse pre-allocated buffers (wrap as CharPtr pointing to index 0)
+                    CharPtr form = new CharPtr(formBuffer, 0);
+                    CharPtr buff = new CharPtr(buffBuffer, 0);
                     if (++arg > top)
                     {
                         LuaLArgError(l, arg, "no value");
@@ -1207,7 +1680,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                                     form,
                                     num.IsInteger
                                         ? (UNSIGNED_LUA_INTFRM_T)(ulong)num.AsInteger
-                                        : (UNSIGNED_LUA_INTFRM_T)num.ToDouble
+                                        : (UNSIGNED_LUA_INTFRM_T)(long)num.ToDouble
                                 );
                             }
                             else
@@ -1215,7 +1688,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                                 StringFormat(
                                     buff,
                                     form,
-                                    (UNSIGNED_LUA_INTFRM_T)LuaLCheckNumber(l, arg)
+                                    (UNSIGNED_LUA_INTFRM_T)(LUA_INTFRM_T)LuaLCheckNumber(l, arg)
                                 );
                             }
                             break;
@@ -1229,6 +1702,94 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                             StringFormat(buff, form, (double)LuaLCheckNumber(l, arg));
                             break;
                         }
+                        case 'a':
+                        case 'A':
+                        {
+                            // Hex float format specifier - only available in Lua 5.2+
+                            if (version < LuaCompatibilityVersion.Lua52)
+                            {
+                                return LuaLError(
+                                    l,
+                                    "invalid option "
+                                        + LuaQuoteLiteral("%" + ch)
+                                        + " to "
+                                        + LuaQuoteLiteral("format"),
+                                    strfrmt[-1]
+                                );
+                            }
+
+                            double value = (double)LuaLCheckNumber(l, arg);
+                            bool uppercase = (ch == 'A');
+
+                            // Parse flags and precision from the format string
+                            string formStr = form.ToString();
+                            string flags = "";
+                            int width = -1;
+                            int precision = -1;
+
+                            // Parse the format string to extract flags, width, and precision
+                            // Format is like: %[-+ #0][width][.precision]a
+                            int pos = 1; // Skip the '%'
+                            while (
+                                pos < formStr.Length - 1
+                                && FLAGS.Contains(formStr[pos], StringComparison.Ordinal)
+                            )
+                            {
+                                flags += formStr[pos];
+                                pos++;
+                            }
+
+                            // Parse width
+                            int widthStart = pos;
+                            while (pos < formStr.Length - 1 && char.IsDigit(formStr[pos]))
+                            {
+                                pos++;
+                            }
+                            if (pos > widthStart)
+                            {
+                                width = int.Parse(
+                                    formStr.Substring(widthStart, pos - widthStart),
+                                    System.Globalization.CultureInfo.InvariantCulture
+                                );
+                            }
+
+                            // Parse precision
+                            if (pos < formStr.Length - 1 && formStr[pos] == '.')
+                            {
+                                pos++;
+                                int precStart = pos;
+                                while (pos < formStr.Length - 1 && char.IsDigit(formStr[pos]))
+                                {
+                                    pos++;
+                                }
+                                if (pos > precStart)
+                                {
+                                    precision = int.Parse(
+                                        formStr.Substring(precStart, pos - precStart),
+                                        System.Globalization.CultureInfo.InvariantCulture
+                                    );
+                                }
+                                else
+                                {
+                                    precision = 0; // "%.a" means precision of 0
+                                }
+                            }
+
+                            string hexFloatStr = FormatHexFloat(
+                                value,
+                                precision,
+                                uppercase,
+                                flags,
+                                width
+                            );
+                            // Copy result to buff
+                            for (int i = 0; i < hexFloatStr.Length && i < MAX_ITEM - 1; i++)
+                            {
+                                buff[i] = hexFloatStr[i];
+                            }
+                            buff[Math.Min(hexFloatStr.Length, MAX_ITEM - 1)] = '\0';
+                            break;
+                        }
                         case 'q':
                         {
                             Addquoted(l, b, arg);
@@ -1236,12 +1797,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
                         }
                         case 's':
                         {
-                            CharPtr s = LuaLCheckLString(l, arg, out uint localLength);
-                            if ((StringFindCharacter(form, '.') == null) && localLength >= 100)
+                            // Lua 5.2+ converts non-string values via tostring
+                            // Lua 5.1 requires string type
+                            DynValue argValue = GetArgument(l, arg);
+                            string s;
+                            if (argValue.Type == DataType.String)
+                            {
+                                s = argValue.String;
+                            }
+                            else if (version >= LuaCompatibilityVersion.Lua52)
+                            {
+                                // Lua 5.2+ coerces to string via tostring()
+                                s = argValue.ToPrintString(version);
+                            }
+                            else
+                            {
+                                // Lua 5.1 coerces numbers to strings, but rejects other types
+                                // ArgAsType returns a NEW DynValue with the converted string
+                                // when AutoConvert is enabled (which is the default).
+                                // For non-convertible types (table, function, etc.), it throws.
+                                DynValue converted = ArgAsType(l, arg, DataType.String, false);
+                                s = converted.String;
+                            }
+
+                            uint localLength = (uint)s.Length;
+                            if ((StringFindCharacter(form, '.').IsNull) && localLength >= 100)
                             {
                                 /* no precision and string is too long to be formatted;
                                    keep original string */
-                                LuaPushValue(l, arg);
+                                LuaPushLiteral(l, s);
                                 LuaLAddValue(b);
                                 continue; /* skip the `addsize' at the end */
                             }

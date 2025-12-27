@@ -3,28 +3,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
+    using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class StringModuleTUnitTests
     {
-        [global::TUnit.Core.Test]
-        public async Task CharProducesStringFromByteValues()
+        [Test]
+        [AllLuaVersions]
+        public async Task CharProducesStringFromByteValues(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char(65, 66, 67)");
 
             await Assert.That(result.String).IsEqualTo("ABC").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task CharThrowsWhenArgumentCannotBeCoerced()
+        [Test]
+        [AllLuaVersions]
+        public async Task CharThrowsWhenArgumentCannotBeCoerced(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.char(\"not-a-number\")")
@@ -33,39 +37,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task CharReturnsNullByteForZero()
+        [Test]
+        [AllLuaVersions]
+        public async Task CharReturnsNullByteForZero(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char(0)");
 
             await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task CharReturnsMaxByteValue()
+        [Test]
+        [AllLuaVersions]
+        public async Task CharReturnsMaxByteValue(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char(255)");
 
             await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(result.String[0]).IsEqualTo((char)255).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task CharReturnsEmptyStringWhenNoArgumentsProvided()
+        [Test]
+        [AllLuaVersions]
+        public async Task CharReturnsEmptyStringWhenNoArgumentsProvided(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char()");
 
             await Assert.That(result.String).IsEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task CharErrorsOnValuesOutsideByteRange()
+        [Test]
+        [AllLuaVersions]
+        public async Task CharErrorsOnValuesOutsideByteRange(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.char(-1, 256)")
@@ -77,10 +87,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task CharAcceptsIntegralFloatValues()
+        [Test]
+        [AllLuaVersions]
+        public async Task CharAcceptsIntegralFloatValues(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char(65.0)");
 
             await Assert.That(result.String).IsEqualTo("A").ConfigureAwait(false);
@@ -90,14 +101,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.1/5.2: Float truncation (tested in CharTruncatesFloatValuesLua51And52)
         // Lua 5.3+: Throws error (tested in CharErrorsOnNonIntegerFloatLua53Plus)
 
-        [global::TUnit.Core.Test]
-        [Arguments(-1, "negative value")]
-        [Arguments(256, "value above 255")]
-        [Arguments(300, "value well above 255")]
-        [Arguments(-100, "large negative value")]
-        public async Task CharErrorsOnOutOfRangeValue(int value, string description)
+        [Test]
+        [LuaTestMatrix(
+            new object[] { -1, "negative value" },
+            new object[] { 256, "value above 255" },
+            new object[] { 300, "value well above 255" },
+            new object[] { -100, "large negative value" }
+        )]
+        public async Task CharErrorsOnOutOfRangeValue(
+            LuaCompatibilityVersion version,
+            int value,
+            string description
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString($"return string.char({value})")
@@ -110,14 +127,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(0, '\0', "zero produces null byte")]
-        [Arguments(255, (char)255, "255 produces max byte")]
-        [Arguments(1, (char)1, "one produces SOH")]
-        [Arguments(127, (char)127, "127 produces DEL")]
-        public async Task CharAcceptsBoundaryValues(int value, char expected, string description)
+        [Test]
+        [LuaTestMatrix(
+            new object[] { 0, '\0', "zero produces null byte" },
+            new object[] { 255, (char)255, "255 produces max byte" },
+            new object[] { 1, (char)1, "one produces SOH" },
+            new object[] { 127, (char)127, "127 produces DEL" }
+        )]
+        public async Task CharAcceptsBoundaryValues(
+            LuaCompatibilityVersion version,
+            int value,
+            char expected,
+            string description
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString($"return string.char({value})");
 
             await Assert
@@ -127,37 +151,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task LenReturnsStringLength()
+        [Test]
+        [AllLuaVersions]
+        public async Task LenReturnsStringLength(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.len('Nova')");
 
             await Assert.That(result.Number).IsEqualTo(4d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task LowerReturnsLowercaseString()
+        [Test]
+        [AllLuaVersions]
+        public async Task LowerReturnsLowercaseString(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.lower('NovaSharp')");
 
             await Assert.That(result.String).IsEqualTo("novasharp").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task UpperReturnsUppercaseString()
+        [Test]
+        [AllLuaVersions]
+        public async Task UpperReturnsUppercaseString(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.upper('NovaSharp')");
 
             await Assert.That(result.String).IsEqualTo("NOVASHARP").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ByteReturnsByteCodesForSubstring()
+        [Test]
+        [AllLuaVersions]
+        public async Task ByteReturnsByteCodesForSubstring(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local codes = {string.byte('Lua', 1, 3)}
@@ -172,55 +200,61 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[3].Number).IsEqualTo(97d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ByteDefaultsToFirstCharacter()
+        [Test]
+        [AllLuaVersions]
+        public async Task ByteDefaultsToFirstCharacter(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('Lua')");
 
             await Assert.That(result.Number).IsEqualTo(76d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ByteSupportsNegativeIndices()
+        [Test]
+        [AllLuaVersions]
+        public async Task ByteSupportsNegativeIndices(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('Lua', -1)");
 
             await Assert.That(result.Number).IsEqualTo(97d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ByteReturnsNilWhenIndexPastEnd()
+        [Test]
+        [AllLuaVersions]
+        public async Task ByteReturnsNilWhenIndexPastEnd(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('Lua', 4)");
 
             await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ByteReturnsNilWhenStartExceedsEnd()
+        [Test]
+        [AllLuaVersions]
+        public async Task ByteReturnsNilWhenStartExceedsEnd(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('Lua', 3, 2)");
 
             await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ByteReturnsNilForEmptySource()
+        [Test]
+        [AllLuaVersions]
+        public async Task ByteReturnsNilForEmptySource(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('', 1)");
 
             await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ByteAcceptsIntegralFloatIndices()
+        [Test]
+        [AllLuaVersions]
+        public async Task ByteAcceptsIntegralFloatIndices(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('Lua', 1.0)");
 
             await Assert.That(result.Number).IsEqualTo(76d).ConfigureAwait(false);
@@ -230,12 +264,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.1/5.2: Silently truncates via floor (tested below)
         // Lua 5.3+: Throws "number has no integer representation" (tested below)
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task ByteTruncatesFloatIndicesLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('Lua', 1.5)");
 
             await Assert
@@ -245,14 +278,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteErrorsOnNonIntegerIndexLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.byte('Lua', 1.5)")
@@ -265,14 +295,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteErrorsOnNaNIndexLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.byte('Lua', 0/0)")
@@ -285,14 +312,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteErrorsOnInfinityIndexLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.byte('Lua', 1/0)")
@@ -305,12 +329,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task ByteReturnsNilForNaNIndexLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('Lua', 0/0)");
 
             // NaN floored is still NaN, which when cast to int produces invalid index
@@ -321,14 +344,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task ByteNegativeFractionalIndexUsesFloorLua51And52(
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             // -0.5 floored is -1, which means "last character" in Lua
             DynValue result = script.DoString("return string.byte('Lua', -0.5)");
 
@@ -340,15 +362,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteAcceptsLargeIntegerIndexLua53Plus(LuaCompatibilityVersion version)
         {
             // Large integer beyond double precision (2^53+1) but stored as integer is valid
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('a', 9007199254740993)");
 
             // Index 2^53+1 is way beyond string length, should return nil
@@ -361,15 +380,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteAcceptsMathMaxIntegerIndexLua53Plus(LuaCompatibilityVersion version)
         {
             // math.maxinteger (2^63-1) is valid when stored as integer
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('a', math.maxinteger)");
 
             // Index is way beyond string length, should return nil
@@ -380,15 +396,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteErrorsOnLargeFloatIndexLua53Plus(LuaCompatibilityVersion version)
         {
             // 1e308 is a valid float but cannot be converted to integer
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.byte('a', 1e308)")
@@ -401,15 +414,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteAcceptsWholeNumberFloatIndexLua53Plus(LuaCompatibilityVersion version)
         {
             // 5.0 is a float with exact integer representation
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('hello', 5.0)");
 
             // 'o' is ASCII 111
@@ -420,11 +430,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task ByteDistinguishesIntegerVsFloatForLargeValuesLua53Plus(
             LuaCompatibilityVersion version
         )
@@ -434,7 +441,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // - 9007199254740993 + 0.0 as float loses precision and may fail validation
             // In Lua 5.4, converting to float and back changes the value, so the float
             // version would round to 9007199254740992, which IS representable
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // Integer version should work
             DynValue intResult = script.DoString(
@@ -457,10 +464,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task UnicodeReturnsFullUnicodeCodePoints()
+        [Test]
+        [AllLuaVersions]
+        public async Task UnicodeReturnsFullUnicodeCodePoints(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local codes = {string.unicode('\u{0100}')}
@@ -473,21 +481,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].Number).IsEqualTo(256d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task RepSupportsSeparatorsAndZeroCount()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task RepSupportsSeparatorsLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            // The separator parameter was added in Lua 5.2
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue repeated = script.DoString("return string.rep('ab', 3, '-')");
-            DynValue zeroCount = script.DoString("return string.rep('ab', 0)");
 
             await Assert.That(repeated.String).IsEqualTo("ab-ab-ab").ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
+        public async Task RepIgnoresSeparatorInLua51(LuaCompatibilityVersion version)
+        {
+            // Lua 5.1 doesn't support the separator parameter - it's ignored
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue repeated = script.DoString("return string.rep('ab', 3, '-')");
+
+            await Assert.That(repeated.String).IsEqualTo("ababab").ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
+        public async Task RepSupportsZeroCount(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue zeroCount = script.DoString("return string.rep('ab', 0)");
+
             await Assert.That(zeroCount.String).IsEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FindReturnsMatchBoundaries()
+        [Test]
+        [AllLuaVersions]
+        public async Task FindReturnsMatchBoundaries(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local startIndex, endIndex = string.find('NovaSharp', 'Sharp')
@@ -500,10 +530,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].Number).IsEqualTo(9d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task MatchReturnsFirstCapture()
+        [Test]
+        [AllLuaVersions]
+        public async Task MatchReturnsFirstCapture(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 "return string.match('Version: 1.2.3', '%d+%.%d+%.%d+')"
             );
@@ -511,19 +542,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("1.2.3").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ReverseReturnsEmptyStringForEmptyInput()
+        [Test]
+        [AllLuaVersions]
+        public async Task ReverseReturnsEmptyStringForEmptyInput(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.reverse('')");
 
             await Assert.That(result.String).IsEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task GSubAppliesGlobalReplacement()
+        [Test]
+        [AllLuaVersions]
+        public async Task GSubAppliesGlobalReplacement(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local replaced, count = string.gsub('foo bar foo', 'foo', 'baz')
@@ -539,10 +572,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].Number).IsEqualTo(2d).ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task SubHandlesNegativeIndices()
+        [Test]
+        [AllLuaVersions]
+        public async Task SubHandlesNegativeIndices(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.sub('NovaSharp', -5, -2)");
 
             await Assert.That(result.String).IsEqualTo("Shar").ConfigureAwait(false);
@@ -552,12 +586,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.1/5.2: Silently truncates via floor
         // Lua 5.3+: Throws "number has no integer representation"
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task SubTruncatesFloatIndicesLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.sub('Lua', 1.5, 3)");
 
             await Assert
@@ -567,14 +600,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task SubErrorsOnNonIntegerIndexLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.sub('Lua', 1.5, 3)")
@@ -591,12 +621,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.1/5.2: Silently truncates via floor
         // Lua 5.3+: Throws "number has no integer representation"
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task RepTruncatesFloatCountLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.rep('a', 2.5)");
 
             await Assert
@@ -606,14 +635,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
-        [Arguments(LuaCompatibilityVersion.Latest)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task RepErrorsOnNonIntegerCountLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.rep('a', 2.5)")
@@ -626,19 +652,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatInterpolatesValues()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatInterpolatesValues(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('Value: %0.2f', 3.14159)");
 
             await Assert.That(result.String).IsEqualTo("Value: 3.14").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task StartsWithEndsWithContainsTreatNilAsFalse()
+        [Test]
+        [AllLuaVersions]
+        public async Task StartsWithEndsWithContainsTreatNilAsFalse(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 return string.startswith(nil, 'prefix'),
@@ -653,10 +681,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[2].Boolean).IsFalse().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task StartsWithEndsWithContainsReturnTrueWhenMatchesPresent()
+        [Test]
+        [AllLuaVersions]
+        public async Task StartsWithEndsWithContainsReturnTrueWhenMatchesPresent(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 return string.startswith('NovaSharp', 'Nova'),
@@ -671,10 +702,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task DumpPrependsNovaSharpBase64Header()
+        [Test]
+        [AllLuaVersions]
+        public async Task DumpPrependsNovaSharpBase64Header(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local function increment(x) return x + 1 end
@@ -688,10 +720,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task GMatchIteratesOverMatches()
+        [Test]
+        [AllLuaVersions]
+        public async Task GMatchIteratesOverMatches(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local iter = string.gmatch('one two', '%w+')
@@ -704,10 +737,116 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].String).IsEqualTo("two").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task DumpWrapsClrFunctionFailuresWithScriptRuntimeException()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task GMatchWithInitParameterStartsAtSpecifiedPosition(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            // Lua 5.4+ supports optional init parameter for string.gmatch
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                for m in string.gmatch('abc def ghi', '%w+', 5) do
+                    results[#results + 1] = m
+                end
+                return table.concat(results, ',')
+                "
+            );
+
+            // Starting at position 5 should skip 'abc ' and start at 'def'
+            await Assert.That(result.String).IsEqualTo("def,ghi").ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task GMatchIgnoresInitParameterInLuaBelow54(LuaCompatibilityVersion version)
+        {
+            // Lua 5.1-5.3 ignore the third argument to string.gmatch
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                for m in string.gmatch('abc def ghi', '%w+', 5) do
+                    results[#results + 1] = m
+                end
+                return table.concat(results, ',')
+                "
+            );
+
+            // In Lua 5.1-5.3, the init parameter is ignored - starts from beginning
+            await Assert.That(result.String).IsEqualTo("abc,def,ghi").ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task GMatchWithNegativeInitStartsFromEnd(LuaCompatibilityVersion version)
+        {
+            // Negative init means offset from end of string (Lua 5.4+)
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                -- 'abc def ghi' has length 11, init=-3 means start at position 9 (the 'g' in 'ghi')
+                for m in string.gmatch('abc def ghi', '%w+', -3) do
+                    results[#results + 1] = m
+                end
+                return table.concat(results, ',')
+                "
+            );
+
+            // Starting at -3 from end should only match 'ghi'
+            await Assert.That(result.String).IsEqualTo("ghi").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GMatchWithInitAtExactWordBoundary()
+        {
+            // Test init parameter at exact word boundary in Lua 5.4
+            Script script = new Script(LuaCompatibilityVersion.Lua54, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                -- 'hello world' - 'world' starts at position 7
+                for m in string.gmatch('hello world', '%w+', 7) do
+                    results[#results + 1] = m
+                end
+                return table.concat(results, ',')
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("world").ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task GMatchWithInitBeyondStringLengthReturnsNoMatches(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Test init parameter beyond string length in Lua 5.4+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local count = 0
+                for m in string.gmatch('abc', '%w+', 100) do
+                    count = count + 1
+                end
+                return count
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
+        public async Task DumpWrapsClrFunctionFailuresWithScriptRuntimeException(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.Globals.Set("callback", DynValue.NewCallback((_, _) => DynValue.Nil));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -724,10 +863,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .IsGreaterThanOrEqualTo(0);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task NovaSharpInitRegistersStringMetatable()
+        [Test]
+        [AllLuaVersions]
+        public async Task NovaSharpInitRegistersStringMetatable(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new Script(version, CoreModulePresets.Complete);
             Table globals = script.Globals;
             Table stringTable = new(script);
             stringTable.Set("marker", DynValue.NewString("value"));
@@ -773,64 +913,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // Lua 5.3+: These values throw "number has no integer representation"
         // ========================================
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task CharHandlesNaNAsZeroLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char(0/0)");
 
             await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
-        public async Task CharHandlesPositiveInfinityAsZeroLua51And52(
-            LuaCompatibilityVersion version
-        )
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task CharErrorsOnPositiveInfinityLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
-            DynValue result = script.DoString("return string.char(1/0)");
+            // In Lua 5.1/5.2, positive infinity throws "invalid value" error
+            // (unlike NaN and negative infinity, which are silently treated as 0)
+            Script script = new Script(version, CoreModulePresets.Complete);
 
-            await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
-            await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.char(1/0)")
+            );
+
+            await Assert.That(exception.Message).Contains("invalid value").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task CharHandlesNegativeInfinityAsZeroLua51And52(
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char(-1/0)");
 
             await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task CharTruncatesFloatValuesLua51And52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char(65.5)");
 
             await Assert.That(result.String).IsEqualTo("A").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task CharErrorsOnNaNLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.char(0/0)")
@@ -842,13 +978,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task CharErrorsOnPositiveInfinityLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.char(1/0)")
@@ -860,13 +994,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task CharErrorsOnNegativeInfinityLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.char(-1/0)")
@@ -878,13 +1010,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task CharErrorsOnNonIntegerFloatLua53Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return string.char(65.5)")
@@ -896,10 +1026,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task CharAcceptsNumericStringArguments()
+        [Test]
+        [AllLuaVersions]
+        public async Task CharAcceptsNumericStringArguments(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char('65', '66')");
 
             await Assert.That(result.String).IsEqualTo("AB").ConfigureAwait(false);
@@ -909,73 +1040,81 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Octal format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatOctalBasic()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatOctalBasic(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%o', 8)");
 
             await Assert.That(result.String).IsEqualTo("10").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatOctalWithAlternateFlag()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatOctalWithAlternateFlag(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%#o', 8)");
 
             await Assert.That(result.String).IsEqualTo("010").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatOctalAlternateFlagWithZero()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatOctalAlternateFlagWithZero(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%#o', 0)");
 
             await Assert.That(result.String).IsEqualTo("0").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatOctalWithFieldWidth()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatOctalWithFieldWidth(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%8o', 8)");
 
             await Assert.That(result.String).IsEqualTo("      10").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatOctalWithZeroPadding()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatOctalWithZeroPadding(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%08o', 8)");
 
             await Assert.That(result.String).IsEqualTo("00000010").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatOctalWithLeftAlign()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatOctalWithLeftAlign(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%-8o', 8)");
 
             await Assert.That(result.String).IsEqualTo("10      ").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatOctalWithLeftAlignAndAlternate()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatOctalWithLeftAlignAndAlternate(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%-#8o', 8)");
 
             await Assert.That(result.String).IsEqualTo("010     ").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatOctalZeroPaddingWithAlternate()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatOctalZeroPaddingWithAlternate(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%#08o', 8)");
 
             await Assert.That(result.String).IsEqualTo("00000010").ConfigureAwait(false);
@@ -985,28 +1124,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Unsigned integer format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatUnsignedBasic()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatUnsignedBasic(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%u', 42)");
 
             await Assert.That(result.String).IsEqualTo("42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatUnsignedWithFieldWidth()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatUnsignedWithFieldWidth(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%8u', 42)");
 
             await Assert.That(result.String).IsEqualTo("      42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatUnsignedWithZeroPadding()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatUnsignedWithZeroPadding(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%08u', 42)");
 
             await Assert.That(result.String).IsEqualTo("00000042").ConfigureAwait(false);
@@ -1016,100 +1158,115 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Hex format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexLowercaseBasic()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexLowercaseBasic(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%x', 255)");
 
             await Assert.That(result.String).IsEqualTo("ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexUppercaseBasic()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexUppercaseBasic(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%X', 255)");
 
             await Assert.That(result.String).IsEqualTo("FF").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexWithAlternateFlagLowercase()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexWithAlternateFlagLowercase(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%#x', 255)");
 
             await Assert.That(result.String).IsEqualTo("0xff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexWithAlternateFlagUppercase()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexWithAlternateFlagUppercase(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%#X', 255)");
 
             await Assert.That(result.String).IsEqualTo("0XFF").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexWithFieldWidth()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexWithFieldWidth(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%8x', 255)");
 
             await Assert.That(result.String).IsEqualTo("      ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexWithZeroPadding()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexWithZeroPadding(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%08x', 255)");
 
             await Assert.That(result.String).IsEqualTo("000000ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexWithLeftAlign()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexWithLeftAlign(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%-8x', 255)");
 
             await Assert.That(result.String).IsEqualTo("ff      ").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexWithPrecision()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexWithPrecision(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%.4x', 255)");
 
             await Assert.That(result.String).IsEqualTo("00ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexZeroPaddingWithAlternateLowercase()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexZeroPaddingWithAlternateLowercase(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%#08x', 255)");
 
             await Assert.That(result.String).IsEqualTo("0x0000ff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexZeroPaddingWithAlternateUppercase()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexZeroPaddingWithAlternateUppercase(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%#08X', 255)");
 
             await Assert.That(result.String).IsEqualTo("0X0000FF").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexLeftAlignWithAlternate()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexLeftAlignWithAlternate(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%-#8x', 255)");
 
             await Assert.That(result.String).IsEqualTo("0xff    ").ConfigureAwait(false);
@@ -1119,65 +1276,74 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Integer format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatIntegerWithPositiveSign()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatIntegerWithPositiveSign(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%+d', 42)");
 
             await Assert.That(result.String).IsEqualTo("+42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatIntegerWithPositiveSpace()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatIntegerWithPositiveSpace(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('% d', 42)");
 
             await Assert.That(result.String).IsEqualTo(" 42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatIntegerPositiveSignOverridesSpace()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatIntegerPositiveSignOverridesSpace(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%+ d', 42)");
 
             await Assert.That(result.String).IsEqualTo("+42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatNegativeIntegerWithPositiveSign()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatNegativeIntegerWithPositiveSign(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%+d', -42)");
 
             await Assert.That(result.String).IsEqualTo("-42").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatIntegerWithZeroPaddingAndPositiveSign()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatIntegerWithZeroPaddingAndPositiveSign(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%+08d', 42)");
 
             await Assert.That(result.String).IsEqualTo("+0000042").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatNegativeIntegerWithZeroPadding()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatNegativeIntegerWithZeroPadding(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%08d', -42)");
 
             // Note: Lua counts the minus sign as part of the width
             await Assert.That(result.String).IsEqualTo("-00000042").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatLeftAlignOverridesZeroPadding()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatLeftAlignOverridesZeroPadding(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%-08d', 42)");
 
             await Assert.That(result.String).IsEqualTo("42      ").ConfigureAwait(false);
@@ -1187,19 +1353,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Float format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatFloatWithPositiveSign()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatFloatWithPositiveSign(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%+f', 3.14)");
 
             await Assert.That(result.String).StartsWith("+3.14").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatFloatWithPositiveSpace()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatFloatWithPositiveSpace(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('% f', 3.14)");
 
             await Assert.That(result.String).StartsWith(" 3.14").ConfigureAwait(false);
@@ -1209,46 +1377,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Exponent format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatExponentLowercase()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatExponentLowercase(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%e', 12345.6)");
 
             await Assert.That(result.String).Contains("e").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatExponentUppercase()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatExponentUppercase(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%E', 12345.6)");
 
             await Assert.That(result.String).Contains("E").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatGeneralLowercase()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatGeneralLowercase(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%g', 0.0001234)");
 
             await Assert.That(result.String).IsNotEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatGeneralUppercase()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatGeneralUppercase(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%G', 0.0001234)");
 
             await Assert.That(result.String).IsNotEmpty().ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatExponentWithPositiveSign()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatExponentWithPositiveSign(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%+e', 12345.6)");
 
             await Assert.That(result.String).StartsWith("+").ConfigureAwait(false);
@@ -1258,10 +1431,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Character format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatCharFromNumber()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatCharFromNumber(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%c', 65)");
 
             await Assert.That(result.String).IsEqualTo("A").ConfigureAwait(false);
@@ -1271,28 +1445,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - String format specifier tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatStringWithPrecision()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatStringWithPrecision(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%.3s', 'Hello')");
 
             await Assert.That(result.String).IsEqualTo("Hel").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatStringWithFieldWidth()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatStringWithFieldWidth(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%10s', 'Hello')");
 
             await Assert.That(result.String).IsEqualTo("     Hello").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatStringWithLeftAlign()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatStringWithLeftAlign(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%-10s', 'Hello')");
 
             await Assert.That(result.String).IsEqualTo("Hello     ").ConfigureAwait(false);
@@ -1302,10 +1479,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Escape tests
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatPercentEscape()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatPercentEscape(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('100%% complete')");
 
             await Assert.That(result.String).IsEqualTo("100% complete").ConfigureAwait(false);
@@ -1315,23 +1493,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // string.format - Integer precision tests (Lua 5.3+ dual numeric type system)
         // ========================================
 
-        [global::TUnit.Core.Test]
-        public async Task FormatDecimalPreservesMathMaxinteger()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatDecimalPreservesMathMaxinteger(LuaCompatibilityVersion version)
         {
             // math.maxinteger = 9223372036854775807 (2^63 - 1)
             // This value cannot be exactly represented as a double (loses precision)
             // With LuaNumber integer subtype, %d should preserve the exact value
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%d', math.maxinteger)");
 
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatDecimalPreservesMathMininteger()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatDecimalPreservesMathMininteger(LuaCompatibilityVersion version)
         {
             // math.mininteger = -9223372036854775808 (-2^63)
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%d', math.mininteger)");
 
             await Assert
@@ -1340,40 +1520,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatIntegerSpecifierPreservesMathMaxinteger()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatIntegerSpecifierPreservesMathMaxinteger(
+            LuaCompatibilityVersion version
+        )
         {
             // %i is equivalent to %d
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%i', math.maxinteger)");
 
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexPreservesLargeIntegers()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatHexPreservesLargeIntegers(LuaCompatibilityVersion version)
         {
             // math.maxinteger in hex should be 7fffffffffffffff
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%x', math.maxinteger)");
 
             await Assert.That(result.String).IsEqualTo("7fffffffffffffff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexUppercasePreservesLargeIntegers()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatHexUppercasePreservesLargeIntegers(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%X', math.maxinteger)");
 
             await Assert.That(result.String).IsEqualTo("7FFFFFFFFFFFFFFF").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatOctalPreservesLargeIntegers()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatOctalPreservesLargeIntegers(LuaCompatibilityVersion version)
         {
             // math.maxinteger in octal
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%o', math.maxinteger)");
 
             await Assert
@@ -1382,74 +1568,77 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatDecimalWithIntegerLiteral()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatDecimalWithIntegerLiteral(LuaCompatibilityVersion version)
         {
             // Large integer literals should preserve precision
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%d', 9223372036854775807)");
 
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, "123", false)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, "123", false)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, null, true)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, null, true)]
-        public async Task FormatDecimalWithFloatBehaviorByVersion(
-            LuaCompatibilityVersion version,
-            string expectedResult,
-            bool expectsError
-        )
+        [Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatDecimalTruncatesFloatInLua51And52(LuaCompatibilityVersion version)
         {
             // Lua 5.1/5.2: Float values are converted to integer (truncated)
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.format('%d', 123.456)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("123")
+                .Because($"Lua {version} should truncate float to integer for %d")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatDecimalErrorsOnFloatInLua53Plus(LuaCompatibilityVersion version)
+        {
             // Lua 5.3+: Float values that don't have integer representation throw an error
-            Script script = CreateScriptWithVersion(version);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
-            if (expectsError)
-            {
-                ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                    script.DoString("return string.format('%d', 123.456)")
-                );
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return string.format('%d', 123.456)")
+            );
 
-                await Assert
-                    .That(exception)
-                    .IsNotNull()
-                    .Because(
-                        $"Lua {version} should throw 'number has no integer representation' for %d with 123.456"
-                    )
-                    .ConfigureAwait(false);
-                await Assert
-                    .That(exception.Message)
-                    .Contains("number has no integer representation")
-                    .ConfigureAwait(false);
-            }
-            else
-            {
-                DynValue result = script.DoString("return string.format('%d', 123.456)");
-                await Assert
-                    .That(result.String)
-                    .IsEqualTo(expectedResult)
-                    .Because($"Lua {version} should truncate float to integer for %d")
-                    .ConfigureAwait(false);
-            }
+            await Assert
+                .That(exception)
+                .IsNotNull()
+                .Because(
+                    $"Lua {version} should throw 'number has no integer representation' for %d with 123.456"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .ConfigureAwait(false);
         }
 
         /// <summary>
         /// Tests that string.format with %d accepts exact integer values in Lua 5.3+.
         /// </summary>
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments("123", "123")]
-        [global::TUnit.Core.Arguments("0", "0")]
-        [global::TUnit.Core.Arguments("-456", "-456")]
-        [global::TUnit.Core.Arguments("math.maxinteger", "9223372036854775807")]
-        [global::TUnit.Core.Arguments("math.mininteger", "-9223372036854775808")]
-        [global::TUnit.Core.Arguments("42.0", "42")] // Whole number float should work
-        [global::TUnit.Core.Arguments("-1.0", "-1")] // Negative whole number float
-        public async Task FormatDecimalAcceptsIntegerValues(string luaExpression, string expected)
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "123", "123" },
+            new object[] { "0", "0" },
+            new object[] { "-456", "-456" },
+            new object[] { "math.maxinteger", "9223372036854775807" },
+            new object[] { "math.mininteger", "-9223372036854775808" },
+            new object[] { "42.0", "42" },
+            new object[] { "-1.0", "-1" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task FormatDecimalAcceptsIntegerValues(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string expected
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString($"return string.format('%d', {luaExpression})");
 
             await Assert
@@ -1462,21 +1651,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// <summary>
         /// Tests that string.format with %d rejects non-integer values in Lua 5.3+.
         /// </summary>
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments("0.5", "fractional")]
-        [global::TUnit.Core.Arguments("-0.5", "negative fractional")]
-        [global::TUnit.Core.Arguments("1e100", "large float beyond integer range")]
-        [global::TUnit.Core.Arguments("-1e100", "large negative float")]
-        [global::TUnit.Core.Arguments("0/0", "NaN")]
-        [global::TUnit.Core.Arguments("1/0", "positive infinity")]
-        [global::TUnit.Core.Arguments("-1/0", "negative infinity")]
-        [global::TUnit.Core.Arguments("math.maxinteger + 0.5", "maxinteger plus fractional")]
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "0.5", "fractional" },
+            new object[] { "-0.5", "negative fractional" },
+            new object[] { "1e100", "large float beyond integer range" },
+            new object[] { "-1e100", "large negative float" },
+            new object[] { "0/0", "NaN" },
+            new object[] { "1/0", "positive infinity" },
+            new object[] { "-1/0", "negative infinity" },
+            new object[] { "math.maxinteger + 0.5", "maxinteger plus fractional" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
         public async Task FormatDecimalRejectsNonIntegerValues(
+            LuaCompatibilityVersion version,
             string luaExpression,
             string description
         )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString($"return string.format('%d', {luaExpression})")
@@ -1499,15 +1692,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// <summary>
         /// Tests other integer format specifiers (%i, %o, %u, %x, %X) with non-integer values in Lua 5.3+.
         /// </summary>
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments("%i")]
-        [global::TUnit.Core.Arguments("%o")]
-        [global::TUnit.Core.Arguments("%u")]
-        [global::TUnit.Core.Arguments("%x")]
-        [global::TUnit.Core.Arguments("%X")]
-        public async Task FormatIntegerSpecifiersRejectFloatValues(string specifier)
+        [Test]
+        [LuaTestMatrix(
+            "%i",
+            "%o",
+            "%u",
+            "%x",
+            "%X",
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task FormatIntegerSpecifiersRejectFloatValues(
+            LuaCompatibilityVersion version,
+            string specifier
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString($"return string.format('{specifier}', 123.456)")
@@ -1527,12 +1726,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// <summary>
         /// Tests that %f (float) specifier works with any numeric value (no integer constraint).
         /// </summary>
-        [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments("123.456", "123")]
-        [global::TUnit.Core.Arguments("0.5", "0")]
-        [global::TUnit.Core.Arguments("-0.5", "-0")]
-        [global::TUnit.Core.Arguments("42", "42")]
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "123.456", "123" },
+            new object[] { "0.5", "0" },
+            new object[] { "-0.5", "-0" },
+            new object[] { "42", "42" }
+        )]
         public async Task FormatFloatAcceptsAnyNumericValue(
+            LuaCompatibilityVersion version,
             string luaValue,
             string expectedIntegerPart
         )
@@ -1540,7 +1742,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             ArgumentNullException.ThrowIfNull(luaValue);
             ArgumentNullException.ThrowIfNull(expectedIntegerPart);
 
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString($"return string.format('%f', {luaValue})");
 
             // %f produces full precision output like "123.456000", just check it starts with expected integer part
@@ -1553,31 +1755,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexWithNegativeInteger()
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatHexWithNegativeInteger(LuaCompatibilityVersion version)
         {
             // -1 as unsigned 64-bit integer is all 1s
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%x', -1)");
 
             await Assert.That(result.String).IsEqualTo("ffffffffffffffff").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatHexWithMathMininteger()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatHexWithMathMininteger(LuaCompatibilityVersion version)
         {
             // math.mininteger = -2^63 = 0x8000000000000000
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%x', math.mininteger)");
 
             await Assert.That(result.String).IsEqualTo("8000000000000000").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatDecimalWithBitwiseResult()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatDecimalWithBitwiseResult(LuaCompatibilityVersion version)
         {
             // Bitwise operations produce integer results - verify precision preserved through formatting
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 "return string.format('%d', math.maxinteger & math.maxinteger)"
             );
@@ -1585,11 +1790,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatDecimalWithMathTointeger()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatDecimalWithMathTointeger(LuaCompatibilityVersion version)
         {
             // math.tointeger returns integer subtype - verify precision preserved
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 "return string.format('%d', math.tointeger(9223372036854775807))"
             );
@@ -1597,14 +1803,487 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task FormatUnsignedWithMathMaxinteger()
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatUnsignedWithMathMaxinteger(LuaCompatibilityVersion version)
         {
             // %u format specifier with large positive integer
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.format('%u', math.maxinteger)");
 
             await Assert.That(result.String).IsEqualTo("9223372036854775807").ConfigureAwait(false);
+        }
+
+        // ==========================================================================
+        // Data-driven tests for string.char infinity/NaN edge cases
+        // ==========================================================================
+
+        /// <summary>
+        /// Data-driven test for string.char() edge cases that SHOULD throw in Lua 5.3+.
+        /// In Lua 5.3+, infinity and NaN have no integer representation and must throw
+        /// with a specific error message.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[]
+            {
+                "string.char(1/0)",
+                "positive infinity",
+                "number has no integer representation",
+            },
+            new object[]
+            {
+                "string.char(-1/0)",
+                "negative infinity",
+                "number has no integer representation",
+            },
+            new object[] { "string.char(0/0)", "NaN", "number has no integer representation" },
+            new object[]
+            {
+                "string.char(65, 1/0, 66)",
+                "positive infinity as second arg",
+                "number has no integer representation",
+            },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task CharRejectsInfinityAndNaNLua53Plus(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description,
+            string expectedError
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString($"return {luaExpression}")
+            );
+
+            await Assert
+                .That(ex.Message)
+                .Contains(expectedError)
+                .Because(
+                    $"Expression '{luaExpression}' ({description}) should throw '{expectedError}' in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for string.char() values that SHOULD succeed in Lua 5.1/5.2.
+        /// NaN and negative infinity are silently converted to 0 (null byte).
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "string.char(0/0)", "NaN", '\0' },
+            new object[] { "string.char(-1/0)", "negative infinity", '\0' },
+            MaximumVersion = LuaCompatibilityVersion.Lua52
+        )]
+        public async Task CharTreatsNaNAndNegativeInfinityAsZeroLua51And52(
+            LuaCompatibilityVersion version,
+            string luaExpression,
+            string description,
+            char expectedChar
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return {luaExpression}");
+
+            await Assert
+                .That(result.String.Length)
+                .IsEqualTo(1)
+                .Because(
+                    $"Expression '{luaExpression}' ({description}) should produce a single character"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.String[0])
+                .IsEqualTo(expectedChar)
+                .Because(
+                    $"Expression '{luaExpression}' ({description}) should produce '{expectedChar}' (char code {(int)expectedChar}) in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSAcceptsIntegersInLua51(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.1, string.format("%s", number) auto-coerces numbers to strings
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(@"return string.format('%s', 123)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("123")
+                .Because("string.format('%s', 123) should return '123' in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSAcceptsFloatsInLua51(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.1, string.format("%s", number) auto-coerces numbers to strings
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(@"return string.format('%s', 123.456)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("123.456")
+                .Because("string.format('%s', 123.456) should return '123.456' in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSAcceptsNegativeNumbersInLua51(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.1, string.format("%s", number) auto-coerces numbers to strings
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(@"return string.format('%s', -42)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("-42")
+                .Because("string.format('%s', -42) should return '-42' in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSAcceptsZeroInLua51(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(@"return string.format('%s', 0)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("0")
+                .Because("string.format('%s', 0) should return '0' in Lua 5.1")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FormatSRejectsTablesInLua51(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.1, string.format("%s", table) should error (tables are not coercible)
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString(@"return string.format('%s', {})"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ex.Message)
+                .Contains("string expected")
+                .Because("string.format('%s', {}) should error in Lua 5.1 for non-coercible types")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task FormatSAcceptsAnyTypeInLua52Plus(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.2+, string.format("%s", value) uses tostring() for all types
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            // Number should work
+            DynValue numResult = script.DoString(@"return string.format('%s', 123)");
+            await Assert.That(numResult.String).IsEqualTo("123").ConfigureAwait(false);
+
+            // Boolean should work (Lua 5.2+)
+            DynValue boolResult = script.DoString(@"return string.format('%s', true)");
+            await Assert.That(boolResult.String).IsEqualTo("true").ConfigureAwait(false);
+
+            // Nil should work (Lua 5.2+)
+            DynValue nilResult = script.DoString(@"return string.format('%s', nil)");
+            await Assert.That(nilResult.String).IsEqualTo("nil").ConfigureAwait(false);
+        }
+
+        // ==========================================================================
+        // Comprehensive data-driven tests for string.format("%s", number) edge cases
+        // These tests ensure the bug fix for number-to-string coercion doesn't regress
+        // ==========================================================================
+
+        /// <summary>
+        /// Data-driven test for string.format("%s", number) with various number types.
+        /// In Lua 5.1, numbers are auto-coerced to strings.
+        /// This was a regression that was fixed - these tests prevent it from recurring.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "123", "123", "positive integer" },
+            new object[] { "-42", "-42", "negative integer" },
+            new object[] { "0", "0", "zero" },
+            new object[] { "123.456", "123.456", "positive float" },
+            new object[] { "-123.456", "-123.456", "negative float" },
+            new object[] { "0.5", "0.5", "fractional less than one" },
+            new object[] { "-0.5", "-0.5", "negative fractional less than one" },
+            new object[] { "1000000", "1000000", "large integer" },
+            new object[] { "-1000000", "-1000000", "large negative integer" },
+            MaximumVersion = LuaCompatibilityVersion.Lua51
+        )]
+        public async Task FormatSWithNumbersLua51DataDriven(
+            LuaCompatibilityVersion version,
+            string luaNumber,
+            string expectedOutput,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.format('%s', {luaNumber})");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expectedOutput)
+                .Because(
+                    $"string.format('%s', {luaNumber}) ({description}) should return '{expectedOutput}' in Lua 5.1"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for string.format("%s", number) with various number types in Lua 5.2+.
+        /// Lua 5.2+ uses tostring() for %s conversion.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "123", "123", "positive integer" },
+            new object[] { "-42", "-42", "negative integer" },
+            new object[] { "0", "0", "zero" },
+            new object[] { "123.456", "123.456", "positive float" },
+            new object[] { "-123.456", "-123.456", "negative float" },
+            new object[] { "0.5", "0.5", "fractional less than one" },
+            new object[] { "-0.5", "-0.5", "negative fractional less than one" },
+            MinimumVersion = LuaCompatibilityVersion.Lua52
+        )]
+        public async Task FormatSWithNumbersLua52PlusDataDriven(
+            LuaCompatibilityVersion version,
+            string luaNumber,
+            string expectedOutput,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.format('%s', {luaNumber})");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expectedOutput)
+                .Because(
+                    $"string.format('%s', {luaNumber}) ({description}) should return '{expectedOutput}' in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for string.format("%s", special_value) with infinity.
+        /// Infinity representation varies by platform - can be "inf", "Infinity", "∞" etc.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatSWithPositiveInfinity(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.format('%s', 1/0)");
+
+            // Infinity representation varies: "inf", "Infinity", etc.
+            await Assert
+                .That(result.String.ToUpperInvariant())
+                .Contains("INF")
+                .Because(
+                    $"string.format('%s', 1/0) should contain 'inf' (case-insensitive) in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Test for string.format with negative infinity.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatSWithNegativeInfinity(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.format('%s', -1/0)");
+
+            // Negative infinity should start with "-" and contain "inf"
+            await Assert
+                .That(result.String)
+                .StartsWith("-")
+                .Because($"string.format('%s', -1/0) should start with '-' in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.String.ToUpperInvariant())
+                .Contains("INF")
+                .Because(
+                    $"string.format('%s', -1/0) should contain 'inf' (case-insensitive) in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for string.format("%s", nan).
+        /// NaN representation varies by platform/implementation.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatSWithNaN(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.format('%s', 0/0)");
+
+            // NaN representation can be "nan", "NaN", "-nan", "-NaN" etc.
+            await Assert
+                .That(result.String.ToUpperInvariant())
+                .Contains("NAN")
+                .Because(
+                    $"string.format('%s', nan) should contain 'nan' (case-insensitive) in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Test for string.format("%s", number) with scientific notation or large numbers.
+        /// Very large numbers should be formatted somehow (exponential or expanded).
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatSWithVeryLargeNumbers(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            // Very large number should format to something (either exponential or expanded)
+            DynValue largeResult = script.DoString("return string.format('%s', 1e308)");
+            await Assert
+                .That(largeResult.String.Length)
+                .IsGreaterThan(0)
+                .Because($"string.format('%s', 1e308) should produce non-empty output in {version}")
+                .ConfigureAwait(false);
+            // Should contain digits - it's formatting a number
+            await Assert
+                .That(largeResult.String)
+                .Matches(".*[0-9].*")
+                .Because($"string.format('%s', 1e308) should contain digits in {version}")
+                .ConfigureAwait(false);
+
+            // Very small number should format to something
+            DynValue smallResult = script.DoString("return string.format('%s', 1e-308)");
+            await Assert
+                .That(smallResult.String.Length)
+                .IsGreaterThan(0)
+                .Because(
+                    $"string.format('%s', 1e-308) should produce non-empty output in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Test for string.format with multiple %s specifiers and numbers.
+        /// Ensures the fix works correctly in complex format strings.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatSWithMultipleNumbers(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                "return string.format('Values: %s, %s, %s', 1, 2.5, -3)"
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("Values: 1, 2.5, -3")
+                .Because(
+                    $"string.format with multiple number %s args should work correctly in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Test for string.format("%s") with negative zero.
+        /// The formatting of negative zero varies by Lua version and platform:
+        /// - Some versions: "-0" or "-0.0"
+        /// - Some versions: "0" (sign lost)
+        /// This test verifies the output contains "0" and documents the behavior.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatSWithNegativeZero(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.format('%s', -0.0)");
+
+            // The output should contain "0" - the sign may or may not be preserved
+            await Assert
+                .That(result.String)
+                .Contains("0")
+                .Because($"string.format('%s', -0.0) should contain '0' in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Test for string.format("%s") with integer subtypes in Lua 5.3+.
+        /// Integers should format without decimal point.
+        /// </summary>
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FormatSWithIntegerSubtypeLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            // math.maxinteger should format as integer (no decimal)
+            DynValue maxResult = script.DoString("return string.format('%s', math.maxinteger)");
+            await Assert
+                .That(maxResult.String)
+                .DoesNotContain(".")
+                .Because(
+                    $"string.format('%s', math.maxinteger) should not contain decimal in {version}"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(maxResult.String)
+                .IsEqualTo("9223372036854775807")
+                .ConfigureAwait(false);
+
+            // math.mininteger should format as integer (no decimal)
+            DynValue minResult = script.DoString("return string.format('%s', math.mininteger)");
+            await Assert
+                .That(minResult.String)
+                .DoesNotContain(".")
+                .Because(
+                    $"string.format('%s', math.mininteger) should not contain decimal in {version}"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(minResult.String)
+                .IsEqualTo("-9223372036854775808")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Test that string.format("%s") combined with other specifiers works correctly.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatSMixedWithOtherSpecifiers(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                "return string.format('Name: %s, Value: %d, Ratio: %s', 'test', 42, 3.14)"
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("Name: test, Value: 42, Ratio: 3.14")
+                .Because(
+                    $"string.format with mixed %s and other specifiers should work in {version}"
+                )
+                .ConfigureAwait(false);
         }
 
         private static Script CreateScript()
@@ -1612,13 +2291,399 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             return new Script(CoreModulePresets.Complete);
         }
 
-        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
+        #region string.byte Edge Cases Data-Driven Tests
+
+        /// <summary>
+        /// Tests that string.byte truncates fractional float indices to integers in Lua 5.1/5.2.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "1.5", 76d, "1.5 truncates to 1 (L)" },
+            new object[] { "2.9", 117d, "2.9 truncates to 2 (u)" },
+            new object[] { "1.1", 76d, "1.1 truncates to 1 (L)" },
+            new object[] { "-0.5", 97d, "-0.5 floors to -1 (last char a)" },
+            new object[] { "-1.9", 117d, "-1.9 floors to -2 (u)" },
+            MaximumVersion = LuaCompatibilityVersion.Lua52
+        )]
+        public async Task ByteTruncatesFloatIndicesLua51And52Matrix(
+            LuaCompatibilityVersion version,
+            string indexExpression,
+            double expectedValue,
+            string description
+        )
         {
-            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
-            {
-                CompatibilityVersion = version,
-            };
-            return new Script(CoreModulePresets.Complete, options);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.byte('Lua', {indexExpression})");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(expectedValue)
+                .Because($"Lua 5.1/5.2 should truncate index: {description}")
+                .ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// Tests that string.byte errors on non-integer float indices in Lua 5.3+.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "1.5", "fractional 1.5" },
+            new object[] { "2.9", "fractional 2.9" },
+            new object[] { "1.1", "fractional 1.1" },
+            new object[] { "-0.5", "negative fractional -0.5" },
+            new object[] { "-1.9", "negative fractional -1.9" },
+            new object[] { "1e308", "large float overflow" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task ByteErrorsOnNonIntegerFloatIndexLua53PlusMatrix(
+            LuaCompatibilityVersion version,
+            string indexExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString($"return string.byte('Lua', {indexExpression})")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because($"Lua 5.3+ requires integer: {description}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that string.byte returns nil for NaN and Infinity indices in Lua 5.1/5.2.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "0/0", "NaN" },
+            new object[] { "1/0", "+Infinity" },
+            new object[] { "-1/0", "-Infinity" },
+            new object[] { "1e308", "large float overflow" },
+            MaximumVersion = LuaCompatibilityVersion.Lua52
+        )]
+        public async Task ByteReturnsNilForSpecialFloatIndicesLua51And52(
+            LuaCompatibilityVersion version,
+            string indexExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.byte('Lua', {indexExpression})");
+
+            await Assert
+                .That(result.IsNil() || result.IsVoid())
+                .IsTrue()
+                .Because($"Lua 5.1/5.2 should return nil for {description} index")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that string.byte errors on NaN and Infinity indices in Lua 5.3+.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "0/0", "NaN" },
+            new object[] { "1/0", "+Infinity" },
+            new object[] { "-1/0", "-Infinity" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task ByteErrorsOnSpecialFloatIndicesLua53Plus(
+            LuaCompatibilityVersion version,
+            string indexExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString($"return string.byte('Lua', {indexExpression})")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("number has no integer representation")
+                .Because($"Lua 5.3+ should error for {description} index")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that string.byte returns correct values for valid negative indices in all versions.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "-1", 97d, "last char 'a'" },
+            new object[] { "-2", 117d, "second-to-last 'u'" },
+            new object[] { "-3", 76d, "first char 'L'" }
+        )]
+        public async Task ByteNegativeIndicesAllVersions(
+            LuaCompatibilityVersion version,
+            string indexExpression,
+            double expectedValue,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.byte('Lua', {indexExpression})");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(expectedValue)
+                .Because($"string.byte should return {description} for index {indexExpression}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that string.byte returns nil for out-of-bounds indices in all versions.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "0", "zero (before first)" },
+            new object[] { "4", "past end (4)" },
+            new object[] { "100", "far past end (100)" },
+            new object[] { "-4", "negative out of bounds (-4)" },
+            new object[] { "-100", "far negative out of bounds (-100)" }
+        )]
+        public async Task ByteOutOfBoundsIndicesAllVersions(
+            LuaCompatibilityVersion version,
+            string indexExpression,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.byte('Lua', {indexExpression})");
+
+            await Assert
+                .That(result.IsNil() || result.IsVoid())
+                .IsTrue()
+                .Because($"string.byte should return nil for {description}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that string.byte accepts whole number floats in all versions.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "1.0", 76d, "1.0 -> L" },
+            new object[] { "2.0", 117d, "2.0 -> u" },
+            new object[] { "3.0", 97d, "3.0 -> a" }
+        )]
+        public async Task ByteAcceptsWholeNumberFloatsAllVersions(
+            LuaCompatibilityVersion version,
+            string indexExpression,
+            double expectedValue,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.byte('Lua', {indexExpression})");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(expectedValue)
+                .Because($"string.byte should accept whole number float: {description}")
+                .ConfigureAwait(false);
+        }
+
+        #region string.sub Edge Cases
+
+        /// <summary>
+        /// Data-driven tests for string.sub with various edge case indices.
+        /// Tests boundary conditions including 0, negative, and beyond-length indices.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "1, 3", "Hel", "normal substring" },
+            new object[] { "0, 3", "Hel", "zero start treated as 1" },
+            new object[] { "1, 0", "", "zero end before start returns empty" },
+            new object[] { "1, -1", "Hello", "negative end means from end" },
+            new object[] { "-5, -1", "Hello", "negative start and end" },
+            new object[] { "-3, -1", "llo", "partial negative range" },
+            new object[] { "1, 100", "Hello", "end beyond length clamped" },
+            new object[] { "-100, 3", "Hel", "start before beginning clamped" },
+            new object[] { "3, 3", "l", "single character" },
+            new object[] { "5, 3", "", "start > end returns empty" }
+        )]
+        public async Task SubEdgeCaseIndices(
+            LuaCompatibilityVersion version,
+            string indices,
+            string expected,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.sub('Hello', {indices})");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected)
+                .Because($"string.sub('Hello', {indices}): {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        #endregion
+
+        #region string.find with Plain Flag
+
+        /// <summary>
+        /// Tests string.find with plain flag treats pattern characters as literal text.
+        /// When plain=true, magic characters like %. have no special meaning.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "a.b", "a.b", true, 1, 3, "dot literal with plain flag" },
+            new object[] { "a%b", "a%b", true, 1, 3, "percent literal with plain flag" },
+            new object[] { "[test]", "[test]", true, 1, 6, "brackets literal with plain flag" },
+            new object[] { "a*b", "a*b", true, 1, 3, "asterisk literal with plain flag" },
+            new object[] { "^start", "^start", true, 1, 6, "caret literal with plain flag" },
+            new object[] { "end$", "end$", true, 1, 4, "dollar literal with plain flag" }
+        )]
+        public async Task FindPlainFlagSpecialCharacters(
+            LuaCompatibilityVersion version,
+            string haystack,
+            string needle,
+            bool plain,
+            int expectedStart,
+            int expectedEnd,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            string plainArg = plain ? "true" : "false";
+            DynValue result = script.DoString(
+                $"return string.find('{haystack}', '{needle}', 1, {plainArg})"
+            );
+
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)expectedStart)
+                .Because($"{description}: start index should be {expectedStart}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo((double)expectedEnd)
+                .Because($"{description}: end index should be {expectedEnd}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests string.find returns nil when pattern not found.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "hello", "xyz", "substring not present" },
+            new object[] { "hello", "HELLO", "case mismatch" },
+            new object[] { "", "a", "empty haystack" },
+            new object[] { "hello", "hello world", "needle longer than haystack" }
+        )]
+        public async Task FindReturnsNilWhenNotFound(
+            LuaCompatibilityVersion version,
+            string haystack,
+            string needle,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.find('{haystack}', '{needle}')");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because($"string.find should return nil: {description}")
+                .ConfigureAwait(false);
+        }
+
+        #endregion
+
+        #region string.format Edge Cases
+
+        /// <summary>
+        /// Tests string.format %q escaping produces valid Lua string literals.
+        /// %q produces a string suitable for use as a Lua string literal.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "hello", "\"hello\"", "simple string" },
+            new object[] { "world", "\"world\"", "another simple string" },
+            new object[] { "", "\"\"", "empty string" },
+            new object[] { "test123", "\"test123\"", "alphanumeric string" }
+        )]
+        public async Task FormatQEscaping(
+            LuaCompatibilityVersion version,
+            string input,
+            string expected,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.format('%q', '{input}')");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected)
+                .Because($"string.format %%q: {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests string.format width specifiers with integers.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "%5d", 42, "   42", "right-padded integer" },
+            new object[] { "%-5d", 42, "42   ", "left-padded integer" },
+            new object[] { "%05d", 42, "00042", "zero-padded integer" }
+        )]
+        public async Task FormatWidthSpecifiersInteger(
+            LuaCompatibilityVersion version,
+            string format,
+            int value,
+            string expected,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.format('{format}', {value})");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected)
+                .Because($"string.format('{format}'): {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests string.format width specifiers with strings.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { "%5s", "hi", "   hi", "right-padded string" },
+            new object[] { "%-5s", "hi", "hi   ", "left-padded string" }
+        )]
+        public async Task FormatWidthSpecifiersString(
+            LuaCompatibilityVersion version,
+            string format,
+            string value,
+            string expected,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return string.format('{format}', '{value}')");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected)
+                .Because($"string.format('{format}'): {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        #endregion
+
+        #endregion
     }
 }

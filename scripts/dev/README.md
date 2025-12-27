@@ -25,15 +25,15 @@ The `pre-commit.sh` script runs two phases of checks:
 
 These hooks automatically fix issues and restage the corrected files:
 
-| Hook                    | Description                                                       | Auto-stages                  |
-| ----------------------- | ----------------------------------------------------------------- | ---------------------------- |
-| **CSharpier**           | Formats all C# files in the repository                            | `*.cs`                       |
-| **Markdown Format**     | Applies mdformat with GFM extension to staged `.md` files         | `*.md`                       |
-| **Markdown Links**      | Validates links in staged Markdown files (fails if broken)        | —                            |
-| **Documentation Audit** | Refreshes `documentation_audit.log` with missing XML doc comments | `documentation_audit.log`    |
-| **Naming Audit**        | Refreshes `naming_audit.log` with naming convention violations    | `naming_audit.log`           |
-| **Spelling Audit**      | Refreshes `spelling_audit.log` with codespell findings            | `spelling_audit.log`         |
-| **Fixture Catalog**     | Regenerates NUnit fixture catalog                                 | `FixtureCatalogGenerated.cs` |
+| Hook                    | Description                                                                   | Auto-stages                           |
+| ----------------------- | ----------------------------------------------------------------------------- | ------------------------------------- |
+| **CSharpier**           | Formats all C# files in the repository                                        | `*.cs`                                |
+| **Markdown Format**     | Applies mdformat with GFM extension to staged `.md` files                     | `*.md`                                |
+| **Markdown Links**      | Validates links in staged Markdown files (fails if broken)                    | —                                     |
+| **Documentation Audit** | Refreshes `docs/audits/documentation_audit.log` with missing XML doc comments | `docs/audits/documentation_audit.log` |
+| **Naming Audit**        | Refreshes `docs/audits/naming_audit.log` with naming convention violations    | `docs/audits/naming_audit.log`        |
+| **Spelling Audit**      | Refreshes `docs/audits/spelling_audit.log` with codespell findings            | `docs/audits/spelling_audit.log`      |
+| **Fixture Catalog**     | Regenerates NUnit fixture catalog                                             | `FixtureCatalogGenerated.cs`          |
 
 ### Phase 2: Validation Hooks
 

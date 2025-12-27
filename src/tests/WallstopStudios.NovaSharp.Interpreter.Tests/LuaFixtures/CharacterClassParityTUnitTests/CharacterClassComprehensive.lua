@@ -16,6 +16,11 @@
 -- %w - alphanumeric characters
 -- %x - hexadecimal digits
 
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/PatternMatching/CharacterClassParityTUnitTests.cs
+-- @test: CharacterClassParityTUnitTests.CharacterClassComprehensive
 local function test_class(class_char, description)
     local result = {}
     for i = 0, 127 do

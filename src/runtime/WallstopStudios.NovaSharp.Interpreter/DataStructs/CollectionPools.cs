@@ -79,6 +79,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             list.CopyTo(result);
             return result;
         }
+
+        /// <summary>
+        /// Rents a pooled list for manual lifetime management.
+        /// The caller is responsible for returning it via <see cref="Return"/>.
+        /// </summary>
+        /// <returns>A list instance from the pool.</returns>
+        public static List<T> Rent()
+        {
+            Pool.Get(out List<T> list);
+            return list;
+        }
+
+        /// <summary>
+        /// Rents a pooled list with at least the specified capacity for manual lifetime management.
+        /// The caller is responsible for returning it via <see cref="Return"/>.
+        /// </summary>
+        /// <param name="capacity">The minimum capacity for the list.</param>
+        /// <returns>A list instance from the pool with at least the specified capacity.</returns>
+        public static List<T> Rent(int capacity)
+        {
+            Pool.Get(out List<T> list);
+            if (list.Capacity < capacity)
+            {
+                list.Capacity = capacity;
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// Returns a list to the pool. The list will be cleared automatically.
+        /// </summary>
+        /// <param name="list">The list to return to the pool.</param>
+        public static void Return(List<T> list)
+        {
+            if (list != null)
+            {
+                Pool.Return(list);
+            }
+        }
+
+        /// <summary>
+        /// Copies the list contents to a new exact-sized array and returns the list to the pool.
+        /// This is the preferred method when converting a pooled list to a final array.
+        /// </summary>
+        /// <param name="list">The list to copy from and return to the pool.</param>
+        /// <returns>A new array containing the list's elements, or Array.Empty if the list is null or empty.</returns>
+        public static T[] ToArrayAndReturn(List<T> list)
+        {
+            if (list == null || list.Count == 0)
+            {
+                Return(list);
+                return Array.Empty<T>();
+            }
+
+            T[] result = new T[list.Count];
+            list.CopyTo(result);
+            Return(list);
+            return result;
+        }
     }
 
     /// <summary>
@@ -111,6 +170,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         public static PooledResource<HashSet<T>> Get(out HashSet<T> set)
         {
             return Pool.Get(out set);
+        }
+
+        /// <summary>
+        /// Rents a pooled hash set for manual lifetime management.
+        /// The caller is responsible for returning it via <see cref="Return"/>.
+        /// </summary>
+        /// <returns>A hash set instance from the pool.</returns>
+        public static HashSet<T> Rent()
+        {
+            Pool.Get(out HashSet<T> set);
+            return set;
+        }
+
+        /// <summary>
+        /// Returns a hash set to the pool. The set will be cleared automatically.
+        /// </summary>
+        /// <param name="set">The hash set to return to the pool.</param>
+        public static void Return(HashSet<T> set)
+        {
+            if (set != null)
+            {
+                Pool.Return(set);
+            }
         }
     }
 

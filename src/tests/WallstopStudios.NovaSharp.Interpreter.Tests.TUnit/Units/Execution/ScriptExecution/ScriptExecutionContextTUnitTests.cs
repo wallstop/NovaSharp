@@ -5,17 +5,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ScriptExecutionContextTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task EvaluateSymbolByNameResolvesLocals()
+        [AllLuaVersions]
+        public async Task EvaluateSymbolByNameResolvesLocals(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             DynValue callback = DynValue.NewCallback(
                 (context, _) =>
                 {
@@ -40,9 +43,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task CurrentGlobalEnvExposesGlobals()
+        [AllLuaVersions]
+        public async Task CurrentGlobalEnvExposesGlobals(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             script.Globals["marker"] = DynValue.NewString("available");
 
             DynValue callback = DynValue.NewCallback(
@@ -72,9 +76,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetMetatableReturnsAssignedMetatable()
+        [AllLuaVersions]
+        public async Task GetMetatableReturnsAssignedMetatable(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
 
             DynValue callback = DynValue.NewCallback(
                 (context, args) =>
@@ -97,9 +102,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetMetamethodTailCallReturnsTailCallRequest()
+        [AllLuaVersions]
+        public async Task GetMetamethodTailCallReturnsTailCallRequest(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             LastTailCall = null;
             DynValue callback = DynValue.NewCallback(
                 (context, args) =>
@@ -131,9 +139,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task PerformMessageDecorationDecoratesException()
+        [AllLuaVersions]
+        public async Task PerformMessageDecorationDecoratesException(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             script.DoString(
                 @"
                 function decorator(message)
@@ -382,9 +393,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task IsYieldableReturnsFalseForMainProcessor()
+        [AllLuaVersions]
+        public async Task IsYieldableReturnsFalseForMainProcessor(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             DynValue callback = DynValue.NewCallback(
                 (context, _) => DynValue.NewBoolean(context.IsYieldable())
             );
@@ -395,9 +407,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task IsYieldableReturnsTrueInsideCoroutine()
+        [AllLuaVersions]
+        public async Task IsYieldableReturnsTrueInsideCoroutine(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             DynValue callback = DynValue.NewCallback(
                 (context, _) => DynValue.NewBoolean(context.IsYieldable())
             );
@@ -486,6 +499,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             throw new InvalidOperationException(
                 $"Expected exception of type {typeof(TException).Name}."
             );
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            return new Script(version, CoreModulePresets.Complete);
         }
 
         private static DynValue LastTailCall;

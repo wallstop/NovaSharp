@@ -4,11 +4,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation(serialize: true)]
     public sealed class UserDataEventsTUnitTests
@@ -47,12 +49,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropEventSimple()
+        [AllLuaVersions]
+        public async Task InteropEventSimple(LuaCompatibilityVersion version)
         {
             await WithRegisteredEventTypes(async () =>
                 {
                     int invocationCount = 0;
-                    Script script = new(default(CoreModules));
+                    Script script = new(version, default(CoreModules));
 
                     SomeClass obj = new();
                     script.Globals["myobj"] = obj;
@@ -82,12 +85,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropEventTwoObjects()
+        [AllLuaVersions]
+        public async Task InteropEventTwoObjects(LuaCompatibilityVersion version)
         {
             await WithRegisteredEventTypes(async () =>
                 {
                     int invocationCount = 0;
-                    Script script = new(default(CoreModules));
+                    Script script = new(version, default(CoreModules));
 
                     SomeClass obj = new();
                     SomeClass obj2 = new();
@@ -120,12 +124,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropEventMulti()
+        [AllLuaVersions]
+        public async Task InteropEventMulti(LuaCompatibilityVersion version)
         {
             await WithRegisteredEventTypes(async () =>
                 {
                     int invocationCount = 0;
-                    Script script = new(default(CoreModules));
+                    Script script = new(version, default(CoreModules));
 
                     SomeClass obj = new();
                     script.Globals["myobj"] = obj;
@@ -156,11 +161,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropEventMultiAndDetach()
+        [AllLuaVersions]
+        public async Task InteropEventMultiAndDetach(LuaCompatibilityVersion version)
         {
             await WithRegisteredEventTypes(async () =>
                 {
-                    Script script = new(default(CoreModules));
+                    Script script = new(version, default(CoreModules));
 
                     SomeClass obj = new();
                     script.Globals["myobj"] = obj;
@@ -186,11 +192,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropEventDetachAndDeregister()
+        [AllLuaVersions]
+        public async Task InteropEventDetachAndDeregister(LuaCompatibilityVersion version)
         {
             await WithRegisteredEventTypes(async () =>
                 {
-                    Script script = new(default(CoreModules));
+                    Script script = new(version, default(CoreModules));
 
                     SomeClass obj = new();
                     script.Globals["myobj"] = obj;
@@ -218,13 +225,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropSEventDetachAndDeregister()
+        [AllLuaVersions]
+        public async Task InteropSEventDetachAndDeregister(LuaCompatibilityVersion version)
         {
             SomeClass.ResetStaticEvents();
             await WithRegisteredEventTypes(async () =>
                 {
                     int invocationCount = 0;
-                    Script script = new(default(CoreModules))
+                    Script script = new(version, default(CoreModules))
                     {
                         Globals =
                         {
@@ -280,13 +288,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropSEventDetachAndReregister()
+        [AllLuaVersions]
+        public async Task InteropSEventDetachAndReregister(LuaCompatibilityVersion version)
         {
             SomeClass.ResetStaticEvents();
             await WithRegisteredEventTypes(async () =>
                 {
                     int invocationCount = 0;
-                    Script script = new(default(CoreModules))
+                    Script script = new(version, default(CoreModules))
                     {
                         Globals =
                         {

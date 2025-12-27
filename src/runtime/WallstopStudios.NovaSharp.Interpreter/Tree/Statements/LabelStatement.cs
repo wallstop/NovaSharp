@@ -11,6 +11,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
     /// </summary>
     internal class LabelStatement : Statement
     {
+        /// <inheritdoc />
+        public override bool IsVoidStatement => true;
+
         /// <summary>
         /// Label name exposed to goto statements.
         /// </summary>
@@ -41,6 +44,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         /// </summary>
         internal string LastDefinedVarName { get; private set; }
 
+        /// <summary>
+        /// Effective number of locals in scope at this label, accounting for the void statement rule.
+        /// </summary>
+        /// <remarks>
+        /// Per Lua 5.4 §3.5, local scope ends at the "last non-void statement" of a block.
+        /// If this label is at the end of a block (followed only by void statements),
+        /// this will be less than <see cref="DefinedVarsCount"/>.
+        /// </remarks>
+        internal int EffectiveDefinedVarsCount { get; private set; }
+
+        /// <summary>
+        /// Effective last variable name in scope at this label, accounting for the void statement rule.
+        /// </summary>
+        internal string EffectiveLastDefinedVarName { get; private set; }
+
+        private bool _effectiveVarsSet;
+
         private readonly List<GotoStatement> _gotos = new();
         private RuntimeScopeBlock _stackFrame;
         private BuildTimeScopeBlock _declaringBlock;
@@ -56,7 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             CheckTokenType(lcontext, TokenType.DoubleColon);
 
             SourceRef = NameToken.GetSourceRef();
-            Label = NameToken.Text;
+            Label = NameToken.text;
 
             lcontext.Scope.DefineLabel(this);
         }
@@ -70,6 +90,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         {
             DefinedVarsCount = definedVarsCount;
             LastDefinedVarName = lastDefinedVarsName;
+
+            // By default, effective vars equals defined vars.
+            // This may be adjusted later by SetEffectiveVars if the label
+            // is at the end of a block (followed only by void statements).
+            if (!_effectiveVarsSet)
+            {
+                EffectiveDefinedVarsCount = definedVarsCount;
+                EffectiveLastDefinedVarName = lastDefinedVarsName;
+            }
+        }
+
+        /// <summary>
+        /// Sets the effective scope for this label when it's at the end of a block.
+        /// </summary>
+        /// <param name="effectiveVarsCount">Number of locals in scope at the last non-void statement.</param>
+        /// <param name="effectiveVarsName">Name of the last local at the last non-void statement.</param>
+        /// <remarks>
+        /// Per Lua 5.4 §3.5, if a label is followed only by void statements (other labels, semicolons)
+        /// until the end of the block, the scope of locals declared before the label does not extend
+        /// to the label position.
+        /// </remarks>
+        internal void SetEffectiveVars(int effectiveVarsCount, string effectiveVarsName)
+        {
+            EffectiveDefinedVarsCount = effectiveVarsCount;
+            EffectiveLastDefinedVarName = effectiveVarsName;
+            _effectiveVarsSet = true;
         }
 
         /// <summary>

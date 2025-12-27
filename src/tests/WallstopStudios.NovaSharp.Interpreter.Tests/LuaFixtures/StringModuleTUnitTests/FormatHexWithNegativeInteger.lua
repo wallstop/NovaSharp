@@ -1,7 +1,7 @@
--- @lua-versions: 5.1, 5.3+
+-- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:1410
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:1764
 -- @test: StringModuleTUnitTests.FormatHexWithNegativeInteger
--- Note: Lua 5.2 has stricter range checking and errors on negative values
+-- @compat-notes: Test targets Lua 5.3+
 return string.format('%x', -1)

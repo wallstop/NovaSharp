@@ -24,9 +24,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     public sealed class IoModuleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task OpenReturnsNilTupleWhenFileDoesNotExist()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenReturnsNilTupleWhenFileDoesNotExist(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             using TempFileScope missingFileScope = TempFileScope.Create(extension: ".txt");
             string path = missingFileScope.EscapedPath;
 
@@ -38,7 +43,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadNumberConsumesMultipleLinesFromStdin()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadNumberConsumesMultipleLinesFromStdin(LuaCompatibilityVersion version)
         {
             string stdinContent = "6.0     -3.23   15e12\n4.3     234     1000001\n";
             using MemoryStream stdinStream = new(
@@ -74,7 +84,12 @@ end
 
         // Lua 5.2+ throws for invalid mode
         [global::TUnit.Core.Test]
-        public async Task OpenThrowsForInvalidModeInLua52Plus()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenThrowsForInvalidModeInLua52Plus(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
             using TempFileScope missingFileScope = TempFileScope.Create(extension: ".txt");
@@ -90,7 +105,14 @@ end
 
         // Lua 5.1 returns (nil, error_message) for invalid mode
         [global::TUnit.Core.Test]
-        public async Task OpenReturnsErrorTupleForInvalidModeInLua51()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenReturnsErrorTupleForInvalidModeInLua51(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
             using TempFileScope tempScope = TempFileScope.Create(extension: ".txt");
@@ -107,9 +129,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task TypeReportsClosedFileAfterClose()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TypeReportsClosedFileAfterClose(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.EscapedPath;
 
@@ -127,9 +154,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task InputReadsFromReassignedDefaultStream()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task InputReadsFromReassignedDefaultStream(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             using TempFileScope temp = TempFileScope.CreateWithText("first\nsecond\n");
             string path = temp.EscapedPath;
 
@@ -144,9 +176,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task OutputWritesToReassignedDefaultStream()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OutputWritesToReassignedDefaultStream(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.EscapedPath;
 
@@ -164,9 +201,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task TmpFileCreatesWritableFile()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TmpFileCreatesWritableFile(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
 
             DynValue typeValue = script.DoString(
                 @"
@@ -181,7 +223,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadNumberWithMissingExponentDigitsReturnsNilAndLeavesStreamIntact()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadNumberWithMissingExponentDigitsReturnsNilAndLeavesStreamIntact(
+            LuaCompatibilityVersion version
+        )
         {
             DynValue tuple = await ReadNumberFromContent("123e").ConfigureAwait(false);
 
@@ -192,7 +241,12 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadNumberParsesHexLiteralInput()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadNumberParsesHexLiteralInput(LuaCompatibilityVersion version)
         {
             DynValue tuple = await ReadNumberFromContent("0x1p2\n").ConfigureAwait(false);
 
@@ -202,9 +256,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task IoStdinExposesFileUserDataHandle()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IoStdinExposesFileUserDataHandle(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue stdinHandle = script.DoString("return io.stdin");
 
             await Assert.That(stdinHandle.Type).IsEqualTo(DataType.UserData);
@@ -212,23 +271,33 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task NumericIndexOnFileHandleReturnsNil()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NumericIndexOnFileHandleReturnsNil(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString("return io.stdin[1]");
 
             await Assert.That(result.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadLineWithStarLIncludesTrailingNewline()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadLineWithStarLIncludesTrailingNewline(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateWithText(
                 "file with text\nsecond line\n"
             );
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
@@ -244,12 +313,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadZeroBytesDoesNotAdvanceStream()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadZeroBytesDoesNotAdvanceStream(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateWithText("abcdef");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
@@ -267,12 +341,19 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadMultipleFixedLengthsReturnsExpectedChunks()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadMultipleFixedLengthsReturnsExpectedChunks(
+            LuaCompatibilityVersion version
+        )
         {
             using TempFileScope temp = TempFileScope.CreateWithText("abcdefghijklmnop");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
@@ -288,12 +369,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadOnClosedHandleThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadOnClosedHandleThrows(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateWithText("content");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
             {
                 script.DoString(
@@ -309,12 +395,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task SeekInvalidOptionRaisesError()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SeekInvalidOptionRaisesError(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateWithText("content");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
             {
                 script.DoString(
@@ -329,13 +420,18 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task SeekReturnsFileLength()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SeekReturnsFileLength(LuaCompatibilityVersion version)
         {
             const string content = "file with text\n";
             using TempFileScope temp = TempFileScope.CreateWithText(content);
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
@@ -349,7 +445,12 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadNumberReturnsInfinityForHugeExponent()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadNumberReturnsInfinityForHugeExponent(LuaCompatibilityVersion version)
         {
             DynValue tuple = await ReadNumberFromContent("1e400").ConfigureAwait(false);
 
@@ -359,7 +460,12 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadNumberParsesHugeInteger()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadNumberParsesHugeInteger(LuaCompatibilityVersion version)
         {
             const string literal = "123456789012345678901234567890\n";
             DynValue tuple = await ReadNumberFromContent(literal).ConfigureAwait(false);
@@ -374,9 +480,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task StdStreamsAreAccessibleViaProperties()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StdStreamsAreAccessibleViaProperties(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
 
             DynValue tuple = script.DoString(
                 "return io.stdin ~= nil, io.stdout ~= nil, io.stderr ~= nil, io.unknown == nil"
@@ -389,9 +500,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetDefaultFileOverridesStdInStream()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetDefaultFileOverridesStdInStream(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             using MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes("override\n"));
 
             IoModule.SetDefaultFile(script, StandardFileType.StdIn, stream);
@@ -402,9 +518,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetDefaultFileOverridesStdOutStream()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetDefaultFileOverridesStdOutStream(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             using MemoryStream stream = new MemoryStream();
 
             IoModule.SetDefaultFile(script, StandardFileType.StdOut, stream);
@@ -416,7 +537,12 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetDefaultFileThrowsWhenScriptNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetDefaultFileThrowsWhenScriptNull(LuaCompatibilityVersion version)
         {
             using MemoryStream stream = new MemoryStream();
 
@@ -429,9 +555,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task LinesWithoutArgumentsReadFromDefaultInput()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LinesWithoutArgumentsReadFromDefaultInput(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             using MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes("alpha\nbeta\n"));
 
             IoModule.SetDefaultFile(script, StandardFileType.StdIn, stream);
@@ -453,9 +584,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task IoReadUsesDefaultInputWhenNoFileProvided()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IoReadUsesDefaultInputWhenNoFileProvided(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             using MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes("alpha\nbeta\n"));
 
             IoModule.SetDefaultFile(script, StandardFileType.StdIn, stream);
@@ -475,9 +611,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task OpenSupportsBinaryEncodingParameter()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenSupportsBinaryEncodingParameter(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             using TempFileScope temp = TempFileScope.CreateWithBytes(new byte[] { 0x41, 0x42 });
             string path = temp.EscapedPath;
 
@@ -494,9 +635,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task OpenThrowsWhenModeEmpty()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenThrowsWhenModeEmptyLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            // Lua 5.2+ throws "bad argument #2 to 'open' (invalid mode)" for empty mode
+            Script script = CreateScriptWithVersion(version);
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.EscapedPath;
 
@@ -509,9 +655,72 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task OpenReturnsErrorWhenEncodingSpecifiedForBinaryMode()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task OpenReturnsNilWhenModeEmptyLua51(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            // Lua 5.1 returns (nil, error_message) for empty mode instead of throwing
+            Script script = CreateScriptWithVersion(version);
+            using TempFileScope temp = TempFileScope.CreateEmpty();
+            string path = temp.EscapedPath;
+
+            DynValue result = script.DoString($"return io.open('{path}', \"\")");
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[1].String).Contains("invalid mode");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenThrowsForInvalidModeCharacterLua52Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.2+ throws "bad argument #2 to 'open' (invalid mode)" for invalid mode characters
+            Script script = CreateScriptWithVersion(version);
+            using TempFileScope temp = TempFileScope.CreateEmpty();
+            string path = temp.EscapedPath;
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                script.DoString($"return io.open('{path}', 'x')");
+            });
+
+            await Assert.That(exception.Message).Contains("invalid mode");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task OpenReturnsNilForInvalidModeCharacterLua51(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1 returns (nil, error_message) for invalid mode characters
+            Script script = CreateScriptWithVersion(version);
+            using TempFileScope temp = TempFileScope.CreateEmpty();
+            string path = temp.EscapedPath;
+
+            DynValue result = script.DoString($"return io.open('{path}', 'x')");
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[1].String).Contains("invalid mode");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenReturnsErrorWhenEncodingSpecifiedForBinaryMode(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.EscapedPath;
 
@@ -523,9 +732,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task TypeReturnsNilForNonUserData()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TypeReturnsNilForNonUserData(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString("return io.type(123)");
 
@@ -533,9 +747,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task TypeReturnsNilForNonUserDataArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TypeReturnsNilForNonUserDataArguments(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString("return io.type(42), io.type({})");
 
             await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
@@ -543,9 +762,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task TypeReturnsNilForNonFileUserData()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TypeReturnsNilForNonFileUserData(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             script.Globals["sampleUserData"] = UserData.Create(new SampleUserData());
 
             DynValue result = script.DoString("return io.type(sampleUserData)");
@@ -554,7 +778,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task IoExceptionToLuaMessageThrowsWhenExceptionNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IoExceptionToLuaMessageThrowsWhenExceptionNull(
+            LuaCompatibilityVersion version
+        )
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
             {
@@ -565,7 +796,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task IoExceptionToLuaMessageReturnsExceptionMessageWhenNotFileNotFound()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IoExceptionToLuaMessageReturnsExceptionMessageWhenNotFileNotFound(
+            LuaCompatibilityVersion version
+        )
         {
             const string message = "access denied";
             string result = IoModule.IoExceptionToLuaMessage(
@@ -577,7 +815,12 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReadNumberParsesHexVariants()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReadNumberParsesHexVariants(LuaCompatibilityVersion version)
         {
             (string Literal, double Expected, string Remainder)[] cases =
             {
@@ -599,12 +842,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseClosesExplicitFileHandle()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseClosesExplicitFileHandle(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
@@ -618,12 +866,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseWithoutParameterUsesCurrentOutput()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseWithoutParameterUsesCurrentOutput(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
@@ -638,12 +891,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task FlushReturnsTrueForCurrentOutput()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FlushReturnsTrueForCurrentOutput(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
@@ -659,12 +917,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task InputReturnsCurrentFileWhenNoArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task InputReturnsCurrentFileWhenNoArguments(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateWithText("data");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
@@ -679,12 +942,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task LinesIteratesOverFileContent()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LinesIteratesOverFileContent(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateWithText("alpha\nbeta\ngamma\n");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local iter = io.lines('{escapedPath}')
@@ -699,9 +967,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task LinesRaisesUsefulMessageWhenFileMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LinesRaisesUsefulMessageWhenFileMissing(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 @"
                 local ok, err = pcall(function() return io.lines('missing-file.txt') end)
@@ -714,9 +987,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseStdErrReturnsErrorTuple()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseStdErrReturnsErrorTuple(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString("return io.close(io.stderr)");
 
             await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
@@ -724,9 +1002,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task StdErrMethodCloseReturnsErrorTuple()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StdErrMethodCloseReturnsErrorTuple(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString("return io.stderr:close()");
 
             await Assert.That(tuple.Tuple[0].IsNil()).IsTrue();
@@ -734,20 +1017,30 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task StdErrFlushReturnsTrue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StdErrFlushReturnsTrue(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString("return io.stderr:flush()");
             await Assert.That(result.Boolean).IsTrue();
         }
 
         [global::TUnit.Core.Test]
-        public async Task TypeReportsClosedFileState()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TypeReportsClosedFileState(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateWithText("abc");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
@@ -763,12 +1056,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetBufferingModesReturnTrue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetBufferingModesReturnTrue(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
@@ -786,12 +1084,19 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task WriteReturnsHandleAndClosedHandleWriteThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task WriteReturnsHandleAndClosedHandleWriteThrows(
+            LuaCompatibilityVersion version
+        )
         {
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'w'))
@@ -808,12 +1113,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task OpenReturnsErrorTupleForUnknownEncoding()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenReturnsErrorTupleForUnknownEncoding(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.Create(extension: ".txt");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                 local file, message = io.open('{escapedPath}', 'w', 'does-not-exist')
@@ -826,12 +1136,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task OpenSupportsExplicitEncoding()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenSupportsExplicitEncoding(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             script.DoString(
                 $@"
                 local f = assert(io.open('{escapedPath}', 'w', 'utf-16'))
@@ -845,12 +1160,19 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task OpenRejectsEncodingWhenBinaryModeSpecified()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenRejectsEncodingWhenBinaryModeSpecified(
+            LuaCompatibilityVersion version
+        )
         {
             using TempFileScope temp = TempFileScope.Create(extension: ".txt");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                 local ok, res1, res2 = pcall(function()
@@ -866,9 +1188,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task TmpFileCreatesWritableStream()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TmpFileCreatesWritableStream(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 @"
                 local f = io.tmpfile()
@@ -886,7 +1213,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task OpenFileInvokesPlatformAccessorAndStillWritesToDisk()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OpenFileInvokesPlatformAccessorAndStillWritesToDisk(
+            LuaCompatibilityVersion version
+        )
         {
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string path = temp.FilePath;
@@ -895,7 +1229,7 @@ end
 
             using (ScriptPlatformScope platformScope = ScriptPlatformScope.Override(accessor))
             {
-                Script script = CreateScript();
+                Script script = CreateScriptWithVersion(version);
                 script.DoString(
                     $@"
                 local f = assert(io.open('{escapedPath}', 'w'))
@@ -913,7 +1247,12 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task StdOutWritesHonorCustomScriptOptionStream()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StdOutWritesHonorCustomScriptOptionStream(LuaCompatibilityVersion version)
         {
             MemoryStream capture = new();
             ScriptOptions options = new ScriptOptions()
@@ -936,12 +1275,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task OutputCanBeRedirectedToCustomFile()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OutputCanBeRedirectedToCustomFile(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateEmpty();
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             script.DoString(
                 $@"
                     local original = io.output()
@@ -959,9 +1303,14 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task PopenIsUnsupportedAndProvidesErrorMessage()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PopenIsUnsupportedAndProvidesErrorMessage(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue typeValue = script.DoString("return type(io.popen)");
             await Assert.That(typeValue.String).IsEqualTo("function");
 
@@ -977,12 +1326,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task LinesMethodIteratesOverHandle()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LinesMethodIteratesOverHandle(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateWithText("first\nsecond\nthird\n");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))
@@ -1001,12 +1355,17 @@ end
         }
 
         [global::TUnit.Core.Test]
-        public async Task LinesMethodSupportsReadOptions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LinesMethodSupportsReadOptions(LuaCompatibilityVersion version)
         {
             using TempFileScope temp = TempFileScope.CreateWithText("abcdef");
             string escapedPath = temp.EscapedPath;
 
-            Script script = CreateScript();
+            Script script = CreateScriptWithVersion(version);
             DynValue tuple = script.DoString(
                 $@"
                     local f = assert(io.open('{escapedPath}', 'r'))

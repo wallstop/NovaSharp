@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 {
     using System;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -25,6 +26,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// <summary>
         /// Determines which string subtype best matches the requested <paramref name="desiredType"/>.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static StringSubtype GetStringSubtype(Type desiredType)
         {
             if (desiredType == typeof(string))

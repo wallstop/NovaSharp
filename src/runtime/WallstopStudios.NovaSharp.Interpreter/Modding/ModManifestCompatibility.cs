@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
     using System;
     using System.IO;
     using System.Text.Json;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
@@ -101,7 +102,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                     LuaCompatibilityProfile profile = LuaCompatibilityProfile.ForVersion(
                         options.CompatibilityVersion
                     );
-                    infoSink?.Invoke($"Applied {profile.DisplayName} profile from {manifestPath}.");
+                    infoSink?.Invoke(
+                        ZString.Concat(
+                            "Applied ",
+                            profile.DisplayName,
+                            " profile from ",
+                            manifestPath,
+                            "."
+                        )
+                    );
                 }
 
                 return true;
@@ -114,7 +123,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                     || ex is ArgumentException
                 )
             {
-                warningSink?.Invoke($"Failed to load {manifestPath}: {ex.Message}");
+                warningSink?.Invoke(
+                    ZString.Concat("Failed to load ", manifestPath, ": ", ex.Message)
+                );
                 return false;
             }
         }

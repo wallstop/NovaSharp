@@ -14,7 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
     /// </remarks>
     internal class Lexer
     {
-        private Token _current;
+        private Token? _current;
         private readonly string _code;
         private int _prevLineTo;
         private int _prevColTo = 1;
@@ -45,12 +45,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         {
             get
             {
-                if (_current == null)
+                if (!_current.HasValue)
                 {
                     Next();
                 }
 
-                return _current;
+                return _current.Value;
             }
         }
 
@@ -63,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
                 //System.Diagnostics.Debug.WriteLine("LEXER : " + T.ToString());
 
                 if (
-                    (t.Type != TokenType.Comment && t.Type != TokenType.HashBang)
+                    (t.type != TokenType.Comment && t.type != TokenType.HashBang)
                     || (!_autoSkipComments)
                 )
                 {
@@ -87,7 +87,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         public Token PeekNext()
         {
             int snapshot = _cursor;
-            Token current = _current;
+            Token? current = _current;
             int line = _line;
             int col = _col;
 
@@ -684,8 +684,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
                 {
                     CursorCharNext();
                     Token t = CreateToken(TokenType.String, fromLine, fromCol);
-                    t.Text = LexerUtils.UnescapeLuaString(t, text.ToString());
-                    return t;
+                    return t.WithText(LexerUtils.UnescapeLuaString(t, text.ToString()));
                 }
                 else
                 {
@@ -748,7 +747,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             string text = null
         )
         {
-            Token t = new(
+            Token t = new Token(
                 tokenType,
                 _sourceId,
                 fromLine,
@@ -756,11 +755,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
                 _line,
                 _col,
                 _prevLineTo,
-                _prevColTo
-            )
-            {
-                Text = text,
-            };
+                _prevColTo,
+                text
+            );
             _prevLineTo = _line;
             _prevColTo = _col;
             return t;

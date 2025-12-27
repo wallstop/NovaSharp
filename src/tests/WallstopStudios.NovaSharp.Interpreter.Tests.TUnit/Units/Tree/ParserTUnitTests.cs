@@ -9,13 +9,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ParserTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task SyntaxErrorsIncludeLineInformation()
+        [AllLuaVersions]
+        public async Task SyntaxErrorsIncludeLineInformation(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString(
@@ -35,9 +37,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadStringReportsFriendlyChunkName()
+        [AllLuaVersions]
+        public async Task LoadStringReportsFriendlyChunkName(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
 
             // Optionally set IgnoreLuaPathGlobal if the loader supports it
             // This is not required for the test but can help avoid path resolution issues
@@ -57,9 +60,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
-        public async Task HexFloatLiteralParsesToExpectedNumber()
+        [AllLuaVersions]
+        public async Task HexFloatLiteralParsesToExpectedNumber(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return 0x1.fp3");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
@@ -67,9 +71,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
-        public async Task UnicodeEscapeSequenceIsDecoded()
+        [AllLuaVersions]
+        public async Task UnicodeEscapeSequenceIsDecoded(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return \"hi-\\u{1F40D}\"");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -122,9 +127,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
-        public async Task MalformedHexLiteralThrowsSyntaxError()
+        [AllLuaVersions]
+        public async Task MalformedHexLiteralThrowsSyntaxError(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("return 0x1G")
             )!;
@@ -136,9 +142,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         }
 
         [global::TUnit.Core.Test]
-        public async Task DecimalEscapeTooLargeThrowsHelpfulMessage()
+        [AllLuaVersions]
+        public async Task DecimalEscapeTooLargeThrowsHelpfulMessage(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("return \"\\400\"")
             )!;
@@ -183,9 +190,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         /// Verifies that when no chunk name is provided, a default one is used.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task LoadStringUsesDefaultChunkNameWhenNotProvided()
+        [AllLuaVersions]
+        public async Task LoadStringUsesDefaultChunkNameWhenNotProvided(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = CreateScript(version);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.LoadString("local = 1")
@@ -203,9 +213,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         /// This test is designed to work regardless of what type of loader is configured.
         /// </summary>
         [global::TUnit.Core.Test]
-        public async Task SyntaxErrorsWorkWithAnyScriptLoaderType()
+        [AllLuaVersions]
+        public async Task SyntaxErrorsWorkWithAnyScriptLoaderType(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = CreateScript(version);
 
             // Capture loader type for diagnostic purposes
             string loaderTypeName = script.Options.ScriptLoader?.GetType().Name ?? "null";
@@ -221,6 +232,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
                     $"Error message should contain chunk name regardless of loader type ({loaderTypeName})"
                 )
                 .ConfigureAwait(false);
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
+            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

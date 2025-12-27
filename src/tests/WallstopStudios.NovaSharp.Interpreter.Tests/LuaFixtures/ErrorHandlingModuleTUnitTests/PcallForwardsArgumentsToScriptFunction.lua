@@ -1,9 +1,8 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\CoreLib\ErrorHandlingModuleTUnitTests.cs:83
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/ErrorHandlingModuleTUnitTests.cs:89
 -- @test: ErrorHandlingModuleTUnitTests.PcallForwardsArgumentsToScriptFunction
--- @compat-notes: Lua 5.3+: bitwise operators
 local function sum(a, b, c)
                     return a + b + c
                 end

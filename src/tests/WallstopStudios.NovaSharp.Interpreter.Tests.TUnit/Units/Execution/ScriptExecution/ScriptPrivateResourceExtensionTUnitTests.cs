@@ -3,8 +3,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ScriptPrivateResourceExtensionTUnitTests
     {
@@ -35,10 +37,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task CheckScriptOwnershipThrowsWhenSharedReceivesPrivate()
+        [AllLuaVersions]
+        public async Task CheckScriptOwnershipThrowsWhenSharedReceivesPrivate(
+            LuaCompatibilityVersion version
+        )
         {
             TestResource sharedContainer = new(owner: null);
-            DynValue dynValue = DynValue.NewTable(new Script());
+            DynValue dynValue = DynValue.NewTable(new Script(version));
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 sharedContainer.CheckScriptOwnership(dynValue)
@@ -62,17 +67,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task CheckScriptOwnershipIgnoresNullDynValues()
+        [AllLuaVersions]
+        public async Task CheckScriptOwnershipIgnoresNullDynValues(LuaCompatibilityVersion version)
         {
-            TestResource container = new(new Script());
+            TestResource container = new(new Script(version));
             container.CheckScriptOwnership((DynValue)null);
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task CheckScriptOwnershipAllowsNonPrivateValues()
+        [AllLuaVersions]
+        public async Task CheckScriptOwnershipAllowsNonPrivateValues(
+            LuaCompatibilityVersion version
+        )
         {
-            TestResource container = new(new Script());
+            TestResource container = new(new Script(version));
             DynValue constant = DynValue.NewNumber(123);
 
             container.CheckScriptOwnership(constant);

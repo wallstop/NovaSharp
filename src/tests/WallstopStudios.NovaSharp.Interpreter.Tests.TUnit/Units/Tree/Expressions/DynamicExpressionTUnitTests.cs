@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -11,9 +12,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
     public sealed class DynamicExpressionTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task ConstantDynamicExpressionReturnsProvidedValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ConstantDynamicExpressionReturnsProvidedValue(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue constant = DynValue.NewString("constant");
 
             DynamicExpression expression = script.CreateConstantDynamicExpression(
@@ -27,7 +35,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvaluateUsesCurrentGlobalValues()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvaluateUsesCurrentGlobalValues(LuaCompatibilityVersion version)
         {
             Script script = new() { Globals = { ["x"] = 21 } };
 
@@ -43,9 +56,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvaluateRespectsCustomEnvironment()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvaluateRespectsCustomEnvironment(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table env = new(script) { ["value"] = DynValue.NewNumber(3) };
 
             DynValue function = script.LoadString("return value * 5", env, "dynamic-expression");
@@ -56,9 +74,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task FindSymbolResolvesGlobalReferences()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FindSymbolResolvesGlobalReferences(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             script.Globals["foo"] = DynValue.NewNumber(123);
 
             DynamicExpression expression = script.CreateDynamicExpression("foo");
@@ -70,9 +93,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EqualityIsBasedOnExpressionCode()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EqualityIsBasedOnExpressionCode(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             DynamicExpression first = script.CreateDynamicExpression("foo");
             DynamicExpression second = script.CreateDynamicExpression("foo");
@@ -87,7 +115,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvaluateThrowsWhenContextBelongsToDifferentScript()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvaluateThrowsWhenContextBelongsToDifferentScript(
+            LuaCompatibilityVersion version
+        )
         {
             Script owner = new();
             DynamicExpression expression = owner.CreateDynamicExpression("1");
@@ -106,9 +141,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task FindSymbolThrowsWhenContextIsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FindSymbolThrowsWhenContextIsNull(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynamicExpression expression = script.CreateDynamicExpression("foo");
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
@@ -119,9 +159,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task FindSymbolReturnsNullForConstantExpressions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FindSymbolReturnsNullForConstantExpressions(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynamicExpression constant = script.CreateConstantDynamicExpression(
                 "constant",
                 DynValue.NewString("value")
@@ -132,9 +179,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvaluateUsesProvidedContextForNonConstantExpressions()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvaluateUsesProvidedContextForNonConstantExpressions(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             script.Globals["value"] = DynValue.NewNumber(7);
 
             DynamicExpression expression = script.CreateDynamicExpression("value + 1");
@@ -146,18 +200,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EqualsReturnsFalseForNonDynamicExpressionInstances()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EqualsReturnsFalseForNonDynamicExpressionInstances(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynamicExpression expression = script.CreateDynamicExpression("foo");
 
             await Assert.That(expression.Equals("foo")).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetHashCodeDefaultsToZeroWhenExpressionCodeIsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetHashCodeDefaultsToZeroWhenExpressionCodeIsNull(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynamicExpression expression = new(script, null, DynValue.NewNumber(1));
 
             await Assert.That(expression.GetHashCode()).IsEqualTo(0).ConfigureAwait(false);

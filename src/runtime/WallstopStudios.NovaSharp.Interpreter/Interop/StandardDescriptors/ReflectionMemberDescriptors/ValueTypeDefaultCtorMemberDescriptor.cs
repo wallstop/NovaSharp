@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
     using System;
     using System.Collections.Generic;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -78,7 +79,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 throw new ArgumentException("valueType is not a value type");
             }
 
-            Name = "__new";
+            Name = Metamethods.New;
             Parameters = Array.Empty<ParameterDescriptor>();
 
             ValueTypeDefaultCtor = valueType;

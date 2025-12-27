@@ -2,8 +2,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
     using System;
     using System.Collections.Generic;
-    using NUnit.Framework;
+    using System.Threading.Tasks;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -11,32 +12,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class SimpleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public void EmptyLongComment()
+        [AllLuaVersions]
+        public void EmptyLongComment(LuaCompatibilityVersion version)
         {
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
             DynValue res = s.DoString("--[[]]");
         }
 
         [global::TUnit.Core.Test]
-        public void EmptyChunk()
+        [AllLuaVersions]
+        public void EmptyChunk(LuaCompatibilityVersion version)
         {
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
             DynValue res = s.DoString("");
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCallStatement()
+        [AllLuaVersions]
+        public async Task CSharpStaticFunctionCallStatement(LuaCompatibilityVersion version)
         {
             DynValue[] args = Array.Empty<DynValue>();
 
             string script = "print(\"hello\", \"world\");";
 
-            Script s = new();
+            Script s = new(version);
 
             s.Globals.Set(
                 "print",
@@ -53,22 +58,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Void));
-            Assert.That(args.Length, Is.EqualTo(2));
-            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[0].String, Is.EqualTo("hello"));
-            Assert.That(args[1].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[1].String, Is.EqualTo("world"));
+            await Assert.That(res.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+            await Assert.That(args.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[0].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(args[1].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[1].String).IsEqualTo("world").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCallRedef()
+        [AllLuaVersions]
+        public async Task CSharpStaticFunctionCallRedef(LuaCompatibilityVersion version)
         {
             DynValue[] args = Array.Empty<DynValue>();
 
             string script = "local print = print; print(\"hello\", \"world\");";
 
-            Script s = new();
+            Script s = new(version);
             s.Globals.Set(
                 "print",
                 DynValue.NewCallback(
@@ -84,16 +90,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(args.Length, Is.EqualTo(2));
-            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[0].String, Is.EqualTo("hello"));
-            Assert.That(args[1].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[1].String, Is.EqualTo("world"));
-            Assert.That(res.Type, Is.EqualTo(DataType.Void));
+            await Assert.That(args.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[0].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(args[1].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[1].String).IsEqualTo("world").ConfigureAwait(false);
+            await Assert.That(res.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCall4()
+        [AllLuaVersions]
+        public async Task CSharpStaticFunctionCall4(LuaCompatibilityVersion version)
         {
             string script = "return callback()();";
 
@@ -114,17 +121,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 )
             );
 
-            Script s = new();
+            Script s = new(version);
             s.Globals.Set("callback", callback);
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1234.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCall3()
+        [AllLuaVersions]
+        public async Task CSharpStaticFunctionCall3(LuaCompatibilityVersion version)
         {
             string script = "return callback();";
 
@@ -137,23 +145,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 )
             );
 
-            Script s = new();
+            Script s = new(version);
             s.Globals.Set("callback", callback);
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1234.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCall2()
+        [AllLuaVersions]
+        public async Task CSharpStaticFunctionCall2(LuaCompatibilityVersion version)
         {
             DynValue[] args = Array.Empty<DynValue>();
 
             string script = "return callback 'hello';";
 
-            Script s = new();
+            Script s = new(version);
             s.Globals.Set(
                 "callback",
                 DynValue.NewCallback(
@@ -169,21 +178,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(args.Length, Is.EqualTo(1));
-            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[0].String, Is.EqualTo("hello"));
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1234.0));
+            await Assert.That(args.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[0].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CSharpStaticFunctionCall()
+        [AllLuaVersions]
+        public async Task CSharpStaticFunctionCall(LuaCompatibilityVersion version)
         {
             DynValue[] args = Array.Empty<DynValue>();
 
             string script = "return print(\"hello\", \"world\");";
 
-            Script s = new();
+            Script s = new(version);
             s.Globals.Set(
                 "print",
                 DynValue.NewCallback(
@@ -199,18 +209,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             DynValue res = s.DoString(script);
 
-            Assert.That(args.Length, Is.EqualTo(2));
-            Assert.That(args[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[0].String, Is.EqualTo("hello"));
-            Assert.That(args[1].Type, Is.EqualTo(DataType.String));
-            Assert.That(args[1].String, Is.EqualTo("world"));
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1234.0));
+            await Assert.That(args.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(args[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[0].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(args[1].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(args[1].String).IsEqualTo("world").ConfigureAwait(false);
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1234.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
         //!!! DO NOT REFORMAT THIS METHOD !!!
-        public void LongStrings()
+        public async Task LongStrings(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -224,44 +235,59 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
 				return x,y,z";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Tuple.Length, Is.EqualTo(3));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[0].String, Is.EqualTo("\t\t\t\t\tciao\n\t\t\t\t"));
-            Assert.That(res.Tuple[1].String, Is.EqualTo(" [[uh]] "));
-            Assert.That(res.Tuple[2].String, Is.EqualTo("[==[[=[[[eheh]]=]=]"));
+            await Assert.That(res.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert
+                .That(res.Tuple[0].String)
+                .IsEqualTo("\t\t\t\t\tciao\n\t\t\t\t")
+                .ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].String).IsEqualTo(" [[uh]] ").ConfigureAwait(false);
+            await Assert
+                .That(res.Tuple[2].String)
+                .IsEqualTo("[==[[=[[[eheh]]=]=]")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void UnicodeEscapeLua53Style()
+        [AllLuaVersions]
+        public async Task UnicodeEscapeLua53Style(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
 				x = 'ciao\u{41}';
 				return x;";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("ciaoA"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("ciaoA").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void InvalidEscape()
+        [AllLuaVersions]
+        public async Task InvalidEscape(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
 				x = 'ciao\k{41}';
 				return x;";
 
-            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
+            Script s = new(version);
+            await Assert
+                .That(() => s.DoString(script))
+                .Throws<SyntaxErrorException>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void KeywordsInStrings()
+        [AllLuaVersions]
+        public async Task KeywordsInStrings(LuaCompatibilityVersion version)
         {
             string keywrd =
                 "and break do else elseif end false end for function end goto if ::in:: in local nil not [or][[][==][[]] repeat return { then 0 end return; }; then true (x != 5 or == * 3 - 5) x";
@@ -271,13 +297,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				x = '{keywrd}';
 				return x;";
 
-            DynValue res = Script.RunString(script);
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo(keywrd));
+            Script s = new(version);
+            DynValue res = s.DoString(script);
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo(keywrd).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ParserErrorMessage()
+        [AllLuaVersions]
+        public async Task ParserErrorMessage(LuaCompatibilityVersion version)
         {
             bool caught = false;
             string script =
@@ -286,21 +314,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				Probably, the cook thought it was funny. \
 				He was wrong.'";
 
+            Script s = new(version);
             try
             {
-                DynValue res = Script.RunString(script);
+                DynValue res = s.DoString(script);
             }
             catch (SyntaxErrorException ex)
             {
                 caught = true;
-                Assert.That(string.IsNullOrEmpty(ex.Message), Is.False, ex.Message);
+                await Assert.That(string.IsNullOrEmpty(ex.Message)).IsFalse().ConfigureAwait(false);
             }
 
-            Assert.That(caught, Is.True);
+            await Assert.That(caught).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void StringsWithBackslashLineEndings2()
+        [AllLuaVersions]
+        public async Task StringsWithBackslashLineEndings2(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -308,13 +338,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				b\
 				c'";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void StringsWithBackslashLineEndings()
+        [AllLuaVersions]
+        public async Task StringsWithBackslashLineEndings(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -322,13 +354,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				Probably, the cook thought it was funny. \
 				He was wrong.'";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionCallWrappers()
+        [AllLuaVersions]
+        public async Task FunctionCallWrappers(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -337,50 +371,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				end
 			";
 
-            Script s = new();
+            Script s = new(version);
             s.DoString(script);
 
             DynValue res = s.Globals.Get("boh").Function.Call(82);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1994));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1994).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ReturnSimpleUnop()
+        [AllLuaVersions]
+        public async Task ReturnSimpleUnop(LuaCompatibilityVersion version)
         {
             string script = @"return -42";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(-42));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(-42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ReturnSimple()
+        [AllLuaVersions]
+        public async Task ReturnSimple(LuaCompatibilityVersion version)
         {
             string script = @"return 42";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(42));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorSimple()
+        [AllLuaVersions]
+        public async Task OperatorSimple(LuaCompatibilityVersion version)
         {
             string script = @"return 6*7";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(42));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SimpleBoolShortCircuit()
+        [AllLuaVersions]
+        public void SimpleBoolShortCircuit(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -388,7 +429,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				y = false and crash();
 			";
 
-            Script s = new();
+            Script s = new(version);
             s.Globals.Set(
                 "crash",
                 DynValue.NewCallback(
@@ -405,7 +446,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionOrOperator()
+        [AllLuaVersions]
+        public async Task FunctionOrOperator(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -414,29 +456,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return loadstring;
 			";
 
-            Script s = new();
+            Script s = new(version);
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.ClrFunction));
+            await Assert.That(res.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SelectNegativeIndex()
+        [AllLuaVersions]
+        public async Task SelectNegativeIndex(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
 				return select(-1,'a','b','c');
 			";
 
-            Script s = new();
+            Script s = new(version);
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("c"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("c").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void BoolConversionAndShortCircuit()
+        [AllLuaVersions]
+        public async Task BoolConversionAndShortCircuit(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -452,23 +496,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
 				return false or f(), true or f(), false and f(), true and f(), i";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Tuple.Length, Is.EqualTo(5));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Boolean));
-            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Boolean));
-            Assert.That(res.Tuple[3].Type, Is.EqualTo(DataType.String));
-            Assert.That(res.Tuple[4].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].String, Is.EqualTo("!"));
-            Assert.That(res.Tuple[1].Boolean, Is.EqualTo(true));
-            Assert.That(res.Tuple[2].Boolean, Is.EqualTo(false));
-            Assert.That(res.Tuple[3].String, Is.EqualTo("!"));
-            Assert.That(res.Tuple[4].Number, Is.EqualTo(2));
+            await Assert.That(res.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.Tuple[4].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].String).IsEqualTo("!").ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Boolean).IsEqualTo(true).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Boolean).IsEqualTo(false).ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].String).IsEqualTo("!").ConfigureAwait(false);
+            await Assert.That(res.Tuple[4].Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void HanoiTowersDontCrash()
+        [AllLuaVersions]
+        public void HanoiTowersDontCrash(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -482,11 +528,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 			move(4, 1, 2, 3)
 			";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
         }
 
         [global::TUnit.Core.Test]
-        public void Factorial()
+        [AllLuaVersions]
+        public async Task Factorial(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -501,14 +549,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return fact(5)";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void IfStatmWithScopeCheck()
+        [AllLuaVersions]
+        public async Task IfStatmWithScopeCheck(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -521,17 +571,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return i, x";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ScopeBlockCheck()
+        [AllLuaVersions]
+        public async Task ScopeBlockCheck(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -543,17 +595,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 		
 				return i, x";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ForLoopWithBreak()
+        [AllLuaVersions]
+        public async Task ForLoopWithBreak(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -566,14 +620,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return x";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ForEachLoopWithBreak()
+        [AllLuaVersions]
+        public async Task ForEachLoopWithBreak(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -605,18 +661,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return x, y";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(6));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(12));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(12).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ForEachLoop()
+        [AllLuaVersions]
+        public async Task ForEachLoop(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -644,18 +702,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return x, y";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(21));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(42));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(21).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void LengthOperator()
+        [AllLuaVersions]
+        public async Task LengthOperator(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -664,18 +724,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
    
 				return #x, #y";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(4));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ForLoopWithBreakAndScopeCheck()
+        [AllLuaVersions]
+        public async Task ForLoopWithBreakAndScopeCheck(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -691,17 +753,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return i, x";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(2));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Nil));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(6));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FactorialWithOneReturn()
+        [AllLuaVersions]
+        public async Task FactorialWithOneReturn(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -715,152 +779,172 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return fact(5)";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VeryBasic()
+        [AllLuaVersions]
+        public async Task VeryBasic(LuaCompatibilityVersion version)
         {
             string script = @"return 7";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(7));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence1()
+        [AllLuaVersions]
+        public async Task OperatorPrecedence1(LuaCompatibilityVersion version)
         {
             string script = @"return 1+2*3";
 
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(7));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence2()
+        [AllLuaVersions]
+        public async Task OperatorPrecedence2(LuaCompatibilityVersion version)
         {
             string script = @"return 2*3+1";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(7));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorAssociativity()
+        [AllLuaVersions]
+        public async Task OperatorAssociativity(LuaCompatibilityVersion version)
         {
             string script = @"return 2^3^2";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(512));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(512).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence3()
+        [AllLuaVersions]
+        public async Task OperatorPrecedence3(LuaCompatibilityVersion version)
         {
             string script = @"return 5-3-2";
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence4()
+        [AllLuaVersions]
+        public async Task OperatorPrecedence4(LuaCompatibilityVersion version)
         {
             string script = @"return 3 + -1";
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(2));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence5()
+        [AllLuaVersions]
+        public async Task OperatorPrecedence5(LuaCompatibilityVersion version)
         {
             string script = @"return 3 * -1 + 5 * 3";
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(12));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(12).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence6()
+        [AllLuaVersions]
+        public async Task OperatorPrecedence6(LuaCompatibilityVersion version)
         {
             string script = @"return -2^2";
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(-4));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(-4).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedence7()
+        [AllLuaVersions]
+        public async Task OperatorPrecedence7(LuaCompatibilityVersion version)
         {
             string script = @"return -7 / 0.5";
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
 
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(-14));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(-14).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorPrecedenceAndAssociativity()
+        [AllLuaVersions]
+        public async Task OperatorPrecedenceAndAssociativity(LuaCompatibilityVersion version)
         {
             string script = @"return 5+3*7-2*5+2^3^2";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(528));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(528).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void OperatorParenthesis()
+        [AllLuaVersions]
+        public async Task OperatorParenthesis(LuaCompatibilityVersion version)
         {
             string script = @"return (5+3)*7-2*5+(2^3)^2";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(110));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(110).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void GlobalVarAssignment()
+        [AllLuaVersions]
+        public async Task GlobalVarAssignment(LuaCompatibilityVersion version)
         {
             string script = @"x = 1; return x;";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TupleAssignment1()
+        [AllLuaVersions]
+        public async Task TupleAssignment1(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -876,14 +960,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return w+x+y+z";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(6));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void IterativeFactorialWithWhile()
+        [AllLuaVersions]
+        public async Task IterativeFactorialWithWhile(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -898,14 +984,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return fact(5)";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void IterativeFactorialWithRepeatUntilAndScopeCheck()
+        [AllLuaVersions]
+        public async Task IterativeFactorialWithRepeatUntilAndScopeCheck(
+            LuaCompatibilityVersion version
+        )
         {
             string script =
                 @"    
@@ -921,15 +1011,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return fact(5)";
 
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SimpleForLoop()
+        [AllLuaVersions]
+        public async Task SimpleForLoop(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -941,14 +1032,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return x;
 			";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(6.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(6.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SimpleFunc()
+        [AllLuaVersions]
+        public async Task SimpleFunc(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -958,14 +1051,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return fact(3)";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(3));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void IterativeFactorialWithFor()
+        [AllLuaVersions]
+        public async Task IterativeFactorialWithFor(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -981,14 +1076,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     
 				return fact(5)";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(120.0));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(120.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void LocalFunctionsObscureScopeRule()
+        [AllLuaVersions]
+        public async Task LocalFunctionsObscureScopeRule(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -999,13 +1096,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return fact();
 				";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Function));
+            await Assert.That(res.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionWithStringArg2()
+        [AllLuaVersions]
+        public async Task FunctionWithStringArg2(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -1020,14 +1119,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x;
 				";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("ciao"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("ciao").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionWithStringArg()
+        [AllLuaVersions]
+        public async Task FunctionWithStringArg(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -1042,14 +1143,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x;
 				";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("ciao"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("ciao").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void FunctionWithTableArg()
+        [AllLuaVersions]
+        public async Task FunctionWithTableArg(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -1064,13 +1167,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x;
 				";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Table));
+            await Assert.That(res.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TupleAssignment2()
+        [AllLuaVersions]
+        public async Task TupleAssignment2(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -1083,19 +1188,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x,y,z;
 				";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(1));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(1));
-            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void LoopWithReturn()
+        [AllLuaVersions]
+        public void LoopWithReturn(LuaCompatibilityVersion version)
         {
             string script =
                 @"function Allowed( )
@@ -1107,11 +1214,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 						Allowed();
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
         }
 
         [global::TUnit.Core.Test]
-        public void IfWithLongExpr()
+        [AllLuaVersions]
+        public void IfWithLongExpr(LuaCompatibilityVersion version)
         {
             string script =
                 @"function Allowed( )
@@ -1125,11 +1234,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 						Allowed();
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
         }
 
         [global::TUnit.Core.Test]
-        public void IfWithLongExprTbl()
+        [AllLuaVersions]
+        public void IfWithLongExprTbl(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1146,11 +1257,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 						Allowed();
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
         }
 
         [global::TUnit.Core.Test]
-        public void ExpressionReducesTuples()
+        [AllLuaVersions]
+        public async Task ExpressionReducesTuples(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1162,14 +1275,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					do return x(); end
 								";
 
-            DynValue res = (new Script(CoreModulePresets.Default)).DoString(script);
+            Script s = new(version, CoreModulePresets.Default);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ExpressionReducesTuples2()
+        [AllLuaVersions]
+        public async Task ExpressionReducesTuples2(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1180,14 +1295,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return 1,x(),x()
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(4));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void ArgsDoNotChange()
+        [AllLuaVersions]
+        public async Task ArgsDoNotChange(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1203,19 +1320,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return x(a, b+1), a, b;
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Tuple.Length, Is.EqualTo(3));
-            Assert.That(res.Tuple[0].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[1].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[2].Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(11));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(1));
-            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
+            await Assert.That(res.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsNoError()
+        [AllLuaVersions]
+        public async Task VarArgsNoError(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1230,19 +1349,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return 1;
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsSum()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task VarArgsSum(LuaCompatibilityVersion version)
         {
             string script =
                 @"
 					function x(...)
-						local t = pack(...);
+						local t = table.pack(...);
 						local sum = 0;
 
 						for i = 1, #t do
@@ -1255,19 +1376,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return x(1,2,3,4);
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(10));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsSum2()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task VarArgsSum2(LuaCompatibilityVersion version)
         {
             string script =
                 @"
 					function x(m, ...)
-						local t = pack(...);
+						local t = table.pack(...);
 						local sum = 0;
 
 						for i = 1, #t do
@@ -1280,14 +1403,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return x(5,1,2,3,4);
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(50));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(50).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsSumTb()
+        [AllLuaVersions]
+        public async Task VarArgsSumTb(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1305,14 +1430,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return x(1,2,3,4);
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(10));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SwapPattern()
+        [AllLuaVersions]
+        public async Task SwapPattern(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1325,18 +1452,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return n1,n2,n3,n4;
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(4));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(4));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
-            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
-            Assert.That(res.Tuple[3].Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SwapPatternGlobal()
+        [AllLuaVersions]
+        public async Task SwapPatternGlobal(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1349,18 +1478,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return n1,n2,n3,n4;
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Tuple));
-            Assert.That(res.Tuple.Length, Is.EqualTo(4));
-            Assert.That(res.Tuple[0].Number, Is.EqualTo(4));
-            Assert.That(res.Tuple[1].Number, Is.EqualTo(3));
-            Assert.That(res.Tuple[2].Number, Is.EqualTo(2));
-            Assert.That(res.Tuple[3].Number, Is.EqualTo(1));
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].Number).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void EnvTestSuite()
+        [AllLuaVersions]
+        public async Task EnvTestSuite(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1390,32 +1521,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return RES;
 								";
 
-            DynValue res = Script.RunString(script);
+            Script s = new(version);
+            DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Table));
+            await Assert.That(res.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
             Table t = res.Table;
 
-            Assert.That(t.Get("T1").Type, Is.EqualTo(DataType.Boolean), "T1-Type");
-            Assert.That(t.Get("T1").Boolean, Is.EqualTo(true), "T1-Val");
+            await Assert.That(t.Get("T1").Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(t.Get("T1").Boolean).IsEqualTo(true).ConfigureAwait(false);
 
-            Assert.That(t.Get("T2").Type, Is.EqualTo(DataType.Boolean), "T2-Type");
-            Assert.That(t.Get("T2").Boolean, Is.EqualTo(true), "T2-Val");
+            await Assert.That(t.Get("T2").Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(t.Get("T2").Boolean).IsEqualTo(true).ConfigureAwait(false);
 
-            Assert.That(t.Get("T3").Type, Is.EqualTo(DataType.Number), "T3-Type");
-            Assert.That(t.Get("T3").Number, Is.EqualTo(1), "T3-Val");
+            await Assert.That(t.Get("T3").Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(t.Get("T3").Number).IsEqualTo(1).ConfigureAwait(false);
 
-            Assert.That(t.Get("T4").Type, Is.EqualTo(DataType.Nil), "T4");
+            await Assert.That(t.Get("T4").Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
 
-            Assert.That(t.Get("T5").Type, Is.EqualTo(DataType.Number), "T5-Type");
-            Assert.That(t.Get("T5").Number, Is.EqualTo(2), "T5-Val");
+            await Assert.That(t.Get("T5").Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(t.Get("T5").Number).IsEqualTo(2).ConfigureAwait(false);
 
-            Assert.That(t.Get("T6").Type, Is.EqualTo(DataType.Number), "T6-Type");
-            Assert.That(t.Get("T6").Number, Is.EqualTo(3), "T6-Val");
+            await Assert.That(t.Get("T6").Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(t.Get("T6").Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TupleToOperator()
+        [AllLuaVersions]
+        public async Task TupleToOperator(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -1426,15 +1559,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x() == 3;	
 			";
 
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Boolean));
-            Assert.That(res.Boolean, Is.EqualTo(true));
+            await Assert.That(res.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
+            await Assert.That(res.Boolean).IsEqualTo(true).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void LiteralExpands()
+        [AllLuaVersions]
+        public async Task LiteralExpands(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -1442,15 +1576,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return x;	
 			";
 
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.String));
-            Assert.That(res.String, Is.EqualTo("aABCz"));
+            await Assert.That(res.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(res.String).IsEqualTo("aABCz").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void HomonymArguments()
+        [AllLuaVersions]
+        public async Task HomonymArguments(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -1459,19 +1594,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return test(1, 2, 3);	
 			";
 
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
             DynValue res = s.DoString(script);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(3));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsSumMainChunk()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task VarArgsSumMainChunk(LuaCompatibilityVersion version)
         {
             string script =
                 @"
-					local t = pack(...);
+					local t = table.pack(...);
 					local sum = 0;
 
 					for i = 1, #t do
@@ -1481,16 +1617,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return sum;
 								";
 
-            DynValue fn = new Script().LoadString(script);
+            Script s = new(version);
+            DynValue fn = s.LoadString(script);
 
             DynValue res = fn.Function.Call(1, 2, 3, 4);
 
-            Assert.That(res.Type, Is.EqualTo(DataType.Number));
-            Assert.That(res.Number, Is.EqualTo(10));
+            await Assert.That(res.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(res.Number).IsEqualTo(10).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void VarArgsInNoVarArgsReturnsError()
+        [AllLuaVersions]
+        public async Task VarArgsInNoVarArgsReturnsError(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -1508,61 +1646,77 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 					return x(1,2,3,4);
 								";
 
-            Assert.Throws<SyntaxErrorException>(() => Script.RunString(script));
+            Script s = new(version);
+            await Assert
+                .That(() => s.DoString(script))
+                .Throws<SyntaxErrorException>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void HexFloats1()
+        [AllLuaVersions]
+        public async Task HexFloats1(LuaCompatibilityVersion version)
         {
             string script = "return 0x0.1E";
-            DynValue result = Script.RunString(script);
-            Assert.That(result.Number, Is.EqualTo((double)0x1E / (double)0x100));
+            Script s = new(version);
+            DynValue result = s.DoString(script);
+            await Assert
+                .That(result.Number)
+                .IsEqualTo((double)0x1E / (double)0x100)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void HexFloats2()
+        [AllLuaVersions]
+        public async Task HexFloats2(LuaCompatibilityVersion version)
         {
             string script = "return 0xA23p-4";
-            DynValue result = Script.RunString(script);
-            Assert.That(result.Number, Is.EqualTo((double)0xA23 / 16.0));
+            Script s = new(version);
+            DynValue result = s.DoString(script);
+            await Assert.That(result.Number).IsEqualTo((double)0xA23 / 16.0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void HexFloats3()
+        [AllLuaVersions]
+        public async Task HexFloats3(LuaCompatibilityVersion version)
         {
             string script = "return 0X1.921FB54442D18P+1";
-            DynValue result = Script.RunString(script);
-            Assert.That(
-                result.Number,
-                Is.EqualTo((1 + (double)0x921FB54442D18 / (double)0x10000000000000) * 2)
-            );
+            Script s = new(version);
+            DynValue result = s.DoString(script);
+            await Assert
+                .That(result.Number)
+                .IsEqualTo((1 + (double)0x921FB54442D18 / (double)0x10000000000000) * 2)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SimpleDelegateInterop1()
+        [AllLuaVersions]
+        public async Task SimpleDelegateInterop1(LuaCompatibilityVersion version)
         {
             int a = 3;
-            Script script = new() { Globals = { ["action"] = new Action(() => a = 5) } };
+            Script script = new(version) { Globals = { ["action"] = new Action(() => a = 5) } };
             script.DoString("action()");
-            Assert.That(a, Is.EqualTo(5));
+            await Assert.That(a).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void SimpleDelegateInterop2()
+        [AllLuaVersions]
+        public async Task SimpleDelegateInterop2(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationPolicyScope policyScope =
                 UserDataRegistrationPolicyScope.Override(InteropRegistrationPolicy.Automatic);
 
             int a = 3;
-            Script script = new() { Globals = { ["action"] = new Action(() => a = 5) } };
+            Script script = new(version) { Globals = { ["action"] = new Action(() => a = 5) } };
             script.DoString("action()");
-            Assert.That(a, Is.EqualTo(5));
+            await Assert.That(a).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void MissingArgsDefaultToNil()
+        [AllLuaVersions]
+        public void MissingArgsDefaultToNil(LuaCompatibilityVersion version)
         {
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
             DynValue res = s.DoString(
                 @"
 				function test(a)
@@ -1575,9 +1729,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public void ParsingTest()
+        [AllLuaVersions]
+        public void ParsingTest(LuaCompatibilityVersion version)
         {
-            Script s = new(default(CoreModules));
+            Script s = new(version, default(CoreModules));
             DynValue res = s.LoadString(
                 @"
 				t = {'a', 'b', 'c', ['d'] = 'f', ['e'] = 5, [65] = true, [true] = false}
@@ -1623,25 +1778,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         //		}
 
         [global::TUnit.Core.Test]
-        public void NumericConversionFailsIfOutOfBounds()
+        [AllLuaVersions]
+        public async Task NumericConversionFailsIfOutOfBounds(LuaCompatibilityVersion version)
         {
-            Script s = new()
+            Script s = new(version)
             {
                 Globals = { ["my_function_takes_byte"] = (Action<byte>)(p => { }) },
             };
 
-            try
-            {
-                s.DoString(
-                    "my_function_takes_byte(2010191) -- a huge number that is definitely not a byte"
-                );
-
-                Assert.Fail(); // ScriptRuntimeException should have been thrown, if it doesn't Assert.Fail should execute
-            }
-            catch (ScriptRuntimeException)
-            {
-                //Assert.Pass(e.DecoratedMessage);
-            }
+            await Assert
+                .That(() =>
+                    s.DoString(
+                        "my_function_takes_byte(2010191) -- a huge number that is definitely not a byte"
+                    )
+                )
+                .Throws<ScriptRuntimeException>()
+                .ConfigureAwait(false);
         }
     }
 }

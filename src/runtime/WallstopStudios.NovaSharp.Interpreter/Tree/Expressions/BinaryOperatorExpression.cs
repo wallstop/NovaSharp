@@ -341,7 +341,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
         private static Operator ParseBinaryOperator(Token token)
         {
-            switch (token.Type)
+            switch (token.type)
             {
                 case TokenType.Or:
                     return Operator.Or;
@@ -388,7 +388,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 default:
                     throw new InternalErrorException(
                         "Unexpected binary operator '{0}'",
-                        token.Text
+                        token.text
                     );
             }
         }
@@ -616,10 +616,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             return result;
         }
 
-        private static double EvalFloorDivision(DynValue v1, DynValue v2)
+        private static LuaNumber EvalFloorDivision(DynValue v1, DynValue v2)
         {
-            double? nd1 = v1.CastToNumber();
-            double? nd2 = v2.CastToNumber();
+            LuaNumber? nd1 = v1.CastToLuaNumber();
+            LuaNumber? nd2 = v2.CastToLuaNumber();
 
             if (nd1 == null || nd2 == null)
             {
@@ -628,17 +628,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 );
             }
 
-            // NOTE: Lua 5.3+ throws "attempt to divide by zero" when both operands are
-            // true integers. NovaSharp cannot distinguish integer vs float number types
-            // at runtime (all numbers are doubles), so we follow IEEE 754 semantics
-            // (returns inf/-inf) for all floor division by zero.
-            return Math.Floor(nd1.Value / nd2.Value);
+            // LuaNumber.FloorDivide preserves integer subtype when both operands are integers,
+            // and handles division by zero correctly per Lua semantics.
+            return LuaNumber.FloorDivide(nd1.Value, nd2.Value);
         }
 
-        private double EvalArithmetic(DynValue v1, DynValue v2)
+        private LuaNumber EvalArithmetic(DynValue v1, DynValue v2)
         {
-            double? nd1 = v1.CastToNumber();
-            double? nd2 = v2.CastToNumber();
+            LuaNumber? nd1 = v1.CastToLuaNumber();
+            LuaNumber? nd2 = v2.CastToLuaNumber();
 
             if (nd1 == null || nd2 == null)
             {
@@ -647,31 +645,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 );
             }
 
-            double d1 = nd1.Value;
-            double d2 = nd2.Value;
+            LuaNumber n1 = nd1.Value;
+            LuaNumber n2 = nd2.Value;
 
             switch (_operator)
             {
                 case Operator.Add:
-                    return d1 + d2;
+                    return LuaNumber.Add(n1, n2);
                 case Operator.Sub:
-                    return d1 - d2;
+                    return LuaNumber.Subtract(n1, n2);
                 case Operator.Mul:
-                    return d1 * d2;
+                    return LuaNumber.Multiply(n1, n2);
                 case Operator.Div:
-                    return d1 / d2;
+                    return LuaNumber.Divide(n1, n2);
                 case Operator.Mod:
-                {
-                    double mod = Math.IEEERemainder(d1, d2);
-                    if (mod < 0)
-                    {
-                        mod += d2;
-                    }
-
-                    return mod;
-                }
+                    return LuaNumber.Modulo(n1, n2);
                 case Operator.Power:
-                    return Math.Pow(d1, d2);
+                    return LuaNumber.Power(n1, n2);
                 default:
                     throw new DynamicExpressionException("Unsupported operator {0}", _operator);
             }
@@ -684,7 +674,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 case Operator.Less:
                     if (l.Type == DataType.Number && r.Type == DataType.Number)
                     {
-                        return (l.Number < r.Number);
+                        // Use LuaNumber comparison to preserve integer precision at boundaries
+                        return LuaNumber.LessThan(l.LuaNumber, r.LuaNumber);
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {
@@ -699,7 +690,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 case Operator.LessOrEqual:
                     if (l.Type == DataType.Number && r.Type == DataType.Number)
                     {
-                        return (l.Number <= r.Number);
+                        // Use LuaNumber comparison to preserve integer precision at boundaries
+                        return LuaNumber.LessThanOrEqual(l.LuaNumber, r.LuaNumber);
                     }
                     else if (l.Type == DataType.String && r.Type == DataType.String)
                     {

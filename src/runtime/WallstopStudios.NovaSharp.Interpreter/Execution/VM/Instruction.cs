@@ -67,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public override string ToString()
         {
-            string opCodeStr = OpCode.ToString().ToUpperInvariant();
+            string opCodeStr = OpCodeStrings.GetUpperName(OpCode);
             int usage = (int)OpCode.GetFieldUsage();
 
             if (usage == 0)
@@ -347,7 +347,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 case DataType.Table:
                     return DynValue.NewTable(envTable);
                 default:
-                    throw new NotSupportedException($"Unsupported type in chunk dump : {dt}");
+                    throw new NotSupportedException(
+                        ZString.Concat("Unsupported type in chunk dump : ", dt)
+                    );
             }
         }
 
@@ -390,7 +392,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     break;
                 default:
                     throw new NotSupportedException(
-                        $"Unsupported type in chunk dump : {value.Type}"
+                        ZString.Concat("Unsupported type in chunk dump : ", value.Type)
                     );
             }
         }

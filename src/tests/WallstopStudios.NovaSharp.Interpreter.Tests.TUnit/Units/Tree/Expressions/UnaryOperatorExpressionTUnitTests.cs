@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -15,7 +16,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
     public sealed class UnaryOperatorExpressionTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task UnaryOperatorsEvaluateExpectedResults()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UnaryOperatorsEvaluateExpectedResults(LuaCompatibilityVersion version)
         {
             IReadOnlyList<(string Script, double Expected)> cases = new[]
             {
@@ -25,7 +31,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 ("return #\"abc\"", 3d),
             };
 
-            Script script = new();
+            Script script = new(version);
 
             foreach ((string chunk, double expected) in cases)
             {
@@ -35,9 +41,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task NegationThrowsForNonNumeric()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NegationThrowsForNonNumeric(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return -\"hello\"")
@@ -50,9 +61,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileRejectsUnexpectedOperator()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CompileRejectsUnexpectedOperator(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptLoadingContext context = new(script);
             Token fakeToken = CreateToken(TokenType.OpMinusOrSub, "++");
             LiteralExpression literal = new(context, DynValue.NewNumber(1));
@@ -70,9 +86,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalRejectsUnexpectedOperator()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvalRejectsUnexpectedOperator(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptLoadingContext context = new(script);
             LiteralExpression literal = new(context, DynValue.NewNumber(1));
             Token fakeToken = CreateToken(TokenType.OpMinusOrSub, "++");
@@ -90,9 +111,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalNegatesNumberValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvalNegatesNumberValue(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
@@ -106,9 +132,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalReturnsBooleanNegation()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvalReturnsBooleanNegation(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(script, DynValue.True, "not");
 
@@ -118,9 +149,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalReturnsLengthOfValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvalReturnsLengthOfValue(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
@@ -134,9 +170,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalLengthThrowsWhenOperandHasNoLength()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvalLengthThrowsWhenOperandHasNoLength(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
@@ -155,9 +196,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalThrowsWhenNegatingNonNumberLiteral()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvalThrowsWhenNegatingNonNumberLiteral(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
@@ -176,9 +222,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalBitNotReturnsOnIntegerOperand()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvalBitNotReturnsOnIntegerOperand(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
@@ -192,9 +243,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalBitNotThrowsOnNonInteger()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvalBitNotThrowsOnNonInteger(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptExecutionContext executionContext = TestHelpers.CreateExecutionContext(script);
             UnaryOperatorExpression expression = CreateExpression(
                 script,
@@ -213,7 +269,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileEmitsExpectedOpcodeForSupportedOperators()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CompileEmitsExpectedOpcodeForSupportedOperators(
+            LuaCompatibilityVersion version
+        )
         {
             (string Text, TokenType Type, OpCode Expected)[] scenarios = new[]
             {
@@ -225,7 +288,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
             foreach ((string text, TokenType type, OpCode expected) in scenarios)
             {
-                Script script = new();
+                Script script = new(version);
                 ScriptLoadingContext context = new(script);
                 LiteralExpression literal = new(context, DynValue.NewNumber(1));
                 UnaryOperatorExpression expression = new(context, literal, CreateToken(type, text));
@@ -268,11 +331,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 toLine: 1,
                 toCol: 1,
                 prevLine: 1,
-                prevCol: 1
-            )
-            {
-                Text = text,
-            };
+                prevCol: 1,
+                text: text
+            );
         }
     }
 }

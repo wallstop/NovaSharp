@@ -122,6 +122,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Infrastructure
             // Calculate range using unsigned arithmetic to handle full Int64 range
             ulong range = (ulong)(maxValue - minValue);
 
+            // Special case: full 64-bit range (range == ulong.MaxValue)
+            // In this case, range + 1 would overflow to 0 causing divide-by-zero
+            if (range == ulong.MaxValue)
+            {
+                lock (_lock)
+                {
+                    return (long)((ulong)NextRaw() << 32 | (uint)NextRaw());
+                }
+            }
+
             // For small ranges, use rejection sampling for uniformity
             if (range <= int.MaxValue)
             {

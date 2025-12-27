@@ -2,7 +2,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
+    using Cysharp.Text;
     using Debugging;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -373,10 +376,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                             break;
                         case OpCode.Invalid:
-                            throw new NotImplementedException($"Invalid opcode : {i.Name}");
+                            throw new NotImplementedException(
+                                ZString.Concat("Invalid opcode : ", i.Name)
+                            );
                         default:
                             throw new NotImplementedException(
-                                $"Execution for {i.OpCode} not implemented yet!"
+                                ZString.Concat("Execution for ", i.OpCode, " not implemented yet!")
                             );
                     }
 
@@ -579,6 +584,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             slot.Assign(value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsSymbolToBeClosed(CallStackItem stackframe, int index)
         {
             return stackframe.ToBeClosedIndices != null
@@ -595,16 +601,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (stackframe.BlocksToClose == null)
             {
-                stackframe.BlocksToClose = new List<List<SymbolRef>>();
+                stackframe.BlocksToClose = ListPool<List<SymbolRef>>.Rent();
             }
 
-            stackframe.BlocksToClose.Add(new List<SymbolRef>(closers));
+            List<SymbolRef> closersList = ListPool<SymbolRef>.Rent(closers.Length);
+            for (int idx = 0; idx < closers.Length; idx++)
+            {
+                closersList.Add(closers[idx]);
+            }
+            stackframe.BlocksToClose.Add(closersList);
 
             if (closers.Length > 0)
             {
                 if (stackframe.ToBeClosedIndices == null)
                 {
-                    stackframe.ToBeClosedIndices = new HashSet<int>();
+                    stackframe.ToBeClosedIndices = HashSetPool<int>.Rent();
                 }
 
                 foreach (SymbolRef sym in closers)
@@ -628,6 +639,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             ClearBlockData(i);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool ShouldIgnoreToBeClosedValue(DynValue value)
         {
             return value == null
@@ -644,7 +656,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            DynValue metamethod = GetMetamethodRaw(candidate, "__close");
+            DynValue metamethod = GetMetamethodRaw(candidate, Metamethods.Close);
 
             if (metamethod == null || metamethod.IsNil())
             {
@@ -661,7 +673,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
-            DynValue metamethod = GetMetamethodRaw(scalar, "__close");
+            DynValue metamethod = GetMetamethodRaw(scalar, Metamethods.Close);
 
             if (metamethod == null || metamethod.IsNil())
             {
@@ -685,6 +697,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (closers.Count == 0)
             {
+                ListPool<SymbolRef>.Return(closers);
                 return;
             }
 
@@ -708,6 +721,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     slot.Assign(DynValue.Nil);
                 }
             }
+
+            ListPool<SymbolRef>.Return(closers);
         }
 
         private void CloseAllPendingBlocks(CallStackItem stackframe, DynValue error)
@@ -732,6 +747,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 if (closers.Count == 0)
                 {
+                    ListPool<SymbolRef>.Return(closers);
                     continue;
                 }
 
@@ -747,6 +763,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         slot.Assign(DynValue.Nil);
                     }
                 }
+
+                ListPool<SymbolRef>.Return(closers);
             }
 
             stackframe.ToBeClosedIndices?.Clear();
@@ -776,6 +794,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             v.Assign(value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ExecSwap(Instruction i)
         {
             DynValue v1 = _valueStack.Peek(i.NumVal);
@@ -785,6 +804,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _valueStack.Set(i.NumVal2, v1);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private DynValue GetStoreValue(Instruction i)
         {
             int stackofs = i.NumVal;
@@ -817,6 +837,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private DynValue GetUpValueSymbol(SymbolRef s)
         {
             if (s.Type == SymbolRefType.Local)
@@ -843,7 +864,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private void ExecToNum(Instruction i)
         {
-            double? v = _valueStack.Pop().ToScalar().CastToNumber();
+            // Use CastToLuaNumber to preserve integer/float subtype for precise arithmetic.
+            // Using CastToNumber (double) loses integer precision for large values near maxinteger,
+            // causing for-loops to infinite loop due to floating-point precision limits.
+            LuaNumber? v = _valueStack.Pop().ToScalar().CastToLuaNumber();
             if (v.HasValue)
             {
                 _valueStack.Push(DynValue.NewNumber(v.Value));
@@ -897,7 +921,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (f.Type != DataType.Function && f.Type != DataType.ClrFunction)
             {
-                DynValue meta = GetMetamethod(f, "__iterator");
+                DynValue meta = GetMetamethod(f, Metamethods.Iterator);
 
                 if (meta != null && !meta.IsNil())
                 {
@@ -919,7 +943,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else if (f.Type == DataType.Table)
                 {
-                    DynValue callmeta = GetMetamethod(f, "__call");
+                    DynValue callmeta = GetMetamethod(f, Metamethods.Call);
 
                     if (callmeta == null || callmeta.IsNil())
                     {
@@ -934,11 +958,64 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private int ExecJFor(Instruction i, int instructionPtr)
         {
-            double val = _valueStack.Peek(0).Number;
-            double step = _valueStack.Peek(1).Number;
-            double stop = _valueStack.Peek(2).Number;
+            // Use LuaNumber to preserve integer precision for large values (e.g., near maxinteger).
+            // Using .Number (double) causes precision loss and infinite loops for large integer bounds.
+            LuaNumber val = _valueStack.Peek(0).LuaNumber;
+            LuaNumber step = _valueStack.Peek(1).LuaNumber;
+            LuaNumber stop = _valueStack.Peek(2).LuaNumber;
 
-            bool whileCond = (step > 0) ? val <= stop : val >= stop;
+            // Lua for-loop condition: if step > 0 then val <= stop else val >= stop
+            // Use LuaNumber comparison to avoid precision loss with large step values
+            bool stepPositive = LuaNumber.LessThan(LuaNumber.Zero, step);
+
+            // For integer for-loops in Lua 5.3+, detect overflow to prevent infinite loops.
+            // Per Lua 5.4 §3.3.5: "the control variable never wraps around".
+            // If step is positive and val < stop but we're past the first iteration (val has been incremented),
+            // we need to detect if the previous increment caused overflow.
+            // Overflow detection: if step > 0 and val < start (represented as stop - n*step equivalent),
+            // or more simply: if step > 0 and val wrapped to negative when it should be positive.
+            if (val.IsInteger && step.IsInteger && stop.IsInteger)
+            {
+                long stepVal = step.AsInteger;
+                long valVal = val.AsInteger;
+                long stopVal = stop.AsInteger;
+
+                // Detect overflow: for positive step, if val < (stop - large_positive) we likely wrapped
+                // More precisely: if step > 0, increment causes overflow when val > maxint - step
+                // After overflow, val will be negative (wrapped from max to min).
+                // If step > 0 and val < 0 and stop > 0, this indicates overflow occurred.
+                // Similarly for step < 0.
+                if (stepVal > 0)
+                {
+                    // Positive step: loop should go from low to high
+                    // If val suddenly became much smaller than stop (wrapped), stop the loop
+                    // Detection: if previous val was > current val after increment, overflow occurred
+                    // Since we don't track previous val, use: if step > 0 but val > stop, it's definitely done.
+                    // But also: if overflow occurred, val wrapped around.
+                    // Conservative detection: if the distance from val to stop is larger than it should be.
+                    // Simplest: use checked arithmetic or detect sign change when it shouldn't happen.
+                    // If stopVal >= 0 and valVal < 0 and step > 0, we wrapped from positive to negative.
+                    if (stopVal >= 0 && valVal < 0)
+                    {
+                        // Overflow occurred - loop should terminate
+                        return i.NumVal;
+                    }
+                }
+                else if (stepVal < 0)
+                {
+                    // Negative step: loop should go from high to low
+                    // If stopVal <= 0 and valVal > 0, we wrapped from negative to positive
+                    if (stopVal <= 0 && valVal > 0)
+                    {
+                        // Overflow occurred - loop should terminate
+                        return i.NumVal;
+                    }
+                }
+            }
+
+            bool whileCond = stepPositive
+                ? LuaNumber.LessThanOrEqual(val, stop)
+                : LuaNumber.LessThanOrEqual(stop, val);
 
             if (!whileCond)
             {
@@ -967,7 +1044,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _valueStack.Push(top);
             }
 
-            top.AssignNumber(top.Number + btm.Number);
+            // Use LuaNumber.Add to preserve integer precision for large values.
+            // Raw double addition causes precision loss near maxinteger, leading to infinite loops.
+            top.AssignNumber(LuaNumber.Add(top.LuaNumber, btm.LuaNumber));
         }
 
         private void ExecCNot(Instruction i)
@@ -990,6 +1069,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ExecNot(Instruction i)
         {
             DynValue v = _valueStack.Pop().ToScalar();
@@ -1001,22 +1081,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem cur = _executionStack.Peek();
 
             cur.DebugSymbols = i.SymbolList;
-            cur.LocalScope = new DynValue[i.NumVal];
+            cur.LocalScope = DynValueArrayPool.Rent(i.NumVal);
+            cur._localScopeSize = i.NumVal;
 
             ClearBlockData(i);
 
             if (cur.BlocksToClose == null)
             {
-                cur.BlocksToClose = new List<List<SymbolRef>>();
+                cur.BlocksToClose = ListPool<List<SymbolRef>>.Rent();
             }
             else
             {
+                // Return all inner lists before clearing the outer list
+                foreach (List<SymbolRef> innerList in cur.BlocksToClose)
+                {
+                    ListPool<SymbolRef>.Return(innerList);
+                }
                 cur.BlocksToClose.Clear();
             }
 
             if (cur.ToBeClosedIndices == null)
             {
-                cur.ToBeClosedIndices = new HashSet<int>();
+                cur.ToBeClosedIndices = HashSetPool<int>.Rent();
             }
             else
             {
@@ -1046,7 +1132,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     && symbol.IndexValue <= rootBlockLastIndex
                 )
                 {
-                    rootClosers ??= new List<SymbolRef>();
+                    rootClosers ??= ListPool<SymbolRef>.Rent();
                     rootClosers.Add(symbol);
                     cur.ToBeClosedIndices.Add(symbol.IndexValue);
                 }
@@ -1056,17 +1142,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 cur.BlocksToClose.Add(rootClosers);
             }
-            else if (cur.BlocksToClose.Count == 0)
+            else
             {
-                cur.BlocksToClose = null;
+                // Return unused pooled list if we allocated one but it's empty
+                ListPool<SymbolRef>.Return(rootClosers);
+                if (cur.BlocksToClose.Count == 0)
+                {
+                    ListPool<List<SymbolRef>>.Return(cur.BlocksToClose);
+                    cur.BlocksToClose = null;
+                }
             }
 
             if (cur.ToBeClosedIndices.Count == 0)
             {
+                HashSetPool<int>.Return(cur.ToBeClosedIndices);
                 cur.ToBeClosedIndices = null;
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private CallStackItem PopToBasePointer()
         {
             CallStackItem csi = _executionStack.Pop();
@@ -1078,6 +1172,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return csi;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int PopExecStackAndCheckVStack(int vstackguard)
         {
             CallStackItem xs = _executionStack.Pop();
@@ -1147,13 +1242,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 )
                 {
                     int len = argsList.Count - i;
-                    DynValue[] varargs = new DynValue[len];
+                    DynValue[] pooledVarargs = DynValueArrayPool.Rent(len);
 
                     for (int ii = 0; ii < len; ii++, i++)
                     {
-                        varargs[ii] = argsList[i].ToScalar().CloneAsWritable();
+                        pooledVarargs[ii] = argsList[i].ToScalar().CloneAsWritable();
                     }
 
+                    DynValue[] varargs = DynValueArrayPool.ToArrayAndReturn(pooledVarargs, len);
                     AssignLocal(
                         instruction.SymbolList[^1],
                         DynValue.NewTuple(InternalAdjustTuple(varargs))
@@ -1283,7 +1379,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             // fallback to __call metamethod
-            DynValue m = GetMetamethod(fn, "__call");
+            DynValue m = GetMetamethod(fn, Metamethods.Call);
 
             if (m != null && m.IsNotNil())
             {
@@ -1425,6 +1521,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return instructionPtr;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int JumpBool(Instruction i, bool expectedValueForJump, int instructionPtr)
         {
             DynValue op = _valueStack.Pop().ToScalar();
@@ -1459,8 +1556,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1469,7 +1566,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__add", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Add, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1486,8 +1583,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1496,7 +1593,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__sub", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Sub, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1513,8 +1610,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1523,7 +1620,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__mul", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Mul, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1540,8 +1637,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1554,7 +1651,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__mod", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Mod, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1571,8 +1668,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1582,7 +1679,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__div", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Div, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1599,8 +1696,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1612,7 +1709,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__idiv", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.IDiv, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1629,8 +1726,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            LuaNumber? rn = r.CastToLuaNumber();
-            LuaNumber? ln = l.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
+            LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
             if (ln.HasValue && rn.HasValue)
             {
@@ -1640,7 +1737,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__pow", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Pow, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1656,21 +1753,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
-            return ExecBitwiseBinary(l, r, "__band", (x, y) => x & y, instructionPtr);
+            return ExecBitwiseBinary(l, r, Metamethods.Band, (x, y) => x & y, instructionPtr);
         }
 
         private int ExecBitOr(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
-            return ExecBitwiseBinary(l, r, "__bor", (x, y) => x | y, instructionPtr);
+            return ExecBitwiseBinary(l, r, Metamethods.Bor, (x, y) => x | y, instructionPtr);
         }
 
         private int ExecBitXor(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
-            return ExecBitwiseBinary(l, r, "__bxor", (x, y) => x ^ y, instructionPtr);
+            return ExecBitwiseBinary(l, r, Metamethods.Bxor, (x, y) => x ^ y, instructionPtr);
         }
 
         private int ExecShiftLeft(Instruction i, int instructionPtr)
@@ -1680,7 +1777,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return ExecBitwiseBinary(
                 l,
                 r,
-                "__shl",
+                Metamethods.Shl,
                 (x, y) => LuaIntegerHelper.ShiftLeft(x, y),
                 instructionPtr
             );
@@ -1693,7 +1790,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return ExecBitwiseBinary(
                 l,
                 r,
-                "__shr",
+                Metamethods.Shr,
                 (x, y) => LuaIntegerHelper.ShiftRight(x, y),
                 instructionPtr
             );
@@ -1709,7 +1806,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return instructionPtr;
             }
 
-            int ip = InternalInvokeUnaryMetaMethod(value, "__bnot", instructionPtr);
+            int ip = InternalInvokeUnaryMetaMethod(value, Metamethods.Bnot, instructionPtr);
             if (ip >= 0)
             {
                 return ip;
@@ -1748,16 +1845,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private int ExecNeg(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
-            LuaNumber? rn = r.CastToLuaNumber();
+            LuaNumber? rn = CastToLuaNumberForArithmetic(r);
 
             if (rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(LuaNumber.Negate(rn.Value)));
+                LuaNumber result = LuaNumber.Negate(rn.Value);
+
+                // Lua 5.1/5.2: negating integer zero should produce float negative zero
+                // In 5.3+, integers are a distinct subtype, so -0 stays integer 0
+                // But in 5.1/5.2, all numbers are floats, so -0 must be negative zero
+                if (
+                    result.IsInteger
+                    && result.AsInteger == 0
+                    && _script.Options.CompatibilityVersion < LuaCompatibilityVersion.Lua53
+                )
+                {
+                    result = LuaNumber.FromFloat(-0.0);
+                }
+
+                _valueStack.Push(DynValue.NewNumber(result));
                 return instructionPtr;
             }
             else
             {
-                int ip = InternalInvokeUnaryMetaMethod(r, "__unm", instructionPtr);
+                int ip = InternalInvokeUnaryMetaMethod(r, Metamethods.Unm, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1784,7 +1895,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // then if they are userdatas, attempt meta
             if (l.Type == DataType.UserData || r.Type == DataType.UserData)
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__eq", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Eq, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1816,7 +1927,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 && (GetMetatable(l) == GetMetatable(r))
             )
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__eq", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Eq, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1845,7 +1956,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__lt", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Lt, instructionPtr);
                 if (ip < 0)
                 {
                     throw ScriptRuntimeException.CompareInvalidType(l, r);
@@ -1883,19 +1994,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 int ip = InternalInvokeBinaryMetaMethod(
                     l,
                     r,
-                    "__le",
+                    Metamethods.Le,
                     instructionPtr,
                     DynValue.False
                 );
                 if (ip < 0)
                 {
-                    ip = InternalInvokeBinaryMetaMethod(
-                        r,
-                        l,
-                        "__lt",
-                        instructionPtr,
-                        DynValue.True
-                    );
+                    // Lua 5.5 removes the fallback from __lt to emulate __le.
+                    // In earlier versions (5.1-5.4), if __le is not defined, we try __lt with swapped arguments.
+                    // Note: Lua 5.4 manual §8.1 claims this was removed in 5.4, but actual Lua 5.4.x still supports it.
+                    // Lua 5.5 (verified against lua5.5) actually removes this fallback behavior.
+                    // Latest mode follows current target (Lua 5.4.x) behavior which allows the fallback.
+                    Compatibility.LuaCompatibilityVersion version = _script
+                        .Options
+                        .CompatibilityVersion;
+                    bool allowLtFallback = version != Compatibility.LuaCompatibilityVersion.Lua55;
+
+                    if (allowLtFallback)
+                    {
+                        ip = InternalInvokeBinaryMetaMethod(
+                            r,
+                            l,
+                            Metamethods.Lt,
+                            instructionPtr,
+                            DynValue.True
+                        );
+                    }
 
                     if (ip < 0)
                     {
@@ -1925,7 +2049,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeUnaryMetaMethod(r, "__len", instructionPtr);
+                int ip = InternalInvokeUnaryMetaMethod(r, Metamethods.Len, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -1958,7 +2082,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
             else
             {
-                int ip = InternalInvokeBinaryMetaMethod(l, r, "__concat", instructionPtr);
+                int ip = InternalInvokeBinaryMetaMethod(l, r, Metamethods.Concat, instructionPtr);
                 if (ip >= 0)
                 {
                     return ip;
@@ -2028,7 +2152,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         }
                     }
 
-                    h = GetMetamethodRaw(obj, "__newindex");
+                    h = GetMetamethodRaw(obj, Metamethods.NewIndex);
 
                     if (h == null || h.IsNil())
                     {
@@ -2067,11 +2191,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else
                 {
-                    h = GetMetamethodRaw(obj, "__newindex");
+                    h = GetMetamethodRaw(obj, Metamethods.NewIndex);
 
                     if (h == null || h.IsNil())
                     {
-                        throw ScriptRuntimeException.IndexType(obj);
+                        string varDesc = _script.Options.LuaCompatibleErrors ? i.Name : null;
+                        throw ScriptRuntimeException.IndexType(obj, varDesc);
                     }
                 }
 
@@ -2133,7 +2258,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         }
                     }
 
-                    h = GetMetamethodRaw(obj, "__index");
+                    h = GetMetamethodRaw(obj, Metamethods.Index);
 
                     if (h == null || h.IsNil())
                     {
@@ -2172,11 +2297,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else
                 {
-                    h = GetMetamethodRaw(obj, "__index");
+                    h = GetMetamethodRaw(obj, Metamethods.Index);
 
                     if (h == null || h.IsNil())
                     {
-                        throw ScriptRuntimeException.IndexType(obj);
+                        string varDesc = _script.Options.LuaCompatibleErrors ? i.Name : null;
+                        throw ScriptRuntimeException.IndexType(obj, varDesc);
                     }
                 }
 
@@ -2232,6 +2358,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     );
                 }
             }
+        }
+
+        /// <summary>
+        /// Converts a DynValue to a LuaNumber for arithmetic operations.
+        /// In Lua 5.4+, strings are NOT automatically coerced to numbers by the arithmetic operators;
+        /// instead, coercion happens via the string metatable's arithmetic metamethods.
+        /// In Lua 5.1-5.3, strings are automatically coerced to numbers.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <returns>
+        /// The LuaNumber if conversion is possible without violating version semantics;
+        /// null if the value cannot be used as a number in arithmetic.
+        /// </returns>
+        private LuaNumber? CastToLuaNumberForArithmetic(DynValue value)
+        {
+            DataType type = value.Type;
+
+            // Numbers always convert
+            if (type == DataType.Number)
+            {
+                return value.LuaNumber;
+            }
+
+            // Strings: version-dependent behavior
+            // In Lua 5.4+, strings are NOT coerced by the arithmetic operators themselves;
+            // the coercion happens via string metatable metamethods (__add, __sub, etc.)
+            if (type == DataType.String)
+            {
+                LuaCompatibilityVersion version = _script.Options.CompatibilityVersion;
+                if (version >= LuaCompatibilityVersion.Lua54)
+                {
+                    // 5.4+: Do NOT coerce strings here; fall through to metamethod lookup
+                    return null;
+                }
+
+                // 5.1-5.3: Auto-coerce strings to numbers
+                if (LuaNumber.TryParse(value.String, out LuaNumber result))
+                {
+                    return result;
+                }
+            }
+
+            return null;
         }
     }
 }

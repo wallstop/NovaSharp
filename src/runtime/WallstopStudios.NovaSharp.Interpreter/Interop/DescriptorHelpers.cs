@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -44,7 +45,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                     if (va != null)
                     {
                         throw new InvalidOperationException(
-                            $"Member '{mi.Name}' specifies NovaSharpVisibleAttribute multiple times."
+                            ZString.Concat(
+                                "Member '",
+                                mi.Name,
+                                "' specifies NovaSharpVisibleAttribute multiple times."
+                            )
                         );
                     }
 
@@ -55,7 +60,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                     if (ha != null)
                     {
                         throw new InvalidOperationException(
-                            $"Member '{mi.Name}' specifies NovaSharpHiddenAttribute multiple times."
+                            ZString.Concat(
+                                "Member '",
+                                mi.Name,
+                                "' specifies NovaSharpHiddenAttribute multiple times."
+                            )
                         );
                     }
 
@@ -66,7 +75,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
             if (va != null && ha != null && va.Visible)
             {
                 throw new InvalidOperationException(
-                    $"A member ('{mi.Name}') can't have discording NovaSharpHiddenAttribute and NovaSharpVisibleAttribute."
+                    ZString.Concat(
+                        "A member ('",
+                        mi.Name,
+                        "') can't have discording NovaSharpHiddenAttribute and NovaSharpVisibleAttribute."
+                    )
                 );
             }
             else if (ha != null)
@@ -86,6 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
         /// <summary>
         /// Determines whether the supplied type derives from <see cref="Delegate"/>.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsDelegateType(this Type t)
         {
             return Framework.Do.IsAssignableFrom(typeof(Delegate), t);
@@ -545,27 +559,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop
                 return snake;
             }
 
-            string[] parts = snake.Split('_', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 0)
-            {
-                return string.Empty;
-            }
-
+            ReadOnlySpan<char> snakeSpan = snake.AsSpan();
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
-            foreach (string part in parts)
+            int start = 0;
+            for (int i = 0; i <= snakeSpan.Length; i++)
             {
-                if (part.Length == 0)
+                if (i == snakeSpan.Length || snakeSpan[i] == '_')
                 {
-                    continue;
-                }
+                    if (i > start)
+                    {
+                        ReadOnlySpan<char> part = snakeSpan.Slice(start, i - start);
+                        if (!part.IsEmpty)
+                        {
+                            sb.Append(char.ToUpperInvariant(part[0]));
 
-                sb.Append(char.ToUpperInvariant(part[0]));
-
-                for (int i = 1; i < part.Length; i++)
-                {
-                    sb.Append(char.ToLowerInvariant(part[i]));
+                            for (int j = 1; j < part.Length; j++)
+                            {
+                                sb.Append(char.ToLowerInvariant(part[j]));
+                            }
+                        }
+                    }
+                    start = i + 1;
                 }
+            }
+
+            if (sb.Length == 0)
+            {
+                return string.Empty;
             }
 
             return sb.ToString();

@@ -47,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 }
             }
 
-            return null;
+            return CharPtr.Null;
         }
 
         internal static CharPtr StringFindAny(CharPtr str, CharPtr charset)
@@ -65,7 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 }
             }
 
-            return null;
+            return CharPtr.Null;
         }
 
         internal static bool IsAlpha(char c)
@@ -207,7 +207,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 }
             }
 
-            return null;
+            return CharPtr.Null;
         }
 
         internal static CharPtr StringCopy(CharPtr dst, CharPtr src)

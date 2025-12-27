@@ -438,14 +438,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// an invalid attempt to index the specified object was made
         /// </summary>
         /// <param name="obj">The object.</param>
+        /// <param name="variableDescription">Optional description of the variable being indexed (e.g., "global 'foo'").</param>
         /// <returns>
         /// The exception to be raised.
         /// </returns>
-        public static ScriptRuntimeException IndexType(DynValue obj)
+        public static ScriptRuntimeException IndexType(
+            DynValue obj,
+            string variableDescription = null
+        )
         {
             if (obj == null)
             {
                 throw new ArgumentNullException(nameof(obj));
+            }
+
+            if (variableDescription != null)
+            {
+                return new ScriptRuntimeException(
+                    "attempt to index a {0} value ({1})",
+                    obj.Type.ToLuaTypeString(),
+                    variableDescription
+                );
             }
 
             return new ScriptRuntimeException(

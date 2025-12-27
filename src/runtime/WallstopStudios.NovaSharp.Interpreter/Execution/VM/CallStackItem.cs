@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System.Collections.Generic;
     using Debugging;
     using Execution.Scopes;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -61,6 +62,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public DynValue[] LocalScope { get; set; }
 
         /// <summary>
+        /// The actual number of elements used in <see cref="LocalScope"/>.
+        /// May be less than the array length when using pooled arrays.
+        /// </summary>
+        internal int _localScopeSize;
+
+        /// <summary>
         /// Closure context captured by the function.
         /// </summary>
         public ClosureContext ClosureScope { get; set; }
@@ -94,11 +101,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             ErrorHandlerBeforeUnwind = null;
             BasePointer = 0;
             ReturnAddress = 0;
-            LocalScope = null;
+            if (LocalScope != null)
+            {
+                DynValueArrayPool.Return(LocalScope, clearArray: true);
+                LocalScope = null;
+            }
+            _localScopeSize = 0;
             ClosureScope = null;
             Flags = default;
-            BlocksToClose?.Clear();
-            ToBeClosedIndices?.Clear();
+            if (BlocksToClose != null)
+            {
+                // Return all inner lists to their pool first
+                foreach (List<SymbolRef> innerList in BlocksToClose)
+                {
+                    ListPool<SymbolRef>.Return(innerList);
+                }
+                // Return the outer list to its pool
+                ListPool<List<SymbolRef>>.Return(BlocksToClose);
+                BlocksToClose = null;
+            }
+            if (ToBeClosedIndices != null)
+            {
+                HashSetPool<int>.Return(ToBeClosedIndices);
+                ToBeClosedIndices = null;
+            }
         }
     }
 }

@@ -1,5 +1,11 @@
 root = false
 
+# Disable all analyzers for auto-generated hardwired file - it's 15K+ lines
+# and causes Roslyn OOM during constant folding when analyzed
+[_Hardwired.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
+
 [*.cs]
 csharp_style_var_elsewhere = false:error
 csharp_style_var_for_built_in_types = false:error

@@ -5,22 +5,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class UserDataNestedTypesTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task InteropNestedTypesPublicEnum()
+        [AllLuaVersions]
+        public async Task InteropNestedTypesPublicEnum(LuaCompatibilityVersion version)
         {
             await WithRegisteredTypeAsync<SomeType>(async () =>
                 {
-                    Script script = new();
+                    Script script = new(version);
 
                     script.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
@@ -35,11 +38,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropNestedTypesPublicRef()
+        [AllLuaVersions]
+        public async Task InteropNestedTypesPublicRef(LuaCompatibilityVersion version)
         {
             await WithRegisteredTypeAsync<SomeType>(async () =>
                 {
-                    Script script = new();
+                    Script script = new(version);
 
                     script.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
@@ -55,11 +59,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropNestedTypesPrivateRef()
+        [AllLuaVersions]
+        public async Task InteropNestedTypesPrivateRef(LuaCompatibilityVersion version)
         {
             await WithRegisteredTypeAsync<SomeType>(async () =>
                 {
-                    Script script = new();
+                    Script script = new(version);
 
                     script.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
@@ -75,11 +80,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropNestedTypesPrivateRef2()
+        [AllLuaVersions]
+        public async Task InteropNestedTypesPrivateRef2(LuaCompatibilityVersion version)
         {
             await WithRegisteredTypeAsync<SomeType>(() =>
                 {
-                    Script script = new();
+                    Script script = new(version);
 
                     script.Globals.Set("o", UserData.CreateStatic<SomeType>());
 
@@ -93,11 +99,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropNestedTypesPublicVal()
+        [AllLuaVersions]
+        public async Task InteropNestedTypesPublicVal(LuaCompatibilityVersion version)
         {
             await WithRegisteredTypeAsync<VSomeType>(async () =>
                 {
-                    Script script = new();
+                    Script script = new(version);
 
                     script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 
@@ -113,11 +120,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropNestedTypesPrivateVal()
+        [AllLuaVersions]
+        public async Task InteropNestedTypesPrivateVal(LuaCompatibilityVersion version)
         {
             await WithRegisteredTypeAsync<VSomeType>(async () =>
                 {
-                    Script script = new();
+                    Script script = new(version);
 
                     script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 
@@ -133,11 +141,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropNestedTypesPrivateVal2()
+        [AllLuaVersions]
+        public async Task InteropNestedTypesPrivateVal2(LuaCompatibilityVersion version)
         {
             await WithRegisteredTypeAsync<VSomeType>(() =>
                 {
-                    Script script = new();
+                    Script script = new(version);
 
                     script.Globals.Set("o", UserData.CreateStatic<VSomeType>());
 

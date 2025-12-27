@@ -1,8 +1,8 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\TableModuleTUnitTests.cs:169
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:184
 -- @test: TableModuleTUnitTests.InsertValidatesPositionType
--- @compat-notes: Lua 5.3+: bitwise operators
+-- @compat-notes: Test targets Lua 5.1
 local values = {}
                     table.insert(values, 'two', 99)

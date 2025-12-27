@@ -6,8 +6,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ProcessorBinaryDumpTUnitTests
     {
@@ -17,9 +19,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         private const int DumpChunkVersion = 0x151;
 
         [global::TUnit.Core.Test]
-        public async Task UndumpThrowsWhenHeaderMissing()
+        [AllLuaVersions]
+        public async Task UndumpThrowsWhenHeaderMissing(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Processor processor = script.GetMainProcessorForTests();
 
             using MemoryStream stream = new();
@@ -40,9 +43,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task UndumpThrowsWhenVersionInvalid()
+        [AllLuaVersions]
+        public async Task UndumpThrowsWhenVersionInvalid(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Processor processor = script.GetMainProcessorForTests();
 
             using MemoryStream stream = new();
@@ -61,9 +65,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task DumpThrowsWhenMetaInstructionMissing()
+        [AllLuaVersions]
+        public async Task DumpThrowsWhenMetaInstructionMissing(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue chunk = script.LoadString("return 1");
             Processor processor = script.GetMainProcessorForTests();
             ByteCode byteCode = script.GetByteCodeForTests();
@@ -92,10 +97,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task DumpLoadRoundTripPreservesIntegerSubtype()
+        [AllLuaVersions]
+        public async Task DumpLoadRoundTripPreservesIntegerSubtype(LuaCompatibilityVersion version)
         {
             // Test that integer subtype is preserved through dump/load cycle
-            Script script = new();
+            Script script = new(version);
             DynValue chunk = script.LoadString("return 9007199254740993"); // 2^53 + 1, beyond double precision
             DynValue result1 = script.Call(chunk);
 
@@ -108,7 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             script.Dump(chunk, stream);
 
             stream.Position = 0;
-            Script script2 = new();
+            Script script2 = new(version);
             DynValue loadedChunk = script2.LoadStream(stream);
             DynValue result2 = script2.Call(loadedChunk);
 
@@ -122,10 +128,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task DumpLoadRoundTripPreservesFloatSubtype()
+        [AllLuaVersions]
+        public async Task DumpLoadRoundTripPreservesFloatSubtype(LuaCompatibilityVersion version)
         {
             // Test that float subtype is preserved through dump/load cycle
-            Script script = new();
+            Script script = new(version);
             DynValue chunk = script.LoadString("return 3.14159");
             DynValue result1 = script.Call(chunk);
 
@@ -138,7 +145,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             script.Dump(chunk, stream);
 
             stream.Position = 0;
-            Script script2 = new();
+            Script script2 = new(version);
             DynValue loadedChunk = script2.LoadStream(stream);
             DynValue result2 = script2.Call(loadedChunk);
 
@@ -149,10 +156,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task DumpLoadRoundTripPreservesNegativeZeroAsFloat()
+        [AllLuaVersions]
+        public async Task DumpLoadRoundTripPreservesNegativeZeroAsFloat(
+            LuaCompatibilityVersion version
+        )
         {
             // Negative zero must remain a float to preserve IEEE 754 semantics
-            Script script = new();
+            Script script = new(version);
             DynValue chunk = script.LoadString("return -0.0");
             DynValue result1 = script.Call(chunk);
 
@@ -165,7 +175,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             script.Dump(chunk, stream);
 
             stream.Position = 0;
-            Script script2 = new();
+            Script script2 = new(version);
             DynValue loadedChunk = script2.LoadStream(stream);
             DynValue result2 = script2.Call(loadedChunk);
 
@@ -179,10 +189,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task DumpLoadRoundTripPreservesLargeIntegerPrecision()
+        [AllLuaVersions]
+        public async Task DumpLoadRoundTripPreservesLargeIntegerPrecision(
+            LuaCompatibilityVersion version
+        )
         {
             // Test large integers near long.MaxValue
-            Script script = new();
+            Script script = new(version);
             // math.maxinteger = 2^63 - 1 = 9223372036854775807
             DynValue chunk = script.LoadString("return 9223372036854775807");
             DynValue result1 = script.Call(chunk);
@@ -196,7 +209,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             script.Dump(chunk, stream);
 
             stream.Position = 0;
-            Script script2 = new();
+            Script script2 = new(version);
             DynValue loadedChunk = script2.LoadStream(stream);
             DynValue result2 = script2.Call(loadedChunk);
 

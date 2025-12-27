@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -11,6 +12,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Utilities;
@@ -221,7 +224,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             DynValue v = args[0];
-            DynValue tail = executionContext.GetMetamethodTailCall(v, "__tostring", v);
+            DynValue tail = executionContext.GetMetamethodTailCall(v, Metamethods.ToStringMeta, v);
 
             if (tail == null || tail.IsNil())
             {
@@ -232,7 +235,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             tail.TailCallData.Continuation = new CallbackFunction(
                 ToStringContinuation,
-                "__tostring"
+                Metamethods.ToStringMeta
             );
 
             return tail;
@@ -424,7 +427,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 DynValue numeral =
                     args[0].Type != DataType.Number
                         ? args.AsType(0, "tonumber", DataType.String, false)
-                        : DynValue.NewString(args[0].Number.ToString(CultureInfo.InvariantCulture));
+                        // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
+                        : DynValue.NewString(args[0].LuaNumber.ToString());
 
                 double baseValue = b.Number;
                 if (double.IsNaN(baseValue) || double.IsInfinity(baseValue))
@@ -518,6 +522,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int GetDigitValue(char candidate)
         {
             if (candidate >= '0' && candidate <= '9')
@@ -610,6 +615,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 )
             )
             {
+                // Lua 5.2+ does NOT accept "nan" or "inf" string literals (returns nil)
+                // Lua 5.1 accepts them via C's strtod
+                if (
+                    resolved >= LuaCompatibilityVersion.Lua52
+                    && (double.IsNaN(doubleValue) || double.IsInfinity(doubleValue))
+                )
+                {
+                    return false;
+                }
+
                 // Use LuaNumber.FromDouble to auto-promote whole numbers to integers
                 value = LuaNumber.FromDouble(doubleValue);
                 return true;
@@ -920,11 +935,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool IsHexDigit(char c)
         {
             return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int HexDigitToValue(char c)
         {
             if (c >= '0' && c <= '9')
@@ -942,6 +959,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua's <c>print</c> function (§6.1) by formatting the arguments with tabs and forwarding them to
         /// the host-provided debug sink.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Version-specific behavior:</b>
+        /// </para>
+        /// <list type="bullet">
+        /// <item>
+        /// <description>
+        /// <b>Lua 5.1–5.3:</b> <c>print</c> calls the global <c>tostring</c> function for each argument.
+        /// If the user has overridden <c>tostring</c> in the global environment, that override is called.
+        /// </description>
+        /// </item>
+        /// <item>
+        /// <description>
+        /// <b>Lua 5.4+:</b> <c>print</c> uses the <c>__tostring</c> metamethod directly (hardwired behavior),
+        /// bypassing the global <c>tostring</c> function entirely.
+        /// </description>
+        /// </item>
+        /// </list>
+        /// </remarks>
         /// <param name="executionContext">Current execution context, used to resolve the script's debug printer.</param>
         /// <param name="args">Arguments to format and print.</param>
         /// <returns><see cref="DynValue.Nil"/>, matching Lua's return contract.</returns>
@@ -957,7 +993,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            Script script = executionContext.Script;
+            LuaCompatibilityVersion version = script.CompatibilityVersion;
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
+
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+
+            // Lua 5.4+ behavior: print uses __tostring metamethod directly (hardwired)
+            // Lua 5.1-5.3 behavior: print calls global tostring function (user-overridable)
+            bool useLua54HardwiredTostring = resolved >= LuaCompatibilityVersion.Lua54;
 
             for (int i = 0; i < args.Count; i++)
             {
@@ -971,12 +1015,412 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     sb.Append('\t');
                 }
 
-                sb.Append(args.AsStringUsingMeta(executionContext, i, "print"));
+                if (useLua54HardwiredTostring)
+                {
+                    // Lua 5.4+: Use __tostring metamethod directly (current behavior)
+                    sb.Append(args.AsStringUsingMeta(executionContext, i, "print"));
+                }
+                else
+                {
+                    // Lua 5.1-5.3: Call global tostring function (user-overridable)
+                    sb.Append(CallGlobalTostring(script, args[i], version));
+                }
             }
 
-            executionContext.Script.Options.DebugPrint(sb.ToString());
+            script.Options.DebugPrint(sb.ToString());
 
             return DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Calls the global <c>tostring</c> function for a value, respecting user overrides.
+        /// Used by <see cref="Print"/> in Lua 5.1–5.3 mode.
+        /// </summary>
+        /// <param name="script">The script containing the global environment.</param>
+        /// <param name="value">The value to convert to string.</param>
+        /// <param name="version">The Lua compatibility version for number formatting.</param>
+        /// <returns>The string representation of the value.</returns>
+        private static string CallGlobalTostring(
+            Script script,
+            DynValue value,
+            LuaCompatibilityVersion version
+        )
+        {
+            // Get the global tostring function
+            DynValue tostringFunc = script.Globals.RawGet("tostring");
+
+            if (
+                tostringFunc != null
+                && (
+                    tostringFunc.Type == DataType.Function
+                    || tostringFunc.Type == DataType.ClrFunction
+                )
+            )
+            {
+                // Call the global tostring function (user-overridable, including CLR callbacks)
+                DynValue result = script.Call(tostringFunc, value);
+
+                if (result.Type == DataType.String)
+                {
+                    return result.String;
+                }
+
+                // tostring must return a string - if not, fall back to default formatting
+                // This matches Lua's behavior where invalid tostring results are not fatal in print
+                return value.ToPrintString(version);
+            }
+
+            // No global tostring or not a callable - use default formatting
+            return value.ToPrintString(version);
+        }
+
+        /// <summary>
+        /// Implements Lua 5.1's <c>getfenv</c> function (§5.1) which retrieves the environment table
+        /// of a function or the running function at a given stack level.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This function was removed in Lua 5.2 and replaced by the <c>_ENV</c> upvalue mechanism.
+        /// </para>
+        /// <para>
+        /// If <paramref name="f"/> is a function, returns its environment.
+        /// If <paramref name="f"/> is a number <c>n</c>, returns the environment of the function at stack level <c>n</c>:
+        /// Level 0 returns the global environment (thread), level 1 is the function calling <c>getfenv</c>, etc.
+        /// Without arguments, returns the environment of the calling function.
+        /// </para>
+        /// </remarks>
+        /// <param name="executionContext">Execution context used to walk the call stack.</param>
+        /// <param name="args">Optional function or stack level (defaults to 1 if omitted).</param>
+        /// <returns>The environment table for the specified function or stack level.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown if the stack level is invalid or negative.</exception>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+        [NovaSharpModuleMethod(Name = "getfenv")]
+        public static DynValue GetFenv(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg = args.Count > 0 ? args[0] : DynValue.Nil;
+
+            // If no argument or nil, default to level 1 (calling function)
+            if (arg.IsNil())
+            {
+                arg = DynValue.NewNumber(1);
+            }
+
+            // Handle function argument
+            if (arg.Type == DataType.Function)
+            {
+                Closure closure = arg.Function;
+                return GetEnvironmentFromClosure(closure, executionContext.Script);
+            }
+            else if (arg.Type == DataType.ClrFunction)
+            {
+                // C functions always return the global environment
+                return DynValue.NewTable(executionContext.Script.Globals);
+            }
+            else if (arg.Type == DataType.Number)
+            {
+                // Handle stack level
+                double levelDouble = arg.Number;
+
+                if (levelDouble < 0 || levelDouble != Math.Floor(levelDouble))
+                {
+                    throw ScriptRuntimeException.BadArgument(
+                        0,
+                        "getfenv",
+                        "non-negative integer expected"
+                    );
+                }
+
+                int level = (int)levelDouble;
+
+                // Level 0 returns the global environment (thread)
+                if (level == 0)
+                {
+                    return DynValue.NewTable(executionContext.Script.Globals);
+                }
+
+                // Find the Lua function at the given stack level
+                if (
+                    !TryGetLuaStackFrameForGetSetFenv(
+                        executionContext,
+                        level,
+                        out CallStackItem frame
+                    )
+                )
+                {
+                    throw new ScriptRuntimeException("'getfenv': invalid level");
+                }
+
+                // Get the environment from the closure context
+                ClosureContext closureScope = frame.ClosureScope;
+                return GetEnvironmentFromClosureContext(closureScope, executionContext.Script);
+            }
+            else
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    0,
+                    "getfenv",
+                    "function or number expected, got " + arg.Type.ToLuaTypeString()
+                );
+            }
+        }
+
+        /// <summary>
+        /// Implements Lua 5.1's <c>setfenv</c> function (§5.1) which changes the environment table
+        /// of a function or the running function at a given stack level.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This function was removed in Lua 5.2 and replaced by the <c>_ENV</c> upvalue mechanism.
+        /// </para>
+        /// <para>
+        /// If <paramref name="f"/> is a function, sets its environment to the given table.
+        /// If <paramref name="f"/> is a number <c>n</c>, sets the environment of the function at stack level <c>n</c>.
+        /// Level 0 sets the global environment (thread), level 1 is the function calling <c>setfenv</c>, etc.
+        /// </para>
+        /// <para>
+        /// Returns the function after modifying its environment (except for level 0 which returns nothing).
+        /// Cannot change the environment of C functions.
+        /// </para>
+        /// </remarks>
+        /// <param name="executionContext">Execution context used to walk the call stack.</param>
+        /// <param name="args">Function or stack level (arg 0) and the new environment table (arg 1).</param>
+        /// <returns>The function with modified environment, or nil for level 0.</returns>
+        /// <exception cref="ScriptRuntimeException">Thrown if arguments are invalid or trying to change a C function's environment.</exception>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+        [NovaSharpModuleMethod(Name = "setfenv")]
+        public static DynValue SetFenv(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            if (args.Count < 2)
+            {
+                throw ScriptRuntimeException.BadArgumentNoValue(1, "setfenv", DataType.Table);
+            }
+
+            DynValue arg = args[0];
+            DynValue envArg = args[1];
+
+            if (envArg.Type != DataType.Table)
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    1,
+                    "setfenv",
+                    "table expected, got " + envArg.Type.ToLuaTypeString()
+                );
+            }
+
+            Table newEnv = envArg.Table;
+
+            // Handle function argument
+            if (arg.Type == DataType.Function)
+            {
+                Closure closure = arg.Function;
+                SetEnvironmentOnClosure(closure, newEnv);
+                return arg; // Return the function
+            }
+            else if (arg.Type == DataType.ClrFunction)
+            {
+                throw new ScriptRuntimeException(
+                    "'setfenv' cannot change environment of given object"
+                );
+            }
+            else if (arg.Type == DataType.Number)
+            {
+                double levelDouble = arg.Number;
+
+                if (levelDouble < 0 || levelDouble != Math.Floor(levelDouble))
+                {
+                    throw ScriptRuntimeException.BadArgument(
+                        0,
+                        "setfenv",
+                        "non-negative integer expected"
+                    );
+                }
+
+                int level = (int)levelDouble;
+
+                // Level 0 sets the global environment (thread) - return nil
+                if (level == 0)
+                {
+                    // Note: In reference Lua 5.1, setfenv(0, t) sets the global environment
+                    // of the running thread. We approximate this by setting _G on the script.
+                    // This is a simplified implementation - full thread support would require more infrastructure.
+                    executionContext.Script.Globals.MetaTable = newEnv.MetaTable;
+                    foreach (TablePair pair in newEnv.GetPairsEnumerator())
+                    {
+                        executionContext.Script.Globals.Set(pair.Key, pair.Value);
+                    }
+                    return DynValue.Nil;
+                }
+
+                // Find the Lua function at the given stack level
+                if (
+                    !TryGetLuaStackFrameForGetSetFenv(
+                        executionContext,
+                        level,
+                        out CallStackItem frame
+                    )
+                )
+                {
+                    throw new ScriptRuntimeException("'setfenv': invalid level");
+                }
+
+                // Set the environment on the closure context
+                ClosureContext closureScope = frame.ClosureScope;
+                if (closureScope == null || closureScope.Count == 0)
+                {
+                    throw new ScriptRuntimeException(
+                        "'setfenv' cannot change environment of given object"
+                    );
+                }
+
+                // The first upvalue should be _ENV
+                if (
+                    closureScope.Symbols.Length > 0
+                    && closureScope.Symbols[0] == WellKnownSymbols.ENV
+                )
+                {
+                    closureScope[0].Assign(DynValue.NewTable(newEnv));
+                    // Return nil for stack-level setfenv (matches Lua 5.1 behavior for level > 0)
+                    // Actually, Lua 5.1 returns the function for level > 0, but we don't have easy access to it
+                    return DynValue.Nil;
+                }
+                else
+                {
+                    throw new ScriptRuntimeException(
+                        "'setfenv' cannot change environment of given object"
+                    );
+                }
+            }
+            else
+            {
+                throw ScriptRuntimeException.BadArgument(
+                    0,
+                    "setfenv",
+                    "function or number expected, got " + arg.Type.ToLuaTypeString()
+                );
+            }
+        }
+
+        /// <summary>
+        /// Walks the call stack to find a Lua (non-CLR) function frame at the specified level.
+        /// Level 1 is the first Lua function in the stack (after skipping CLR frames).
+        /// </summary>
+        private static bool TryGetLuaStackFrameForGetSetFenv(
+            ScriptExecutionContext executionContext,
+            int luaLevel,
+            out CallStackItem frame
+        )
+        {
+            frame = null;
+
+            if (luaLevel <= 0)
+            {
+                return false;
+            }
+
+            int matched = 0;
+
+            for (
+                int depth = 0;
+                executionContext.TryGetStackFrame(depth, out CallStackItem candidate);
+                depth++
+            )
+            {
+                // Skip CLR function frames
+                if (candidate.ClrFunction != null)
+                {
+                    continue;
+                }
+
+                matched++;
+
+                if (matched == luaLevel)
+                {
+                    frame = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the environment table from a closure's upvalues.
+        /// </summary>
+        private static DynValue GetEnvironmentFromClosure(Closure closure, Script script)
+        {
+            if (closure.UpValuesCount > 0 && closure.GetUpValueName(0) == WellKnownSymbols.ENV)
+            {
+                DynValue envValue = closure.GetUpValue(0);
+                if (envValue.Type == DataType.Table)
+                {
+                    return envValue;
+                }
+            }
+
+            // If no _ENV upvalue, return global environment
+            return DynValue.NewTable(script.Globals);
+        }
+
+        /// <summary>
+        /// Gets the environment table from a closure context.
+        /// </summary>
+        private static DynValue GetEnvironmentFromClosureContext(
+            ClosureContext context,
+            Script script
+        )
+        {
+            if (
+                context != null
+                && context.Count > 0
+                && context.Symbols.Length > 0
+                && context.Symbols[0] == WellKnownSymbols.ENV
+            )
+            {
+                DynValue envValue = context[0];
+                if (envValue.Type == DataType.Table)
+                {
+                    return envValue;
+                }
+            }
+
+            // If no _ENV upvalue, return global environment
+            return DynValue.NewTable(script.Globals);
+        }
+
+        /// <summary>
+        /// Sets the environment table on a closure's _ENV upvalue.
+        /// </summary>
+        private static void SetEnvironmentOnClosure(Closure closure, Table newEnv)
+        {
+            if (closure.UpValuesCount > 0 && closure.GetUpValueName(0) == WellKnownSymbols.ENV)
+            {
+                DynValue upvalue = closure.GetUpValueMutable(0);
+                upvalue.Assign(DynValue.NewTable(newEnv));
+            }
+            else
+            {
+                throw new ScriptRuntimeException(
+                    "'setfenv' cannot change environment of given object"
+                );
+            }
         }
 
         /// <summary>

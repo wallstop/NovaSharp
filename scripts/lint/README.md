@@ -76,6 +76,52 @@ Incorrect pattern:
 python scripts/lint/check-shell-python-invocation.py
 ```
 
+### check-tunit-version-coverage.py
+
+Audits TUnit test files for Lua version coverage. NovaSharp supports Lua 5.1, 5.2, 5.3, 5.4, and 5.5, and every TUnit test that executes Lua code should declare which versions it targets via `[Arguments(LuaCompatibilityVersion.*)]` attributes.
+
+The script:
+
+- Scans all `*TUnitTests.cs` files
+- Identifies tests with/without version arguments
+- Distinguishes Lua execution tests from infrastructure tests
+- Reports compliance statistics and detailed test listings
+
+```bash
+# Basic summary
+python scripts/lint/check-tunit-version-coverage.py
+
+# Detailed output with all non-compliant tests
+python scripts/lint/check-tunit-version-coverage.py --detailed
+
+# JSON output for automation
+python scripts/lint/check-tunit-version-coverage.py --json
+
+# Fail CI if Lua execution tests lack version coverage
+python scripts/lint/check-tunit-version-coverage.py --lua-only --fail-on-noncompliant
+```
+
+### check-luanumber-usage.py
+
+Detects potentially problematic patterns where raw C# numeric types (double, float) are used instead of `LuaNumber` for Lua math operations. This can cause:
+
+1. **Precision loss**: Values beyond 2^53 cannot be exactly represented as doubles
+1. **Type coercion errors**: Integer vs float subtype distinction lost (critical for Lua 5.3+)
+1. **Overflow/underflow bugs**: Silent wrapping or unexpected behavior
+
+The script maintains a list of known-safe patterns (e.g., argument count retrieval, intentional float handling after type checks) that have been audited.
+
+```bash
+# Basic check
+python scripts/lint/check-luanumber-usage.py
+
+# Detailed output with line-by-line issues
+python scripts/lint/check-luanumber-usage.py --detailed
+
+# Fail CI if issues found
+python scripts/lint/check-luanumber-usage.py --fail-on-issues
+```
+
 ## Adding New Lint Scripts
 
 1. Create a Python script following the existing patterns (use `pathlib.rglob()` for searching, return exit code 0 on success, 1 on violation).

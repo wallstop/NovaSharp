@@ -10,8 +10,8 @@
         <UseMicrosoftTestingPlatform>true</UseMicrosoftTestingPlatform>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="TUnit" Version="1.2.11" />
-        <PackageReference Include="TUnit.Assertions" Version="1.2.11" />
+        <PackageReference Include="TUnit" Version="1.5.70" />
+        <PackageReference Include="TUnit.Assertions" Version="1.5.70" />
         <ProjectReference Include="$(DebuggersRoot)WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj" />
     </ItemGroup>
     <ItemGroup>

@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
     using System.IO;
     using System.Security;
     using System.Text;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -776,6 +777,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         protected abstract string Close();
 
         /// <summary>
+        /// Internal method to read a line from the file, with newline characters trimmed.
+        /// Used by <c>io.lines</c> lazy iterator.
+        /// </summary>
+        /// <returns>The line read, or <c>null</c> if at end of file.</returns>
+        internal string ReadLineInternal()
+        {
+            if (Eof())
+            {
+                return null;
+            }
+
+            string line = ReadLine();
+            return TrimLineEnding(line);
+        }
+
+        /// <summary>
         /// Flushes buffered content to the underlying stream, mirroring Lua's <c>file:flush</c>.
         /// </summary>
         /// <returns><c>true</c> when the flush succeeds.</returns>
@@ -804,7 +821,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib.IO
         {
             if (IsOpen())
             {
-                return $"file ({ReferenceId:X8})";
+                using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                sb.Append("file (0x");
+                sb.Append(ReferenceId.ToString("x", CultureInfo.InvariantCulture));
+                sb.Append(')');
+                return sb.ToString();
             }
             else
             {

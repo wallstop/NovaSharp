@@ -2,19 +2,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
+    using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Serialization.Json;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class JsonModuleTUnitTests
     {
-        [global::TUnit.Core.Test]
-        public async Task EncodeProducesCanonicalObject()
+        [Test]
+        [AllLuaVersions]
+        public async Task EncodeProducesCanonicalObject(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             script.DoString(
                 "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
             );
@@ -38,10 +42,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .IsTrue();
         }
 
-        [global::TUnit.Core.Test]
-        public async Task DecodeBuildsLuaTable()
+        [Test]
+        [AllLuaVersions]
+        public async Task DecodeBuildsLuaTable(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             script.DoString(
                 "local m = require('json'); json = { encode = m.serialize, decode = m.parse };"
             );
@@ -57,10 +62,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[2].Number).IsEqualTo(20);
         }
 
-        [global::TUnit.Core.Test]
-        public async Task ParseThrowsScriptRuntimeExceptionOnInvalidJson()
+        [Test]
+        [AllLuaVersions]
+        public async Task ParseThrowsScriptRuntimeExceptionOnInvalidJson(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             DynValue jsonModule = script.DoString("return require('json')");
             DynValue parse = jsonModule.Table.Get("parse");
 
@@ -70,10 +78,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(exception).IsNotNull();
         }
 
-        [global::TUnit.Core.Test]
-        public async Task SerializeThrowsScriptRuntimeExceptionOnNonTable()
+        [Test]
+        [AllLuaVersions]
+        public async Task SerializeThrowsScriptRuntimeExceptionOnNonTable(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             DynValue jsonModule = script.DoString("return require('json')");
             DynValue serialize = jsonModule.Table.Get("serialize");
 
@@ -83,10 +94,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(exception).IsNotNull();
         }
 
-        [global::TUnit.Core.Test]
-        public async Task IsNullDetectsJsonNullAndNil()
+        [Test]
+        [AllLuaVersions]
+        public async Task IsNullDetectsJsonNullAndNil(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 @"
                 local json = require('json')
@@ -103,13 +115,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[3].Boolean).IsFalse();
         }
 
-        [global::TUnit.Core.Test]
+        [Test]
         public async Task NullReturnsJsonNullDynValue()
         {
             DynValue value = JsonNull.Create();
 
             await Assert.That(value.Type).IsEqualTo(DataType.UserData);
             await Assert.That(JsonNull.IsJsonNull(value)).IsTrue();
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            return new Script(version, CoreModulePresets.Complete);
         }
     }
 }

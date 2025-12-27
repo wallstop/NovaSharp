@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -12,14 +13,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Expressions;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
     using Expression = NovaSharp.Interpreter.Tree.Expression;
 
     public sealed class BinaryOperatorExpressionTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task OrShortCircuitsWhenFirstOperandIsTruthy()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OrShortCircuitsWhenFirstOperandIsTruthy(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
@@ -42,9 +49,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task OrEvaluatesSecondOperandWhenFirstIsFalsey()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OrEvaluatesSecondOperandWhenFirstIsFalsey(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
@@ -67,9 +79,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task AndShortCircuitsWhenFirstOperandIsFalsey()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AndShortCircuitsWhenFirstOperandIsFalsey(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
@@ -92,9 +109,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task AndEvaluatesSecondOperandWhenFirstIsTruthy()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AndEvaluatesSecondOperandWhenFirstIsTruthy(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             StubExpression rhsStub = null;
 
             Expression expr = BuildBinaryExpression(
@@ -117,9 +141,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ModuloNormalizesNegativeRemainders()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ModuloNormalizesNegativeRemainders(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -135,9 +164,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorDivisionUsesFlooredQuotient()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FloorDivisionUsesFlooredQuotient(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -153,9 +185,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task BitwiseAndReturnsIntegerResult()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseAndReturnsIntegerResult(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -171,9 +206,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task AdditionHasHigherPrecedenceThanShiftOperators()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AdditionHasHigherPrecedenceThanShiftOperators(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue[] operands = new DynValue[]
             {
                 DynValue.NewNumber(1),
@@ -194,9 +234,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ArithmeticFailsWhenOperandsAreNotNumbers()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ArithmeticFailsWhenOperandsAreNotNumbers(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -214,9 +259,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConcatThrowsOnNonStringOperands()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ConcatThrowsOnNonStringOperands(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -234,9 +284,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task LessThanSupportsStringComparison()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LessThanSupportsStringComparison(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -252,9 +307,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task LessOrEqualSupportsStringComparison()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LessOrEqualSupportsStringComparison(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -270,9 +330,180 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task LessThanThrowsOnMismatchedTypes()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LessThanPreservesIntegerPrecisionAtBoundaries(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            // Test that large integers are compared correctly in DynamicExpression.Eval().
+            // Before the fix, this would incorrectly compare as equal due to double precision loss.
+            Script script = new(version);
+            const long maxIntegerMinusOne = long.MaxValue - 1;
+            const long maxInteger = long.MaxValue;
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThan,
+                "<",
+                ctx => new LiteralExpression(
+                    ctx,
+                    DynValue.NewNumber(LuaNumber.FromInteger(maxIntegerMinusOne))
+                ),
+                ctx => new LiteralExpression(
+                    ctx,
+                    DynValue.NewNumber(LuaNumber.FromInteger(maxInteger))
+                )
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            // 9223372036854775806 < 9223372036854775807 should be true
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LessOrEqualPreservesIntegerPrecisionAtBoundaries(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Test that large integers are compared correctly in DynamicExpression.Eval().
+            Script script = new(version);
+            const long maxInteger = long.MaxValue;
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpLessThanEqual,
+                "<=",
+                ctx => new LiteralExpression(
+                    ctx,
+                    DynValue.NewNumber(LuaNumber.FromInteger(maxInteger))
+                ),
+                ctx => new LiteralExpression(
+                    ctx,
+                    DynValue.NewNumber(LuaNumber.FromInteger(maxInteger))
+                )
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            // maxinteger <= maxinteger should be true
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AdditionPreservesIntegerSubtype(LuaCompatibilityVersion version)
+        {
+            // Test that integer arithmetic in DynamicExpression.Eval() preserves the integer subtype.
+            Script script = new(version);
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpAdd,
+                "+",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(10))),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(20)))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(30L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SubtractionPreservesIntegerSubtype(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpMinusOrSub,
+                "-",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(50))),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(20)))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(30L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MultiplicationPreservesIntegerSubtype(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpMul,
+                "*",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(6))),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(7)))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(42L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FloorDivisionPreservesIntegerSubtype(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+
+            Expression expr = BuildBinaryExpression(
+                script,
+                TokenType.OpFloorDiv,
+                "//",
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(17))),
+                ctx => new LiteralExpression(ctx, DynValue.NewNumber(LuaNumber.FromInteger(5)))
+            );
+
+            DynValue result = expr.Eval(TestHelpers.CreateExecutionContext(script));
+
+            // 17 // 5 = 3 (integer)
+            await Assert.That(result.IsInteger).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.LuaNumber.AsInteger).IsEqualTo(3L).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LessThanThrowsOnMismatchedTypes(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -290,9 +521,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EqualityTreatsNilAndVoidCombinationAsEqual()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EqualityTreatsNilAndVoidCombinationAsEqual(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -308,9 +546,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EqualityReturnsFalseWhenNumbersDiffer()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EqualityReturnsFalseWhenNumbersDiffer(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -326,13 +569,80 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments((int)TokenType.OpMinusOrSub, "-", (int)OpCode.Sub)]
-        [global::TUnit.Core.Arguments((int)TokenType.OpMul, "*", (int)OpCode.Mul)]
-        [global::TUnit.Core.Arguments((int)TokenType.OpDiv, "/", (int)OpCode.Div)]
-        [global::TUnit.Core.Arguments((int)TokenType.OpMod, "%", (int)OpCode.Mod)]
-        [global::TUnit.Core.Arguments((int)TokenType.OpPwr, "^", (int)OpCode.Power)]
-        [global::TUnit.Core.Arguments((int)TokenType.OpConcat, "..", (int)OpCode.Concat)]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpMinusOrSub,
+            "-",
+            (int)OpCode.Sub
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpMul,
+            "*",
+            (int)OpCode.Mul
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpDiv,
+            "/",
+            (int)OpCode.Div
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpMod,
+            "%",
+            (int)OpCode.Mod
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpPwr,
+            "^",
+            (int)OpCode.Power
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpConcat,
+            "..",
+            (int)OpCode.Concat
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpMinusOrSub,
+            "-",
+            (int)OpCode.Sub
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpMul,
+            "*",
+            (int)OpCode.Mul
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpDiv,
+            "/",
+            (int)OpCode.Div
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpMod,
+            "%",
+            (int)OpCode.Mod
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpPwr,
+            "^",
+            (int)OpCode.Power
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpConcat,
+            "..",
+            (int)OpCode.Concat
+        )]
         public async Task CompileEmitsExpectedOpCodeForArithmeticOperators(
+            LuaCompatibilityVersion version,
             int tokenTypeValue,
             string tokenText,
             int expectedOpCodeValue
@@ -341,7 +651,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             TokenType tokenType = (TokenType)tokenTypeValue;
             OpCode expectedOpCode = (OpCode)expectedOpCodeValue;
 
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -359,9 +669,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ParsingUnexpectedOperatorThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ParsingUnexpectedOperatorThrows(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptLoadingContext context = new(script);
             object chain = BinaryOperatorExpression.BeginOperatorChain();
             BinaryOperatorExpression.AddExpressionToChain(
@@ -380,9 +695,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EqualityReturnsFalseForMismatchedTypes()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EqualityReturnsFalseForMismatchedTypes(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -416,9 +736,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ModuloProducesPositiveResult()
+        [AllLuaVersions]
+        public async Task ModuloProducesPositiveResult(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -434,12 +755,88 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments((int)TokenType.OpAdd, "+", 4d, 6d, 10d)]
-        [global::TUnit.Core.Arguments((int)TokenType.OpMinusOrSub, "-", 9d, 3d, 6d)]
-        [global::TUnit.Core.Arguments((int)TokenType.OpMul, "*", 7d, 8d, 56d)]
-        [global::TUnit.Core.Arguments((int)TokenType.OpDiv, "/", 9d, 3d, 3d)]
-        [global::TUnit.Core.Arguments((int)TokenType.OpPwr, "^", 2d, 3d, 8d)]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpAdd,
+            "+",
+            4d,
+            6d,
+            10d
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpMinusOrSub,
+            "-",
+            9d,
+            3d,
+            6d
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpMul,
+            "*",
+            7d,
+            8d,
+            56d
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpDiv,
+            "/",
+            9d,
+            3d,
+            3d
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            (int)TokenType.OpPwr,
+            "^",
+            2d,
+            3d,
+            8d
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpAdd,
+            "+",
+            4d,
+            6d,
+            10d
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpMinusOrSub,
+            "-",
+            9d,
+            3d,
+            6d
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpMul,
+            "*",
+            7d,
+            8d,
+            56d
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpDiv,
+            "/",
+            9d,
+            3d,
+            3d
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            (int)TokenType.OpPwr,
+            "^",
+            2d,
+            3d,
+            8d
+        )]
         public async Task ArithmeticOperatorsProduceExpectedNumbers(
+            LuaCompatibilityVersion version,
             int tokenTypeValue,
             string tokenText,
             double left,
@@ -449,7 +846,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         {
             TokenType tokenType = (TokenType)tokenTypeValue;
 
-            Script script = new();
+            Script script = new(version);
             Expression expr = BuildBinaryExpression(
                 script,
                 tokenType,
@@ -464,9 +861,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ArithmeticThrowsOnNonNumericOperands()
+        [AllLuaVersions]
+        public async Task ArithmeticThrowsOnNonNumericOperands(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -484,9 +882,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConcatenationCombinesStrings()
+        [AllLuaVersions]
+        public async Task ConcatenationCombinesStrings(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -502,9 +901,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConcatenationThrowsForNonStringOperands()
+        [AllLuaVersions]
+        public async Task ConcatenationThrowsForNonStringOperands(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -522,9 +922,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ComparisonEvaluatesNumericOrdering()
+        [AllLuaVersions]
+        public async Task ComparisonEvaluatesNumericOrdering(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -540,9 +941,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ComparisonSupportsGreaterThan()
+        [AllLuaVersions]
+        public async Task ComparisonSupportsGreaterThan(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -558,9 +960,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task StringLessComparisonUsesLexicographicalOrdering()
+        [AllLuaVersions]
+        public async Task StringLessComparisonUsesLexicographicalOrdering(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -576,9 +981,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task StringLessOrEqualTreatsEqualStringsAsTrue()
+        [AllLuaVersions]
+        public async Task StringLessOrEqualTreatsEqualStringsAsTrue(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -594,9 +1000,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EqualityTreatsNilAndVoidAsEqual()
+        [AllLuaVersions]
+        public async Task EqualityTreatsNilAndVoidAsEqual(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -612,9 +1019,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EqualityReturnsTrueForSharedDynValueReference()
+        [AllLuaVersions]
+        public async Task EqualityReturnsTrueForSharedDynValueReference(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new Script();
+            Script script = new Script(version);
             DynValue shared = DynValue.NewTable(script);
 
             Expression expr = BuildBinaryExpression(
@@ -631,9 +1041,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task GreaterOrEqualComparisonReturnsTrueForEqualNumbers()
+        [AllLuaVersions]
+        public async Task GreaterOrEqualComparisonReturnsTrueForEqualNumbers(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -649,9 +1062,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task ComparisonThrowsForMismatchedTypes()
+        [AllLuaVersions]
+        public async Task ComparisonThrowsForMismatchedTypes(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -669,9 +1083,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task LessComparisonSupportsStrings()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LessComparisonSupportsStrings(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -687,9 +1106,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task GreaterComparisonUsesInvertedLessOrEqualResult()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GreaterComparisonUsesInvertedLessOrEqualResult(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -705,9 +1131,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task LessOrEqualThrowsForMismatchedTypes()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LessOrEqualThrowsForMismatchedTypes(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -725,9 +1156,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task EqualityHandlesNilAndVoidEquivalence()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EqualityHandlesNilAndVoidEquivalence(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Expression expr = BuildBinaryExpression(
                 script,
                 TokenType.OpEqual,
@@ -742,9 +1178,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task PowerOperatorIsRightAssociative()
+        [AllLuaVersions]
+        public async Task PowerOperatorIsRightAssociative(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildExpressionChain(
                 script,
@@ -761,9 +1198,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CreatePowerExpressionBuildsExponentNode()
+        [AllLuaVersions]
+        public async Task CreatePowerExpressionBuildsExponentNode(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
             ScriptLoadingContext ctx = new(script);
 
             Expression expr = BinaryOperatorExpression.CreatePowerExpression(
@@ -778,9 +1216,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task MultiplicationHasHigherPrecedenceThanAddition()
+        [AllLuaVersions]
+        public async Task MultiplicationHasHigherPrecedenceThanAddition(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildExpressionChain(
                 script,
@@ -794,9 +1235,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileOrEmitsShortCircuitJump()
+        [AllLuaVersions]
+        public async Task CompileOrEmitsShortCircuitJump(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -825,9 +1267,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileAndEmitsShortCircuitJump()
+        [AllLuaVersions]
+        public async Task CompileAndEmitsShortCircuitJump(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -856,11 +1299,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileGreaterThanSwapsOperandsAndUsesLess()
+        [AllLuaVersions]
+        public async Task CompileGreaterThanSwapsOperandsAndUsesLess(
+            LuaCompatibilityVersion version
+        )
         {
             // Per Lua spec: a > b is compiled as b < a (swap operands, use Less).
             // This preserves correct NaN handling: nan > nan = false.
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -896,9 +1342,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileArithmeticAndConcatEmitsExpectedOpcode()
+        [AllLuaVersions]
+        public async Task CompileArithmeticAndConcatEmitsExpectedOpcode(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new Script();
+            Script script = new Script(version);
             (TokenType TokenType, string Text, bool OperandsAreStrings, OpCode OpCode)[] cases =
             {
                 (TokenType.OpAdd, "+", false, OpCode.Add),
@@ -942,9 +1391,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileComparisonOperatorsEmitExpectedOpcode()
+        [AllLuaVersions]
+        public async Task CompileComparisonOperatorsEmitExpectedOpcode(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new Script();
+            Script script = new Script(version);
             (TokenType TokenType, string Text, OpCode OpCode)[] cases =
             {
                 (TokenType.OpLessThan, "<", OpCode.Less),
@@ -985,9 +1437,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileNotEqualEmitsEqualityFollowedByNot()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CompileNotEqualEmitsEqualityFollowedByNot(LuaCompatibilityVersion version)
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             Expression expr = BuildBinaryExpression(
                 script,
@@ -1012,9 +1469,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CommitOperatorChainThrowsWhenReductionLeavesMultipleNodes()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CommitOperatorChainThrowsWhenReductionLeavesMultipleNodes(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             ScriptLoadingContext context = new(script);
             object chain = BinaryOperatorExpression.BeginOperatorChain();
             BinaryOperatorExpression.AddExpressionToChain(
@@ -1037,9 +1501,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CommitOperatorChainThrowsWhenExpressionMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CommitOperatorChainThrowsWhenExpressionMissing(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             ScriptLoadingContext context = new(script);
             object chain = BinaryOperatorExpression.BeginOperatorChain();
             BinaryOperatorExpression.AddExpressionToChain(
@@ -1059,9 +1530,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
         }
 
         [global::TUnit.Core.Test]
-        public async Task CompileThrowsWhenOperatorMappingMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CompileThrowsWhenOperatorMappingMissing(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptLoadingContext context = new(script);
             BinaryOperatorExpression expression = (BinaryOperatorExpression)
                 BinaryOperatorExpression.CreatePowerExpression(
@@ -1159,7 +1635,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
 
         private static Token CreateToken(TokenType type, string text)
         {
-            return new Token(type, 0, 0, 0, 0, 0, 0, 0) { Text = text };
+            return new Token(type, 0, 0, 0, 0, 0, 0, 0, text);
         }
 
         private sealed class StubExpression : Expression

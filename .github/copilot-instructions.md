@@ -1,140 +1,67 @@
 # Copilot Instructions for NovaSharp
 
-> **⚠️ This file is deprecated.** All AI assistant guidelines have been consolidated into [`CONTRIBUTING_AI.md`](../CONTRIBUTING_AI.md). This file is retained for backwards compatibility with GitHub Copilot.
+**See [`.llm/context.md`](../.llm/context.md) for all AI assistant guidelines.**
 
-> **🚫 CRITICAL: NEVER perform `git add` or `git commit` operations.** Leave all version control to the human developer.
+## 🔴 Priority Hierarchy (NEVER Violate)
 
-> **🚫 CRITICAL: NEVER use absolute paths to local development machines.** All file paths must be relative to the repository root. Never reference paths like `D:/Code`, `C:/Users`, `/Users/username`, `/home/username`, or any machine-specific path in committed files.
+NovaSharp follows a strict priority order:
 
-> **🔴 HIGHEST PRIORITY: Lua Spec Compliance** — NovaSharp's primary goal is to faithfully match the official Lua reference implementation. When fixture comparisons reveal behavioral differences, these are **production bugs in NovaSharp that must be fixed**. **NEVER adjust tests or fixture expectations to match NovaSharp's incorrect behavior** — always fix the production code instead. See `PLAN.md` §8.38 for known spec violations and `CONTRIBUTING_AI.md` for the full policy.
+| Priority           | Concern                | Description                                   |
+| ------------------ | ---------------------- | --------------------------------------------- |
+| **1. CORRECTNESS** | Lua Spec Compliance    | Behavior MUST match reference Lua exactly     |
+| **2. SPEED**       | Runtime Performance    | Execute Lua code as fast as possible          |
+| **3. MEMORY**      | Minimal Allocations    | Zero-allocation hot paths, aggressive pooling |
+| **4. UNITY**       | Platform Compatibility | IL2CPP/AOT, Mono, no runtime code generation  |
+| **5. CLARITY**     | Maintainability        | Clean architecture, readability               |
 
-See [`CONTRIBUTING_AI.md`](../CONTRIBUTING_AI.md) for:
+**The Iron Rule**: A performance optimization that breaks Lua spec compliance is REJECTED. See [`.llm/skills/correctness-then-performance.md`](../.llm/skills/correctness-then-performance.md).
 
-- **🔴 Lua Spec Compliance Policy** (highest priority)
-- **🔴 Flag enum combined values must be external** (no `|`, `&`, `^`, `~` in enum members—use helper classes)
-- Project overview and repository structure
-- Build, test, and formatting commands
-- Architecture overview and key namespaces
-- Coding style and testing guidelines
-- **LuaNumber usage for Lua math operations**
-- **Lua fixture verification policy** (create cross-interpreter test fixtures for all bug fixes)
-- **Lua corpus regeneration** (regenerate fixtures after test changes via `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`)
-- Lint guards and commit style
+## 🔴 Critical Rules
+
+1. **NEVER `git add` or `git commit`** — Leave version control to the human
+1. **NEVER use absolute paths** — Use relative paths from repo root only
+1. **NEVER discard output** — **NO redirects or pipes to `/dev/null`** (`>/dev/null`, `2>/dev/null`, `&>/dev/null`, `| cat >/dev/null`, etc.), **even in chained commands** (`cmd1 2>/dev/null && cmd2`). Command output is essential for debugging. If a command produces too much output, use `--quiet` flags or filter with `grep`, but NEVER silently discard stderr.
+1. **Lua Spec Compliance is HIGHEST PRIORITY** — Fix production code when it differs from reference Lua, never tests. See [`.llm/skills/correctness-then-performance.md`](../.llm/skills/correctness-then-performance.md)
+1. **Maximum Performance** — After correctness is verified, optimize aggressively. All hot paths must be zero-allocation. See [`.llm/skills/high-performance-csharp.md`](../.llm/skills/high-performance-csharp.md)
+1. **Zero-Flaky Test Policy** — Every test failure indicates a **real bug** (production or test). NEVER skip, disable, ignore, or "make tests pass" without full root cause investigation. See [`.llm/skills/test-failure-investigation.md`](../.llm/skills/test-failure-investigation.md)
+1. **Always create BOTH C# tests AND `.lua` fixtures** — Every test/fix needs: (1) TUnit C# tests for NovaSharp runtime, (2) standalone `.lua` fixtures for cross-interpreter verification, (3) regenerate corpus with `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`
+1. **Multi-Version Testing** — All tests must run across Lua 5.1, 5.2, 5.3, 5.4, 5.5; include positive AND negative tests for version-specific features
+1. **Lua Fixture Metadata** — ONLY use `@lua-versions`, `@novasharp-only`, `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description` are **NOT parsed** by the harness and will be silently ignored
+1. **Exhaustive Test Coverage** — Every feature/bugfix needs comprehensive tests: normal cases, edge cases, error cases, negative tests, "the impossible". Use data-driven tests. See [`.llm/skills/exhaustive-test-coverage.md`](../.llm/skills/exhaustive-test-coverage.md)
+1. **Documentation & Changelog** — Every user-facing change requires: (1) updated XML docs and code comments, (2) updated markdown docs with CORRECT code samples, (3) CHANGELOG.md entry in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. See [`.llm/skills/documentation-and-changelog.md`](../.llm/skills/documentation-and-changelog.md)
+1. **Defensive Programming** — Production code must be robust and resilient. Handle all errors gracefully, never throw exceptions except for truly exceptional cases. See [`.llm/skills/defensive-programming.md`](../.llm/skills/defensive-programming.md)
+1. **Pre-Commit Validation** — Work is NOT complete until `bash ./scripts/dev/pre-commit.sh` passes. This runs all formatters, linters, and checks. A diff that fails CI is not ready for review. See [`.llm/skills/pre-commit-validation.md`](../.llm/skills/pre-commit-validation.md)
+
+## 🔴 Build & Test Commands
+
+**ALWAYS use the quick scripts** for fast, consistent builds and tests:
+
+```bash
+# Build (interpreter only, fast incremental)
+./scripts/build/quick.sh
+
+# Build full solution
+./scripts/build/quick.sh --all
+
+# Run all tests
+./scripts/test/quick.sh
+
+# Run tests matching pattern (method names containing "Floor")
+./scripts/test/quick.sh Floor
+
+# Run tests in specific class
+./scripts/test/quick.sh -c MathModule
+
+# Combined: class AND method filter
+./scripts/test/quick.sh -c Math -m Floor
+
+# Skip build when iterating on tests
+./scripts/test/quick.sh --no-build Floor
+
+# List all available tests
+./scripts/test/quick.sh --list
+```
+
+**⚠️ Do NOT use raw `dotnet build` or `dotnet test` commands** — the quick scripts handle all the correct flags and project paths.
 
 For human contributors, see [`docs/Contributing.md`](../docs/Contributing.md).
-
-______________________________________________________________________
-
-## Legacy Content (Preserved for Reference)
-
-### Project Overview
-
-NovaSharp is a multi-version Lua interpreter (supporting Lua 5.1, 5.2, 5.3, and 5.4) written in C# for .NET Standard 2.1, Mono, Xamarin, and Unity3D (including IL2CPP/AOT). It is an actively maintained continuation of the original interpreter by Marco Mastropaolo targeting modern .NET (6/7/8+), comprehensive Lua compatibility across all major versions, and Unity-first ergonomics.
-
-## Repository Structure
-
-```
-src/
-  runtime/WallstopStudios.NovaSharp.Interpreter/   # Core interpreter (lexer, parser, compiler, VM)
-  tooling/NovaSharp.Cli/           # Command-line interface
-  debuggers/                       # VS Code and remote debugger adapters
-  tests/
-    WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/  # Canonical test runner (TUnit)
-    WallstopStudios.NovaSharp.Interpreter.Tests/        # Shared Lua fixtures and helpers
-docs/                              # Testing, contributing, and architecture guides
-scripts/                           # Build, coverage, and lint helpers
-```
-
-## Build Commands
-
-```bash
-# Install local CLI tools (CSharpier formatter) — run once per checkout
-dotnet tool restore
-
-# Full release build
-dotnet build src/NovaSharp.sln -c Release
-
-# Quick iteration on interpreter core
-dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/NovaSharp.Interpreter.csproj
-
-# Format all C# code before committing
-dotnet csharpier .
-```
-
-## Test Commands
-
-```bash
-# Run interpreter tests (TUnit, Microsoft.Testing.Platform)
-dotnet test --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release
-
-# Generate coverage reports
-pwsh ./scripts/coverage/coverage.ps1   # or bash ./scripts/coverage/coverage.sh
-```
-
-## Architecture
-
-NovaSharp follows a classic interpreter pipeline:
-
-```
-Lua Source → [Lexer] → Tokens → [Parser] → AST → [Compiler] → Bytecode → [VM] → Execution
-```
-
-### Key Namespaces
-
-| Namespace   | Purpose                                                             |
-| ----------- | ------------------------------------------------------------------- |
-| `Execution` | VM core: `Processor`, `ByteCode`, `Instruction`, `OpCode`           |
-| `Tree`      | AST nodes: `Statement`, `Expression`, parsing logic                 |
-| `DataTypes` | Lua values: `DynValue`, `Table`, `Closure`, `Coroutine`, `UserData` |
-| `Interop`   | C# bridging: converters, descriptors, type registry                 |
-| `CoreLib`   | Built-in Lua modules: `TableModule`, `StringModule`, `MathModule`   |
-
-### DynValue: The Universal Value Type
-
-`DynValue` is the central hub representing all Lua values (nil, boolean, number, string, table, function, etc.). It uses a discriminated union pattern with a `DataType` enum and value storage. Factory methods: `NewString()`, `NewTable()`, `NewClosure()`, etc.
-
-## Coding Style
-
-- **Indentation**: 4 spaces, braces on new lines (Allman style)
-- **Naming**: PascalCase for types/methods, `_camelCase` for private fields
-- **Formatting**: Run `dotnet csharpier .` before committing — CSharpier is canonical
-- **Explicit types**: Prefer explicit types over `var`; only use `var` for anonymous types
-- **No nullable syntax**: Do not use `#nullable`, `string?`, `?.` on reference types, or `null!`
-- **No regions**: Never add `#region`/`#endregion` directives; delete any you encounter
-- **Access modifiers**: Always explicit; keep `using` directives minimal
-- **Internals access**: Prefer `internal` + `InternalsVisibleTo` over reflection hacks
-
-## Testing Guidelines
-
-- **Framework**: TUnit only (`global::TUnit.Core.Test`); do not add NUnit fixtures
-- **Async assertions**: Use `await Assert.That(...)` with `.ConfigureAwait(false)` on every await
-- **Isolation**: Use `[UserDataIsolation]` for tests that mutate `UserData` registry; use `[ScriptGlobalOptionsIsolation]` for `Script.GlobalOptions` changes
-- **Method names**: PascalCase without underscores
-- **Cleanup**: Use scope helpers (`TempFileScope`, `TempDirectoryScope`, `SemaphoreSlimScope`) instead of `try`/`finally`
-- **Console capture**: Use `ConsoleTestUtilities.WithConsoleCaptureAsync` / `WithConsoleRedirectionAsync`
-- **Spec alignment**: When tests fail, consult the Lua 5.4 manual; fix runtime code, not tests
-- **Production bug policy**: Never adjust tests to accommodate production bugs — fix production code to produce correct output
-
-## Lint Guards (Run Before Pushing)
-
-```bash
-python scripts/lint/check-platform-testhooks.py
-python scripts/lint/check-console-capture-semaphore.py
-python scripts/lint/check-userdata-scope-usage.py
-python scripts/lint/check-test-finally.py
-python scripts/lint/check-temp-path-usage.py
-```
-
-## Commit Style
-
-- Concise, imperative messages: "Fix parser regression"
-- Subsystem prefixes when helpful: "debugger: Fix breakpoint handling"
-- Reference issues: "Fixes #123"
-
-## Additional Resources
-
-- [AGENTS.md](../AGENTS.md) — Detailed agent guidelines (will be consolidated)
-- [CLAUDE.md](../CLAUDE.md) — Claude-specific context (will be consolidated)
-- [docs/Contributing.md](../docs/Contributing.md) — Full contributor guide
-- [docs/Testing.md](../docs/Testing.md) — Testing infrastructure details
-- [Lua 5.4 Manual](https://www.lua.org/manual/5.4/) — Canonical spec reference

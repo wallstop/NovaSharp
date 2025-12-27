@@ -1,8 +1,9 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\LuaBasicMultiVersionSpecTUnitTests.cs:22
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/LuaBasicMultiVersionSpecTUnitTests.cs:29
 -- @test: LuaBasicMultiVersionSpecTUnitTests.ToNumberParsesIntegersAcrossSupportedBases
+-- @compat-notes: Test targets Lua 5.1
 return tonumber('1010', 2),
                        tonumber('-77', 8),
                        tonumber('+1e', 16),

@@ -295,10 +295,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
             int prevCol = 2
         )
         {
-            return new Token(type, sourceId, fromLine, fromCol, toLine, toCol, prevLine, prevCol)
-            {
-                Text = text,
-            };
+            return new Token(
+                type,
+                sourceId,
+                fromLine,
+                fromCol,
+                toLine,
+                toCol,
+                prevLine,
+                prevCol,
+                text
+            );
         }
     }
 }

@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -17,9 +18,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     public sealed class ByteCodeTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task EnterSourceAppliesSourceRefsUntilGuardDisposes()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EnterSourceAppliesSourceRefsUntilGuardDisposes(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             ByteCode byteCode = new(script);
             SourceRef sourceRef = new(0, 1, 2, 3, 4, false);
 
@@ -37,7 +45,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task JumpPointHelpersExposeCodeCountAndLastInstruction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task JumpPointHelpersExposeCodeCountAndLastInstruction(
+            LuaCompatibilityVersion version
+        )
         {
             ByteCode byteCode = new(new Script());
             byteCode.EmitNop("first");
@@ -59,9 +74,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
 #if (!PCL) && ((!UNITY_5) || UNITY_STANDALONE) && (!(NETFX_CORE))
         [global::TUnit.Core.Test]
-        public async Task DumpWritesInstructionsAndDebugLines()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DumpWritesInstructionsAndDebugLines(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ByteCode byteCode = new(script);
             byteCode.EmitNop("first");
             byteCode.EmitDebug("trace");
@@ -147,7 +167,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitInvalidAddsInvalidInstructionWithReason()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitInvalidAddsInvalidInstructionWithReason(
+            LuaCompatibilityVersion version
+        )
         {
             ByteCode byteCode = new(new Script());
 
@@ -158,7 +185,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitLoadHandlesGlobalSymbols()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitLoadHandlesGlobalSymbols(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             SymbolRef env = SymbolRef.UpValue("_ENV", 0);
@@ -182,7 +214,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitLoadHandlesLocalSymbols()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitLoadHandlesLocalSymbols(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             SymbolRef symbol = SymbolRef.Local("localValue", 1);
@@ -201,7 +238,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitLoadHandlesUpValueSymbols()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitLoadHandlesUpValueSymbols(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             SymbolRef symbol = SymbolRef.UpValue("upvalue", 2);
@@ -220,7 +262,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitStoreHandlesGlobalSymbols()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitStoreHandlesGlobalSymbols(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             SymbolRef env = SymbolRef.UpValue("_ENV", 0);
@@ -241,7 +288,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitStoreHandlesLocalSymbols()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitStoreHandlesLocalSymbols(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             SymbolRef symbol = SymbolRef.Local("localValue", 3);
@@ -257,7 +309,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitStoreHandlesUpValueSymbols()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitStoreHandlesUpValueSymbols(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             SymbolRef symbol = SymbolRef.UpValue("upvalue", 5);
@@ -273,7 +330,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitCleanFiltersSymbolsAboveScopeRange()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitCleanFiltersSymbolsAboveScopeRange(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             SymbolRef retained = SymbolRef.Local("retained", 5);
@@ -301,7 +363,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitBeginFnSerializesScopeMetadata()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitBeginFnSerializesScopeMetadata(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             RuntimeScopeFrame frame = new() { ToFirstBlock = 42 };
@@ -322,7 +389,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitTblInitIEncodesLastPositionFlagWhenTrue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitTblInitIEncodesLastPositionFlagWhenTrue(
+            LuaCompatibilityVersion version
+        )
         {
             Instruction instruction = new ByteCode(new Script()).EmitTblInitI(lastpos: true);
             await Assert.That(instruction.OpCode).IsEqualTo(OpCode.TblInitI).ConfigureAwait(false);
@@ -330,7 +404,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitTblInitIEncodesLastPositionFlagWhenFalse()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitTblInitIEncodesLastPositionFlagWhenFalse(
+            LuaCompatibilityVersion version
+        )
         {
             Instruction instruction = new ByteCode(new Script()).EmitTblInitI(lastpos: false);
             await Assert.That(instruction.OpCode).IsEqualTo(OpCode.TblInitI).ConfigureAwait(false);
@@ -338,7 +419,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitDebugProducesDebugInstruction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitDebugProducesDebugInstruction(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
 
@@ -352,7 +438,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitLoadThrowsOnUnsupportedSymbolType()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitLoadThrowsOnUnsupportedSymbolType(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>
@@ -365,7 +456,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmitStoreThrowsOnUnsupportedSymbolType()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitStoreThrowsOnUnsupportedSymbolType(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
             InternalErrorException exception = Assert.Throws<InternalErrorException>(() =>

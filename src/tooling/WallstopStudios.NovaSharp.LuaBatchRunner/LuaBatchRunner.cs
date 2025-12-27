@@ -19,6 +19,7 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
     using System.Threading;
     using System.Threading.Tasks;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
@@ -108,6 +109,140 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
     internal static class Program
     {
         private const int ScriptTimeoutMs = 5000; // 5 second timeout per script
+        private static readonly char[] VersionSplitChars = new char[] { ',', ' ' };
+
+        /// <summary>
+        /// Tries to parse a Lua version string into a <see cref="LuaCompatibilityVersion"/>.
+        /// </summary>
+        /// <param name="versionString">The version string to parse (e.g., "5.4", "54", "Lua54").</param>
+        /// <param name="version">The parsed version.</param>
+        /// <returns>True if parsing succeeded.</returns>
+        private static bool TryParseLuaVersion(
+            string versionString,
+            out LuaCompatibilityVersion version
+        )
+        {
+            version = LuaCompatibilityVersion.Latest;
+
+            if (string.IsNullOrWhiteSpace(versionString))
+            {
+                return false;
+            }
+
+            // Normalize: remove "lua" prefix if present, trim whitespace
+            string normalized = versionString.Trim();
+            if (
+                normalized.StartsWith("lua", StringComparison.OrdinalIgnoreCase)
+                || normalized.StartsWith("Lua", StringComparison.Ordinal)
+            )
+            {
+                normalized = normalized.Substring(3);
+            }
+
+            // Remove dots: "5.4" -> "54"
+            normalized = normalized.Replace(".", string.Empty, StringComparison.Ordinal);
+
+            // Try parse as integer
+            if (
+                int.TryParse(
+                    normalized,
+                    System.Globalization.NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out int numericVersion
+                )
+            )
+            {
+                switch (numericVersion)
+                {
+                    case 51:
+                        version = LuaCompatibilityVersion.Lua51;
+                        return true;
+                    case 52:
+                        version = LuaCompatibilityVersion.Lua52;
+                        return true;
+                    case 53:
+                        version = LuaCompatibilityVersion.Lua53;
+                        return true;
+                    case 54:
+                        version = LuaCompatibilityVersion.Lua54;
+                        return true;
+                    case 55:
+                        version = LuaCompatibilityVersion.Lua55;
+                        return true;
+                }
+            }
+
+            // Try parse "latest"
+            if (string.Equals(normalized, "latest", StringComparison.OrdinalIgnoreCase))
+            {
+                version = LuaCompatibilityVersion.Latest;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Parses the @lua-versions metadata from the first few lines of a Lua fixture file.
+        /// </summary>
+        /// <param name="luaFilePath">Path to the Lua file.</param>
+        /// <returns>The first valid version found, or null if no version metadata exists.</returns>
+        private static LuaCompatibilityVersion? ParseLuaVersionFromFile(string luaFilePath)
+        {
+            const int MaxLinesToCheck = 10;
+
+            try
+            {
+                using (StreamReader reader = new StreamReader(luaFilePath))
+                {
+                    for (int lineNum = 0; lineNum < MaxLinesToCheck; lineNum++)
+                    {
+                        string line = reader.ReadLine();
+                        if (line == null)
+                        {
+                            break;
+                        }
+
+                        // Look for @lua-versions: in comments
+                        // Format: -- @lua-versions: 5.1, 5.2, 5.3
+                        int idx = line.IndexOf(
+                            "@lua-versions:",
+                            StringComparison.OrdinalIgnoreCase
+                        );
+                        if (idx >= 0)
+                        {
+                            string versionsPart = line.Substring(idx + "@lua-versions:".Length)
+                                .Trim();
+                            // Take the first version listed
+                            string[] versions = versionsPart.Split(
+                                VersionSplitChars,
+                                StringSplitOptions.RemoveEmptyEntries
+                            );
+                            if (versions.Length > 0)
+                            {
+                                if (
+                                    TryParseLuaVersion(
+                                        versions[0],
+                                        out LuaCompatibilityVersion parsedVersion
+                                    )
+                                )
+                                {
+                                    return parsedVersion;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+#pragma warning disable CA1031 // Catch all exceptions when reading file metadata
+            catch (Exception)
+            {
+                // If we can't read the file, we'll let the main execution handle the error
+            }
+#pragma warning restore CA1031
+
+            return null;
+        }
 
         internal static int Main(string[] args)
         {
@@ -117,11 +252,15 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                 Console.Error.WriteLine(
                     "   or: LuaBatchRunner <output-dir> --files-from <list.txt>"
                 );
+                Console.Error.WriteLine(
+                    "       --lua-version <5.1|5.2|5.3|5.4|5.5>  Set Lua compatibility version"
+                );
                 return 1;
             }
 
             string outputDir = args[0];
             List<string> luaFiles = new List<string>();
+            LuaCompatibilityVersion? cliLuaVersion = null;
 
             // Parse arguments
             int i = 1;
@@ -141,6 +280,24 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                 else if (args[i] == "--base-dir" && i + 1 < args.Length)
                 {
                     // Base directory for relative path calculation (ignored, we use full paths)
+                    i += 2;
+                }
+                else if (args[i] == "--lua-version" && i + 1 < args.Length)
+                {
+                    if (TryParseLuaVersion(args[i + 1], out LuaCompatibilityVersion parsedVersion))
+                    {
+                        cliLuaVersion = parsedVersion;
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine(
+                            string.Format(
+                                CultureInfo.InvariantCulture,
+                                "Warning: Invalid Lua version '{0}', using default",
+                                args[i + 1]
+                            )
+                        );
+                    }
                     i += 2;
                 }
                 else
@@ -212,6 +369,18 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                     string stderr = "";
                     int returnCode = 0;
 
+                    // Determine Lua version: CLI arg takes precedence, then file metadata, then default
+                    LuaCompatibilityVersion effectiveVersion;
+                    if (cliLuaVersion.HasValue)
+                    {
+                        effectiveVersion = cliLuaVersion.Value;
+                    }
+                    else
+                    {
+                        LuaCompatibilityVersion? fileVersion = ParseLuaVersionFromFile(luaFile);
+                        effectiveVersion = fileVersion ?? LuaCompatibilityVersion.Lua51;
+                    }
+
                     try
                     {
                         // Capture console output
@@ -236,11 +405,15 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
 
                                 // Run script with timeout to handle infinite loops
                                 Exception caughtException = null;
+                                LuaCompatibilityVersion versionForTask = effectiveVersion;
                                 Task scriptTask = Task.Run(() =>
                                 {
                                     try
                                     {
-                                        Script script = new Script();
+                                        Script script = new Script(
+                                            versionForTask,
+                                            CoreModulePresets.Complete
+                                        );
                                         script.DoFile(luaFile);
                                     }
 #pragma warning disable CA1031 // Catch all exceptions from user scripts intentionally

@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -14,13 +15,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ProcessorCoreLifecycleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task CallThrowsWhenEnteredFromDifferentThread()
+        [AllLuaVersions]
+        public async Task CallThrowsWhenEnteredFromDifferentThread(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             script.Options.CheckThreadAccess = true;
             DynValue chunk = script.LoadString("return 42");
 
@@ -195,9 +198,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CoroutineYieldPassesValuesWhenYieldingIsAllowed()
+        [AllLuaVersions]
+        public async Task CoroutineYieldPassesValuesWhenYieldingIsAllowed(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function worker()
@@ -217,9 +223,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task YieldingFromMainChunkThrowsCannotYieldMain()
+        [AllLuaVersions]
+        public async Task YieldingFromMainChunkThrowsCannotYieldMain(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString("coroutine.yield('outside')")
@@ -231,9 +240,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task YieldingWithClrBoundaryInsideCoroutineThrowsCannotYield()
+        [AllLuaVersions]
+        public async Task YieldingWithClrBoundaryInsideCoroutineThrowsCannotYield(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function boundary()

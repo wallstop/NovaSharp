@@ -410,7 +410,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         private static void EnsurePointer(CharPtr ptr, string paramName)
         {
-            if (ptr == null)
+            if (ptr.IsNull)
             {
                 throw new ArgumentNullException(paramName);
             }

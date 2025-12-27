@@ -7,6 +7,11 @@
 *.sh text eol=lf
 .githooks/* text eol=lf
 
+# Devcontainer scripts need LF endings to run in Linux containers
+.devcontainer/*.sh text eol=lf
+.devcontainer/Dockerfile text eol=lf
+.devcontainer/devcontainer.json text eol=lf
+
 # Keep C# sources on CRLF to match .editorconfig and keep CSharpier happy on Linux agents.
 *.cs text eol=crlf
 

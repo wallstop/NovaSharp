@@ -29,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         public LiteralExpression(ScriptLoadingContext lcontext, Token t)
             : base(lcontext)
         {
-            switch (t.Type)
+            switch (t.type)
             {
                 case TokenType.Number:
                 case TokenType.NumberHex:
@@ -54,7 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     break;
                 case TokenType.String:
                 case TokenType.StringLong:
-                    _value = DynValue.NewString(t.Text).AsReadOnly();
+                    _value = DynValue.NewString(t.text).AsReadOnly();
                     break;
                 case TokenType.True:
                     _value = DynValue.True;
@@ -71,7 +71,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             if (_value == null)
             {
-                throw new SyntaxErrorException(t, "unknown literal format near '{0}'", t.Text);
+                throw new SyntaxErrorException(t, "unknown literal format near '{0}'", t.text);
             }
 
             lcontext.Lexer.Next();

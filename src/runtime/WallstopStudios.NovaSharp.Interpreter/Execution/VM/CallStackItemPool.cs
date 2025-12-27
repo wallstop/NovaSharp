@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
 
     /// <summary>
@@ -34,6 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private static readonly Action<CallStackItem> ReturnToPool = item => Return(item);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static Stack<CallStackItem> GetPool()
         {
             Stack<CallStackItem> pool = ThreadLocalPool;
@@ -53,9 +55,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public static PooledResource<CallStackItem> Get(out CallStackItem item)
         {
             Stack<CallStackItem> pool = GetPool();
-            if (pool.Count > 0)
+            if (pool.TryPop(out CallStackItem pooledItem))
             {
-                item = pool.Pop();
+                item = pooledItem;
             }
             else
             {
@@ -72,12 +74,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Always pair with <see cref="Return"/> to avoid memory leaks.
         /// Prefer using the <see cref="Get(out CallStackItem)"/> method with a using statement instead.
         /// </remarks>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CallStackItem Rent()
         {
             Stack<CallStackItem> pool = GetPool();
-            if (pool.Count > 0)
+            if (pool.TryPop(out CallStackItem item))
             {
-                return pool.Pop();
+                return item;
             }
             return new CallStackItem();
         }

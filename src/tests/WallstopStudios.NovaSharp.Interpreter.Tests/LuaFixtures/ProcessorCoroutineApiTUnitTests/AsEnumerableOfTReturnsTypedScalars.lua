@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineApiTUnitTests.cs:101
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineApiTUnitTests.cs:127
 -- @test: ProcessorCoroutineApiTUnitTests.AsEnumerableOfTReturnsTypedScalars
+-- @compat-notes: Test targets Lua 5.1
 return function() coroutine.yield(1) coroutine.yield(2) return 3 end

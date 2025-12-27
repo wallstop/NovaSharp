@@ -160,10 +160,10 @@ if [[ "$SKIP_NOVASHARP" != "true" ]]; then
     echo ""
     echo "Running $total_files fixtures against NovaSharp (batch mode)..."
     
-    BATCH_RUNNER="${ROOT_DIR}/src/tooling/NovaSharp.LuaBatchRunner/bin/Release/net8.0/NovaSharp.LuaBatchRunner.dll"
+    BATCH_RUNNER="${ROOT_DIR}/src/tooling/WallstopStudios.NovaSharp.LuaBatchRunner/bin/Release/net8.0/WallstopStudios.NovaSharp.LuaBatchRunner.dll"
     if [[ ! -f "$BATCH_RUNNER" ]]; then
-        echo "Building NovaSharp.LuaBatchRunner..."
-        dotnet build "${ROOT_DIR}/src/tooling/NovaSharp.LuaBatchRunner/NovaSharp.LuaBatchRunner.csproj" -c Release -v q --nologo
+        echo "Building WallstopStudios.NovaSharp.LuaBatchRunner..."
+        dotnet build "${ROOT_DIR}/src/tooling/WallstopStudios.NovaSharp.LuaBatchRunner/WallstopStudios.NovaSharp.LuaBatchRunner.csproj" -c Release -v q --nologo
     fi
     
     if [[ ! -f "$BATCH_RUNNER" ]]; then
@@ -174,7 +174,8 @@ if [[ "$SKIP_NOVASHARP" != "true" ]]; then
     start_time=$(date +%s)
     
     # Run all files in a single process using the batch runner
-    DOTNET_ROLL_FORWARD=Major dotnet "$BATCH_RUNNER" "$OUTPUT_DIR" --files-from "$file_list"
+    # Pass --lua-version to ensure correct compatibility mode
+    DOTNET_ROLL_FORWARD=Major dotnet "$BATCH_RUNNER" "$OUTPUT_DIR" --lua-version "$LUA_VERSION" --files-from "$file_list"
     
     # Read results from summary
     if [[ -f "${OUTPUT_DIR}/novasharp_summary.json" ]]; then

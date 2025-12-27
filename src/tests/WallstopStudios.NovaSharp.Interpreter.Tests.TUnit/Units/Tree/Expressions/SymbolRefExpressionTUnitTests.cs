@@ -20,10 +20,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             ScriptLoadingContext context = CreateDynamicContext(script, hasVarArgs: true);
             context.Scope.DefineLocal(WellKnownSymbols.VARARGS);
 
-            Token token = new(TokenType.VarArgs, 0, 1, 1, 1, 3, 1, 0)
-            {
-                Text = WellKnownSymbols.VARARGS,
-            };
+            Token token = new Token(
+                TokenType.VarArgs,
+                0,
+                1,
+                1,
+                1,
+                3,
+                1,
+                0,
+                WellKnownSymbols.VARARGS
+            );
 
             DynamicExpressionException exception = Assert.Throws<DynamicExpressionException>(() =>
             {

@@ -1,7 +1,7 @@
--- @lua-versions: 5.1, 5.3+
+-- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:1390
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:1577
 -- @test: StringModuleTUnitTests.FormatDecimalWithIntegerLiteral
--- Note: Lua 5.2 has stricter range checking and errors on large integers
+-- @compat-notes: Test targets Lua 5.1
 return string.format('%d', 9223372036854775807)

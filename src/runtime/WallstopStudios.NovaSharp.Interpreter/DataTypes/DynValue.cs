@@ -1142,17 +1142,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.Void:
                     return "void";
                 case DataType.Nil:
-                    return "nil";
+                    return LuaKeywords.Nil;
                 case DataType.Boolean:
-                    return Boolean ? "true" : "false";
+                    return Boolean ? LuaKeywords.True : LuaKeywords.False;
                 case DataType.Number:
-                    return Number.ToString(CultureInfo.InvariantCulture);
+                    // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
+                    return LuaNumber.ToString();
                 case DataType.String:
                     // Use ZString.Concat for zero-allocation string building.
                     // JoinTupleStrings already uses notNested: false so recursive calls are safe.
                     return ZString.Concat("\"", String, "\"");
                 case DataType.Function:
-                    return ZString.Format("(Function {0:X8})", Function.EntryPointByteCodeLocation);
+                    return ZString.Format(
+                        "(Function 0x{0:x})",
+                        Function.EntryPointByteCodeLocation
+                    );
                 case DataType.ClrFunction:
                     return "(Function CLR)";
                 case DataType.Table:
@@ -1167,7 +1171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.UserData:
                     return "(UserData)";
                 case DataType.Thread:
-                    return ZString.Format("(Coroutine {0:X8})", Coroutine.ReferenceId);
+                    return ZString.Format("(Coroutine 0x{0:x})", Coroutine.ReferenceId);
                 default:
                     return "(???)";
             }
@@ -1257,9 +1261,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     _hashCode = hash.ToHashCode();
                     break;
                 case DataType.UserData:
+                    if (UserData?.Object != null)
+                    {
+                        hash.AddInt(UserData.Object.GetHashCode());
+                    }
+                    else if (UserData != null)
+                    {
+                        hash.AddInt(UserData.ReferenceId);
+                    }
+                    _hashCode = hash.ToHashCode();
+                    break;
                 case DataType.Thread:
+                    if (Coroutine != null)
+                    {
+                        hash.AddInt(Coroutine.ReferenceId);
+                    }
+                    _hashCode = hash.ToHashCode();
+                    break;
                 default:
-                    _hashCode = 999;
+                    _hashCode = hash.ToHashCode();
                     break;
             }
 
@@ -1357,7 +1377,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue rv = ToScalar();
             if (rv.Type == DataType.Number)
             {
-                return rv.Number.ToString(CultureInfo.InvariantCulture);
+                // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
+                return rv.LuaNumber.ToString();
             }
             else if (rv.Type == DataType.String)
             {
@@ -1462,10 +1483,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Performs an assignment, overwriting the value with the specified one.
+        /// This method is internal to prevent external code from corrupting VM state.
+        /// External code should use <see cref="Clone"/> and variable assignment instead.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <exception cref="ScriptRuntimeException">If the value is readonly.</exception>
-        public void Assign(DynValue value)
+        internal void Assign(DynValue value)
         {
             if (value == null)
             {

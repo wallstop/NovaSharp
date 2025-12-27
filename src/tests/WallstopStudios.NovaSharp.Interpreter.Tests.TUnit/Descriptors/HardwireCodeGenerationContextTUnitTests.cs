@@ -7,9 +7,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Hardwire;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Tests.TestUtilities;
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class HardwireCodeGenerationContextTUnitTests
     {
@@ -162,10 +164,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task DispatchTablePairsThrowsWhenMembersNull()
+        [AllLuaVersions]
+        public async Task DispatchTablePairsThrowsWhenMembersNull(LuaCompatibilityVersion version)
         {
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
-            Table table = new(new Script());
+            Table table = new(new Script(version));
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 context.DispatchTablePairs(table, null)
@@ -174,10 +177,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task DispatchTablePairsThrowsWhenActionNullForExpressionOverload()
+        [AllLuaVersions]
+        public async Task DispatchTablePairsThrowsWhenActionNullForExpressionOverload(
+            LuaCompatibilityVersion version
+        )
         {
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext();
-            Table table = new(new Script());
+            Table table = new(new Script(version));
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 context.DispatchTablePairs(
@@ -235,12 +241,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task DispatchTablePairsLogsErrorWhenEntryNotTable()
+        [AllLuaVersions]
+        public async Task DispatchTablePairsLogsErrorWhenEntryNotTable(
+            LuaCompatibilityVersion version
+        )
         {
             CapturingCodeGenerationLogger logger = new();
             HardwireCodeGenerationContext context = HardwireTestUtilities.CreateContext(logger);
 
-            Table root = new(new Script());
+            Table root = new(new Script(version));
             root.Set("Broken", DynValue.NewString("failure detected"));
 
             context.DispatchTablePairs(root, new CodeTypeMemberCollection());

@@ -4,16 +4,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class SourceCodeTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task LinesIncludeSyntheticHeaderAndOriginalCode()
+        [AllLuaVersions]
+        public async Task LinesIncludeSyntheticHeaderAndOriginalCode(
+            LuaCompatibilityVersion version
+        )
         {
             const string ChunkName = "units/source/header";
             const string Code = "local one = 1\nreturn one";
-            Script script = new();
+            Script script = new(version);
 
             script.DoString(Code, null, ChunkName);
             SourceCode source = script.GetSourceCode(script.SourceCodeCount - 1);
@@ -30,9 +35,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetCodeSnippetThrowsWhenSourceRefIsNull()
+        [AllLuaVersions]
+        public async Task GetCodeSnippetThrowsWhenSourceRefIsNull(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             script.DoString("return 1", null, "units/source/null");
             SourceCode source = script.GetSourceCode(script.SourceCodeCount - 1);
 
@@ -44,9 +50,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetCodeSnippetAppendsIntermediateLines()
+        [AllLuaVersions]
+        public async Task GetCodeSnippetAppendsIntermediateLines(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             script.DoString(
                 "local one = 1\nlocal two = one + 1\nlocal three = two + 1\nreturn three",
                 null,

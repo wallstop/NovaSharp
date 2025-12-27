@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -37,6 +38,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         }
 
         /// <summary>
+        /// Gets a description of the base variable being indexed (for error messages).
+        /// Returns a string like "global 'foo'" or "local 'bar'" when the base is a symbol reference.
+        /// </summary>
+        private string GetBaseVariableDescription()
+        {
+            if (_baseExp is SymbolRefExpression symRef)
+            {
+                SymbolRef symbol = symRef.GetSymbolRef();
+                if (symbol != null)
+                {
+                    string name = symbol.Name;
+                    return symbol.Type switch
+                    {
+                        SymbolRefType.Global => ZString.Concat("global '", name, "'"),
+                        SymbolRefType.Local => ZString.Concat("local '", name, "'"),
+                        SymbolRefType.UpValue => ZString.Concat("upvalue '", name, "'"),
+                        _ => null,
+                    };
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Emits bytecode that loads the base table and pushes the requested field value.
         /// </summary>
         /// <param name="bc">Bytecode builder receiving the emitted opcodes.</param>
@@ -44,18 +69,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         {
             _baseExp.Compile(bc);
 
+            string baseName = GetBaseVariableDescription();
+
             if (_name != null)
             {
-                bc.EmitIndex(DynValue.NewString(_name), true);
+                bc.EmitIndex(DynValue.NewString(_name), true, baseName: baseName);
             }
             else if (_indexExp is LiteralExpression lit)
             {
-                bc.EmitIndex(lit.Value);
+                bc.EmitIndex(lit.Value, baseName: baseName);
             }
             else
             {
                 _indexExp.Compile(bc);
-                bc.EmitIndex(isExpList: (_indexExp is ExprListExpression));
+                bc.EmitIndex(isExpList: (_indexExp is ExprListExpression), baseName: baseName);
             }
         }
 
@@ -69,18 +96,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         {
             _baseExp.Compile(bc);
 
+            string baseName = GetBaseVariableDescription();
+
             if (_name != null)
             {
-                bc.EmitIndexSet(stackofs, tupleidx, DynValue.NewString(_name), isNameIndex: true);
+                bc.EmitIndexSet(
+                    stackofs,
+                    tupleidx,
+                    DynValue.NewString(_name),
+                    isNameIndex: true,
+                    baseName: baseName
+                );
             }
             else if (_indexExp is LiteralExpression lit)
             {
-                bc.EmitIndexSet(stackofs, tupleidx, lit.Value);
+                bc.EmitIndexSet(stackofs, tupleidx, lit.Value, baseName: baseName);
             }
             else
             {
                 _indexExp.Compile(bc);
-                bc.EmitIndexSet(stackofs, tupleidx, isExpList: (_indexExp is ExprListExpression));
+                bc.EmitIndexSet(
+                    stackofs,
+                    tupleidx,
+                    isExpList: (_indexExp is ExprListExpression),
+                    baseName: baseName
+                );
             }
         }
 

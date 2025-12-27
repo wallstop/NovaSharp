@@ -1,7 +1,11 @@
--- @lua-versions: 5.3, 5.4
 -- Tests that table.insert accepts float positions that have integer representation in Lua 5.3+
 -- Per Lua 5.3 manual §6.6: 2.0 has integer representation
 
+-- @lua-versions: 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs
+-- @test: TableModuleTUnitTests.InsertIntegerFloat_53plus
 local t = {1, 2, 3}
 table.insert(t, 2.0, "x")  -- 2.0 has integer representation, should work
 assert(t[1] == 1, "First element should still be 1")

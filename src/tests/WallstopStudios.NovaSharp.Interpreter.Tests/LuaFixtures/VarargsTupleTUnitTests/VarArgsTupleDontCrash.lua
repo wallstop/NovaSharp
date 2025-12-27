@@ -1,33 +1,9 @@
--- @lua-versions: novasharp-only
--- @novasharp-only: true
+-- @lua-versions: 5.1+
+-- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\VarargsTupleTUnitTests.cs:63
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/VarargsTupleTUnitTests.cs:66
 -- @test: VarargsTupleTUnitTests.VarArgsTupleDontCrash
--- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: r
-function f(a,b)
-                    local debug = 'a: ' .. tostring(a) .. ' b: ' .. tostring(b)
-                    return debug
+function Obj(...)
+                    local args = { ... }
                 end
-
-                function g(a, b, ...)
-                    local debug = 'a: ' .. tostring(a) .. ' b: ' .. tostring(b)
-                    local arg = {...}
-                    debug = debug .. ' arg: {'
-                    for k, v in pairs(arg) do
-                        debug = debug .. tostring(v) .. ', '
-                    end
-                    debug = debug .. '}'
-                    return debug
-                end
-
-                function r()
-                    return 1, 2, 3
-                end
-
-                function h(...)
-                    return g(...)
-                end
-
-                function i(...)
-                    return g('extra', ...)
-                end
+                Obj(1)

@@ -2,6 +2,11 @@
 -- This fixture validates that integer vs float type distinctions are handled correctly
 
 -- 2^53 is the maximum integer exactly representable as a double
+-- @lua-versions: 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs
+-- @test: StringModuleTUnitTests.LargeIntegerIndexBehavior
 local limit = 9007199254740992  -- 2^53
 
 -- 2^53 + 1 cannot be exactly represented as a double

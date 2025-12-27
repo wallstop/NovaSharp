@@ -1,9 +1,13 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System.IO;
+    using Cysharp.Text;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
@@ -135,6 +139,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Lua `load` implementation that compiles a chunk from a string or reader function and
         /// returns the resulting function or an error tuple.
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// In Lua 5.1, <c>load</c> only accepts a reader function. Strings must be loaded via
+        /// <c>loadstring</c>. In Lua 5.2+, <c>load</c> accepts both strings and functions,
+        /// and <c>loadstring</c> was removed.
+        /// </para>
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">
         /// Callback arguments following the Lua signature (<c>ld, source, mode, env</c>).
@@ -154,7 +165,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             CheckFunctionAccess(executionContext.Script, "load");
 
-            return LoadCore(executionContext, args, null);
+            // In Lua 5.1, load() only accepts functions, not strings (use loadstring for strings)
+            // In Lua 5.2+, load() accepts both strings and functions
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool allowStrings = version >= LuaCompatibilityVersion.Lua52;
+
+            return LoadCore(executionContext, args, null, allowStrings);
         }
 
         // loadsafe (ld [, source [, mode [, env]]])
@@ -180,7 +198,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return LoadCore(executionContext, args, GetSafeDefaultEnv(executionContext));
+            // In Lua 5.1, load() only accepts functions, not strings (use loadstring for strings)
+            // In Lua 5.2+, load() accepts both strings and functions
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool allowStrings = version >= LuaCompatibilityVersion.Lua52;
+
+            return LoadCore(
+                executionContext,
+                args,
+                GetSafeDefaultEnv(executionContext),
+                allowStrings
+            );
         }
 
         /// <summary>
@@ -189,11 +219,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Loader arguments.</param>
         /// <param name="defaultEnv">Optional default environment when callers omit `env`.</param>
+        /// <param name="allowStrings">Whether to accept strings as chunk sources (false for Lua 5.1 load).</param>
         /// <returns>Compiled chunk or <c>(nil, errorMessage)</c>.</returns>
         public static DynValue LoadCore(
             ScriptExecutionContext executionContext,
             CallbackArguments args,
-            Table defaultEnv
+            Table defaultEnv,
+            bool allowStrings = true
         )
         {
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
@@ -232,7 +264,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
                 else if (ld.Type == DataType.String)
                 {
+                    if (!allowStrings)
+                    {
+                        // Lua 5.1's load() only accepts functions, not strings
+                        // Use loadstring() for strings in Lua 5.1
+                        args.AsType(0, "load", DataType.Function, false);
+                    }
                     script = ld.String;
+                }
+                else if (ld.Type == DataType.Number && allowStrings)
+                {
+                    // Lua 5.2+: load() accepts numbers and converts them to strings
+                    // Reference Lua behavior: load(123) tries to parse "123" as Lua code
+                    script = ld.CastToString();
                 }
                 else
                 {
@@ -246,6 +290,72 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     script,
                     !env.IsNil() ? env.Table : defaultEnv,
                     !source.IsNil() ? source.String : "=(load)"
+                );
+
+                return fn;
+            }
+            catch (SyntaxErrorException ex)
+            {
+                return DynValue.NewTuple(
+                    DynValue.Nil,
+                    DynValue.NewString(GetSyntaxErrorMessage(ex))
+                );
+            }
+        }
+
+        // loadstring (string [, chunkname])
+        // ----------------------------------------------------------------
+        // Lua 5.1 only: Loads a chunk from a string. In Lua 5.2+, this functionality was
+        // merged into load() and loadstring was removed.
+        //
+        // If there are no syntactic errors, returns the compiled chunk as a function;
+        // otherwise, returns nil plus the error message.
+        //
+        // chunkname is used as the name of the chunk for error messages and debug
+        // information. When absent, it defaults to "=(loadstring)".
+        /// <summary>
+        /// Lua 5.1's <c>loadstring</c> implementation that compiles a chunk from a string and
+        /// returns the resulting function or an error tuple.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This function is only available in Lua 5.1. In Lua 5.2+, use <c>load</c> instead,
+        /// which accepts both strings and reader functions.
+        /// </para>
+        /// </remarks>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">
+        /// Callback arguments following the Lua 5.1 signature (<c>string, chunkname</c>).
+        /// </param>
+        /// <returns>
+        /// A <see cref="DynValue"/> representing the compiled chunk or <c>(nil, errorMessage)</c> on
+        /// failure.
+        /// </returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+        [NovaSharpModuleMethod(Name = "loadstring")]
+        public static DynValue LoadString(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            CheckFunctionAccess(executionContext.Script, "loadstring");
+
+            try
+            {
+                Script s = executionContext.Script;
+                DynValue stringArg = args.AsType(0, "loadstring", DataType.String, false);
+                DynValue chunkname = args.AsType(1, "loadstring", DataType.String, true);
+
+                DynValue fn = s.LoadString(
+                    stringArg.String,
+                    null,
+                    !chunkname.IsNil() ? chunkname.String : "=(loadstring)"
                 );
 
                 return fn;
@@ -357,14 +467,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             catch (System.IO.FileNotFoundException ex)
             {
                 // Per Lua spec: loadfile returns (nil, error_message) when file cannot be opened
-                return DynValue.NewTuple(
-                    DynValue.Nil,
-                    DynValue.NewString(
-                        ex.FileName != null
-                            ? $"cannot open {ex.FileName}: No such file or directory"
-                            : ex.Message
-                    )
-                );
+                string errorMessage;
+                if (ex.FileName != null)
+                {
+                    using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                    sb.Append("cannot open ");
+                    sb.Append(ex.FileName);
+                    sb.Append(": No such file or directory");
+                    errorMessage = sb.ToString();
+                }
+                else
+                {
+                    errorMessage = ex.Message;
+                }
+                return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(errorMessage));
             }
             catch (System.IO.IOException ex)
             {
@@ -457,6 +573,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             catch (SyntaxErrorException ex)
             {
                 throw new ScriptRuntimeException(ex);
+            }
+            catch (System.IO.FileNotFoundException ex)
+            {
+                // Per Lua spec: dofile propagates errors - convert .NET exception to Lua error
+                string errorMessage;
+                if (ex.FileName != null)
+                {
+                    using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                    sb.Append("cannot open ");
+                    sb.Append(ex.FileName);
+                    sb.Append(": No such file or directory");
+                    errorMessage = sb.ToString();
+                }
+                else
+                {
+                    errorMessage = ex.Message;
+                }
+                throw new ScriptRuntimeException(errorMessage);
+            }
+            catch (System.IO.IOException ex)
+            {
+                // Per Lua spec: dofile propagates errors - convert .NET exception to Lua error
+                throw new ScriptRuntimeException(ex.Message);
+            }
+            catch (System.UnauthorizedAccessException ex)
+            {
+                // Per Lua spec: dofile propagates errors - convert .NET exception to Lua error
+                throw new ScriptRuntimeException(ex.Message);
             }
         }
 

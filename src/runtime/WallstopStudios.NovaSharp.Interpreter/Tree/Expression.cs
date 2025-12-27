@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
 {
     using System.Collections.Generic;
     using Expressions;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -45,17 +46,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
             Expression expr1
         )
         {
-            List<Expression> exps = new();
-
-            exps.Add(expr1);
-
-            while ((lcontext.Lexer.Current.Type == TokenType.Comma))
+            using (ListPool<Expression>.Get(out List<Expression> exps))
             {
-                lcontext.Lexer.Next();
-                exps.Add(Expr(lcontext));
-            }
+                exps.Add(expr1);
 
-            return exps;
+                while ((lcontext.Lexer.Current.type == TokenType.Comma))
+                {
+                    lcontext.Lexer.Next();
+                    exps.Add(Expr(lcontext));
+                }
+
+                // Return a new list since the pooled one will be cleared on dispose
+                return new List<Expression>(exps);
+            }
         }
 
         /// <summary>
@@ -63,21 +66,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         /// </summary>
         internal static List<Expression> ExprList(ScriptLoadingContext lcontext)
         {
-            List<Expression> exps = new();
-
-            while (true)
+            using (ListPool<Expression>.Get(out List<Expression> exps))
             {
-                exps.Add(Expr(lcontext));
-
-                if (lcontext.Lexer.Current.Type != TokenType.Comma)
+                while (true)
                 {
-                    break;
+                    exps.Add(Expr(lcontext));
+
+                    if (lcontext.Lexer.Current.type != TokenType.Comma)
+                    {
+                        break;
+                    }
+
+                    lcontext.Lexer.Next();
                 }
 
-                lcontext.Lexer.Next();
+                // Return a new list since the pooled one will be cleared on dispose
+                return new List<Expression>(exps);
             }
-
-            return exps;
         }
 
         /// <summary>
@@ -107,27 +112,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
                 Token unaryOp = t;
                 t = lcontext.Lexer.Current;
 
-                if (isPrimary && t.Type == TokenType.OpPwr)
+                if (isPrimary && t.type == TokenType.OpPwr)
                 {
-                    List<Expression> powerChain = new();
-                    powerChain.Add(e);
-
-                    while (isPrimary && t.Type == TokenType.OpPwr)
+                    using (ListPool<Expression>.Get(out List<Expression> powerChain))
                     {
-                        lcontext.Lexer.Next();
-                        powerChain.Add(SubExpr(lcontext, false));
-                        t = lcontext.Lexer.Current;
-                    }
+                        powerChain.Add(e);
 
-                    e = powerChain[^1];
+                        while (isPrimary && t.type == TokenType.OpPwr)
+                        {
+                            lcontext.Lexer.Next();
+                            powerChain.Add(SubExpr(lcontext, false));
+                            t = lcontext.Lexer.Current;
+                        }
 
-                    for (int i = powerChain.Count - 2; i >= 0; i--)
-                    {
-                        e = BinaryOperatorExpression.CreatePowerExpression(
-                            powerChain[i],
-                            e,
-                            lcontext
-                        );
+                        e = powerChain[^1];
+
+                        for (int i = powerChain.Count - 2; i >= 0; i--)
+                        {
+                            e = BinaryOperatorExpression.CreatePowerExpression(
+                                powerChain[i],
+                                e,
+                                lcontext
+                            );
+                        }
                     }
                 }
 
@@ -169,7 +176,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         {
             Token t = lcontext.Lexer.Current;
 
-            switch (t.Type)
+            switch (t.type)
             {
                 case TokenType.Number:
                 case TokenType.NumberHex:
@@ -184,7 +191,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
                     return new SymbolRefExpression(t, lcontext);
                 case TokenType.BrkOpenCurly:
                 case TokenType.BrkOpenCurlyShared:
-                    return new TableConstructor(lcontext, t.Type == TokenType.BrkOpenCurlyShared);
+                    return new TableConstructor(lcontext, t.type == TokenType.BrkOpenCurlyShared);
                 case TokenType.Function:
                     lcontext.Lexer.Next();
                     return new FunctionDefinitionExpression(lcontext, false, false);
@@ -205,15 +212,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
             while (true)
             {
                 Token t = lcontext.Lexer.Current;
-                Token thisCallName = null;
+                Token? thisCallName = null;
 
-                switch (t.Type)
+                switch (t.type)
                 {
                     case TokenType.Dot:
                         {
                             lcontext.Lexer.Next();
                             Token name = CheckTokenType(lcontext, TokenType.Name);
-                            e = new IndexExpression(e, name.Text, lcontext);
+                            e = new IndexExpression(e, name.text, lcontext);
                         }
                         break;
                     case TokenType.BrkOpenSquare:
@@ -223,7 +230,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
                             Expression index = Expr(lcontext);
 
                             // support NovaSharp multiple indexers for userdata
-                            if (lcontext.Lexer.Current.Type == TokenType.Comma)
+                            if (lcontext.Lexer.Current.type == TokenType.Comma)
                             {
                                 List<Expression> explist = ExprListAfterFirstExpr(lcontext, index);
                                 index = new ExprListExpression(explist, lcontext);
@@ -252,7 +259,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
 
         private static void EnsureUnaryOperatorSupported(ScriptLoadingContext lcontext, Token token)
         {
-            if (token.Type == TokenType.OpBitNotOrXor)
+            if (token.type == TokenType.OpBitNotOrXor)
             {
                 EnsureLua53ExpressionFeature(lcontext, token, "Lua 5.3 manual §3.4.7");
             }
@@ -263,11 +270,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
             Token token
         )
         {
-            if (token.Type == TokenType.OpFloorDiv)
+            if (token.type == TokenType.OpFloorDiv)
             {
                 EnsureLua53ExpressionFeature(lcontext, token, "Lua 5.3 manual §3.4.1");
             }
-            else if (IsBitwiseToken(token.Type))
+            else if (IsBitwiseToken(token.type))
             {
                 EnsureLua53ExpressionFeature(lcontext, token, "Lua 5.3 manual §3.4.7");
             }
@@ -293,7 +300,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
             throw new SyntaxErrorException(
                 token,
                 "'{0}' operator requires Lua 5.3+ compatibility ({1}). Set Script.Options.CompatibilityVersion accordingly.",
-                token.Text,
+                token.text,
                 manualReference
             );
         }
@@ -310,7 +317,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         private static Expression PrefixExp(ScriptLoadingContext lcontext)
         {
             Token t = lcontext.Lexer.Current;
-            switch (t.Type)
+            switch (t.type)
             {
                 case TokenType.BrkOpenRound:
                     lcontext.Lexer.Next();
@@ -321,9 +328,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
                 case TokenType.Name:
                     return new SymbolRefExpression(t, lcontext);
                 default:
-                    throw new SyntaxErrorException(t, "unexpected symbol near '{0}'", t.Text)
+                    throw new SyntaxErrorException(t, "unexpected symbol near '{0}'", t.text)
                     {
-                        IsPrematureStreamTermination = (t.Type == TokenType.Eof),
+                        IsPrematureStreamTermination = (t.type == TokenType.Eof),
                     };
             }
         }

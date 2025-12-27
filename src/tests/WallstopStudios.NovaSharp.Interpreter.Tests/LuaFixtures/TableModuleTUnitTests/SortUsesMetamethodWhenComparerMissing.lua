@@ -1,9 +1,8 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\TableModuleTUnitTests.cs:84
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:91
 -- @test: TableModuleTUnitTests.SortUsesMetamethodWhenComparerMissing
--- @compat-notes: Lua 5.3+: bitwise operators
 local mt = {}
                 function mt.__lt(left, right)
                     return left.value < right.value

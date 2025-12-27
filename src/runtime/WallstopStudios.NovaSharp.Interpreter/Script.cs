@@ -51,6 +51,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private readonly IRandomProvider _randomProvider;
         private readonly DateTime _startTimeUtc;
         private readonly Sandboxing.AllocationTracker _allocationTracker;
+        private readonly Execution.ScriptCompilationCache _compilationCache;
         private bool _bit32CompatibilityWarningEmitted;
         private static ScriptGlobalOptions GlobalOptionsSnapshot;
         private static readonly AsyncLocal<GlobalOptionsScope> ScopedGlobalOptions = new();
@@ -84,27 +85,80 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Script"/> clas.s
+        /// Initializes a new instance of the <see cref="Script"/> class with default modules
+        /// and the Lua version from <see cref="GlobalOptions"/>.
         /// </summary>
+        /// <remarks>
+        /// Uses <see cref="CoreModulePresets.Default"/> and inherits <see cref="ScriptGlobalOptions.CompatibilityVersion"/>
+        /// from <see cref="GlobalOptions"/>. For explicit version control, use <see cref="Script(LuaCompatibilityVersion)"/>
+        /// or <see cref="Script(LuaCompatibilityVersion, CoreModules)"/>.
+        /// </remarks>
         public Script()
             : this(CoreModulePresets.Default, null) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Script"/> class.
+        /// Initializes a new instance of the <see cref="Script"/> class with the specified Lua version
+        /// and default modules.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to target.</param>
+        /// <remarks>
+        /// Uses <see cref="CoreModulePresets.Default"/>. This is the recommended constructor when you need
+        /// explicit version control without custom modules.
+        /// </remarks>
+        public Script(LuaCompatibilityVersion version)
+            : this(version, CoreModulePresets.Default) { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Script"/> class with the specified Lua version
+        /// and core modules.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to target.</param>
+        /// <param name="coreModules">The core modules to be pre-registered in the default global table.</param>
+        /// <remarks>
+        /// This is the recommended constructor for explicit control over both version and modules.
+        /// </remarks>
+        public Script(LuaCompatibilityVersion version, CoreModules coreModules)
+            : this(coreModules, CreateOptionsForVersion(version)) { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Script"/> class with the specified core modules
+        /// and the Lua version from <see cref="GlobalOptions"/>.
         /// </summary>
         /// <param name="coreModules">The core modules to be pre-registered in the default global table.</param>
+        /// <remarks>
+        /// Inherits <see cref="ScriptGlobalOptions.CompatibilityVersion"/> from <see cref="GlobalOptions"/>.
+        /// For explicit version control, use <see cref="Script(LuaCompatibilityVersion, CoreModules)"/>.
+        /// </remarks>
         public Script(CoreModules coreModules)
             : this(coreModules, null) { }
 
         /// <summary>
-        /// Initializes a new instance using a custom options snapshot.
+        /// Initializes a new instance using a custom options snapshot with default modules.
         /// </summary>
+        /// <param name="options">
+        /// The options to use. The <see cref="ScriptOptions.CompatibilityVersion"/> from these options
+        /// is used as-is (unlike the parameterless constructor which inherits from <see cref="GlobalOptions"/>).
+        /// </param>
+        /// <remarks>
+        /// Uses <see cref="CoreModulePresets.Default"/>. Note that if you create a fresh <see cref="ScriptOptions"/>
+        /// without copying from <see cref="DefaultOptions"/>, the version defaults to <see cref="LuaCompatibilityVersion.Latest"/>.
+        /// </remarks>
         public Script(ScriptOptions options)
             : this(CoreModulePresets.Default, options) { }
 
         /// <summary>
-        /// Initializes a new instance with modules + options.
+        /// Initializes a new instance with the specified modules and options.
         /// </summary>
+        /// <param name="coreModules">The core modules to be pre-registered in the default global table.</param>
+        /// <param name="options">
+        /// The options to use, or <c>null</c> to use <see cref="DefaultOptions"/> with
+        /// <see cref="ScriptGlobalOptions.CompatibilityVersion"/> from <see cref="GlobalOptions"/>.
+        /// </param>
+        /// <remarks>
+        /// This is the most flexible constructor. When <paramref name="options"/> is <c>null</c>,
+        /// the script inherits <see cref="ScriptGlobalOptions.CompatibilityVersion"/> from <see cref="GlobalOptions"/>.
+        /// When <paramref name="options"/> is provided, its <see cref="ScriptOptions.CompatibilityVersion"/> is used as-is.
+        /// </remarks>
         public Script(CoreModules coreModules, ScriptOptions options)
         {
             Options = new ScriptOptions(options ?? DefaultOptions);
@@ -123,6 +177,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (Options.Sandbox.HasMemoryLimit || Options.Sandbox.HasCoroutineLimit)
             {
                 _allocationTracker = new Sandboxing.AllocationTracker();
+            }
+
+            // Initialize compilation cache if enabled
+            if (Options.EnableScriptCaching)
+            {
+                _compilationCache = new Execution.ScriptCompilationCache(
+                    Options.CompatibilityVersion,
+                    Options.ScriptCacheMaxEntries
+                );
             }
 
             PerformanceStats = new PerformanceStatistics(
@@ -155,6 +218,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             return new Lua51RandomProvider();
+        }
+
+        /// <summary>
+        /// Creates a <see cref="ScriptOptions"/> instance configured for the specified Lua version.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to target.</param>
+        /// <returns>A new <see cref="ScriptOptions"/> with the specified version.</returns>
+        private static ScriptOptions CreateOptionsForVersion(LuaCompatibilityVersion version)
+        {
+            return new ScriptOptions(DefaultOptions) { CompatibilityVersion = version };
         }
 
         /// <summary>
@@ -246,6 +319,21 @@ namespace WallstopStudios.NovaSharp.Interpreter
         internal DateTime StartTimeUtc => _startTimeUtc;
 
         /// <summary>
+        /// Gets the approximate number of compiled scripts currently in the cache.
+        /// Returns 0 if caching is disabled via <see cref="ScriptOptions.EnableScriptCaching"/>.
+        /// </summary>
+        public int CompilationCacheCount => _compilationCache?.ApproximateCount ?? 0;
+
+        /// <summary>
+        /// Clears the script compilation cache, forcing subsequent <see cref="LoadString"/> calls
+        /// to perform full compilation. Has no effect if caching is disabled.
+        /// </summary>
+        public void ClearCompilationCache()
+        {
+            _compilationCache?.Clear();
+        }
+
+        /// <summary>
         /// Gets the default global table for this script. Unless a different table is intentionally passed (or setfenv has been used)
         /// execution uses this table.
         /// </summary>
@@ -271,8 +359,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         {
             this.CheckScriptOwnership(globalTable);
 
-            string chunkName =
-                $"libfunc_{funcFriendlyName ?? _sources.Count.ToString(CultureInfo.InvariantCulture)}";
+            string chunkName = ZString.Concat(
+                "libfunc_",
+                funcFriendlyName ?? _sources.Count.ToString(CultureInfo.InvariantCulture)
+            );
 
             SourceCode source = new(chunkName, code, _sources.Count, this);
 
@@ -347,8 +437,26 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     return LoadStream(ms, globalTable, codeFriendlyName);
                 }
 
+                // Try to use cached compilation if available
+                // Only use cache when no custom friendly name is specified (for proper debug tracking)
+                if (
+                    _compilationCache != null
+                    && codeFriendlyName == null
+                    && _compilationCache.TryGet(code, out Execution.CachedChunk cached)
+                )
+                {
+                    // Cache hit: reuse the previously compiled bytecode
+                    // The SourceCode is already in _sources at cached.SourceId
+                    // Just create a new closure pointing to the cached entry point
+                    return MakeClosure(cached._entryPointAddress, globalTable ?? _globalTable);
+                }
+
                 string chunkName =
-                    $"{codeFriendlyName ?? "chunk_" + _sources.Count.ToString(CultureInfo.InvariantCulture)}";
+                    codeFriendlyName
+                    ?? ZString.Concat(
+                        "chunk_",
+                        _sources.Count.ToString(CultureInfo.InvariantCulture)
+                    );
 
                 SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
 
@@ -358,6 +466,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
                 SignalSourceCodeChange(source);
                 SignalByteCodeChange();
+
+                // Store in cache for future reuse (only when no custom friendly name)
+                if (_compilationCache != null && codeFriendlyName == null)
+                {
+                    _compilationCache.Store(code, address, source.SourceId);
+                }
 
                 return MakeClosure(address, globalTable ?? _globalTable);
             });
@@ -398,11 +512,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 else
                 {
                     string chunkName =
-                        $"{codeFriendlyName ?? "dump_" + _sources.Count.ToString(CultureInfo.InvariantCulture)}";
+                        codeFriendlyName
+                        ?? ZString.Concat(
+                            "dump_",
+                            _sources.Count.ToString(CultureInfo.InvariantCulture)
+                        );
 
                     SourceCode source = new(
                         codeFriendlyName ?? chunkName,
-                        $"-- This script was decoded from a binary dump - dump_{_sources.Count}",
+                        ZString.Concat(
+                            "-- This script was decoded from a binary dump - dump_",
+                            _sources.Count
+                        ),
                         _sources.Count,
                         this
                     );
@@ -541,7 +662,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 else
                 {
                     throw new InvalidCastException(
-                        $"Unsupported return type from IScriptLoader.LoadFile : {code.GetType()}"
+                        ZString.Concat(
+                            "Unsupported return type from IScriptLoader.LoadFile : ",
+                            code.GetType()
+                        )
                     );
                 }
             }
@@ -804,7 +928,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
             {
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, "__call");
+                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
 
                 if (metafunction != null)
                 {
@@ -1083,15 +1207,81 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             WarnIfBit32CompatibilityDisabled(modname);
 
-            string filename = Options.ScriptLoader.ResolveModuleName(modname, globals);
+            // Try to get detailed resolution result with searched paths for better error messages
+            IScriptLoader loader = Options.ScriptLoader;
+            string filename;
+            IReadOnlyList<string> searchedPaths = null;
+
+            if (loader is ScriptLoaderBase baseLoader)
+            {
+                ModuleResolutionResult result = baseLoader.TryResolveModuleName(modname, globals);
+                filename = result.ResolvedPath;
+                searchedPaths = result.SearchedPaths;
+            }
+            else
+            {
+                // Fallback for custom IScriptLoader implementations
+                filename = loader.ResolveModuleName(modname, globals);
+            }
 
             if (filename == null)
             {
-                throw new ScriptRuntimeException("module '{0}' not found", modname);
+                throw new ScriptRuntimeException(
+                    FormatModuleNotFoundError(modname, searchedPaths, Options.LuaCompatibleErrors)
+                );
             }
 
             DynValue func = LoadFile(filename, globalContext, filename);
             return func;
+        }
+
+        /// <summary>
+        /// Formats the "module not found" error message. When <paramref name="luaCompatibleErrors"/>
+        /// is enabled, lists all paths that were searched to match reference Lua behavior.
+        /// Otherwise, returns a simple message for backward compatibility.
+        /// </summary>
+        /// <param name="modname">The module name that was not found.</param>
+        /// <param name="searchedPaths">The list of paths that were searched.</param>
+        /// <param name="luaCompatibleErrors">Whether to include detailed search paths in the error.</param>
+        /// <returns>A formatted error message.</returns>
+        private static string FormatModuleNotFoundError(
+            string modname,
+            IReadOnlyList<string> searchedPaths,
+            bool luaCompatibleErrors
+        )
+        {
+            // When LuaCompatibleErrors is disabled, return a simple message for backward compatibility
+            if (!luaCompatibleErrors)
+            {
+                return ZString.Concat("module '", modname, "' not found");
+            }
+
+            if (searchedPaths == null || searchedPaths.Count == 0)
+            {
+                using Utf16ValueStringBuilder sb0 = ZString.CreateStringBuilder();
+                sb0.Append("module '");
+                sb0.Append(modname);
+                sb0.Append("' not found:\n\tno field package.preload['");
+                sb0.Append(modname);
+                sb0.Append("']");
+                return sb0.ToString();
+            }
+
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+            sb.Append("module '");
+            sb.Append(modname);
+            sb.Append("' not found:\n\tno field package.preload['");
+            sb.Append(modname);
+            sb.Append("']");
+
+            foreach (string path in searchedPaths)
+            {
+                sb.Append("\n\tno file '");
+                sb.Append(path);
+                sb.Append('\'');
+            }
+
+            return sb.ToString();
         }
 
         private void WarnIfBit32CompatibilityDisabled(string moduleName)
@@ -1111,8 +1301,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return;
             }
 
-            string message =
-                $"[compatibility] require('bit32') is only available when targeting Lua 5.2. Active profile: {profile.DisplayName}. Update Script.Options.CompatibilityVersion or ship a custom bit32 module.";
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+            sb.Append(
+                "[compatibility] require('bit32') is only available when targeting Lua 5.2. Active profile: "
+            );
+            sb.Append(profile.DisplayName);
+            sb.Append(
+                ". Update Script.Options.CompatibilityVersion or ship a custom bit32 module."
+            );
+            string message = sb.ToString();
 
             Action<string> sink = Options.DebugPrint ?? Script.GlobalOptions.Platform.DefaultPrint;
             sink(message);
@@ -1176,7 +1373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynamicExpression CreateDynamicExpression(string code)
         {
             int sourceId = _sources.Count;
-            SourceCode source = new($"__dynamic_{sourceId}", code, sourceId, this);
+            SourceCode source = new(ZString.Concat("__dynamic_", sourceId), code, sourceId, this);
             _sources.Add(source);
 
             try

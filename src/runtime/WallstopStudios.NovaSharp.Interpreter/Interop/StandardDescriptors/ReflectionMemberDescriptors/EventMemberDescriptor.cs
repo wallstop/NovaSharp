@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -172,7 +173,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 if (throwException)
                 {
                     throw new ArgumentException(
-                        $"Event handler cannot have more than {MaxArgsInDelegate} parameters"
+                        ZString.Concat(
+                            "Event handler cannot have more than ",
+                            MaxArgsInDelegate,
+                            " parameters"
+                        )
                     );
                 }
 
@@ -268,12 +273,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         {
             lock (_lock)
             {
-                Closure closure = args.AsType(
-                    0,
-                    $"userdata<{EventInfo.DeclaringType}>.{EventInfo.Name}.add",
-                    DataType.Function,
-                    false
-                ).Function;
+                using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+                sb.Append("userdata<");
+                sb.Append(EventInfo.DeclaringType);
+                sb.Append(">.");
+                sb.Append(EventInfo.Name);
+                sb.Append(".add");
+                Closure closure = args.AsType(0, sb.ToString(), DataType.Function, false).Function;
 
                 if (_callbacks.Add(o, closure))
                 {
@@ -295,10 +301,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         {
             lock (_lock)
             {
-                string removeLabel = FormattableString.Invariant(
-                    $"userdata<{EventInfo.DeclaringType}>.{EventInfo.Name}.remove"
-                );
-                Closure closure = args.AsType(0, removeLabel, DataType.Function, false).Function;
+                using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+                sb.Append("userdata<");
+                sb.Append(EventInfo.DeclaringType);
+                sb.Append(">.");
+                sb.Append(EventInfo.Name);
+                sb.Append(".remove");
+                Closure closure = args.AsType(0, sb.ToString(), DataType.Function, false).Function;
 
                 if (_callbacks.RemoveValue(o, closure))
                 {

@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
     using System;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -27,6 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Registers the `string` metatable so literal strings inherit the library functions.
+        /// For Lua 5.4+, also registers arithmetic metamethods that provide string-to-number coercion.
         /// </summary>
         /// <param name="globalTable">Global table provided by the module host.</param>
         /// <param name="stringTable">Library table containing the exported functions.</param>
@@ -34,9 +36,204 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             globalTable = ModuleArgumentValidation.RequireTable(globalTable, nameof(globalTable));
             stringTable = ModuleArgumentValidation.RequireTable(stringTable, nameof(stringTable));
-            Table stringMetatable = new(globalTable.OwnerScript);
-            stringMetatable.Set("__index", DynValue.NewTable(stringTable));
-            globalTable.OwnerScript.SetTypeMetatable(DataType.String, stringMetatable);
+
+            Script script = globalTable.OwnerScript;
+            Table stringMetatable = new(script);
+            stringMetatable.Set(Metamethods.Index, DynValue.NewTable(stringTable));
+
+            // Lua 5.4+: String-to-number coercion was removed from the arithmetic operators themselves.
+            // Instead, the string metatable provides arithmetic metamethods that perform the coercion.
+            // See Lua 5.4 Reference Manual §3.4.1
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                script.CompatibilityVersion
+            );
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                RegisterStringArithmeticMetamethods(stringMetatable);
+            }
+
+            script.SetTypeMetatable(DataType.String, stringMetatable);
+        }
+
+        /// <summary>
+        /// Registers arithmetic metamethods (__add, __sub, __mul, etc.) on the string metatable.
+        /// These metamethods coerce string operands to numbers for arithmetic in Lua 5.4+.
+        /// Per Lua 5.4 manual §3.4.3: "If the conversion fails, the library calls the metamethod
+        /// of the other operand (if present) or it raises an error."
+        /// </summary>
+        private static void RegisterStringArithmeticMetamethods(Table stringMetatable)
+        {
+            // __add: a + b
+            stringMetatable.Set(
+                Metamethods.Add,
+                DynValue.NewCallback(
+                    (ctx, args) => StringBinaryArithmetic(ctx, args, Metamethods.Add, LuaNumber.Add)
+                )
+            );
+
+            // __sub: a - b
+            stringMetatable.Set(
+                Metamethods.Sub,
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.Sub, LuaNumber.Subtract)
+                )
+            );
+
+            // __mul: a * b
+            stringMetatable.Set(
+                Metamethods.Mul,
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.Mul, LuaNumber.Multiply)
+                )
+            );
+
+            // __div: a / b
+            stringMetatable.Set(
+                Metamethods.Div,
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.Div, LuaNumber.Divide)
+                )
+            );
+
+            // __mod: a % b
+            stringMetatable.Set(
+                Metamethods.Mod,
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                        StringBinaryArithmetic(
+                            ctx,
+                            args,
+                            Metamethods.Mod,
+                            (a, b) => LuaNumber.Modulo(a, b, LuaCompatibilityVersion.Lua54)
+                        )
+                )
+            );
+
+            // __pow: a ^ b
+            stringMetatable.Set(
+                Metamethods.Pow,
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.Pow, LuaNumber.Power)
+                )
+            );
+
+            // __idiv: a // b (floor division)
+            stringMetatable.Set(
+                Metamethods.IDiv,
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                        StringBinaryArithmetic(ctx, args, Metamethods.IDiv, LuaNumber.FloorDivide)
+                )
+            );
+
+            // __unm: -a (unary minus)
+            stringMetatable.Set(
+                Metamethods.Unm,
+                DynValue.NewCallback(
+                    (ctx, args) =>
+                    {
+                        LuaNumber? a = CoerceToLuaNumber(args[0]);
+                        if (!a.HasValue)
+                        {
+                            throw ScriptRuntimeException.ArithmeticOnNonNumber(args[0]);
+                        }
+                        return DynValue.NewNumber(LuaNumber.Negate(a.Value));
+                    }
+                )
+            );
+        }
+
+        /// <summary>
+        /// Implements a binary arithmetic metamethod for strings with proper fallback behavior.
+        /// Per Lua 5.4 manual: if coercion fails, calls the other operand's metamethod (if present).
+        /// </summary>
+        private static DynValue StringBinaryArithmetic(
+            ScriptExecutionContext ctx,
+            CallbackArguments args,
+            string metamethodName,
+            Func<LuaNumber, LuaNumber, LuaNumber> operation
+        )
+        {
+            DynValue left = args[0];
+            DynValue right = args[1];
+
+            LuaNumber? a = CoerceToLuaNumber(left);
+            LuaNumber? b = CoerceToLuaNumber(right);
+
+            // If both can be coerced to numbers, perform the operation
+            if (a.HasValue && b.HasValue)
+            {
+                return DynValue.NewNumber(operation(a.Value, b.Value));
+            }
+
+            // Coercion failed - try to fall back to the other operand's metamethod
+            // We need to check if the non-string operand has its own metamethod
+            DynValue nonStringOperand = left.Type == DataType.String ? right : left;
+
+            // Only try fallback if the other operand could have a metamethod (tables, userdata)
+            if (
+                nonStringOperand.Type == DataType.Table
+                || nonStringOperand.Type == DataType.UserData
+            )
+            {
+                DynValue otherMetamethod = ctx.GetBinaryMetamethod(
+                    nonStringOperand,
+                    nonStringOperand,
+                    metamethodName
+                );
+
+                if (otherMetamethod != null && otherMetamethod.IsNotNil())
+                {
+                    // Call the other operand's metamethod with the original arguments
+                    return ctx.Script.Call(otherMetamethod, left, right);
+                }
+            }
+
+            // No fallback available - throw the appropriate error
+            throw ArithmeticCoercionError(left, right);
+        }
+
+        /// <summary>
+        /// Coerces a DynValue to a LuaNumber for string arithmetic metamethods.
+        /// Returns null if the value cannot be coerced.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static LuaNumber? CoerceToLuaNumber(DynValue value)
+        {
+            if (value.Type == DataType.Number)
+            {
+                return value.LuaNumber;
+            }
+
+            if (value.Type == DataType.String)
+            {
+                if (LuaNumber.TryParse(value.String, out LuaNumber result))
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Creates an appropriate arithmetic error for string coercion failure.
+        /// </summary>
+        private static ScriptRuntimeException ArithmeticCoercionError(DynValue a, DynValue b)
+        {
+            // Report the first non-number operand
+            if (
+                a.Type != DataType.Number
+                && (a.Type != DataType.String || !LuaNumber.TryParse(a.String, out _))
+            )
+            {
+                return ScriptRuntimeException.ArithmeticOnNonNumber(a);
+            }
+            return ScriptRuntimeException.ArithmeticOnNonNumber(b);
         }
 
         /// <summary>
@@ -134,42 +331,63 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     // NaN, Infinity, and non-integer floats all error
                     if (double.IsNaN(d) || double.IsInfinity(d))
                     {
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'char' (number has no integer representation)"
-                        );
+                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
+                        errSb.Append("bad argument #");
+                        errSb.Append(i + 1);
+                        errSb.Append(" to 'char' (number has no integer representation)");
+                        throw new ScriptRuntimeException(errSb.ToString());
                     }
 
                     double floored = Math.Floor(d);
                     if (floored != d)
                     {
                         // Non-integer float (e.g., 65.5)
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'char' (number has no integer representation)"
-                        );
+                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
+                        errSb.Append("bad argument #");
+                        errSb.Append(i + 1);
+                        errSb.Append(" to 'char' (number has no integer representation)");
+                        throw new ScriptRuntimeException(errSb.ToString());
                     }
 
                     if (floored < 0 || floored > 255)
                     {
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'char' (value out of range)"
-                        );
+                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
+                        errSb.Append("bad argument #");
+                        errSb.Append(i + 1);
+                        errSb.Append(" to 'char' (value out of range)");
+                        throw new ScriptRuntimeException(errSb.ToString());
                     }
 
                     charValue = (int)floored;
                 }
                 else
                 {
-                    // Lua 5.1/5.2 behavior: NaN/Infinity → 0, truncate floats
+                    // Lua 5.1/5.2 behavior:
+                    // - NaN → 0 (silent)
+                    // - Negative infinity → 0 (silent)
+                    // - Positive infinity → ERROR "invalid value"
+                    // This matches reference Lua 5.1/5.2 behavior on macOS and most platforms
                     double floored = Math.Floor(d);
-                    if (double.IsNaN(floored) || double.IsInfinity(floored))
+                    if (double.IsPositiveInfinity(floored))
+                    {
+                        // Positive infinity errors in Lua 5.1/5.2 with "invalid value"
+                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
+                        errSb.Append("bad argument #");
+                        errSb.Append(i + 1);
+                        errSb.Append(" to 'char' (invalid value)");
+                        throw new ScriptRuntimeException(errSb.ToString());
+                    }
+                    else if (double.IsNaN(floored) || double.IsNegativeInfinity(floored))
                     {
                         charValue = 0;
                     }
                     else if (floored < 0 || floored > 255)
                     {
-                        throw new ScriptRuntimeException(
-                            $"bad argument #{i + 1} to 'char' (value out of range)"
-                        );
+                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
+                        errSb.Append("bad argument #");
+                        errSb.Append(i + 1);
+                        errSb.Append(" to 'char' (value out of range)");
+                        throw new ScriptRuntimeException(errSb.ToString());
                     }
                     else
                     {
@@ -250,9 +468,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             StringRange range = StringRange.FromLuaRange(vi, vj, null);
-            string s = range.ApplyToString(vs.String);
+            ReadOnlySpan<char> span = range.ApplyToSpan(vs.String);
 
-            int length = s.Length;
+            int length = span.Length;
 
             if (length == 0)
             {
@@ -262,19 +480,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // Fast path for single character - avoid array allocation
             if (length == 1)
             {
-                return DynValue.NewNumber(filter((int)s[0]));
+                return DynValue.NewNumber(filter(span[0]));
             }
 
             DynValue[] rets = new DynValue[length];
 
             for (int i = 0; i < length; ++i)
             {
-                rets[i] = DynValue.NewNumber(filter((int)s[i]));
+                rets[i] = DynValue.NewNumber(filter(span[i]));
             }
 
             return DynValue.NewTuple(rets);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int NormalizeByte(double value)
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
@@ -540,16 +759,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue argS = args.AsType(0, "reverse", DataType.String, false);
+            string str = argS.String;
 
-            if (String.IsNullOrEmpty(argS.String))
+            if (String.IsNullOrEmpty(str))
             {
                 return DynValue.EmptyString;
             }
 
-            char[] elements = argS.String.ToCharArray();
-            Array.Reverse(elements);
+            // Use stackalloc for common small strings to avoid heap allocation
+            const int StackAllocThreshold = 256;
 
-            return DynValue.NewString(new String(elements));
+            if (str.Length <= StackAllocThreshold)
+            {
+                Span<char> buffer = stackalloc char[str.Length];
+                str.AsSpan().CopyTo(buffer);
+                buffer.Reverse();
+                return DynValue.NewString(new string(buffer));
+            }
+            else
+            {
+                // Fallback to heap allocation for large strings
+                char[] elements = str.ToCharArray();
+                Array.Reverse(elements);
+                return DynValue.NewString(new string(elements));
+            }
         }
 
         /// <summary>

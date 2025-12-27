@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using Debugging;
     using Execution.Scopes;
     using REPL;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -62,9 +63,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 HandleClassicExprsSyntax = true,
             };
 
+            // Reference Lua uses "lua_debug> " as the fixed prompt for debug.debug(),
+            // unlike the main REPL which uses ">" and ">>" for continuation.
+            const string DebugPrompt = "lua_debug> ";
+
             while (true)
             {
-                string input = script.Options.DebugInput(interpreter.ClassicPrompt + " ");
+                string input = script.Options.DebugInput(DebugPrompt);
 
                 if (input == null)
                 {
@@ -73,7 +78,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 ReadOnlySpan<char> trimmedInput = input.AsSpan().TrimWhitespace();
 
-                if (trimmedInput.Equals("return".AsSpan(), StringComparison.OrdinalIgnoreCase))
+                if (
+                    trimmedInput.Equals(
+                        LuaKeywords.Return.AsSpan(),
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
                 {
                     break;
                 }
@@ -84,20 +94,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                     if (result != null && result.Type != DataType.Void)
                     {
-                        script.Options.DebugPrint($"{result}");
+                        script.Options.DebugPrint(result.ToString());
                     }
                 }
                 catch (InterpreterException ex)
                 {
-                    script.Options.DebugPrint($"{ex.DecoratedMessage ?? ex.Message}");
+                    script.Options.DebugPrint(ex.DecoratedMessage ?? ex.Message);
                 }
                 catch (InvalidOperationException ex)
                 {
-                    script.Options.DebugPrint($"{ex.Message}");
+                    script.Options.DebugPrint(ex.Message);
                 }
                 catch (ArgumentException ex)
                 {
-                    script.Options.DebugPrint($"{ex.Message}");
+                    script.Options.DebugPrint(ex.Message);
                 }
             }
 
@@ -149,45 +159,85 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Implements <c>debug.getuservalue</c>, returning the user value associated with userdata or nil otherwise.
+        /// In Lua 5.4+, accepts an optional second argument <c>n</c> specifying which user value slot (1-based).
+        /// In Lua 5.4+, returns two values: the user value and a boolean (false if the userdata doesn't have that value).
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
-        /// <param name="args">Arguments (userdata whose user value should be returned).</param>
-        /// <returns>The stored user value or <see cref="DynValue.Nil"/>.</returns>
+        /// <param name="args">Arguments (userdata [, n]).</param>
+        /// <returns>The stored user value (and boolean in 5.4+) or <see cref="DynValue.Nil"/>.</returns>
         [NovaSharpModuleMethod(Name = "getuservalue")]
         public static DynValue GetUserValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            ModuleArgumentValidation.RequireExecutionContext(
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue v = args[0];
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+            bool isLua54OrLater =
+                LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua54;
+
+            // In Lua 5.4+, optional second argument n specifies which user value (1-based)
+            // NovaSharp only supports a single user value, so only n=1 is valid
+            int n = 1;
+            if (isLua54OrLater && args.Count > 1 && args[1].IsNotNil())
+            {
+                DynValue nArg = args[1];
+                if (nArg.Type != DataType.Number)
+                {
+                    throw ScriptRuntimeException.BadArgument(
+                        1,
+                        "getuservalue",
+                        "number expected, got " + nArg.Type.ToErrorTypeString()
+                    );
+                }
+
+                n = (int)nArg.Number;
+            }
 
             if (v.Type != DataType.UserData)
             {
-                return DynValue.Nil;
+                // Lua 5.4+: return nil, false for non-userdata
+                return isLua54OrLater
+                    ? DynValue.NewTuple(DynValue.Nil, DynValue.False)
+                    : DynValue.Nil;
             }
 
-            return v.UserData.UserValue ?? DynValue.Nil;
+            // NovaSharp only supports a single user value (slot 1)
+            // Any n != 1 means the userdata doesn't have that value
+            if (n != 1)
+            {
+                // Lua 5.4+: return nil, false for invalid slot
+                return isLua54OrLater
+                    ? DynValue.NewTuple(DynValue.Nil, DynValue.False)
+                    : DynValue.Nil;
+            }
+
+            DynValue userValue = v.UserData.UserValue ?? DynValue.Nil;
+
+            // Lua 5.4+: return value, true (indicating the userdata has this value slot)
+            return isLua54OrLater ? DynValue.NewTuple(userValue, DynValue.True) : userValue;
         }
 
         /// <summary>
         /// Implements <c>debug.setuservalue</c>, assigning a new table to the supplied userdata's user value slot.
+        /// In Lua 5.4+, accepts an optional third argument <c>n</c> specifying which user value slot (1-based).
         /// </summary>
         /// <param name="executionContext">Current execution context.</param>
-        /// <param name="args">Arguments (userdata and optional table).</param>
-        /// <returns>The table that was assigned.</returns>
+        /// <param name="args">Arguments (userdata, value [, n]).</param>
+        /// <returns>The userdata (or nil/fail if the userdata doesn't have that slot in 5.4+).</returns>
         [NovaSharpModuleMethod(Name = "setuservalue")]
         public static DynValue SetUserValue(
             ScriptExecutionContext executionContext,
             CallbackArguments args
         )
         {
-            ModuleArgumentValidation.RequireExecutionContext(
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
@@ -207,8 +257,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgument(
                     1,
                     "setuservalue",
-                    FormattableString.Invariant($"table expected, got {got}")
+                    ZString.Concat("table expected, got ", got)
                 );
+            }
+
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+            bool isLua54OrLater =
+                LuaVersionDefaults.Resolve(version) >= LuaCompatibilityVersion.Lua54;
+
+            // In Lua 5.4+, optional third argument n specifies which user value slot (1-based)
+            // NovaSharp only supports a single user value, so only n=1 is valid
+            int n = 1;
+            if (isLua54OrLater && args.Count > 2 && args[2].IsNotNil())
+            {
+                DynValue nArg = args[2];
+                if (nArg.Type != DataType.Number)
+                {
+                    throw ScriptRuntimeException.BadArgument(
+                        2,
+                        "setuservalue",
+                        "number expected, got " + nArg.Type.ToErrorTypeString()
+                    );
+                }
+
+                n = (int)nArg.Number;
+            }
+
+            // NovaSharp only supports a single user value (slot 1)
+            // Any n != 1 means the userdata doesn't have that slot, return nil (fail)
+            if (n != 1)
+            {
+                return DynValue.Nil;
             }
 
             DynValue userValue = valueArgument.IsNil() ? DynValue.Nil : valueArgument;
@@ -985,13 +1064,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             if (frame.Address >= 0)
             {
-                return DynValue.NewString(
-                    FormattableString.Invariant($"function: 0x{frame.Address:X}")
-                );
+                using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                sb.Append("function: 0x");
+                sb.Append(frame.Address.ToString("x", CultureInfo.InvariantCulture));
+                return DynValue.NewString(sb.ToString());
             }
 
-            string name = frame.Name ?? "function";
-            return DynValue.NewString($"function: {name}");
+            string name = frame.Name ?? LuaKeywords.Function;
+            return DynValue.NewString(ZString.Concat("function: ", name));
         }
 
         private static void SetSourceFields(
@@ -1144,7 +1224,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return DynValue.Nil;
             }
 
-            string placeholderName = FormattableString.Invariant($"(*function-local {index})");
+            using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+            sb.Append("(*function-local ");
+            sb.Append(index);
+            sb.Append(')');
+            string placeholderName = sb.ToString();
             return DynValue.NewTuple(DynValue.NewString(placeholderName), DynValue.Nil);
         }
 
@@ -1288,7 +1372,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             public override string ToString()
             {
-                return FormattableString.Invariant($"upvalue: 0x{ReferenceId:X}");
+                using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                sb.Append("upvalue: 0x");
+                sb.Append(ReferenceId.ToString("X", CultureInfo.InvariantCulture));
+                return sb.ToString();
             }
         }
 

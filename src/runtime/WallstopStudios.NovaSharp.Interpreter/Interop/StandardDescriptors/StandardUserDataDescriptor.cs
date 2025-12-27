@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
     using System.Globalization;
     using System.Reflection;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -87,18 +88,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors
                 // add declared constructors
                 foreach (ConstructorInfo ci in Framework.Do.GetConstructors(type))
                 {
-                    if (membersToIgnore.Contains("__new"))
+                    if (membersToIgnore.Contains(Metamethods.New))
                     {
                         continue;
                     }
 
-                    AddMember("__new", MethodMemberDescriptor.TryCreateIfVisible(ci, AccessMode));
+                    AddMember(
+                        Metamethods.New,
+                        MethodMemberDescriptor.TryCreateIfVisible(ci, AccessMode)
+                    );
                 }
 
                 // valuetypes don't reflect their empty ctor.. actually empty ctors are a perversion, we don't care and implement ours
-                if (Framework.Do.IsValueType(type) && !membersToIgnore.Contains("__new"))
+                if (Framework.Do.IsValueType(type) && !membersToIgnore.Contains(Metamethods.New))
                 {
-                    AddMember("__new", new ValueTypeDefaultCtorMemberDescriptor(type));
+                    AddMember(Metamethods.New, new ValueTypeDefaultCtorMemberDescriptor(type));
                 }
             }
 

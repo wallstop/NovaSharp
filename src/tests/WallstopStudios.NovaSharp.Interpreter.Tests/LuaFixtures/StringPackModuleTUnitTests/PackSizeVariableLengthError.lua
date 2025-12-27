@@ -1,0 +1,9 @@
+-- @lua-versions: 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: true
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringPackModuleTUnitTests.cs
+-- @test: StringPackModuleTUnitTests.PackSizeVariableLengthError
+
+-- Test: packsize errors on variable-length formats (z has no fixed size)
+
+string.packsize("z")

@@ -49,40 +49,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         /// </summary>
         public override void Compile(ByteCode bc)
         {
-            Loop l = new() { Scope = _stackFrame };
-
-            bc.LoopTracker.Loops.Push(l);
-
-            bc.PushSourceRef(_start);
-
-            int start = bc.GetJumpPointForNextInstruction();
-
-            _condition.Compile(bc);
-            Instruction jumpend = bc.EmitJump(OpCode.Jf, -1);
-
-            bc.EmitEnter(_stackFrame);
-
-            _block.Compile(bc);
-
-            bc.PopSourceRef();
-            bc.EmitDebug("..end");
-            bc.PushSourceRef(_end);
-
-            bc.EmitLeave(_stackFrame);
-            bc.EmitJump(OpCode.Jump, start);
-
-            bc.LoopTracker.Loops.Pop();
-
-            int exitpoint = bc.GetJumpPointForNextInstruction();
-
-            foreach (Instruction i in l.BreakJumps)
+            using (Loop l = new() { Scope = _stackFrame })
             {
-                i.NumVal = exitpoint;
+                bc.LoopTracker.Loops.Push(l);
+
+                bc.PushSourceRef(_start);
+
+                int start = bc.GetJumpPointForNextInstruction();
+
+                _condition.Compile(bc);
+                Instruction jumpend = bc.EmitJump(OpCode.Jf, -1);
+
+                bc.EmitEnter(_stackFrame);
+
+                _block.Compile(bc);
+
+                bc.PopSourceRef();
+                bc.EmitDebug("..end");
+                bc.PushSourceRef(_end);
+
+                bc.EmitLeave(_stackFrame);
+                bc.EmitJump(OpCode.Jump, start);
+
+                bc.LoopTracker.Loops.Pop();
+
+                int exitpoint = bc.GetJumpPointForNextInstruction();
+
+                foreach (Instruction i in l.BreakJumps)
+                {
+                    i.NumVal = exitpoint;
+                }
+
+                jumpend.NumVal = exitpoint;
+
+                bc.PopSourceRef();
             }
-
-            jumpend.NumVal = exitpoint;
-
-            bc.PopSourceRef();
         }
     }
 }

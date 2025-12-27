@@ -677,12 +677,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task BandErrorsOnNonIntegerArgumentLua52WithIntegerValidation()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task BandErrorsOnNonIntegerArgumentLua52WithIntegerValidation(
+            LuaCompatibilityVersion version
+        )
         {
             // Note: bit32 is only available in Lua 5.2, but we need to test integer validation
             // For Lua 5.2, non-integer values should truncate, not error
             // This test documents the Lua 5.2 truncation behavior
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.band(5.7, 3) should truncate 5.7 to 5 and return 5 & 3 = 1
             DynValue result = script.DoString("return bit32.band(5.7, 3)");
@@ -691,9 +694,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task BandTruncatesNonIntegerArgumentLua52()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task BandTruncatesNonIntegerArgumentLua52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.band(5.7, 3) should truncate 5.7 to 5 and return 5 & 3 = 1
             DynValue result = script.DoString("return bit32.band(5.7, 3)");
@@ -702,9 +706,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task BandAcceptsIntegralFloatLua52()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task BandAcceptsIntegralFloatLua52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.band(5.0, 3.0) should work since 5.0 and 3.0 have integer representation
             DynValue result = script.DoString("return bit32.band(5.0, 3.0)");
@@ -713,10 +718,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LshiftErrorsOnNonIntegerShiftAmountLua52WithIntegerValidation()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task LshiftErrorsOnNonIntegerShiftAmountLua52WithIntegerValidation(
+            LuaCompatibilityVersion version
+        )
         {
             // Note: bit32 is only available in Lua 5.2, where non-integer values truncate
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.lshift(1, 2.5) should truncate 2.5 to 2 and return 1 << 2 = 4
             DynValue result = script.DoString("return bit32.lshift(1, 2.5)");
@@ -725,9 +733,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LshiftTruncatesNonIntegerShiftAmountLua52()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task LshiftTruncatesNonIntegerShiftAmountLua52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.lshift(1, 2.5) should truncate 2.5 to 2 and return 1 << 2 = 4
             DynValue result = script.DoString("return bit32.lshift(1, 2.5)");
@@ -736,10 +745,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExtractErrorsOnNonIntegerPositionLua52WithIntegerValidation()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task ExtractErrorsOnNonIntegerPositionLua52WithIntegerValidation(
+            LuaCompatibilityVersion version
+        )
         {
             // Note: bit32 is only available in Lua 5.2, where non-integer values truncate
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             // bit32.extract(0xFF, 1.5) in Lua 5.2 truncates 1.5 to 1 (default width=1)
             // Extract bit 1 from 0xFF (11111111) = 1

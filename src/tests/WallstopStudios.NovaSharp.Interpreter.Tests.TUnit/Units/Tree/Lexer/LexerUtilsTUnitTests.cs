@@ -237,11 +237,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
                 toLine: 1,
                 toCol: text.Length,
                 prevLine: 1,
-                prevCol: 0
-            )
-            {
-                Text = text,
-            };
+                prevCol: 0,
+                text: text
+            );
         }
     }
 }

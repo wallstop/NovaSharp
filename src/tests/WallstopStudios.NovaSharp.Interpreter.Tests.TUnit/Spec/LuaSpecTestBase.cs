@@ -9,17 +9,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     /// </summary>
     public abstract class LuaSpecTestBase
     {
+        /// <summary>
+        /// Creates a script with the specified Lua version and core modules.
+        /// </summary>
+        /// <param name="compatibilityVersion">The Lua version to target.</param>
+        /// <param name="modules">The core modules to register.</param>
+        /// <returns>A configured <see cref="Script"/> instance.</returns>
         protected static Script CreateScript(
             LuaCompatibilityVersion compatibilityVersion,
             CoreModules modules
         )
         {
-            ScriptOptions options = new(Script.DefaultOptions)
-            {
-                CompatibilityVersion = compatibilityVersion,
-            };
+            return new Script(compatibilityVersion, modules);
+        }
 
-            return new Script(modules, options);
+        /// <summary>
+        /// Creates a script with the specified Lua version and default modules.
+        /// </summary>
+        /// <param name="compatibilityVersion">The Lua version to target.</param>
+        /// <returns>A configured <see cref="Script"/> instance.</returns>
+        protected static Script CreateScript(LuaCompatibilityVersion compatibilityVersion)
+        {
+            return new Script(compatibilityVersion);
         }
     }
 }

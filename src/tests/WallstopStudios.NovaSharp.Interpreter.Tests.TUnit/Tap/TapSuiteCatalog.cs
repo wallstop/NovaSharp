@@ -52,6 +52,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
                 return LuaCompatibilityVersion.Lua52;
             }
 
+            // 306-math.t tests math.frexp and math.ldexp which were deprecated
+            // in 5.2 and removed in 5.3+
+            if (IsLua52MathSuite(path))
+            {
+                return LuaCompatibilityVersion.Lua52;
+            }
+
             // 309-os.t expects Lua 5.2 os.difftime single-arg behavior
             // (second argument optional in 5.1/5.2, required in 5.3+)
             if (IsLua52OsSuite(path))
@@ -76,6 +83,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Tap
             return string.Equals(
                 path,
                 "TestMore/StandardLibrary/309-os.t",
+                StringComparison.OrdinalIgnoreCase
+            );
+        }
+
+        private static bool IsLua52MathSuite(string path)
+        {
+            return string.Equals(
+                path,
+                "TestMore/StandardLibrary/306-math.t",
                 StringComparison.OrdinalIgnoreCase
             );
         }

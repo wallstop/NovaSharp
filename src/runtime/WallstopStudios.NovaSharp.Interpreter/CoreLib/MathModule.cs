@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -20,8 +21,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         [NovaSharpModuleConstant(Name = "pi")]
         public const double PI = Math.PI;
 
+        /// <summary>
+        /// Lua's <c>math.huge</c> constant representing positive infinity (§6.7).
+        /// Per the Lua specification, this is the value HUGE_VAL from the C library,
+        /// which is IEEE 754 positive infinity (1/0 in Lua).
+        /// </summary>
         [NovaSharpModuleConstant]
-        public const double HUGE = double.MaxValue;
+        public const double HUGE = double.PositiveInfinity;
 
         /// <summary>
         /// The maximum value for an integer in Lua 5.3+ (2^63 - 1).
@@ -43,9 +49,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         [LuaCompatibility(LuaCompatibilityVersion.Lua53)]
         public const long MININTEGER = long.MinValue;
 
+        // Cached static delegates to avoid allocations in hot paths (Initiative 12 Phase 4)
+        private static readonly Func<double, double, double> Atan2Op = Math.Atan2;
+
+        // Use % operator (C's fmod) NOT IEEERemainder - fmod truncates toward zero, IEEERemainder rounds to nearest
+        private static readonly Func<double, double, double> FmodOp = (d1, d2) => d1 % d2;
+        private static readonly Func<double, double, double> LdexpOp = (d1, d2) =>
+            d1 * Math.Pow(2, d2);
+
+        // Lua max/min use standard comparison which makes NaN comparisons always false
+        // This means NaN values are effectively "skipped" - the non-NaN value wins
+        // Do NOT use Math.Max/Math.Min which propagate NaN per IEEE 754
+        private static readonly Func<double, double, double> MaxOp = (d1, d2) => d2 > d1 ? d2 : d1;
+        private static readonly Func<double, double, double> MinOp = (d1, d2) => d2 < d1 ? d2 : d1;
+        private static readonly Func<double, double, double> PowOp = Math.Pow;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetIntegerFromDouble(double number, out long value) =>
             LuaIntegerHelper.TryGetInteger(number, out value);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool TryGetIntegerFromDynValue(DynValue value, out long integer)
         {
             return LuaIntegerHelper.TryGetInteger(value, out integer);
@@ -99,6 +122,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue arg = args.AsType(0, funcName, DataType.Number, false);
             DynValue arg2 = args.AsType(1, funcName, DataType.Number, false);
             return DynValue.NewNumber(func(arg.Number, arg2.Number));
+        }
+
+        /// <summary>
+        /// Two-argument executor that always returns a float result.
+        /// Used for operations like exponentiation that always produce floats per Lua spec.
+        /// </summary>
+        private static DynValue Exec2Float(
+            CallbackArguments args,
+            string funcName,
+            Func<double, double, double> func
+        )
+        {
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg = args.AsType(0, funcName, DataType.Number, false);
+            DynValue arg2 = args.AsType(1, funcName, DataType.Number, false);
+            return DynValue.NewFloat(func(arg.Number, arg2.Number));
         }
 
         private static DynValue Exec2N(
@@ -350,7 +390,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "atan2", (d1, d2) => Math.Atan2(d1, d2));
+            return Exec2(args, "atan2", Atan2Op);
         }
 
         /// <summary>
@@ -531,21 +571,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua `math.fmod`, returning the remainder of division with sign matching the dividend (§6.7).
         /// </summary>
+        /// <remarks>
+        /// <para><b>Lua 5.3+:</b> Throws error when divisor is zero.</para>
+        /// <para><b>Lua 5.1/5.2:</b> Returns NaN when divisor is zero.</para>
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments supplying dividend and divisor.</param>
         /// <returns>Remainder value.</returns>
         [NovaSharpModuleMethod(Name = "fmod")]
         public static DynValue Fmod(ScriptExecutionContext executionContext, CallbackArguments args)
         {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg1 = args.AsType(0, "fmod", DataType.Number, false);
+            DynValue arg2 = args.AsType(1, "fmod", DataType.Number, false);
+
+            double divisor = arg2.Number;
+
+            // Lua 5.3+ throws error when divisor is zero
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            if (version >= LuaCompatibilityVersion.Lua53 && divisor == 0.0)
+            {
+                throw new ScriptRuntimeException("bad argument #2 to 'fmod' (zero)");
+            }
+
+            // Use % operator (C's fmod) - sign matches dividend, truncates toward zero
+            return DynValue.NewNumber(arg1.Number % divisor);
+        }
+
+        /// <summary>
+        /// Implements Lua 5.1 `math.mod`, an alias for `math.fmod` (§5.6 in Lua 5.1 manual).
+        /// </summary>
+        /// <remarks>
+        /// This function was deprecated in Lua 5.1 itself (alias for fmod) and removed in Lua 5.2.
+        /// Users should use <c>math.fmod</c> or the <c>%</c> operator instead.
+        /// </remarks>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments supplying dividend and divisor.</param>
+        /// <returns>Remainder value (same as fmod).</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+        [NovaSharpModuleMethod(Name = "mod")]
+        public static DynValue Mod(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "fmod", (d1, d2) => Math.IEEERemainder(d1, d2));
+            // Lua 5.1 only - no zero divisor check
+            return Exec2(args, "mod", FmodOp);
         }
 
         /// <summary>
         /// Implements Lua `math.frexp`, decomposing a number into mantissa/exponent components (§6.7).
+        /// Returns m and e such that x = m * 2^e, where m is in [0.5, 1) for non-zero values.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments providing the number to decompose.</param>
@@ -622,6 +706,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Implements Lua `math.ldexp`, building a number from mantissa and exponent (§6.7).
+        /// Returns mantissa * 2^exp, the inverse of <see cref="Frexp"/>.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments containing mantissa and exponent.</param>
@@ -636,23 +721,73 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "ldexp", (d1, d2) => d1 * Math.Pow(2, d2));
+            return Exec2(args, "ldexp", LdexpOp);
         }
 
         /// <summary>
-        /// Implements Lua `math.log`, returning the logarithm of a number with an optional base (§6.7).
+        /// Implements Lua `math.log`, returning the logarithm of a number (§6.7).
         /// </summary>
+        /// <remarks>
+        /// <para><b>Lua 5.1:</b> Only takes one argument; always returns natural logarithm (base e).
+        /// Additional arguments are silently ignored.</para>
+        /// <para><b>Lua 5.2+:</b> Accepts optional base parameter. If omitted, returns natural logarithm.</para>
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
-        /// <param name="args">Arguments providing the value (and optional base).</param>
+        /// <param name="args">Arguments providing the value (and optional base for 5.2+).</param>
         /// <returns>The logarithm result.</returns>
         [NovaSharpModuleMethod(Name = "log")]
         public static DynValue Log(ScriptExecutionContext executionContext, CallbackArguments args)
+        {
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
+                executionContext,
+                nameof(executionContext)
+            );
+            args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            DynValue arg = args.AsType(0, "log", DataType.Number, false);
+
+            // Lua 5.1: only natural log, ignore any base argument
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            if (version <= LuaCompatibilityVersion.Lua51)
+            {
+                return DynValue.NewNumber(Math.Log(arg.Number));
+            }
+
+            // Lua 5.2+: optional base parameter (default: e for natural log)
+            DynValue baseArg = args.AsType(1, "log", DataType.Number, true);
+            if (baseArg.IsNil())
+            {
+                return DynValue.NewNumber(Math.Log(arg.Number));
+            }
+
+            return DynValue.NewNumber(Math.Log(arg.Number, baseArg.Number));
+        }
+
+        /// <summary>
+        /// Implements Lua `math.log10`, returning the base-10 logarithm of a number (§6.7).
+        /// </summary>
+        /// <remarks>
+        /// Available in Lua 5.1-5.4. Removed in Lua 5.5 (use <c>math.log(x, 10)</c> instead).
+        /// In Lua 5.2+, this is equivalent to <c>math.log(x, 10)</c> but was retained for
+        /// backward compatibility until removal in 5.5.
+        /// </remarks>
+        /// <param name="executionContext">Current script execution context.</param>
+        /// <param name="args">Arguments providing the value.</param>
+        /// <returns>The base-10 logarithm result.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
+        [NovaSharpModuleMethod(Name = "log10")]
+        public static DynValue Log10(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
         {
             ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2N(args, "log", Math.E, (d1, d2) => Math.Log(d1, d2));
+            return Exec1(args, "log10", d => Math.Log10(d));
         }
 
         /// <summary>
@@ -668,7 +803,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Execaccum(args, "max", (d1, d2) => Math.Max(d1, d2));
+            return Execaccum(args, "max", MaxOp);
         }
 
         /// <summary>
@@ -684,30 +819,86 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Execaccum(args, "min", (d1, d2) => Math.Min(d1, d2));
+            return Execaccum(args, "min", MinOp);
         }
 
         /// <summary>
         /// Implements Lua `math.modf`, splitting a number into integer and fractional parts (§6.7).
         /// </summary>
+        /// <remarks>
+        /// <para><b>Lua 5.1/5.2:</b> Both parts returned as floats.</para>
+        /// <para><b>Lua 5.3+:</b> The integer part is returned as integer subtype when it fits
+        /// in the integer range; the fractional part is always a float.</para>
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments with the value to split.</param>
         /// <returns>Tuple {integerPart, fractionalPart}.</returns>
         [NovaSharpModuleMethod(Name = "modf")]
         public static DynValue Modf(ScriptExecutionContext executionContext, CallbackArguments args)
         {
-            ModuleArgumentValidation.RequireExecutionContext(
+            executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
             DynValue arg = args.AsType(0, "modf", DataType.Number, false);
-            double integerPart = Math.Truncate(arg.Number);
-            double fractionalPart = arg.Number - integerPart;
-            return DynValue.NewTuple(
-                DynValue.NewNumber(integerPart),
-                DynValue.NewNumber(fractionalPart)
+
+            double value = arg.Number;
+            double integerPart = Math.Truncate(value);
+
+            // Check version for integer promotion and negative zero behavior
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
             );
+            bool supportsIntegerSubtype = version >= LuaCompatibilityVersion.Lua53;
+
+            double fractionalPart;
+
+            // Special case: infinity - fractional part is 0, not NaN
+            // (inf - inf = NaN, but Lua defines modf(inf) to have fractional part of 0)
+            if (double.IsInfinity(value))
+            {
+                // Lua 5.1/5.2: preserve negative zero (-0 for -inf)
+                // Lua 5.3+: always positive zero (0.0)
+                fractionalPart = supportsIntegerSubtype ? 0.0 : (value > 0 ? 0.0 : -0.0);
+            }
+            else
+            {
+                fractionalPart = value - integerPart;
+                // Lua 5.1/5.2: Preserve negative zero - if fractional part is zero but original
+                // value was negative, use -0.0. This matches Lua 5.1/5.2 behavior where
+                // math.modf(-5) returns (-5, -0). IEEE 754 subtraction (-5.0 - -5.0) produces +0.0,
+                // so we need to explicitly restore the sign.
+                // Lua 5.3+: Do NOT preserve negative zero - fractional part is always positive 0.0
+                if (!supportsIntegerSubtype && fractionalPart == 0.0 && double.IsNegative(value))
+                {
+                    fractionalPart = -0.0;
+                }
+            }
+
+            // Lua 5.1/5.2: both parts are floats
+            if (!supportsIntegerSubtype)
+            {
+                return DynValue.NewTuple(
+                    DynValue.NewNumber(integerPart),
+                    DynValue.NewNumber(fractionalPart)
+                );
+            }
+
+            // Lua 5.3+: integer part is integer subtype if it fits
+            DynValue integerResult;
+            if (TryGetIntegerFromDouble(integerPart, out long integerValue))
+            {
+                integerResult = DynValue.NewInteger(integerValue);
+            }
+            else
+            {
+                // Value outside integer range (e.g., very large float)
+                integerResult = DynValue.NewNumber(integerPart);
+            }
+
+            // Fractional part is always a float
+            return DynValue.NewTuple(integerResult, DynValue.NewFloat(fractionalPart));
         }
 
         /// <summary>
@@ -717,7 +908,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments for base and exponent.</param>
-        /// <returns>Exponentiation result.</returns>
+        /// <returns>Exponentiation result as a float (per Lua spec, exponentiation always returns float).</returns>
         [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "pow")]
         public static DynValue Pow(ScriptExecutionContext executionContext, CallbackArguments args)
@@ -726,7 +917,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 executionContext,
                 nameof(executionContext)
             );
-            return Exec2(args, "pow", (d1, d2) => Math.Pow(d1, d2));
+            // Exponentiation always returns float per Lua spec (§3.4.1)
+            return Exec2Float(args, "pow", PowOp);
         }
 
         /// <summary>
@@ -795,7 +987,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             // One argument
             if (n.IsNil())
             {
+                // Resolve version for proper comparison
+                LuaCompatibilityVersion effectiveVersion = LuaVersionDefaults.Resolve(version);
+
                 // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+                // For Lua 5.1, this must happen BEFORE the interval check because reference Lua
+                // uses luaL_checkint() which converts to int first, then checks l <= u on integers.
                 long mVal = Utilities.LuaNumberHelpers.ToLongWithValidation(
                     version,
                     m,
@@ -803,12 +1000,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     1
                 );
 
+                if (effectiveVersion == LuaCompatibilityVersion.Lua51)
+                {
+                    // Lua 5.1: interval check on INTEGER values AFTER conversion
+                    // Reference Lua 5.1 lmathlib.c uses luaL_checkint() which does (long) cast first.
+                    // For NaN/Infinity: (long)nan = LONG_MIN, (long)inf = LONG_MIN
+                    // So math.random(nan): 1 <= LONG_MIN is FALSE → error
+                    // And math.random(inf): 1 <= LONG_MIN is FALSE → error
+                    // But math.random(-inf): 1 <= LONG_MIN is FALSE → error
+                    // Note: All out-of-range values become LONG_MIN via ToLongWithValidation
+                    if (!(1L <= mVal))
+                    {
+                        throw new ScriptRuntimeException(
+                            "bad argument #1 to 'random' (interval is empty)"
+                        );
+                    }
+                }
+                else if (effectiveVersion == LuaCompatibilityVersion.Lua52)
+                {
+                    // Lua 5.2: interval check on FLOAT values BEFORE conversion
+                    // Reference Lua 5.2 lmathlib.c uses luaL_checknumber() keeping the float.
+                    // - math.random(inf): 1.0 <= inf is TRUE → no error (produces garbage)
+                    // - math.random(nan): 1.0 <= nan is FALSE → error
+                    // - math.random(-inf): 1.0 <= -inf is FALSE → error
+                    // - math.random(-1): 1.0 <= -1 is FALSE → error
+                    double mFloat = m.LuaNumber.AsFloat;
+                    // NaN comparisons: !(1.0 <= nan) is true, so we use negated form
+                    if (!(1.0 <= mFloat))
+                    {
+                        throw new ScriptRuntimeException(
+                            "bad argument #1 to 'random' (interval is empty)"
+                        );
+                    }
+                }
+
                 // math.random(0): return integer with all bits pseudo-random (Lua 5.4+ only, §6.7)
                 // In Lua 5.1-5.3, math.random(0) throws "interval is empty"
                 if (mVal == 0)
                 {
-                    // Resolve Latest to current default version for proper version comparison
-                    LuaCompatibilityVersion effectiveVersion = LuaVersionDefaults.Resolve(version);
                     if (effectiveVersion >= LuaCompatibilityVersion.Lua54)
                     {
                         return DynValue.NewNumber(r.NextInt64());
@@ -820,24 +1049,85 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
 
                 // math.random(m): return integer in [1, m]
-                if (mVal < 1)
+                // For Lua 5.3+, check after conversion
+                if (effectiveVersion >= LuaCompatibilityVersion.Lua53 && mVal < 1)
                 {
                     throw new ScriptRuntimeException(
                         "bad argument #1 to 'random' (interval is empty)"
                     );
                 }
 
+                // For Lua 5.1/5.2: If the interval check passed but integer conversion produced
+                // an invalid value (e.g., Lua 5.2 math.random(inf) becomes math.random(LONG_MIN)),
+                // reference Lua would compute garbage via floor(r*u) + 1 with overflowing
+                // arithmetic. We match this by producing a deterministic garbage result.
+                if (effectiveVersion < LuaCompatibilityVersion.Lua53 && mVal < 1)
+                {
+                    // Return a garbage result similar to what reference Lua would produce
+                    return DynValue.NewNumber(r.NextLong(mVal, 1));
+                }
+
                 return DynValue.NewNumber(r.NextLong(1, mVal));
             }
 
             // Two arguments: math.random(m, n) returns integer in [m, n]
-            // Lua 5.3+: require integer representation; Lua 5.1/5.2: silently truncate
+            LuaCompatibilityVersion effectiveVersionForInterval = LuaVersionDefaults.Resolve(
+                version
+            );
+
+            // Convert to integers first (needed for all versions)
+            // For Lua 5.1, this happens BEFORE the interval check per reference lmathlib.c
             long mValue = Utilities.LuaNumberHelpers.ToLongWithValidation(version, m, "random", 1);
             long nValue = Utilities.LuaNumberHelpers.ToLongWithValidation(version, n, "random", 2);
 
-            if (mValue > nValue)
+            if (effectiveVersionForInterval == LuaCompatibilityVersion.Lua51)
+            {
+                // Lua 5.1: interval check on INTEGER values AFTER conversion
+                // Reference Lua 5.1 lmathlib.c uses luaL_checkint() for both args, then checks l <= u.
+                // For NaN first arg: (long)nan = LONG_MIN, so LONG_MIN <= 10 is TRUE → no error
+                // For Infinity second arg: 1 <= (long)inf = LONG_MIN is FALSE → error
+                // For NaN second arg: 1 <= (long)nan = LONG_MIN is FALSE → error
+                if (!(mValue <= nValue))
+                {
+                    throw new ScriptRuntimeException(
+                        "bad argument #2 to 'random' (interval is empty)"
+                    );
+                }
+            }
+            else if (effectiveVersionForInterval == LuaCompatibilityVersion.Lua52)
+            {
+                // Lua 5.2: interval check on FLOAT values BEFORE conversion
+                // Reference Lua 5.2 lmathlib.c uses luaL_checknumber() keeping floats, then checks l <= u.
+                // - math.random(nan, 10): nan <= 10 is FALSE → error
+                // - math.random(inf, 10): inf <= 10 is FALSE → error
+                // - math.random(1, inf): 1 <= inf is TRUE → no error (produces garbage)
+                // - math.random(1, nan): 1 <= nan is FALSE → error
+                double mFloat = m.LuaNumber.AsFloat;
+                double nFloat = n.LuaNumber.AsFloat;
+                // NaN comparisons: !(m <= n) catches NaN in either argument
+                if (!(mFloat <= nFloat))
+                {
+                    throw new ScriptRuntimeException(
+                        "bad argument #2 to 'random' (interval is empty)"
+                    );
+                }
+            }
+
+            // For Lua 5.3+, check after conversion (integers are required anyway)
+            if (effectiveVersionForInterval >= LuaCompatibilityVersion.Lua53 && mValue > nValue)
             {
                 throw new ScriptRuntimeException("bad argument #2 to 'random' (interval is empty)");
+            }
+
+            // For Lua 5.1/5.2: If the interval check passed but integer values form an
+            // invalid range (e.g., Lua 5.2 math.random(1, inf) becomes math.random(1, LONG_MIN)),
+            // reference Lua would compute garbage via floor(r*(u-l+1)) + l with overflowing
+            // arithmetic. We match this by producing a deterministic garbage result.
+            if (effectiveVersionForInterval < LuaCompatibilityVersion.Lua53 && mValue > nValue)
+            {
+                // Return a garbage result similar to what reference Lua would produce
+                // when the interval arithmetic overflows.
+                return DynValue.NewNumber(r.NextLong(nValue, mValue));
             }
 
             return DynValue.NewNumber(r.NextLong(mValue, nValue));

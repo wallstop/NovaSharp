@@ -2,7 +2,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 {
     using System.Threading.Tasks;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for <see cref="AllocationTracker"/> and memory limit sandbox features.
@@ -10,7 +12,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     public sealed class SandboxMemoryLimitTUnitTests
     {
         [Test]
-        public async Task AllocationTrackerRecordsAllocations()
+        [AllLuaVersions]
+        public async Task AllocationTrackerRecordsAllocations(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -22,7 +25,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerRecordsMultipleAllocations()
+        [AllLuaVersions]
+        public async Task AllocationTrackerRecordsMultipleAllocations(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -35,7 +41,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerRecordsDeallocations()
+        [AllLuaVersions]
+        public async Task AllocationTrackerRecordsDeallocations(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -49,7 +56,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerTracksPeakMemory()
+        [AllLuaVersions]
+        public async Task AllocationTrackerTracksPeakMemory(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -63,7 +71,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerResetClearsAllCounters()
+        [AllLuaVersions]
+        public async Task AllocationTrackerResetClearsAllCounters(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -78,7 +87,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerExceedsLimitReturnsTrueWhenOverLimit()
+        [AllLuaVersions]
+        public async Task AllocationTrackerExceedsLimitReturnsTrueWhenOverLimit(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -90,7 +102,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerExceedsLimitReturnsFalseForUnlimited()
+        [AllLuaVersions]
+        public async Task AllocationTrackerExceedsLimitReturnsFalseForUnlimited(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -100,7 +115,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerExceedsLimitWithSandboxOptions()
+        [AllLuaVersions]
+        public async Task AllocationTrackerExceedsLimitWithSandboxOptions(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
             SandboxOptions options = new SandboxOptions { MaxMemoryBytes = 1024 };
@@ -111,7 +129,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerExceedsLimitWithNullOptions()
+        [AllLuaVersions]
+        public async Task AllocationTrackerExceedsLimitWithNullOptions(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -124,7 +145,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerExceedsLimitWithUnrestrictedOptions()
+        [AllLuaVersions]
+        public async Task AllocationTrackerExceedsLimitWithUnrestrictedOptions(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -137,7 +161,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerZeroAllocationIsNoOp()
+        [AllLuaVersions]
+        public async Task AllocationTrackerZeroAllocationIsNoOp(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -148,7 +173,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerZeroDeallocationIsNoOp()
+        [AllLuaVersions]
+        public async Task AllocationTrackerZeroDeallocationIsNoOp(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -160,7 +186,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerNegativeAllocationThrows()
+        [AllLuaVersions]
+        public async Task AllocationTrackerNegativeAllocationThrows(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -171,7 +198,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerNegativeDeallocationThrows()
+        [AllLuaVersions]
+        public async Task AllocationTrackerNegativeDeallocationThrows(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -182,7 +212,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationSnapshotCapturesState()
+        [AllLuaVersions]
+        public async Task AllocationSnapshotCapturesState(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -198,7 +229,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationSnapshotToStringFormatsCorrectly()
+        [AllLuaVersions]
+        public async Task AllocationSnapshotToStringFormatsCorrectly(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationSnapshot snapshot = new AllocationSnapshot(768, 1024, 1024, 256, 2, 3, 5);
 
@@ -213,7 +247,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxOptionsHasMemoryLimitReturnsTrueWhenSet()
+        [AllLuaVersions]
+        public async Task SandboxOptionsHasMemoryLimitReturnsTrueWhenSet(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions options = new SandboxOptions { MaxMemoryBytes = 1024 };
 
@@ -221,7 +258,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxOptionsHasMemoryLimitReturnsFalseWhenZero()
+        [AllLuaVersions]
+        public async Task SandboxOptionsHasMemoryLimitReturnsFalseWhenZero(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions options = new SandboxOptions { MaxMemoryBytes = 0 };
 
@@ -229,7 +269,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxOptionsHasMemoryLimitReturnsFalseByDefault()
+        [AllLuaVersions]
+        public async Task SandboxOptionsHasMemoryLimitReturnsFalseByDefault(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions options = new SandboxOptions();
 
@@ -237,7 +280,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxOptionsMaxMemoryBytesNormalizesNegativeToZero()
+        [AllLuaVersions]
+        public async Task SandboxOptionsMaxMemoryBytesNormalizesNegativeToZero(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions options = new SandboxOptions { MaxMemoryBytes = -100 };
 
@@ -246,7 +292,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxOptionsCopyConstructorCopiesMemorySettings()
+        [AllLuaVersions]
+        public async Task SandboxOptionsCopyConstructorCopiesMemorySettings(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions original = new SandboxOptions
             {
@@ -261,7 +310,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationExceptionMemoryLimitExceededFormatsMessage()
+        [AllLuaVersions]
+        public async Task SandboxViolationExceptionMemoryLimitExceededFormatsMessage(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationException ex = new SandboxViolationException(
                 SandboxViolationType.MemoryLimitExceeded,
@@ -284,7 +336,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationTypeIncludesMemoryLimitExceeded()
+        [AllLuaVersions]
+        public async Task SandboxViolationTypeIncludesMemoryLimitExceeded(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationType[] allTypes = System.Enum.GetValues<SandboxViolationType>();
 
@@ -295,7 +350,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsInstructionLimitCreatesCorrectDetails()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsInstructionLimitCreatesCorrectDetails(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details = SandboxViolationDetails.InstructionLimit(1000, 1500);
 
@@ -311,7 +369,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsRecursionLimitCreatesCorrectDetails()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsRecursionLimitCreatesCorrectDetails(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details = SandboxViolationDetails.RecursionLimit(100, 150);
 
@@ -326,7 +387,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsMemoryLimitCreatesCorrectDetails()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsMemoryLimitCreatesCorrectDetails(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details = SandboxViolationDetails.MemoryLimit(1024, 2048);
 
@@ -341,7 +405,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsModuleAccessDeniedCreatesCorrectDetails()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsModuleAccessDeniedCreatesCorrectDetails(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details = SandboxViolationDetails.ModuleAccessDenied("os");
 
@@ -357,7 +424,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsFunctionAccessDeniedCreatesCorrectDetails()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsFunctionAccessDeniedCreatesCorrectDetails(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details = SandboxViolationDetails.FunctionAccessDenied(
                 "loadfile"
@@ -373,7 +443,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsFormatMessageReturnsCorrectString()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsFormatMessageReturnsCorrectString(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails memoryDetails = SandboxViolationDetails.MemoryLimit(1024, 2048);
 
@@ -388,7 +461,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsToStringReturnsFormattedMessage()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsToStringReturnsFormattedMessage(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details = SandboxViolationDetails.ModuleAccessDenied("io");
 
@@ -401,7 +477,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsEqualityWorksCorrectly()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsEqualityWorksCorrectly(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details1 = SandboxViolationDetails.MemoryLimit(1024, 2048);
             SandboxViolationDetails details2 = SandboxViolationDetails.MemoryLimit(1024, 2048);
@@ -414,7 +493,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsGetHashCodeIsConsistent()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsGetHashCodeIsConsistent(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details1 = SandboxViolationDetails.InstructionLimit(100, 200);
             SandboxViolationDetails details2 = SandboxViolationDetails.InstructionLimit(100, 200);
@@ -426,7 +508,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationExceptionWithDetailsConstructorSetsProperties()
+        [AllLuaVersions]
+        public async Task SandboxViolationExceptionWithDetailsConstructorSetsProperties(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details = SandboxViolationDetails.MemoryLimit(1024, 2048);
 
@@ -448,7 +533,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationExceptionDetailsPropertyExposesStructuredData()
+        [AllLuaVersions]
+        public async Task SandboxViolationExceptionDetailsPropertyExposesStructuredData(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationException ex = new SandboxViolationException(
                 SandboxViolationType.InstructionLimitExceeded,
@@ -465,7 +553,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationExceptionAccessDenialDetailsPropertyExposesStructuredData()
+        [AllLuaVersions]
+        public async Task SandboxViolationExceptionAccessDenialDetailsPropertyExposesStructuredData(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationException ex = new SandboxViolationException(
                 SandboxViolationType.FunctionAccessDenied,
@@ -483,7 +574,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         // =====================================================
 
         [Test]
-        public async Task ScriptWithMemoryLimitHasAllocationTracker()
+        [AllLuaVersions]
+        public async Task ScriptWithMemoryLimitHasAllocationTracker(LuaCompatibilityVersion version)
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -495,15 +587,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptWithoutMemoryLimitHasNoAllocationTracker()
+        [AllLuaVersions]
+        public async Task ScriptWithoutMemoryLimitHasNoAllocationTracker(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new Script();
+            Script script = new Script(version);
 
             await Assert.That(script.AllocationTracker).IsNull().ConfigureAwait(false);
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerRecordsTableCreation()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerRecordsTableCreation(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -526,7 +624,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerRecordsTableEntries()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerRecordsTableEntries(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -547,7 +648,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptMemoryLimitThrowsWhenExceeded()
+        [AllLuaVersions]
+        public async Task ScriptMemoryLimitThrowsWhenExceeded(LuaCompatibilityVersion version)
         {
             // Very small memory limit to trigger violation quickly
             ScriptOptions options = new ScriptOptions
@@ -585,7 +687,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptMemoryLimitCallbackCanAllowContinuation()
+        [AllLuaVersions]
+        public async Task ScriptMemoryLimitCallbackCanAllowContinuation(
+            LuaCompatibilityVersion version
+        )
         {
             bool callbackInvoked = false;
             long reportedMemory = 0;
@@ -621,7 +726,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerPeakBytesTracksHighWaterMark()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerPeakBytesTracksHighWaterMark(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -650,7 +758,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerSnapshotCapturesState()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerSnapshotCapturesState(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -678,7 +789,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerRecordsClosureCreation()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerRecordsClosureCreation(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -698,7 +812,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerRecordsClosureWithUpValues()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerRecordsClosureWithUpValues(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -727,7 +844,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerRecordsMultipleClosures()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerRecordsMultipleClosures(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -755,7 +875,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerRecordsCoroutineCreation()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerRecordsCoroutineCreation(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -784,7 +907,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerRecordsMultipleCoroutines()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerRecordsMultipleCoroutines(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -816,7 +942,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerCombinedTableClosureCoroutine()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerCombinedTableClosureCoroutine(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -866,7 +995,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         // ========================================================
 
         [Test]
-        public async Task AllocationTrackerRecordsCoroutineCreation()
+        [AllLuaVersions]
+        public async Task AllocationTrackerRecordsCoroutineCreation(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -878,7 +1008,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerRecordsMultipleCoroutineCreations()
+        [AllLuaVersions]
+        public async Task AllocationTrackerRecordsMultipleCoroutineCreations(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -892,7 +1025,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerRecordsCoroutineDisposal()
+        [AllLuaVersions]
+        public async Task AllocationTrackerRecordsCoroutineDisposal(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -906,7 +1040,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerTracksPeakCoroutines()
+        [AllLuaVersions]
+        public async Task AllocationTrackerTracksPeakCoroutines(LuaCompatibilityVersion version)
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -922,7 +1057,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerResetClearsCoroutineCounters()
+        [AllLuaVersions]
+        public async Task AllocationTrackerResetClearsCoroutineCounters(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -936,7 +1074,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerExceedsCoroutineLimitReturnsTrueWhenAtLimit()
+        [AllLuaVersions]
+        public async Task AllocationTrackerExceedsCoroutineLimitReturnsTrueWhenAtLimit(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -952,7 +1093,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerExceedsCoroutineLimitReturnsFalseForUnlimited()
+        [AllLuaVersions]
+        public async Task AllocationTrackerExceedsCoroutineLimitReturnsFalseForUnlimited(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -963,7 +1107,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerExceedsCoroutineLimitWithSandboxOptions()
+        [AllLuaVersions]
+        public async Task AllocationTrackerExceedsCoroutineLimitWithSandboxOptions(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
             SandboxOptions options = new SandboxOptions { MaxCoroutines = 2 };
@@ -978,7 +1125,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerExceedsCoroutineLimitWithNullOptions()
+        [AllLuaVersions]
+        public async Task AllocationTrackerExceedsCoroutineLimitWithNullOptions(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -992,7 +1142,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task AllocationTrackerSnapshotIncludesCoroutineData()
+        [AllLuaVersions]
+        public async Task AllocationTrackerSnapshotIncludesCoroutineData(
+            LuaCompatibilityVersion version
+        )
         {
             AllocationTracker tracker = new AllocationTracker();
 
@@ -1008,7 +1161,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxOptionsMaxCoroutinesPropertyWorks()
+        [AllLuaVersions]
+        public async Task SandboxOptionsMaxCoroutinesPropertyWorks(LuaCompatibilityVersion version)
         {
             SandboxOptions options = new SandboxOptions { MaxCoroutines = 10 };
 
@@ -1017,7 +1171,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxOptionsMaxCoroutinesZeroMeansUnlimited()
+        [AllLuaVersions]
+        public async Task SandboxOptionsMaxCoroutinesZeroMeansUnlimited(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions options = new SandboxOptions { MaxCoroutines = 0 };
 
@@ -1025,7 +1182,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxOptionsMaxCoroutinesNegativeBecomesZero()
+        [AllLuaVersions]
+        public async Task SandboxOptionsMaxCoroutinesNegativeBecomesZero(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions options = new SandboxOptions { MaxCoroutines = -5 };
 
@@ -1034,7 +1194,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxOptionsCopyConstructorCopiesCoroutineSettings()
+        [AllLuaVersions]
+        public async Task SandboxOptionsCopyConstructorCopiesCoroutineSettings(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions original = new SandboxOptions
             {
@@ -1049,7 +1212,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsCoroutineLimitCreatesCorrectDetails()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsCoroutineLimitCreatesCorrectDetails(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details = SandboxViolationDetails.CoroutineLimit(10, 11);
 
@@ -1064,7 +1230,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationDetailsCoroutineLimitFormatMessage()
+        [AllLuaVersions]
+        public async Task SandboxViolationDetailsCoroutineLimitFormatMessage(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationDetails details = SandboxViolationDetails.CoroutineLimit(5, 6);
 
@@ -1077,7 +1246,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task SandboxViolationExceptionCoroutineLimitHasCorrectProperties()
+        [AllLuaVersions]
+        public async Task SandboxViolationExceptionCoroutineLimitHasCorrectProperties(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxViolationException ex = new SandboxViolationException(
                 SandboxViolationType.CoroutineLimitExceeded,
@@ -1102,7 +1274,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         // ========================================================
 
         [Test]
-        public async Task ScriptWithCoroutineLimitHasAllocationTracker()
+        [AllLuaVersions]
+        public async Task ScriptWithCoroutineLimitHasAllocationTracker(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -1114,7 +1289,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptCoroutineLimitThrowsWhenExceeded()
+        [AllLuaVersions]
+        public async Task ScriptCoroutineLimitThrowsWhenExceeded(LuaCompatibilityVersion version)
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -1147,7 +1323,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptCoroutineLimitCallbackCanAllowContinuation()
+        [AllLuaVersions]
+        public async Task ScriptCoroutineLimitCallbackCanAllowContinuation(
+            LuaCompatibilityVersion version
+        )
         {
             bool callbackInvoked = false;
             int reportedCount = 0;
@@ -1178,7 +1357,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptCoroutineLimitCallbackCanDenyContinuation()
+        [AllLuaVersions]
+        public async Task ScriptCoroutineLimitCallbackCanDenyContinuation(
+            LuaCompatibilityVersion version
+        )
         {
             bool callbackInvoked = false;
 
@@ -1219,7 +1401,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptAllocationTrackerRecordsCoroutineCount()
+        [AllLuaVersions]
+        public async Task ScriptAllocationTrackerRecordsCoroutineCount(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -1261,7 +1446,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptCoroutineLimitAllowsExactlyMaxCoroutines()
+        [AllLuaVersions]
+        public async Task ScriptCoroutineLimitAllowsExactlyMaxCoroutines(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -1285,7 +1473,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptWithoutCoroutineLimitAllowsUnlimited()
+        [AllLuaVersions]
+        public async Task ScriptWithoutCoroutineLimitAllowsUnlimited(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new ScriptOptions
             {
@@ -1308,7 +1499,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptCoroutineWrapCountsAgainstLimit()
+        [AllLuaVersions]
+        public async Task ScriptCoroutineWrapCountsAgainstLimit(LuaCompatibilityVersion version)
         {
             ScriptOptions options = new ScriptOptions
             {

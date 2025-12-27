@@ -3,8 +3,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Threading.Tasks;
     using Cysharp.Text;
     using global::TUnit.Assertions;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for ZString-based string operations in DynValue.
@@ -150,37 +153,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task ScriptConcatenationUsesZStringInternally()
+        [AllLuaVersions]
+        public async Task ScriptConcatenationUsesZStringInternally(LuaCompatibilityVersion version)
         {
             // This test verifies that string concatenation in Lua uses the ZString-based API
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString("return 'hello' .. ' ' .. 'world'");
 
             await Assert.That(result.String).IsEqualTo("hello world").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ScriptConcatenationWithNumbersUsesZString()
+        [AllLuaVersions]
+        public async Task ScriptConcatenationWithNumbersUsesZString(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString("return 'value: ' .. 42");
 
             await Assert.That(result.String).IsEqualTo("value: 42").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ScriptConcatenationChainedUsesZString()
+        [AllLuaVersions]
+        public async Task ScriptConcatenationChainedUsesZString(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString("return 'a' .. 'b' .. 'c' .. 'd' .. 'e'");
 
             await Assert.That(result.String).IsEqualTo("abcde").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ScriptConcatenationInLoopUsesZString()
+        [AllLuaVersions]
+        public async Task ScriptConcatenationInLoopUsesZString(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local s = ''
@@ -195,9 +202,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableConcatUsesZStringInternally()
+        [AllLuaVersions]
+        public async Task TableConcatUsesZStringInternally(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local t = {'a', 'b', 'c', 'd'}
@@ -209,9 +217,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableConcatWithSeparatorUsesZString()
+        [AllLuaVersions]
+        public async Task TableConcatWithSeparatorUsesZString(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local t = {'a', 'b', 'c', 'd'}
@@ -223,27 +232,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task StringRepUsesZStringInternally()
+        [AllLuaVersions]
+        public async Task StringRepUsesZStringInternally(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString("return string.rep('ab', 5)");
 
             await Assert.That(result.String).IsEqualTo("ababababab").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task StringRepWithSeparatorUsesZString()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task StringRepWithSeparatorUsesZString(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            // string.rep with separator is Lua 5.3+ only
+            Script script = new(version);
             DynValue result = script.DoString("return string.rep('ab', 3, '-')");
 
             await Assert.That(result.String).IsEqualTo("ab-ab-ab").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task StringCharUsesZStringInternally()
+        [AllLuaVersions]
+        public async Task StringCharUsesZStringInternally(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString("return string.char(72, 101, 108, 108, 111)");
 
             await Assert.That(result.String).IsEqualTo("Hello").ConfigureAwait(false);

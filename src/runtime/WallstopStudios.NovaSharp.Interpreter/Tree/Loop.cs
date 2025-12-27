@@ -1,15 +1,23 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree
 {
+    using System;
     using System.Collections.Generic;
     using Execution.Scopes;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
 
     /// <summary>
     /// Represents a concrete loop body that can accept `break` statements and later patch them once the scope exits.
+    /// Implements <see cref="IDisposable"/> to ensure the pooled <see cref="BreakJumps"/> list is returned.
     /// </summary>
-    internal class Loop : ILoop
+    internal sealed class Loop : ILoop, IDisposable
     {
+        private PooledResource<List<Instruction>> _pooledBreakJumps = ListPool<Instruction>.Get(
+            out _
+        );
+        private bool _disposed;
+
         /// <summary>
         /// Scope guarded by this loop; the compiler emits `Exit` instructions for any `break`.
         /// </summary>
@@ -18,7 +26,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         /// <summary>
         /// Jump instructions emitted for `break` statements that still need to be patched to the loop exit.
         /// </summary>
-        public List<Instruction> BreakJumps { get; } = new();
+        public List<Instruction> BreakJumps => _pooledBreakJumps.Resource;
 
         /// <summary>
         /// Emits the bytecode for a `break` statement within this loop and records the jump for later patching.
@@ -28,6 +36,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         {
             bc.EmitExit(Scope);
             BreakJumps.Add(bc.EmitJump(OpCode.Jump, -1));
+        }
+
+        /// <summary>
+        /// Returns the pooled <see cref="BreakJumps"/> list to the pool.
+        /// Prefer using the <see cref="Dispose"/> method via a using statement instead.
+        /// </summary>
+        [Obsolete("Use Dispose() via a using statement instead for automatic resource cleanup.")]
+        public void ReturnBreakJumpsToPool()
+        {
+            Dispose();
+        }
+
+        /// <summary>
+        /// Disposes the loop and returns the pooled list to the pool.
+        /// </summary>
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+            _disposed = true;
+            _pooledBreakJumps.Dispose();
         }
 
         /// <summary>

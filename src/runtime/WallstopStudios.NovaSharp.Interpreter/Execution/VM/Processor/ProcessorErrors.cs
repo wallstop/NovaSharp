@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
+    using System.Runtime.CompilerServices;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
@@ -11,6 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Retrieves the source reference corresponding to the specified instruction pointer.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private SourceRef GetCurrentSourceRef(int instructionPtr)
         {
             if (instructionPtr >= 0 && instructionPtr < _rootChunk.Code.Count)

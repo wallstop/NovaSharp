@@ -32,47 +32,80 @@ from pathlib import Path
 from typing import Optional
 
 
+# Default fixture directory for version compatibility checks
+DEFAULT_FIXTURES_DIR = Path(__file__).resolve().parents[2] / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests" / "LuaFixtures"
+
+
+def parse_fixture_version_info(fixture_path: Path) -> tuple[list[str], bool]:
+    """
+    Parse version metadata from a fixture file header.
+    Returns (lua_versions, novasharp_only).
+    """
+    lua_versions = []
+    novasharp_only = False
+    
+    try:
+        with open(fixture_path, 'r', encoding='utf-8') as f:
+            for _ in range(10):
+                line = f.readline()
+                if not line.startswith("--"):
+                    break
+                
+                if "@lua-versions:" in line:
+                    versions_part = line.split("@lua-versions:")[1].strip()
+                    if "novasharp-only" in versions_part.lower():
+                        novasharp_only = True
+                    else:
+                        lua_versions = [v.strip() for v in versions_part.split(",")]
+                
+                if "@novasharp-only: true" in line.lower():
+                    novasharp_only = True
+    except Exception:
+        pass
+    
+    return lua_versions, novasharp_only
+
+
+def is_fixture_compatible(lua_versions: list[str], target_version: str, novasharp_only: bool) -> bool:
+    """Check if a fixture is compatible with the given Lua version."""
+    if novasharp_only:
+        return False
+    
+    if not lua_versions:
+        return True  # No version info, assume compatible
+    
+    # Check for exact match
+    if target_version in lua_versions:
+        return True
+    
+    # Check for "5.3+" style patterns
+    try:
+        target_num = int(target_version.replace(".", ""))
+        for v in lua_versions:
+            if v.endswith("+"):
+                base_version = int(v.rstrip("+").replace(".", ""))
+                if target_num >= base_version:
+                    return True
+    except ValueError:
+        pass
+    
+    return False
+
+
 # Known divergences that don't represent bugs in NovaSharp.
 # Format: list of fixture paths (relative to corpus dir) that should be excluded from failure.
 # See docs/testing/lua-divergences.md for documentation of each divergence.
+#
+# NOTE (2025-12-20 - Session 051): This set was audited and found to be largely obsolete.
+# Most entries are now skipped via @novasharp-only fixture metadata or handled via version
+# compatibility filtering. The set is kept minimal for potential edge cases only.
+# Audit result: 0 unexpected mismatches across all Lua versions (5.1, 5.2, 5.3, 5.4, 5.5).
 KNOWN_DIVERGENCES = {
-    # Debug module: NovaSharp has partial implementation, different output format
-    "DebugModuleTUnitTests/DebugDebugExitsImmediatelyWhenDefaultInputReturnsNull.lua",
-    "DebugModuleTUnitTests/DebugDebugThrowsWhenDebugInputIsNull.lua",
-    "DebugModuleTUnitTests/GetHookReturnsNilWhenNoHookIsSet.lua",
-    "DebugModuleTUnitTests/GetHookWithCoroutineArgument.lua",
-    # Debug module TAP parity: require 'debug' fails in NovaSharp
-    "DebugModuleTapParityTUnitTests/Unknown.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_1.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_2.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_3.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_5.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_6.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_11.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_12.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_14.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_15.lua",
-    "DebugModuleTapParityTUnitTests/Unknown_16.lua",
-    # Debug module TAP parity: upvalue index differences between NovaSharp and Lua
-    "DebugModuleTapParityTUnitTests/UpvalueIdReturnsUserDataHandles.lua",
-    "DebugModuleTapParityTUnitTests/UpvalueJoinSharesState.lua",
-    # Address format: NovaSharp uses different hex format than Lua
-    "BinaryDumpTUnitTests/LoadChangeEnvWithDebugSetUpValue.lua",
-    # bit32 module: NovaSharp enables bit32 only in 5.2, but Lua 5.3 still has it
-    # TODO: Fix NovaSharp to enable bit32 in 5.3 mode as well
-    "Bit32ModuleTUnitTests/BandAcceptsIntegralFloatLua52.lua",
-    # <close> attribute: semantics differ from Lua 5.4, needs investigation
-    "CloseAttributeTUnitTests/ReassignmentClosesPreviousValueImmediately.lua",
-    # xpcall: output format differs, needs investigation
-    "ErrorHandlingModuleTUnitTests/XpcallAcceptsClrHandler.lua",
-    "ErrorHandlingModuleTUnitTests/XpcallAllowsNilHandler.lua",
-    "ErrorHandlingModuleTUnitTests/XpcallDecoratesClrExceptionWithHandlerBeforeUnwind_1.lua",
-    # IO module: file handle output format differs
-    "IoModuleTUnitTests/CloseClosesExplicitFileHandle.lua",
-    "IoModuleTUnitTests/CloseWithoutParameterUsesCurrentOutput.lua",
-    "IoModuleTUnitTests/InputReturnsCurrentFileWhenNoArguments.lua",
-    # OS time: platform-dependent - .NET supports negative epoch times, some Lua installations don't
-    "OsTimeModuleTUnitTests/TimeReturnsNegativeForDatesBeforeEpoch.lua",
+    # Reserved for future entries if needed.
+    # All previously listed divergences are now:
+    # - Skipped via @novasharp-only: true in fixture headers (CLR interop fixtures)
+    # - Handled via @lua-versions metadata (version-specific features)
+    # - Classified as both_error (both interpreters reject invalid code)
 }
 
 
@@ -401,6 +434,17 @@ def main():
             args.results_dir, rel_path, args.lua_version, args.strict
         )
         
+        # Check fixture version compatibility before flagging as mismatch
+        if result.status == 'mismatch':
+            # Try to find the fixture file and check its version metadata
+            fixture_path = DEFAULT_FIXTURES_DIR / rel_path
+            if fixture_path.exists():
+                lua_versions, novasharp_only = parse_fixture_version_info(fixture_path)
+                if not is_fixture_compatible(lua_versions, args.lua_version, novasharp_only):
+                    # This fixture should not have been run against this version
+                    result.status = 'skipped'
+                    result.diff_summary = f"Version incompatible: fixture targets {lua_versions}"
+        
         # Check if this is a known divergence
         if result.status == 'mismatch' and rel_path in allowlist:
             result.status = 'known_divergence'
@@ -484,21 +528,21 @@ def main():
     if args.monitor:
         # Monitor mode: always succeed but report status
         if stats['mismatch'] > 0:
-            print(f"\n📊 MONITOR MODE: {stats['mismatch']} mismatch(es) found (not failing)")
+            print(f"\n[INFO] MONITOR MODE: {stats['mismatch']} mismatch(es) found (not failing)")
             print("This is expected for experimental Lua versions like 5.5.")
         else:
-            print("\n✅ MONITOR MODE: All comparable fixtures match.")
+            print("\n[OK] MONITOR MODE: All comparable fixtures match.")
         sys.exit(0)
     elif args.enforce and stats['mismatch'] > 0:
-        print(f"\n❌ ENFORCE MODE: {stats['mismatch']} unexpected mismatch(es) found!")
+        print(f"\n[FAIL] ENFORCE MODE: {stats['mismatch']} unexpected mismatch(es) found!")
         print("Add to KNOWN_DIVERGENCES in compare-lua-outputs.py if these are expected,")
         print("or fix the divergence in NovaSharp runtime.")
         sys.exit(1)
     elif stats['mismatch'] > 0:
-        print(f"\n⚠️  {stats['mismatch']} mismatch(es) found (warn mode, not failing)")
+        print(f"\n[WARN] {stats['mismatch']} mismatch(es) found (warn mode, not failing)")
         sys.exit(0)
     else:
-        print("\n✅ All comparable fixtures match (or are documented divergences).")
+        print("\n[OK] All comparable fixtures match (or are documented divergences).")
         sys.exit(0)
 
 

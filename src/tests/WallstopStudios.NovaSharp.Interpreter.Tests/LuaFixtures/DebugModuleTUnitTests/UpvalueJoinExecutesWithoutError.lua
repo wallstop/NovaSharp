@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:428
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:886
 -- @test: DebugModuleTUnitTests.UpvalueJoinExecutesWithoutError
--- @compat-notes: Lua 5.3+: bitwise operators; Lua 5.2+: debug.upvaluejoin (5.2+)
+-- @compat-notes: Test targets Lua 5.1; Lua 5.2+: debug.upvaluejoin (5.2+)
 local x = 1
                 local y = 2
                 local function f1() return x end

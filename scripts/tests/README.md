@@ -3,6 +3,8 @@
 Utilities that keep the interpreter test metadata in sync now that all fixtures run on
 Microsoft.Testing.Platform/TUnit, plus Lua specification parity harnesses.
 
+> **Note:** For quick test execution with filtering, see [`../test/quick.sh`](../test/README.md).
+
 ## Lua Specification Parity Harness
 
 ### run-lua-fixtures-parallel.py (Recommended)

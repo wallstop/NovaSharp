@@ -21,6 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             RandomProvider = null; // null means create a new SystemRandomProvider per script
             ForceUtcDateTime = false;
             Sandbox = SandboxOptions.Unrestricted;
+            LuaCompatibleErrors = false;
         }
 
         public ScriptOptions(ScriptOptions defaults)
@@ -48,6 +49,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
             TimeProvider = defaults.TimeProvider;
             RandomProvider = defaults.RandomProvider;
             ForceUtcDateTime = defaults.ForceUtcDateTime;
+            LuaCompatibleErrors = defaults.LuaCompatibleErrors;
+            EnableScriptCaching = defaults.EnableScriptCaching;
+            ScriptCacheMaxEntries = defaults.ScriptCacheMaxEntries;
             Sandbox =
                 defaults.Sandbox == SandboxOptions.Unrestricted
                     ? SandboxOptions.Unrestricted
@@ -154,5 +158,39 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// recursion depth, and module/function access restrictions. Defaults to <see cref="SandboxOptions.Unrestricted"/>.
         /// </summary>
         public SandboxOptions Sandbox { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether error messages should include variable name information
+        /// to match Lua's error format. When enabled, errors like "attempt to index a nil value" will
+        /// include the variable name, e.g., "attempt to index a nil value (global 'foo')".
+        /// Defaults to <c>false</c> for backwards compatibility.
+        /// </summary>
+        public bool LuaCompatibleErrors { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether script compilation caching is enabled.
+        /// When enabled, scripts loaded with <see cref="Script.LoadString"/> that have identical
+        /// source text will reuse previously compiled bytecode, dramatically reducing compilation
+        /// time and memory allocation for repeated script loads.
+        /// Defaults to <c>true</c>.
+        /// </summary>
+        /// <remarks>
+        /// Script caching is particularly beneficial for:
+        /// <list type="bullet">
+        /// <item>Hot-reloading development workflows where scripts are loaded repeatedly</item>
+        /// <item>Game engines that load the same mod scripts for multiple entities</item>
+        /// <item>Template-based script generation where the base script is reused</item>
+        /// </list>
+        /// Disable this option if you need to ensure each <see cref="Script.LoadString"/> call
+        /// produces a fresh compilation (e.g., for debugging compiler behavior).
+        /// </remarks>
+        public bool EnableScriptCaching { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets the maximum number of compiled scripts to cache per Script instance.
+        /// Only used when <see cref="EnableScriptCaching"/> is <c>true</c>.
+        /// Defaults to 64.
+        /// </summary>
+        public int ScriptCacheMaxEntries { get; set; } = 64;
     }
 }

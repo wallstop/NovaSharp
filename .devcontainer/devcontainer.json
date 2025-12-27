@@ -1,21 +1,211 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/dotnet
 {
-	"name": "C# (.NET)",
-	"image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0-bookworm",
-	"features": {
-		"ghcr.io/devcontainers/features/dotnet:2": {
-			"additionalVersions": "8.0"
-		},
-		"ghcr.io/devcontainers/features/powershell:1": {},
-		"ghcr.io/nikiforovall/devcontainer-features/dotnet-csharpier:1": {},
-		"ghcr.io/devcontainers-extra/features/ripgrep:1": {},
-		"ghcr.io/devcontainers/features/python:1": {
-			"version": "3.12"
-		}
-	},
-
-	// Install all Lua versions for specification comparison testing
-	// Lua 5.1-5.4 from apt, Lua 5.5 built from source (RC phase, not in package managers)
-	"postCreateCommand": "bash .devcontainer/post-create.sh"
+    "name": "NovaSharp (.NET + Lua)",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": "."
+    },
+    // Mount configuration for better performance
+    "mounts": [
+        // Cache NuGet packages in a named volume for persistence across rebuilds
+        "source=novasharp-nuget-cache,target=/home/vscode/.nuget,type=volume",
+        // Cache dotnet tools
+        "source=novasharp-dotnet-tools,target=/home/vscode/.dotnet/tools,type=volume",
+        // RAM disk for build artifacts - dramatically speeds up compilation I/O
+        // Uses tmpfs for obj/ and bin/ directories (persisted within session, not across rebuilds)
+        "source=novasharp-build-cache,target=/workspaces/NovaSharp/artifacts/build-cache,type=volume"
+    ],
+    // VS Code customizations
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // C# Development (Roslyn LSP - modern, stable)
+                "ms-dotnettools.csharp",
+                // Testing
+                "bits.csharp-test-filter",
+                // Code Quality
+                "usernamehw.errorlens",
+                "editorconfig.editorconfig",
+                "DavidAnson.vscode-markdownlint",
+                // Git
+                "eamodio.gitlens",
+                "mhutchie.git-graph",
+                // Lua (for test fixtures)
+                "sumneko.lua",
+                // Productivity
+                "streetsidesoftware.code-spell-checker",
+                "gruntfuggly.todo-tree",
+                "aaron-bond.better-comments",
+                // AI / Copilot
+                "github.copilot",
+                "github.copilot-chat"
+            ],
+            "settings": {
+                // ============================================================
+                // C# / Roslyn Language Server Settings
+                // ============================================================
+                // Use the modern Roslyn language server (default, stable, no Razor issues)
+                // Do NOT use OmniSharp - it has the "Cannot load Razor OmniSharp" bug
+                "dotnet.server.useOmnisharp": false,
+                // Auto-load the solution file
+                "dotnet.defaultSolution": "src/NovaSharp.sln",
+                // Enable Roslyn analyzers for code quality
+                "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "fullSolution",
+                "dotnet.backgroundAnalysis.compilerDiagnosticsScope": "fullSolution",
+                // IntelliSense settings
+                "dotnet.inlayHints.enableInlayHintsForParameters": true,
+                "dotnet.inlayHints.enableInlayHintsForLiteralParameters": true,
+                "dotnet.inlayHints.enableInlayHintsForObjectCreationParameters": true,
+                "dotnet.inlayHints.enableInlayHintsForIndexerParameters": false,
+                "dotnet.inlayHints.enableInlayHintsForOtherParameters": false,
+                "dotnet.inlayHints.suppressInlayHintsForParametersThatMatchMethodIntent": true,
+                "dotnet.inlayHints.suppressInlayHintsForParametersThatDifferOnlyBySuffix": true,
+                "dotnet.inlayHints.enableInlayHintsForTypes": true,
+                "dotnet.inlayHints.enableInlayHintsForImplicitVariableTypes": true,
+                "dotnet.inlayHints.enableInlayHintsForLambdaParameterTypes": true,
+                "dotnet.inlayHints.enableInlayHintsForImplicitObjectCreation": true,
+                // Completion settings
+                "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
+                "dotnet.completion.provideRegexCompletions": true,
+                // ============================================================
+                // Editor Settings
+                // ============================================================
+                "editor.formatOnSave": true,
+                "editor.formatOnPaste": false,
+                "editor.formatOnType": false,
+                "[csharp]": {
+                    "editor.defaultFormatter": "ms-dotnettools.csharp"
+                },
+                "editor.bracketPairColorization.enabled": true,
+                "editor.guides.bracketPairs": "active",
+                "editor.stickyScroll.enabled": true,
+                "editor.minimap.enabled": false,
+                "editor.renderWhitespace": "boundary",
+                "editor.rulers": [
+                    120
+                ],
+                "editor.wordWrap": "off",
+                "editor.tabSize": 4,
+                "editor.insertSpaces": true,
+                "editor.detectIndentation": false,
+                // ============================================================
+                // File Associations & Exclusions
+                // ============================================================
+                "files.associations": {
+                    "*.lua": "lua"
+                },
+                "files.exclude": {
+                    "**/bin": true,
+                    "**/obj": true,
+                    "**/.vs": true,
+                    "**/node_modules": true,
+                    "**/*.suo": true,
+                    "**/*.user": true,
+                    "**/_Hardwired.cs": true
+                },
+                "files.watcherExclude": {
+                    "**/bin/**": true,
+                    "**/obj/**": true,
+                    "**/.git/objects/**": true,
+                    "**/node_modules/**": true,
+                    "**/artifacts/**": true,
+                    "**/_Hardwired.cs": true
+                },
+                "search.exclude": {
+                    "**/bin": true,
+                    "**/obj": true,
+                    "**/artifacts": true,
+                    "**/*.dll": true,
+                    "**/*.pdb": true,
+                    "**/_Hardwired.cs": true
+                },
+                // ============================================================
+                // Terminal Settings
+                // ============================================================
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "terminal.integrated.scrollback": 10000,
+                "terminal.integrated.enablePersistentSessions": false,
+                // Shell integration - auto-enabled via /etc/bash.bashrc in Dockerfile
+                "terminal.integrated.shellIntegration.enabled": true,
+                "terminal.integrated.shellIntegration.decorationsEnabled": "both",
+                // ============================================================
+                // Git Settings
+                // ============================================================
+                "git.autofetch": true,
+                "git.enableSmartCommit": true,
+                "git.confirmSync": false,
+                // ============================================================
+                // Extension-specific Settings
+                // ============================================================
+                // Error Lens - show errors inline
+                "errorLens.enabledDiagnosticLevels": [
+                    "error",
+                    "warning"
+                ],
+                "errorLens.excludeBySource": [
+                    "csharp(CS8019)"
+                ],
+                // Todo Tree
+                "todo-tree.general.tags": [
+                    "TODO",
+                    "FIXME",
+                    "BUG",
+                    "HACK",
+                    "XXX",
+                    "PERF"
+                ],
+                // Spell checker - add Lua/NovaSharp terms
+                "cSpell.words": [
+                    "NovaSharp",
+                    "MoonSharp",
+                    "netstandard",
+                    "coroutine",
+                    "metatables",
+                    "metatable",
+                    "upvalues",
+                    "vararg",
+                    "userdata",
+                    "Interop"
+                ],
+                // ============================================================
+                // Lua Extension Settings (for test fixtures)
+                // ============================================================
+                "Lua.diagnostics.globals": [
+                    "print",
+                    "assert",
+                    "error",
+                    "pcall",
+                    "xpcall"
+                ],
+                "Lua.runtime.version": "Lua 5.4",
+                "Lua.diagnostics.disable": [
+                    "lowercase-global"
+                ]
+            }
+        }
+    },
+    // Features to add to the dev container
+    "features": {
+        // GitHub CLI for PR workflows
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    // Port forwarding (if running test servers)
+    "forwardPorts": [],
+    // Clean stale Windows build artifacts and fix line endings before container setup
+    // This runs on the HOST before the container is created, cleaning mounted volumes
+    // Using external script for stability (prevents VS Code from detecting "config changes")
+    "initializeCommand": "bash .devcontainer/init-host.sh \"${localWorkspaceFolder}\"",
+    // onCreateCommand runs BEFORE extensions are activated
+    // This ensures NuGet packages are restored before C# extension tries to load projects
+    "onCreateCommand": "bash .devcontainer/on-create.sh",
+    // postCreateCommand runs after container is created but extensions may still race
+    "postCreateCommand": "bash .devcontainer/post-create.sh",
+    // updateContentCommand runs after git pull/clone operations
+    // Re-run NuGet restore to ensure packages are up to date
+    "updateContentCommand": "dotnet restore src/NovaSharp.sln --verbosity minimal",
+    // postStartCommand runs after container starts
+    "postStartCommand": "echo '✅ NovaSharp dev container ready! IntelliSense will load automatically.'",
+    // Set the default user
+    "remoteUser": "vscode"
 }

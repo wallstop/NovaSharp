@@ -3,14 +3,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class BinaryMetamethodTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task FloorDivisionMetamethodOverridesOperator()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task FloorDivisionMetamethodOverridesOperator(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            // Floor division (//) is Lua 5.3+
+            Script script = new(version);
 
             DynValue result = script.DoString(
                 @"
@@ -32,9 +36,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task BitwiseNotMetamethodOverridesOperator()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task BitwiseNotMetamethodOverridesOperator(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            // Bitwise operators are Lua 5.3+
+            Script script = new(version);
 
             DynValue result = script.DoString(
                 @"

@@ -3,8 +3,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     using System;
     using System.Threading.Tasks;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for <see cref="SandboxOptions"/> instruction limits.
@@ -12,11 +14,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     public sealed class SandboxInstructionLimitTUnitTests
     {
         [Test]
-        public async Task InstructionLimitExceededThrowsSandboxViolationException()
+        [AllLuaVersions]
+        public async Task InstructionLimitExceededThrowsSandboxViolationException(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions sandbox = new SandboxOptions { MaxInstructions = 10 };
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             SandboxViolationException ex = await Assert
                 .That(() => script.DoString("while true do end"))
@@ -31,11 +38,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptExecutesWithinInstructionLimit()
+        [AllLuaVersions]
+        public async Task ScriptExecutesWithinInstructionLimit(LuaCompatibilityVersion version)
         {
             SandboxOptions sandbox = new SandboxOptions { MaxInstructions = 1000 };
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // Simple script that should complete well under 1000 instructions
             DynValue result = script.DoString("return 1 + 2");
@@ -44,11 +54,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task UnlimitedInstructionsDoesNotThrow()
+        [AllLuaVersions]
+        public async Task UnlimitedInstructionsDoesNotThrow(LuaCompatibilityVersion version)
         {
             SandboxOptions sandbox = new SandboxOptions { MaxInstructions = 0 }; // 0 = unlimited
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // Run a moderately long script
             DynValue result = script.DoString(
@@ -65,7 +78,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task InstructionLimitCallbackCanAllowContinuation()
+        [AllLuaVersions]
+        public async Task InstructionLimitCallbackCanAllowContinuation(
+            LuaCompatibilityVersion version
+        )
         {
             int callbackInvocations = 0;
             SandboxOptions sandbox = new SandboxOptions
@@ -79,7 +95,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 },
             };
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // Script that needs more than 150 instructions (3 * 50) should eventually fail
             await Assert
@@ -101,7 +119,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task InstructionLimitCallbackResetAllowsFullCompletion()
+        [AllLuaVersions]
+        public async Task InstructionLimitCallbackResetAllowsFullCompletion(
+            LuaCompatibilityVersion version
+        )
         {
             int callbackInvocations = 0;
             SandboxOptions sandbox = new SandboxOptions
@@ -114,7 +135,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 },
             };
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // Should complete because callback always allows reset
             DynValue result = script.DoString(

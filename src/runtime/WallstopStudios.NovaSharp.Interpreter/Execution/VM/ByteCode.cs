@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using Debugging;
     using Execution.Scopes;
@@ -132,6 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Gets the instruction index where the next emission will land. Useful for jump patching.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetJumpPointForNextInstruction()
         {
             return Code.Count;
@@ -140,6 +142,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Gets the index of the last emitted instruction.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int GetJumpPointForLastInstruction()
         {
             return Code.Count - 1;
@@ -148,11 +151,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Gets the most recently appended instruction.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Instruction GetLastInstruction()
         {
             return Code[^1];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Instruction AppendInstruction(Instruction c)
         {
             Code.Add(c);
@@ -663,10 +668,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="index">Optional literal index.</param>
         /// <param name="isNameIndex">Whether the index is a string literal.</param>
         /// <param name="isExpList">Whether the index was produced by an expression list.</param>
+        /// <param name="baseName">Optional name of the base variable being indexed (for error messages).</param>
         public Instruction EmitIndex(
             DynValue index = null,
             bool isNameIndex = false,
-            bool isExpList = false
+            bool isExpList = false,
+            string baseName = null
         )
         {
             OpCode o;
@@ -684,7 +691,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             return AppendInstruction(
-                new Instruction(_currentSourceRef) { OpCode = o, Value = index }
+                new Instruction(_currentSourceRef)
+                {
+                    OpCode = o,
+                    Value = index,
+                    Name = baseName,
+                }
             );
         }
 
@@ -696,12 +708,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="index">Optional literal index.</param>
         /// <param name="isNameIndex">Whether the index is a string literal.</param>
         /// <param name="isExpList">Whether the index was produced by an expression list.</param>
+        /// <param name="baseName">Optional name of the base variable being indexed (for error messages).</param>
         public Instruction EmitIndexSet(
             int stackofs,
             int tupleidx,
             DynValue index = null,
             bool isNameIndex = false,
-            bool isExpList = false
+            bool isExpList = false,
+            string baseName = null
         )
         {
             OpCode o;
@@ -725,6 +739,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     NumVal = stackofs,
                     NumVal2 = tupleidx,
                     Value = index,
+                    Name = baseName,
                 }
             );
         }

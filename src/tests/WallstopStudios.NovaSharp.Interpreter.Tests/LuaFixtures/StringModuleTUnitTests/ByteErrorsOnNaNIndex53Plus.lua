@@ -1,4 +1,4 @@
--- @lua-versions: 5.3, 5.4
+-- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: true
 -- @error-pattern: number has no integer representation

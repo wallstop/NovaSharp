@@ -3,14 +3,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class CloseAttributeTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task ToBeClosedVariablesCloseInReverseOrderOnScopeExit()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task ToBeClosedVariablesCloseInReverseOrderOnScopeExit(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            // <close> attribute is Lua 5.4+
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local log = {}
@@ -43,9 +49,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task ReassignmentClosesPreviousValueImmediately()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task ReassignmentClosesPreviousValueImmediately(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            // <close> attribute is Lua 5.4+
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local log = {}
@@ -77,9 +87,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task ErrorPathPassesErrorObjectToCloseMetamethod()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task ErrorPathPassesErrorObjectToCloseMetamethod(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            // <close> attribute is Lua 5.4+
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local captured = {}
@@ -111,9 +125,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task MissingCloseMetamethodRaisesRuntimeError()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task MissingCloseMetamethodRaisesRuntimeError(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            // <close> attribute is Lua 5.4+
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local ok, err = pcall(function()
@@ -132,9 +148,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoJumpOutOfScopeClosesLocals()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task GotoJumpOutOfScopeClosesLocals(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            // <close> attribute is Lua 5.4+
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local log = {}
@@ -169,9 +187,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task BreakStatementClosesLoopScopedLocals()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task BreakStatementClosesLoopScopedLocals(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            // <close> attribute is Lua 5.4+
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local log = {}
@@ -201,9 +221,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseMetamethodErrorsAreCapturedAndOtherClosersRun()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseMetamethodErrorsAreCapturedAndOtherClosersRun(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            // <close> attribute is Lua 5.4+
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local log = {}

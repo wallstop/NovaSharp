@@ -2,7 +2,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System.Collections.Concurrent;
     using System.Diagnostics.CodeAnalysis;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
@@ -96,12 +98,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             string
         > KnownTypeNames = new()
         {
-            { DataType.Nil, "nil" },
+            { DataType.Nil, LuaKeywords.Nil },
             { DataType.Void, "void" },
             { DataType.Boolean, "boolean" },
             { DataType.Number, "number" },
             { DataType.String, "string" },
-            { DataType.Function, "function" },
+            { DataType.Function, LuaKeywords.Function },
             { DataType.ClrFunction, "clrfunction" },
             { DataType.Table, "table" },
             { DataType.Tuple, "tuple" },
@@ -134,7 +136,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.Void:
                     return "no value";
                 case DataType.Nil:
-                    return "nil";
+                    return LuaKeywords.Nil;
                 case DataType.Boolean:
                     return "boolean";
                 case DataType.Number:
@@ -142,9 +144,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.String:
                     return "string";
                 case DataType.Function:
-                    return "function";
+                    return LuaKeywords.Function;
                 case DataType.ClrFunction:
-                    return "function";
+                    return LuaKeywords.Function;
                 case DataType.Table:
                     return "table";
                 case DataType.UserData:
@@ -155,7 +157,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.TailCallRequest:
                 case DataType.YieldRequest:
                 default:
-                    return $"internal<{type.ToLuaDebuggerString()}>";
+                    return ZString.Concat("internal<", type.ToLuaDebuggerString(), ">");
             }
         }
 
@@ -191,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 case DataType.Void:
                 case DataType.Nil:
-                    return "nil";
+                    return LuaKeywords.Nil;
                 case DataType.Boolean:
                     return "boolean";
                 case DataType.Number:
@@ -199,9 +201,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.String:
                     return "string";
                 case DataType.Function:
-                    return "function";
+                    return LuaKeywords.Function;
                 case DataType.ClrFunction:
-                    return "function";
+                    return LuaKeywords.Function;
                 case DataType.Table:
                     return "table";
                 case DataType.UserData:

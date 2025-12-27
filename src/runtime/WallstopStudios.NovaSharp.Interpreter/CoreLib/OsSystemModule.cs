@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.IO;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -14,15 +15,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     public static class OsSystemModule
     {
         /// <summary>
-        /// Implements Lua `os.execute`, delegating to the host platform to run a shell command and
-        /// returning the Lua 5.4 status tuple `(true|nil, "exit"|"signal", code)` (§6.9).
+        /// Implements Lua `os.execute`, delegating to the host platform to run a shell command.
         /// </summary>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments containing an optional command string.</param>
         /// <returns>
-        /// <see cref="DynValue.True"/> when no command is provided, `(nil,"exit",code)` on success,
-        /// or <c>nil</c> when the host cannot execute commands.
+        /// <para><b>Lua 5.1</b>: Returns exit status code as a number (0 for success).</para>
+        /// <para><b>Lua 5.2+</b>: Returns tuple <c>(true|nil, "exit"|"signal", code)</c>.</para>
+        /// <para>When no command is provided, returns <c>true</c> to indicate shell availability.</para>
         /// </returns>
+        /// <remarks>
+        /// The return value format changed in Lua 5.2:
+        /// <list type="bullet">
+        ///   <item><b>Lua 5.1</b>: Returns the exit status code directly as a number.</item>
+        ///   <item><b>Lua 5.2+</b>: Returns a tuple of (success, type, code) where success is
+        ///   <c>true</c> for exit code 0, <c>nil</c> otherwise; type is "exit" or "signal";
+        ///   and code is the exit code or signal number.</item>
+        /// </list>
+        /// </remarks>
         [NovaSharpModuleMethod(Name = "execute")]
         public static DynValue Execute(
             ScriptExecutionContext executionContext,
@@ -35,6 +45,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
             DynValue v = args.AsType(0, "execute", DataType.String, true);
 
             if (v.IsNil())
@@ -46,6 +59,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             try
             {
                 int exitCode = Script.GlobalOptions.Platform.ExecuteCommand(v.String);
+
+                // Lua 5.1: Return just the exit status code
+                if (version < LuaCompatibilityVersion.Lua52)
+                {
+                    return DynValue.NewNumber(exitCode);
+                }
+
+                // Lua 5.2+: Return tuple (true|nil, "exit"|"signal", code)
                 bool exitedViaSignal = exitCode < 0;
                 string terminationType = exitedViaSignal ? "signal" : "exit";
                 int normalizedCode = exitedViaSignal ? -exitCode : exitCode;
@@ -59,10 +80,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
             catch (PlatformNotSupportedException ex)
             {
+                // Lua 5.1: Return -1 for platform errors
+                if (version < LuaCompatibilityVersion.Lua52)
+                {
+                    return DynValue.NewNumber(-1);
+                }
                 return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
             }
             catch (InvalidOperationException ex)
             {
+                // Lua 5.1: Return -1 for operation errors
+                if (version < LuaCompatibilityVersion.Lua52)
+                {
+                    return DynValue.NewNumber(-1);
+                }
                 return DynValue.NewTuple(DynValue.Nil, DynValue.NewString(ex.Message));
             }
         }

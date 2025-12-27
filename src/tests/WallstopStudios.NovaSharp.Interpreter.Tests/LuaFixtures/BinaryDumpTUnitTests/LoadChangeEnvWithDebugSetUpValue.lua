@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\BinaryDumpTUnitTests.cs:202
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/BinaryDumpTUnitTests.cs:226
 -- @test: BinaryDumpTUnitTests.LoadChangeEnvWithDebugSetUpValue
--- @compat-notes: NovaSharp: potential NovaSharp sandbox
+-- @compat-notes: NovaSharp: potential NovaSharp sandbox; Test targets Lua 5.2+
 function print_env()
                     print(_ENV)
                 end

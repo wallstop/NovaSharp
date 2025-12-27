@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -12,9 +13,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     public sealed class ReplInterpreterTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task ClassicPromptReflectsPendingState()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClassicPromptReflectsPendingState(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
             await Assert.That(interpreter.ClassicPrompt).IsEqualTo(">").ConfigureAwait(false);
             interpreter.Evaluate("function foo()");
@@ -23,9 +29,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task CurrentPendingCommandExposesBufferedInput()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CurrentPendingCommandExposesBufferedInput(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
             DynValue pending = interpreter.Evaluate("function sample()");
             await Assert.That(pending).IsNull().ConfigureAwait(false);
@@ -38,9 +49,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvaluateSupportsClassicExpressionSyntax()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvaluateSupportsClassicExpressionSyntax(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete))
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete))
             {
                 HandleClassicExprsSyntax = true,
             };
@@ -51,9 +67,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvaluateSupportsDynamicExpressionSyntax()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvaluateSupportsDynamicExpressionSyntax(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete))
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete))
             {
                 HandleDynamicExprs = true,
             };
@@ -67,9 +88,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvaluateReturnsNullWhenAwaitingMoreInput()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvaluateReturnsNullWhenAwaitingMoreInput(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
             DynValue first = interpreter.Evaluate("function foo()");
             await Assert.That(first).IsNull().ConfigureAwait(false);
@@ -86,9 +112,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynamicExpressionReturnsComputedValueWhenCodeIsPresent()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DynamicExpressionReturnsComputedValueWhenCodeIsPresent(
+            LuaCompatibilityVersion version
+        )
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete))
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete))
             {
                 HandleDynamicExprs = true,
             };
@@ -100,9 +133,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task EmptyInputWithoutPendingReturnsVoid()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmptyInputWithoutPendingReturnsVoid(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
             DynValue result = interpreter.Evaluate(string.Empty);
             await Assert.That(result).IsEqualTo(DynValue.Void).ConfigureAwait(false);
@@ -110,9 +148,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynamicExpressionHandlesEmptyCodeAsVoid()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DynamicExpressionHandlesEmptyCodeAsVoid(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete))
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete))
             {
                 HandleDynamicExprs = true,
             };
@@ -126,9 +169,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task ForcedBlankLineRethrowsPrematureSyntaxError()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ForcedBlankLineRethrowsPrematureSyntaxError(
+            LuaCompatibilityVersion version
+        )
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
             DynValue pending = interpreter.Evaluate("function foo()");
             await Assert.That(pending).IsNull().ConfigureAwait(false);
@@ -142,9 +192,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task SyntaxErrorsClearPendingCommand()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SyntaxErrorsClearPendingCommand(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
             SyntaxErrorException exception = ExpectException<SyntaxErrorException>(() =>
                 interpreter.Evaluate("return )")
@@ -154,9 +209,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task RuntimeExceptionsClearPendingCommand()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RuntimeExceptionsClearPendingCommand(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 interpreter.Evaluate("error('boom')")
@@ -166,9 +226,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task UnhandledExceptionsAlsoClearPendingCommand()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UnhandledExceptionsAlsoClearPendingCommand(
+            LuaCompatibilityVersion version
+        )
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
             ReplInterpreter.TestHooks.SetScript(interpreter, null);
 
             NullReferenceException exception = ExpectException<NullReferenceException>(() =>
@@ -179,9 +246,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvaluateThrowsWhenInputIsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EvaluateThrowsWhenInputIsNull(LuaCompatibilityVersion version)
         {
-            ReplInterpreter interpreter = new(new Script(CoreModulePresets.Complete));
+            ReplInterpreter interpreter = new(new Script(version, CoreModulePresets.Complete));
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 interpreter.Evaluate(null)

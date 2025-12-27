@@ -18,6 +18,7 @@ This folder hosts the canonical documentation set for NovaSharp. Use the index b
 | Proposals                      | `docs/proposals/`                                               | Roslyn hardwire generator, namespace rules, VM correctness, and upcoming feature designs.                           |
 | Script tooling                 | `scripts/README.md`, `scripts/coverage/README.md`               | Entry point for helper scripts (build, coverage, branding guards, etc.).                                            |
 | Naming audit helper            | `tools/NamingAudit/README.md`                                   | Python-based checker that enforces PascalCase file/type names per `.editorconfig`.                                  |
+| Audit reports                  | `docs/audits/README.md`                                         | Tracked audit logs (documentation, naming, spelling) verified by CI.                                                |
 
 ## Contributing Expectations
 

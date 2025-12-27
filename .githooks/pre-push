@@ -1,0 +1,112 @@
+#!/usr/bin/env sh
+# pre-push hook for NovaSharp
+# Runs key CI checks before allowing a push to proceed.
+# 
+# This hook mirrors critical CI checks to catch issues early, before
+# they fail in the CI pipeline. It runs:
+#   1. CSharpier format check (C# code formatting)
+#   2. Markdown format check (documentation formatting)
+#   3. Branding check (NovaSharp naming consistency)
+#   4. Namespace alignment check (C# namespace conventions)
+#   5. Build check (solution compiles) - optional, skip with SKIP_BUILD_ON_PUSH=1
+#
+# To skip the build check (useful for documentation-only changes):
+#   SKIP_BUILD_ON_PUSH=1 git push
+#
+# To bypass this hook entirely (use sparingly):
+#   git push --no-verify
+
+set -eu
+
+# -----------------------------------------------------------------------------
+# Helper functions
+# -----------------------------------------------------------------------------
+
+log() {
+  printf '[pre-push] %s\n' "$1"
+}
+
+log_success() {
+  printf '[pre-push] ✓ %s\n' "$1"
+}
+
+log_error() {
+  printf '[pre-push] ✗ %s\n' "$1" >&2
+}
+
+# Find repository root
+repo_root="$(git rev-parse --show-toplevel 2>&1)" || {
+  log_error "Unable to locate repository root"
+  exit 1
+}
+
+cd "$repo_root"
+
+# -----------------------------------------------------------------------------
+# Check 1: CSharpier format check
+# -----------------------------------------------------------------------------
+log "Checking C# formatting with CSharpier..."
+
+if ! dotnet tool run csharpier check .; then
+  log_error "CSharpier check failed - run 'dotnet tool run csharpier .' to fix"
+  exit 1
+fi
+
+log_success "CSharpier check passed"
+
+# -----------------------------------------------------------------------------
+# Check 2: Markdown format check
+# -----------------------------------------------------------------------------
+log "Checking Markdown formatting..."
+
+if ! python3 scripts/ci/format_markdown.py --check --all; then
+  log_error "Markdown format check failed - run 'python3 scripts/ci/format_markdown.py --all' to fix"
+  exit 1
+fi
+
+log_success "Markdown format check passed"
+
+# -----------------------------------------------------------------------------
+# Check 3: Branding check
+# -----------------------------------------------------------------------------
+log "Checking NovaSharp branding consistency..."
+
+if ! ./scripts/branding/ensure-novasharp-branding.sh; then
+  log_error "Branding check failed - review output above for issues"
+  exit 1
+fi
+
+log_success "Branding check passed"
+
+# -----------------------------------------------------------------------------
+# Check 4: Namespace alignment check
+# -----------------------------------------------------------------------------
+log "Checking C# namespace alignment..."
+
+if ! python3 tools/NamespaceAudit/namespace_audit.py; then
+  log_error "Namespace alignment check failed - review output above for issues"
+  exit 1
+fi
+
+log_success "Namespace alignment check passed"
+
+# -----------------------------------------------------------------------------
+# Check 5: Build check (optional)
+# -----------------------------------------------------------------------------
+if [ "${SKIP_BUILD_ON_PUSH:-0}" = "1" ]; then
+  log "Skipping build check (SKIP_BUILD_ON_PUSH=1)"
+else
+  log "Building solution..."
+  
+  if ! ./scripts/build/quick.sh; then
+    log_error "Build failed - fix build errors before pushing"
+    exit 1
+  fi
+  
+  log_success "Build succeeded"
+fi
+
+# -----------------------------------------------------------------------------
+# All checks passed
+# -----------------------------------------------------------------------------
+log_success "All pre-push checks passed"

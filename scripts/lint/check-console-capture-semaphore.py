@@ -3,10 +3,21 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 import re
 import sys
 from typing import Iterable, Tuple
+
+
+def is_ci() -> bool:
+    return os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI") == "true"
+
+
+def emit_error(file_path: str, line_number: int, message: str) -> None:
+    if is_ci():
+        print(f"::error file={file_path},line={line_number}::{message}")
+    print(f"{file_path}:{line_number}: {message}")
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 TEST_ROOT = REPO_ROOT / "src" / "tests"
@@ -83,7 +94,10 @@ def main() -> int:
         for message, rows in grouped.items():
             print(f"{message}\n")
             for path_str, entry in rows:
-                print(f"{path_str}:{entry}")
+                # entry is "line_num:content", extract line number
+                line_num_str = entry.split(":")[0]
+                line_num = int(line_num_str) if line_num_str.isdigit() else 1
+                emit_error(path_str, line_num, message)
             print()
         return 1
 
