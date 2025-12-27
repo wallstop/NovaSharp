@@ -738,9 +738,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             // Float formatting per Lua conventions
+            // NaN sign bit must be preserved: -nan vs nan
+            // IEEE 754 NaNs have a sign bit; Lua distinguishes them in string output
             if (double.IsNaN(_float))
             {
-                return "nan";
+                return double.IsNegative(_float) ? "-nan" : "nan";
             }
             if (double.IsPositiveInfinity(_float))
             {
@@ -761,6 +763,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     return _float.ToString("0.0", CultureInfo.InvariantCulture);
                 }
                 // Lua 5.1/5.2: format without decimal point for integer-like floats
+                // Special case: negative zero must print as "-0" not "0"
+                // Casting -0.0 to long produces 0, losing the sign
+                if (_float == 0.0 && double.IsNegative(_float))
+                {
+                    return "-0";
+                }
                 // Only cast to long if the value is within long range to avoid overflow
                 if (_float >= long.MinValue && _float <= long.MaxValue)
                 {

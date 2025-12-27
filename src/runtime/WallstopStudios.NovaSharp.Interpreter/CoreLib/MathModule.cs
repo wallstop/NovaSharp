@@ -769,12 +769,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// Implements Lua `math.log10`, returning the base-10 logarithm of a number (§6.7).
         /// </summary>
         /// <remarks>
-        /// Available in all Lua versions (5.1-5.4). In Lua 5.2+, this is equivalent to
-        /// <c>math.log(x, 10)</c> but is retained for compatibility.
+        /// Available in Lua 5.1-5.4. Removed in Lua 5.5 (use <c>math.log(x, 10)</c> instead).
+        /// In Lua 5.2+, this is equivalent to <c>math.log(x, 10)</c> but was retained for
+        /// backward compatibility until removal in 5.5.
         /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments providing the value.</param>
         /// <returns>The base-10 logarithm result.</returns>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua54)]
         [NovaSharpModuleMethod(Name = "log10")]
         public static DynValue Log10(
             ScriptExecutionContext executionContext,
@@ -843,35 +845,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             double value = arg.Number;
             double integerPart = Math.Truncate(value);
+
+            // Check version for integer promotion and negative zero behavior
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool supportsIntegerSubtype = version >= LuaCompatibilityVersion.Lua53;
+
             double fractionalPart;
 
             // Special case: infinity - fractional part is 0, not NaN
             // (inf - inf = NaN, but Lua defines modf(inf) to have fractional part of 0)
             if (double.IsInfinity(value))
             {
-                // Use copysign to preserve the sign (-0 for -inf, +0 for +inf)
-                fractionalPart = value > 0 ? 0.0 : -0.0;
+                // Lua 5.1/5.2: preserve negative zero (-0 for -inf)
+                // Lua 5.3+: always positive zero (0.0)
+                fractionalPart = supportsIntegerSubtype ? 0.0 : (value > 0 ? 0.0 : -0.0);
             }
             else
             {
                 fractionalPart = value - integerPart;
-                // Preserve negative zero: if fractional part is zero but original value was
-                // negative, use -0.0. This matches Lua behavior where math.modf(-5) returns
-                // (-5, -0) not (-5, 0). IEEE 754 subtraction (-5.0 - -5.0) produces +0.0,
+                // Lua 5.1/5.2: Preserve negative zero - if fractional part is zero but original
+                // value was negative, use -0.0. This matches Lua 5.1/5.2 behavior where
+                // math.modf(-5) returns (-5, -0). IEEE 754 subtraction (-5.0 - -5.0) produces +0.0,
                 // so we need to explicitly restore the sign.
-                if (fractionalPart == 0.0 && double.IsNegative(value))
+                // Lua 5.3+: Do NOT preserve negative zero - fractional part is always positive 0.0
+                if (!supportsIntegerSubtype && fractionalPart == 0.0 && double.IsNegative(value))
                 {
                     fractionalPart = -0.0;
                 }
             }
 
-            // Check version for integer promotion behavior
-            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
-                executionContext.Script.CompatibilityVersion
-            );
-
             // Lua 5.1/5.2: both parts are floats
-            if (version < LuaCompatibilityVersion.Lua53)
+            if (!supportsIntegerSubtype)
             {
                 return DynValue.NewTuple(
                     DynValue.NewNumber(integerPart),

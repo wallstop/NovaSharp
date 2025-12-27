@@ -1849,7 +1849,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (rn.HasValue)
             {
-                _valueStack.Push(DynValue.NewNumber(LuaNumber.Negate(rn.Value)));
+                LuaNumber result = LuaNumber.Negate(rn.Value);
+
+                // Lua 5.1/5.2: negating integer zero should produce float negative zero
+                // In 5.3+, integers are a distinct subtype, so -0 stays integer 0
+                // But in 5.1/5.2, all numbers are floats, so -0 must be negative zero
+                if (
+                    result.IsInteger
+                    && result.AsInteger == 0
+                    && _script.Options.CompatibilityVersion < LuaCompatibilityVersion.Lua53
+                )
+                {
+                    result = LuaNumber.FromFloat(-0.0);
+                }
+
+                _valueStack.Push(DynValue.NewNumber(result));
                 return instructionPtr;
             }
             else

@@ -427,7 +427,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 DynValue numeral =
                     args[0].Type != DataType.Number
                         ? args.AsType(0, "tonumber", DataType.String, false)
-                        : DynValue.NewString(args[0].Number.ToString(CultureInfo.InvariantCulture));
+                        // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
+                        : DynValue.NewString(args[0].LuaNumber.ToString());
 
                 double baseValue = b.Number;
                 if (double.IsNaN(baseValue) || double.IsInfinity(baseValue))

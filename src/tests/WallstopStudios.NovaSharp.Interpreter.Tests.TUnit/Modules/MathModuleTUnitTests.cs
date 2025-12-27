@@ -1321,12 +1321,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         /// <summary>
-        /// Tests that math.log10 is available in all Lua versions.
+        /// Tests that math.log10 is available in Lua 5.1-5.4.
+        /// math.log10 was removed in Lua 5.5 (use <c>math.log(x, 10)</c> instead).
         /// Verified against reference Lua 5.1-5.4: math.log10(100) == 2.
         /// </summary>
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
-        public async Task Log10AvailableInAllVersions(Compatibility.LuaCompatibilityVersion version)
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua54)]
+        public async Task Log10AvailableInLua51Through54(
+            Compatibility.LuaCompatibilityVersion version
+        )
         {
             Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.log10(100)");
@@ -1341,9 +1344,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         /// <summary>
         /// Tests that math.log10 returns correct results for various inputs.
+        /// math.log10 was removed in Lua 5.5 (use <c>math.log(x, 10)</c> instead).
         /// </summary>
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua54)]
         public async Task Log10ReturnsCorrectValues(Compatibility.LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1362,6 +1366,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .That(script.DoString("return math.log10(1000)").Number)
                 .IsEqualTo(3d)
                 .Within(1e-10)
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.log10 is NOT available in Lua 5.5 (it was removed).
+        /// In Lua 5.5, use <c>math.log(x, 10)</c> instead.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua55)]
+        public async Task Log10IsNilInLua55(Compatibility.LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString("return math.log10");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because(
+                    "math.log10 was removed in Lua 5.5. Use math.log(x, 10) instead. "
+                        + $"Actual type: {result.Type}, value: {result}"
+                )
                 .ConfigureAwait(false);
         }
 

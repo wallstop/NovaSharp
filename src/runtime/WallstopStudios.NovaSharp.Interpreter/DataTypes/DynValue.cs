@@ -1146,7 +1146,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.Boolean:
                     return Boolean ? LuaKeywords.True : LuaKeywords.False;
                 case DataType.Number:
-                    return Number.ToString(CultureInfo.InvariantCulture);
+                    // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
+                    return LuaNumber.ToString();
                 case DataType.String:
                     // Use ZString.Concat for zero-allocation string building.
                     // JoinTupleStrings already uses notNested: false so recursive calls are safe.
@@ -1376,7 +1377,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue rv = ToScalar();
             if (rv.Type == DataType.Number)
             {
-                return rv.Number.ToString(CultureInfo.InvariantCulture);
+                // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
+                return rv.LuaNumber.ToString();
             }
             else if (rv.Type == DataType.String)
             {
