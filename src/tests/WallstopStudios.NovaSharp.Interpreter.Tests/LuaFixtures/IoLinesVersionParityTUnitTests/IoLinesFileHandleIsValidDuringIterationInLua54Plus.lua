@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs:209
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs:193
 -- @test: IoLinesVersionParityTUnitTests.IoLinesFileHandleIsValidDuringIterationInLua54Plus
 -- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.4+
 local iter, a, b, fh = io.lines('{path}')

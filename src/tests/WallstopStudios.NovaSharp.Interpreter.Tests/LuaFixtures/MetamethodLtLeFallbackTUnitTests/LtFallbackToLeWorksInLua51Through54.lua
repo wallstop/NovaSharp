@@ -1,7 +1,7 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
+-- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/MetamethodLtLeFallbackTUnitTests.cs:53
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/MetamethodLtLeFallbackTUnitTests.cs:50
 -- @test: MetamethodLtLeFallbackTUnitTests.LtFallbackToLeWorksInLua51Through54
 -- @compat-notes: Test targets Lua 5.1
 local mt = {

@@ -12,6 +12,6 @@ local function make()
                     end
                 end
                 local fn = make()
-                local first = debug.upvalueid(fn, 1)
-                local second = debug.upvalueid(fn, 1)
+                local first = debug.upvalueid(fn, 2)
+                local second = debug.upvalueid(fn, 2)
                 return type(first), first == second

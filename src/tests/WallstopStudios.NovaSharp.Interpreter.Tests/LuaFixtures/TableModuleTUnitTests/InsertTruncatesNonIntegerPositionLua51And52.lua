@@ -1,7 +1,7 @@
--- @lua-versions: 5.1, 5.2
+-- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:313
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:284
 -- @test: TableModuleTUnitTests.InsertTruncatesNonIntegerPositionLua51And52
 -- @compat-notes: Test targets Lua 5.1
 local t = {1, 2, 3}

@@ -1,8 +1,7 @@
 -- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: true
--- @error-pattern: number has no integer representation
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Utf8ModuleTUnitTests.cs
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Utf8ModuleTUnitTests.cs:951
 -- @test: Utf8ModuleTUnitTests.Utf8CharRejectsNonIntegerFloat
--- @compat-notes: Lua 5.3+ requires integer representation for utf8.char arguments
+-- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: utf8 library
 return utf8.char(65.5)

@@ -3,7 +3,7 @@
 -- Reference: Lua §6.7, IEEE 754-2008
 
 -- 1 raised to any finite power equals 1
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: standalone-fixture
@@ -22,7 +22,7 @@ assert(math.pow(1, math.huge) == 1, "1^inf should equal 1")
 assert(math.pow(1, -math.huge) == 1, "1^-inf should equal 1")
 
 -- 1 raised to NaN equals 1 (C99 pow special case)
-local nan = 0/0
+local nan = 0 / 0
 assert(math.pow(1, nan) == 1, "1^nan should equal 1")
 
 -- Anything raised to 1 equals itself

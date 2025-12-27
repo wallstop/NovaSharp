@@ -1,7 +1,7 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
--- @novasharp-only: true
+-- @lua-versions: 5.3, 5.4, 5.5
+-- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:2363
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:1764
 -- @test: StringModuleTUnitTests.FormatHexWithNegativeInteger
--- @compat-notes: Reference Lua 5.2+ rejects %x with negative numbers; NovaSharp is more permissive
+-- @compat-notes: Test targets Lua 5.3+
 return string.format('%x', -1)

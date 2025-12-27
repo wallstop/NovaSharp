@@ -1,9 +1,8 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:875
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:791
 -- @test: CoroutineModuleTUnitTests.WrapWithPcallReturnsYieldedValues
--- @compat-notes: Test targets Lua 5.1
 function buildYieldingWrapper()
                     local step = 0
                     return coroutine.wrap(function()

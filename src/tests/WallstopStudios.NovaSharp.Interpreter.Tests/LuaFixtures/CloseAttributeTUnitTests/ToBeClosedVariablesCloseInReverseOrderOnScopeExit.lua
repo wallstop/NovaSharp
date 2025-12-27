@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/CloseAttributeTUnitTests.cs:20
 -- @test: CloseAttributeTUnitTests.ToBeClosedVariablesCloseInReverseOrderOnScopeExit
--- @compat-notes: Test targets Lua 5.4+; Lua 5.4: close attribute
+-- @compat-notes: Test targets Lua 5.4+; Lua 5.4+: close attribute
 local log = {}
 
                 local function newcloser(name)

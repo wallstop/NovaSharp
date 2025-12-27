@@ -1,9 +1,8 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:693
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:621
 -- @test: CoroutineModuleTUnitTests.WrapPropagatesErrorsToCaller
--- @compat-notes: Test targets Lua 5.1
 function buildErrorWrapper()
                     return coroutine.wrap(function()
                         error('wrap boom', 0)

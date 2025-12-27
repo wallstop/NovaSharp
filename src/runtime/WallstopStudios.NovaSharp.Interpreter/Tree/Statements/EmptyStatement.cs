@@ -7,6 +7,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
     /// </summary>
     internal class EmptyStatement : Statement
     {
+        /// <inheritdoc />
+        public override bool IsVoidStatement => true;
+
         /// <summary>
         /// Initializes a no-op statement; nothing is parsed beyond the triggering semicolon.
         /// </summary>

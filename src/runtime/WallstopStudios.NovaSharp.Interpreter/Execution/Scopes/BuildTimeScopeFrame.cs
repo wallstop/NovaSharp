@@ -155,5 +155,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         {
             _scopeTreeHead.RegisterGoto(gotostat);
         }
+
+        /// <summary>
+        /// Called before parsing a statement to snapshot the current var count.
+        /// </summary>
+        internal void BeforeStatement()
+        {
+            _scopeTreeHead.BeforeStatement();
+        }
+
+        /// <summary>
+        /// Marks that a non-void statement was parsed in the current block.
+        /// </summary>
+        internal void MarkNonVoidStatement()
+        {
+            _scopeTreeHead.MarkNonVoidStatement();
+        }
     }
 }

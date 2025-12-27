@@ -390,6 +390,8 @@ check_branding() {
       scripts/dev/pre-commit.sh|scripts/dev/README.md) continue ;;  # Branding check documentation
       src/tooling/WallstopStudios.NovaSharp.Comparison*) continue ;;
       .devcontainer/devcontainer.json) continue ;;  # cSpell dictionary includes MoonSharp
+      .llm/skills/documentation-and-changelog.md) continue ;;  # Changelog example includes MoonSharp
+      .llm/skills/pre-commit-validation.md) continue ;;  # Pre-commit docs explain branding check
     esac
 
     # Check staged content for MoonSharp

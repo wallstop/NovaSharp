@@ -1,7 +1,7 @@
--- @lua-versions: 5.5
+-- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleTUnitTests.cs:289
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleTUnitTests.cs:348
 -- @test: LoadModuleTUnitTests.LoadSafeThrowsWhenEnvironmentCannotBeRetrieved
 -- @compat-notes: Test targets Lua 5.1; Lua 5.2+: _ENV variable
 local original_env = _ENV

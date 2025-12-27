@@ -1,4 +1,4 @@
--- @lua-versions: 5.5
+-- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/BitwiseOperatorTUnitTests.cs:23

@@ -1,9 +1,8 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:1045
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:949
 -- @test: CoroutineModuleTUnitTests.CoroutineStatusRemainsAccurateAfterNestedResumes
--- @compat-notes: Test targets Lua 5.1
 loggedStatuses = {}
 
                 function outerCoroutine()

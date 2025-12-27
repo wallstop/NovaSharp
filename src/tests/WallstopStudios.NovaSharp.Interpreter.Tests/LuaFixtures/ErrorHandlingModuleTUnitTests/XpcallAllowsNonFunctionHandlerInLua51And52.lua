@@ -1,4 +1,4 @@
--- @lua-versions: 5.1, 5.2
+-- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/CoreLib/ErrorHandlingModuleTUnitTests.cs:384

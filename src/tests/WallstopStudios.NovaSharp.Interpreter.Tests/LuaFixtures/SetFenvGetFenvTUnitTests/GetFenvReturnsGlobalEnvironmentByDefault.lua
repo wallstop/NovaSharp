@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/SetFenvGetFenvTUnitTests.cs:86
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/SetFenvGetFenvTUnitTests.cs:80
 -- @test: SetFenvGetFenvTUnitTests.GetFenvReturnsGlobalEnvironmentByDefault
 -- @compat-notes: Test targets Lua 5.1
 return getfenv() == _G

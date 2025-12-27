@@ -1,14 +1,9 @@
 -- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringPackModuleTUnitTests.cs
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/StringPackModuleTUnitTests.cs:206
 -- @test: StringPackModuleTUnitTests.PackUnpackMultipleValues
-
--- Test: Packing and unpacking multiple values at once
-
-local packed = string.pack("i4 i4 i4 z", 1, 2, 3, "hello")
-local a, b, c, s = string.unpack("i4 i4 i4 z", packed)
-print(a)
-print(b)
-print(c)
-print(s)
+-- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: string.pack (5.3+); Lua 5.3+: string.unpack (5.3+)
+local packed = string.pack('i4 i4 z', 100, 200, 'test')
+                local a, b, c = string.unpack('i4 i4 z', packed)
+                return a, b, c

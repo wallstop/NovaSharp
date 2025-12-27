@@ -1,7 +1,7 @@
--- @lua-versions: 5.5
+-- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:415
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:416
 -- @test: DebugModuleTUnitTests.UpvalueIdReturnsNilForNegativeIndexLua54Plus
 -- @compat-notes: Test targets Lua 5.1; Lua 5.2+: debug.upvalueid (5.2+)
 local x = 10

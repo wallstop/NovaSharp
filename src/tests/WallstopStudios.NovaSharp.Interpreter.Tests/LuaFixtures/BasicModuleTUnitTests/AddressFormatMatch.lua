@@ -2,7 +2,12 @@
 -- @novasharp-only: true
 -- @expects-error: false
 -- @test: BasicModuleTUnitTests.AddressFormatMatch
--- @compat-notes: Tests NovaSharp's normalized address format (0x prefix, lowercase hex). Windows Lua uses different format (no 0x prefix, uppercase hex).
+-- @compat-notes: NovaSharp intentionally uses a CONSISTENT address format across all platforms.
+--   Reference Lua address formats vary by platform:
+--     - Unix Lua: "table: 0x3f8" (0x prefix, lowercase hex)
+--     - Windows Lua: "table: 0000023111B24C20" (no 0x prefix, uppercase hex, fixed width)
+--   NovaSharp normalizes to: "table: 0x3f8" (0x prefix, lowercase hex) on ALL platforms.
+--   This is intentional for consistent cross-platform behavior and is BETTER than varying format.
 
 -- Test: Address format should match NovaSharp's normalized style
 -- This test verifies that tostring() produces the expected NovaSharp format.
@@ -26,7 +31,7 @@ assert(cos:match("^thread: 0x%x+$"), "thread format should be 'thread: 0x<hex>' 
 -- Verify lowercase hex (not uppercase)
 -- The pattern %x matches both, but we can check no uppercase A-F appear
 local function hasUpperHex(s)
-    return s:match("[A-F]") ~= nil
+  return s:match("[A-F]") ~= nil
 end
 
 -- Note: In reference Lua, addresses are lowercase. NovaSharp should match this.

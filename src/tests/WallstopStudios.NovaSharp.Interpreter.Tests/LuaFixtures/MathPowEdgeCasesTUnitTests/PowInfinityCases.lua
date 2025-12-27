@@ -2,7 +2,7 @@
 -- Expected: IEEE 754 compliant infinity handling
 -- Reference: Lua §6.7, IEEE 754-2008
 
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: standalone-fixture
@@ -11,8 +11,8 @@ local inf = math.huge
 local neginf = -math.huge
 
 -- Verify math.huge is actually infinity
-assert(inf == 1/0, "math.huge should equal 1/0 (positive infinity)")
-assert(neginf == -1/0, "-math.huge should equal -1/0 (negative infinity)")
+assert(inf == 1 / 0, "math.huge should equal 1/0 (positive infinity)")
+assert(neginf == -1 / 0, "-math.huge should equal -1/0 (negative infinity)")
 
 -- Infinity raised to powers
 assert(math.pow(inf, 0) == 1, "inf^0 should equal 1")

@@ -1,9 +1,9 @@
--- @lua-versions: 5.4, 5.5
+-- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs:229
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs:215
 -- @test: StringArithmeticCoercionTUnitTests.CustomStringMetamethodIsCalledInLua54Plus
--- @compat-notes: Test targets Lua 5.4+
+-- @compat-notes: Test targets Lua 5.3+
 local mt = getmetatable('')
                 local original_add = mt.__add
                 local called = false

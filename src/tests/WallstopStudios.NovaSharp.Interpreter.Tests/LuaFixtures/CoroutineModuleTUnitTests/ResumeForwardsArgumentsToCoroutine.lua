@@ -1,9 +1,8 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:508
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:453
 -- @test: CoroutineModuleTUnitTests.ResumeForwardsArgumentsToCoroutine
--- @compat-notes: Test targets Lua 5.1
 function sum(...)
                     local total = 0
                     for i = 1, select('#', ...) do

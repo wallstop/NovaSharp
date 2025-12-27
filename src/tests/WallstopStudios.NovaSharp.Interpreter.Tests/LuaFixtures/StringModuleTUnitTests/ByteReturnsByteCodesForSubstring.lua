@@ -1,8 +1,7 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:359
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:189
 -- @test: StringModuleTUnitTests.ByteReturnsByteCodesForSubstring
--- @compat-notes: Test targets Lua 5.1
 local codes = {string.byte('Lua', 1, 3)}
                 return #codes, codes[1], codes[2], codes[3]

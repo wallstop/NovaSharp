@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/VarargsTupleTUnitTests.cs:96
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/VarargsTupleTUnitTests.cs:77
 -- @test: VarargsTupleTUnitTests.VarArgsTupleDontCrash
--- @compat-notes: Test targets Lua 5.2+; Uses injected variable: r
+-- @compat-notes: Uses injected variable: r
 function f(a,b)
                     local debug = 'a: ' .. tostring(a) .. ' b: ' .. tostring(b)
                     return debug

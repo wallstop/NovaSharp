@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
--- @novasharp-only: true
+-- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:57
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:58
 -- @test: OsExecuteVersionParityTUnitTests.OsExecuteReturnsNonZeroNumberOnFailureInLua51
--- @compat-notes: Test requires stubbed platform; not comparable against native Lua
+-- @compat-notes: Test targets Lua 5.1
 return os.execute('fail')

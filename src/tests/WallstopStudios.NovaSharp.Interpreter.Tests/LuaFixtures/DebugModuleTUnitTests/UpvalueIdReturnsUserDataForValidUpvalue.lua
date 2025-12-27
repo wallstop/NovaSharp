@@ -1,7 +1,7 @@
--- @lua-versions: 5.5
+-- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1775
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:2000
 -- @test: DebugModuleTUnitTests.UpvalueIdReturnsUserDataForValidUpvalue
 -- @compat-notes: Test targets Lua 5.1; Lua 5.2+: debug.upvalueid (5.2+)
 local x = 10

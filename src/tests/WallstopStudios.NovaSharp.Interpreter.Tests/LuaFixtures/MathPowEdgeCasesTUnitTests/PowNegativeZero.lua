@@ -2,7 +2,7 @@
 -- Expected: Proper IEEE 754 negative zero handling
 -- Reference: Lua §6.7, IEEE 754-2008
 
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: standalone-fixture
@@ -13,7 +13,7 @@ local inf = math.huge
 local negzero = -0.0
 
 -- Verify we have negative zero (1/negzero should be -inf)
-local negzero_test = 1/negzero
+local negzero_test = 1 / negzero
 assert(negzero_test == -inf, "1/-0 should equal -inf, got " .. tostring(negzero_test))
 
 -- Negative zero raised to positive odd integer

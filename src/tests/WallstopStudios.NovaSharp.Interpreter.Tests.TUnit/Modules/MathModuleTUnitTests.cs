@@ -179,10 +179,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// In Lua 5.5, use the ^ operator instead: 10^6.
         /// </summary>
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua55)]
         public async Task PowIsNilInLua55(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua55);
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return math.pow");
 
             await Assert
@@ -196,23 +196,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         /// <summary>
-        /// Tests that the ^ operator (exponentiation) still works in Lua 5.5.
-        /// This is the replacement for the deprecated math.pow function.
+        /// Tests that the ^ operator (exponentiation) works in all Lua versions.
+        /// This is the primary method for exponentiation and the only way in Lua 5.5+.
         /// </summary>
         [global::TUnit.Core.Test]
         [AllLuaVersions]
-        public async Task ExponentiationOperatorWorksInLua55(
+        public async Task ExponentiationOperatorWorksInAllVersions(
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua55);
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return 10 ^ 6");
 
             await Assert
                 .That(result.Number)
                 .IsEqualTo(1_000_000d)
                 .Within(1e-6)
-                .Because("10 ^ 6 should return 1000000 in Lua 5.5")
+                .Because($"10 ^ 6 should return 1000000 in {version}")
                 .ConfigureAwait(false);
         }
 
@@ -1276,10 +1276,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Verified against reference Lua 5.1: math.log(100) == math.log(100, 10) == 4.605170...
         /// </summary>
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
         public async Task LogIgnoresBaseInLua51(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua51);
+            Script script = CreateScript(version);
 
             // In Lua 5.1, math.log always returns natural log regardless of second argument
             DynValue resultWithoutBase = script.DoString("return math.log(100)");
@@ -1370,19 +1370,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Verified against reference Lua: math.mod exists in 5.1, nil in 5.2+.
         /// </summary>
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
         public async Task ModAvailableOnlyInLua51(Compatibility.LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(Compatibility.LuaCompatibilityVersion.Lua51);
+            Script script = CreateScript(version);
 
-            // math.mod should be available and work like fmod
+            // math.mod should be available and work like fmod (returns 10 % 3 = 1)
+            // Note: math.mod is an alias for math.fmod, NOT IEEE remainder
             DynValue result = script.DoString("return math.mod(10, 3)");
 
             await Assert
                 .That(result.Number)
-                .IsEqualTo(Math.IEEERemainder(10, 3))
+                .IsEqualTo(1d)
                 .Within(1e-10)
-                .Because("math.mod(10, 3) should work in Lua 5.1")
+                .Because("math.mod(10, 3) should return 1 in Lua 5.1 (same as fmod)")
                 .ConfigureAwait(false);
         }
 
@@ -2040,6 +2041,498 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 )
                 .ConfigureAwait(false);
         }
+
+        // ==========================================================================
+        // Comprehensive data-driven tests for math.modf edge cases
+        // These tests ensure negative zero preservation and other edge cases don't regress
+        // ==========================================================================
+
+        /// <summary>
+        /// Data-driven test for math.modf with various negative integers.
+        /// The fractional part should be negative zero (-0) for negative integer inputs.
+        /// This is critical for IEEE 754 compliance and was previously a regression.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { -1, -1d, true, "negative one" },
+            new object[] { -5, -5d, true, "negative five" },
+            new object[] { -10, -10d, true, "negative ten" },
+            new object[] { -100, -100d, true, "negative hundred" },
+            new object[] { -1000000, -1000000d, true, "negative million" }
+        )]
+        public async Task ModfNegativeIntegersPreserveNegativeZeroDataDriven(
+            LuaCompatibilityVersion version,
+            int input,
+            double expectedIntPart,
+            bool expectedIsNegativeZero,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                $@"
+                local int_part, frac_part = math.modf({input})
+                local is_neg_zero = (frac_part == 0 and 1/frac_part == -math.huge)
+                return int_part, frac_part, is_neg_zero
+            "
+            );
+
+            await Assert
+                .That(result.Tuple.Length)
+                .IsEqualTo(3)
+                .Because($"math.modf({input}) should return 3 values")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo(expectedIntPart)
+                .Because($"math.modf({input}) integer part should be {expectedIntPart}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(0d)
+                .Because($"math.modf({input}) fractional part should be zero")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Boolean)
+                .IsEqualTo(expectedIsNegativeZero)
+                .Because(
+                    $"math.modf({input}) ({description}) fractional part should be negative zero in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for math.modf with positive integers.
+        /// The fractional part should be positive zero (+0) for positive integer inputs.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { 1, 1d, true, "positive one" },
+            new object[] { 5, 5d, true, "positive five" },
+            new object[] { 10, 10d, true, "positive ten" },
+            new object[] { 100, 100d, true, "positive hundred" },
+            new object[] { 1000000, 1000000d, true, "positive million" }
+        )]
+        public async Task ModfPositiveIntegersPreservePositiveZeroDataDriven(
+            LuaCompatibilityVersion version,
+            int input,
+            double expectedIntPart,
+            bool expectedIsPositiveZero,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                $@"
+                local int_part, frac_part = math.modf({input})
+                local is_pos_zero = (frac_part == 0 and 1/frac_part == math.huge)
+                return int_part, frac_part, is_pos_zero
+            "
+            );
+
+            await Assert
+                .That(result.Tuple.Length)
+                .IsEqualTo(3)
+                .Because($"math.modf({input}) should return 3 values")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo(expectedIntPart)
+                .Because($"math.modf({input}) integer part should be {expectedIntPart}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(0d)
+                .Because($"math.modf({input}) fractional part should be zero")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Boolean)
+                .IsEqualTo(expectedIsPositiveZero)
+                .Because(
+                    $"math.modf({input}) ({description}) fractional part should be positive zero in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for math.modf with special floating-point values.
+        /// Includes negative zero input, positive/negative infinity.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "-0.0", 0d, true, "negative zero input - both parts should be -0" },
+            new object[] { "0.0", 0d, false, "positive zero input - both parts should be +0" }
+        )]
+        public async Task ModfZeroPreservesSignDataDriven(
+            LuaCompatibilityVersion version,
+            string luaInput,
+            double expectedIntPart,
+            bool expectedIsNegativeZero,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                $@"
+                local int_part, frac_part = math.modf({luaInput})
+                local is_neg_zero = (frac_part == 0 and 1/frac_part == -math.huge)
+                return int_part, frac_part, is_neg_zero
+            "
+            );
+
+            await Assert
+                .That(result.Tuple.Length)
+                .IsEqualTo(3)
+                .Because($"math.modf({luaInput}) should return 3 values")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo(expectedIntPart)
+                .Because($"math.modf({luaInput}) integer part should be {expectedIntPart}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Boolean)
+                .IsEqualTo(expectedIsNegativeZero)
+                .Because(
+                    $"math.modf({luaInput}) ({description}) - checking sign of fractional zero"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for math.modf with infinity.
+        /// math.modf(±inf) should return (±inf, ±0).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ModfPositiveInfinityReturnsPositiveInfinityAndPositiveZero(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local int_part, frac_part = math.modf(math.huge)
+                local is_pos_inf = (int_part == math.huge)
+                local is_pos_zero = (frac_part == 0 and 1/frac_part == math.huge)
+                return int_part, frac_part, is_pos_inf, is_pos_zero
+            "
+            );
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Boolean)
+                .IsTrue()
+                .Because($"math.modf(+inf) integer part should be +inf in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[3].Boolean)
+                .IsTrue()
+                .Because($"math.modf(+inf) fractional part should be +0 in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven test for math.modf with negative fractions.
+        /// Ensures fractional part preserves sign for negative numbers.
+        /// Note: For values like -0.5, the integer part is +0 (not -0) because
+        /// truncating towards zero from -0.5 gives 0, which is positive by IEEE 754.
+        /// The fractional part preserves the sign of the input.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "-0.25", 0d, -0.25d, false, "negative quarter - int is +0" },
+            new object[] { "-0.5", 0d, -0.5d, false, "negative half - int is +0" },
+            new object[] { "-0.75", 0d, -0.75d, false, "negative three-quarters - int is +0" },
+            new object[] { "-1.25", -1d, -0.25d, false, "negative one and quarter" },
+            new object[] { "-3.5", -3d, -0.5d, false, "negative three and half" }
+        )]
+        public async Task ModfNegativeFractionsPreserveSignDataDriven(
+            LuaCompatibilityVersion version,
+            string luaInput,
+            double expectedIntPart,
+            double expectedFracPart,
+            bool intPartIsNegativeZero,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                $@"
+                local int_part, frac_part = math.modf({luaInput})
+                local int_is_neg_zero = (int_part == 0 and 1/int_part == -math.huge)
+                return int_part, frac_part, int_is_neg_zero
+            "
+            );
+
+            await Assert
+                .That(result.Tuple.Length)
+                .IsEqualTo(3)
+                .Because($"math.modf({luaInput}) should return 3 values")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo(expectedIntPart)
+                .Because(
+                    $"math.modf({luaInput}) ({description}) integer part should be {expectedIntPart}"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(expectedFracPart)
+                .Within(1e-15)
+                .Because(
+                    $"math.modf({luaInput}) ({description}) fractional part should be {expectedFracPart}"
+                )
+                .ConfigureAwait(false);
+
+            if (intPartIsNegativeZero)
+            {
+                await Assert
+                    .That(result.Tuple[2].Boolean)
+                    .IsTrue()
+                    .Because(
+                        $"math.modf({luaInput}) ({description}) integer part should be negative zero in {version}"
+                    )
+                    .ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// Data-driven test for math.modf with NaN.
+        /// math.modf(nan) should return (nan, nan).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ModfNaNReturnsBothNaN(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local int_part, frac_part = math.modf(0/0)
+                return int_part, frac_part, int_part ~= int_part, frac_part ~= frac_part
+            "
+            );
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Boolean)
+                .IsTrue()
+                .Because(
+                    $"math.modf(nan) integer part should be NaN (not equal to itself) in {version}"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[3].Boolean)
+                .IsTrue()
+                .Because(
+                    $"math.modf(nan) fractional part should be NaN (not equal to itself) in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        #region Data-Driven Edge Case Tests
+
+        /// <summary>
+        /// Data-driven tests for math.floor with negative numbers and edge cases.
+        /// Tests ensure floor behaves consistently across all Lua versions.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { -3.7, -4d, "negative float rounds toward negative infinity" },
+            new object[] { -3.0, -3d, "negative integer unchanged" },
+            new object[] { -0.1, -1d, "small negative rounds to -1" },
+            new object[] { -0.9, -1d, "large negative fraction rounds to -1" },
+            new object[] { 0.0, 0d, "zero unchanged" },
+            new object[] { -0.0, 0d, "negative zero unchanged" }
+        )]
+        public async Task FloorNegativeEdgeCases(
+            LuaCompatibilityVersion version,
+            double input,
+            double expected,
+            string description
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString($"return math.floor({input})");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(expected)
+                .Because($"math.floor({input}): {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven tests for math.ceil with negative numbers and edge cases.
+        /// Tests ensure ceil behaves consistently across all Lua versions.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { -3.7, -3d, "negative float rounds toward zero" },
+            new object[] { -3.0, -3d, "negative integer unchanged" },
+            new object[] { -0.1, 0d, "small negative rounds to 0" },
+            new object[] { -0.9, 0d, "large negative fraction rounds to 0" },
+            new object[] { 0.0, 0d, "zero unchanged" },
+            new object[] { 0.1, 1d, "small positive rounds to 1" }
+        )]
+        public async Task CeilNegativeEdgeCases(
+            LuaCompatibilityVersion version,
+            double input,
+            double expected,
+            string description
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString($"return math.ceil({input})");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(expected)
+                .Because($"math.ceil({input}): {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests math.floor with positive and negative infinity.
+        /// Infinity values should pass through unchanged.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FloorInfinityPassthrough(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            DynValue posInf = script.DoString("return math.floor(math.huge)");
+            DynValue negInf = script.DoString("return math.floor(-math.huge)");
+
+            await Assert
+                .That(double.IsPositiveInfinity(posInf.Number))
+                .IsTrue()
+                .Because($"math.floor(+inf) should return +inf in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(double.IsNegativeInfinity(negInf.Number))
+                .IsTrue()
+                .Because($"math.floor(-inf) should return -inf in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests math.ceil with positive and negative infinity.
+        /// Infinity values should pass through unchanged.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CeilInfinityPassthrough(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            DynValue posInf = script.DoString("return math.ceil(math.huge)");
+            DynValue negInf = script.DoString("return math.ceil(-math.huge)");
+
+            await Assert
+                .That(double.IsPositiveInfinity(posInf.Number))
+                .IsTrue()
+                .Because($"math.ceil(+inf) should return +inf in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(double.IsNegativeInfinity(negInf.Number))
+                .IsTrue()
+                .Because($"math.ceil(-inf) should return -inf in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Data-driven tests for math.fmod with negative numbers.
+        /// The sign of the result follows the sign of the dividend (first argument).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { 10, 3, 1d, "positive/positive" },
+            new object[] { -10, 3, -1d, "negative/positive" },
+            new object[] { 10, -3, 1d, "positive/negative" },
+            new object[] { -10, -3, -1d, "negative/negative" },
+            new object[] { 5.5, 2.5, 0.5, "float/float" },
+            new object[] { -5.5, 2.5, -0.5, "negative float/positive float" }
+        )]
+        public async Task FmodSignedDividendEdgeCases(
+            LuaCompatibilityVersion version,
+            double dividend,
+            double divisor,
+            double expected,
+            string description
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString($"return math.fmod({dividend}, {divisor})");
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(expected)
+                .Within(1e-12)
+                .Because($"math.fmod({dividend}, {divisor}): {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests math.type (Lua 5.3+) correctly distinguishes integers from floats.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "5", "integer", "integer literal" },
+            new object[] { "3.14", "float", "float literal" },
+            new object[] { "5.0", "float", "float with zero fraction" },
+            new object[] { "math.floor(3.5)", "integer", "result of math.floor" },
+            new object[] { "1/2", "float", "division result is always float" },
+            new object[] { "2^10", "float", "exponentiation result is float" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task MathTypeDistinguishesNumericTypes(
+            LuaCompatibilityVersion version,
+            string expression,
+            string expectedType,
+            string description
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString($"return math.type({expression})");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expectedType)
+                .Because($"math.type({expression}): {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that math.type returns nil for non-numeric types (Lua 5.3+).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "\"hello\"", "string" },
+            new object[] { "true", "boolean" },
+            new object[] { "nil", "nil" },
+            new object[] { "{}", "table" },
+            MinimumVersion = LuaCompatibilityVersion.Lua53
+        )]
+        public async Task MathTypeReturnsNilForNonNumeric(
+            LuaCompatibilityVersion version,
+            string expression,
+            string typeName
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString($"return math.type({expression})");
+
+            await Assert
+                .That(result.IsNil())
+                .IsTrue()
+                .Because($"math.type should return nil for {typeName} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        #endregion
 
         private static Script CreateScript()
         {

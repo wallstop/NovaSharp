@@ -1,13 +1,10 @@
 -- Tests that math.random(m, inf) THROWS in Lua 5.1
--- Lua 5.1 uses luaL_checkint() which converts to long FIRST, then compares
--- Infinity converts to LONG_MIN in most C implementations
--- Comparison: 1 <= LONG_MIN is FALSE, so "interval is empty"
+-- Verified empirically: Lua 5.1 converts inf to long (LONG_MIN),
+-- comparison 1 <= LONG_MIN is FALSE, so throws "interval is empty"
 
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs
--- @test: MathModuleTUnitTests.RandomErrorsOnPositiveInfinitySecondArgLua51
 local inf = 1 / 0
 local result = math.random(1, inf)
 -- Should throw "interval is empty" in Lua 5.1

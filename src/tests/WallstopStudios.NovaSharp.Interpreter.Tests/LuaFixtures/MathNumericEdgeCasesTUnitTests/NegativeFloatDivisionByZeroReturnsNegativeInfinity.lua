@@ -1,7 +1,6 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:244
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:214
 -- @test: MathNumericEdgeCasesTUnitTests.NegativeFloatDivisionByZeroReturnsNegativeInfinity
--- @compat-notes: Test targets Lua 5.1
 return -1.0 / 0

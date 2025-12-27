@@ -1,9 +1,8 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:285
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:299
 -- @test: LoadModuleVersionParityTUnitTests.LoadWithReaderConcatenatesFragmentsInAllVersions
--- @compat-notes: Test targets Lua 5.1
 local parts = { 'return ', '1 + ', '2' }
                 local index = 0
                 local function reader()

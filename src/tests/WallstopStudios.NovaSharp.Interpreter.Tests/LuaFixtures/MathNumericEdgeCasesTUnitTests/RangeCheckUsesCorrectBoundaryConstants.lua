@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:1128
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:1010
 -- @test: MathNumericEdgeCasesTUnitTests.RangeCheckUsesCorrectBoundaryConstants
 -- @compat-notes: Test targets Lua 5.3+
 local just_under = 9223372036854774784.0  -- largest double < 2^63

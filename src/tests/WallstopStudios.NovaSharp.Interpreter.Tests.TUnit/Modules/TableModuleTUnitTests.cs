@@ -580,5 +580,326 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         {
             return new Script(version, CoreModulePresets.Complete);
         }
+
+        #region Data-Driven Edge Case Tests
+
+        /// <summary>
+        /// Data-driven tests for table.concat with various separators and indices.
+        /// Tests boundary conditions and edge cases.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ConcatBasicUsage(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                @"
+                local t = {'a', 'b', 'c', 'd'}
+                return table.concat(t)
+                "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("abcd")
+                .Because($"table.concat with no separator should join elements in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.concat with custom separator.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { ", ", "a, b, c, d", "comma separator" },
+            new object[] { "-", "a-b-c-d", "dash separator" },
+            new object[] { "", "abcd", "empty separator" },
+            new object[] { "---", "a---b---c---d", "multi-char separator" }
+        )]
+        public async Task ConcatWithSeparator(
+            LuaCompatibilityVersion version,
+            string separator,
+            string expected,
+            string description
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                $@"
+                local t = {{'a', 'b', 'c', 'd'}}
+                return table.concat(t, '{separator}')
+                "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected)
+                .Because($"table.concat: {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.concat with explicit start and end indices.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { 2, 3, "b-c", "middle range" },
+            new object[] { 1, 4, "a-b-c-d", "full range" },
+            new object[] { 1, 1, "a", "single element" },
+            new object[] { 3, 3, "c", "single middle element" },
+            new object[] { 4, 4, "d", "last element only" }
+        )]
+        public async Task ConcatWithIndices(
+            LuaCompatibilityVersion version,
+            int startIndex,
+            int endIndex,
+            string expected,
+            string description
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                $@"
+                local t = {{'a', 'b', 'c', 'd'}}
+                return table.concat(t, '-', {startIndex}, {endIndex})
+                "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected)
+                .Because($"table.concat: {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.concat returns empty string when end index is before start.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ConcatEmptyRangeEndBeforeStart(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                @"
+                local t = {'a', 'b', 'c', 'd'}
+                return table.concat(t, '-', 3, 2)
+                "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("")
+                .Because(
+                    $"table.concat with end before start should return empty string in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.insert at various positions.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task InsertAtEnd(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                @"
+                local t = {1, 2, 3}
+                table.insert(t, 4)
+                return t[1], t[2], t[3], t[4], #t
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(4d).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[4].Number)
+                .IsEqualTo(4d)
+                .Because($"table length should be 4 after insert in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.insert at specific positions shifts elements.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { 1, "x", "x-a-b-c", "insert at beginning" },
+            new object[] { 2, "x", "a-x-b-c", "insert at second position" },
+            new object[] { 3, "x", "a-b-x-c", "insert at third position" }
+        )]
+        public async Task InsertAtPosition(
+            LuaCompatibilityVersion version,
+            int position,
+            string value,
+            string expected,
+            string description
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                $@"
+                local t = {{'a', 'b', 'c'}}
+                table.insert(t, {position}, '{value}')
+                return table.concat(t, '-')
+                "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected)
+                .Because($"table.insert: {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.remove at various positions.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { 1, "a", "b-c-d", "remove first" },
+            new object[] { 2, "b", "a-c-d", "remove second" },
+            new object[] { 4, "d", "a-b-c", "remove last" }
+        )]
+        public async Task RemoveAtPosition(
+            LuaCompatibilityVersion version,
+            int position,
+            string expectedRemoved,
+            string expectedRemaining,
+            string description
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                $@"
+                local t = {{'a', 'b', 'c', 'd'}}
+                local removed = table.remove(t, {position})
+                return removed, table.concat(t, '-')
+                "
+            );
+
+            await Assert
+                .That(result.Tuple[0].String)
+                .IsEqualTo(expectedRemoved)
+                .Because(
+                    $"table.remove: {description} should return '{expectedRemoved}' in {version}"
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .IsEqualTo(expectedRemaining)
+                .Because(
+                    $"table.remove: remaining elements should be '{expectedRemaining}' in {version}"
+                )
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.remove with no position removes last element.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RemoveDefaultPosition(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                @"
+                local t = {'a', 'b', 'c'}
+                local removed = table.remove(t)
+                return removed, table.concat(t, '-'), #t
+                "
+            );
+
+            await Assert
+                .That(result.Tuple[0].String)
+                .IsEqualTo("c")
+                .Because($"table.remove with no position should return last element in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .IsEqualTo("a-b")
+                .Because($"remaining elements should be 'a-b' in {version}")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Number)
+                .IsEqualTo(2d)
+                .Because($"table length should be 2 after remove in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.sort with custom comparator edge cases.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task SortDescendingOrder(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                @"
+                local t = {3, 1, 4, 1, 5, 9, 2, 6}
+                table.sort(t, function(a, b) return a > b end)
+                return table.concat(t, '-')
+                "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("9-6-5-4-3-2-1-1")
+                .Because($"table.sort with descending comparator should work in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.sort with string elements.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task SortStringElements(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                @"
+                local t = {'banana', 'apple', 'cherry', 'date'}
+                table.sort(t)
+                return table.concat(t, '-')
+                "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("apple-banana-cherry-date")
+                .Because($"table.sort should sort strings alphabetically in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests table.sort with comparator that sorts by string length.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task SortByStringLength(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue result = script.DoString(
+                @"
+                local t = {'a', 'bbb', 'cc', 'dddd'}
+                table.sort(t, function(a, b) return #a < #b end)
+                return table.concat(t, '-')
+                "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("a-cc-bbb-dddd")
+                .Because($"table.sort by length should work in {version}")
+                .ConfigureAwait(false);
+        }
+
+        #endregion
     }
 }

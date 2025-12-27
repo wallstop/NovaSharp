@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
--- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:299
+-- @expects-error: true
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:145
 -- @test: StringModuleTUnitTests.CharAcceptsBoundaryValues
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.1
+-- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
 return string.char({value})

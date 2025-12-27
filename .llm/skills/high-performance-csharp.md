@@ -1,8 +1,133 @@
 # High-Performance C# Coding Guidelines
 
+**PRIORITY REMINDER**: Performance is the SECOND priority after correctness. A fast implementation that breaks Lua spec compliance is REJECTED. See [correctness-then-performance](correctness-then-performance.md) for the full priority hierarchy.
+
 When writing new code for NovaSharp, prioritize **minimal allocations** and **maximum efficiency**. This interpreter runs hot paths millions of times—every allocation and boxing operation has measurable impact.
 
-**Related Skills**: [zstring-migration](zstring-migration.md) (detailed ZString patterns), [span-optimization](span-optimization.md) (detailed Span patterns)
+**Related Skills**: [correctness-then-performance](correctness-then-performance.md) (priority hierarchy), [zstring-migration](zstring-migration.md) (detailed ZString patterns), [span-optimization](span-optimization.md) (detailed Span patterns)
+
+______________________________________________________________________
+
+## 🔴 Unity Compatibility Requirements (CRITICAL)
+
+NovaSharp targets **Unity3D (IL2CPP/AOT), Mono, and Xamarin** in addition to .NET. This imposes strict API constraints that affect ALL code.
+
+### ❌ APIs NOT AVAILABLE in Unity (NEVER USE)
+
+| API                                            | Reason                     | Alternative                                 |
+| ---------------------------------------------- | -------------------------- | ------------------------------------------- |
+| `CollectionsMarshal.AsSpan<T>(List<T>)`        | .NET 5+ only, not in Unity | Use `list.ToArray()` or manual array access |
+| `CollectionsMarshal.GetValueRefOrAddDefault()` | .NET 6+ only               | Use standard dictionary operations          |
+| `List<T>.EnsureCapacity()`                     | .NET Core 2.1+ only        | Use constructor with capacity               |
+| `Span<T>` fields in non-ref structs            | Requires runtime support   | Use `ref struct` or arrays                  |
+| `[SkipLocalsInit]`                             | Requires runtime support   | Unavailable                                 |
+| `half` (Half-precision float)                  | .NET 5+ only               | Use `float`                                 |
+| `nint` / `nuint`                               | .NET 5+ only               | Use `IntPtr` / `UIntPtr`                    |
+| Generic math interfaces (`INumber<T>`)         | .NET 7+ only               | Use explicit type overloads                 |
+| `System.Reflection.Emit`                       | AOT incompatible           | Pre-generated code                          |
+| `Expression.Compile()`                         | AOT incompatible           | Interpreted expressions                     |
+| `dynamic` keyword                              | Requires DLR, AOT issues   | Explicit type handling                      |
+
+### ✅ Unity-Compatible Performance Patterns
+
+```csharp
+// ✅ Get raw array access for List<T> in Unity
+// Option 1: Pre-size and use array directly
+List<T> list = new List<T>(capacity);
+// ... populate ...
+T[] underlying = list.ToArray();  // One allocation, then work with array
+
+// Option 2: Use array from the start if size is known
+T[] array = ArrayPool<T>.Shared.Rent(capacity);
+
+// Option 3: For fixed-size pools, use NovaSharp's pooling
+using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(size, out DynValue[] array);
+```
+
+### IL2CPP-Specific Considerations
+
+| Concern                     | Impact                        | Mitigation                             |
+| --------------------------- | ----------------------------- | -------------------------------------- |
+| No JIT                      | Generics may be slower        | Use concrete types in hot paths        |
+| Limited reflection          | Runtime type discovery fails  | Use `[Preserve]` attributes            |
+| AOT compilation             | Dynamic code generation fails | Avoid `Emit`, `Expression.Compile`     |
+| Value type devirtualization | May not happen                | Manually inline critical paths         |
+| Generic virtual methods     | May not be optimized          | Use non-generic overloads in hot paths |
+
+______________________________________________________________________
+
+## 🔴 Architecture Principles for Performance
+
+Performance and good architecture **are not mutually exclusive**. Apply these principles to ALL code:
+
+### Build Lightweight Abstractions
+
+When you see repetitive patterns, **create reusable abstractions** rather than duplicating code:
+
+```csharp
+// ❌ BAD: Copy-pasting the same pattern in multiple places
+// File1.cs
+for (int i = 0; i < list.Count; i++)
+{
+    if (list[i].Type == targetType)
+    {
+        found = list[i];
+        break;
+    }
+}
+
+// File2.cs (same pattern duplicated)
+for (int i = 0; i < items.Count; i++)
+{
+    if (items[i].Type == wantedType)
+    {
+        result = items[i];
+        break;
+    }
+}
+
+// ✅ GOOD: Create a lightweight abstraction
+// Use a static extension method - zero allocation, reusable everywhere
+public static class ListExtensions
+{
+    public static T FindByType<T>(this List<T> list, SomeType targetType) where T : IHasType
+    {
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i].Type == targetType)
+            {
+                return list[i];
+            }
+        }
+        return default;
+    }
+}
+
+// Usage - clean, readable, zero allocation
+T found = list.FindByType(targetType);
+```
+
+### Abstraction Guidelines
+
+| Prefer              | Over                 | Reason                              |
+| ------------------- | -------------------- | ----------------------------------- |
+| `readonly struct`   | `class`              | Stack-allocated, no GC pressure     |
+| `static` methods    | Instance methods     | No `this` capture, enables inlining |
+| Extension methods   | Utility classes      | Discoverable, fluent APIs           |
+| Generic constraints | Interface parameters | Avoids boxing for value types       |
+
+### When to Create Abstractions
+
+- **See the same pattern 2+ times** → Extract it immediately
+- **Pattern involves allocation** → Create zero-allocation alternative
+- **Logic is non-trivial** → Centralize to prevent bugs from diverging implementations
+- **Unity compatibility varies** → Centralize to handle platform differences
+
+### When NOT to Create Abstractions
+
+- **One-off code** with no reuse potential
+- **Abstraction adds allocation** that the pattern didn't have
+- **Abstraction obscures intent** more than it clarifies
 
 ______________________________________________________________________
 
@@ -161,41 +286,6 @@ internal static class ExampleModule
         return CreateResult(buffer, written);
     }
 }
-```
-
-______________________________________________________________________
-
-## 🔴 Unity Compatibility Requirements
-
-NovaSharp targets **Unity3D (IL2CPP/AOT), Mono, and Xamarin** in addition to .NET. This imposes strict API constraints:
-
-### ❌ APIs NOT AVAILABLE in Unity (DO NOT USE)
-
-| API                                            | Reason                     | Alternative                                 |
-| ---------------------------------------------- | -------------------------- | ------------------------------------------- |
-| `CollectionsMarshal.AsSpan<T>(List<T>)`        | .NET 5+ only, not in Unity | Use `list.ToArray()` or manual array access |
-| `CollectionsMarshal.GetValueRefOrAddDefault()` | .NET 6+ only               | Use standard dictionary operations          |
-| `List<T>.EnsureCapacity()`                     | .NET Core 2.1+ only        | Use constructor with capacity               |
-| `Span<T>` fields in non-ref structs            | Requires runtime support   | Use `ref struct` or arrays                  |
-| `[SkipLocalsInit]`                             | Requires runtime support   | Unavailable                                 |
-| `half` (Half-precision float)                  | .NET 5+ only               | Use `float`                                 |
-| `nint` / `nuint`                               | .NET 5+ only               | Use `IntPtr` / `UIntPtr`                    |
-| Generic math interfaces (`INumber<T>`)         | .NET 7+ only               | Use explicit type overloads                 |
-
-### ✅ Unity-Compatible Performance Patterns
-
-```csharp
-// ✅ Get raw array access for List<T> in Unity
-// Option 1: Pre-size and use array directly
-List<T> list = new List<T>(capacity);
-// ... populate ...
-T[] underlying = list.ToArray();  // One allocation, then work with array
-
-// Option 2: Use array from the start if size is known
-T[] array = ArrayPool<T>.Shared.Rent(capacity);
-
-// Option 3: For fixed-size pools, use NovaSharp's pooling
-using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(size, out DynValue[] array);
 ```
 
 ______________________________________________________________________

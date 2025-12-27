@@ -1,12 +1,10 @@
--- Tests that math.random(m, nan) does NOT throw in Lua 5.1/5.2
--- In reference Lua 5.1/5.2, NaN is silently handled (not an error)
+-- Tests that math.random(m, nan) THROWS in Lua 5.1/5.2
+-- Verified empirically: Both Lua 5.1 and 5.2 throw "interval is empty"
 
 -- @lua-versions: 5.1, 5.2
 -- @novasharp-only: false
--- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs
--- @test: MathModuleTUnitTests.RandomAcceptsInfinityAndNaNLua51And52
-local nan = 0/0
+-- @expects-error: true
+local nan = 0 / 0
 local result = math.random(1, nan)
--- Should not throw, should return a number
-print(type(result) == "number")
+-- Should throw "interval is empty" in Lua 5.1/5.2
+print("ERROR: Should have thrown")

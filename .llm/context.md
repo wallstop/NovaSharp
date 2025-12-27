@@ -1,14 +1,35 @@
 # AI Assistant Guidelines for NovaSharp
 
+## 🔴 Priority Hierarchy (NEVER Violate)
+
+NovaSharp follows a strict priority order. **NEVER sacrifice a higher priority for a lower one:**
+
+| Priority           | Concern                | Description                                   |
+| ------------------ | ---------------------- | --------------------------------------------- |
+| **1. CORRECTNESS** | Lua Spec Compliance    | Behavior MUST match reference Lua exactly     |
+| **2. SPEED**       | Runtime Performance    | Execute Lua code as fast as possible          |
+| **3. MEMORY**      | Minimal Allocations    | Zero-allocation hot paths, aggressive pooling |
+| **4. UNITY**       | Platform Compatibility | IL2CPP/AOT, Mono, no runtime code generation  |
+| **5. CLARITY**     | Maintainability        | Clean architecture, readability               |
+
+**The Iron Rule**: A performance optimization that breaks Lua spec compliance is REJECTED. A memory optimization that slows down hot paths is REJECTED. See [correctness-then-performance](skills/correctness-then-performance.md) for the complete decision framework.
+
+______________________________________________________________________
+
 ## 🔴 Critical Rules
 
 1. **NEVER `git add` or `git commit`** — Leave all version control to the human developer
 1. **NEVER use absolute paths** — All paths must be relative to repo root (no `D:/Code`, `/Users/...`, etc.)
 1. **NEVER discard output** — **NO redirects or pipes to `/dev/null`** (`>/dev/null`, `2>/dev/null`, `&>/dev/null`, `| cat >/dev/null`, etc.), **even in chained commands** (`cmd1 2>/dev/null && cmd2`). Command output is essential for debugging. If a command produces too much output, use `--quiet` flags or filter with `grep`, but NEVER silently discard stderr.
-1. **Lua Spec Compliance is HIGHEST PRIORITY** — When NovaSharp differs from reference Lua, fix production code, never tests
+1. **Lua Spec Compliance is HIGHEST PRIORITY** — When NovaSharp differs from reference Lua, fix production code, never tests. See [correctness-then-performance](skills/correctness-then-performance.md)
+1. **Maximum Performance** — After correctness is verified, optimize aggressively for speed, then memory. All hot paths must be zero-allocation. See [high-performance-csharp](skills/high-performance-csharp.md)
+1. **Zero-Flaky Test Policy** — Every test failure indicates a **real bug** (production or test). NEVER skip, disable, ignore, or "make tests pass" without full root cause investigation. See [test-failure-investigation](skills/test-failure-investigation.md)
 1. **Always create BOTH C# tests AND `.lua` fixtures** — Every test/fix needs: (1) TUnit C# tests for NovaSharp runtime, (2) standalone `.lua` fixtures for cross-interpreter verification, (3) regenerate corpus with `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`
 1. **Multi-Version Testing** — All TUnit tests MUST run against all applicable Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
 1. **Lua Fixture Metadata** — ONLY use `@lua-versions`, `@novasharp-only`, `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description` are **NOT parsed** by the harness and will be silently ignored
+1. **Exhaustive Test Coverage** — Every feature/bugfix needs comprehensive tests: normal cases, edge cases, error cases, negative tests, "the impossible". Use data-driven tests for comprehensive coverage. See [exhaustive-test-coverage](skills/exhaustive-test-coverage.md)
+1. **Documentation & Changelog** — Every user-facing change requires: (1) updated XML docs and code comments, (2) updated markdown docs with CORRECT code samples, (3) CHANGELOG.md entry in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. See [documentation-and-changelog](skills/documentation-and-changelog.md)
+1. **Pre-Commit Validation** — Work is NOT complete until `bash ./scripts/dev/pre-commit.sh` passes. This runs all formatters, linters, and checks. A diff that fails CI is not ready for review. See [pre-commit-validation](skills/pre-commit-validation.md)
 
 ______________________________________________________________________
 
@@ -114,9 +135,48 @@ ______________________________________________________________________
 
 ### Comments
 
-- **Minimal comments** — Write self-documenting code with clear naming
-- **No obvious comments** — Don't explain what code does; explain *why* if non-obvious
+- **Minimal comments** — Write self-documenting code with clear, descriptive names
+- **Only explain WHY, never WHAT** — Code should be self-explanatory through naming and structure; comments are reserved for non-obvious design rationale
+- **Avoid redundant documentation** — Never restate what the code already says; if you need a comment, first consider renaming
 - **XML docs only for public API** — Not internal implementation
+
+### Software Architecture
+
+**Apply these principles to ALL code** — production, editor, inspector, test, tooling, etc.
+
+- **SOLID Principles** — Single responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion
+- **DRY (Don't Repeat Yourself)** — Extract common patterns into reusable abstractions; duplicate code is a bug waiting to happen
+- **Clean Architecture** — Separate concerns, depend on abstractions not concretions, keep business logic independent of frameworks
+- **Design Patterns** — Use appropriate patterns (Factory, Strategy, Observer, etc.) when they clarify intent and reduce coupling
+- **Build Lightweight Abstractions** — When you see repetitive patterns, create common abstractions that benefit the entire codebase:
+  - Prefer **value types** (`readonly struct`) over classes for small abstractions
+  - Prefer **static/extension methods** over instance methods when no state is needed
+  - Target **zero or minimal allocation** — abstractions should not add overhead
+  - Keep abstractions **focused and composable** — do one thing well
+- **Consolidate Common Code** — Rarely duplicate code; if duplication is absolutely necessary, document why extraction isn't possible
+- **Leverage Existing Utilities** — Check for existing pooling, caching, string building, and collection utilities before creating new ones (see Key Utilities section)
+
+### Defensive Programming
+
+**Production code must be extremely robust and resilient.** See [defensive-programming](skills/defensive-programming.md) for comprehensive patterns.
+
+- **Assume nothing** — Don't trust inputs, state, or invariants without verification
+- **Handle all errors gracefully** — Every possible error path must be handled; return error results or defaults, not exceptions
+- **Never throw exceptions** — Exceptions are for truly exceptional cases only (catastrophically bad user input, programmer errors)
+- **Maintain internal consistency** — Internal state must ALWAYS be valid, even after errors; use atomic updates or rollback patterns
+- **Use defensive patterns**:
+  - Guard clauses with graceful fallbacks (return `DynValue.Nil`, not `null`)
+  - Try-pattern for operations that can fail (`bool TryGet(out result)`)
+  - Bounds checking before collection access
+  - Safe casting (`as`/`is` pattern matching, not direct casts)
+  - Validate state before operations
+- **Debug vs Release** — Use `Debug.Assert` for invariants during development, but handle gracefully in release builds
+
+### Preprocessor Directives
+
+- **`#if`/`#define` directives INSIDE namespace** — Keep preprocessor directives within the namespace block, never at file top (same rule as `using` directives)
+- **Consistent placement** — All conditional compilation should follow the same pattern throughout the codebase
+- **Prefer runtime checks when possible** — Use compile-time directives only for platform-specific code or true compile-time variations
 
 ### Enums
 
@@ -269,22 +329,50 @@ ______________________________________________________________________
 
 Detailed guides for common tasks are in `.llm/skills/`:
 
-| Skill                                                        | When to Use                                                        |
-| ------------------------------------------------------------ | ------------------------------------------------------------------ |
-| [high-performance-csharp](skills/high-performance-csharp.md) | Writing new types/methods with minimal allocations                 |
-| [performance-audit](skills/performance-audit.md)             | Quick checklist for reviewing performance-sensitive code           |
-| [refactor-to-zero-alloc](skills/refactor-to-zero-alloc.md)   | Converting allocating code to zero-allocation patterns             |
-| [zstring-migration](skills/zstring-migration.md)             | Migrating string interpolation/concat to zero-allocation ZString   |
-| [span-optimization](skills/span-optimization.md)             | Replacing Split/Substring/ToArray with span-based alternatives     |
-| [use-extension-methods](skills/use-extension-methods.md)     | Available extension methods and utilities in NovaSharp             |
-| [lua-fixture-creation](skills/lua-fixture-creation.md)       | Creating `.lua` test files with harness-compatible metadata        |
-| [tunit-test-writing](skills/tunit-test-writing.md)           | Writing multi-version TUnit tests with proper isolation            |
-| [lua-spec-verification](skills/lua-spec-verification.md)     | Investigating Lua spec compliance, verifying against reference Lua |
-| [adding-opcodes](skills/adding-opcodes.md)                   | Adding new bytecode instructions to the VM                         |
-| [debugging-interpreter](skills/debugging-interpreter.md)     | Debugging the Lexer → Parser → AST → VM pipeline                   |
-| [clr-interop](skills/clr-interop.md)                         | Exposing C# types to Lua, calling Lua from C#                      |
-| [coverage-analysis](skills/coverage-analysis.md)             | Running coverage, interpreting reports, finding gaps               |
-| [lua-comparison-harness](skills/lua-comparison-harness.md)   | Running fixtures against reference Lua interpreters                |
+### Priority & Correctness (Apply to ALL Work)
+
+| Skill                                                                  | When to Use                                                        |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [correctness-then-performance](skills/correctness-then-performance.md) | **ALL work** — Priority hierarchy: correctness → speed → memory    |
+| [lua-spec-verification](skills/lua-spec-verification.md)               | Investigating Lua spec compliance, verifying against reference Lua |
+| [pre-commit-validation](skills/pre-commit-validation.md)               | **After ALL changes** — run before declaring work complete         |
+
+### Performance (Apply to ALL New Code)
+
+| Skill                                                        | When to Use                                                  |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [high-performance-csharp](skills/high-performance-csharp.md) | **ALL new code** — Unity-compatible zero-allocation patterns |
+| [performance-audit](skills/performance-audit.md)             | Quick checklist for reviewing performance-sensitive code     |
+| [refactor-to-zero-alloc](skills/refactor-to-zero-alloc.md)   | Converting allocating code to zero-allocation patterns       |
+| [zstring-migration](skills/zstring-migration.md)             | Migrating string interpolation/concat to zero-allocation     |
+| [span-optimization](skills/span-optimization.md)             | Replacing Split/Substring/ToArray with span-based patterns   |
+| [use-extension-methods](skills/use-extension-methods.md)     | Available extension methods and utilities in NovaSharp       |
+
+### Testing
+
+| Skill                                                              | When to Use                                                        |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| [exhaustive-test-coverage](skills/exhaustive-test-coverage.md)     | **All features/fixes** — comprehensive tests, edge cases           |
+| [tunit-test-writing](skills/tunit-test-writing.md)                 | Writing multi-version TUnit tests with proper isolation            |
+| [lua-fixture-creation](skills/lua-fixture-creation.md)             | Creating `.lua` test files with harness-compatible metadata        |
+| [test-failure-investigation](skills/test-failure-investigation.md) | **Any test failure** — zero-flaky policy, full root cause analysis |
+| [lua-comparison-harness](skills/lua-comparison-harness.md)         | Running fixtures against reference Lua interpreters                |
+| [coverage-analysis](skills/coverage-analysis.md)                   | Running coverage, interpreting reports, finding gaps               |
+
+### Production Code Quality
+
+| Skill                                                                | When to Use                                                     |
+| -------------------------------------------------------------------- | --------------------------------------------------------------- |
+| [defensive-programming](skills/defensive-programming.md)             | **All production code** — robustness, error handling, state     |
+| [documentation-and-changelog](skills/documentation-and-changelog.md) | **All features/fixes** — docs, XML comments, samples, CHANGELOG |
+
+### Interpreter Development
+
+| Skill                                                    | When to Use                                      |
+| -------------------------------------------------------- | ------------------------------------------------ |
+| [adding-opcodes](skills/adding-opcodes.md)               | Adding new bytecode instructions to the VM       |
+| [debugging-interpreter](skills/debugging-interpreter.md) | Debugging the Lexer → Parser → AST → VM pipeline |
+| [clr-interop](skills/clr-interop.md)                     | Exposing C# types to Lua, calling Lua from C#    |
 
 ______________________________________________________________________
 

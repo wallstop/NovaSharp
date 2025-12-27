@@ -25,8 +25,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                     break;
                 }
 
+                // Per Lua 5.4 §3.5: snapshot var count before statement parsing
+                // so we know which locals were added by this statement.
+                lcontext.Scope.BeforeStatement();
+
                 Statement s = CreateStatement(lcontext, out bool forceLast);
                 _statements.Add(s);
+
+                // Per Lua 5.4 §3.5: track non-void statements for label scope computation.
+                // Void statements are labels and empty statements (semicolons).
+                if (!s.IsVoidStatement)
+                {
+                    lcontext.Scope.MarkNonVoidStatement();
+                }
 
                 if (forceLast)
                 {

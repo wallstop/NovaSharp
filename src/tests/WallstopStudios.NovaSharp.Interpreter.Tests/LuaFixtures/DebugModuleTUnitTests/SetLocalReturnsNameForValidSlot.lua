@@ -1,7 +1,7 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:140
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:141
 -- @test: DebugModuleTUnitTests.SetLocalReturnsNameForValidSlot
 -- @compat-notes: Test targets Lua 5.1
 local assigned = debug.setlocal(0, 1, 0)

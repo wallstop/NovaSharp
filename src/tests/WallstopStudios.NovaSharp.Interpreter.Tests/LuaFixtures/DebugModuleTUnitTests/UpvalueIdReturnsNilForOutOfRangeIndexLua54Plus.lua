@@ -1,7 +1,7 @@
--- @lua-versions: 5.5
+-- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1724
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1949
 -- @test: DebugModuleTUnitTests.UpvalueIdReturnsNilForOutOfRangeIndexLua54Plus
 -- @compat-notes: Test targets Lua 5.1; Lua 5.2+: _ENV variable; Lua 5.2+: debug.upvalueid (5.2+)
 local function f()

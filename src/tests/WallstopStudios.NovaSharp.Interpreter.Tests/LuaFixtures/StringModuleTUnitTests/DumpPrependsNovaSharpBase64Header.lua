@@ -1,8 +1,7 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:986
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:710
 -- @test: StringModuleTUnitTests.DumpPrependsNovaSharpBase64Header
--- @compat-notes: Test targets Lua 5.1
 local function increment(x) return x + 1 end
                 return string.dump(increment)

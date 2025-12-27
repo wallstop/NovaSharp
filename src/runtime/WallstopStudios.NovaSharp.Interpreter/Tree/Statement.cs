@@ -18,6 +18,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
             : base(lcontext) { }
 
         /// <summary>
+        /// Indicates whether this is a "void statement" per Lua 5.4 §3.5.
+        /// </summary>
+        /// <remarks>
+        /// Void statements are labels and empty statements (semicolons).
+        /// They do not affect local variable scope endings.
+        /// </remarks>
+        public virtual bool IsVoidStatement => false;
+
+        /// <summary>
         /// Parses the next statement, returning the appropriate concrete node and flagging whether Lua requires it to be the final statement in the block.
         /// </summary>
         /// <param name="lcontext">Parser context providing the lexer/token stream.</param>

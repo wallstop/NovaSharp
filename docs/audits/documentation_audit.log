@@ -74,20 +74,20 @@ Found 74 undocumented public/internal type declarations.
   - line 372: missing XML docs for `ClassName`
   - line 373: missing XML docs for `NamespaceName`
 - src/tooling/WallstopStudios.NovaSharp.LuaBatchRunner/LuaBatchRunner.cs
-  - line 31: missing XML docs for `ExitCode`
-  - line 72: missing XML docs for `FilterSupportedCoreModules()`
-  - line 75: missing XML docs for `GetEnvironmentVariable()`
-  - line 78: missing XML docs for `IsRunningOnAOT()`
-  - line 80: missing XML docs for `GetPlatformName()`
-  - line 82: missing XML docs for `DefaultPrint()`
-  - line 84: missing XML docs for `DefaultInput()`
-  - line 86: missing XML docs for `OpenFile()`
-  - line 89: missing XML docs for `GetStandardStream()`
-  - line 91: missing XML docs for `GetTempFileName()`
-  - line 93: missing XML docs for `FileExists()`
-  - line 95: missing XML docs for `DeleteFile()`
-  - line 97: missing XML docs for `MoveFile()`
-  - line 99: missing XML docs for `ExecuteCommand()`
-  - line 101: missing XML docs for `ExitFast()`
-  - line 108: missing XML docs for `class Program`
-  - line 112: missing XML docs for `Main()`
+  - line 32: missing XML docs for `ExitCode`
+  - line 73: missing XML docs for `FilterSupportedCoreModules()`
+  - line 76: missing XML docs for `GetEnvironmentVariable()`
+  - line 79: missing XML docs for `IsRunningOnAOT()`
+  - line 81: missing XML docs for `GetPlatformName()`
+  - line 83: missing XML docs for `DefaultPrint()`
+  - line 85: missing XML docs for `DefaultInput()`
+  - line 87: missing XML docs for `OpenFile()`
+  - line 90: missing XML docs for `GetStandardStream()`
+  - line 92: missing XML docs for `GetTempFileName()`
+  - line 94: missing XML docs for `FileExists()`
+  - line 96: missing XML docs for `DeleteFile()`
+  - line 98: missing XML docs for `MoveFile()`
+  - line 100: missing XML docs for `ExecuteCommand()`
+  - line 102: missing XML docs for `ExitFast()`
+  - line 109: missing XML docs for `class Program`
+  - line 247: missing XML docs for `Main()`

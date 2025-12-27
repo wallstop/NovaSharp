@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/SimpleTUnitTests.cs:1407
 -- @test: SimpleTUnitTests.VarArgsSum2
--- @compat-notes: Lua 5.2+: table.pack (5.2+)
+-- @compat-notes: Test targets Lua 5.2+; Lua 5.2+: table.pack (5.2+)
 function x(m, ...)
 						local t = table.pack(...);
 						local sum = 0;

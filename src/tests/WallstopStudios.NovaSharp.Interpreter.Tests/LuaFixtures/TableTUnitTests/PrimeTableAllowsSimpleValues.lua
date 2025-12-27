@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableTUnitTests.cs:289
 -- @test: TableTUnitTests.PrimeTableAllowsSimpleValues
--- @compat-notes: Prime table syntax (${ }) is NovaSharp-specific, not standard Lua
+-- @compat-notes: Test targets Lua 5.2+
 t = ${ ciao = 'hello' }

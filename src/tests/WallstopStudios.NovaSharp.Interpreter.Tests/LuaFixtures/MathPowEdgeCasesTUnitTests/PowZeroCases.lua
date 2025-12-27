@@ -3,13 +3,13 @@
 -- Reference: Lua §6.7, IEEE 754-2008
 
 -- 0^0 is defined as 1 in Lua (per C99 pow specification)
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: standalone-fixture
 -- @test: MathPowEdgeCasesTUnitTests.PowZeroCases
 assert(math.pow(0, 0) == 1, "0^0 should equal 1")
-assert(0^0 == 1, "0^0 operator should equal 1")
+assert(0 ^ 0 == 1, "0^0 operator should equal 1")
 
 -- 0 raised to positive powers
 assert(math.pow(0, 1) == 0, "0^1 should equal 0")

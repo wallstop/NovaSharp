@@ -191,5 +191,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         {
             CurrentFrame.RegisterGoto(gotostat);
         }
+
+        /// <summary>
+        /// Called before parsing a statement to snapshot the current var count.
+        /// </summary>
+        /// <remarks>
+        /// This captures the var count before any locals declared in the statement,
+        /// needed for the void statement rule in Lua 5.4 §3.5.
+        /// </remarks>
+        internal void BeforeStatement()
+        {
+            CurrentFrame.BeforeStatement();
+        }
+
+        /// <summary>
+        /// Marks that a non-void statement was parsed in the current block.
+        /// </summary>
+        /// <remarks>
+        /// Per Lua 5.4 §3.5, void statements are labels and empty statements.
+        /// All other statements are non-void. This tracking is needed to implement
+        /// the rule that local scope ends at the "last non-void statement".
+        /// </remarks>
+        internal void MarkNonVoidStatement()
+        {
+            CurrentFrame.MarkNonVoidStatement();
+        }
     }
 }

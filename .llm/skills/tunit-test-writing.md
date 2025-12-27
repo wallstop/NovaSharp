@@ -2,7 +2,7 @@
 
 **When to use**: Writing or modifying TUnit tests for the interpreter.
 
-**Related Skills**: [lua-fixture-creation](lua-fixture-creation.md) (creating .lua fixtures for tests), [lua-spec-verification](lua-spec-verification.md) (verifying behavior)
+**Related Skills**: [exhaustive-test-coverage](exhaustive-test-coverage.md) (comprehensive testing philosophy), [lua-fixture-creation](lua-fixture-creation.md) (creating .lua fixtures for tests), [lua-spec-verification](lua-spec-verification.md) (verifying behavior), [test-failure-investigation](test-failure-investigation.md) (investigating any test failures)
 
 ______________________________________________________________________
 
@@ -195,3 +195,18 @@ ______________________________________________________________________
 ## Running Tests
 
 See [context.md Quick Scripts](../context.md) for test commands (`./scripts/test/quick.sh`).
+
+______________________________________________________________________
+
+## Exhaustive Testing
+
+For comprehensive testing guidelines including edge cases, error cases, negative tests, and data-driven approaches, see [exhaustive-test-coverage](exhaustive-test-coverage.md).
+
+**Key principle**: Every feature and bugfix needs tests covering:
+
+- Normal/happy path cases
+- Edge cases and boundaries
+- Error cases with invalid inputs
+- Negative tests (what shouldn't work)
+- Special values (infinity, NaN, empty, null)
+- "The impossible" scenarios

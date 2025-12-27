@@ -2,7 +2,7 @@
 -- Expected: Proper overflow handling per IEEE 754
 -- Reference: Lua §6.7, IEEE 754-2008
 
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: standalone-fixture

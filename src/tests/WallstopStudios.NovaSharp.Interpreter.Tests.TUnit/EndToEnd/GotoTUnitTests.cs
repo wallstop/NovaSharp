@@ -146,13 +146,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoCanJumpOverLocalWhenLabelAtEndOfBlock(LuaCompatibilityVersion version)
+        {
+            // Per Lua 5.4 §3.5: "The scope of a local variable begins at the first statement
+            // after its declaration and lasts until the last non-void statement of the
+            // innermost block that includes the declaration. Void statements are labels
+            // and empty statements."
+            //
+            // This means when a label is at the end of a block (followed only by void
+            // statements), locals declared before the label are NOT in scope at the label,
+            // so the goto does NOT "jump into scope".
+            string code =
+                @"
+                goto f
+                local x = 1
+                ::f::
+                ";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(code); // Should not throw
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task GotoCannotJumpOverLocalDeclarations(LuaCompatibilityVersion version)
         {
+            // Note: Per Lua 5.4 §3.5, if the label is at the end of a block (followed only by
+            // void statements like other labels or semicolons), then locals declared before
+            // the label are NOT in scope at the label. This code adds a statement after the
+            // label to ensure the label is NOT at the end of the block.
             string code =
                 @"
                 goto f
                 local x
                 ::f::
+                print(x)
                 ";
 
             Script script = new Script(version, CoreModulePresets.Complete);

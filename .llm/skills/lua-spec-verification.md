@@ -2,7 +2,7 @@
 
 **When to use**: Investigating whether NovaSharp behavior matches reference Lua.
 
-**Related Skills**: [lua-fixture-creation](lua-fixture-creation.md) (creating test fixtures), [lua-comparison-harness](lua-comparison-harness.md) (running fixtures)
+**Related Skills**: [lua-fixture-creation](lua-fixture-creation.md) (creating test fixtures), [lua-comparison-harness](lua-comparison-harness.md) (running fixtures), [test-failure-investigation](test-failure-investigation.md) (investigating test failures)
 
 ______________________________________________________________________
 

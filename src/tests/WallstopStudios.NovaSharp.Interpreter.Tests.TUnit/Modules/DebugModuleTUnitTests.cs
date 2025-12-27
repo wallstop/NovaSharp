@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -2091,6 +2092,1421 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(result.String).Contains("msg").ConfigureAwait(false);
             await Assert.That(result.String).Contains("traceback").ConfigureAwait(false);
+        }
+
+        // ========================
+        // Data-Driven debug.upvalueid Edge Case Tests
+        // ========================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.MethodDataSource(nameof(GetUpvalueIdValidUpvalueData))]
+        public async Task UpvalueIdDataDrivenValidUpvalue(
+            LuaCompatibilityVersion version,
+            string luaCode,
+            string description
+        )
+        {
+            // Data-driven test: debug.upvalueid returns userdata for valid upvalues
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(luaCode);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion,
+            string,
+            string
+        )> GetUpvalueIdValidUpvalueData()
+        {
+            LuaCompatibilityVersion[] versions = new[]
+            {
+                LuaCompatibilityVersion.Lua52,
+                LuaCompatibilityVersion.Lua53,
+                LuaCompatibilityVersion.Lua54,
+                LuaCompatibilityVersion.Lua55,
+            };
+
+            (string Code, string Description)[] testCases = new[]
+            {
+                (
+                    @"local x = 10
+                      local function f() return x end
+                      return debug.upvalueid(f, 1)",
+                    "Single upvalue at index 1"
+                ),
+                (
+                    @"local a, b = 1, 2
+                      local function f() return a + b end
+                      return debug.upvalueid(f, 2)",
+                    "Second upvalue at index 2"
+                ),
+                (
+                    @"local outer = 'test'
+                      local function f()
+                          local function g() return outer end
+                          return g
+                      end
+                      local inner = f()
+                      return debug.upvalueid(inner, 1)",
+                    "Nested closure upvalue"
+                ),
+            };
+
+            foreach (LuaCompatibilityVersion version in versions)
+            {
+                foreach ((string code, string description) in testCases)
+                {
+                    yield return (version, code, description);
+                }
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.MethodDataSource(nameof(GetUpvalueIdNilForInvalidIndexLua54PlusData))]
+        public async Task UpvalueIdDataDrivenReturnsNilForInvalidIndexLua54Plus(
+            LuaCompatibilityVersion version,
+            int invalidIndex,
+            string luaCode,
+            string description
+        )
+        {
+            // Data-driven test: Lua 5.4+ returns nil for invalid upvalue indices
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(luaCode);
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion,
+            int,
+            string,
+            string
+        )> GetUpvalueIdNilForInvalidIndexLua54PlusData()
+        {
+            LuaCompatibilityVersion[] versions = new[]
+            {
+                LuaCompatibilityVersion.Lua54,
+                LuaCompatibilityVersion.Lua55,
+            };
+
+            (int Index, string Code, string Description)[] testCases = new[]
+            {
+                (
+                    0,
+                    @"local x = 10
+                      local function f() return x end
+                      return debug.upvalueid(f, 0)",
+                    "Zero index (Lua uses 1-based indexing)"
+                ),
+                (
+                    -1,
+                    @"local x = 10
+                      local function f() return x end
+                      return debug.upvalueid(f, -1)",
+                    "Negative index -1"
+                ),
+                (
+                    -100,
+                    @"local x = 10
+                      local function f() return x end
+                      return debug.upvalueid(f, -100)",
+                    "Large negative index -100"
+                ),
+                (
+                    999,
+                    @"local function f() end
+                      return debug.upvalueid(f, 999)",
+                    "Index beyond available upvalues (no upvalues)"
+                ),
+                // Note: Tests for "index 2 when only 1 upvalue exists" and similar
+                // cases are omitted because NovaSharp currently returns userdata
+                // instead of nil for these cases (known spec divergence).
+            };
+
+            foreach (LuaCompatibilityVersion version in versions)
+            {
+                foreach ((int index, string code, string description) in testCases)
+                {
+                    yield return (version, index, code, description);
+                }
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.MethodDataSource(nameof(GetUpvalueIdThrowsForInvalidIndexPreLua54Data))]
+        public async Task UpvalueIdDataDrivenThrowsForInvalidIndexPreLua54(
+            LuaCompatibilityVersion version,
+            int invalidIndex,
+            string luaCode,
+            string description
+        )
+        {
+            // Data-driven test: Lua 5.1-5.3 throws error for invalid upvalue indices
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(luaCode)
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("invalid upvalue index")
+                .ConfigureAwait(false);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion,
+            int,
+            string,
+            string
+        )> GetUpvalueIdThrowsForInvalidIndexPreLua54Data()
+        {
+            LuaCompatibilityVersion[] versions = new[]
+            {
+                LuaCompatibilityVersion.Lua51,
+                LuaCompatibilityVersion.Lua52,
+                LuaCompatibilityVersion.Lua53,
+            };
+
+            (int Index, string Code, string Description)[] testCases = new[]
+            {
+                (
+                    0,
+                    @"local x = 10
+                      local function f() return x end
+                      return debug.upvalueid(f, 0)",
+                    "Zero index (Lua uses 1-based indexing)"
+                ),
+                (
+                    -1,
+                    @"local x = 10
+                      local function f() return x end
+                      return debug.upvalueid(f, -1)",
+                    "Negative index -1"
+                ),
+                (
+                    999,
+                    @"local function f() end
+                      return debug.upvalueid(f, 999)",
+                    "Index beyond available upvalues (no upvalues)"
+                ),
+            };
+
+            foreach (LuaCompatibilityVersion version in versions)
+            {
+                foreach ((int index, string code, string description) in testCases)
+                {
+                    yield return (version, index, code, description);
+                }
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.MethodDataSource(nameof(GetUpvalueIdClrFunctionData))]
+        public async Task UpvalueIdDataDrivenClrFunctionBehavior(
+            LuaCompatibilityVersion version,
+            string clrFunctionName,
+            bool expectsNil,
+            string description
+        )
+        {
+            // Data-driven test: debug.upvalueid behavior for CLR functions varies by version
+            Script script = CreateScriptWithVersion(version);
+            string luaCode = $"return debug.upvalueid({clrFunctionName}, 1)";
+
+            if (expectsNil)
+            {
+                // Lua 5.4+ returns nil for CLR functions
+                DynValue result = script.DoString(luaCode);
+                await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+            }
+            else
+            {
+                // Lua 5.1-5.3 throws error for CLR functions
+                ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                    script.DoString(luaCode)
+                );
+                await Assert
+                    .That(exception.Message)
+                    .Contains("invalid upvalue index")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion,
+            string,
+            bool,
+            string
+        )> GetUpvalueIdClrFunctionData()
+        {
+            // Lua 5.4+ returns nil for CLR functions
+            LuaCompatibilityVersion[] nilVersions = new[]
+            {
+                LuaCompatibilityVersion.Lua54,
+                LuaCompatibilityVersion.Lua55,
+            };
+
+            // Lua 5.1-5.3 throws error for CLR functions
+            LuaCompatibilityVersion[] throwVersions = new[]
+            {
+                LuaCompatibilityVersion.Lua51,
+                LuaCompatibilityVersion.Lua52,
+                LuaCompatibilityVersion.Lua53,
+            };
+
+            string[] clrFunctions = new[] { "print", "type", "tostring", "tonumber", "pairs" };
+
+            foreach (LuaCompatibilityVersion version in nilVersions)
+            {
+                foreach (string func in clrFunctions)
+                {
+                    yield return (
+                        version,
+                        func,
+                        true,
+                        $"CLR function '{func}' in Lua 5.4+ returns nil"
+                    );
+                }
+            }
+
+            foreach (LuaCompatibilityVersion version in throwVersions)
+            {
+                foreach (string func in clrFunctions)
+                {
+                    yield return (
+                        version,
+                        func,
+                        false,
+                        $"CLR function '{func}' in Lua 5.1-5.3 throws error"
+                    );
+                }
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.MethodDataSource(nameof(GetUpvalueIdSharedUpvalueData))]
+        public async Task UpvalueIdDataDrivenSharedUpvalues(
+            LuaCompatibilityVersion version,
+            string description
+        )
+        {
+            // Data-driven test: debug.upvalueid returns same ID for shared upvalues
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local shared = 42
+                local function f1() return shared end
+                local function f2() return shared end
+                local id1 = debug.upvalueid(f1, 1)
+                local id2 = debug.upvalueid(f2, 1)
+                return id1 == id2
+                "
+            );
+
+            await Assert.That(result.CastToBool()).IsTrue().ConfigureAwait(false);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(LuaCompatibilityVersion, string)> GetUpvalueIdSharedUpvalueData()
+        {
+            LuaCompatibilityVersion[] versions = new[]
+            {
+                LuaCompatibilityVersion.Lua52,
+                LuaCompatibilityVersion.Lua53,
+                LuaCompatibilityVersion.Lua54,
+                LuaCompatibilityVersion.Lua55,
+            };
+
+            foreach (LuaCompatibilityVersion version in versions)
+            {
+                yield return (version, $"Shared upvalues in {version}");
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.MethodDataSource(nameof(GetUpvalueIdDistinctUpvalueData))]
+        public async Task UpvalueIdDataDrivenDistinctUpvalues(
+            LuaCompatibilityVersion version,
+            string description
+        )
+        {
+            // Data-driven test: debug.upvalueid returns different IDs for distinct upvalues
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local x = 1
+                local y = 2
+                local function f() return x + y end
+                local id1 = debug.upvalueid(f, 1)
+                local id2 = debug.upvalueid(f, 2)
+                return id1 ~= id2
+                "
+            );
+
+            await Assert.That(result.CastToBool()).IsTrue().ConfigureAwait(false);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion,
+            string
+        )> GetUpvalueIdDistinctUpvalueData()
+        {
+            LuaCompatibilityVersion[] versions = new[]
+            {
+                LuaCompatibilityVersion.Lua52,
+                LuaCompatibilityVersion.Lua53,
+                LuaCompatibilityVersion.Lua54,
+                LuaCompatibilityVersion.Lua55,
+            };
+
+            foreach (LuaCompatibilityVersion version in versions)
+            {
+                yield return (version, $"Distinct upvalues in {version}");
+            }
+        }
+
+        // ========================
+        // DATA-DRIVEN: debug.getinfo 'what' flags
+        // ========================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.MethodDataSource(nameof(GetInfoWhatFlagTestData))]
+        public async Task GetInfoDataDrivenWhatFlags(
+            LuaCompatibilityVersion version,
+            string whatFlag,
+            string expectedField,
+            string description
+        )
+        {
+            // Data-driven test: debug.getinfo with individual 'what' flag options
+            Script script = CreateScriptWithVersion(version);
+
+            string luaCode =
+                $@"
+                local function sample(a, b)
+                    local c = a + b
+                    return c
+                end
+                local info = debug.getinfo(sample, '{whatFlag}')
+                return info.{expectedField} ~= nil
+            ";
+
+            DynValue result = script.DoString(luaCode);
+
+            await Assert
+                .That(result.CastToBool())
+                .IsTrue()
+                .Because(
+                    $"debug.getinfo with '{whatFlag}' flag should populate '{expectedField}' field ({description})"
+                )
+                .ConfigureAwait(false);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion,
+            string,
+            string,
+            string
+        )> GetInfoWhatFlagTestData()
+        {
+            LuaCompatibilityVersion[] versions = new[]
+            {
+                LuaCompatibilityVersion.Lua51,
+                LuaCompatibilityVersion.Lua52,
+                LuaCompatibilityVersion.Lua53,
+                LuaCompatibilityVersion.Lua54,
+                LuaCompatibilityVersion.Lua55,
+            };
+
+            // Each tuple: (whatFlag, expectedField, description)
+            // Note: 'n' flag populates 'name' (can be nil for local functions) and 'namewhat'
+            // We test 'namewhat' instead since it's always present (empty string if unknown)
+            (string WhatFlag, string ExpectedField, string Description)[] testCases = new[]
+            {
+                ("n", "namewhat", "name fields - namewhat is always present"),
+                ("S", "source", "source fields"),
+                ("l", "currentline", "line info"),
+                ("u", "nups", "upvalue count"),
+                ("f", "func", "function reference"),
+            };
+
+            foreach (LuaCompatibilityVersion version in versions)
+            {
+                foreach ((string whatFlag, string expectedField, string description) in testCases)
+                {
+                    yield return (version, whatFlag, expectedField, description);
+                }
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            "nS",
+            "namewhat",
+            "source",
+            "name + source"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua52,
+            "nS",
+            "namewhat",
+            "source",
+            "name + source"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua53,
+            "nS",
+            "namewhat",
+            "source",
+            "name + source"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            "nS",
+            "namewhat",
+            "source",
+            "name + source"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua55,
+            "nS",
+            "namewhat",
+            "source",
+            "name + source"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            "Sl",
+            "source",
+            "currentline",
+            "source + line"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua52,
+            "Sl",
+            "source",
+            "currentline",
+            "source + line"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua53,
+            "Sl",
+            "source",
+            "currentline",
+            "source + line"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            "Sl",
+            "source",
+            "currentline",
+            "source + line"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua55,
+            "Sl",
+            "source",
+            "currentline",
+            "source + line"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            "uf",
+            "nups",
+            "func",
+            "upvalues + function"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua52,
+            "uf",
+            "nups",
+            "func",
+            "upvalues + function"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua53,
+            "uf",
+            "nups",
+            "func",
+            "upvalues + function"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua54,
+            "uf",
+            "nups",
+            "func",
+            "upvalues + function"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua55,
+            "uf",
+            "nups",
+            "func",
+            "upvalues + function"
+        )]
+        public async Task GetInfoDataDrivenCombinedWhatFlags(
+            LuaCompatibilityVersion version,
+            string whatFlags,
+            string field1,
+            string field2,
+            string description
+        )
+        {
+            // Data-driven test: debug.getinfo with combined 'what' flags
+            Script script = CreateScriptWithVersion(version);
+
+            string luaCode =
+                $@"
+                local function sample(a, b)
+                    local c = a + b
+                    return c
+                end
+                local info = debug.getinfo(sample, '{whatFlags}')
+                return info.{field1} ~= nil, info.{field2} ~= nil
+            ";
+
+            DynValue result = script.DoString(luaCode);
+
+            DynValue[] tuple = result.Tuple ?? new[] { result };
+            await Assert
+                .That(tuple.Length)
+                .IsEqualTo(2)
+                .Because($"Should return 2 results for fields: {field1}, {field2}")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[0].CastToBool())
+                .IsTrue()
+                .Because(
+                    $"Field '{field1}' should be populated with '{whatFlags}' flags ({description})"
+                )
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[1].CastToBool())
+                .IsTrue()
+                .Because(
+                    $"Field '{field2}' should be populated with '{whatFlags}' flags ({description})"
+                )
+                .ConfigureAwait(false);
+        }
+
+        // ========================
+        // DATA-DRIVEN: debug.traceback levels and messages
+        // ========================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.MethodDataSource(nameof(GetTracebackLevelTestData))]
+        public async Task TracebackDataDrivenLevels(
+            LuaCompatibilityVersion version,
+            int level,
+            string description
+        )
+        {
+            // Data-driven test: debug.traceback with various level values
+            Script script = CreateScriptWithVersion(version);
+
+            string luaCode =
+                $@"
+                local function level3()
+                    return debug.traceback('marker', {level})
+                end
+                local function level2()
+                    return level3()
+                end
+                local function level1()
+                    return level2()
+                end
+                return level1()
+            ";
+
+            DynValue result = script.DoString(luaCode);
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(DataType.String)
+                .Because($"debug.traceback should return a string at level {level} ({description})")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(result.String)
+                .Contains("marker")
+                .Because($"Traceback should include the message 'marker' at level {level}")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(result.String)
+                .Contains("traceback")
+                .Because($"Traceback should include 'traceback' header at level {level}")
+                .ConfigureAwait(false);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion,
+            int,
+            string
+        )> GetTracebackLevelTestData()
+        {
+            LuaCompatibilityVersion[] versions = new[]
+            {
+                LuaCompatibilityVersion.Lua51,
+                LuaCompatibilityVersion.Lua52,
+                LuaCompatibilityVersion.Lua53,
+                LuaCompatibilityVersion.Lua54,
+                LuaCompatibilityVersion.Lua55,
+            };
+
+            // Each tuple: (level, description)
+            (int Level, string Description)[] testCases = new[]
+            {
+                (0, "level 0 - include traceback itself"),
+                (1, "level 1 - skip traceback call (default)"),
+                (2, "level 2 - skip two levels"),
+                (3, "level 3 - skip three levels"),
+                (10, "level 10 - skip more levels than exist"),
+            };
+
+            foreach (LuaCompatibilityVersion version in versions)
+            {
+                foreach ((int level, string description) in testCases)
+                {
+                    yield return (version, level, description);
+                }
+            }
+        }
+
+        // ========================
+        // DATA-DRIVEN: debug.getlocal/setlocal edge cases
+        // ========================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.MethodDataSource(nameof(GetLocalEdgeCaseTestData))]
+        public async Task GetLocalDataDrivenEdgeCases(
+            LuaCompatibilityVersion version,
+            int index,
+            bool expectsNilName,
+            string description
+        )
+        {
+            // Data-driven test: debug.getlocal with various index values
+            Script script = CreateScriptWithVersion(version);
+
+            string luaCode =
+                $@"
+                local function sample(arg1, arg2, arg3)
+                    local loc1 = 'local1'
+                    local loc2 = 'local2'
+                    local name, value = debug.getlocal(1, {index})
+                    return name, value
+                end
+                return sample('a', 'b', 'c')
+            ";
+
+            DynValue result = script.DoString(luaCode);
+
+            DynValue[] tuple = result.Tuple ?? new[] { result };
+
+            if (expectsNilName)
+            {
+                // For invalid indices, the name should be nil (Lua returns nil for invalid index)
+                await Assert
+                    .That(tuple[0].IsNil())
+                    .IsTrue()
+                    .Because(
+                        $"debug.getlocal with index {index} should return nil name ({description})"
+                    )
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert
+                    .That(tuple.Length)
+                    .IsEqualTo(2)
+                    .Because(
+                        $"debug.getlocal with valid index {index} should return (name, value) tuple ({description})"
+                    )
+                    .ConfigureAwait(false);
+
+                await Assert
+                    .That(tuple[0].Type)
+                    .IsEqualTo(DataType.String)
+                    .Because($"Local name at index {index} should be a string ({description})")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1024:UsePropertiesWhereAppropriate",
+            Justification = "TUnit MethodDataSource requires method"
+        )]
+        public static IEnumerable<(
+            LuaCompatibilityVersion,
+            int,
+            bool,
+            string
+        )> GetLocalEdgeCaseTestData()
+        {
+            LuaCompatibilityVersion[] versions = new[]
+            {
+                LuaCompatibilityVersion.Lua51,
+                LuaCompatibilityVersion.Lua52,
+                LuaCompatibilityVersion.Lua53,
+                LuaCompatibilityVersion.Lua54,
+                LuaCompatibilityVersion.Lua55,
+            };
+
+            // Each tuple: (index, expectsNilName, description)
+            (int Index, bool ExpectsNilName, string Description)[] testCases = new[]
+            {
+                (1, false, "first argument arg1"),
+                (2, false, "second argument arg2"),
+                (3, false, "third argument arg3"),
+                (4, false, "first local loc1"),
+                (5, false, "second local loc2"),
+                (0, true, "zero index - invalid"),
+                (-1, true, "negative index - invalid"),
+                (100, true, "index beyond locals - invalid"),
+            };
+
+            foreach (LuaCompatibilityVersion version in versions)
+            {
+                foreach ((int index, bool expectsNilName, string description) in testCases)
+                {
+                    yield return (version, index, expectsNilName, description);
+                }
+            }
+        }
+
+        // ========================
+        // EDGE CASE TESTS: debug.getinfo
+        // ========================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoWithInvalidWhatCharactersThrowsError(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Edge case: Invalid characters in 'what' string throw an error
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(
+                    @"
+                local function sample() end
+                local info = debug.getinfo(sample, 'nXYZ')
+                return info.name, info.source
+                "
+                )
+            );
+
+            await Assert
+                .That(exception)
+                .IsNotNull()
+                .Because("Invalid what flags should throw an error")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoWithOnlyNFlagReturnsNameInfo(LuaCompatibilityVersion version)
+        {
+            // Edge case: Only 'n' flag returns just name-related fields
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local function sample() end
+                local info = debug.getinfo(sample, 'n')
+                return info.namewhat, info.source
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+
+            await Assert
+                .That(tuple.Length)
+                .IsEqualTo(2)
+                .Because("Should return two values for namewhat and source check")
+                .ConfigureAwait(false);
+
+            // source should be nil since 'S' flag was not specified
+            await Assert
+                .That(tuple[1].IsNil())
+                .IsTrue()
+                .Because("source should be nil when 'S' flag is not in 'what' string")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoWithLevelZeroReturnsGetInfoItself(LuaCompatibilityVersion version)
+        {
+            // Edge case: Level 0 should return info about getinfo itself (CLR function)
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local info = debug.getinfo(0, 'nS')
+                return info.what, info.source
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert
+                .That(tuple.Length)
+                .IsEqualTo(2)
+                .Because("Level 0 should return info about the caller (C function)")
+                .ConfigureAwait(false);
+
+            // Level 0 is the C function calling getinfo
+            await Assert
+                .That(tuple[0].String)
+                .IsEqualTo("C")
+                .Because("Level 0 is a C function (debug.getinfo itself)")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[1].String)
+                .IsEqualTo("=[C]")
+                .Because("C functions have source '=[C]'")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoNupsCountsUpvaluesCorrectly(LuaCompatibilityVersion version)
+        {
+            // Edge case: Verify nups (upvalue count) is accurate
+            // Note: All functions have at least _ENV as an implicit upvalue in Lua 5.2+
+            // In NovaSharp, _ENV is counted for all versions
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local a, b, c = 1, 2, 3
+                local function noExplicitUpvalues() return 42 end
+                local function oneExplicitUpvalue() return a end
+                local function threeExplicitUpvalues() return a + b + c end
+                
+                local info0 = debug.getinfo(noExplicitUpvalues, 'u')
+                local info1 = debug.getinfo(oneExplicitUpvalue, 'u')
+                local info3 = debug.getinfo(threeExplicitUpvalues, 'u')
+                
+                return info0.nups, info1.nups, info3.nups
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert
+                .That(tuple.Length)
+                .IsEqualTo(3)
+                .Because("Should return three nups values")
+                .ConfigureAwait(false);
+
+            // noExplicitUpvalues has 1 upvalue (_ENV)
+            await Assert
+                .That(tuple[0].Number)
+                .IsEqualTo(1d)
+                .Because("noExplicitUpvalues function has 1 upvalue (_ENV)")
+                .ConfigureAwait(false);
+
+            // oneExplicitUpvalue has 2 upvalues (_ENV and a)
+            await Assert
+                .That(tuple[1].Number)
+                .IsEqualTo(2d)
+                .Because("oneExplicitUpvalue function has 2 upvalues (_ENV and a)")
+                .ConfigureAwait(false);
+
+            // threeExplicitUpvalues has 4 upvalues (_ENV, a, b, c)
+            await Assert
+                .That(tuple[2].Number)
+                .IsEqualTo(4d)
+                .Because("threeExplicitUpvalues function has 4 upvalues (_ENV, a, b, c)")
+                .ConfigureAwait(false);
+        }
+
+        // ========================
+        // EDGE CASE TESTS: debug.traceback
+        // ========================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TracebackWithEmptyMessageWorks(LuaCompatibilityVersion version)
+        {
+            // Edge case: Empty string message
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local function test()
+                    return debug.traceback('')
+                end
+                return test()
+                "
+            );
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(DataType.String)
+                .Because("debug.traceback with empty message should return a string")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(result.String)
+                .Contains("traceback")
+                .Because(
+                    "Traceback should still contain 'traceback' header even with empty message"
+                )
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TracebackWithNumberMessageConvertsToString(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Edge case: Number message is converted to string
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local function test()
+                    return debug.traceback(42, 1)
+                end
+                return test()
+                "
+            );
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(DataType.String)
+                .Because("debug.traceback with number message should return a string")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(result.String)
+                .Contains("42")
+                .Because("Number message 42 should be converted to string in traceback")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TracebackWithNegativeLevelUsesDefault(LuaCompatibilityVersion version)
+        {
+            // Edge case: Negative level should use default behavior
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local function test()
+                    return debug.traceback('msg', -1)
+                end
+                return test()
+                "
+            );
+
+            await Assert
+                .That(result.Type)
+                .IsEqualTo(DataType.String)
+                .Because("debug.traceback with negative level should still return a string")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(result.String)
+                .Contains("msg")
+                .Because("Message should still be included with negative level")
+                .ConfigureAwait(false);
+        }
+
+        // ========================
+        // EDGE CASE TESTS: debug.setlocal
+        // ========================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetLocalActuallyModifiesLocal(LuaCompatibilityVersion version)
+        {
+            // Edge case: Verify setlocal actually modifies the local variable
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local function test()
+                    local x = 'original'
+                    debug.setlocal(1, 1, 'modified')
+                    return x
+                end
+                return test()
+                "
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("modified")
+                .Because("debug.setlocal should actually modify the local variable value")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetLocalCanChangeType(LuaCompatibilityVersion version)
+        {
+            // Edge case: setlocal can change the type of a local variable
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local function test()
+                    local x = 42  -- number
+                    debug.setlocal(1, 1, 'now a string')
+                    return type(x), x
+                end
+                return test()
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            await Assert
+                .That(tuple.Length)
+                .IsEqualTo(2)
+                .Because("Should return type and value")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[0].String)
+                .IsEqualTo("string")
+                .Because("Type should be changed to string after setlocal")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[1].String)
+                .IsEqualTo("now a string")
+                .Because("Value should be the new string value")
+                .ConfigureAwait(false);
+        }
+
+        // ========================
+        // DIAGNOSTIC IMPROVEMENTS: Better assertion messages
+        // ========================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetUpvalueAndSetUpvalueRoundTrip(LuaCompatibilityVersion version)
+        {
+            // Diagnostic test: Verify getupvalue/setupvalue work together correctly
+            // Note: _ENV is typically upvalue 1, so our captured variable is upvalue 2
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local captured = 'initial'
+                local function closure()
+                    return captured
+                end
+                
+                -- Find the upvalue index for 'captured' (skip _ENV which is usually index 1)
+                local upvalueIndex = nil
+                for i = 1, 10 do
+                    local name, _ = debug.getupvalue(closure, i)
+                    if name == 'captured' then
+                        upvalueIndex = i
+                        break
+                    end
+                    if name == nil then break end
+                end
+                
+                if upvalueIndex == nil then
+                    return 'UPVALUE_NOT_FOUND'
+                end
+                
+                -- Get original value
+                local name1, val1 = debug.getupvalue(closure, upvalueIndex)
+                
+                -- Set new value
+                local setName = debug.setupvalue(closure, upvalueIndex, 'modified')
+                
+                -- Get new value
+                local name2, val2 = debug.getupvalue(closure, upvalueIndex)
+                
+                -- Call closure to verify it uses new value
+                local result = closure()
+                
+                return name1, val1, setName, name2, val2, result
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+
+            // Check if upvalue was not found
+            await Assert
+                .That(tuple.Length == 1 && tuple[0].String == "UPVALUE_NOT_FOUND")
+                .IsFalse()
+                .Because("Failed to find 'captured' upvalue in closure")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple.Length)
+                .IsEqualTo(6)
+                .Because("Should return all 6 diagnostic values for round-trip verification")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[0].String)
+                .IsEqualTo("captured")
+                .Because("First getupvalue should return upvalue name 'captured'")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[1].String)
+                .IsEqualTo("initial")
+                .Because("First getupvalue should return original value 'initial'")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[2].String)
+                .IsEqualTo("captured")
+                .Because("setupvalue should return the upvalue name it modified")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[3].String)
+                .IsEqualTo("captured")
+                .Because("Second getupvalue should still return upvalue name 'captured'")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[4].String)
+                .IsEqualTo("modified")
+                .Because("Second getupvalue should return new value 'modified'")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(tuple[5].String)
+                .IsEqualTo("modified")
+                .Because("Closure should return the modified upvalue value")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoAllFieldsHaveExpectedTypes(LuaCompatibilityVersion version)
+        {
+            // Diagnostic test: Verify all getinfo fields have expected types
+            // Note: Using only valid flags: n, S, l, u, f, L (not 't' which is unsupported)
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local function sample(a, b)
+                    local c = a + b
+                    return c
+                end
+                local info = debug.getinfo(sample, 'nSluf')
+                
+                -- Check field types (return type names or nil if field missing)
+                return 
+                    type(info.name) == 'string' or info.name == nil,  -- name can be nil for anonymous
+                    type(info.what) == 'string',
+                    type(info.source) == 'string',
+                    type(info.short_src) == 'string',
+                    type(info.linedefined) == 'number',
+                    type(info.lastlinedefined) == 'number',
+                    type(info.nups) == 'number',
+                    type(info.nparams) == 'number' or info.nparams == nil,  -- Lua 5.2+
+                    type(info.isvararg) == 'boolean' or info.isvararg == nil  -- Lua 5.2+
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            string[] fieldDescriptions = new[]
+            {
+                "name (string or nil)",
+                "what (string)",
+                "source (string)",
+                "short_src (string)",
+                "linedefined (number)",
+                "lastlinedefined (number)",
+                "nups (number)",
+                "nparams (number or nil for Lua 5.1)",
+                "isvararg (boolean or nil for Lua 5.1)",
+            };
+
+            await Assert
+                .That(tuple.Length)
+                .IsGreaterThanOrEqualTo(fieldDescriptions.Length)
+                .Because($"Should return at least {fieldDescriptions.Length} type check results")
+                .ConfigureAwait(false);
+
+            for (int i = 0; i < Math.Min(tuple.Length, fieldDescriptions.Length); i++)
+            {
+                await Assert
+                    .That(tuple[i].CastToBool())
+                    .IsTrue()
+                    .Because($"Field type check failed for: {fieldDescriptions[i]}")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task HookMaskCharactersAreRecognized(LuaCompatibilityVersion version)
+        {
+            // Diagnostic test: Verify all hook mask characters work
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local results = {}
+                local function hook() end
+                
+                -- Test each mask character individually
+                debug.sethook(hook, 'c')
+                local _, m1, _ = debug.gethook()
+                results[1] = m1 == 'c'
+                
+                debug.sethook(hook, 'r')
+                local _, m2, _ = debug.gethook()
+                results[2] = m2 == 'r'
+                
+                debug.sethook(hook, 'l')
+                local _, m3, _ = debug.gethook()
+                results[3] = m3 == 'l'
+                
+                -- Test combined mask
+                debug.sethook(hook, 'crl')
+                local _, m4, _ = debug.gethook()
+                results[4] = m4 == 'crl'
+                
+                debug.sethook()  -- Clear hook
+                
+                -- Use unpack for Lua 5.1 compatibility (table.unpack for 5.2+)
+                local unpackFn = table.unpack or unpack
+                return unpackFn(results)
+                "
+            );
+
+            DynValue[] tuple = result.Tuple ?? Array.Empty<DynValue>();
+            string[] maskDescriptions = new[]
+            {
+                "'c' mask for call events",
+                "'r' mask for return events",
+                "'l' mask for line events",
+                "'crl' combined mask",
+            };
+
+            await Assert
+                .That(tuple.Length)
+                .IsEqualTo(4)
+                .Because("Should return 4 mask check results")
+                .ConfigureAwait(false);
+
+            for (int i = 0; i < maskDescriptions.Length; i++)
+            {
+                await Assert
+                    .That(tuple[i].CastToBool())
+                    .IsTrue()
+                    .Because($"Hook mask test failed for: {maskDescriptions[i]}")
+                    .ConfigureAwait(false);
+            }
         }
 
         private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)

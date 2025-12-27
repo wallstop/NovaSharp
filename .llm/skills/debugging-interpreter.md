@@ -2,7 +2,7 @@
 
 **When to use**: Investigating bugs in lexing, parsing, compilation, or execution.
 
-**Related Skills**: [lua-spec-verification](lua-spec-verification.md) (comparing with reference Lua), [lua-fixture-creation](lua-fixture-creation.md) (creating test cases), [tunit-test-writing](tunit-test-writing.md) (minimal reproduction tests)
+**Related Skills**: [lua-spec-verification](lua-spec-verification.md) (comparing with reference Lua), [lua-fixture-creation](lua-fixture-creation.md) (creating test cases), [tunit-test-writing](tunit-test-writing.md) (minimal reproduction tests), [test-failure-investigation](test-failure-investigation.md) (investigating test failures)
 
 ______________________________________________________________________
 
