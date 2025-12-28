@@ -6,9 +6,13 @@
 
 ______________________________________________________________________
 
-## 🔴 Critical Rule: Always Run Pre-Commit Validation
+## 🔴 Critical Rule: Run Pre-Commit Validation Iteratively
 
-**Work is NOT complete until all pre-commit checks pass.** Before declaring any task finished, you MUST run the pre-commit validation to ensure:
+**Run `bash ./scripts/dev/pre-commit.sh` after EVERY significant code change**, not just before declaring work complete. This catches issues early and prevents cascading failures.
+
+> ⚠️ **Common Mistake**: Waiting until the end to run pre-commit, then discovering multiple audit failures that require extensive rework. Run it iteratively!
+
+Before declaring any task finished, ALL pre-commit checks must pass:
 
 1. Code is properly formatted (CSharpier, Markdown)
 1. No linting errors exist
@@ -58,12 +62,15 @@ ______________________________________________________________________
 ./scripts/build/quick.sh
 ./scripts/test/quick.sh
 
-# 3. Run pre-commit validation (REQUIRED before task is complete)
+# 3. Run pre-commit validation (run AFTER EVERY significant change, not just at the end)
 bash ./scripts/dev/pre-commit.sh
 
 # 4. Review any errors and fix them
 # 5. Re-run pre-commit until it passes
+# 6. Repeat steps 1-5 for each significant change
 ```
+
+> 💡 **Best Practice**: Run pre-commit after each logical unit of work (e.g., after adding a new file, after refactoring a module, after adding tests). This makes debugging failures much easier than running it only at the end.
 
 ### When Pre-Commit Fails
 
@@ -166,6 +173,61 @@ python3 scripts/lint/check-test-finally.py
 
 ______________________________________________________________________
 
+## 🔴 Common Audit Failures and How to Prevent Them
+
+### Files Added or Removed → Audit Log Mismatch
+
+**Symptom**: Pre-commit fails with diff in `docs/audits/spelling_audit.log`, `docs/audits/naming_audit.log`, or `docs/audits/documentation_audit.log`.
+
+**Cause**: When files are added, removed, or renamed, the audit logs become stale because they track all scanned files.
+
+**Prevention**:
+
+1. **Run pre-commit immediately after adding/removing files** — Don't wait until the end
+
+1. Pre-commit auto-regenerates these logs, but you must commit the updated logs
+
+1. If manually regenerating:
+
+   ```bash
+   python3 tools/SpellingAudit/spelling_audit.py --write-log docs/audits/spelling_audit.log
+   python3 tools/NamingAudit/naming_audit.py --write-log docs/audits/naming_audit.log
+   python3 tools/DocumentationAudit/documentation_audit.py --write-log docs/audits/documentation_audit.log
+   ```
+
+### Fixture Catalog Out of Sync
+
+**Symptom**: Pre-commit shows diff in `FixtureCatalogGenerated.cs`.
+
+**Cause**: Lua fixture files (`.lua`) were added, removed, or had their metadata changed.
+
+**Prevention**: Run pre-commit after adding/modifying any `.lua` test fixtures. The catalog is regenerated automatically.
+
+### Iterative Development Anti-Pattern
+
+**Symptom**: Multiple cascading failures when pre-commit is run only at the end of a large task.
+
+**Cause**: Making many changes without running pre-commit leads to compounding issues:
+
+- Spelling audit finds the old file list
+- Naming audit finds stale namespaces
+- Branding check finds issues in multiple files
+- Each fix requires re-running, which may reveal more issues
+
+**Prevention**:
+
+> 🔴 **Run `bash ./scripts/dev/pre-commit.sh` after EVERY significant change:**
+>
+> - After adding a new file
+> - After removing or renaming a file
+> - After refactoring that moves code between files
+> - After adding new public APIs
+> - Before switching to a different area of the codebase
+
+This "fail fast" approach catches issues when there's only one thing to fix, not twenty.
+
+______________________________________________________________________
+
 ## 🔴 Common Issues and Solutions
 
 ### Issue: CSharpier Changes Files Unexpectedly
@@ -224,8 +286,10 @@ ______________________________________________________________________
 
 - [ ] Code changes compile: `./scripts/build/quick.sh`
 - [ ] Tests pass: `./scripts/test/quick.sh`
+- [ ] **If any files were added/removed**: Audit logs are regenerated (pre-commit does this automatically)
 - [ ] Pre-commit validation passes: `bash ./scripts/dev/pre-commit.sh`
 - [ ] No remaining errors or warnings from pre-commit
+- [ ] **Final verification**: Run pre-commit one more time to confirm all auto-generated files are committed
 - [ ] Changes are ready for human review
 
 **If any check fails, the work is NOT complete.**

@@ -30,7 +30,7 @@ NovaSharp follows a strict priority order:
 1. **Exhaustive Test Coverage** — Every feature/bugfix needs comprehensive tests: normal cases, edge cases, error cases, negative tests, "the impossible". Use data-driven tests. See [`.llm/skills/exhaustive-test-coverage.md`](../.llm/skills/exhaustive-test-coverage.md)
 1. **Documentation & Changelog** — Every user-facing change requires: (1) updated XML docs and code comments, (2) updated markdown docs with CORRECT code samples, (3) CHANGELOG.md entry in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. See [`.llm/skills/documentation-and-changelog.md`](../.llm/skills/documentation-and-changelog.md)
 1. **Defensive Programming** — Production code must be robust and resilient. Handle all errors gracefully, never throw exceptions except for truly exceptional cases. See [`.llm/skills/defensive-programming.md`](../.llm/skills/defensive-programming.md)
-1. **Pre-Commit Validation** — Work is NOT complete until `bash ./scripts/dev/pre-commit.sh` passes. This runs all formatters, linters, and checks. A diff that fails CI is not ready for review. See [`.llm/skills/pre-commit-validation.md`](../.llm/skills/pre-commit-validation.md)
+1. **Pre-Commit Validation** — Run `bash ./scripts/dev/pre-commit.sh` **after EVERY significant change**, not just before declaring complete. This runs all formatters, linters, and audits. If files are added/removed, audit logs MUST be regenerated. A diff that fails CI is not ready for review. See [`.llm/skills/pre-commit-validation.md`](../.llm/skills/pre-commit-validation.md)
 
 ## 🔴 Build & Test Commands
 

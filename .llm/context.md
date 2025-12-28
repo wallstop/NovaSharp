@@ -29,7 +29,7 @@ ______________________________________________________________________
 1. **Lua Fixture Metadata** — ONLY use `@lua-versions`, `@novasharp-only`, `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description` are **NOT parsed** by the harness and will be silently ignored
 1. **Exhaustive Test Coverage** — Every feature/bugfix needs comprehensive tests: normal cases, edge cases, error cases, negative tests, "the impossible". Use data-driven tests for comprehensive coverage. See [exhaustive-test-coverage](skills/exhaustive-test-coverage.md)
 1. **Documentation & Changelog** — Every user-facing change requires: (1) updated XML docs and code comments, (2) updated markdown docs with CORRECT code samples, (3) CHANGELOG.md entry in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. See [documentation-and-changelog](skills/documentation-and-changelog.md)
-1. **Pre-Commit Validation** — Work is NOT complete until `bash ./scripts/dev/pre-commit.sh` passes. This runs all formatters, linters, and checks. A diff that fails CI is not ready for review. See [pre-commit-validation](skills/pre-commit-validation.md)
+1. **Pre-Commit Validation** — Run `bash ./scripts/dev/pre-commit.sh` **after EVERY significant change**, not just before declaring complete. This runs all formatters, linters, and audits. If files are added/removed, audit logs MUST be regenerated. A diff that fails CI is not ready for review. See [pre-commit-validation](skills/pre-commit-validation.md)
 
 ______________________________________________________________________
 
