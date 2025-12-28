@@ -4,7 +4,7 @@
 
 When writing new code for NovaSharp, prioritize **minimal allocations** and **maximum efficiency**. This interpreter runs hot paths millions of times—every allocation and boxing operation has measurable impact.
 
-**Related Skills**: [correctness-then-performance](correctness-then-performance.md) (priority hierarchy), [zstring-migration](zstring-migration.md) (detailed ZString patterns), [span-optimization](span-optimization.md) (detailed Span patterns)
+**Related Skills**: [correctness-then-performance](correctness-then-performance.md) (priority hierarchy), [zstring-migration](zstring-migration.md) (detailed ZString patterns), [span-optimization](span-optimization.md) (detailed Span patterns), [unity-gc-patterns](unity-gc-patterns.md) (Unity GC specifics), [aggressive-inlining](aggressive-inlining.md) (method inlining), [delegate-caching](delegate-caching.md) (delegate allocation elimination), [params-elimination](params-elimination.md) (params array elimination), [foreach-allocation](foreach-allocation.md) (foreach loop traps)
 
 ______________________________________________________________________
 
@@ -53,6 +53,27 @@ using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(size, out DynVal
 | AOT compilation             | Dynamic code generation fails | Avoid `Emit`, `Expression.Compile`     |
 | Value type devirtualization | May not happen                | Manually inline critical paths         |
 | Generic virtual methods     | May not be optimized          | Use non-generic overloads in hot paths |
+
+### Unity GC vs .NET GC (Why Zero-Allocation is Critical)
+
+Unity uses the **Boehm-Demers-Weiser** garbage collector, which is significantly worse than .NET's generational GC:
+
+| Aspect                | Unity (Boehm)                      | .NET CLR GC                 |
+| --------------------- | ---------------------------------- | --------------------------- |
+| **Algorithm**         | Conservative, non-generational     | Generational (Gen 0/1/2)    |
+| **Heap scanning**     | Scans ENTIRE heap every collection | Only scans young generation |
+| **Memory compaction** | ❌ No                              | ✅ Yes                      |
+| **Fragmentation**     | Prone to fragmentation             | Reduced via compaction      |
+| **Speed**             | Slow (entire heap)                 | Fast (generational)         |
+
+**Zero-allocation code is even MORE critical in Unity than in .NET** because:
+
+- Unity GC must scan the entire heap on every collection
+- No generational optimization — temporary objects are as expensive as long-lived ones
+- Memory fragmentation accumulates over time (no compaction)
+- GC spikes cause frame drops and stuttering
+
+See [unity-gc-patterns](unity-gc-patterns.md) for Unity-specific allocation traps and patterns.
 
 ______________________________________________________________________
 

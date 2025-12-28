@@ -348,6 +348,16 @@ Detailed guides for common tasks are in `.llm/skills/`:
 | [span-optimization](skills/span-optimization.md)             | Replacing Split/Substring/ToArray with span-based patterns   |
 | [use-extension-methods](skills/use-extension-methods.md)     | Available extension methods and utilities in NovaSharp       |
 
+### Unity-Specific Performance
+
+| Skill                                                | When to Use                                                |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| [unity-gc-patterns](skills/unity-gc-patterns.md)     | Unity GC behavior, IL2CPP constraints, non-allocating APIs |
+| [foreach-allocation](skills/foreach-allocation.md)   | Foreach loop allocation traps in Unity Mono                |
+| [delegate-caching](skills/delegate-caching.md)       | Eliminating delegate/lambda allocation via caching         |
+| [params-elimination](skills/params-elimination.md)   | Eliminating hidden params array allocations                |
+| [aggressive-inlining](skills/aggressive-inlining.md) | When/how to use [MethodImpl(AggressiveInlining)]           |
+
 ### Testing
 
 | Skill                                                              | When to Use                                                        |

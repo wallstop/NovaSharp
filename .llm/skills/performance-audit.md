@@ -140,6 +140,24 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
+## Unity-Specific Audit
+
+When targeting Unity, check these additional traps. See [unity-gc-patterns](unity-gc-patterns.md) for details.
+
+| Pattern                    | Problem                  | Fix                                  |
+| -------------------------- | ------------------------ | ------------------------------------ |
+| `foreach` on `List<T>`     | 24 bytes per loop (Mono) | Use `for` loop                       |
+| `foreach` on `Dictionary`  | Enumerator allocation    | Manual enumerator or `for` with keys |
+| `Func<T>` assigned in loop | 52+ bytes per iteration  | Cache delegate in field              |
+| `params object[]`          | Array + boxing           | Overloads for 0-4 args               |
+| `Mathf.Max(a,b,c)`         | params array             | Chain `Mathf.Max(Mathf.Max(a,b),c)`  |
+| `gameObject.name`          | Allocates string         | Cache in `Awake()`                   |
+| `gameObject.tag ==`        | Allocates string         | Use `CompareTag()`                   |
+| `mesh.vertices`            | Copies array             | Cache or use `GetVertices(List)`     |
+| `yield return new`         | Allocates object         | Cache yield instruction              |
+
+______________________________________________________________________
+
 ## Profiling Checklist
 
 1. **Build Release mode** - Debug has different allocation patterns
@@ -151,6 +169,8 @@ ______________________________________________________________________
    - [ ] Iterator allocations (foreach on non-List/Array)
    - [ ] String concatenation
    - [ ] Unpooled collection creation
+   - [ ] Delegate creation in loops
+   - [ ] params array allocations
 1. **Verify with BenchmarkDotNet** - Use `[MemoryDiagnoser]` attribute
 1. **Target: 0 bytes allocated** on hot paths
 
@@ -166,4 +186,10 @@ public class MyBenchmarks
 
 ______________________________________________________________________
 
-*Keep interpreter hot paths allocation-free. When in doubt, profile.*
+## Related Skills
+
+- [unity-gc-patterns](unity-gc-patterns.md) — Unity GC behavior and patterns
+- [foreach-allocation](foreach-allocation.md) — Foreach loop traps
+- [delegate-caching](delegate-caching.md) — Delegate allocation elimination
+- [params-elimination](params-elimination.md) — Params array elimination
+- [aggressive-inlining](aggressive-inlining.md) — Method inlining optimization

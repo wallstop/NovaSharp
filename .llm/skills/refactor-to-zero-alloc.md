@@ -727,6 +727,9 @@ Before submitting refactored code, verify:
 - [ ] **Arrays are pooled or stackalloc** — Using appropriate pool or stack allocation
 - [ ] **No boxing** — Using generic methods where possible
 - [ ] **Pools are disposed** — All `PooledResource<T>` in `using` blocks
+- [ ] **No `foreach` on List in hot paths** — Using `for` loops (Unity Mono trap)
+- [ ] **No `params` in hot paths** — Using overloads or Span-based API
+- [ ] **Delegates are cached** — Not creating new delegates in loops
 - [ ] **Tested for allocations** — Verified with allocation test or profiler
 
 ______________________________________________________________________
@@ -736,13 +739,7 @@ ______________________________________________________________________
 - [high-performance-csharp](high-performance-csharp.md) — General high-performance patterns and pool API reference
 - [zstring-migration](zstring-migration.md) — Detailed ZString migration patterns
 - [span-optimization](span-optimization.md) — Span-based string and array operations
-
-______________________________________________________________________
-
-## Source References
-
-- [DataStructs/CollectionPools.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/CollectionPools.cs) — ListPool, HashSetPool, DictionaryPool, StackPool, QueuePool
-- [DataStructs/DynValueArrayPool.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/DynValueArrayPool.cs) — DynValue array pooling
-- [DataStructs/ObjectArrayPool.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/ObjectArrayPool.cs) — Object array pooling for interop
-- [DataStructs/SystemArrayPool.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/SystemArrayPool.cs) — Generic array pooling via ArrayPool<T>.Shared
-- [DataStructs/ZStringBuilder.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/ZStringBuilder.cs) — ZString wrapper factory methods
+- [unity-gc-patterns](unity-gc-patterns.md) — Unity-specific GC patterns and traps
+- [foreach-allocation](foreach-allocation.md) — foreach loop allocation traps
+- [delegate-caching](delegate-caching.md) — Delegate allocation elimination
+- [params-elimination](params-elimination.md) — params array elimination patterns
