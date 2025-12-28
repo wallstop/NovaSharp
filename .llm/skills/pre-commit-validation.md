@@ -39,7 +39,7 @@ This single command runs ALL validation checks:
 | ------------------------- | --------------------------------------------- | ----------- |
 | **CSharpier**             | Formats all C# files                          | ✅ Yes      |
 | **Markdown Formatting**   | Formats staged `.md` files                    | ✅ Yes      |
-| **Markdown Links**        | Validates links in staged `.md` files         | ❌ No       |
+| **Markdown Links** ⚠️     | Validates links in staged `.md` files         | ❌ No       |
 | **Documentation Audit**   | Updates `docs/audits/documentation_audit.log` | ✅ Yes      |
 | **Naming Audit**          | Updates `docs/audits/naming_audit.log`        | ✅ Yes      |
 | **Spelling Audit**        | Updates `docs/audits/spelling_audit.log`      | ✅ Yes      |
@@ -75,6 +75,26 @@ bash ./scripts/dev/pre-commit.sh
 ### When Pre-Commit Fails
 
 If the script fails, you MUST fix the issues:
+
+#### Markdown Link Failures
+
+```
+[pre-commit] ERROR: Markdown link check failed.
+```
+
+**Fix**: The link checker found broken or unreachable URLs. Common causes:
+
+- External URLs have moved or been deleted
+- Typos in internal file paths
+- Old Microsoft docs URLs (use `learn.microsoft.com` instead of `docs.microsoft.com`)
+
+To debug, run manually:
+
+```bash
+python3 scripts/ci/check_markdown_links.py --files path/to/your.md
+```
+
+See [documentation-and-changelog](documentation-and-changelog.md) for external link best practices.
 
 #### Branding Failures
 

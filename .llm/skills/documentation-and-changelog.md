@@ -224,6 +224,45 @@ Console.WriteLine(result.Number);  // Output: 0  ← WRONG! Should be -1
 
 ______________________________________________________________________
 
+## 🔴 External Link Best Practices
+
+External URLs can break over time. Follow these guidelines to minimize broken links:
+
+### Prefer Stable/Canonical URLs
+
+| ❌ Avoid                                | ✅ Use Instead                              |
+| --------------------------------------- | ------------------------------------------- |
+| `docs.microsoft.com/...`                | `learn.microsoft.com/...`                   |
+| Deep links to specific sections         | Landing pages when content moves frequently |
+| URLs with version numbers in path       | Version-agnostic URLs when available        |
+| Short URLs / redirects (bit.ly, aka.ms) | Canonical full URLs                         |
+
+### Verify Links Before Committing
+
+When adding external links to markdown files:
+
+```bash
+# Check specific file(s)
+python3 scripts/ci/check_markdown_links.py --files path/to/your.md
+
+# Check all markdown files
+python3 scripts/ci/check_markdown_links.py --all
+```
+
+### For Frequently-Changing Documentation
+
+When linking to external documentation that moves frequently:
+
+1. **Prefer official landing pages** over deep links (e.g., link to the docs homepage, not a specific subsection)
+1. **Add descriptive link text** so readers can find content even if links break
+1. **Consider local copies** for critical reference material in `docs/`
+
+### CI Enforcement
+
+The pre-commit script (`bash ./scripts/dev/pre-commit.sh`) runs link validation on all staged markdown files. **Always run pre-commit after adding or modifying markdown files** to catch broken links before they reach CI.
+
+______________________________________________________________________
+
 ## 🔴 Documenting New Behavior
 
 When introducing behavior that differs from previous versions or reference Lua:
@@ -359,5 +398,5 @@ ______________________________________________________________________
 
 - [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) — Changelog format specification
 - [Semantic Versioning](https://semver.org/) — Version numbering standard
-- [Microsoft XML Documentation](https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/) — XML doc reference
+- [Microsoft XML Documentation](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/) — XML doc reference
 - [docs/](../../docs/) — NovaSharp documentation folder
