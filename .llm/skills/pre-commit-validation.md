@@ -309,7 +309,46 @@ ______________________________________________________________________
 - [ ] **If any files were added/removed**: Audit logs are regenerated (pre-commit does this automatically)
 - [ ] Pre-commit validation passes: `bash ./scripts/dev/pre-commit.sh`
 - [ ] No remaining errors or warnings from pre-commit
+- [ ] **If CI/CD workflows were modified**: Run affected CI scripts locally (see below)
 - [ ] **Final verification**: Run pre-commit one more time to confirm all auto-generated files are committed
 - [ ] Changes are ready for human review
 
 **If any check fails, the work is NOT complete.**
+
+______________________________________________________________________
+
+## 🔴 CI/CD Workflow Validation
+
+If you modify any files in `.github/workflows/` or build/test scripts, **you MUST validate them locally before pushing**. See [ci-cd-validation](ci-cd-validation.md) for the full guide.
+
+### Quick CI Validation
+
+```bash
+# Run the same scripts CI uses
+./scripts/build/build.sh                        # Full build (what CI runs)
+./scripts/branding/ensure-novasharp-branding.sh # Branding check
+./scripts/ci/check-csharpier.sh                 # CSharpier gate
+./scripts/ci/check-markdown.sh                  # Markdown formatting + links
+```
+
+### Verify Test Artifact Generation
+
+If modifying test execution or artifact paths:
+
+```bash
+# Run tests and verify artifacts are created
+./scripts/test/quick.sh
+ls -la artifacts/test-results/
+
+# Check that TRX files exist (required for CI artifact upload)
+find artifacts -name "*.trx"
+```
+
+### Common CI Issues to Check For
+
+| Issue                    | Symptom                        | Prevention                                          |
+| ------------------------ | ------------------------------ | --------------------------------------------------- |
+| Missing TRX package      | No test results artifact       | Ensure `Microsoft.Testing.Extensions.TrxReport` ref |
+| Platform options ignored | Options have no effect         | Put options after `--` separator                    |
+| Path mismatch            | Artifact upload finds no files | Verify paths between test run and upload step       |
+| Shell script not +x      | Permission denied              | Run `chmod +x` on new scripts                       |

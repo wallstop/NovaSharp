@@ -96,8 +96,9 @@ NovaSharp test results were not generated. This placeholder file ensures CI arti
         Set-Content -Path $placeholderPath -Value $placeholderContent
 
         Write-Host "Running tests for $TestProject..."
-        dotnet test --project $TestProject -c $Configuration --no-build `
-            --report-trx --report-trx-filename "NovaSharpInterpreterTUnit.trx" `
+        # Microsoft.Testing.Platform options (--report-trx, --results-directory) must be passed after --
+        dotnet test $TestProject -c $Configuration --no-build `
+            -- --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx `
             --results-directory $resultsDir
         if ($LASTEXITCODE -ne 0) {
             throw "dotnet test $TestProject failed with exit code $LASTEXITCODE."

@@ -30,6 +30,7 @@ ______________________________________________________________________
 1. **Exhaustive Test Coverage** — Every feature/bugfix needs comprehensive tests: normal cases, edge cases, error cases, negative tests, "the impossible". Use data-driven tests for comprehensive coverage. See [exhaustive-test-coverage](skills/exhaustive-test-coverage.md)
 1. **Documentation & Changelog** — Every user-facing change requires: (1) updated XML docs and code comments, (2) updated markdown docs with CORRECT code samples, (3) CHANGELOG.md entry in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. See [documentation-and-changelog](skills/documentation-and-changelog.md)
 1. **Pre-Commit Validation** — Run `bash ./scripts/dev/pre-commit.sh` **after EVERY significant change**, not just before declaring complete. This runs all formatters, linters, and audits. If files are added/removed, audit logs MUST be regenerated. A diff that fails CI is not ready for review. See [pre-commit-validation](skills/pre-commit-validation.md)
+1. **CI/CD Validation** — Before modifying GitHub Actions workflows or build scripts, run the affected scripts locally and verify artifacts are generated correctly. Never push CI changes without local validation. See [ci-cd-validation](skills/ci-cd-validation.md)
 
 ______________________________________________________________________
 
@@ -331,11 +332,12 @@ Detailed guides for common tasks are in `.llm/skills/`:
 
 ### Priority & Correctness (Apply to ALL Work)
 
-| Skill                                                                  | When to Use                                                        |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [correctness-then-performance](skills/correctness-then-performance.md) | **ALL work** — Priority hierarchy: correctness → speed → memory    |
-| [lua-spec-verification](skills/lua-spec-verification.md)               | Investigating Lua spec compliance, verifying against reference Lua |
-| [pre-commit-validation](skills/pre-commit-validation.md)               | **After ALL changes** — run before declaring work complete         |
+| Skill                                                                  | When to Use                                                         |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [correctness-then-performance](skills/correctness-then-performance.md) | **ALL work** — Priority hierarchy: correctness → speed → memory     |
+| [lua-spec-verification](skills/lua-spec-verification.md)               | Investigating Lua spec compliance, verifying against reference Lua  |
+| [pre-commit-validation](skills/pre-commit-validation.md)               | **After ALL changes** — run before declaring work complete          |
+| [ci-cd-validation](skills/ci-cd-validation.md)                         | Modifying workflows/build scripts — validate locally before pushing |
 
 ### Performance (Apply to ALL New Code)
 

@@ -117,9 +117,10 @@ if (( run_tests )); then
     if (( ! restore_packages )); then
         test_restore_flag=(--no-restore)
     fi
-    dotnet test --project "$test_project" -c "$configuration" --no-build \
+    # Microsoft.Testing.Platform options (--report-trx, --results-directory) must be passed after --
+    dotnet test "$test_project" -c "$configuration" --no-build \
         "${test_restore_flag[@]}" \
-        --report-trx --report-trx-filename "NovaSharpInterpreterTUnit.trx" \
+        -- --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx \
         --results-directory "$test_results_dir"
     rm -f "$test_results_placeholder"
 fi
