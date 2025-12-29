@@ -1370,15 +1370,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Casts this DynValue to string, using coercion if the type is number.
+        /// Uses Lua 5.3+ formatting by default.
         /// </summary>
         /// <returns>The string representation, or null if not number, not string.</returns>
         public string CastToString()
         {
+            // Default to Lua 5.3+ formatting for backwards compatibility
+            return CastToString(LuaCompatibilityVersion.Lua53);
+        }
+
+        /// <summary>
+        /// Casts this DynValue to string, using coercion if the type is number,
+        /// with version-specific number formatting.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to use for number formatting.</param>
+        /// <returns>The string representation, or null if not number, not string.</returns>
+        /// <remarks>
+        /// Number formatting differences by version:
+        /// - Lua 5.1/5.2: Integer-like floats (e.g., 42.0) format as "42"
+        /// - Lua 5.3+: Integer-like floats format as "42.0" to distinguish from integers
+        /// </remarks>
+        public string CastToString(LuaCompatibilityVersion version)
+        {
             DynValue rv = ToScalar();
             if (rv.Type == DataType.Number)
             {
-                // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
-                return rv.LuaNumber.ToString();
+                // Use version-aware LuaNumber.ToLuaString() for correct number formatting
+                return rv.LuaNumber.ToLuaString(version);
             }
             else if (rv.Type == DataType.String)
             {

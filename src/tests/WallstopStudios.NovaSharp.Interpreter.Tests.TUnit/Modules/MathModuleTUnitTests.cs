@@ -1805,8 +1805,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            // math.modf(-5) should return (-5, -0), not (-5, 0)
-            // The fractional part should be negative zero to preserve the sign
+            // math.modf(-5) fractional part behavior:
+            // - Lua 5.1/5.2: returns (-5, -0) - negative zero preserved
+            // - Lua 5.3+: returns (-5, 0.0) - always positive zero
             Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
@@ -1817,13 +1818,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
+            // Lua 5.3+ changed behavior: fractional part is always positive zero
+            bool expectNegativeZero = version < LuaCompatibilityVersion.Lua53;
+
             await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Number).IsEqualTo(-5d).ConfigureAwait(false);
             await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[2].Boolean)
-                .IsTrue()
-                .Because($"math.modf(-5) fractional part should be -0 (negative zero) in {version}")
+                .IsEqualTo(expectNegativeZero)
+                .Because(
+                    $"math.modf(-5) fractional part should be {(expectNegativeZero ? "-0" : "+0")} in {version}"
+                )
                 .ConfigureAwait(false);
         }
 
@@ -1860,7 +1866,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             Compatibility.LuaCompatibilityVersion version
         )
         {
-            // math.modf(-inf) should return (-inf, -0)
+            // math.modf(-inf) fractional part behavior:
+            // - Lua 5.1/5.2: returns (-inf, -0) - negative zero preserved
+            // - Lua 5.3+: returns (-inf, 0.0) - always positive zero
             Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
@@ -1870,6 +1878,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             "
             );
 
+            // Lua 5.3+ changed behavior: fractional part is always positive zero
+            bool expectNegativeZero = version < LuaCompatibilityVersion.Lua53;
+
             await Assert.That(result.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
             await Assert
                 .That(double.IsNegativeInfinity(result.Tuple[0].Number))
@@ -1878,9 +1889,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
             await Assert
                 .That(result.Tuple[2].Boolean)
-                .IsTrue()
+                .IsEqualTo(expectNegativeZero)
                 .Because(
-                    $"math.modf(-inf) fractional part should be -0 (negative zero) in {version}"
+                    $"math.modf(-inf) fractional part should be {(expectNegativeZero ? "-0" : "+0")} in {version}"
                 )
                 .ConfigureAwait(false);
         }
@@ -2069,27 +2080,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // ==========================================================================
         // Comprehensive data-driven tests for math.modf edge cases
-        // These tests ensure negative zero preservation and other edge cases don't regress
+        // These tests ensure correct negative zero handling per Lua version
+        // Lua 5.1/5.2: negative zero preserved | Lua 5.3+: always positive zero
         // ==========================================================================
 
         /// <summary>
         /// Data-driven test for math.modf with various negative integers.
-        /// The fractional part should be negative zero (-0) for negative integer inputs.
-        /// This is critical for IEEE 754 compliance and was previously a regression.
+        /// Fractional part behavior:
+        /// - Lua 5.1/5.2: negative zero (-0) for negative integer inputs
+        /// - Lua 5.3+: always positive zero (0.0)
         /// </summary>
         [global::TUnit.Core.Test]
         [LuaTestMatrix(
-            new object[] { -1, -1d, true, "negative one" },
-            new object[] { -5, -5d, true, "negative five" },
-            new object[] { -10, -10d, true, "negative ten" },
-            new object[] { -100, -100d, true, "negative hundred" },
-            new object[] { -1000000, -1000000d, true, "negative million" }
+            new object[] { -1, -1d, "negative one" },
+            new object[] { -5, -5d, "negative five" },
+            new object[] { -10, -10d, "negative ten" },
+            new object[] { -100, -100d, "negative hundred" },
+            new object[] { -1000000, -1000000d, "negative million" }
         )]
         public async Task ModfNegativeIntegersPreserveNegativeZeroDataDriven(
             LuaCompatibilityVersion version,
             int input,
             double expectedIntPart,
-            bool expectedIsNegativeZero,
             string description
         )
         {
@@ -2101,6 +2113,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 return int_part, frac_part, is_neg_zero
             "
             );
+
+            // Lua 5.3+ changed behavior: fractional part is always positive zero
+            bool expectedIsNegativeZero = version < LuaCompatibilityVersion.Lua53;
 
             await Assert
                 .That(result.Tuple.Length)
@@ -2121,7 +2136,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .That(result.Tuple[2].Boolean)
                 .IsEqualTo(expectedIsNegativeZero)
                 .Because(
-                    $"math.modf({input}) ({description}) fractional part should be negative zero in {version}"
+                    $"math.modf({input}) ({description}) fractional part should be {(expectedIsNegativeZero ? "-0" : "+0")} in {version}"
                 )
                 .ConfigureAwait(false);
         }
@@ -2181,18 +2196,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         /// <summary>
         /// Data-driven test for math.modf with special floating-point values.
-        /// Includes negative zero input, positive/negative infinity.
+        /// Includes negative zero input and positive zero input.
+        /// - Lua 5.1/5.2: negative zero preserved for -0.0 input
+        /// - Lua 5.3+: always positive zero
         /// </summary>
         [global::TUnit.Core.Test]
         [LuaTestMatrix(
-            new object[] { "-0.0", 0d, true, "negative zero input - both parts should be -0" },
-            new object[] { "0.0", 0d, false, "positive zero input - both parts should be +0" }
+            new object[] { "-0.0", 0d, true, "negative zero input" },
+            new object[] { "0.0", 0d, false, "positive zero input" }
         )]
         public async Task ModfZeroPreservesSignDataDriven(
             LuaCompatibilityVersion version,
             string luaInput,
             double expectedIntPart,
-            bool expectedIsNegativeZero,
+            bool inputIsNegativeZero,
             string description
         )
         {
@@ -2204,6 +2221,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 return int_part, frac_part, is_neg_zero
             "
             );
+
+            // Lua 5.3+ changed behavior: fractional part is always positive zero
+            // So only expect negative zero in Lua 5.1/5.2 for -0.0 input
+            bool expectedIsNegativeZero =
+                inputIsNegativeZero && version < LuaCompatibilityVersion.Lua53;
 
             await Assert
                 .That(result.Tuple.Length)
@@ -2219,7 +2241,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .That(result.Tuple[2].Boolean)
                 .IsEqualTo(expectedIsNegativeZero)
                 .Because(
-                    $"math.modf({luaInput}) ({description}) - checking sign of fractional zero"
+                    $"math.modf({luaInput}) ({description}) fractional part should be {(expectedIsNegativeZero ? "-0" : "+0")} in {version}"
                 )
                 .ConfigureAwait(false);
         }

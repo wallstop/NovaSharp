@@ -61,6 +61,62 @@ Key namespaces: `Execution` (VM), `Tree` (AST), `DataTypes` (DynValue, Table), `
 
 ______________________________________________________________________
 
+## Where to Find Things
+
+### Quick Navigation by Task
+
+| I want to...                   | Look in                                             |
+| ------------------------------ | --------------------------------------------------- |
+| Fix Lua behavior bug           | `src/runtime/.../CoreLib/` (stdlib modules)         |
+| Fix parser/lexer issue         | `src/runtime/.../Tree/Lexer/` or `.../Tree/Parser/` |
+| Fix VM execution bug           | `src/runtime/.../Execution/VM/`                     |
+| Add/modify a data type         | `src/runtime/.../DataTypes/`                        |
+| Fix C# interop issue           | `src/runtime/.../Interop/`                          |
+| Add a new test                 | `src/tests/.../Tests.TUnit/`                        |
+| Add a Lua test fixture         | `src/tests/.../Tests/Fixtures/`                     |
+| Check Lua spec                 | `docs/lua-spec/lua5X-manual.md`                     |
+| Find pooling utilities         | `src/runtime/.../DataStructs/CollectionPools.cs`    |
+| Find string building utilities | `src/runtime/.../DataStructs/ZStringBuilder.cs`     |
+| Check/add performance patterns | `.llm/skills/high-performance-csharp.md`            |
+
+### Key Files
+
+| File                               | Purpose                                            |
+| ---------------------------------- | -------------------------------------------------- |
+| `DataTypes/DynValue.cs`            | Core Lua value type (nil, bool, number, string...) |
+| `DataTypes/Table.cs`               | Lua table implementation                           |
+| `DataTypes/LuaNumber.cs`           | Number with integer/float subtype                  |
+| `Execution/VM/Processor.cs`        | Main VM execution loop                             |
+| `CoreLib/MathModule.cs`            | `math.*` library implementation                    |
+| `CoreLib/StringModule.cs`          | `string.*` library implementation                  |
+| `CoreLib/TableModule.cs`           | `table.*` library implementation                   |
+| `DataStructs/CollectionPools.cs`   | ListPool, HashSetPool, DictionaryPool              |
+| `DataStructs/DynValueArrayPool.cs` | Fixed-size DynValue[] pooling                      |
+| `DataStructs/HashCodeHelper.cs`    | Deterministic hash code generation                 |
+
+### Searching the Codebase
+
+```bash
+# Find where a function is implemented
+rg "public.*FunctionName" --type cs src/runtime/
+
+# Find all usages of a type
+rg "DynValue" --type cs -l
+
+# Find Lua module implementations
+rg "\[NovaSharpModule" --type cs -A 2
+
+# Find version-specific code
+rg "LuaCompatibilityVersion" --type cs
+
+# Find test fixtures for a feature
+fd "feature" src/tests/ --extension lua
+```
+
+See [search-codebase](skills/search-codebase.md) for comprehensive search patterns.
+
+______________________________________________________________________
+
 ## Commands
 
 ### Quick Scripts (Recommended)
@@ -341,14 +397,17 @@ Detailed guides for common tasks are in `.llm/skills/`:
 
 ### Performance (Apply to ALL New Code)
 
-| Skill                                                        | When to Use                                                  |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [high-performance-csharp](skills/high-performance-csharp.md) | **ALL new code** — Unity-compatible zero-allocation patterns |
-| [performance-audit](skills/performance-audit.md)             | Quick checklist for reviewing performance-sensitive code     |
-| [refactor-to-zero-alloc](skills/refactor-to-zero-alloc.md)   | Converting allocating code to zero-allocation patterns       |
-| [zstring-migration](skills/zstring-migration.md)             | Migrating string interpolation/concat to zero-allocation     |
-| [span-optimization](skills/span-optimization.md)             | Replacing Split/Substring/ToArray with span-based patterns   |
-| [use-extension-methods](skills/use-extension-methods.md)     | Available extension methods and utilities in NovaSharp       |
+| Skill                                                            | When to Use                                                  |
+| ---------------------------------------------------------------- | ------------------------------------------------------------ |
+| [high-performance-csharp](skills/high-performance-csharp.md)     | **ALL new code** — Unity-compatible zero-allocation patterns |
+| [memory-allocation-traps](skills/memory-allocation-traps.md)     | Quick reference for hidden allocation sources in C#          |
+| [profile-debug-performance](skills/profile-debug-performance.md) | Measuring allocations, profiling, benchmarking               |
+| [data-structures](skills/data-structures.md)                     | Choosing the right collection, complexity reference          |
+| [performance-audit](skills/performance-audit.md)                 | Quick checklist for reviewing performance-sensitive code     |
+| [refactor-to-zero-alloc](skills/refactor-to-zero-alloc.md)       | Converting allocating code to zero-allocation patterns       |
+| [zstring-migration](skills/zstring-migration.md)                 | Migrating string interpolation/concat to zero-allocation     |
+| [span-optimization](skills/span-optimization.md)                 | Replacing Split/Substring/ToArray with span-based patterns   |
+| [use-extension-methods](skills/use-extension-methods.md)         | Available extension methods and utilities in NovaSharp       |
 
 ### Unity-Specific Performance
 
@@ -385,6 +444,12 @@ Detailed guides for common tasks are in `.llm/skills/`:
 | [adding-opcodes](skills/adding-opcodes.md)               | Adding new bytecode instructions to the VM       |
 | [debugging-interpreter](skills/debugging-interpreter.md) | Debugging the Lexer → Parser → AST → VM pipeline |
 | [clr-interop](skills/clr-interop.md)                     | Exposing C# types to Lua, calling Lua from C#    |
+
+### Codebase Navigation
+
+| Skill                                        | When to Use                                         |
+| -------------------------------------------- | --------------------------------------------------- |
+| [search-codebase](skills/search-codebase.md) | Finding code with rg, fd, bat — patterns & examples |
 
 ______________________________________________________________________
 

@@ -565,8 +565,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             }
             else if (_operator == Operator.StrConcat)
             {
-                string s1 = v1.CastToString();
-                string s2 = v2.CastToString();
+                // Use version-aware CastToString for correct number formatting
+                // Lua 5.1/5.2: integer-like floats format as "42"
+                // Lua 5.3+: integer-like floats format as "42.0"
+                Compatibility.LuaCompatibilityVersion version = context
+                    .Script
+                    .Options
+                    .CompatibilityVersion;
+                string s1 = v1.CastToString(version);
+                string s2 = v2.CastToString(version);
 
                 if (s1 == null || s2 == null)
                 {

@@ -585,9 +585,12 @@ public sealed class LuaNumberTUnitTests
     [Test]
     public async Task ToStringForNaNReturnsNan()
     {
+        // Note: double.NaN in .NET has a negative sign bit (0xFFF8000000000000),
+        // so LuaNumber.NaN.ToString() returns "-nan" to match Lua's behavior.
+        // Reference Lua also outputs "-nan" for 0/0 across all versions.
         LuaNumber num = LuaNumber.NaN;
 
-        await Assert.That(num.ToString()).IsEqualTo("nan").ConfigureAwait(false);
+        await Assert.That(num.ToString()).IsEqualTo("-nan").ConfigureAwait(false);
     }
 
     [Test]

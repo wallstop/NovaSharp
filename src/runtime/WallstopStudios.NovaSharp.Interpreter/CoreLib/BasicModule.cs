@@ -1065,9 +1065,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     return result.String;
                 }
 
-                // tostring must return a string - if not, fall back to default formatting
-                // This matches Lua's behavior where invalid tostring results are not fatal in print
-                return value.ToPrintString(version);
+                // tostring must return a string - throw error if not
+                // In Lua 5.1-5.3, 'print' requires 'tostring' to return a string
+                throw new ScriptRuntimeException("'tostring' must return a string to 'print'");
             }
 
             // No global tostring or not a callable - use default formatting

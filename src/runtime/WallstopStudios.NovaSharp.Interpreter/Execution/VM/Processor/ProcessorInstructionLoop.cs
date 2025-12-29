@@ -2072,8 +2072,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            string rs = r.CastToString();
-            string ls = l.CastToString();
+            // Use version-aware CastToString for correct number formatting
+            // Lua 5.1/5.2: integer-like floats format as "42"
+            // Lua 5.3+: integer-like floats format as "42.0"
+            LuaCompatibilityVersion version = _script.Options.CompatibilityVersion;
+            string rs = r.CastToString(version);
+            string ls = l.CastToString(version);
 
             if (rs != null && ls != null)
             {
