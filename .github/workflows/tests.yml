@@ -555,9 +555,25 @@ jobs:
           
           Write-Host "Compiling $($AllCFiles.Count) source files..."
           
+          # Define compatibility macros based on Lua version
+          # These match what Linux/macOS package managers typically enable:
+          # - LUA_COMPAT_5_1: Enables deprecated Lua 5.1 functions (loadstring, etc.) in 5.2+
+          # - LUA_COMPAT_5_2: Enables deprecated Lua 5.2 functions (math.pow, etc.) in 5.3+
+          # Without these, Lua 5.2+ builds lack functions that most distributions include.
+          $CompatDefs = @()
+          switch ($LuaVersion) {
+            "5.2" { $CompatDefs = @("/DLUA_COMPAT_5_1") }
+            "5.3" { $CompatDefs = @("/DLUA_COMPAT_5_2") }
+            "5.4" { $CompatDefs = @("/DLUA_COMPAT_5_3") }
+            "5.5" { $CompatDefs = @("/DLUA_COMPAT_5_4") }
+          }
+          if ($CompatDefs.Count -gt 0) {
+            Write-Host "Adding compatibility defines: $($CompatDefs -join ', ')"
+          }
+          
           # Compile all library .c files to .obj
           foreach ($f in $AllCFiles) {
-            $output = & cl.exe /c /O2 /MD /W3 /nologo $f 2>&1
+            $output = & cl.exe /c /O2 /MD /W3 /nologo @CompatDefs $f 2>&1
             if ($LASTEXITCODE -ne 0) {
               Write-Host "Failed to compile ${f}:"
               Write-Host $output
@@ -566,7 +582,7 @@ jobs:
           }
           
           # Compile lua.c for the interpreter
-          $output = & cl.exe /c /O2 /MD /W3 /nologo lua.c 2>&1
+          $output = & cl.exe /c /O2 /MD /W3 /nologo @CompatDefs lua.c 2>&1
           if ($LASTEXITCODE -ne 0) {
             Write-Host "Failed to compile lua.c:"
             Write-Host $output

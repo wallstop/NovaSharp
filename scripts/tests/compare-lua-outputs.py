@@ -132,6 +132,7 @@ def normalize_output(text: str, strict: bool = False) -> str:
     Normalizations applied:
     - NovaSharp CLI: Remove [compatibility] info lines
     - Floating-point: Round to 10 decimal places, normalize -0 to 0
+    - NaN representations: Normalize nan/-nan/-nan(ind) to canonical form
     - Memory addresses: Replace hex addresses with <addr>
     - Line numbers in errors: Normalize to <line>
     - Platform paths: Normalize separators
@@ -146,6 +147,15 @@ def normalize_output(text: str, strict: bool = False) -> str:
     # Normalize escaped newlines in quoted strings (%q format)
     # Lua outputs "\<actual newline>" while NovaSharp outputs "\n"
     result = re.sub(r'\\\n', r'\\n', result)
+    
+    # Normalize NaN representations (platform-specific: nan, -nan, -nan(ind), NaN)
+    # Different platforms output NaN differently:
+    # - macOS Lua: "nan" (no sign)
+    # - Windows Lua: "nan" or "-nan(ind)" (with "(ind)" suffix for indeterminate NaN)
+    # - Linux Lua: "-nan" (with sign)
+    # - NovaSharp: "-nan" (with sign, from .NET Double.NaN.ToString())
+    # Normalize all to lowercase "nan" for comparison
+    result = re.sub(r'-?nan(\(ind\))?', 'nan', result, flags=re.IGNORECASE)
     
     # Remove NovaSharp CLI compatibility info lines
     result = re.sub(r'^\[compatibility\].*$\n?', '', result, flags=re.MULTILINE)
