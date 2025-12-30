@@ -933,6 +933,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Number).IsLessThanOrEqualTo(2d).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Tests that math.random throws "wrong number of arguments" when called with more than 2 arguments.
+        /// Reference Lua behavior: both lua5.2 and lua5.4 throw this error for math.random(1, 2, 3).
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RandomErrorsOnTooManyArguments(
+            Compatibility.LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException ex = await Assert
+                .ThrowsAsync<ScriptRuntimeException>(async () =>
+                    await Task.FromResult(script.DoString("return math.random(1, 2, 3)"))
+                        .ConfigureAwait(false)
+                )
+                .ConfigureAwait(false);
+            await Assert
+                .That(ex.Message)
+                .Contains("wrong number of arguments")
+                .ConfigureAwait(false);
+        }
+
         // ==========================================================================
         // math.randomseed integer representation tests (Lua 5.4+ only)
         // ==========================================================================

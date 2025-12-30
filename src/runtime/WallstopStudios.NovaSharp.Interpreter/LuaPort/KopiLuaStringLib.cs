@@ -1436,8 +1436,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
         public static readonly int MaxFormat =
             (FLAGS.Length + 1) + (LuaIntegerFormatLength.Length + 1) + 10;
 
-        // Pre-computed escape sequences for characters 0-15 to avoid allocations in Addquoted
-        // These are the 3-digit versions (e.g., "\000", "\001", ..., "\015") for when followed by a digit
+        // Pre-computed escape sequences for characters 0-31 to avoid allocations in Addquoted.
+        // These are the 3-digit versions (e.g., "\000", "\001", ..., "\031") for when followed by a digit.
+        // Lua 5.2+ escapes ALL control characters (0-31) using numeric escapes.
         private static readonly string[] EscapeSequences3Digit =
         {
             "\\000",
@@ -1456,9 +1457,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             "\\013",
             "\\014",
             "\\015",
+            "\\016",
+            "\\017",
+            "\\018",
+            "\\019",
+            "\\020",
+            "\\021",
+            "\\022",
+            "\\023",
+            "\\024",
+            "\\025",
+            "\\026",
+            "\\027",
+            "\\028",
+            "\\029",
+            "\\030",
+            "\\031",
         };
 
-        // These are the minimal versions (e.g., "\0", "\1", ..., "\15") for when not followed by a digit
+        // These are the minimal versions (e.g., "\0", "\1", ..., "\31") for when not followed by a digit.
+        // Using minimal escapes saves output bytes when safe.
         private static readonly string[] EscapeSequencesMinimal =
         {
             "\\0",
@@ -1477,6 +1495,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             "\\13",
             "\\14",
             "\\15",
+            "\\16",
+            "\\17",
+            "\\18",
+            "\\19",
+            "\\20",
+            "\\21",
+            "\\22",
+            "\\23",
+            "\\24",
+            "\\25",
+            "\\26",
+            "\\27",
+            "\\28",
+            "\\29",
+            "\\30",
+            "\\31",
         };
 
         private static void Addquoted(LuaState l, LuaLBuffer b, int arg)
@@ -1487,28 +1521,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort
             {
                 switch (s[0])
                 {
+                    // BUG FIX: These three cases were previously falling through incorrectly,
+                    // all outputting "\n". Each case needs its own proper escape sequence.
                     case '"':
-                    case '\\':
-                    case '\n':
                     {
                         LuaLAddChar(b, '\\');
-                        LuaLAddChar(b, 'n');
+                        LuaLAddChar(b, '"');
                         break;
                     }
-                    case '\r':
+                    case '\\':
                     {
-                        LuaLAddLString(b, "\\r", 2);
+                        LuaLAddChar(b, '\\');
+                        LuaLAddChar(b, '\\');
+                        break;
+                    }
+                    case '\n':
+                    {
+                        // Lua escapes newline as backslash followed by a literal newline character.
+                        // This matches Lua behavior across all versions.
+                        LuaLAddChar(b, '\\');
+                        LuaLAddChar(b, '\n');
                         break;
                     }
                     default:
                     {
-                        if (s[0] < (char)16)
+                        // BUG FIX: Previously only characters 0-15 were escaped. Lua 5.2+ escapes
+                        // ALL control characters (0-31) using numeric escape sequences.
+                        if (s[0] < (char)32)
                         {
                             int charValue = (int)s[0];
-                            bool isfollowedbynum = length >= 1 && char.IsNumber(s[1]);
+                            bool isFollowedByDigit = length >= 1 && char.IsNumber(s[1]);
 
-                            // Use pre-computed escape sequences to avoid string allocations
-                            if (isfollowedbynum)
+                            // Use pre-computed escape sequences to avoid string allocations.
+                            // Use 3-digit form when followed by a digit to avoid ambiguity.
+                            if (isFollowedByDigit)
                             {
                                 LuaLAddString(b, EscapeSequences3Digit[charValue]);
                             }

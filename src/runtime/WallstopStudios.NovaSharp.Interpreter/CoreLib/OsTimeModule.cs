@@ -396,9 +396,94 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     continue;
                 }
 
+                // Handle POSIX O and E locale modifiers (Lua 5.2+)
+                // O = alternate numeric symbols, E = alternate era-based representation
+                // These are passed to C strftime which may or may not support them.
+                // We implement common glibc-compatible O/E modifier behavior:
+                // - %Oy, %Ey = two-digit year (same as %y)
+                // - %Om, %Od, %Oe, %OH, %OI, %OM, %OS, %Ou, %OU, %OV, %Ow, %OW = alternate numerals (same as base)
+                // - %EY = four-digit year in era format (same as %Y)
+                // - %Ec, %EC, %Ex, %EX = alternate representations (same as base)
+                // In Lua 5.1, unknown specifiers (including O/E) pass through as literal text.
+                // In Lua 5.2+, unsupported O/E combinations throw "invalid conversion specifier".
                 if (c is 'O' or 'E')
                 {
-                    continue; // no modifiers
+                    // Peek at the next character to see what modifier combination we have
+                    if (i + 1 >= format.Length)
+                    {
+                        // O/E at end of string - treat as unknown specifier
+                        if (version == LuaCompatibilityVersion.Lua51)
+                        {
+                            sb.Append('%');
+                            sb.Append(c);
+                            isEscapeSequence = false;
+                            continue;
+                        }
+                        throw new ScriptRuntimeException(
+                            ZString.Concat(
+                                "bad argument #1 to 'date' (invalid conversion specifier '%",
+                                c,
+                                "')"
+                            )
+                        );
+                    }
+
+                    char nextChar = format[i + 1];
+                    bool isSupported = false;
+
+                    // Check if this O/E + next char combination is supported
+                    if (c == 'O')
+                    {
+                        // O modifier: alternate numeric representation
+                        // Supported: d, e, H, I, m, M, S, u, U, V, w, W, y
+                        isSupported =
+                            nextChar
+                                is 'd'
+                                    or 'e'
+                                    or 'H'
+                                    or 'I'
+                                    or 'm'
+                                    or 'M'
+                                    or 'S'
+                                    or 'u'
+                                    or 'U'
+                                    or 'V'
+                                    or 'w'
+                                    or 'W'
+                                    or 'y';
+                    }
+                    else // c == 'E'
+                    {
+                        // E modifier: alternate era-based representation
+                        // Supported: c, C, x, X, y, Y
+                        isSupported = nextChar is 'c' or 'C' or 'x' or 'X' or 'y' or 'Y';
+                    }
+
+                    if (!isSupported)
+                    {
+                        // Unsupported combination
+                        if (version == LuaCompatibilityVersion.Lua51)
+                        {
+                            // Lua 5.1: output as literal
+                            sb.Append('%');
+                            sb.Append(c);
+                            isEscapeSequence = false;
+                            continue;
+                        }
+                        // Lua 5.2+: throw error
+                        throw new ScriptRuntimeException(
+                            ZString.Concat(
+                                "bad argument #1 to 'date' (invalid conversion specifier '%",
+                                c,
+                                nextChar,
+                                "')"
+                            )
+                        );
+                    }
+
+                    // Skip the O/E modifier and let the next iteration handle the actual specifier
+                    // The modifier doesn't change the output in NovaSharp (we don't have locale-specific alternate numerals)
+                    continue;
                 }
 
                 isEscapeSequence = false;

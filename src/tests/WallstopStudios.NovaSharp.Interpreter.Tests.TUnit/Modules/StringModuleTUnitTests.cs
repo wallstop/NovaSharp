@@ -2630,6 +2630,175 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         /// <summary>
+        /// Tests string.format %q correctly escapes backslash characters.
+        /// This was a bug where backslash, quote, and newline were all incorrectly
+        /// outputting "\n" due to a switch fall-through error.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatQEscapesBackslashCorrectly(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            // Test backslash: should become \\
+            DynValue result = script.DoString("return string.format('%q', '\\\\')");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("\"\\\\\"")
+                .Because("string.format %q should escape backslash as \\\\")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests string.format %q correctly escapes double quote characters.
+        /// This was a bug where double quotes were incorrectly outputting "\n".
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatQEscapesQuoteCorrectly(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            // Test quote: should become \"
+            DynValue result = script.DoString("return string.format('%q', '\"')");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("\"\\\"\"")
+                .Because("string.format %q should escape quote as \\\"")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests string.format %q correctly escapes newline characters.
+        /// Lua uses backslash followed by a literal newline character for newlines.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatQEscapesNewlineCorrectly(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            // Test newline: should become backslash + literal newline
+            DynValue result = script.DoString("return string.format('%q', '\\n')");
+
+            // Lua escapes newline as backslash followed by literal newline character
+            await Assert
+                .That(result.String)
+                .IsEqualTo("\"\\\n\"")
+                .Because("string.format %q should escape newline as backslash + literal newline")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests string.format %q escapes control characters 0-31 as numeric sequences.
+        /// This was a bug where only characters 0-15 were escaped, leaving 16-31 unescaped.
+        /// </summary>
+        [Test]
+        [LuaTestMatrix(
+            new object[] { 0, "\"\\0\"", "NUL character" },
+            new object[] { 1, "\"\\1\"", "SOH control character" },
+            new object[] { 7, "\"\\7\"", "BEL control character" },
+            new object[] { 8, "\"\\8\"", "BS control character" },
+            new object[] { 9, "\"\\9\"", "TAB control character" },
+            new object[] { 13, "\"\\13\"", "CR control character" },
+            new object[] { 16, "\"\\16\"", "DLE control character (previously not escaped)" },
+            new object[] { 31, "\"\\31\"", "US control character (previously not escaped)" }
+        )]
+        public async Task FormatQEscapesControlCharacters(
+            LuaCompatibilityVersion version,
+            int charCode,
+            string expected,
+            string description
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                $"return string.format('%q', string.char({charCode}))"
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo(expected)
+                .Because($"string.format %q should escape {description} in {version}")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests string.format %q uses 3-digit escape sequences when followed by a digit.
+        /// This prevents ambiguity like "\01" + "2" being read as "\012".
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatQUsesThreeDigitEscapeWhenFollowedByDigit(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            // NUL followed by "2" should use 3-digit escape to avoid ambiguity
+            DynValue result = script.DoString("return string.format('%q', string.char(0) .. '2')");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("\"\\0002\"")
+                .Because("string.format %q should use 3-digit escape when followed by digit")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests string.format %q on a string with mixed content including control characters,
+        /// quotes, backslashes, and regular text.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatQMixedContentString(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            // Test: hello"world\tab (with actual tab character)
+            DynValue result = script.DoString(
+                "return string.format('%q', 'hello\"world\\\\tab' .. string.char(9))"
+            );
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("\"hello\\\"world\\\\tab\\9\"")
+                .Because("string.format %q should correctly escape mixed content")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Tests that string.format %q output can be loaded as valid Lua.
+        /// The output should be a valid Lua string literal.
+        /// </summary>
+        [Test]
+        [AllLuaVersions]
+        public async Task FormatQOutputIsValidLuaString(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            // Create a string with various special characters using string.char to build it
+            // Note: Use loadstring for Lua 5.1, load for Lua 5.2+
+            const string lua =
+                @"
+                local original = 'hello' .. string.char(9) .. 'world' .. string.char(10) .. 'end'
+                local quoted = string.format('%q', original)
+                -- Load the quoted string as Lua code (loadstring for 5.1, load for 5.2+)
+                local loader = loadstring or load
+                local func = loader('return ' .. quoted)
+                if func then
+                    local roundtrip = func()
+                    return original == roundtrip
+                else
+                    return false
+                end
+            ";
+            DynValue result = script.DoString(lua);
+
+            await Assert
+                .That(result.Boolean)
+                .IsTrue()
+                .Because("string.format %q output should be valid Lua that roundtrips correctly")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Tests string.format width specifiers with integers.
         /// </summary>
         [Test]

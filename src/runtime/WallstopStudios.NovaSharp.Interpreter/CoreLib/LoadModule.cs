@@ -319,7 +319,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// </summary>
         /// <remarks>
         /// <para>
-        /// This function is only available in Lua 5.1. In Lua 5.2+, use <c>load</c> instead,
+        /// This function is available in Lua 5.1 and deprecated (but still present) in Lua 5.2.
+        /// In Lua 5.3+, it was removed entirely - use <c>load</c> instead,
         /// which accepts both strings and reader functions.
         /// </para>
         /// </remarks>
@@ -331,7 +332,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// A <see cref="DynValue"/> representing the compiled chunk or <c>(nil, errorMessage)</c> on
         /// failure.
         /// </returns>
-        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "loadstring")]
         public static DynValue LoadString(
             ScriptExecutionContext executionContext,

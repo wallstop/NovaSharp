@@ -973,6 +973,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 nameof(executionContext)
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
+
+            // Check for too many arguments (max 2 allowed)
+            // Reference Lua 5.2+ throws "wrong number of arguments" for math.random(1, 2, 3)
+            if (args.Count > 2)
+            {
+                throw new ScriptRuntimeException("wrong number of arguments");
+            }
+
             DynValue m = args.AsType(0, "random", DataType.Number, true);
             DynValue n = args.AsType(1, "random", DataType.Number, true);
             IRandomProvider r = executionContext.Script.RandomProvider;

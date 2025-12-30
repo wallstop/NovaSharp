@@ -243,7 +243,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             await Assert.That(result.String).IsEqualTo("3.14");
         }
 
-        /// <remarks>Lua 5.4 §6.4 string.format — %q escapes quotes and control characters.</remarks>
+        /// <remarks>
+        /// Lua 5.4 §6.4 string.format — %q escapes newlines with a backslash followed by
+        /// an actual newline character (not \n). This is valid Lua string syntax.
+        /// For example, string.format('%q', "Lua\n") produces "Lua\<newline>"
+        /// where the backslash-newline sequence is a valid continuation in Lua strings.
+        /// </remarks>
         [global::TUnit.Core.Test]
         public async Task StringFormatPercentQEscapesControlSequences()
         {
@@ -251,8 +256,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
                 "return string.byte(string.format('%q', string.char(76, 117, 97, 10)), 5, 6)"
             );
 
+            // Byte 5 should be backslash (92)
+            // Byte 6 should be actual newline (10), NOT 'n' (110)
+            // Reference Lua 5.4 confirms: `lua5.4 -e "print(string.byte(string.format('%q', string.char(76, 117, 97, 10)), 5, 6))"`
+            // outputs: 92      10
             await Assert.That(result.Tuple[0].Number).IsEqualTo(92);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(110);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(10);
         }
 
         /// <remarks>Lua 5.4 §6.4 string.format — width and zero padding for integers.</remarks>

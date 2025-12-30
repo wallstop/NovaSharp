@@ -475,15 +475,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[0].Number).IsGreaterThanOrEqualTo(0d);
         }
 
+        /// <summary>
+        /// Tests that Lua 5.1 outputs %Oy as literal text (not as year modifier).
+        /// Reference: lua5.1 -e "print(os.date('%Oy', 0))" outputs "%Oy"
+        /// </summary>
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
-        public async Task DatePercentOyYieldsTwoDigitYear(LuaCompatibilityVersion version)
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task DatePercentOyOutputsLiteralTextInLua51(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
-            using ScriptContext context = CreateScriptContext(stub);
+            using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
             DynValue result = script.DoString("return os.date('!%Oy', 0)");
 
+            await Assert.That(result.String).IsEqualTo("%Oy");
+        }
+
+        /// <summary>
+        /// Tests that Lua 5.2+ supports %Oy format modifier (POSIX alternate numerals).
+        /// Reference: lua5.2+ -e "print(os.date('%Oy', 0))" outputs "70"
+        /// %Oy is a valid POSIX O modifier combination with 'y' (2-digit year)
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task DatePercentOyOutputsTwoDigitYearInLua52Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            StubPlatformAccessor stub = new();
+            using ScriptContext context = CreateScriptContext(stub, version);
+            Script script = context.Script;
+            DynValue result = script.DoString("return os.date('!%Oy', 0)");
+
+            // %Oy uses alternate numerals representation of 2-digit year
+            // In C locale, this outputs the same as %y which is "70" for epoch
             await Assert.That(result.String).IsEqualTo("70");
         }
 

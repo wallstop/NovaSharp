@@ -1030,6 +1030,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue EmptyString { get; private set; }
 
+        /// <summary>
+        /// A preinitialized, readonly instance representing an empty tuple (0 elements).
+        /// This is semantically different from Nil: an empty tuple means "no values"
+        /// while Nil means "the value nil". This distinction is important for varargs
+        /// handling where select("#", ...) should return 0 for empty varargs, not 1.
+        /// </summary>
+        public static DynValue EmptyTuple { get; private set; }
+
         static DynValue()
         {
             Nil = new DynValue() { _type = DataType.Nil }.AsReadOnly();
@@ -1037,6 +1045,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             True = NewBoolean(true).AsReadOnly();
             False = NewBoolean(false).AsReadOnly();
             EmptyString = NewString(string.Empty).AsReadOnly();
+            EmptyTuple = new DynValue()
+            {
+                _object = Array.Empty<DynValue>(),
+                _type = DataType.Tuple,
+            }.AsReadOnly();
         }
 
         /// <summary>

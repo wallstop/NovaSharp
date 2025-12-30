@@ -277,54 +277,92 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(marchWeeks.String).IsEqualTo("01-01-02");
         }
 
+        /// <summary>
+        /// Tests that Lua 5.1 outputs unsupported %O and %E format modifiers as literal text.
+        /// Reference: lua5.1 -e "print(os.date('%OY-%Ew', 0))" outputs "%OY-%Ew"
+        /// </summary>
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task DateIgnoresOAndEFormatModifiers(LuaCompatibilityVersion version)
+        public async Task DateOutputsUnsupportedOAndEAsLiteralTextInLua51(
+            LuaCompatibilityVersion version
+        )
         {
-            // NOTE: This documents a NovaSharp extension. Standard Lua rejects %O and %E
-            // format modifiers as invalid conversion specifiers. NovaSharp strips them and
-            // treats the following character as the format specifier (POSIX-style behavior).
-            // For example, %OY becomes %Y (year) and %Ew becomes %w (weekday).
-            // This is a known divergence from standard Lua behavior.
+            // Lua 5.1 behavior: Unknown conversion specifiers pass through as literal text
+            // lua5.1 -e "print(os.date('%OY-%Ew', 0))" outputs "%OY-%Ew"
+            // %OY and %Ew are not valid POSIX combinations
             Script script = new Script(version, CoreModulePresets.Complete);
             DynValue formatted = script.DoString("return os.date('!%OY-%Ew', 0)");
 
-            await Assert.That(formatted.String).IsEqualTo("1970-4");
+            await Assert.That(formatted.String).IsEqualTo("%OY-%Ew");
         }
 
-        // This is a documentation comment explaining the known spec divergence.
-        // No test assertion needed - the DateIgnoresOAndEFormatModifiers test above
-        // already validates NovaSharp's behavior, and this comment documents
-        // that it differs from standard Lua.
-        //
-        // Standard Lua behavior:
-        //   lua5.2 -e "print(os.date('%OY-%Ew', 0))"
-        //   lua5.2: (command line):1: bad argument #1 to 'date' (invalid conversion specifier '%OY-%Ew')
-        //
-        // NovaSharp behavior:
-        //   NovaSharp accepts %O and %E as POSIX-style modifier prefixes and strips them.
-        //   This results in %OY -> %Y (year: 1970) and %Ew -> %w (weekday: 4 for Thursday)
-        //   Output: "1970-4"
-        //
-        // If we want to match standard Lua behavior, we would need to add a check
-        // in OsTimeModule.cs to reject %O and %E as unknown specifiers.
+        /// <summary>
+        /// Tests that Lua 5.2+ throws "invalid conversion specifier" for unsupported %O/%E combinations.
+        /// Reference: lua5.2 -e "print(os.date('%OY', 0))" throws error
+        /// %OY is not a valid POSIX combination (Y doesn't support O modifier)
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task DateThrowsForUnsupportedOModifierInLua52Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.2+ behavior: Unsupported O/E modifier combinations throw an error
+            // lua5.2 -e "print(os.date('%OY', 0))" throws error
+            Script script = new Script(version, CoreModulePresets.Complete);
 
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return os.date('!%OY', 0)")
+            );
+
+            await Assert.That(exception.Message).Contains("invalid conversion specifier");
+        }
+
+        /// <summary>
+        /// Tests that Lua 5.1 outputs %Oy as literal text (unknown specifier pass-through).
+        /// Reference: lua5.1 -e "print(os.date('%Oy', 0))" outputs "%Oy"
+        /// </summary>
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task DateSupportsOyModifier(LuaCompatibilityVersion version)
+        public async Task DateOutputsOyAsLiteralTextInLua51(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
             DynValue formatted = script.DoString("return os.date('!%Oy', 0)");
 
+            // Lua 5.1 outputs unknown specifiers as literal text
+            await Assert.That(formatted.String).IsEqualTo("%Oy");
+        }
+
+        /// <summary>
+        /// Tests that Lua 5.2+ supports %Oy format modifier (POSIX alternate representation).
+        /// Reference: lua5.2+ -e "print(os.date('%Oy', 0))" outputs "70"
+        /// %Oy is a valid POSIX combination (y supports O modifier for alternate numerals)
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task DateSupportsOyModifierInLua52Plus(LuaCompatibilityVersion version)
+        {
+            // Lua 5.2+ with glibc strftime supports %Oy (alternate representation of year)
+            // lua5.2 -e "print(os.date('!%Oy', 0))" outputs "70"
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue formatted = script.DoString("return os.date('!%Oy', 0)");
+
             await Assert.That(formatted.String).IsEqualTo("70");
+        }
+
+        /// <summary>
+        /// Tests that Lua 5.2+ supports %EY format modifier (POSIX era-based year).
+        /// Reference: lua5.2+ -e "print(os.date('%EY', 0))" outputs "1970"
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task DateSupportsEYModifierInLua52Plus(LuaCompatibilityVersion version)
+        {
+            // lua5.2 -e "print(os.date('!%EY', 0))" outputs "1970"
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue formatted = script.DoString("return os.date('!%EY', 0)");
+
+            await Assert.That(formatted.String).IsEqualTo("1970");
         }
 
         [global::TUnit.Core.Test]

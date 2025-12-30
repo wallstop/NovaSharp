@@ -1193,24 +1193,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             DynValue lastParam = _valueStack.Peek(offsFromTop);
 
-            if (lastParam.Type == DataType.Tuple && lastParam.Tuple.Length > 1)
+            // Handle tuple expansion: when the last argument is a tuple, it needs special handling.
+            // In Lua, when a function/varargs returns multiple values (or no values), those values
+            // are expanded in the argument list, not passed as a single tuple argument.
+            // - Empty tuple (0 elements): contributes 0 arguments
+            // - Single-element tuple: contributes 1 argument (the element)
+            // - Multi-element tuple: contributes N arguments (all elements)
+            if (lastParam.Type == DataType.Tuple)
             {
+                int tupleLength = lastParam.Tuple.Length;
+
+                // Empty tuple: skip it entirely, return only the preceding arguments
+                if (tupleLength == 0)
+                {
+                    if (numargs == 1)
+                    {
+                        return Array.Empty<DynValue>();
+                    }
+
+                    // Return all arguments except the last (empty) tuple
+                    return new Slice<DynValue>(
+                        _valueStack,
+                        _valueStack.Count - numargs - offsFromTop,
+                        numargs - 1,
+                        false
+                    );
+                }
+
+                // Single-element tuple: use just the first element
+                if (tupleLength == 1)
+                {
+                    // Note: We can't use ListPool here because the caller needs the list
+                    // to persist until ExecArgs completes.
+                    List<DynValue> values = new(numargs);
+
+                    for (int idx = 0; idx < numargs - 1; idx++)
+                    {
+                        values.Add(_valueStack.Peek(numargs - idx - 1 + offsFromTop));
+                    }
+
+                    values.Add(lastParam.Tuple[0]);
+                    return values;
+                }
+
+                // Multi-element tuple: expand all elements
                 // Note: We can't use ListPool here because the caller needs the list
-                // to persist until ExecArgs completes. The list is short-lived but
-                // escapes this method's scope.
-                List<DynValue> values = new(numargs - 1 + lastParam.Tuple.Length);
+                // to persist until ExecArgs completes.
+                List<DynValue> expandedValues = new(numargs - 1 + tupleLength);
 
                 for (int idx = 0; idx < numargs - 1; idx++)
                 {
-                    values.Add(_valueStack.Peek(numargs - idx - 1 + offsFromTop));
+                    expandedValues.Add(_valueStack.Peek(numargs - idx - 1 + offsFromTop));
                 }
 
-                for (int idx = 0; idx < lastParam.Tuple.Length; idx++)
+                for (int idx = 0; idx < tupleLength; idx++)
                 {
-                    values.Add(lastParam.Tuple[idx]);
+                    expandedValues.Add(lastParam.Tuple[idx]);
                 }
 
-                return values;
+                return expandedValues;
             }
             else
             {
@@ -1232,28 +1273,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             for (int i = 0; i < instruction.SymbolList.Length; i++)
             {
-                if (i >= argsList.Count)
-                {
-                    AssignLocal(instruction.SymbolList[i], DynValue.Nil);
-                }
-                else if (
+                // Check for varargs FIRST - this must be checked before i >= argsList.Count
+                // because varargs with 0 arguments should create an empty tuple, not assign nil.
+                // BUG FIX: Previously, when argsList.Count == 0 and i == 0, the "i >= argsList.Count"
+                // branch was taken, incorrectly assigning nil to the varargs symbol instead of
+                // creating an empty varargs tuple.
+                if (
                     (i == instruction.SymbolList.Length - 1)
                     && (instruction.SymbolList[i].NameValue == WellKnownSymbols.VARARGS)
                 )
                 {
-                    int len = argsList.Count - i;
-                    DynValue[] pooledVarargs = DynValueArrayPool.Rent(len);
+                    int len = Math.Max(0, argsList.Count - i);
 
-                    for (int ii = 0; ii < len; ii++, i++)
+                    // Handle empty varargs specially: use EmptyTuple to distinguish
+                    // "zero arguments" from "one nil argument". This is critical for
+                    // select("#", ...) to return 0 when no varargs are passed.
+                    if (len == 0)
                     {
-                        pooledVarargs[ii] = argsList[i].ToScalar().CloneAsWritable();
+                        AssignLocal(instruction.SymbolList[^1], DynValue.EmptyTuple);
                     }
+                    else
+                    {
+                        DynValue[] pooledVarargs = DynValueArrayPool.Rent(len);
 
-                    DynValue[] varargs = DynValueArrayPool.ToArrayAndReturn(pooledVarargs, len);
-                    AssignLocal(
-                        instruction.SymbolList[^1],
-                        DynValue.NewTuple(InternalAdjustTuple(varargs))
-                    );
+                        for (int ii = 0; ii < len; ii++, i++)
+                        {
+                            pooledVarargs[ii] = argsList[i].ToScalar().CloneAsWritable();
+                        }
+
+                        DynValue[] varargs = DynValueArrayPool.ToArrayAndReturn(pooledVarargs, len);
+                        AssignLocal(
+                            instruction.SymbolList[^1],
+                            DynValue.NewTuple(InternalAdjustTuple(varargs))
+                        );
+                    }
+                }
+                else if (i >= argsList.Count)
+                {
+                    AssignLocal(instruction.SymbolList[i], DynValue.Nil);
                 }
                 else
                 {

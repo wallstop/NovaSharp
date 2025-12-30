@@ -34,9 +34,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
-        public async Task LoadstringIsNilInLua52Plus(LuaCompatibilityVersion version)
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task LoadstringIsDeprecatedButAvailableInLua52(LuaCompatibilityVersion version)
         {
+            // Reference Lua 5.2 keeps loadstring as a deprecated-but-functional alias for load
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return type(loadstring)");
+            await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task LoadstringIsNilInLua53Plus(LuaCompatibilityVersion version)
+        {
+            // loadstring was actually removed in Lua 5.3, not 5.2
             Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return type(loadstring)");
             await Assert.That(result.String).IsEqualTo("nil").ConfigureAwait(false);
