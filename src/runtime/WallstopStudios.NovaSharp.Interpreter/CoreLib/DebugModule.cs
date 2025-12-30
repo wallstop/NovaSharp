@@ -638,7 +638,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgument(3, "upvaluejoin", "invalid upvalue index");
             }
 
-            c2.ClosureContext[n2] = c1.ClosureContext[n1];
+            // Make f1's n1-th upvalue refer to f2's n2-th upvalue (per Lua 5.2+ spec)
+            c1.ClosureContext[n1] = c2.ClosureContext[n2];
 
             return DynValue.Void;
         }

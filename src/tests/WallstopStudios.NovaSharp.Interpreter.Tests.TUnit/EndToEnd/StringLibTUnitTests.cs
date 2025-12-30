@@ -234,9 +234,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        [AllLuaVersions]
-        public Task ToStringMetamethodCanReturnVoid(LuaCompatibilityVersion version)
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public Task ToStringMetamethodCanReturnVoidInLua51To52(LuaCompatibilityVersion version)
         {
+            // Lua 5.1-5.2: __tostring can return any value (including nil/void)
             string code =
                 @"
 				t = {}
@@ -250,6 +251,144 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(code);
             return EndToEndDynValueAssert.ExpectAsync(result, DataType.Void, "yup");
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task ToStringMetamethodMustReturnStringInLua53Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.3+: __tostring MUST return a string; void/nil errors
+            string code =
+                @"
+				t = {}
+				mt = {}
+				function mt.__tostring () end
+				setmetatable(t, mt)
+                return tostring(t)
+			";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                script.DoString(code);
+            });
+
+            await Assert.That(exception.Message).Contains("'__tostring' must return a string");
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task ToStringMetamethodRejectsNumberReturnInLua53Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.3+: __tostring returning a number is an error
+            string code =
+                @"
+				t = {}
+				mt = {}
+				function mt.__tostring () return 42 end
+				setmetatable(t, mt)
+                return tostring(t)
+			";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                script.DoString(code);
+            });
+
+            await Assert.That(exception.Message).Contains("'__tostring' must return a string");
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task ToStringMetamethodAllowsNumberReturnInLua51To52(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1-5.2: __tostring can return any value, including numbers
+            string code =
+                @"
+				t = {}
+				mt = {}
+				function mt.__tostring () return 42 end
+				setmetatable(t, mt)
+                return tostring(t)
+			";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
+            await Assert.That(result.Type).IsEqualTo(DataType.Number);
+            await Assert.That(result.Number).IsEqualTo(42);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ToStringMetamethodWorksWithValidString(LuaCompatibilityVersion version)
+        {
+            // All versions: __tostring returning a valid string works
+            string code =
+                @"
+				t = {}
+				mt = {}
+				function mt.__tostring () return 'custom_tostring' end
+				setmetatable(t, mt)
+                return tostring(t)
+			";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
+            await Assert.That(result.Type).IsEqualTo(DataType.String);
+            await Assert.That(result.String).IsEqualTo("custom_tostring");
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+        public async Task ToStringMetamethodRejectsNilReturnInLua53Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.3+: __tostring returning nil explicitly is an error
+            string code =
+                @"
+				t = {}
+				mt = {}
+				function mt.__tostring () return nil end
+				setmetatable(t, mt)
+                return tostring(t)
+			";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+            {
+                script.DoString(code);
+            });
+
+            await Assert.That(exception.Message).Contains("'__tostring' must return a string");
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
+        public async Task ToStringMetamethodAllowsNilReturnInLua51To52(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1-5.2: __tostring returning nil is allowed
+            string code =
+                @"
+				t = {}
+				mt = {}
+				function mt.__tostring () return nil end
+				setmetatable(t, mt)
+                return tostring(t)
+			";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
+            await Assert.That(result.IsNil()).IsTrue();
         }
 
         [global::TUnit.Core.Test]

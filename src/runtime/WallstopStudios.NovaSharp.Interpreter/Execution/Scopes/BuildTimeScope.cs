@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
 {
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Statements;
@@ -178,9 +179,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// Registers a label inside the active block so <c>goto</c> statements can resolve against it.
         /// </summary>
         /// <param name="label">The label being declared.</param>
-        internal void DefineLabel(LabelStatement label)
+        /// <param name="version">Target Lua version for version-specific validation.</param>
+        internal void DefineLabel(LabelStatement label, LuaCompatibilityVersion version)
         {
-            CurrentFrame.DefineLabel(label);
+            CurrentFrame.DefineLabel(label, version);
         }
 
         /// <summary>

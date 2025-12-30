@@ -926,17 +926,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         [Test]
         [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
-        public async Task CharErrorsOnPositiveInfinityLua51And52(LuaCompatibilityVersion version)
+        public async Task CharHandlesPositiveInfinityAsZeroLua51And52(
+            LuaCompatibilityVersion version
+        )
         {
-            // In Lua 5.1/5.2, positive infinity throws "invalid value" error
-            // (unlike NaN and negative infinity, which are silently treated as 0)
+            // In Lua 5.1/5.2, positive infinity is silently converted to 0 (like NaN and -inf).
+            // Verified: lua5.1 -e "print(string.byte(string.char(1/0)))" → 0
             Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return string.char(1/0)");
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                script.DoString("return string.char(1/0)")
-            );
-
-            await Assert.That(exception.Message).Contains("invalid value").ConfigureAwait(false);
+            await Assert.That(result.String.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.String[0]).IsEqualTo('\0').ConfigureAwait(false);
         }
 
         [Test]

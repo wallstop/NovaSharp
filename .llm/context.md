@@ -14,6 +14,16 @@ NovaSharp follows a strict priority order. **NEVER sacrifice a higher priority f
 
 **The Iron Rule**: A performance optimization that breaks Lua spec compliance is REJECTED. A memory optimization that slows down hot paths is REJECTED. See [correctness-then-performance](skills/correctness-then-performance.md) for the complete decision framework.
 
+### ⛔ "Close Enough" is NEVER Acceptable
+
+NovaSharp's goal is **exact Lua spec compliance**, not "something like Lua." When discrepancies are found:
+
+1. **ASSUME NovaSharp is WRONG** — Reference Lua behavior is the source of truth
+1. **Investigate deeply** — Never dismiss differences as "acceptable variations"
+1. **Fix production code** — Never adjust tests to match NovaSharp's bugs
+1. **Verify with `lua5.X`** — Every expected result must be confirmed against reference Lua
+1. **"Close enough" = BUG** — Approximate behavior, formatting differences, or edge case mismatches are all bugs
+
 ______________________________________________________________________
 
 ## 🔴 Critical Rules

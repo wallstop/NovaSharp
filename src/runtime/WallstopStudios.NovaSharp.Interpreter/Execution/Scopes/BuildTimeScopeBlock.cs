@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
     using System;
     using System.Collections.Generic;
     using Cysharp.Text;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -229,11 +230,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// Registers a label so subsequent gotos can reference it, validating duplicates per Lua 5.4 §3.3.4.
         /// </summary>
         /// <param name="label">Label being declared.</param>
+        /// <param name="version">Target Lua version for version-specific validation.</param>
         /// <exception cref="SyntaxErrorException">Thrown when a label is defined twice in the same scope.</exception>
-        internal void DefineLabel(LabelStatement label)
+        /// <remarks>
+        /// In Lua 5.2/5.3, labels can be shadowed in nested blocks.
+        /// In Lua 5.4+, labels cannot shadow visible labels anywhere in the function.
+        /// See: https://www.lua.org/manual/5.4/manual.html#8 ("Goto labels cannot shadow visible labels")
+        /// </remarks>
+        internal void DefineLabel(LabelStatement label, LuaCompatibilityVersion version)
         {
             _localLabels ??= new Dictionary<string, LabelStatement>();
 
+            // Check for duplicate in the current block (always an error)
             if (_localLabels.TryGetValue(label.Label, out LabelStatement existing))
             {
                 throw new SyntaxErrorException(
@@ -243,20 +251,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
                     existing.SourceRef.FromLine
                 );
             }
-            else
-            {
-                _localLabels.Add(label.Label, label);
-                label.SetDefinedVars(_definedNames.Count, _lastDefinedName);
-                label.SetDeclaringBlock(this);
 
-                // Track this label as potentially being at end of block.
-                // We'll finalize this when the block closes.
-                _labelsAtPotentialEnd ??= new List<(LabelStatement, int, string)>();
-                _labelsAtPotentialEnd.Add(
-                    (label, _varCountBeforeLastNonVoidStatement, _varNameBeforeLastNonVoidStatement)
-                );
-                _seenNonVoidStatementSinceLastLabel = false;
+            // Lua 5.4+ prohibits shadowing visible labels in parent blocks
+            if (version >= LuaCompatibilityVersion.Lua54)
+            {
+                LabelStatement visibleLabel = FindLabelInParentBlocks(label.Label);
+                if (visibleLabel != null)
+                {
+                    throw new SyntaxErrorException(
+                        label.NameToken,
+                        "label '{0}' already defined on line {1}",
+                        label.Label,
+                        visibleLabel.SourceRef.FromLine
+                    );
+                }
             }
+
+            // Add the label to the current block
+            _localLabels.Add(label.Label, label);
+            label.SetDefinedVars(_definedNames.Count, _lastDefinedName);
+            label.SetDeclaringBlock(this);
+
+            // Track this label as potentially being at end of block.
+            // We'll finalize this when the block closes.
+            _labelsAtPotentialEnd ??= new List<(LabelStatement, int, string)>();
+            _labelsAtPotentialEnd.Add(
+                (label, _varCountBeforeLastNonVoidStatement, _varNameBeforeLastNonVoidStatement)
+            );
+            _seenNonVoidStatementSinceLastLabel = false;
+        }
+
+        /// <summary>
+        /// Searches parent blocks for a label with the specified name.
+        /// </summary>
+        /// <param name="labelName">The label name to search for.</param>
+        /// <returns>The first matching label found in a parent block, or <c>null</c> if none exists.</returns>
+        private LabelStatement FindLabelInParentBlocks(string labelName)
+        {
+            for (BuildTimeScopeBlock parent = Parent; parent != null; parent = parent.Parent)
+            {
+                if (
+                    parent._localLabels != null
+                    && parent._localLabels.TryGetValue(labelName, out LabelStatement existing)
+                )
+                {
+                    return existing;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

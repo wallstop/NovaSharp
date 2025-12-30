@@ -6,6 +6,39 @@
 
 ______________________________________________________________________
 
+## 🔴 Reference Lua is the Source of Truth
+
+When creating fixtures, remember:
+
+1. **Run against reference Lua FIRST** — The output from `lua5.X fixture.lua` defines expected behavior
+1. **NovaSharp must match** — Any difference means NovaSharp has a bug
+1. **NEVER adjust fixtures to match NovaSharp** — Fix the interpreter instead
+1. **Document version differences** — If Lua 5.1 and 5.4 behave differently, that's TWO expected behaviors
+
+### Before Committing ANY Fixture
+
+```bash
+# Run against ALL target versions and RECORD THE OUTPUT
+lua5.1 fixture.lua
+lua5.2 fixture.lua
+lua5.3 fixture.lua
+lua5.4 fixture.lua
+
+# These outputs are the SPEC — NovaSharp MUST match them
+# If outputs differ between versions, create version-specific tests
+```
+
+### When NovaSharp and Reference Lua Differ
+
+| Scenario                                | Action                                  |
+| --------------------------------------- | --------------------------------------- |
+| NovaSharp differs from ALL Lua versions | **NovaSharp BUG** — fix production code |
+| NovaSharp matches some Lua versions     | Check version gating in NovaSharp       |
+| Fixture fails on reference Lua          | **Fixture bug** — fix the fixture       |
+| Fixture uses NovaSharp-only features    | Mark `@novasharp-only: true`            |
+
+______________________________________________________________________
+
 ## 🔴 Critical: Complete Test Workflow
 
 Every new test requires **THREE deliverables**:
@@ -72,7 +105,7 @@ ______________________________________________________________________
 
 The harness **ONLY** parses the three required fields (`@lua-versions`, `@novasharp-only`, `@expects-error`). Any other metadata tags are **silently ignored** and will cause fixtures to run incorrectly or be skipped entirely.
 
-### ❌ NEVER Use These (they are NOT parsed):
+### ❌ NEVER Use These (they are NOT parsed)
 
 ```lua
 -- ❌ WRONG: @min-version is NOT recognized
@@ -97,7 +130,7 @@ The harness **ONLY** parses the three required fields (`@lua-versions`, `@novash
 -- @error-pattern: some error message
 ```
 
-### ✅ CORRECT Equivalents:
+### ✅ CORRECT Equivalents
 
 | ❌ Invalid                     | ✅ Correct Replacement                          |
 | ------------------------------ | ----------------------------------------------- |

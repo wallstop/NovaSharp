@@ -244,6 +244,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Continuation that validates the result of a <c>__tostring</c> metamethod before returning it to Lua.
         /// </summary>
+        /// <remarks>
+        /// <para><b>Lua 5.1–5.2:</b> <c>__tostring</c> can return any value (gets passed through, including nil).</para>
+        /// <para><b>Lua 5.3+:</b> <c>__tostring</c> MUST return a string; otherwise, an error is raised:
+        /// <c>'__tostring' must return a string</c>.</para>
+        /// </remarks>
         /// <param name="executionContext">Execution context driving the metamethod invocation.</param>
         /// <param name="args">Arguments flowing out of the metamethod call.</param>
         /// <returns>The validated string result.</returns>
@@ -252,6 +257,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackArguments args
         )
         {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
             if (args == null)
             {
                 throw new ArgumentNullException(nameof(args));
@@ -259,14 +269,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             DynValue b = args[0].ToScalar();
 
+            // Lua 5.3+ requires __tostring to return a string; Lua 5.1-5.2 allows any return value
+            LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
+            LuaCompatibilityVersion resolved = LuaVersionDefaults.Resolve(version);
+            bool requireStringReturn = resolved >= LuaCompatibilityVersion.Lua53;
+
             if (b.IsNil())
             {
+                if (requireStringReturn)
+                {
+                    throw new ScriptRuntimeException("'__tostring' must return a string");
+                }
+
                 return b;
             }
 
             if (b.Type != DataType.String)
             {
-                throw new ScriptRuntimeException("'tostring' must return a string");
+                if (requireStringReturn)
+                {
+                    throw new ScriptRuntimeException("'__tostring' must return a string");
+                }
+
+                // Lua 5.1-5.2: allow non-string returns to pass through
+                return b;
             }
 
             return b;
@@ -605,6 +631,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return TryParseHexLuaNumeral(span, index + 2, negative, out value);
             }
 
+            // Handle "inf" string specially - .NET's double.TryParse doesn't recognize "inf",
+            // only "Infinity". Lua 5.1's strtod accepts "inf" via C runtime.
+            // Lua 5.2+ rejects all inf/nan strings, so we only enable this for Lua 5.1.
+            if (resolved == LuaCompatibilityVersion.Lua51)
+            {
+                ReadOnlySpan<char> remaining = span.Slice(index);
+                if (
+                    remaining.Equals("inf".AsSpan(), StringComparison.OrdinalIgnoreCase)
+                    || remaining.Equals("infinity".AsSpan(), StringComparison.OrdinalIgnoreCase)
+                )
+                {
+                    value = LuaNumber.FromDouble(
+                        negative ? double.NegativeInfinity : double.PositiveInfinity
+                    );
+                    return true;
+                }
+            }
+
             // Decimal fallback using invariant culture
             if (
                 double.TryParse(
@@ -623,6 +667,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 )
                 {
                     return false;
+                }
+
+                // Fix NaN sign bit: .NET's double.Parse("nan") always produces a negative NaN,
+                // but Lua 5.1's strtod("nan") produces a positive NaN (platform-dependent).
+                // We preserve the sign from the input string: "nan" → positive NaN, "-nan" → negative NaN.
+                if (double.IsNaN(doubleValue))
+                {
+                    // Create the correct NaN sign based on whether the input had a minus sign
+                    // Use bit manipulation to create a positive NaN (clear sign bit)
+                    if (!negative)
+                    {
+                        // Clear the sign bit (bit 63) to create positive NaN
+                        long bits = BitConverter.DoubleToInt64Bits(doubleValue);
+                        bits &= 0x7FFFFFFFFFFFFFFF; // Clear sign bit
+                        doubleValue = BitConverter.Int64BitsToDouble(bits);
+                    }
                 }
 
                 // Use LuaNumber.FromDouble to auto-promote whole numbers to integers

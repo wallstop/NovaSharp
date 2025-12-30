@@ -185,6 +185,7 @@ LUA_55_FEATURES = [
 NOVASHARP_SPECIFIC_PATTERNS = [
     (r'\b!=\b', 'C-style not-equal'),
     (r'_NOVASHARP', 'NovaSharp global'),
+    (r'_NovaSharp', 'NovaSharp global'),  # Both casings
     (r'clr\.', 'CLR interop'),
     (r'import\s*\(', 'NovaSharp import'),
     (r'dynamic\.', 'dynamic access'),
@@ -197,11 +198,20 @@ NOVASHARP_SPECIFIC_PATTERNS = [
     (r"require\s*\(\s*['\"]json['\"]\s*\)", 'NovaSharp json module'),
     (r'string\.startswith\s*\(', 'NovaSharp string extension'),
     (r'string\.endswith\s*\(', 'NovaSharp string extension'),
+    (r':startsWith\s*\(', 'NovaSharp string extension (method-style)'),
+    (r':endsWith\s*\(', 'NovaSharp string extension (method-style)'),
+    (r':contains\s*\(', 'NovaSharp string extension (method-style)'),
     (r'string\.contains\s*\(', 'NovaSharp string extension'),
     (r'string\.unicode\s*\(', 'NovaSharp string extension'),
     (r'Script\.GlobalOptions', 'NovaSharp Script.GlobalOptions'),
     (r'sandbox', 'potential NovaSharp sandbox'),
     (r'debug\.debug\s*\(\s*\)', 'debug.debug() is interactive/platform-dependent'),
+    # Metalua-style lambda syntax: |params|expression
+    (r'\|[a-zA-Z_][a-zA-Z0-9_,\s]*\|', 'metalua-style lambda syntax'),
+    # NovaSharp-specific error messages
+    (r'CLR-call boundary', 'NovaSharp CLR-call boundary error message'),
+    # NovaSharp prime table syntax: ${ key = value }
+    (r'\$\s*\{', 'NovaSharp prime table syntax'),
 ]
 
 # Patterns indicating the test expects an error
@@ -442,6 +452,7 @@ NOVASHARP_ONLY_TEST_CLASS_PREFIXES = [
     'JsonModule',  # NovaSharp JSON module
     'IoModuleVirtualization',  # NovaSharp IO stream virtualization
     'OsSystemModule',  # os.execute behavior differs from standard Lua
+    'OsExecuteVersionParity',  # Uses StubPlatformAccessor for command virtualization
 ]
 
 

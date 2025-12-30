@@ -780,6 +780,142 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        // ========================================
+        // Infinity/NaN String Parsing Tests (Lua §6.1)
+        // Lua 5.1 accepts "inf" and "nan" string literals via C's strtod.
+        // Lua 5.2+ rejects them and returns nil.
+        // ========================================
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("inf")]
+        [global::TUnit.Core.Arguments("Inf")]
+        [global::TUnit.Core.Arguments("INF")]
+        [global::TUnit.Core.Arguments("infinity")]
+        [global::TUnit.Core.Arguments("Infinity")]
+        [global::TUnit.Core.Arguments("INFINITY")]
+        public async Task ToNumberParsesInfStringInLua51(string infString)
+        {
+            // In Lua 5.1, tonumber('inf') returns positive infinity
+            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString(infString) },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert
+                .That(double.IsPositiveInfinity(result.Number))
+                .IsTrue()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("-inf")]
+        [global::TUnit.Core.Arguments("-Inf")]
+        [global::TUnit.Core.Arguments("-INF")]
+        [global::TUnit.Core.Arguments("-infinity")]
+        [global::TUnit.Core.Arguments("-Infinity")]
+        [global::TUnit.Core.Arguments("-INFINITY")]
+        public async Task ToNumberParsesNegativeInfStringInLua51(string infString)
+        {
+            // In Lua 5.1, tonumber('-inf') returns negative infinity
+            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString(infString) },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert
+                .That(double.IsNegativeInfinity(result.Number))
+                .IsTrue()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberReturnsNilForInfStringInLua52Plus(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.2+, tonumber('inf') returns nil
+            Script script = new Script(version, CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(new[] { DynValue.NewString("inf") }, isMethodCall: false);
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("nan")]
+        [global::TUnit.Core.Arguments("NaN")]
+        [global::TUnit.Core.Arguments("NAN")]
+        [global::TUnit.Core.Arguments("Nan")]
+        [global::TUnit.Core.Arguments("+nan")]
+        [global::TUnit.Core.Arguments("+NaN")]
+        public async Task ToNumberParsesNanStringAsPositiveNanInLua51(string nanString)
+        {
+            // In Lua 5.1, tonumber('nan') returns a positive NaN (per strtod behavior on Linux)
+            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString(nanString) },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
+            // Verify it's a positive NaN (sign bit not set)
+            await Assert.That(double.IsNegative(result.Number)).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("-nan")]
+        [global::TUnit.Core.Arguments("-NaN")]
+        [global::TUnit.Core.Arguments("-NAN")]
+        [global::TUnit.Core.Arguments("-Nan")]
+        public async Task ToNumberParsesNegativeNanStringAsNegativeNanInLua51(string nanString)
+        {
+            // In Lua 5.1, tonumber('-nan') returns a negative NaN (sign bit set)
+            Script script = CreateScript(LuaCompatibilityVersion.Lua51);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(
+                new[] { DynValue.NewString(nanString) },
+                isMethodCall: false
+            );
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(double.IsNaN(result.Number)).IsTrue().ConfigureAwait(false);
+            // Verify it's a negative NaN (sign bit set)
+            await Assert.That(double.IsNegative(result.Number)).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberReturnsNilForNanStringInLua52Plus(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.2+, tonumber('nan') returns nil
+            Script script = new Script(version, CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments args = new(new[] { DynValue.NewString("nan") }, isMethodCall: false);
+
+            DynValue result = BasicModule.ToNumber(context, args);
+
+            await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]

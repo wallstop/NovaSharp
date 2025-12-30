@@ -176,12 +176,30 @@ public async Task MinimalReproduction()
 }
 ```
 
-### 2. Compare with reference Lua
+### 2. Compare with Reference Lua (The Source of Truth)
+
+**Reference Lua output is the ONLY acceptable expected result.**
 
 ```bash
-# Run same code in reference Lua
-lua5.4 -e "print(<test code>)"
+# Run against ALL target versions
+for v in 5.1 5.2 5.3 5.4; do
+    echo "=== Lua $v ==="
+    lua$v -e "print(<test code>)"
+done
+```
 
+When outputs differ:
+
+| Scenario                                | Conclusion                                              |
+| --------------------------------------- | ------------------------------------------------------- |
+| NovaSharp differs from ALL Lua versions | **NovaSharp BUG** — fix production code                 |
+| NovaSharp matches Lua 5.4 but not 5.1   | Check if version-specific; may need version gating      |
+| NovaSharp matches 5.1 but not 5.4       | Likely **BUG** — verify which version NovaSharp targets |
+| Lua versions differ from each other     | NovaSharp must match **EACH version** when in that mode |
+
+**🔴 NEVER** assume NovaSharp is correct when it differs from reference Lua. The burden of proof is on NovaSharp to match Lua, not the other way around.
+
+```bash
 # Run in NovaSharp CLI
 dotnet run -c Release --project src/tooling/WallstopStudios.NovaSharp.Cli -e "print(<test code>)"
 ```

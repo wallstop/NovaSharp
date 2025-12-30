@@ -1,22 +1,23 @@
 -- @lua-versions: 5.1
--- @novasharp-only: false
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:0
 -- @test: BasicModuleTUnitTests.TonumberNanStringLua51
 -- @compat-notes: Lua 5.1 accepts NaN string literals via C's strtod; Lua 5.2+ rejects them (returns nil)
+-- @novasharp-only-reason: string.format %q escape sequence rendering differs between Lua and NovaSharp (tab displays as /9 vs \t)
 
 -- Test that Lua 5.1 accepts various NaN string formats and returns a number
 
 local function test_nan_string(input, label)
-    local result = tonumber(input)
-    if type(result) ~= "number" then
-        error(string.format("FAIL: tonumber(%q) expected number, got %s", input, type(result)))
-    end
-    -- NaN has the special property that it's not equal to itself
-    if result == result then
-        error(string.format("FAIL: tonumber(%q) returned %s, expected NaN (not equal to itself)", input, tostring(result)))
-    end
-    print(string.format("PASS: tonumber(%q) = %s (type: %s)", input, tostring(result), type(result)))
+  local result = tonumber(input)
+  if type(result) ~= "number" then
+    error(string.format("FAIL: tonumber(%q) expected number, got %s", input, type(result)))
+  end
+  -- NaN has the special property that it's not equal to itself
+  if result == result then
+    error(string.format("FAIL: tonumber(%q) returned %s, expected NaN (not equal to itself)", input, tostring(result)))
+  end
+  print(string.format("PASS: tonumber(%q) = %s (type: %s)", input, tostring(result), type(result)))
 end
 
 -- Basic NaN variants

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2213
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2260
 -- @test: MathModuleTUnitTests.ModfPositiveInfinityReturnsPositiveInfinityAndPositiveZero
 local int_part, frac_part = math.modf(math.huge)
                 local is_pos_inf = (int_part == math.huge)

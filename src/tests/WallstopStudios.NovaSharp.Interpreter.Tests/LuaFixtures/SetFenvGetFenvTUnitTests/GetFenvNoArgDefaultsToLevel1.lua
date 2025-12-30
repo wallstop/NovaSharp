@@ -1,12 +1,11 @@
+-- @lua-versions: 5.1
+-- @novasharp-only: false
+-- @expects-error: false
 -- Test: getfenv with no argument defaults to getfenv(1)
 -- Expected: success - same as getfenv(1)
 -- Versions: 5.1 only
 -- Reference: Lua 5.1 Reference Manual §5.1
-
 -- getfenv() is equivalent to getfenv(1)
--- @lua-versions: 5.1
--- @novasharp-only: false
--- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/SetFenvGetFenvTUnitTests.cs
 -- @test: SetFenvGetFenvTUnitTests.GetFenvNoArgDefaultsToLevel1
 local ok, err = pcall(function()

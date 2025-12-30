@@ -593,6 +593,15 @@ Before submitting code, verify:
 - [ ] Special values (infinity, NaN, empty, null) covered
 - [ ] Version-specific behavior (5.1 through 5.5) covered
 
+### Lua Compliance Verification
+
+- [ ] **All expected values verified against reference Lua** (`lua5.X -e "..."`)
+- [ ] Output format (strings, numbers) matches reference Lua **exactly**
+- [ ] Error messages compared with reference Lua (type must match)
+- [ ] Edge case behavior **confirmed** with reference Lua (not assumed)
+- [ ] Version-specific differences documented with Lua version citations
+- [ ] Created `.lua` fixture files runnable by reference Lua interpreters
+
 ### Data-Driven Tests
 
 - [ ] Used `[Arguments]` or `[MethodDataSource]` where appropriate

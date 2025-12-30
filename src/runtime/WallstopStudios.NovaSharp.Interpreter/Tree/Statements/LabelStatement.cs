@@ -78,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             SourceRef = NameToken.GetSourceRef();
             Label = NameToken.text;
 
-            lcontext.Scope.DefineLabel(this);
+            lcontext.Scope.DefineLabel(this, lcontext.Script.Options.CompatibilityVersion);
         }
 
         /// <summary>

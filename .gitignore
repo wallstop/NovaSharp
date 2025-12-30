@@ -6,6 +6,11 @@
 *.user
 *.sln.docstates
 
+tools/LuaCorpusExtractor/__pycache__/**
+tools/LuaCorpusExtractor/__pycache__
+
+*.pyc
+
 .vscode/**
 
 # Build results

@@ -89,9 +89,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua53)]
         public async Task GotoSupportsRedeclaringInsideBlock(LuaCompatibilityVersion version)
         {
+            // In Lua 5.2/5.3, labels can be shadowed in nested blocks
             string code =
                 @"
                 ::label::
@@ -106,9 +107,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task GotoLabelShadowingProhibitedInLua54Plus(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.4+, labels cannot shadow visible labels (even in nested blocks)
+            // See: https://www.lua.org/manual/5.4/manual.html#8 ("Goto labels cannot shadow visible labels")
+            string code =
+                @"
+                ::label::
+                do
+                    ::label::
+                end
+                ";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua53)]
         public async Task GotoRedeclaredLabelAllowsJump(LuaCompatibilityVersion version)
         {
+            // In Lua 5.2/5.3, goto jumps to the innermost label when shadowed
             string code =
                 @"
                 ::label::
@@ -123,6 +144,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task GotoRedeclaredLabelThrowsInLua54Plus(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.4+, label redeclaration in inner scope is a syntax error
+            string code =
+                @"
+                ::label::
+                do
+                    goto label
+                    do return 5 end
+                    ::label::
+                    return 3
+                end
+                ";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

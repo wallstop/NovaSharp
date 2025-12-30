@@ -365,19 +365,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     // Lua 5.1/5.2 behavior:
                     // - NaN → 0 (silent)
                     // - Negative infinity → 0 (silent)
-                    // - Positive infinity → ERROR "invalid value"
-                    // This matches reference Lua 5.1/5.2 behavior on macOS and most platforms
+                    // - Positive infinity → 0 (silent)
+                    // All special float values are silently converted to 0 in Lua 5.1/5.2.
+                    // Verified with lua5.1 -e "print(string.byte(string.char(1/0)))" → 0
                     double floored = Math.Floor(d);
-                    if (double.IsPositiveInfinity(floored))
-                    {
-                        // Positive infinity errors in Lua 5.1/5.2 with "invalid value"
-                        using Utf16ValueStringBuilder errSb = ZStringBuilder.Create();
-                        errSb.Append("bad argument #");
-                        errSb.Append(i + 1);
-                        errSb.Append(" to 'char' (invalid value)");
-                        throw new ScriptRuntimeException(errSb.ToString());
-                    }
-                    else if (double.IsNaN(floored) || double.IsNegativeInfinity(floored))
+                    if (
+                        double.IsNaN(floored)
+                        || double.IsNegativeInfinity(floored)
+                        || double.IsPositiveInfinity(floored)
+                    )
                     {
                         charValue = 0;
                     }

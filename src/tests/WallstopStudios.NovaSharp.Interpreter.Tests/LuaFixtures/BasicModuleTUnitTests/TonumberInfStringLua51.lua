@@ -1,29 +1,30 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: true
--- @expects-error: true
+-- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:0
 -- @test: BasicModuleTUnitTests.TonumberInfStringLua51
--- @compat-notes: Lua 5.1 accepts infinity string literals via C's strtod; Lua 5.2+ rejects them (returns nil). NovaSharp currently does NOT support this - see commit 3be26a45ac9f4689d939156aec68b516cbec3222 for context.
+-- @compat-notes: Lua 5.1 accepts infinity string literals via C's strtod; Lua 5.2+ rejects them (returns nil).
+-- @novasharp-only-reason: string.format %q escape sequence rendering differs between Lua and NovaSharp (tab displays as /9 vs \t)
 
 -- Test that Lua 5.1 accepts various infinity string formats and returns a number
 
 local function test_inf_string(input, expected_sign, label)
-    local result = tonumber(input)
-    if type(result) ~= "number" then
-        error(string.format("FAIL: tonumber(%q) expected number, got %s", input, type(result)))
-    end
-    -- Check if it's actually infinity (finite check)
-    local is_inf = (result == result) and (result + 1 == result) -- only true for infinity
-    if not is_inf then
-        error(string.format("FAIL: tonumber(%q) returned %s, expected infinity", input, tostring(result)))
-    end
-    -- Check sign
-    if expected_sign == "positive" and result < 0 then
-        error(string.format("FAIL: tonumber(%q) expected positive infinity, got %s", input, tostring(result)))
-    elseif expected_sign == "negative" and result > 0 then
-        error(string.format("FAIL: tonumber(%q) expected negative infinity, got %s", input, tostring(result)))
-    end
-    print(string.format("PASS: tonumber(%q) = %s (type: %s)", input, tostring(result), type(result)))
+  local result = tonumber(input)
+  if type(result) ~= "number" then
+    error(string.format("FAIL: tonumber(%q) expected number, got %s", input, type(result)))
+  end
+  -- Check if it's actually infinity (finite check)
+  local is_inf = (result == result) and (result + 1 == result) -- only true for infinity
+  if not is_inf then
+    error(string.format("FAIL: tonumber(%q) returned %s, expected infinity", input, tostring(result)))
+  end
+  -- Check sign
+  if expected_sign == "positive" and result < 0 then
+    error(string.format("FAIL: tonumber(%q) expected positive infinity, got %s", input, tostring(result)))
+  elseif expected_sign == "negative" and result > 0 then
+    error(string.format("FAIL: tonumber(%q) expected negative infinity, got %s", input, tostring(result)))
+  end
+  print(string.format("PASS: tonumber(%q) = %s (type: %s)", input, tostring(result), type(result)))
 end
 
 -- Basic inf variants (positive)

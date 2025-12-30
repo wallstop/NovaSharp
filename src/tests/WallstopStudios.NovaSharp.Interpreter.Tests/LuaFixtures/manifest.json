@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1724,
-  "novasharp_only": 418,
-  "comparable": 1306,
+  "total_snippets": 1759,
+  "novasharp_only": 450,
+  "comparable": 1309,
   "by_version": {
-    "5.1": 861,
-    "5.2": 574,
+    "5.1": 862,
+    "5.2": 571,
     "5.3": 816,
-    "5.4": 853,
-    "5.5": 893
+    "5.4": 856,
+    "5.5": 897
   },
   "snippets": [
     {
@@ -573,11 +573,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ClosureTUnitTests.cs:45",
       "test": "ClosureTUnitTests.LambdaFunctions",
       "lua_versions": [
+        "5.1",
+        "5.2",
         "5.3",
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -585,11 +587,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ClosureTUnitTests.cs:62",
       "test": "ClosureTUnitTests.ClosureOnParamLambda",
       "lua_versions": [
+        "5.1",
+        "5.2",
         "5.3",
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -757,7 +761,7 @@
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -979,7 +983,7 @@
     },
     {
       "path": "GotoTUnitTests/GotoSupportsRedeclaringInsideBlock.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:104",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:105",
       "test": "GotoTUnitTests.GotoSupportsRedeclaringInsideBlock",
       "lua_versions": [
         "5.2",
@@ -991,8 +995,21 @@
       "expects_error": true
     },
     {
-      "path": "GotoTUnitTests/GotoRedeclaredLabelAllowsJump.lua",
+      "path": "GotoTUnitTests/GotoLabelShadowingProhibitedInLua54Plus.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:124",
+      "test": "GotoTUnitTests.GotoLabelShadowingProhibitedInLua54Plus",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "GotoTUnitTests/GotoRedeclaredLabelAllowsJump.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:145",
       "test": "GotoTUnitTests.GotoRedeclaredLabelAllowsJump",
       "lua_versions": [
         "5.2",
@@ -1004,8 +1021,21 @@
       "expects_error": true
     },
     {
+      "path": "GotoTUnitTests/GotoRedeclaredLabelThrowsInLua54Plus.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:166",
+      "test": "GotoTUnitTests.GotoRedeclaredLabelThrowsInLua54Plus",
+      "lua_versions": [
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
       "path": "GotoTUnitTests/GotoUndefinedInnerLabelThrows.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:143",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:185",
       "test": "GotoTUnitTests.GotoUndefinedInnerLabelThrows",
       "lua_versions": [
         "5.2",
@@ -1018,7 +1048,7 @@
     },
     {
       "path": "GotoTUnitTests/GotoCanJumpOverLocalWhenLabelAtEndOfBlock.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:167",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:209",
       "test": "GotoTUnitTests.GotoCanJumpOverLocalWhenLabelAtEndOfBlock",
       "lua_versions": [
         "5.2",
@@ -1031,7 +1061,7 @@
     },
     {
       "path": "GotoTUnitTests/GotoCannotJumpOverLocalDeclarations.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:188",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:230",
       "test": "GotoTUnitTests.GotoCannotJumpOverLocalDeclarations",
       "lua_versions": [
         "5.2",
@@ -1044,7 +1074,7 @@
     },
     {
       "path": "GotoTUnitTests/GotoJumpOutOfBlocksReturnsValue.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:215",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:257",
       "test": "GotoTUnitTests.GotoJumpOutOfBlocksReturnsValue",
       "lua_versions": [
         "5.2",
@@ -1057,7 +1087,7 @@
     },
     {
       "path": "GotoTUnitTests/GotoJumpOutOfScopesPreservesVariables.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:248",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:290",
       "test": "GotoTUnitTests.GotoJumpOutOfScopesPreservesVariables",
       "lua_versions": [
         "5.2",
@@ -2568,11 +2598,20 @@
       "expects_error": false
     },
     {
-      "path": "StringLibTUnitTests/ToStringMetamethodCanReturnVoid.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:251",
-      "test": "StringLibTUnitTests.ToStringMetamethodCanReturnVoid",
+      "path": "StringLibTUnitTests/ToStringMetamethodCanReturnVoidInLua51To52.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:252",
+      "test": "StringLibTUnitTests.ToStringMetamethodCanReturnVoidInLua51To52",
       "lua_versions": [
-        "5.2",
+        "5.1"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringLibTUnitTests/ToStringMetamethodMustReturnStringInLua53Plus.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:275",
+      "test": "StringLibTUnitTests.ToStringMetamethodMustReturnStringInLua53Plus",
+      "lua_versions": [
         "5.3",
         "5.4",
         "5.5"
@@ -2581,8 +2620,60 @@
       "expects_error": true
     },
     {
+      "path": "StringLibTUnitTests/ToStringMetamethodRejectsNumberReturnInLua53Plus.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:300",
+      "test": "StringLibTUnitTests.ToStringMetamethodRejectsNumberReturnInLua53Plus",
+      "lua_versions": [
+        "5.1"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "StringLibTUnitTests/ToStringMetamethodAllowsNumberReturnInLua51To52.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:323",
+      "test": "StringLibTUnitTests.ToStringMetamethodAllowsNumberReturnInLua51To52",
+      "lua_versions": [
+        "5.1"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "StringLibTUnitTests/ToStringMetamethodWorksWithValidString.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:343",
+      "test": "StringLibTUnitTests.ToStringMetamethodWorksWithValidString",
+      "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "StringLibTUnitTests/ToStringMetamethodRejectsNilReturnInLua53Plus.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:367",
+      "test": "StringLibTUnitTests.ToStringMetamethodRejectsNilReturnInLua53Plus",
+      "lua_versions": [
+        "5.1"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "StringLibTUnitTests/ToStringMetamethodAllowsNilReturnInLua51To52.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:390",
+      "test": "StringLibTUnitTests.ToStringMetamethodAllowsNilReturnInLua51To52",
+      "lua_versions": [
+        "5.1"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
       "path": "StringLibTUnitTests/StringGSubRejectsPercentEscapes.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:265",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:404",
       "test": "StringLibTUnitTests.StringGSubRejectsPercentEscapes",
       "lua_versions": [
         "5.1"
@@ -2592,7 +2683,7 @@
     },
     {
       "path": "StringLibTUnitTests/StringGSubTreatsUnknownPercentEscapesAsLiteralInLua51.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:286",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:425",
       "test": "StringLibTUnitTests.StringGSubTreatsUnknownPercentEscapesAsLiteralInLua51",
       "lua_versions": [
         "5.1"
@@ -2602,7 +2693,7 @@
     },
     {
       "path": "StringLibTUnitTests/StringGSubHandlesMultilinePatterns.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:303",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:442",
       "test": "StringLibTUnitTests.StringGSubHandlesMultilinePatterns",
       "lua_versions": [
         "5.1",
@@ -2616,7 +2707,7 @@
     },
     {
       "path": "StringLibTUnitTests/StringMatchMatchesErrorMessage.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:329",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:468",
       "test": "StringLibTUnitTests.StringMatchMatchesErrorMessage",
       "lua_versions": [
         "5.1",
@@ -2914,7 +3005,7 @@
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -2928,7 +3019,7 @@
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": true
     },
     {
@@ -4333,7 +4424,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/SelectErrorsOnNonIntegerIndexLua53Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:793",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:929",
       "test": "BasicModuleTUnitTests.SelectErrorsOnNonIntegerIndexLua53Plus",
       "lua_versions": [
         "5.1"
@@ -4343,7 +4434,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/SelectTruncatesNonIntegerIndexLua51And52.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:806",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:942",
       "test": "BasicModuleTUnitTests.SelectTruncatesNonIntegerIndexLua51And52",
       "lua_versions": [
         "5.1"
@@ -4353,7 +4444,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/SelectAcceptsIntegralFloatLua53Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:821",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:957",
       "test": "BasicModuleTUnitTests.SelectAcceptsIntegralFloatLua53Plus",
       "lua_versions": [
         "5.3",
@@ -4365,7 +4456,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/ErrorLevelErrorsOnNonIntegerLua53Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:839",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:975",
       "test": "BasicModuleTUnitTests.ErrorLevelErrorsOnNonIntegerLua53Plus",
       "lua_versions": [
         "5.1"
@@ -4375,7 +4466,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/ErrorLevelTruncatesNonIntegerLua51And52.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:853",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:989",
       "test": "BasicModuleTUnitTests.ErrorLevelTruncatesNonIntegerLua51And52",
       "lua_versions": [
         "5.1"
@@ -4385,7 +4476,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/PrintCallsGlobalTostringInLua51To53.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:875",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1011",
       "test": "BasicModuleTUnitTests.PrintCallsGlobalTostringInLua51To53",
       "lua_versions": [
         "5.1"
@@ -4395,7 +4486,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/PrintUsesTostringMetamethodDirectlyInLua54Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:905",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1041",
       "test": "BasicModuleTUnitTests.PrintUsesTostringMetamethodDirectlyInLua54Plus",
       "lua_versions": [
         "5.4",
@@ -4406,7 +4497,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/PrintIgnoresGlobalTostringForPlainTablesInLua54Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:935",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1071",
       "test": "BasicModuleTUnitTests.PrintIgnoresGlobalTostringForPlainTablesInLua54Plus",
       "lua_versions": [
         "5.4",
@@ -4417,7 +4508,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/PrintCallsGlobalTostringForPlainTablesInLua51To53.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:968",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1104",
       "test": "BasicModuleTUnitTests.PrintCallsGlobalTostringForPlainTablesInLua51To53",
       "lua_versions": [
         "5.1"
@@ -4427,7 +4518,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/PrintCallsGlobalTostringForNumbersInLua51To53.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:998",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1134",
       "test": "BasicModuleTUnitTests.PrintCallsGlobalTostringForNumbersInLua51To53",
       "lua_versions": [
         "5.1"
@@ -4437,7 +4528,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/PrintIgnoresGlobalTostringForNumbersInLua54Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1030",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1166",
       "test": "BasicModuleTUnitTests.PrintIgnoresGlobalTostringForNumbersInLua54Plus",
       "lua_versions": [
         "5.1"
@@ -4447,7 +4538,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/PrintSeparatesArgumentsWithTabs.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1059",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1195",
       "test": "BasicModuleTUnitTests.PrintSeparatesArgumentsWithTabs",
       "lua_versions": [
         "5.1"
@@ -4457,7 +4548,7 @@
     },
     {
       "path": "BasicModuleTUnitTests/PrintWorksWithClrFunctionTostringInLua51To53.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1087",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1223",
       "test": "BasicModuleTUnitTests.PrintWorksWithClrFunctionTostringInLua51To53",
       "lua_versions": [
         "5.1"
@@ -8769,27 +8860,20 @@
       "expects_error": false
     },
     {
-      "path": "MathModuleTUnitTests/Log10AvailableInAllVersions.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1332",
-      "test": "MathModuleTUnitTests.Log10AvailableInAllVersions",
+      "path": "MathModuleTUnitTests/Log10AvailableInLua51Through54.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1335",
+      "test": "MathModuleTUnitTests.Log10AvailableInLua51Through54",
       "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
-        "5.4",
-        "5.5"
+        "5.1"
       ],
       "novasharp_only": false,
       "expects_error": false
     },
     {
       "path": "MathModuleTUnitTests/Log10ReturnsCorrectValues.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1352",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1356",
       "test": "MathModuleTUnitTests.Log10ReturnsCorrectValues",
       "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
         "5.4",
         "5.5"
       ],
@@ -8798,12 +8882,9 @@
     },
     {
       "path": "MathModuleTUnitTests/Log10ReturnsCorrectValues_1.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1357",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1361",
       "test": "MathModuleTUnitTests.Log10ReturnsCorrectValues",
       "lua_versions": [
-        "5.1",
-        "5.2",
-        "5.3",
         "5.4",
         "5.5"
       ],
@@ -8812,17 +8893,28 @@
     },
     {
       "path": "MathModuleTUnitTests/Log10ReturnsCorrectValues_2.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1362",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1366",
       "test": "MathModuleTUnitTests.Log10ReturnsCorrectValues",
       "lua_versions": [
-        "5.1"
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/Log10IsNilInLua55.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1381",
+      "test": "MathModuleTUnitTests.Log10IsNilInLua55",
+      "lua_versions": [
+        "5.5"
       ],
       "novasharp_only": false,
       "expects_error": false
     },
     {
       "path": "MathModuleTUnitTests/ModAvailableOnlyInLua51.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1380",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1405",
       "test": "MathModuleTUnitTests.ModAvailableOnlyInLua51",
       "lua_versions": [
         "5.1"
@@ -8832,7 +8924,7 @@
     },
     {
       "path": "MathModuleTUnitTests/ModIsNilInLua52Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1398",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1423",
       "test": "MathModuleTUnitTests.ModIsNilInLua52Plus",
       "lua_versions": [
         "5.2",
@@ -8845,7 +8937,7 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfReturnsIntegerSubtypeInLua53Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1420",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1445",
       "test": "MathModuleTUnitTests.ModfReturnsIntegerSubtypeInLua53Plus",
       "lua_versions": [
         "5.3",
@@ -8857,7 +8949,7 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfReturnsFloatSubtypeInLua51And52.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1456",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1481",
       "test": "MathModuleTUnitTests.ModfReturnsFloatSubtypeInLua51And52",
       "lua_versions": [
         "5.1"
@@ -8867,7 +8959,7 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfWithNegativeNumbersReturnsIntegerSubtype.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1491",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1516",
       "test": "MathModuleTUnitTests.ModfWithNegativeNumbersReturnsIntegerSubtype",
       "lua_versions": [
         "5.3",
@@ -8879,7 +8971,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomRejectsInfinityAndNaNLua53Plus.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1551",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1576",
       "test": "MathModuleTUnitTests.RandomRejectsInfinityAndNaNLua53Plus",
       "lua_versions": [
         "5.3",
@@ -8891,7 +8983,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomErrorsOnIntervalEmptyLua51And52.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1596",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1621",
       "test": "MathModuleTUnitTests.RandomErrorsOnIntervalEmptyLua51And52",
       "lua_versions": [
         "5.1"
@@ -8901,7 +8993,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomSucceedsWithNegativeInfinityFirstArgLua51And52.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1642",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1667",
       "test": "MathModuleTUnitTests.RandomSucceedsWithNegativeInfinityFirstArgLua51And52",
       "lua_versions": [
         "5.1"
@@ -8911,7 +9003,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomSucceedsWithPositiveInfinitySecondArgLua52Only.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1666",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1691",
       "test": "MathModuleTUnitTests.RandomSucceedsWithPositiveInfinitySecondArgLua52Only",
       "lua_versions": [
         "5.2",
@@ -8924,7 +9016,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomErrorsWithPositiveInfinitySecondArgLua51.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1690",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1715",
       "test": "MathModuleTUnitTests.RandomErrorsWithPositiveInfinitySecondArgLua51",
       "lua_versions": [
         "5.1"
@@ -8934,7 +9026,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomErrorsWithInfinityNaNFirstArgLua52Only.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1728",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1753",
       "test": "MathModuleTUnitTests.RandomErrorsWithInfinityNaNFirstArgLua52Only",
       "lua_versions": [
         "5.2",
@@ -8947,7 +9039,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomSucceedsWithInfinityNaNFirstArgLua51.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1766",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1791",
       "test": "MathModuleTUnitTests.RandomSucceedsWithInfinityNaNFirstArgLua51",
       "lua_versions": [
         "5.1"
@@ -8957,11 +9049,9 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfPreservesNegativeZeroForNegativeIntegers.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1786",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1812",
       "test": "MathModuleTUnitTests.ModfPreservesNegativeZeroForNegativeIntegers",
       "lua_versions": [
-        "5.1",
-        "5.2",
         "5.3",
         "5.4",
         "5.5"
@@ -8971,11 +9061,9 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfPreservesPositiveZeroForPositiveIntegers.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1813",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1844",
       "test": "MathModuleTUnitTests.ModfPreservesPositiveZeroForPositiveIntegers",
       "lua_versions": [
-        "5.1",
-        "5.2",
         "5.3",
         "5.4",
         "5.5"
@@ -8985,11 +9073,9 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfNegativeInfinityFractionalPartIsNegativeZero.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1840",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1873",
       "test": "MathModuleTUnitTests.ModfNegativeInfinityFractionalPartIsNegativeZero",
       "lua_versions": [
-        "5.1",
-        "5.2",
         "5.3",
         "5.4",
         "5.5"
@@ -8999,7 +9085,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomSucceedsDataDriven.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1890",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1926",
       "test": "MathModuleTUnitTests.RandomSucceedsDataDriven",
       "lua_versions": [
         "5.1",
@@ -9013,7 +9099,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomErrorsIntervalEmptyLua51And52DataDriven.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1921",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1957",
       "test": "MathModuleTUnitTests.RandomErrorsIntervalEmptyLua51And52DataDriven",
       "lua_versions": [
         "5.1"
@@ -9023,7 +9109,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomErrorsNoIntegerRepresentationLua53PlusDataDriven.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1963",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1999",
       "test": "MathModuleTUnitTests.RandomErrorsNoIntegerRepresentationLua53PlusDataDriven",
       "lua_versions": [
         "5.3",
@@ -9035,7 +9121,7 @@
     },
     {
       "path": "MathModuleTUnitTests/RandomseedSucceedsLua51To53DataDriven.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2034",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2070",
       "test": "MathModuleTUnitTests.RandomseedSucceedsLua51To53DataDriven",
       "lua_versions": [
         "5.1"
@@ -9045,11 +9131,9 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfNegativeIntegersPreserveNegativeZeroDataDriven.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2072",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2109",
       "test": "MathModuleTUnitTests.ModfNegativeIntegersPreserveNegativeZeroDataDriven",
       "lua_versions": [
-        "5.1",
-        "5.2",
         "5.3",
         "5.4",
         "5.5"
@@ -9059,7 +9143,7 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfPositiveIntegersPreservePositiveZeroDataDriven.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2125",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2165",
       "test": "MathModuleTUnitTests.ModfPositiveIntegersPreservePositiveZeroDataDriven",
       "lua_versions": [
         "5.1",
@@ -9073,11 +9157,9 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfZeroPreservesSignDataDriven.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2175",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2217",
       "test": "MathModuleTUnitTests.ModfZeroPreservesSignDataDriven",
       "lua_versions": [
-        "5.1",
-        "5.2",
         "5.3",
         "5.4",
         "5.5"
@@ -9087,7 +9169,7 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfPositiveInfinityReturnsPositiveInfinityAndPositiveZero.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2213",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2260",
       "test": "MathModuleTUnitTests.ModfPositiveInfinityReturnsPositiveInfinityAndPositiveZero",
       "lua_versions": [
         "5.1",
@@ -9101,7 +9183,7 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfNegativeFractionsPreserveSignDataDriven.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2260",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2307",
       "test": "MathModuleTUnitTests.ModfNegativeFractionsPreserveSignDataDriven",
       "lua_versions": [
         "5.1",
@@ -9115,7 +9197,7 @@
     },
     {
       "path": "MathModuleTUnitTests/ModfNaNReturnsBothNaN.lua",
-      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2310",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2357",
       "test": "MathModuleTUnitTests.ModfNaNReturnsBothNaN",
       "lua_versions": [
         "5.1",
@@ -9125,6 +9207,128 @@
         "5.5"
       ],
       "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/FloorNegativeEdgeCases.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2404",
+      "test": "MathModuleTUnitTests.FloorNegativeEdgeCases",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/CeilNegativeEdgeCases.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2434",
+      "test": "MathModuleTUnitTests.CeilNegativeEdgeCases",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/FloorInfinityPassthrough.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2453",
+      "test": "MathModuleTUnitTests.FloorInfinityPassthrough",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/FloorInfinityPassthrough_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2454",
+      "test": "MathModuleTUnitTests.FloorInfinityPassthrough",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/CeilInfinityPassthrough.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2478",
+      "test": "MathModuleTUnitTests.CeilInfinityPassthrough",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/CeilInfinityPassthrough_1.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2479",
+      "test": "MathModuleTUnitTests.CeilInfinityPassthrough",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/FmodSignedDividendEdgeCases.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2515",
+      "test": "MathModuleTUnitTests.FmodSignedDividendEdgeCases",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/MathTypeDistinguishesNumericTypes.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2546",
+      "test": "MathModuleTUnitTests.MathTypeDistinguishesNumericTypes",
+      "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "MathModuleTUnitTests/MathTypeReturnsNilForNonNumeric.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:2573",
+      "test": "MathModuleTUnitTests.MathTypeReturnsNilForNonNumeric",
+      "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10098,9 +10302,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:40",
       "test": "OsExecuteVersionParityTUnitTests.OsExecuteReturnsNumberInLua51",
       "lua_versions": [
-        "5.1"
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10108,9 +10316,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:58",
       "test": "OsExecuteVersionParityTUnitTests.OsExecuteReturnsNonZeroNumberOnFailureInLua51",
       "lua_versions": [
-        "5.1"
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10118,9 +10330,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:76",
       "test": "OsExecuteVersionParityTUnitTests.OsExecuteReturnsNegativeOneOnExceptionInLua51",
       "lua_versions": [
-        "5.1"
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10128,9 +10344,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:94",
       "test": "OsExecuteVersionParityTUnitTests.OsExecuteReturnsNegativeOneOnNotSupportedInLua51",
       "lua_versions": [
-        "5.1"
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10138,12 +10358,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:114",
       "test": "OsExecuteVersionParityTUnitTests.OsExecuteReturnsTupleInLua52Plus",
       "lua_versions": [
+        "5.1",
         "5.2",
         "5.3",
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10151,12 +10372,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:134",
       "test": "OsExecuteVersionParityTUnitTests.OsExecuteReturnsNilTupleOnFailureInLua52Plus",
       "lua_versions": [
+        "5.1",
         "5.2",
         "5.3",
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10164,12 +10386,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:154",
       "test": "OsExecuteVersionParityTUnitTests.OsExecuteReportsSignalWhenExitCodeNegativeInLua52Plus",
       "lua_versions": [
+        "5.1",
         "5.2",
         "5.3",
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10177,12 +10400,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:174",
       "test": "OsExecuteVersionParityTUnitTests.OsExecuteReturnsNilTupleOnExceptionInLua52Plus",
       "lua_versions": [
+        "5.1",
         "5.2",
         "5.3",
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10190,12 +10414,13 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs:196",
       "test": "OsExecuteVersionParityTUnitTests.OsExecuteReportsNotSupportedMessageInLua52Plus",
       "lua_versions": [
+        "5.1",
         "5.2",
         "5.3",
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -10209,7 +10434,7 @@
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -12641,14 +12866,14 @@
       "expects_error": false
     },
     {
-      "path": "StringModuleTUnitTests/CharErrorsOnPositiveInfinityLua51And52.lua",
+      "path": "StringModuleTUnitTests/CharHandlesPositiveInfinityAsZeroLua51And52.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:936",
-      "test": "StringModuleTUnitTests.CharErrorsOnPositiveInfinityLua51And52",
+      "test": "StringModuleTUnitTests.CharHandlesPositiveInfinityAsZeroLua51And52",
       "lua_versions": [
         "5.1"
       ],
       "novasharp_only": false,
-      "expects_error": true
+      "expects_error": false
     },
     {
       "path": "StringModuleTUnitTests/CharHandlesNegativeInfinityAsZeroLua51And52.lua",
@@ -12658,7 +12883,7 @@
         "5.1"
       ],
       "novasharp_only": false,
-      "expects_error": true
+      "expects_error": false
     },
     {
       "path": "StringModuleTUnitTests/CharTruncatesFloatValuesLua51And52.lua",
@@ -13869,6 +14094,90 @@
       "expects_error": false
     },
     {
+      "path": "StringModuleTUnitTests/SubEdgeCaseIndices.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:2519",
+      "test": "StringModuleTUnitTests.SubEdgeCaseIndices",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FindPlainFlagSpecialCharacters.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:2557",
+      "test": "StringModuleTUnitTests.FindPlainFlagSpecialCharacters",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FindReturnsNilWhenNotFound.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:2591",
+      "test": "StringModuleTUnitTests.FindReturnsNilWhenNotFound",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FormatQEscaping.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:2623",
+      "test": "StringModuleTUnitTests.FormatQEscaping",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FormatWidthSpecifiersInteger.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:2650",
+      "test": "StringModuleTUnitTests.FormatWidthSpecifiersInteger",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "StringModuleTUnitTests/FormatWidthSpecifiersString.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:2676",
+      "test": "StringModuleTUnitTests.FormatWidthSpecifiersString",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
       "path": "TableModuleTUnitTests/PackPreservesNilAndReportsCount.lua",
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:19",
       "test": "TableModuleTUnitTests.PackPreservesNilAndReportsCount",
@@ -14163,6 +14472,160 @@
       "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:563",
       "test": "TableModuleTUnitTests.MaxnIsNilInLua53Plus",
       "lua_versions": [
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/ConcatBasicUsage.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:595",
+      "test": "TableModuleTUnitTests.ConcatBasicUsage",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/ConcatWithSeparator.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:627",
+      "test": "TableModuleTUnitTests.ConcatWithSeparator",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/ConcatWithIndices.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:661",
+      "test": "TableModuleTUnitTests.ConcatWithIndices",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/ConcatEmptyRangeEndBeforeStart.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:683",
+      "test": "TableModuleTUnitTests.ConcatEmptyRangeEndBeforeStart",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/InsertAtEnd.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:707",
+      "test": "TableModuleTUnitTests.InsertAtEnd",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/InsertAtPosition.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:744",
+      "test": "TableModuleTUnitTests.InsertAtPosition",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/RemoveAtPosition.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:777",
+      "test": "TableModuleTUnitTests.RemoveAtPosition",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": true,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/RemoveDefaultPosition.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:809",
+      "test": "TableModuleTUnitTests.RemoveDefaultPosition",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/SortDescendingOrder.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:842",
+      "test": "TableModuleTUnitTests.SortDescendingOrder",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/SortStringElements.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:865",
+      "test": "TableModuleTUnitTests.SortStringElements",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "TableModuleTUnitTests/SortByStringLength.lua",
+      "source": "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:888",
+      "test": "TableModuleTUnitTests.SortByStringLength",
+      "lua_versions": [
+        "5.1",
+        "5.2",
         "5.3",
         "5.4",
         "5.5"
@@ -16740,7 +17203,7 @@
       "lua_versions": [
         "5.1"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -16750,7 +17213,7 @@
       "lua_versions": [
         "5.1"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {

@@ -1,12 +1,11 @@
+-- @lua-versions: 5.1
+-- @novasharp-only: false
+-- @expects-error: false
 -- Test: getfenv(function) returns the function's environment
 -- Expected: success - returns the function's environment table
 -- Versions: 5.1 only
 -- Reference: Lua 5.1 Reference Manual §5.1
-
 -- getfenv(f) returns function f's environment
--- @lua-versions: 5.1
--- @novasharp-only: false
--- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/SetFenvGetFenvTUnitTests.cs
 -- @test: SetFenvGetFenvTUnitTests.GetFenvReturnsFunctionEnvironment
 local ok, err = pcall(function()

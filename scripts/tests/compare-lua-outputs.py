@@ -136,11 +136,16 @@ def normalize_output(text: str, strict: bool = False) -> str:
     - Line numbers in errors: Normalize to <line>
     - Platform paths: Normalize separators
     - Whitespace: Normalize trailing whitespace
+    - Quoted strings: Normalize escaped newlines in string.format("%q") output
     """
     if strict:
         return text
     
     result = text
+    
+    # Normalize escaped newlines in quoted strings (%q format)
+    # Lua outputs "\<actual newline>" while NovaSharp outputs "\n"
+    result = re.sub(r'\\\n', r'\\n', result)
     
     # Remove NovaSharp CLI compatibility info lines
     result = re.sub(r'^\[compatibility\].*$\n?', '', result, flags=re.MULTILINE)

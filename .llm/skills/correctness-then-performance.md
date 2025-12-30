@@ -87,6 +87,22 @@ Before optimizing ANY code path:
 | Skip validation for speed  | Invalid state causes wrong behavior  | Validate in debug builds, trust in release          |
 | Reorder operations         | Observable side-effect order changes | Preserve Lua-specified evaluation order             |
 
+### 🔴 ABSOLUTE PROHIBITIONS
+
+The following optimizations are **NEVER acceptable**, regardless of performance gains:
+
+| Optimization                               | Why Prohibited                                             |
+| ------------------------------------------ | ---------------------------------------------------------- |
+| **Approximate math**                       | Lua spec defines exact behavior; 1 ULP difference is a BUG |
+| **Cached values without invalidation**     | Stale values produce wrong results                         |
+| **Fast-path that skips edge cases**        | "Works for 99% of inputs" means 1% are **WRONG**           |
+| **Reordering with side effects**           | Lua spec defines evaluation order precisely                |
+| **String interning that changes identity** | Can break equality and hash behavior                       |
+| **Floating-point shortcuts**               | IEEE 754 edge cases (NaN, ±Inf, -0) must match Lua exactly |
+| **"Close enough" numeric output**          | `print(0.1+0.2)` must be **byte-identical** to Lua         |
+
+**If an optimization breaks even ONE edge case's Lua-spec compliance, it is REJECTED.**
+
 ______________________________________________________________________
 
 ## 🔴 Performance Second: Maximum Speed

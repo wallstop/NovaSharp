@@ -75,19 +75,22 @@ while IFS= read -r -d '' lua_file; do
         break
     fi
     
-    # Read first line for version info
-    first_line=$(head -1 "$lua_file")
+    # Read first 10 lines for metadata (comments end when non-comment starts)
+    header=$(head -10 "$lua_file")
     
-    # Skip NovaSharp-only
-    if echo "$first_line" | grep -q "novasharp-only: true"; then
+    # Skip NovaSharp-only (check both formats)
+    # Format 1: @lua-versions: novasharp-only
+    # Format 2: @novasharp-only: true
+    if echo "$header" | grep -qE "(@lua-versions:\s*novasharp-only|@novasharp-only:\s*true)"; then
         ((skipped_novasharp++)) || true
         continue
     fi
     
-    # Check version compatibility
-    if echo "$first_line" | grep -q "@lua-versions:"; then
-        # Extract versions
-        if ! echo "$first_line" | grep -qE "(5\.1\+|${LUA_VERSION})"; then
+    # Check version compatibility from @lua-versions line
+    version_line=$(echo "$header" | grep "@lua-versions:" || true)
+    if [[ -n "$version_line" ]]; then
+        # Extract versions - need to check if this version is compatible
+        if ! echo "$version_line" | grep -qE "(5\.1\+|${LUA_VERSION})"; then
             ((skipped_version++)) || true
             continue
         fi

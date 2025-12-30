@@ -137,7 +137,28 @@ ______________________________________________________________________
 + [string "test"]:1: attempt to index nil value
 ```
 
-**Usually OK**: Error message formatting often differs. Check the error type matches.
+**🔴 INVESTIGATE THOROUGHLY** — Error message formatting may legitimately differ between interpreters, but this is **NOT an excuse to skip investigation**. You MUST verify:
+
+1. Error **TYPE** is semantically identical (same Lua error class)
+1. Error **LOCATION** (line/column) is correct when applicable
+1. Error **CAUSE** is the same (e.g., indexing nil vs. calling nil vs. arithmetic on nil)
+1. If NovaSharp produces a different error type than reference Lua, that is a **BUG**
+1. Document any accepted format-only differences with justification
+
+**⚠️ CRITICAL CLARIFICATION**: "Format differences" means ONLY:
+
+- Filename/path representation in error messages
+- Chunk name formatting (`stdin:1` vs `[string "test"]:1`)
+- Whitespace around error text
+
+**"Format differences" does NOT excuse:**
+
+- Different error TYPE (type error vs arithmetic error is a **BUG**)
+- Different error CAUSE (indexing nil vs calling nil is a **BUG**)
+- Missing or extra diagnostic information
+- Different line/column numbers (is a **BUG**)
+
+**When in doubt: It's a NovaSharp bug until proven otherwise.**
 
 ### Floating-point precision
 
@@ -146,7 +167,13 @@ ______________________________________________________________________
 + 0.3
 ```
 
-**Check**: Is this a display issue or calculation difference?
+**🔴 NEVER ACCEPT DIFFERENCES** — Lua has specific formatting for floating-point output. If NovaSharp produces different output:
+
+1. NovaSharp's `print()` and `tostring()` **MUST produce byte-identical output** to reference Lua for the same numeric value
+1. This includes trailing zeros, scientific notation thresholds, and precision display
+1. Test with `lua5.4 -e "print(0.1 + 0.2)"` — NovaSharp must match **character-for-character**
+1. If Lua versions differ in output format, NovaSharp must match the **target version exactly**
+1. Any display difference is a **BUG** in NovaSharp's number formatting — fix production code, not tests
 
 ### Version-specific behavior
 

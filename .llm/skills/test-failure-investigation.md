@@ -118,7 +118,14 @@ for v in 5.1 5.2 5.3 5.4; do
 done
 ```
 
-**Important**: If Lua behavior differs from test expectation, you likely found a test bug. But verify thoroughly — the test may be correct and NovaSharp has a bug.
+**🔴 CRITICAL — PRESUME NOVASHARP IS WRONG**: If NovaSharp behavior differs from what a test expects:
+
+1. **FIRST**, verify what reference Lua produces: `lua5.4 -e "print(...)"`
+1. If reference Lua matches the test expectation → **NovaSharp has a BUG** → Fix production code
+1. If reference Lua differs from the test expectation → Verify across ALL Lua versions (5.1-5.5)
+1. Only consider a "test bug" if reference Lua across ALL applicable versions produces different output than the test expects
+
+**NEVER** assume the test is wrong just because NovaSharp disagrees. The test documents expected Lua behavior — NovaSharp must conform to it.
 
 ### Step 6: Test Isolation Investigation
 
