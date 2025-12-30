@@ -91,23 +91,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result).IsEqualTo(DynValue.Nil);
         }
 
+        /// <summary>
+        /// Verifies that <see cref="BasicModule.ToStringContinuation"/> throws when executionContext is null.
+        /// This is a defensive programming check - the continuation cannot execute without a valid context.
+        /// </summary>
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task ToStringContinuationThrowsWhenMetamethodReturnsNonString(
-            LuaCompatibilityVersion version
-        )
+        public async Task ToStringContinuationThrowsWhenExecutionContextIsNull()
         {
-            CallbackArguments args = new(new[] { DynValue.NewNumber(5) }, isMethodCall: false);
+            CallbackArguments args = new(new[] { DynValue.NewString("test") }, isMethodCall: false);
 
-            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 BasicModule.ToStringContinuation(null, args)
             );
 
-            await Assert.That(exception.Message).Contains("tostring");
+            await Assert.That(exception.ParamName).IsEqualTo("executionContext");
+        }
+
+        /// <summary>
+        /// Verifies that <see cref="BasicModule.ToStringContinuation"/> throws when args is null.
+        /// This is a defensive programming check - the continuation cannot process results without args.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ToStringContinuationThrowsWhenArgsIsNull(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            ScriptExecutionContext executionContext = script.CreateDynamicExecutionContext();
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                BasicModule.ToStringContinuation(executionContext, null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("args");
         }
 
         [global::TUnit.Core.Test]

@@ -396,29 +396,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     continue;
                 }
 
-                // Handle POSIX O and E locale modifiers (Lua 5.2+)
+                // Handle POSIX O and E locale modifiers
                 // O = alternate numeric symbols, E = alternate era-based representation
-                // These are passed to C strftime which may or may not support them.
-                // We implement common glibc-compatible O/E modifier behavior:
-                // - %Oy, %Ey = two-digit year (same as %y)
-                // - %Om, %Od, %Oe, %OH, %OI, %OM, %OS, %Ou, %OU, %OV, %Ow, %OW = alternate numerals (same as base)
-                // - %EY = four-digit year in era format (same as %Y)
-                // - %Ec, %EC, %Ex, %EX = alternate representations (same as base)
-                // In Lua 5.1, unknown specifiers (including O/E) pass through as literal text.
-                // In Lua 5.2+, unsupported O/E combinations throw "invalid conversion specifier".
+                //
+                // Lua 5.1 behavior: processes format specifiers one character at a time.
+                // %O and %E are treated as unknown specifiers and passed to strftime individually.
+                // This results in literal "%O" or "%E" output, followed by the next character
+                // being processed normally. For example, "%Oy" outputs "%O" + "y" = "%Oy".
+                //
+                // Lua 5.2+ behavior: validates against a known list of 2-char specifiers.
+                // Supported O combinations: d, e, H, I, m, M, S, u, U, V, w, W, y
+                // Supported E combinations: c, C, x, X, y, Y
+                // For supported combinations, processes the full %Ox/%Ex specifier.
+                // For unsupported combinations, throws "invalid conversion specifier".
                 if (c is 'O' or 'E')
                 {
-                    // Peek at the next character to see what modifier combination we have
+                    // In Lua 5.1, O and E are NOT special modifiers - they're processed
+                    // one char at a time like any other unknown specifier.
+                    // The result is "%O" or "%E" literal, with the next char processed normally.
+                    if (version == LuaCompatibilityVersion.Lua51)
+                    {
+                        // Output as literal "%O" or "%E" (unknown specifier passthrough)
+                        sb.Append('%');
+                        sb.Append(c);
+                        isEscapeSequence = false;
+                        continue;
+                    }
+
+                    // Lua 5.2+: Handle O/E as locale modifiers with the next character
                     if (i + 1 >= format.Length)
                     {
-                        // O/E at end of string - treat as unknown specifier
-                        if (version == LuaCompatibilityVersion.Lua51)
-                        {
-                            sb.Append('%');
-                            sb.Append(c);
-                            isEscapeSequence = false;
-                            continue;
-                        }
+                        // O/E at end of string - invalid
                         throw new ScriptRuntimeException(
                             ZString.Concat(
                                 "bad argument #1 to 'date' (invalid conversion specifier '%",
@@ -461,16 +469,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                     if (!isSupported)
                     {
-                        // Unsupported combination
-                        if (version == LuaCompatibilityVersion.Lua51)
-                        {
-                            // Lua 5.1: output as literal
-                            sb.Append('%');
-                            sb.Append(c);
-                            isEscapeSequence = false;
-                            continue;
-                        }
-                        // Lua 5.2+: throw error
+                        // Lua 5.2+: throw error for unsupported combination
                         throw new ScriptRuntimeException(
                             ZString.Concat(
                                 "bad argument #1 to 'date' (invalid conversion specifier '%",
