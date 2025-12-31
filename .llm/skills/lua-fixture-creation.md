@@ -70,6 +70,38 @@ Every `.lua` fixture file **MUST** start with a metadata block for the test runn
 
 **⚠️ WARNING**: The harness ONLY parses `@lua-versions`, `@novasharp-only`, and `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description`, `@expected-output`, `@error-pattern` are **NOT recognized** and will be silently ignored! See the "INVALID Metadata" section below.
 
+### 🔴 CRITICAL: Metadata Location Requirements
+
+**The harness parser STOPS at the FIRST non-comment line.** ALL metadata MUST be at the TOP of the file, before ANY blank lines or code.
+
+```lua
+-- ✅ CORRECT: All metadata at top, no blank lines before code
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src/tests/...
+-- @test: TestClass.TestMethod
+print("test")  -- Code starts immediately after metadata
+```
+
+```lua
+-- ❌ WRONG: Blank line before metadata = metadata SILENTLY IGNORED!
+
+-- @lua-versions: 5.3, 5.4, 5.5
+-- @novasharp-only: false
+-- @expects-error: false
+print("test")
+```
+
+```lua
+-- ❌ WRONG: Metadata after code = metadata SILENTLY IGNORED!
+print("test")
+-- @lua-versions: 5.3, 5.4, 5.5
+-- @novasharp-only: false
+```
+
+**Real-World Impact**: This caused 9 test fixtures to fail in CI because the metadata was placed after a blank line, causing them to run on ALL Lua versions instead of only the intended versions.
+
 ### Minimal Required Template
 
 ```lua
@@ -390,13 +422,25 @@ ______________________________________________________________________
 
 Before committing a fixture, verify:
 
-1. ✅ Metadata block starts at line 1
+1. ✅ **Metadata block starts at LINE 1 with NO blank lines before or within metadata** (parser stops at first non-comment line!)
 1. ✅ All three required fields present (`@lua-versions`, `@novasharp-only`, `@expects-error`)
 1. ✅ `@lua-versions` lists correct compatible versions
 1. ✅ `@novasharp-only` is `true` if using any NovaSharp extensions
 1. ✅ `@expects-error` matches whether fixture should error
 1. ✅ File runs successfully with reference Lua: `lua5.4 path/to/fixture.lua`
 1. ✅ Output is deterministic (no random values, timestamps, memory addresses)
+
+### Quick Metadata Validation
+
+```bash
+# Check that metadata is at the top of file (should show metadata, not blank line)
+head -1 path/to/fixture.lua
+# Should output: -- @lua-versions: ...
+
+# Verify no blank lines before metadata
+head -10 path/to/fixture.lua | cat -A
+# Look for ^$ (empty lines) before @lua-versions
+```
 
 ______________________________________________________________________
 

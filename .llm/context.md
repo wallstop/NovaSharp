@@ -36,7 +36,7 @@ ______________________________________________________________________
 1. **Zero-Flaky Test Policy** — Every test failure indicates a **real bug** (production or test). NEVER skip, disable, ignore, or "make tests pass" without full root cause investigation. See [test-failure-investigation](skills/test-failure-investigation.md)
 1. **Always create BOTH C# tests AND `.lua` fixtures** — Every test/fix needs: (1) TUnit C# tests for NovaSharp runtime, (2) standalone `.lua` fixtures for cross-interpreter verification, (3) regenerate corpus with `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`
 1. **Multi-Version Testing** — All TUnit tests MUST run against all applicable Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
-1. **Lua Fixture Metadata** — ONLY use `@lua-versions`, `@novasharp-only`, `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description` are **NOT parsed** by the harness and will be silently ignored
+1. **Lua Fixture Metadata** — ONLY use `@lua-versions`, `@novasharp-only`, `@expects-error`. Fields like `@min-version`, `@max-version`, `@versions`, `@name`, `@description` are **NOT parsed** by the harness and will be silently ignored. **CRITICAL: ALL metadata MUST be at the TOP of the file** — the parser stops at the first non-comment line, so metadata after a blank line is SILENTLY IGNORED
 1. **Exhaustive Test Coverage** — Every feature/bugfix needs comprehensive tests: normal cases, edge cases, error cases, negative tests, "the impossible". Use data-driven tests for comprehensive coverage. See [exhaustive-test-coverage](skills/exhaustive-test-coverage.md)
 1. **Documentation & Changelog** — Every user-facing change requires: (1) updated XML docs and code comments, (2) updated markdown docs with CORRECT code samples, (3) CHANGELOG.md entry in [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format. See [documentation-and-changelog](skills/documentation-and-changelog.md)
 1. **Pre-Commit Validation** — Run `bash ./scripts/dev/pre-commit.sh` **after EVERY significant change**, not just before declaring complete. This runs all formatters, linters, and audits. If files are added/removed, audit logs MUST be regenerated. A diff that fails CI is not ready for review. See [pre-commit-validation](skills/pre-commit-validation.md)
@@ -75,19 +75,21 @@ ______________________________________________________________________
 
 ### Quick Navigation by Task
 
-| I want to...                   | Look in                                             |
-| ------------------------------ | --------------------------------------------------- |
-| Fix Lua behavior bug           | `src/runtime/.../CoreLib/` (stdlib modules)         |
-| Fix parser/lexer issue         | `src/runtime/.../Tree/Lexer/` or `.../Tree/Parser/` |
-| Fix VM execution bug           | `src/runtime/.../Execution/VM/`                     |
-| Add/modify a data type         | `src/runtime/.../DataTypes/`                        |
-| Fix C# interop issue           | `src/runtime/.../Interop/`                          |
-| Add a new test                 | `src/tests/.../Tests.TUnit/`                        |
-| Add a Lua test fixture         | `src/tests/.../Tests/Fixtures/`                     |
-| Check Lua spec                 | `docs/lua-spec/lua5X-manual.md`                     |
-| Find pooling utilities         | `src/runtime/.../DataStructs/CollectionPools.cs`    |
-| Find string building utilities | `src/runtime/.../DataStructs/ZStringBuilder.cs`     |
-| Check/add performance patterns | `.llm/skills/high-performance-csharp.md`            |
+| I want to...                    | Look in                                             |
+| ------------------------------- | --------------------------------------------------- |
+| Fix Lua behavior bug            | `src/runtime/.../CoreLib/` (stdlib modules)         |
+| Fix parser/lexer issue          | `src/runtime/.../Tree/Lexer/` or `.../Tree/Parser/` |
+| Fix VM execution bug            | `src/runtime/.../Execution/VM/`                     |
+| Add/modify a data type          | `src/runtime/.../DataTypes/`                        |
+| Fix C# interop issue            | `src/runtime/.../Interop/`                          |
+| Add a new test                  | `src/tests/.../Tests.TUnit/`                        |
+| Add a Lua test fixture          | `src/tests/.../Tests/Fixtures/`                     |
+| Check Lua spec                  | `docs/lua-spec/lua5X-manual.md`                     |
+| Find pooling utilities          | `src/runtime/.../DataStructs/CollectionPools.cs`    |
+| Find string building utilities  | `src/runtime/.../DataStructs/ZStringBuilder.cs`     |
+| Check/add performance patterns  | `.llm/skills/high-performance-csharp.md`            |
+| Investigate comparison failures | `.llm/skills/lua-comparison-harness.md`             |
+| Debug cross-platform issues     | `.llm/skills/test-failure-investigation.md`         |
 
 ### Key Files
 
