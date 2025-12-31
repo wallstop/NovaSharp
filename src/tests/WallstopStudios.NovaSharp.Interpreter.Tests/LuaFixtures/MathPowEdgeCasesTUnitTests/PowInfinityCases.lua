@@ -1,12 +1,14 @@
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
+-- @novasharp-only: true
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowInfinityCases
+-- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
+
 -- Test: math.pow edge cases involving infinity (math.huge)
 -- Expected: IEEE 754 compliant infinity handling
 -- Reference: Lua §6.7, IEEE 754-2008
 
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @novasharp-only: false
--- @expects-error: false
--- @source: standalone-fixture
--- @test: MathPowEdgeCasesTUnitTests.PowInfinityCases
 local inf = math.huge
 local neginf = -math.huge
 

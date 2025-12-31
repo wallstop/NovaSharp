@@ -1,13 +1,15 @@
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
+-- @novasharp-only: true
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowNegativeBaseFractionalExponent
+-- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
+
 -- Test: Negative base with fractional exponent produces NaN
 -- Expected: NaN result (complex number in real domain)
 -- Reference: Lua §6.7, IEEE 754-2008
 
 -- Helper to check if a value is NaN
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @novasharp-only: false
--- @expects-error: false
--- @source: standalone-fixture
--- @test: MathPowEdgeCasesTUnitTests.PowNegativeBaseFractionalExponent
 local function isnan(x)
     return x ~= x
 end

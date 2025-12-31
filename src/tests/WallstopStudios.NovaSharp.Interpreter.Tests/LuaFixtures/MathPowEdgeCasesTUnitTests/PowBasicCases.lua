@@ -1,13 +1,15 @@
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
+-- @novasharp-only: true
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowBasicCases
+-- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
+
 -- Test: Basic math.pow/^ operations
 -- Expected: Correct power results
 -- Reference: Lua §6.7 (math.pow), §3.4.1 (arithmetic operators)
 
 -- Basic integer exponents
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @novasharp-only: false
--- @expects-error: false
--- @source: standalone-fixture
--- @test: MathPowEdgeCasesTUnitTests.PowBasicCases
 assert(math.pow(2, 3) == 8, "2^3 should equal 8")
 assert(math.pow(10, 2) == 100, "10^2 should equal 100")
 assert(math.pow(2, 10) == 1024, "2^10 should equal 1024")

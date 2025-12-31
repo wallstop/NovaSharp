@@ -455,8 +455,14 @@ NOVASHARP_ONLY_TEST_CLASS_PREFIXES = [
     'OsExecuteVersionParity',  # Uses StubPlatformAccessor for command virtualization
 ]
 
+# Test method substrings that indicate NovaSharp-only behavior
+# These test methods verify NovaSharp-specific behavior that differs from reference Lua by design
+NOVASHARP_ONLY_TEST_METHOD_SUBSTRINGS = [
+    'IsUnsupported',  # Tests for intentionally unsupported features (e.g., io.popen)
+]
 
-def analyze_version_compatibility(lua_code: str, surrounding_context: str, test_class: str = "") -> LuaVersionCompatibility:
+
+def analyze_version_compatibility(lua_code: str, surrounding_context: str, test_class: str = "", test_method: str = "") -> LuaVersionCompatibility:
     """Analyze Lua code to determine version compatibility."""
     compat = LuaVersionCompatibility()
     
@@ -465,6 +471,13 @@ def analyze_version_compatibility(lua_code: str, surrounding_context: str, test_
         if test_class.startswith(prefix):
             compat.novasharp_only = True
             compat.reasons.append(f"Test class '{test_class}' uses NovaSharp-specific {prefix} functionality")
+            return compat  # No need to check further - it's definitely NovaSharp-only
+    
+    # Check if test method name indicates NovaSharp-only behavior
+    for substring in NOVASHARP_ONLY_TEST_METHOD_SUBSTRINGS:
+        if substring in test_method:
+            compat.novasharp_only = True
+            compat.reasons.append(f"Test method '{test_method}' tests NovaSharp-specific behavior ({substring})")
             return compat  # No need to check further - it's definitely NovaSharp-only
     
     # Check for NovaSharp-specific patterns
@@ -627,7 +640,7 @@ def extract_snippets_from_file(file_path: Path) -> Iterator[LuaSnippet]:
         end_ctx = min(len(content), position + len(lua_code) + 500)
         surrounding = content[start_ctx:end_ctx]
         
-        compatibility = analyze_version_compatibility(lua_code, surrounding, test_class)
+        compatibility = analyze_version_compatibility(lua_code, surrounding, test_class, test_method)
         expects_error = check_expects_error(surrounding)
         
         key = f"{test_class}.{test_method}"

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.4, 5.5
--- @novasharp-only: false
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1356
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1380
 -- @test: MathModuleTUnitTests.Log10ReturnsCorrectValues
--- @compat-notes: Test targets Lua 5.4+
+-- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
 return math.log10(1)

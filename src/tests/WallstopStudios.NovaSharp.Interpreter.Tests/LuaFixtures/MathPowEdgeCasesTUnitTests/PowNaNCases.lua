@@ -1,12 +1,14 @@
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
+-- @novasharp-only: true
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowNaNCases
+-- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
+
 -- Test: math.pow edge cases involving NaN
 -- Expected: IEEE 754 compliant NaN handling
 -- Reference: Lua §6.7, IEEE 754-2008, C99 pow specification
 
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @novasharp-only: false
--- @expects-error: false
--- @source: standalone-fixture
--- @test: MathPowEdgeCasesTUnitTests.PowNaNCases
 local nan = 0 / 0
 
 -- Helper to check if a value is NaN

@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
--- @novasharp-only: false
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsTimeModuleTUnitTests.cs
 -- @test: OsTimeModuleTUnitTests.DateOutputsUnsupportedOAndEAsLiteralTextInLua51
--- @compat-notes: Lua 5.1 outputs unknown format specifiers as literal text
+-- @compat-notes: Platform-specific: macOS strftime interprets %O/%E modifiers differently than Linux. NovaSharp matches Linux/Ubuntu Lua behavior (outputs literal text for unsupported combinations)
 
 -- Reference: lua5.1 -e "print(os.date('%OY-%Ew', 0))" outputs "%OY-%Ew"
 -- %OY and %Ew are not valid POSIX combinations

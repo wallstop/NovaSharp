@@ -1,13 +1,15 @@
+-- @lua-versions: 5.1, 5.2, 5.3, 5.4
+-- @novasharp-only: true
+-- @expects-error: false
+-- @source: standalone-fixture
+-- @test: MathPowEdgeCasesTUnitTests.PowOneCases
+-- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
+
 -- Test: math.pow edge cases involving one
 -- Expected: 1 raised to any power equals 1
 -- Reference: Lua §6.7, IEEE 754-2008
 
 -- 1 raised to any finite power equals 1
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
--- @novasharp-only: false
--- @expects-error: false
--- @source: standalone-fixture
--- @test: MathPowEdgeCasesTUnitTests.PowOneCases
 assert(math.pow(1, 0) == 1, "1^0 should equal 1")
 assert(math.pow(1, 1) == 1, "1^1 should equal 1")
 assert(math.pow(1, 2) == 1, "1^2 should equal 1")
