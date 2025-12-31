@@ -13,6 +13,8 @@ tools/LuaCorpusExtractor/__pycache__
 
 .vscode/**
 
+lua-comparison-results/**
+
 # Build results
 
 [Dd]ebug/
