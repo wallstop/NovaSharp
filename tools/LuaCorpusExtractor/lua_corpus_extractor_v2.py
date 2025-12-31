@@ -107,7 +107,7 @@ LUA_53_FEATURES = [
 LUA_52_FEATURES = [
     (r'goto\s+\w+', 'goto statement (5.2+)'),
     (r'::\w+::', 'label (5.2+)'),
-    (r'bit32\.', 'bit32 library'),
+    # Note: bit32 is handled separately in LUA_52_ONLY_FEATURES (removed in 5.3+)
     (r'_ENV\b', '_ENV variable'),
     (r'package\.searchpath', 'package.searchpath'),
     (r'rawlen\s*\(', 'rawlen function'),
@@ -172,6 +172,13 @@ LUA_51_ONLY_FEATURES = [
     (r'string\.gfind\s*\(', 'string.gfind (5.1 only, use string.gmatch)'),
     (r'table\.foreach\s*\(', 'table.foreach (5.1 only, deprecated)'),
     (r'table\.foreachi\s*\(', 'table.foreachi (5.1 only, deprecated)'),
+]
+
+# Features that exist ONLY in Lua 5.2 (not 5.1, deprecated/removed in 5.3+)
+LUA_52_ONLY_FEATURES = [
+    # bit32 was added in 5.2 but deprecated and removed in 5.3+
+    # (5.3+ uses native bitwise operators instead)
+    (r'bit32\.', 'bit32 library (5.2 only, removed in 5.3+)'),
 ]
 
 # Lua 5.5 specific features (currently Lua 5.5 is backward compatible with 5.4)
@@ -453,6 +460,7 @@ NOVASHARP_ONLY_TEST_CLASS_PREFIXES = [
     'IoModuleVirtualization',  # NovaSharp IO stream virtualization
     'OsSystemModule',  # os.execute behavior differs from standard Lua
     'OsExecuteVersionParity',  # Uses StubPlatformAccessor for command virtualization
+    'Bit32CompatibilityWarning',  # Tests NovaSharp's bit32 compatibility warning behavior
 ]
 
 # Test method substrings that indicate NovaSharp-only behavior
@@ -554,7 +562,17 @@ def analyze_version_compatibility(lua_code: str, surrounding_context: str, test_
             compat.lua_54 = False
             compat.lua_55 = False
             compat.reasons.append(f"Lua 5.1 only: {reason}")
-    
+
+    # Check for Lua 5.2-only features (not in 5.1, removed in 5.3+)
+    # bit32 is the primary example: added in 5.2, deprecated and removed in 5.3+
+    for pattern, reason in LUA_52_ONLY_FEATURES:
+        if re.search(pattern, lua_code):
+            compat.lua_51 = False
+            compat.lua_53 = False
+            compat.lua_54 = False
+            compat.lua_55 = False
+            compat.reasons.append(f"Lua 5.2 only: {reason}")
+
     # Check for Lua 5.5 specific features (forward compatibility)
     for pattern, reason in LUA_55_FEATURES:
         if re.search(pattern, lua_code):

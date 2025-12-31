@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/MetatableTUnitTests.cs:182
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\MetatableTUnitTests.cs:182
 -- @test: MetatableTUnitTests.MetatableIndexAndSetIndexBounce
 T = { a = 'a', b = 'b', c = 'c' };
                 t = { };

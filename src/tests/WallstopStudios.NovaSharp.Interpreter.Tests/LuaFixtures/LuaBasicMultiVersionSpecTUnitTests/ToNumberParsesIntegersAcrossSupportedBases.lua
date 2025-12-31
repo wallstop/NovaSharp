@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/LuaBasicMultiVersionSpecTUnitTests.cs:29
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\LuaBasicMultiVersionSpecTUnitTests.cs:29
 -- @test: LuaBasicMultiVersionSpecTUnitTests.ToNumberParsesIntegersAcrossSupportedBases
 -- @compat-notes: Test targets Lua 5.1
 return tonumber('1010', 2),

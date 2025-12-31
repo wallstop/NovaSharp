@@ -253,8 +253,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetUpvalueReturnsTuple(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
+            // For Lua 5.1: _ENV is always at index 1 (for setfenv/getfenv compatibility), so 'captured' is at index 2.
+            // For Lua 5.2+: _ENV is only captured if globals are referenced, so 'captured' is at index 1.
+            int capturedIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
             DynValue tuple = script.DoString(
-                @"
+                $@"
                 local function make()
                     local captured = 7
                     local function inner()
@@ -263,7 +266,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                     return inner
                 end
                 local fn = make()
-                return debug.getupvalue(fn, 2)
+                return debug.getupvalue(fn, {capturedIndex})
                 "
             );
 
@@ -277,8 +280,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task SetupValueUpdatesClosure(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
+            // For Lua 5.1: _ENV is always at index 1, so 'captured' is at index 2.
+            // For Lua 5.2+: _ENV is only captured if globals are referenced, so 'captured' is at index 1.
+            int capturedIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
             DynValue result = script.DoString(
-                @"
+                $@"
                 local function make()
                     local captured = 1
                     local function inner()
@@ -287,7 +293,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                     return inner
                 end
                 local fn = make()
-                debug.setupvalue(fn, 2, 42)
+                debug.setupvalue(fn, {capturedIndex}, 42)
                 return fn()
                 "
             );
@@ -300,8 +306,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UpvalueJoinSharesState(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
+            // For Lua 5.1: _ENV is always at index 1, so 'value' is at index 2.
+            // For Lua 5.2+: _ENV is only captured if globals are referenced, so 'value' is at index 1.
+            int valueIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
             DynValue result = script.DoString(
-                @"
+                $@"
                 local function counter(start)
                     local value = start
                     return function(delta)
@@ -314,19 +323,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
                 local first = counter(0)
                 local second = counter(100)
-                local beforeShared = debug.upvalueid(first, 2) == debug.upvalueid(second, 2)
-                debug.upvaluejoin(second, 2, first, 2)
-                local afterShared = debug.upvalueid(first, 2) == debug.upvalueid(second, 2)
+                local beforeShared = debug.upvalueid(first, {valueIndex}) == debug.upvalueid(second, {valueIndex})
+                debug.upvaluejoin(second, {valueIndex}, first, {valueIndex})
+                local afterShared = debug.upvalueid(first, {valueIndex}) == debug.upvalueid(second, {valueIndex})
                 second(5)
                 local firstValue = first()
                 local secondValue = second()
 
-                return {
+                return {{
                     before = beforeShared,
                     after = afterShared,
                     firstValue = firstValue,
                     secondValue = secondValue
-                }
+                }}
                 "
             );
 
@@ -344,8 +353,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task UpvalueIdReturnsUserDataHandles(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
+            // For Lua 5.1: _ENV is always at index 1, so 'captured' is at index 2.
+            // For Lua 5.2+: _ENV is only captured if globals are referenced, so 'captured' is at index 1.
+            int capturedIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
             DynValue result = script.DoString(
-                @"
+                $@"
                 local function make()
                     local captured = 1
                     return function()
@@ -354,8 +366,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                     end
                 end
                 local fn = make()
-                local first = debug.upvalueid(fn, 2)
-                local second = debug.upvalueid(fn, 2)
+                local first = debug.upvalueid(fn, {capturedIndex})
+                local second = debug.upvalueid(fn, {capturedIndex})
                 return type(first), first == second
                 "
             );

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/MetatableTUnitTests.cs:70
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\MetatableTUnitTests.cs:70
 -- @test: MetatableTUnitTests.TableAddWithMetatable
 v1 = { 'aaaa' }
                 v2 = { 'aaaaaa' }

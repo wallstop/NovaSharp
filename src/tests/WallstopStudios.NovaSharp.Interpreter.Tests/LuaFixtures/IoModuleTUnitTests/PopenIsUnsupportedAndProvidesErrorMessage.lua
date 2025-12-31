@@ -1,7 +1,7 @@
--- @lua-versions: 5.1
+-- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoModuleTUnitTests.cs:1314
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\IoModuleTUnitTests.cs:1314
 -- @test: IoModuleTUnitTests.PopenIsUnsupportedAndProvidesErrorMessage
--- @compat-notes: Test targets Lua 5.1
+-- @compat-notes: Test method 'PopenIsUnsupportedAndProvidesErrorMessage' tests NovaSharp-specific behavior (IsUnsupported)
 return type(io.popen)

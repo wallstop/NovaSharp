@@ -14,24 +14,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     {
         [global::TUnit.Core.Test]
         [AllLuaVersions]
-        public async Task GetUpValuesTypeReturnsEnvironmentWhenOnlyEnvIsCaptured(
-            LuaCompatibilityVersion version
-        )
+        public async Task ClosureWithNoGlobalsHasNoEnvUpvalue(LuaCompatibilityVersion version)
         {
+            // For Lua 5.1: _ENV is always present for setfenv/getfenv compatibility, so upvalue count is 1.
+            // For Lua 5.2+: _ENV is only included when globals are referenced, so upvalue count is 0.
             Script script = new(version);
             DynValue function = script.DoString("return function(a) return a end");
 
             Closure closure = function.Function;
 
-            await Assert.That(closure.UpValuesCount).IsEqualTo(1).ConfigureAwait(false);
-            await Assert
-                .That(closure.GetUpValueName(0))
-                .IsEqualTo(WellKnownSymbols.ENV)
-                .ConfigureAwait(false);
-            await Assert
-                .That(closure.CapturedUpValuesType)
-                .IsEqualTo(Closure.UpValuesType.Environment)
-                .ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                await Assert.That(closure.UpValuesCount).IsEqualTo(1).ConfigureAwait(false);
+                await Assert
+                    .That(closure.GetUpValueName(0))
+                    .IsEqualTo(WellKnownSymbols.ENV)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(closure.CapturedUpValuesType)
+                    .IsEqualTo(Closure.UpValuesType.Environment)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(closure.UpValuesCount).IsEqualTo(0).ConfigureAwait(false);
+                await Assert
+                    .That(closure.CapturedUpValuesType)
+                    .IsEqualTo(default(Closure.UpValuesType))
+                    .ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -75,6 +86,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [AllLuaVersions]
         public async Task GetUpValuesExposesCapturedSymbols(LuaCompatibilityVersion version)
         {
+            // This closure captures x and y. For Lua 5.1, _ENV is also included.
+            // For Lua 5.2+, _ENV is NOT included since no globals are referenced.
             Script script = new(version);
             DynValue function = script.DoString(
                 @"
@@ -99,8 +112,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             int xIndex = names.IndexOf("x");
             int yIndex = names.IndexOf("y");
 
-            await Assert.That(upvalueCount).IsEqualTo(3).ConfigureAwait(false);
-            await Assert.That(envIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                // Lua 5.1: _ENV + x + y = 3 upvalues
+                await Assert.That(upvalueCount).IsEqualTo(3).ConfigureAwait(false);
+                await Assert.That(envIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
+            }
+            else
+            {
+                // Lua 5.2+: x + y = 2 upvalues (no _ENV)
+                await Assert.That(upvalueCount).IsEqualTo(2).ConfigureAwait(false);
+                await Assert.That(envIndex).IsEqualTo(-1).ConfigureAwait(false);
+            }
             await Assert.That(xIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
             await Assert.That(yIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
             await Assert

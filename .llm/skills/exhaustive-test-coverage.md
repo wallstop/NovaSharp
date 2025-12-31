@@ -102,6 +102,7 @@ Confirm that behavior that SHOULDN'T exist doesn't.
 
 ```csharp
 // Feature should NOT be available in older versions
+// ✅ GOOD: Uses range-based helper (future-proof)
 [Test]
 [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
 public async Task MathTypeDoesNotExistInLua52AndEarlier(LuaCompatibilityVersion version)
@@ -111,6 +112,8 @@ public async Task MathTypeDoesNotExistInLua52AndEarlier(LuaCompatibilityVersion 
     await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
 }
 ```
+
+**⚠️ PREFER range-based helpers** (`[AllLuaVersions]`, `[LuaVersionsFrom]`, `[LuaVersionsUntil]`, `[LuaVersionRange]`) over explicit version lists. Range-based helpers are future-proof and automatically include new Lua versions.
 
 ### 5. Special Value Tests
 

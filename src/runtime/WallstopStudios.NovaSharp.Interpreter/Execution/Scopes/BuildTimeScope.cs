@@ -115,7 +115,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         }
 
         /// <summary>
-        /// Forces the current function to capture <c>_ENV</c> as an upvalue so globals remain addressable even when not explicitly referenced.
+        /// Forces the current function to capture <c>_ENV</c> as an upvalue.
+        /// This is needed for Lua 5.1 compatibility where setfenv/getfenv can operate
+        /// on any function, even those that don't explicitly reference globals.
+        /// For Lua 5.2+, this should NOT be called - _ENV is only captured when needed.
         /// </summary>
         public void ForceEnvUpValue()
         {

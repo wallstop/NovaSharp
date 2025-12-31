@@ -58,6 +58,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task DynamicAccessScopeSecurityReturnsNil(LuaCompatibilityVersion version)
         {
+            // Note: The worker function must reference a global so it captures the shadowed _ENV.
+            // In Lua 5.2+, closures only capture _ENV when they actually reference global variables.
+            // Without the dummy reference to `_`, the worker function wouldn't have _ENV as an upvalue,
+            // and dynamic.eval would find the script's global _ENV instead of the empty local one.
             string code =
                 @"
                 a = 5;
@@ -65,6 +69,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 local eval = dynamic.eval;
                 local _ENV = { }
                 function worker()
+                    local _ = _  -- Force capture of _ENV by referencing a global
                     return eval(prepared);
                 end
                 return worker();

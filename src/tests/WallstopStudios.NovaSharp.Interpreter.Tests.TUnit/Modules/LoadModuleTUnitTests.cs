@@ -335,14 +335,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task LoadSafeThrowsWhenEnvironmentCannotBeRetrieved(
             LuaCompatibilityVersion version
         )
         {
+            // This test is for Lua 5.1 only, where _ENV is always captured for setfenv/getfenv compatibility.
+            // In Lua 5.2+, if the calling function doesn't reference globals, it won't have _ENV as an upvalue,
+            // and loadsafe will successfully find the global environment from the script's globals.
+            //
+            // For Lua 5.1: We can test that when _ENV is nil in the calling function, loadsafe fails.
+            // The inner function must NOT reference any globals (otherwise it would fail before calling loadsafe).
             Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
@@ -351,6 +353,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 local ls = loadsafe
                 local pc = pcall
                 _ENV = nil
+                -- In Lua 5.1, even though we only use locals, _ENV is still captured as an upvalue.
+                -- So when loadsafe looks for _ENV, it finds nil and fails.
                 local ok, err = pc(function() return ls('return 1') end)
                 _ENV = original_env
                 return ok, err
@@ -361,6 +365,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert
                 .That(result.Tuple[1].String)
                 .Contains("current environment cannot be backtracked");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadSafeUsesGlobalEnvWhenCallerHasNoEnvUpvalue(
+            LuaCompatibilityVersion version
+        )
+        {
+            // In Lua 5.2+, if the calling function doesn't reference any globals, it won't have _ENV
+            // as an upvalue. In this case, loadsafe should successfully use the script's global environment.
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local ls = loadsafe
+                -- This function only uses the local 'ls', so it has no _ENV upvalue in Lua 5.2+.
+                -- loadsafe should fall back to using the script's global environment.
+                local fn = ls('return 42')
+                return fn()
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(42d);
         }
 
         [global::TUnit.Core.Test]

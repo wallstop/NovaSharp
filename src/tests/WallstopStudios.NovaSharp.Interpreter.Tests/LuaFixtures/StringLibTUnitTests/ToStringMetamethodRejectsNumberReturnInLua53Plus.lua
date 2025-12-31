@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:300
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\StringLibTUnitTests.cs:300
 -- @test: StringLibTUnitTests.ToStringMetamethodRejectsNumberReturnInLua53Plus
 -- @compat-notes: Test targets Lua 5.1
 t = {}

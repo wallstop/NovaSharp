@@ -57,6 +57,101 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 ## 🔴 HIGH PRIORITY: Known Issues
 
+### Consolidate Lua Version Parsing Logic 🔴 **TECH DEBT**
+
+**Status**: 🔲 **NOT STARTED** — Code duplication across tools.
+
+**Problem**: Lua version parsing logic is duplicated across multiple Python scripts and doesn't share code:
+
+| File                                                  | Parses          | Supports `5.X+` | Supports `all` | Supports `5.X-5.Y` |
+| ----------------------------------------------------- | --------------- | --------------- | -------------- | ------------------ |
+| `scripts/tests/run-lua-fixtures-parallel.py`          | `@lua-versions` | ✅ Yes          | ❌ No          | ❌ No              |
+| `scripts/tests/compare-lua-outputs.py`                | `@lua-versions` | ✅ Yes          | ❌ No          | ❌ No              |
+| `tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py` | Generates       | ✅ Generates    | ❌ No          | ❌ No              |
+
+**Goal**: Create a shared Python module for Lua version parsing with full range syntax support.
+
+**Implementation Steps**:
+
+1. **Create shared module**: `tools/lua_version_utils.py` with:
+
+   - `parse_lua_versions(version_string: str) -> list[str]` - Parse `@lua-versions` values
+   - `is_version_compatible(lua_versions: list[str], target: str) -> bool` - Check compatibility
+   - Support for: explicit lists, `all`, `5.X+`, `5.X-5.Y` range syntax
+
+2. **Update consumers**: Refactor the three scripts to use the shared module
+
+3. **Add tests**: Unit tests for the version parsing logic
+
+4. **Update corpus extractor**: Generate range syntax where appropriate (e.g., `5.3+` instead of `5.3, 5.4, 5.5`)
+
+**Benefits**:
+
+- Single source of truth for version parsing
+- Easier to add new range syntax features
+- Reduced risk of parsing inconsistencies between tools
+
+---
+
+### Migrate Tests to Range-Based Version Annotations 🔴 **FUTURE-PROOFING**
+
+**Status**: 🔲 **NOT STARTED** — Full codebase scan required. **BLOCKED BY**: Consolidate Lua Version Parsing Logic (above).
+
+**Problem**: Many existing tests and Lua fixtures use explicit version lists (e.g., `5.1, 5.2, 5.3, 5.4, 5.5` or `[Arguments(Lua53)][Arguments(Lua54)][Arguments(Lua55)]`) instead of range-based annotations. When Lua 5.6 is released, these tests will require manual updates.
+
+**Goal**: Migrate all version annotations to range-based syntax for automatic future version inclusion.
+
+**Affected Patterns to Find and Replace**:
+
+| Pattern Type | Find (Explicit)                                       | Replace With (Range-Based)                                        |
+| ------------ | ----------------------------------------------------- | ----------------------------------------------------------------- |
+| Lua fixture  | `@lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5`              | `@lua-versions: all`                                              |
+| Lua fixture  | `@lua-versions: 5.3, 5.4, 5.5`                        | `@lua-versions: 5.3+`                                             |
+| Lua fixture  | `@lua-versions: 5.1, 5.2`                             | `@lua-versions: 5.1-5.2`                                          |
+| Lua fixture  | `@lua-versions: 5.2, 5.3, 5.4`                        | `@lua-versions: 5.2-5.4`                                          |
+| C# test      | Multiple `[Arguments(LuaCompatibilityVersion.LuaXX)]` | `[LuaVersionsFrom]`/`[LuaVersionsUntil]`/`[LuaVersionRange]`      |
+
+**Implementation Steps**:
+
+1. **Phase 1: Audit** — Run grep/rg to identify all explicit version patterns:
+
+   ```bash
+   # Find explicit version lists in Lua fixtures
+   rg "@lua-versions: 5\.[1-5], 5\." --type lua -c
+
+   # Find explicit Arguments attributes in C# tests
+   rg "\[Arguments\(LuaCompatibilityVersion\.Lua5" --type cs -c
+   ```
+
+2. **Phase 2: Prioritize** — Categorize by conversion type:
+
+   - `all` conversions (all 5 versions listed)
+   - `5.X+` conversions (contiguous from version to latest)
+   - `5.X-5.Y` conversions (contiguous range)
+   - Manual review needed (non-contiguous, version-specific behavior)
+
+3. **Phase 3: Batch Conversion** — Use automated scripts where safe:
+
+   - `@lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5` → `@lua-versions: all`
+   - `@lua-versions: 5.3, 5.4, 5.5` → `@lua-versions: 5.3+`
+   - Validate with `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`
+
+4. **Phase 4: Verify** — Run full test suite to ensure no regressions
+
+**Estimated Scope**:
+
+- ~1,800+ Lua fixtures to scan
+- ~2,000+ C# tests with version attributes
+- Majority expected to be simple conversions
+
+**Benefits**:
+
+- **Future-proof**: New Lua versions automatically included
+- **Less maintenance**: No manual updates when 5.6/5.7 releases
+- **Consistency**: Uniform annotation style across codebase
+
+---
+
 ### TUnit Test Project Compilation Speed 🔴 **CRITICAL**
 
 **Status**: 🔴 **NEEDS IMMEDIATE ACTION** — Compilation takes 60-100+ seconds.

@@ -1,7 +1,7 @@
--- @lua-versions: 5.2, 5.3, 5.4, 5.5
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Compatibility/Bit32CompatibilityWarningTUnitTests.cs:59
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Compatibility\Bit32CompatibilityWarningTUnitTests.cs:59
 -- @test: Bit32CompatibilityWarningTUnitTests.RequireBit32InLua52DoesNotEmitWarning
--- @compat-notes: Test targets Lua 5.2+
+-- @compat-notes: Test class 'Bit32CompatibilityWarningTUnitTests' uses NovaSharp-specific Bit32CompatibilityWarning functionality
 return require('bit32') ~= nil

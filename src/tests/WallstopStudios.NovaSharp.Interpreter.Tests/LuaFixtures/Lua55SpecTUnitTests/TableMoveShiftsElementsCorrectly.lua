@@ -1,7 +1,7 @@
 -- @lua-versions: 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/Lua55SpecTUnitTests.cs:199
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\Lua55SpecTUnitTests.cs:199
 -- @test: Lua55SpecTUnitTests.TableMoveShiftsElementsCorrectly
 -- @compat-notes: Test targets Lua 5.5+; Lua 5.3+: table.move
 local t = {1, 2, 3, 4, 5}

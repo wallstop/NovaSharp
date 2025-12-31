@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Tree/Statements/BreakStatementTUnitTests.cs:108
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Tree\Statements\BreakStatementTUnitTests.cs:108
 -- @test: BreakStatementTUnitTests.MultipleBreakStatementsRespectInnermostLoopScope
 local log = {}
 

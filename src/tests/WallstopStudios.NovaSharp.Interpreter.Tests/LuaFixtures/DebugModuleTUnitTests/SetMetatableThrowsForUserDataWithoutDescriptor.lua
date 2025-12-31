@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1851
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:1851
 -- @test: DebugModuleTUnitTests.SetMetatableThrowsForUserDataWithoutDescriptor
 -- @compat-notes: Test targets Lua 5.1
 local co = coroutine.create(function() end)

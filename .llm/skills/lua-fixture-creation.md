@@ -105,7 +105,7 @@ print("test")
 ### Minimal Required Template
 
 ```lua
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/<TestProject>/<TestClass>.cs:<LineNumber>
@@ -117,7 +117,7 @@ print("test")
 ### Full Template (with all optional fields)
 
 ```lua
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:42
@@ -191,30 +191,49 @@ ______________________________________________________________________
 
 ### `@lua-versions` Format
 
-**⚠️ IMPORTANT**: `@lua-versions` must list **ALL** versions where the fixture is valid, not a range with just endpoints. For features introduced in a specific version, list every version from introduction through the latest.
+**⚠️ PREFERRED: Use range syntax for future-proof tests.** Range annotations automatically include new Lua versions (e.g., 5.6) without requiring test updates.
 
 ```lua
--- All versions (comma-separated list):
+-- ✅ BEST: Range syntax (future-proof, auto-includes new versions)
+-- @lua-versions: all              -- All Lua versions (5.1+)
+-- @lua-versions: 5.3+             -- 5.3 and above (expands to 5.3, 5.4, 5.5, ...)
+-- @lua-versions: 5.1-5.2          -- 5.1 through 5.2 (inclusive range)
+-- @lua-versions: 5.2-5.4          -- 5.2 through 5.4 (inclusive range)
+
+-- ✅ ACCEPTABLE: Explicit list (only when behavior differs non-contiguously)
 -- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
 
--- Range syntax (version and above) - expands to all versions from N to 5.5:
--- @lua-versions: 5.3+
--- (equivalent to: 5.3, 5.4, 5.5)
+-- ❌ AVOID: Explicit lists for contiguous ranges (not future-proof)
+-- @lua-versions: 5.3, 5.4, 5.5    -- Use 5.3+ instead
+-- @lua-versions: 5.1, 5.2         -- Use 5.1-5.2 instead
 
--- Feature introduced in 5.2 (must list ALL supported versions, not just 5.2):
--- @lua-versions: 5.2, 5.3, 5.4, 5.5
--- (or use shorthand: 5.2+)
-
--- ❌ WRONG: Only listing first and last version
+-- ❌ WRONG: Only listing first and last version (skips middle versions!)
 -- @lua-versions: 5.2, 5.5
 -- (This SKIPS 5.3 and 5.4 testing!)
-
--- Specific versions only (when feature was removed or changed):
--- @lua-versions: 5.1, 5.2
 
 -- NovaSharp-only (skip reference Lua comparison):
 -- @lua-versions: novasharp-only
 ```
+
+### Range Annotation Reference
+
+| Annotation       | Meaning                     | Equivalent Explicit List       | Tooling Support |
+| ---------------- | --------------------------- | ------------------------------ | --------------- |
+| `all`            | All Lua versions            | `5.1, 5.2, 5.3, 5.4, 5.5, ...` | 🔲 Planned      |
+| `5.3+`           | Version 5.3 and above       | `5.3, 5.4, 5.5, ...`           | ✅ Supported    |
+| `5.1-5.2`        | Versions 5.1 through 5.2    | `5.1, 5.2`                     | 🔲 Planned      |
+| `5.2-5.4`        | Versions 5.2 through 5.4    | `5.2, 5.3, 5.4`                | 🔲 Planned      |
+| `novasharp-only` | NovaSharp-specific features | (skip reference Lua)           | ✅ Supported    |
+
+**Current Tooling Status**:
+
+- `run-lua-fixtures-parallel.py`: Supports `5.X+` syntax
+- `compare-lua-outputs.py`: Supports `5.X+` syntax
+- `lua_corpus_extractor_v2.py`: Generates `5.X+` for contiguous ranges from version to latest
+
+**Planned**: Full `all` and `5.X-5.Y` range syntax (see PLAN.md: "Consolidate Lua Version Parsing Logic")
+
+**Why prefer ranges?** When Lua 5.6 is released, tests using `5.3+` will automatically include it. Tests using explicit `5.3, 5.4, 5.5` will need manual updates.
 
 ### `@novasharp-only` Values
 
@@ -265,16 +284,17 @@ ______________________________________________________________________
 
 ## Version-Specific Naming Conventions
 
-| Pattern                   | Use Case                       | `@lua-versions`                     |
-| ------------------------- | ------------------------------ | ----------------------------------- |
-| `feature_test.lua`        | Works in all versions          | `5.1, 5.2, 5.3, 5.4, 5.5` or `5.1+` |
-| `feature_test_51.lua`     | Lua 5.1 only                   | `5.1`                               |
-| `feature_test_52.lua`     | Lua 5.2 only                   | `5.2`                               |
-| `feature_test_52plus.lua` | Lua 5.2 and later              | `5.2, 5.3, 5.4, 5.5` or `5.2+`      |
-| `feature_test_53plus.lua` | Lua 5.3 and later              | `5.3, 5.4, 5.5` or `5.3+`           |
-| `feature_test_54plus.lua` | Lua 5.4 and later              | `5.4, 5.5` or `5.4+`                |
-| `feature_test_51_52.lua`  | Lua 5.1 and 5.2 only           | `5.1, 5.2`                          |
-| `feature_test_error.lua`  | Error expected in all versions | (with `@expects-error: true`)       |
+| Pattern                   | Use Case                       | `@lua-versions` (preferred)   |
+| ------------------------- | ------------------------------ | ----------------------------- |
+| `feature_test.lua`        | Works in all versions          | `all`                         |
+| `feature_test_51.lua`     | Lua 5.1 only                   | `5.1`                         |
+| `feature_test_52.lua`     | Lua 5.2 only                   | `5.2`                         |
+| `feature_test_52plus.lua` | Lua 5.2 and later              | `5.2+`                        |
+| `feature_test_53plus.lua` | Lua 5.3 and later              | `5.3+`                        |
+| `feature_test_54plus.lua` | Lua 5.4 and later              | `5.4+`                        |
+| `feature_test_51_52.lua`  | Lua 5.1 and 5.2 only           | `5.1-5.2`                     |
+| `feature_test_52_54.lua`  | Lua 5.2 through 5.4            | `5.2-5.4`                     |
+| `feature_test_error.lua`  | Error expected in all versions | (with `@expects-error: true`) |
 
 ______________________________________________________________________
 
@@ -324,7 +344,7 @@ ______________________________________________________________________
 ### Basic Fixture (all versions)
 
 ```lua
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:100
@@ -341,7 +361,7 @@ print("PASS")
 ### Version-Specific Fixture (5.3+)
 
 ```lua
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:150
@@ -359,7 +379,7 @@ print("PASS")
 ### Error-Expecting Fixture
 
 ```lua
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:99
@@ -374,7 +394,7 @@ return 1 // 0  -- integer division by zero should error
 ### NovaSharp-Only Fixture (CLR interop)
 
 ```lua
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: true
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Interop/ClrInteropTests.cs:50
@@ -392,7 +412,7 @@ print("PASS")
 ### Fixture with pcall Error Handling
 
 ```lua
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:120

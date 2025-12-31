@@ -66,13 +66,31 @@ ______________________________________________________________________
 
 ### Version Data-Driving Helpers
 
+**⚠️ PREFERRED: Use range-based helpers for future-proof tests.** These automatically include new Lua versions (e.g., 5.6) without requiring test updates.
+
 | Helper                                              | Description              | Use Case                           |
 | --------------------------------------------------- | ------------------------ | ---------------------------------- |
-| `[AllLuaVersions]`                                  | Expands to Lua 5.1–5.5   | Universal coverage                 |
+| `[AllLuaVersions]`                                  | All Lua versions (5.1+)  | Universal coverage (future-proof)  |
 | `[LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]`  | Versions from 5.3+       | Features introduced in 5.3         |
 | `[LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]` | Versions up to 5.2       | Features removed/changed after 5.2 |
 | `[LuaVersionRange(Lua52, Lua54)]`                   | Inclusive version window | Focused compatibility spans        |
 | `[LuaTestMatrix("input1", "input2")]`               | Versions × inputs        | Comprehensive edge-case testing    |
+
+### ❌ AVOID: Explicit Version Lists
+
+```csharp
+// ❌ AVOID: Explicit version lists (not future-proof)
+[Arguments(LuaCompatibilityVersion.Lua53)]
+[Arguments(LuaCompatibilityVersion.Lua54)]
+[Arguments(LuaCompatibilityVersion.Lua55)]
+public async Task Feature(LuaCompatibilityVersion version) { }
+
+// ✅ PREFER: Range-based helpers (auto-includes future versions)
+[LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
+public async Task Feature(LuaCompatibilityVersion version) { }
+```
+
+**Why prefer ranges?** When Lua 5.6 is released, tests using `[LuaVersionsFrom]` will automatically include it. Tests using explicit `[Arguments]` for each version will need manual updates.
 
 ### Examples
 

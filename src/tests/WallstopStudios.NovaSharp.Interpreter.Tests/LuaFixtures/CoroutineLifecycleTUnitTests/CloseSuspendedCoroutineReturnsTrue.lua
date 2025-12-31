@@ -1,7 +1,7 @@
 -- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/CoroutineLifecycleIntegrationTUnitTests.cs:271
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\CoroutineLifecycleIntegrationTUnitTests.cs:271
 -- @test: CoroutineLifecycleTUnitTests.CloseSuspendedCoroutineReturnsTrue
 -- @compat-notes: Test targets Lua 5.1; Lua 5.4+: close attribute
 function closable_success()

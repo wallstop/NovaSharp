@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1868
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:1868
 -- @test: MathModuleTUnitTests.ModfPreservesPositiveZeroForPositiveIntegers
 -- @compat-notes: Test targets Lua 5.3+
 local int_part, frac_part = math.modf(5)

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TailCallTUnitTests.cs:88
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\DataTypes\TailCallTUnitTests.cs:88
 -- @test: TailCallTUnitTests.RecursiveSumHandlesVeryDeepTailRecursion
 local function recsum(n, partial)
                     if n == 0 then

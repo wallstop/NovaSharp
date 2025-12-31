@@ -3042,8 +3042,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         public async Task GetInfoNupsCountsUpvaluesCorrectly(LuaCompatibilityVersion version)
         {
             // Edge case: Verify nups (upvalue count) is accurate
-            // Note: All functions have at least _ENV as an implicit upvalue in Lua 5.2+
-            // In NovaSharp, _ENV is counted for all versions
+            // For Lua 5.1: _ENV is always included for setfenv/getfenv compatibility.
+            // For Lua 5.2+: _ENV is only included when the closure actually references global variables.
             Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
@@ -3052,11 +3052,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 local function noExplicitUpvalues() return 42 end
                 local function oneExplicitUpvalue() return a end
                 local function threeExplicitUpvalues() return a + b + c end
-                
+
                 local info0 = debug.getinfo(noExplicitUpvalues, 'u')
                 local info1 = debug.getinfo(oneExplicitUpvalue, 'u')
                 local info3 = debug.getinfo(threeExplicitUpvalues, 'u')
-                
+
                 return info0.nups, info1.nups, info3.nups
                 "
             );
@@ -3068,26 +3068,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .Because("Should return three nups values")
                 .ConfigureAwait(false);
 
-            // noExplicitUpvalues has 1 upvalue (_ENV)
-            await Assert
-                .That(tuple[0].Number)
-                .IsEqualTo(1d)
-                .Because("noExplicitUpvalues function has 1 upvalue (_ENV)")
-                .ConfigureAwait(false);
-
-            // oneExplicitUpvalue has 2 upvalues (_ENV and a)
-            await Assert
-                .That(tuple[1].Number)
-                .IsEqualTo(2d)
-                .Because("oneExplicitUpvalue function has 2 upvalues (_ENV and a)")
-                .ConfigureAwait(false);
-
-            // threeExplicitUpvalues has 4 upvalues (_ENV, a, b, c)
-            await Assert
-                .That(tuple[2].Number)
-                .IsEqualTo(4d)
-                .Because("threeExplicitUpvalues function has 4 upvalues (_ENV, a, b, c)")
-                .ConfigureAwait(false);
+            if (version == LuaCompatibilityVersion.Lua51)
+            {
+                // Lua 5.1: _ENV is always included, so counts are +1
+                await Assert
+                    .That(tuple[0].Number)
+                    .IsEqualTo(1d)
+                    .Because("Lua 5.1: noExplicitUpvalues has 1 upvalue (_ENV)")
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(tuple[1].Number)
+                    .IsEqualTo(2d)
+                    .Because("Lua 5.1: oneExplicitUpvalue has 2 upvalues (_ENV + a)")
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(tuple[2].Number)
+                    .IsEqualTo(4d)
+                    .Because("Lua 5.1: threeExplicitUpvalues has 4 upvalues (_ENV + a + b + c)")
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                // Lua 5.2+: _ENV is not included since no globals are referenced
+                await Assert
+                    .That(tuple[0].Number)
+                    .IsEqualTo(0d)
+                    .Because("Lua 5.2+: noExplicitUpvalues has 0 upvalues")
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(tuple[1].Number)
+                    .IsEqualTo(1d)
+                    .Because("Lua 5.2+: oneExplicitUpvalue has 1 upvalue (a)")
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(tuple[2].Number)
+                    .IsEqualTo(3d)
+                    .Because("Lua 5.2+: threeExplicitUpvalues has 3 upvalues (a + b + c)")
+                    .ConfigureAwait(false);
+            }
         }
 
         // ========================

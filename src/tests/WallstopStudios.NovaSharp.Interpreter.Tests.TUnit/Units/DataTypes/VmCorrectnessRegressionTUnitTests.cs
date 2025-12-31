@@ -116,20 +116,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         /// <summary>
         /// Verifies that debug.setupvalue still works correctly after the API changes.
-        /// The first upvalue (index 1) is _ENV, the captured variable x is at index 2.
+        /// For Lua 5.1: _ENV is at index 1, x is at index 2.
+        /// For Lua 5.2+: x is at index 1 (no _ENV since no globals).
         /// </summary>
         [Test]
         [AllLuaVersions]
         public async Task DebugSetUpValueStillWorks(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
+            int xIndex = version == LuaCompatibilityVersion.Lua51 ? 2 : 1;
             DynValue result = script.DoString(
-                @"
+                $@"
                 local x = 10
                 local function f()
                     return x
                 end
-                debug.setupvalue(f, 2, 99)  -- x is at index 2 (_ENV is at index 1)
+                debug.setupvalue(f, {xIndex}, 99)
                 return f()
                 "
             );

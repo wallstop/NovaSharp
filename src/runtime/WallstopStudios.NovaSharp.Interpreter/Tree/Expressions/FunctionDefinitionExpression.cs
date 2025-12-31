@@ -77,10 +77,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
             {
                 _env = lcontext.Scope.DefineLocal(WellKnownSymbols.ENV);
             }
-            else
+            else if (
+                lcontext.Script.CompatibilityVersion == Compatibility.LuaCompatibilityVersion.Lua51
+            )
             {
+                // Lua 5.1 compatibility: In Lua 5.1, setfenv/getfenv can operate on any function,
+                // even those that don't explicitly reference globals. We need _ENV to be present
+                // as an upvalue for setfenv to work. This is only needed for Lua 5.1 since
+                // setfenv/getfenv were removed in Lua 5.2+.
                 lcontext.Scope.ForceEnvUpValue();
             }
+            // For Lua 5.2+, we no longer force _ENV. The _ENV upvalue is only captured when
+            // the closure actually references global variables (via CreateGlobalReference).
+            // This matches reference Lua 5.2+ behavior.
 
             _paramNames = DefineArguments(paramnames, lcontext);
 

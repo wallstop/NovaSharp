@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/MetatableTUnitTests.cs:161
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\MetatableTUnitTests.cs:161
 -- @test: MetatableTUnitTests.MetatableIndexAndSetIndexFunctions
 -- @compat-notes: Uses injected variable: obj
 T = { a = 'a', b = 'b', c = 'c' };
