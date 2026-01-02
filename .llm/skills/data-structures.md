@@ -1,8 +1,26 @@
+______________________________________________________________________
+
+triggers:
+
+- "data structure"
+- "collection"
+- "dictionary"
+- "list vs array"
+- "complexity"
+- "big O"
+  category: performance
+  related:
+- high-performance-csharp
+- allocation-traps
+  priority: recommended
+
+______________________________________________________________________
+
 # Skill: Data Structures — When to Use What
 
 **When to use**: Choosing the right data structure for performance-critical code, or understanding complexity trade-offs.
 
-**Related Skills**: [high-performance-csharp](high-performance-csharp.md) (performance patterns), [memory-allocation-traps](memory-allocation-traps.md) (allocation costs)
+**Related Skills**: [high-performance-csharp](high-performance-csharp.md) (performance patterns), [allocation-traps](allocation-traps.md) (allocation costs)
 
 ______________________________________________________________________
 
@@ -156,74 +174,12 @@ ______________________________________________________________________
 
 ## Common Anti-Patterns
 
-### ❌ List as Set
-
-```csharp
-// BAD: O(n) Contains on every Add
-List<DynValue> seen = new List<DynValue>();
-if (!seen.Contains(value))  // O(n)
-{
-    seen.Add(value);
-}
-
-// GOOD: O(1) lookup
-HashSet<DynValue> seen = new HashSet<DynValue>();
-seen.Add(value);  // Returns false if duplicate
-```
-
-### ❌ Dictionary for Ordered Data
-
-```csharp
-// BAD: Dictionary doesn't guarantee order
-Dictionary<int, string> ordered = new();
-ordered[3] = "c";
-ordered[1] = "a";
-ordered[2] = "b";
-// Iteration order is NOT 1,2,3
-
-// GOOD: Use SortedDictionary or List
-SortedDictionary<int, string> ordered = new();
-// OR
-List<(int key, string value)> ordered = new();
-```
-
-### ❌ LinkedList for Random Access
-
-```csharp
-// BAD: O(n) index access
-LinkedList<int> list = new();
-int value = list.ElementAt(500);  // Traverses 500 nodes
-
-// GOOD: O(1) index access
-List<int> list = new();
-int value = list[500];
-```
-
-### ❌ Reallocating in Loops
-
-```csharp
-// BAD: Allocates and grows repeatedly
-List<int> results = new List<int>();
-for (int i = 0; i < 1000; i++)
-{
-    results.Add(Compute(i));  // May reallocate multiple times
-}
-
-// GOOD: Pre-size when count is known
-List<int> results = new List<int>(1000);
-for (int i = 0; i < 1000; i++)
-{
-    results.Add(Compute(i));  // No reallocation
-}
-
-// BEST: Use pool in hot paths
-using PooledResource<List<int>> pooled = ListPool<int>.Get(out List<int> results);
-for (int i = 0; i < 1000; i++)
-{
-    results.Add(Compute(i));
-}
-// Results cleared and returned to pool automatically
-```
+| Anti-Pattern                 | Problem                     | Fix                              |
+| ---------------------------- | --------------------------- | -------------------------------- |
+| List as set                  | O(n) Contains on each add   | Use `HashSet<T>`                 |
+| Dictionary for ordered data  | Order not guaranteed        | Use `SortedDictionary` or `List` |
+| LinkedList for random access | O(n) index access           | Use `List<T>`                    |
+| Reallocating in loops        | Multiple resize allocations | Pre-size or use pool             |
 
 ______________________________________________________________________
 
@@ -296,7 +252,6 @@ ______________________________________________________________________
 ## Resources
 
 - [high-performance-csharp](high-performance-csharp.md) — Performance patterns
-- [memory-allocation-traps](memory-allocation-traps.md) — Hidden allocations
-- [profile-debug-performance](profile-debug-performance.md) — Measuring performance
+- [allocation-traps](allocation-traps.md) — Hidden allocations
 - [DataStructs/CollectionPools.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/CollectionPools.cs) — Pool implementations
 - [DataStructs/HashCodeHelper.cs](../../src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/HashCodeHelper.cs) — Hash code utilities

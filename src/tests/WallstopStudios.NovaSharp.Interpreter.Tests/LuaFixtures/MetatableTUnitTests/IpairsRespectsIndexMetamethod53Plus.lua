@@ -1,4 +1,4 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
 -- Test: ipairs respects __index metamethod in Lua 5.3+

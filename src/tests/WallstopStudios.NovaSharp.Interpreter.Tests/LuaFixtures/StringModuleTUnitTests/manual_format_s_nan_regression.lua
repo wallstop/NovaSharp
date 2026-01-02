@@ -1,6 +1,6 @@
 -- Tests string.format("%s", nan) behavior.
 -- NaN formatting varies by platform/implementation but should contain "nan".
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 

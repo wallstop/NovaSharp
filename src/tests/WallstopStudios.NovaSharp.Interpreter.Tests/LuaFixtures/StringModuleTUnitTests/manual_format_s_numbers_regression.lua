@@ -1,6 +1,6 @@
 -- Tests that string.format("%s", number) correctly converts numbers to strings.
 -- This tests the fix for number-to-string coercion in the %s format specifier.
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 

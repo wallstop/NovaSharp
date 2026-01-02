@@ -1,3 +1,21 @@
+______________________________________________________________________
+
+triggers:
+
+- "ZString"
+- "string building"
+- "StringBuilder"
+- "string interpolation"
+- "string concatenation"
+- "zero-alloc string"
+  category: performance
+  related:
+- high-performance-csharp
+- span-optimization
+  priority: recommended
+
+______________________________________________________________________
+
 # ZString Migration Guidelines
 
 This document provides guidance for migrating string operations to ZString for zero-allocation string building in NovaSharp.

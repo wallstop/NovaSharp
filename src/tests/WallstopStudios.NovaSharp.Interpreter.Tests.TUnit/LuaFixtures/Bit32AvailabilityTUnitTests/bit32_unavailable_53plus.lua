@@ -1,5 +1,5 @@
 -- bit32_unavailable_53plus.lua
--- @lua-versions: 5.4, 5.5
+-- @lua-versions: 5.4+
 -- @novasharp-only: false
 -- @expects-error: false
 -- Verifies bit32 library is NOT available in Lua 5.4+ (removed)

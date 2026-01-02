@@ -1,7 +1,7 @@
 -- Only Lua 5.4+ requires integer representation for randomseed.
 
 -- This should succeed in 5.1/5.2/5.3
--- @lua-versions: 5.1, 5.2, 5.3
+-- @lua-versions: 5.1-5.3
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs

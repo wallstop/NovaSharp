@@ -1,7 +1,7 @@
 -- Tests that math.fmod(x, 0) throws an error in Lua 5.3+
 -- Lua 5.1/5.2 returned NaN instead
 
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0

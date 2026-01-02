@@ -2,7 +2,7 @@
 -- This fixture validates that integer vs float type distinctions are handled correctly
 
 -- 2^53 is the maximum integer exactly representable as a double
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs

@@ -916,9 +916,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// which is outside the valid signed integer range.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task MaxintegerPlusHalfRoundsToTwoPow63(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -998,9 +996,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// (even though it loses precision when stored as a float).
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task RangeCheckUsesCorrectBoundaryConstants(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -1044,9 +1040,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Reference: Lua 5.4 Manual §6.7 - math.floor returns integer when result fits.
         /// </remarks>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FloorReturnsFloatWhenResultExceedsIntegerRange(
             LuaCompatibilityVersion version
         )
@@ -1080,9 +1074,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// Tests that math.ceil returns a float (not integer) when the result exceeds integer range.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task CeilReturnsFloatWhenResultExceedsIntegerRange(
             LuaCompatibilityVersion version
         )
@@ -1110,9 +1102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// long.MinValue, causing string.format to silently output the wrong value.
         /// </summary>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task FormatDecimalThrowsForFlooredOverflowValue(
             LuaCompatibilityVersion version
         )
@@ -1261,8 +1251,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         /// detail, not a Lua 5.1/5.2 semantic distinction.
         /// </remarks>
         [Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task FloorReturnsNumberInLua51And52(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);

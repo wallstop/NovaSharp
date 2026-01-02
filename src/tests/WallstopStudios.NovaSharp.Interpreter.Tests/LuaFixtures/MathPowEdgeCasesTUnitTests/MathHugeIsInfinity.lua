@@ -2,7 +2,7 @@
 -- Expected: math.huge equals 1/0 and behaves as infinity
 -- Reference: Lua §6.7 - "math.huge: The float value HUGE_VAL, a value greater than any other numeric value"
 
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: standalone-fixture

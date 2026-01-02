@@ -1,4 +1,4 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4
+-- @lua-versions: 5.1-5.4
 -- @novasharp-only: true
 -- @expects-error: false
 -- @source: standalone-fixture

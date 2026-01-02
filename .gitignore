@@ -229,3 +229,6 @@ scratch/
 *.out
 *.err
 *.rc
+
+# Migration tool output files
+manual-review.txt

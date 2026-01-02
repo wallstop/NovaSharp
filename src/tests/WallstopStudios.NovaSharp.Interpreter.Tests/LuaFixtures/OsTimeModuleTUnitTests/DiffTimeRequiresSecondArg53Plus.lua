@@ -1,4 +1,4 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: true
 -- os.difftime requires second argument in Lua 5.3+

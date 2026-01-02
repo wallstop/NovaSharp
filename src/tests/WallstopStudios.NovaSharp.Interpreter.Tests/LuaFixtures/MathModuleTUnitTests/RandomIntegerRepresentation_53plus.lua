@@ -2,7 +2,7 @@
 -- Per Lua 5.3 manual §6.7: math.random arguments must have integer representation
 
 -- This should error with "number has no integer representation" in 5.3+
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs

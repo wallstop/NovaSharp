@@ -1,3 +1,19 @@
+______________________________________________________________________
+
+triggers:
+
+- "git add"
+- "git index.lock"
+- "pre-commit hook"
+- "git staging"
+- "lock contention"
+  category: workflow
+  related:
+- ci-workflow
+  priority: reference
+
+______________________________________________________________________
+
 # Skill: Git-Safe Operations for Scripts and Hooks
 
 **When to use**: Creating or modifying scripts that run `git add`, `git reset`, or other git index operations.

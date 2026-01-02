@@ -507,4 +507,8 @@ check_shell_executable
 check_shell_python_invocation
 check_test_lint
 
+# Validate LLM skill metadata (strict mode - fail on errors)
+log "[pre-commit] Validating LLM skill metadata..."
+run_python tools/LlmSkillIndexer/llm_skill_indexer.py --check
+
 log "[pre-commit] Completed successfully."

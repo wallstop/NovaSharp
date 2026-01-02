@@ -2,7 +2,7 @@
 -- Per Lua 5.3 manual §6.7: 5.0 has integer representation
 
 -- This should succeed - 5.0 is a float but has integer representation
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs

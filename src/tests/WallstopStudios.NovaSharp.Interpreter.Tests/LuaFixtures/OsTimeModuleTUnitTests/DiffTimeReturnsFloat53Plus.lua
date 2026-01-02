@@ -1,4 +1,4 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
 -- os.difftime should return a float in Lua 5.3+

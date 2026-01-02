@@ -1,4 +1,4 @@
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 -- Test os.time with a known date (Y2K: Jan 1, 2000 00:00:00 UTC)

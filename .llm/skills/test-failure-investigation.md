@@ -1,8 +1,28 @@
+______________________________________________________________________
+
+triggers:
+
+- "test failure"
+- "failing test"
+- "flaky test"
+- "test investigation"
+- "root cause"
+- "test debugging"
+  category: testing
+  related:
+- codebase-navigation
+- lua-spec-verification
+- tunit-test-writing
+- lua-comparison-harness
+  priority: core
+
+______________________________________________________________________
+
 # Skill: Test Failure Investigation
 
 **When to use**: Any test failure occurs — whether intermittent, unexpected, or seemingly unrelated to current changes.
 
-**Related Skills**: [debugging-interpreter](debugging-interpreter.md) (pipeline debugging), [lua-spec-verification](lua-spec-verification.md) (comparing with reference Lua), [tunit-test-writing](tunit-test-writing.md) (test writing)
+**Related Skills**: [codebase-navigation](codebase-navigation.md) (pipeline debugging), [lua-spec-verification](lua-spec-verification.md) (comparing with reference Lua), [tunit-test-writing](tunit-test-writing.md) (test writing)
 
 ______________________________________________________________________
 
@@ -35,47 +55,11 @@ ______________________________________________________________________
 
 ### Step 1: Reproduce Reliably
 
-Before investigating, ensure you can reproduce the failure:
-
-```bash
-# Run the specific failing test multiple times
-./scripts/test/quick.sh FailingTestName
-./scripts/test/quick.sh FailingTestName
-./scripts/test/quick.sh FailingTestName
-
-# Run with verbose output
-./scripts/test/quick.sh --no-build FailingTestName 2>&1 | tee failure.log
-```
-
-If the failure is intermittent:
-
-```bash
-# Run in a loop to catch intermittent failures
-for i in {1..20}; do
-    echo "=== Run $i ===" 
-    ./scripts/test/quick.sh --no-build FailingTestName || echo "FAILED on run $i"
-done
-```
+Run the test multiple times: `./scripts/test/quick.sh FailingTestName`. For intermittent failures, run in a loop.
 
 ### Step 2: Understand the Test's Intent
 
-Read the test thoroughly:
-
-1. What behavior is it verifying?
-1. What Lua version(s) does it target?
-1. Is there a corresponding `.lua` fixture?
-1. What does the Lua specification say about this behavior?
-
-```bash
-# Find the test file
-fd "TestClassName" src/tests/
-
-# Find related fixtures
-fd "test_name" src/tests/ --extension lua
-
-# Check Lua spec
-rg "relevant_function" docs/lua-spec/
-```
+Read the test. What behavior is it verifying? What Lua version(s)? Is there a `.lua` fixture? Check Lua spec: `rg "function_name" docs/lua-spec/`
 
 ### Step 3: Determine Failure Category
 
@@ -88,44 +72,11 @@ rg "relevant_function" docs/lua-spec/
 
 ### Step 4: Production Bug Investigation
 
-If the test correctly expects Lua-compliant behavior:
-
-```bash
-# Verify expected behavior with reference Lua
-lua5.4 -e "print(test_code_here)"
-
-# Compare with NovaSharp
-dotnet run --project src/tooling/NovaSharp.Cli -e "print(test_code_here)"
-
-# Check all Lua versions if version-specific
-for v in 5.1 5.2 5.3 5.4; do lua$v -e "print(test_code_here)"; done
-```
-
-Then follow [debugging-interpreter](debugging-interpreter.md) to trace through the pipeline.
+Verify behavior with reference Lua: `lua5.4 -e "print(...)"`. Compare with NovaSharp. Then follow [codebase-navigation](codebase-navigation.md).
 
 ### Step 5: Test Bug Investigation
 
-If the test expectation might be wrong:
-
-```bash
-# Check Lua specification
-bat --paging=never docs/lua-spec/lua54-manual.md | rg -A5 "function_name"
-
-# Verify with ALL Lua versions
-for v in 5.1 5.2 5.3 5.4; do
-    echo "=== Lua $v ==="
-    lua$v -e "print(test_code_here)"
-done
-```
-
-**🔴 CRITICAL — PRESUME NOVASHARP IS WRONG**: If NovaSharp behavior differs from what a test expects:
-
-1. **FIRST**, verify what reference Lua produces: `lua5.4 -e "print(...)"`
-1. If reference Lua matches the test expectation → **NovaSharp has a BUG** → Fix production code
-1. If reference Lua differs from the test expectation → Verify across ALL Lua versions (5.1-5.5)
-1. Only consider a "test bug" if reference Lua across ALL applicable versions produces different output than the test expects
-
-**NEVER** assume the test is wrong just because NovaSharp disagrees. The test documents expected Lua behavior — NovaSharp must conform to it.
+**🔴 PRESUME NOVASHARP IS WRONG**: First verify with reference Lua. If Lua matches test expectation, NovaSharp has a BUG. Only consider a test bug if ALL applicable Lua versions differ from test expectation.
 
 ### Step 6: Test Isolation Investigation
 
@@ -301,7 +252,7 @@ ______________________________________________________________________
 
 ## Resources
 
-- [debugging-interpreter](debugging-interpreter.md) — Pipeline debugging
+- [codebase-navigation](codebase-navigation.md) — Pipeline debugging
 - [lua-spec-verification](lua-spec-verification.md) — Verifying against reference Lua
 - [tunit-test-writing](tunit-test-writing.md) — Test patterns and isolation
 - [docs/Testing.md](../../docs/Testing.md) — Testing documentation

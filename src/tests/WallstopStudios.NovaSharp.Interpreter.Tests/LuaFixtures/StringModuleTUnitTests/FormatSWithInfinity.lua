@@ -1,6 +1,6 @@
 -- Tests string.format("%s", infinity) behavior.
 -- Infinity formatting varies by platform/implementation.
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 

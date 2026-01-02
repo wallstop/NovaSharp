@@ -1,213 +1,110 @@
+______________________________________________________________________
+
+triggers:
+
+- "refactor allocation"
+- "eliminate allocation"
+- "zero allocation"
+- "remove LINQ"
+- "closure elimination"
+  category: performance
+  related:
+- high-performance-csharp
+- allocation-traps
+- zstring-migration
+  priority: recommended
+
+______________________________________________________________________
+
 # Skill: Refactoring to Zero-Allocation Patterns
 
 **When to use**: Eliminating GC allocations from existing code by converting to pooled collections, eliminating LINQ, removing closures, and using zero-allocation string building.
 
-**Related Skills**: [high-performance-csharp](high-performance-csharp.md) (general guidelines), [zstring-migration](zstring-migration.md) (string building), [span-optimization](span-optimization.md) (span-based operations)
+**Code Samples**: [pooling-patterns](../code-samples/pooling-patterns.md), [string-building](../code-samples/string-building.md)
+
+**Related Skills**: [high-performance-csharp](high-performance-csharp.md), [allocation-traps](allocation-traps.md), [zstring-migration](zstring-migration.md)
 
 ______________________________________________________________________
 
 ## Refactoring Process Overview
 
-Follow these steps **in order** when refactoring allocating code:
-
-| Step | Focus                   | Tools                                                        |
-| ---- | ----------------------- | ------------------------------------------------------------ |
-| 1    | Identify Allocations    | Regex search, profiler, code review                          |
-| 2    | LINQ → Loop Conversion  | Manual loop replacement                                      |
-| 3    | Closure Elimination     | Extract to explicit loops, static lambdas, pass state        |
-| 4    | Collection Pooling      | `ListPool<T>`, `HashSetPool<T>`, `DictionaryPool<K,V>`       |
-| 5    | StringBuilder → ZString | `ZStringBuilder.Create()`, `ZString.Concat()`                |
-| 6    | Array Pooling           | `DynValueArrayPool`, `ObjectArrayPool`, `SystemArrayPool<T>` |
+| Step | Focus                    | Tools                                                        |
+| ---- | ------------------------ | ------------------------------------------------------------ |
+| 1    | Identify Allocations     | Regex search, profiler, code review                          |
+| 2    | LINQ to Loop Conversion  | Manual loop replacement                                      |
+| 3    | Closure Elimination      | Extract to explicit loops, static lambdas, pass state        |
+| 4    | Collection Pooling       | `ListPool<T>`, `HashSetPool<T>`, `DictionaryPool<K,V>`       |
+| 5    | StringBuilder to ZString | `ZStringBuilder.Create()`, `ZString.Concat()`                |
+| 6    | Array Pooling            | `DynValueArrayPool`, `ObjectArrayPool`, `SystemArrayPool<T>` |
 
 ______________________________________________________________________
 
 ## Step 1: Identify Allocations
 
-### Common Allocation Sources Checklist
+### Common Allocation Sources
 
 | Source                | Example                              | Allocation Type          |
 | --------------------- | ------------------------------------ | ------------------------ |
 | LINQ methods          | `.Where()`, `.Select()`, `.ToList()` | Iterator + result        |
 | `new List<T>()`       | `new List<DynValue>()`               | List + backing array     |
 | `new Dictionary<K,V>` | `new Dictionary<string, int>()`      | Dictionary + buckets     |
-| `new HashSet<T>()`    | `new HashSet<int>()`                 | HashSet + slots          |
 | String interpolation  | `$"Error: {msg}"`                    | Intermediate strings     |
-| String concatenation  | `"a" + b + "c"`                      | Multiple strings         |
-| `StringBuilder`       | `new StringBuilder()`                | StringBuilder + buffer   |
 | Lambda closures       | `list.Find(x => x.Id == targetId)`   | Closure class + delegate |
 | `new T[]`             | `new DynValue[count]`                | Array                    |
 | `.ToArray()`          | `list.ToArray()`                     | New array copy           |
-| Boxing                | `object o = 42;`                     | Boxed value              |
-| `foreach` on struct   | `foreach (var kv in dict)`           | Enumerator allocation\*  |
-| `params` arrays       | `Method(arg1, arg2, arg3)`           | Params array             |
 
-\*Note: Dictionary and HashSet `foreach` may allocate in some .NET versions.
-
-### Regex Patterns to Search for Allocations
+### Regex Search Patterns
 
 ```bash
 # LINQ methods (high priority)
-rg '\.Where\(|\.Select\(|\.First\(|\.FirstOrDefault\(|\.Any\(|\.Count\(.*=>|\.ToList\(\)|\.ToArray\(\)|\.OrderBy\(' src/runtime/ --type cs
+rg '\.Where\(|\.Select\(|\.First\(|\.Any\(|\.ToList\(\)|\.ToArray\(\)' --type cs
 
 # New collections
-rg 'new (List|Dictionary|HashSet|Queue|Stack)<' src/runtime/ --type cs
+rg 'new (List|Dictionary|HashSet)<' --type cs
 
 # String operations
-rg '\$"|new StringBuilder|\.ToString\(\).*\+|"\s*\+\s*[^"]+\s*\+' src/runtime/ --type cs
-
-# Lambda closures (capturing variables)
-rg '\(\w+\s*=>\s*.*\w+\)' src/runtime/ --type cs
-
-# Array allocations
-rg 'new \w+\[\d+\]|new \w+\[.*\]' src/runtime/ --type cs
-
-# Boxing
-rg 'object\s+\w+\s*=\s*\d+|\.Add\(\s*\d+\s*\)' src/runtime/ --type cs
+rg '\$"|new StringBuilder' --type cs
 ```
 
 ______________________________________________________________________
 
-## Step 2: LINQ → Loop Conversion
+## Step 2: LINQ to Loop Conversion
 
-### Pattern: Where + FirstOrDefault
+See [pooling-patterns](../code-samples/pooling-patterns.md#linq-to-loop-conversions) for detailed examples.
 
-```csharp
-// ❌ BEFORE: Allocates iterator
-var item = collection.Where(x => x.Id == targetId).FirstOrDefault();
+### Quick Reference
 
-// ✅ AFTER: Manual loop
-TItem item = default;
-foreach (var x in collection)
-{
-    if (x.Id == targetId)
-    {
-        item = x;
-        break;
-    }
-}
-```
-
-### Pattern: Where + ToList
-
-```csharp
-// ❌ BEFORE: Allocates iterator + new list
-var matches = items.Where(x => x.IsActive).ToList();
-
-// ✅ AFTER: Pooled list with manual filtering
-using (ListPool<Item>.Get(out List<Item> matches))
-{
-    foreach (var item in items)
-    {
-        if (item.IsActive)
-        {
-            matches.Add(item);
-        }
-    }
-    // Use matches here...
-}
-```
-
-### Pattern: Select + ToArray
-
-```csharp
-// ❌ BEFORE: Allocates iterator + new array
-var names = items.Select(x => x.Name).ToArray();
-
-// ✅ AFTER: Direct array population
-string[] names = new string[items.Count];
-for (int i = 0; i < items.Count; i++)
-{
-    names[i] = items[i].Name;
-}
-```
-
-### Pattern: Any
-
-```csharp
-// ❌ BEFORE: Allocates iterator (with closure if predicate captures)
-bool hasActive = items.Any(x => x.Status == status);
-
-// ✅ AFTER: Manual loop
-bool hasActive = false;
-foreach (var item in items)
-{
-    if (item.Status == status)
-    {
-        hasActive = true;
-        break;
-    }
-}
-```
-
-### Pattern: Count with Predicate
-
-```csharp
-// ❌ BEFORE: Allocates iterator
-int activeCount = items.Count(x => x.IsActive);
-
-// ✅ AFTER: Manual count
-int activeCount = 0;
-foreach (var item in items)
-{
-    if (item.IsActive)
-    {
-        activeCount++;
-    }
-}
-```
-
-### Pattern: Sum
-
-```csharp
-// ❌ BEFORE: Allocates iterator
-int total = items.Sum(x => x.Value);
-
-// ✅ AFTER: Manual sum
-int total = 0;
-foreach (var item in items)
-{
-    total += item.Value;
-}
-```
-
-### Pattern: OrderBy + ToList
-
-```csharp
-// ❌ BEFORE: Multiple allocations
-var sorted = items.OrderBy(x => x.Priority).ToList();
-
-// ✅ AFTER: In-place sort with pooled list
-using (ListPool<Item>.Get(items.Count, out List<Item> sorted))
-{
-    sorted.AddRange(items);
-    sorted.Sort((a, b) => a.Priority.CompareTo(b.Priority));
-    // Use sorted here...
-}
-```
+| LINQ Pattern          | Zero-Alloc Replacement           |
+| --------------------- | -------------------------------- |
+| `.Where().ToList()`   | `for` loop + `ListPool<T>.Get()` |
+| `.Select().ToArray()` | Pre-sized array + `for` loop     |
+| `.Any(predicate)`     | `for` loop with early `return`   |
+| `.First(predicate)`   | `for` loop with early `break`    |
+| `.Count(predicate)`   | `for` loop with counter          |
+| `.Sum(selector)`      | `for` loop with accumulator      |
+| `.OrderBy().ToList()` | `ListPool<T>.Get()` + `Sort()`   |
 
 ______________________________________________________________________
 
-## Step 3: Closure Elimination Techniques
+## Step 3: Closure Elimination
 
-### 🔴 Why Closures Allocate
+### Why Closures Allocate
 
-When a lambda captures a variable from its enclosing scope, the compiler generates a hidden class to hold the captured values. This class is allocated on the heap.
+When a lambda captures a variable, the compiler generates a hidden class:
 
 ```csharp
-// This allocates a closure class every call because 'targetId' is captured
+// This allocates a closure class every call
 void FindItem(int targetId)
 {
-    var item = list.Find(x => x.Id == targetId);  // ❌ Allocates closure
+    Item item = list.Find(x => x.Id == targetId);  // Allocates!
 }
 ```
 
-### Technique 1: Extract to Explicit Loop
+### Techniques
+
+1. **Extract to Explicit Loop** (preferred):
 
 ```csharp
-// ❌ BEFORE: Closure captures 'targetId'
-var item = list.Find(x => x.Id == targetId);
-
-// ✅ AFTER: No allocation
 Item item = null;
 for (int i = 0; i < list.Count; i++)
 {
@@ -219,219 +116,46 @@ for (int i = 0; i < list.Count; i++)
 }
 ```
 
-### Technique 2: Static Lambda for Cached Delegates
-
-When no capture is needed, use a static lambda (C# 9+) or a static readonly delegate:
+2. **Static Lambda** (C# 9+):
 
 ```csharp
-// ❌ BEFORE: Allocates delegate each call
-items.Sort((a, b) => a.Priority.CompareTo(b.Priority));
-
-// ✅ AFTER: Cached static delegate
-private static readonly Comparison<Item> PriorityComparison = 
+private static readonly Comparison<Item> PriorityComparison =
     static (a, b) => a.Priority.CompareTo(b.Priority);
 
 items.Sort(PriorityComparison);
 ```
 
-### Technique 3: Pass State via Parameter
-
-Some APIs accept state as a parameter to avoid closures:
+3. **Pass State via Parameter**:
 
 ```csharp
-// ❌ BEFORE: Closure captures 'threshold'
-int threshold = 10;
-bool found = Array.Exists(items, x => x.Value > threshold);
-
-// ✅ AFTER: Use state parameter pattern (when API supports it)
-// For custom implementations, design APIs with state parameters:
-public static bool Find<T, TState>(T[] array, TState state, Func<T, TState, bool> predicate)
-{
-    foreach (var item in array)
-    {
-        if (predicate(item, state))
-            return true;
-    }
-    return false;
-}
-
-// Usage: no closure
 bool found = Find(items, threshold, static (x, thresh) => x.Value > thresh);
 ```
 
-### Technique 4: Remove 'this' Capture
+______________________________________________________________________
 
-Instance method references implicitly capture `this`:
+## Step 4: Collection Pooling
 
-```csharp
-// ❌ BEFORE: Captures 'this' via method group
-items.ForEach(ProcessItem);  // ProcessItem is instance method
+All pools are in `WallstopStudios.NovaSharp.Interpreter.DataStructs`.
 
-// ✅ AFTER: Use explicit loop
-foreach (var item in items)
-{
-    ProcessItem(item);
-}
+| Pool                  | Get Method                                     |
+| --------------------- | ---------------------------------------------- |
+| `ListPool<T>`         | `ListPool<T>.Get(out List<T>)`                 |
+| `HashSetPool<T>`      | `HashSetPool<T>.Get(out HashSet<T>)`           |
+| `DictionaryPool<K,V>` | `DictionaryPool<K,V>.Get(out Dictionary<K,V>)` |
 
-// OR: Make ProcessItem static if it doesn't need instance state
-private static void ProcessItem(Item item) { ... }
-```
+See [pooling-patterns](../code-samples/pooling-patterns.md) for usage examples.
 
 ______________________________________________________________________
 
-## Step 4: Collection Pooling Migration
+## Step 5: String Building
 
-### NovaSharp Collection Pool APIs
-
-All pools are in namespace `WallstopStudios.NovaSharp.Interpreter.DataStructs`.
-
-| Pool                  | Get Method                                     | Returns                           |
-| --------------------- | ---------------------------------------------- | --------------------------------- |
-| `ListPool<T>`         | `ListPool<T>.Get(out List<T>)`                 | `PooledResource<List<T>>`         |
-| `ListPool<T>`         | `ListPool<T>.Get(capacity, out List<T>)`       | `PooledResource<List<T>>`         |
-| `HashSetPool<T>`      | `HashSetPool<T>.Get(out HashSet<T>)`           | `PooledResource<HashSet<T>>`      |
-| `DictionaryPool<K,V>` | `DictionaryPool<K,V>.Get(out Dictionary<K,V>)` | `PooledResource<Dictionary<K,V>>` |
-| `StackPool<T>`        | `StackPool<T>.Get(out Stack<T>)`               | `PooledResource<Stack<T>>`        |
-| `QueuePool<T>`        | `QueuePool<T>.Get(out Queue<T>)`               | `PooledResource<Queue<T>>`        |
-
-### Pattern: Method Creating List
+Replace `StringBuilder` and string concatenation with ZString:
 
 ```csharp
-// ❌ BEFORE: Allocates new list
-List<DynValue> values = new List<DynValue>();
-foreach (var item in source)
-{
-    values.Add(ConvertItem(item));
-}
-return ProcessValues(values);
-
-// ✅ AFTER: Pooled list
-using (ListPool<DynValue>.Get(out List<DynValue> values))
-{
-    foreach (var item in source)
-    {
-        values.Add(ConvertItem(item));
-    }
-    return ProcessValues(values);
-}
-```
-
-### Pattern: List with Known Capacity
-
-```csharp
-// ❌ BEFORE: Allocates with estimated capacity (still allocates!)
-List<DynValue> values = new List<DynValue>(estimatedSize);
-
-// ✅ AFTER: Pooled with capacity hint
-using (ListPool<DynValue>.Get(estimatedSize, out List<DynValue> values))
-{
-    // List has at least 'estimatedSize' capacity
-    // ...
-}
-```
-
-### Pattern: Temporary HashSet
-
-```csharp
-// ❌ BEFORE: Allocates new hashset
-var seen = new HashSet<int>();
-foreach (var item in items)
-{
-    if (!seen.Add(item.Id))
-    {
-        // Duplicate found
-    }
-}
-
-// ✅ AFTER: Pooled hashset
-using (HashSetPool<int>.Get(out HashSet<int> seen))
-{
-    foreach (var item in items)
-    {
-        if (!seen.Add(item.Id))
-        {
-            // Duplicate found
-        }
-    }
-}
-```
-
-### Pattern: Temporary Dictionary
-
-```csharp
-// ❌ BEFORE: Allocates new dictionary
-var lookup = new Dictionary<string, Item>();
-foreach (var item in items)
-{
-    lookup[item.Key] = item;
-}
-// Use lookup...
-
-// ✅ AFTER: Pooled dictionary
-using (DictionaryPool<string, Item>.Get(out Dictionary<string, Item> lookup))
-{
-    foreach (var item in items)
-    {
-        lookup[item.Key] = item;
-    }
-    // Use lookup within the using block...
-}
-```
-
-### Pattern: Manual Rent/Return for Complex Lifetimes
-
-When the collection lifetime doesn't fit a `using` block:
-
-```csharp
-// For fields or complex lifetimes, use Rent/Return pattern
-private HashSet<int> _indices;
-
-void BeginOperation()
-{
-    _indices = HashSetPool<int>.Rent();
-}
-
-void EndOperation()
-{
-    if (_indices != null)
-    {
-        HashSetPool<int>.Return(_indices);
-        _indices = null;
-    }
-}
-```
-
-______________________________________________________________________
-
-## Step 5: StringBuilder Patterns
-
-### Pattern: String Concatenation in Loop → ZStringBuilder
-
-```csharp
-// ❌ BEFORE: O(n²) allocations
-string result = "";
-foreach (var item in items)
-{
-    result += item.Name + ", ";
-}
-
-// ✅ AFTER: Single allocation at ToString()
-using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
-foreach (var item in items)
-{
-    sb.Append(item.Name);
-    sb.Append(", ");
-}
-return sb.ToString();
-```
-
-### Pattern: String Interpolation → ZStringBuilder
-
-```csharp
-// ❌ BEFORE: Multiple intermediate allocations
+// BAD: Multiple allocations
 return $"Error at line {line}: {message} (code: {errorCode})";
 
-// ✅ AFTER: Zero intermediate allocations
+// GOOD: Zero intermediate allocations
 using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 sb.Append("Error at line ");
 sb.Append(line);
@@ -443,303 +167,50 @@ sb.Append(')');
 return sb.ToString();
 ```
 
-### Pattern: Simple Concatenation → ZString.Concat
-
-```csharp
-// ❌ BEFORE: Multiple allocations
-return "\"" + value + "\"";
-
-// ✅ AFTER: Zero allocation
-return ZString.Concat("\"", value, "\"");
-```
-
-### Pattern: Multiple Format Calls
-
-```csharp
-// ❌ BEFORE: Multiple Format allocations
-string header = string.Format("Function: {0}", name);
-string params = string.Format("  Parameters: {0}", count);
-return header + "\n" + params;
-
-// ✅ AFTER: Single builder
-using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
-sb.Append("Function: ");
-sb.AppendLine(name);
-sb.Append("  Parameters: ");
-sb.Append(count);
-return sb.ToString();
-```
-
-### Pattern: Joining Collections → ZStringBuilder.Join
-
-```csharp
-// ❌ BEFORE: Allocates array + result
-return string.Join(", ", items.Select(x => x.Name));
-
-// ✅ AFTER: Zero allocation join (if names is already materialized)
-return ZStringBuilder.Join(", ", names);
-```
+See [zstring-migration](zstring-migration.md) for detailed patterns.
 
 ______________________________________________________________________
 
-## Step 6: Array Pool Usage
+## Step 6: Array Pooling
 
-### NovaSharp Array Pool APIs
-
-All pools are in namespace `WallstopStudios.NovaSharp.Interpreter.DataStructs`.
-
-| Pool                 | Get Method                                             | Use Case                              |
-| -------------------- | ------------------------------------------------------ | ------------------------------------- |
-| `DynValueArrayPool`  | `DynValueArrayPool.Get(size, out DynValue[])`          | Fixed exact-size DynValue arrays      |
-| `ObjectArrayPool`    | `ObjectArrayPool.Get(size, out object[])`              | Fixed exact-size object[] (interop)   |
-| `SystemArrayPool<T>` | `SystemArrayPool<T>.Get(size, out T[])`                | Variable-size buffers (may be larger) |
-| `SystemArrayPool<T>` | `SystemArrayPool<T>.Get(size, clearOnReturn, out T[])` | Control clearing behavior             |
-
-### 🔴 Critical: Pool Selection Guide
-
-| Scenario                              | Pool                 | Notes                                  |
-| ------------------------------------- | -------------------- | -------------------------------------- |
-| DynValue arrays in VM hot path        | `DynValueArrayPool`  | Thread-local caching for sizes ≤16     |
-| Object arrays for reflection/interop  | `ObjectArrayPool`    | Thread-local caching for sizes ≤8      |
-| Variable-size temporary buffers       | `SystemArrayPool<T>` | May return larger array than requested |
-| Small fixed-size buffers (≤256 bytes) | `stackalloc`         | Stack allocation, no pooling needed    |
-| Large permanent arrays                | Direct allocation    | Long-lived objects don't benefit       |
-
-### Pattern: Temporary Array (Variable Size)
-
-```csharp
-// ❌ BEFORE: Allocates new array
-char[] buffer = new char[estimatedSize];
-int written = FormatValue(value, buffer);
-return new string(buffer, 0, written);
-
-// ✅ AFTER: Pooled buffer (may be larger than requested!)
-using PooledResource<char[]> pooled = SystemArrayPool<char>.Get(
-    estimatedSize, clearOnReturn: false, out char[] buffer);
-int written = FormatValue(value, buffer);
-return new string(buffer, 0, written);
-```
-
-### Pattern: DynValue Array in VM
-
-```csharp
-// ❌ BEFORE: Allocates every call
-DynValue[] args = new DynValue[argCount];
-
-// ✅ AFTER: Pooled with automatic return
-using (DynValueArrayPool.Get(argCount, out DynValue[] args))
-{
-    // Populate and use args...
-    // Returns to pool when disposed
-}
-```
-
-### Pattern: Object Array for Reflection
-
-```csharp
-// ❌ BEFORE: Allocates for every method invocation
-object[] parameters = new object[paramCount];
-// ... populate ...
-methodInfo.Invoke(target, parameters);
-
-// ✅ AFTER: Pooled object array
-using (ObjectArrayPool.Get(paramCount, out object[] parameters))
-{
-    // ... populate ...
-    methodInfo.Invoke(target, parameters);
-}
-```
-
-### Pattern: Fixed-Size Buffer → stackalloc
-
-```csharp
-// ❌ BEFORE: Heap allocation for small buffer
-byte[] bytes = new byte[8];
-WriteDouble(value, bytes);
-
-// ✅ AFTER: Stack allocation (no heap, no pooling overhead)
-Span<byte> bytes = stackalloc byte[8];
-WriteDouble(value, bytes);
-```
-
-### Pattern: Converting Pooled Array to Final Array
-
-```csharp
-// When you need the final result as an array:
-using (DynValueArrayPool.Get(maxSize, out DynValue[] buffer))
-{
-    int actualCount = PopulateBuffer(buffer);
-    
-    // Create exact-sized result array
-    DynValue[] result = new DynValue[actualCount];
-    Array.Copy(buffer, result, actualCount);
-    return result;
-}
-
-// OR use ToArrayAndReturn for lists:
-List<DynValue> list = ListPool<DynValue>.Rent(capacity);
-// ... populate list ...
-return ListPool<DynValue>.ToArrayAndReturn(list);  // Returns list to pool
-```
+| Scenario                                | Pool                 |
+| --------------------------------------- | -------------------- |
+| DynValue arrays in VM hot path          | `DynValueArrayPool`  |
+| Object arrays for reflection/interop    | `ObjectArrayPool`    |
+| Variable-size temporary buffers         | `SystemArrayPool<T>` |
+| Small fixed-size buffers (\<=256 bytes) | `stackalloc`         |
 
 ______________________________________________________________________
 
-## Complete Refactoring Example
+## Verification
 
-### Before (Multiple Allocation Issues)
-
-```csharp
-public string FormatErrors(List<Error> errors, int threshold)
-{
-    // ❌ Issue 1: LINQ with closure (captures 'threshold')
-    var filtered = errors.Where(e => e.Severity > threshold).ToList();
-    
-    // ❌ Issue 2: StringBuilder allocation
-    var sb = new StringBuilder();
-    sb.AppendLine("Errors found:");
-    
-    foreach (var error in filtered)
-    {
-        // ❌ Issue 3: String interpolation inside loop
-        sb.AppendLine($"  [{error.Code}] {error.Message}");
-    }
-    
-    // ❌ Issue 4: LINQ Count
-    sb.AppendLine($"Total: {filtered.Count(e => e.IsCritical)} critical");
-    
-    return sb.ToString();
-}
-```
-
-### After (Zero Allocation in Hot Path)
-
-```csharp
-public string FormatErrors(List<Error> errors, int threshold)
-{
-    // ✅ Fix 1: Pooled list with manual filtering
-    using (ListPool<Error>.Get(out List<Error> filtered))
-    {
-        foreach (var error in errors)
-        {
-            if (error.Severity > threshold)
-            {
-                filtered.Add(error);
-            }
-        }
-        
-        // ✅ Fix 2: ZStringBuilder instead of StringBuilder
-        using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
-        sb.AppendLine("Errors found:");
-        
-        // ✅ Fix 3: Manual count, no closure
-        int criticalCount = 0;
-        
-        foreach (var error in filtered)
-        {
-            // ✅ Fix 4: Append segments instead of interpolation
-            sb.Append("  [");
-            sb.Append(error.Code);
-            sb.Append("] ");
-            sb.AppendLine(error.Message);
-            
-            if (error.IsCritical)
-            {
-                criticalCount++;
-            }
-        }
-        
-        sb.Append("Total: ");
-        sb.Append(criticalCount);
-        sb.AppendLine(" critical");
-        
-        return sb.ToString();
-    }
-}
-```
-
-______________________________________________________________________
-
-## Verification: Confirming Zero Allocations
-
-### Method 1: GC.GetAllocatedBytesForCurrentThread()
+### Test Zero Allocation
 
 ```csharp
 [Test]
 public void Method_ShouldNotAllocate()
 {
-    // Warm up
-    MethodUnderTest();
-    
-    // Force collection to get stable baseline
-    GC.Collect();
-    GC.WaitForPendingFinalizers();
-    GC.Collect();
-    
+    MethodUnderTest();  // Warm up
+
     long before = GC.GetAllocatedBytesForCurrentThread();
-    
     for (int i = 0; i < 1000; i++)
     {
         MethodUnderTest();
     }
-    
     long after = GC.GetAllocatedBytesForCurrentThread();
-    long allocated = after - before;
-    
-    // Allow small tolerance for measurement overhead
-    Assert.That(allocated, Is.LessThan(100), 
-        $"Method allocated {allocated} bytes over 1000 iterations");
+
+    Assert.That(after - before, Is.LessThan(100));
 }
 ```
-
-### Method 2: BenchmarkDotNet with MemoryDiagnoser
-
-```csharp
-[MemoryDiagnoser]
-public class AllocationBenchmarks
-{
-    [Benchmark]
-    public void MethodUnderTest()
-    {
-        // Your method here
-    }
-}
-```
-
-Run with:
-
-```bash
-dotnet run -c Release -- --filter "*MethodUnderTest*"
-```
-
-Check `Allocated` column in results - should show `0 B` or `-` for zero allocations.
 
 ______________________________________________________________________
 
 ## Quick Refactoring Checklist
 
-Before submitting refactored code, verify:
-
-- [ ] **No LINQ in hot paths** — Converted to manual loops
-- [ ] **No closures capturing variables** — Using static lambdas or explicit loops
-- [ ] **Collections are pooled** — Using `ListPool<T>`, `HashSetPool<T>`, etc.
-- [ ] **No `new StringBuilder()`** — Using `ZStringBuilder.Create()`
-- [ ] **No string interpolation** — Using `ZString.Concat()` or `ZStringBuilder`
-- [ ] **Arrays are pooled or stackalloc** — Using appropriate pool or stack allocation
-- [ ] **No boxing** — Using generic methods where possible
-- [ ] **Pools are disposed** — All `PooledResource<T>` in `using` blocks
-- [ ] **No `foreach` on List in hot paths** — Using `for` loops (Unity Mono trap)
-- [ ] **No `params` in hot paths** — Using overloads or Span-based API
-- [ ] **Delegates are cached** — Not creating new delegates in loops
-- [ ] **Tested for allocations** — Verified with allocation test or profiler
-
-______________________________________________________________________
-
-## Related Skills
-
-- [high-performance-csharp](high-performance-csharp.md) — General high-performance patterns and pool API reference
-- [zstring-migration](zstring-migration.md) — Detailed ZString migration patterns
-- [span-optimization](span-optimization.md) — Span-based string and array operations
-- [unity-gc-patterns](unity-gc-patterns.md) — Unity-specific GC patterns and traps
-- [foreach-allocation](foreach-allocation.md) — foreach loop allocation traps
-- [delegate-caching](delegate-caching.md) — Delegate allocation elimination
-- [params-elimination](params-elimination.md) — params array elimination patterns
+- [ ] No LINQ in hot paths - converted to manual loops
+- [ ] No closures capturing variables - using static lambdas or explicit loops
+- [ ] Collections are pooled - using `ListPool<T>`, `HashSetPool<T>`, etc.
+- [ ] No `new StringBuilder()` - using `ZStringBuilder.Create()`
+- [ ] Arrays are pooled or stackalloc
+- [ ] Pools are disposed - all `PooledResource<T>` in `using` blocks
+- [ ] Tested for allocations - verified with allocation test

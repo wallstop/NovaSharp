@@ -86,9 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         // the known deviation from spec. When/if we add version-aware lexing, these tests
         // should be updated to expect errors in pre-5.3 modes.
         [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua53)]
-        [Arguments(LuaCompatibilityVersion.Lua54)]
-        [Arguments(LuaCompatibilityVersion.Lua55)]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua53)]
         public async Task UnicodeEscapeSequenceIsValidInLua53Plus(LuaCompatibilityVersion version)
         {
             ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
@@ -103,8 +101,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree
         // which is a deviation from the official Lua spec. Standard Lua 5.1/5.2 would
         // throw a syntax error. This is tracked as a known spec divergence.
         [global::TUnit.Core.Test]
-        [Arguments(LuaCompatibilityVersion.Lua51)]
-        [Arguments(LuaCompatibilityVersion.Lua52)]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
         public async Task UnicodeEscapeSequenceAcceptedInPreLua53ModesKnownDivergence(
             LuaCompatibilityVersion version
         )

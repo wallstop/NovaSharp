@@ -1,7 +1,7 @@
 -- Tests that math.random(nan) THROWS in Lua 5.1/5.2
 -- Verified empirically: Both Lua 5.1 and 5.2 throw "interval is empty"
 
--- @lua-versions: 5.1, 5.2
+-- @lua-versions: 5.1-5.2
 -- @novasharp-only: false
 -- @expects-error: true
 local nan = 0 / 0

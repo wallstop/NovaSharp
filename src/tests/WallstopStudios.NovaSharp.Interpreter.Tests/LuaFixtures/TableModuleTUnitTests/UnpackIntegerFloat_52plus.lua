@@ -1,7 +1,7 @@
 -- Tests that table.unpack accepts float indices that have integer representation in Lua 5.2+
 -- Per Lua 5.3 manual §6.6: 2.0 and 4.0 have integer representation
 
--- @lua-versions: 5.2, 5.3, 5.4
+-- @lua-versions: 5.2-5.4
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs

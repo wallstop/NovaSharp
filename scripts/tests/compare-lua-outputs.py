@@ -31,6 +31,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+# Add tools directory to path for imports
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+
+from lua_version_utils import parse_lua_versions, is_version_compatible
 
 # Default fixture directory for version compatibility checks
 DEFAULT_FIXTURES_DIR = Path(__file__).resolve().parents[2] / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests" / "LuaFixtures"
@@ -40,56 +44,46 @@ def parse_fixture_version_info(fixture_path: Path) -> tuple[list[str], bool]:
     """
     Parse version metadata from a fixture file header.
     Returns (lua_versions, novasharp_only).
+
+    Uses the shared lua_version_utils module for version parsing.
     """
     lua_versions = []
     novasharp_only = False
-    
+
     try:
         with open(fixture_path, 'r', encoding='utf-8') as f:
             for _ in range(10):
                 line = f.readline()
                 if not line.startswith("--"):
                     break
-                
+
                 if "@lua-versions:" in line:
                     versions_part = line.split("@lua-versions:")[1].strip()
                     if "novasharp-only" in versions_part.lower():
                         novasharp_only = True
                     else:
-                        lua_versions = [v.strip() for v in versions_part.split(",")]
-                
+                        # Use shared module for parsing
+                        lua_versions = parse_lua_versions(versions_part)
+
                 if "@novasharp-only: true" in line.lower():
                     novasharp_only = True
-    except Exception:
+    except (IOError, UnicodeDecodeError, OSError):
         pass
-    
+
     return lua_versions, novasharp_only
 
 
 def is_fixture_compatible(lua_versions: list[str], target_version: str, novasharp_only: bool) -> bool:
-    """Check if a fixture is compatible with the given Lua version."""
+    """
+    Check if a fixture is compatible with the given Lua version.
+
+    Uses the shared lua_version_utils module for version compatibility checking.
+    """
     if novasharp_only:
         return False
-    
-    if not lua_versions:
-        return True  # No version info, assume compatible
-    
-    # Check for exact match
-    if target_version in lua_versions:
-        return True
-    
-    # Check for "5.3+" style patterns
-    try:
-        target_num = int(target_version.replace(".", ""))
-        for v in lua_versions:
-            if v.endswith("+"):
-                base_version = int(v.rstrip("+").replace(".", ""))
-                if target_num >= base_version:
-                    return True
-    except ValueError:
-        pass
-    
-    return False
+
+    # Use shared module for compatibility check
+    return is_version_compatible(lua_versions, target_version)
 
 
 # Known divergences that don't represent bugs in NovaSharp.

@@ -1,7 +1,7 @@
 -- Tests that table.remove(t, pos) accepts fractional position in Lua 5.1/5.2
 -- These versions silently truncate via floor
 
--- @lua-versions: 5.1, 5.2
+-- @lua-versions: 5.1-5.2
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs

@@ -1,4 +1,4 @@
--- @lua-versions: 5.1, 5.2
+-- @lua-versions: 5.1-5.2
 -- @novasharp-only: false
 -- @expects-error: false
 -- Test: ipairs uses raw access in Lua 5.1/5.2 (ignores __index)

@@ -1,7 +1,7 @@
 -- Tests that math.fmod sign matches dividend (fmod/truncate toward zero behavior)
 -- Unlike IEEERemainder which rounds to nearest, fmod truncates toward zero
 
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0

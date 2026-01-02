@@ -2,7 +2,7 @@
 -- Per Lua 5.3 manual §6.6: table.move indices must have integer representation
 -- NOTE: table.move was added in Lua 5.3
 
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs

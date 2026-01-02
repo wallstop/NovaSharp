@@ -1,6 +1,6 @@
 -- Tests that math.modf(+n) returns positive zero for the fractional part
 -- when the input is a positive integer.
--- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
 

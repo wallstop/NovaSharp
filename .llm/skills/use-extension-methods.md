@@ -1,3 +1,20 @@
+______________________________________________________________________
+
+triggers:
+
+- "extension method"
+- "existing utilities"
+- "helper methods"
+- "LinqHelpers"
+- "StringSpanExtensions"
+  category: meta
+  related:
+- high-performance-csharp
+- span-optimization
+  priority: reference
+
+______________________________________________________________________
+
 # Skill: Use Extension Methods
 
 ## Trigger

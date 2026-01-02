@@ -1,7 +1,7 @@
 -- Tests that table.remove accepts float positions that have integer representation in Lua 5.3+
 -- Per Lua 5.3 manual §6.6: 2.0 has integer representation
 
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs

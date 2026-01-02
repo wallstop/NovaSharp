@@ -328,8 +328,7 @@ public sealed class LuaNumberTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
+    [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
     public async Task ModuloByZeroReturnsNaNInLua51And52(LuaCompatibilityVersion version)
     {
         // In Lua 5.1/5.2, integer modulo by zero returns nan (promotes to float)

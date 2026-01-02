@@ -3,7 +3,7 @@
 -- NOTE: Lua 5.1 does not have table.unpack (uses global unpack instead)
 
 -- table.unpack was added in Lua 5.2
--- @lua-versions: 5.2, 5.3, 5.4
+-- @lua-versions: 5.2-5.4
 -- @novasharp-only: false
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs

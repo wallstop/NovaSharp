@@ -1,3 +1,21 @@
+______________________________________________________________________
+
+triggers:
+
+- "CLR interop"
+- "C# interop"
+- "UserData"
+- "expose C# to Lua"
+- "call Lua from C#"
+- "type registration"
+  category: lua
+  related:
+- lua-fixture-creation
+- tunit-test-writing
+  priority: reference
+
+______________________________________________________________________
+
 # Skill: CLR Interop (C# ↔ Lua Bridge)
 
 **When to use**: Exposing C# types/methods to Lua or calling Lua from C#.

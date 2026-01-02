@@ -1,3 +1,20 @@
+______________________________________________________________________
+
+triggers:
+
+- "inlining"
+- "AggressiveInlining"
+- "MethodImpl"
+- "method inlining"
+- "hot path optimization"
+  category: performance
+  related:
+- high-performance-csharp
+- unity-gc-patterns
+  priority: reference
+
+______________________________________________________________________
+
 # Skill: Aggressive Inlining
 
 **When to use**: Optimizing hot path methods for maximum performance, especially in interpreter loops and frequently-called code.
@@ -79,232 +96,61 @@ public static double Clamp(double value, double min, double max)
 
 ### ❌ Bad Candidates
 
-| Scenario                            | Why                                    |
-| ----------------------------------- | -------------------------------------- |
-| **Large methods** (>32 IL bytes)    | Code bloat, instruction cache misses   |
-| **Methods with exception handling** | Try/catch blocks inhibit inlining      |
-| **Virtual methods**                 | Cannot inline through virtual dispatch |
-| **Methods with many locals**        | Register pressure, stack spills        |
-| **Recursive methods**               | Cannot inline recursion                |
-| **Cold path error handling**        | Inlining error paths bloats hot code   |
-
-```csharp
-// ❌ BAD: Too large, has exception handling
-[MethodImpl(MethodImplOptions.AggressiveInlining)]  // Don't do this!
-public DynValue ParseComplexExpression(string input)
-{
-    try
-    {
-        // 50+ lines of parsing logic
-    }
-    catch (Exception ex)
-    {
-        // Error handling
-    }
-}
-
-// ❌ BAD: Virtual method
-[MethodImpl(MethodImplOptions.AggressiveInlining)]  // No effect!
-public virtual void Process() { }
-```
+| Scenario                     | Why                            |
+| ---------------------------- | ------------------------------ |
+| Large methods (>32 IL bytes) | Code bloat, cache misses       |
+| Methods with try/catch       | Inhibits inlining              |
+| Virtual methods              | Cannot inline virtual dispatch |
+| Recursive methods            | Cannot inline recursion        |
 
 ______________________________________________________________________
 
 ## 🔴 IL2CPP/AOT Considerations
 
-In Unity IL2CPP (AOT compilation), inlining behavior differs:
-
-| Aspect                 | JIT (.NET)     | AOT (IL2CPP)              |
-| ---------------------- | -------------- | ------------------------- |
-| **Decision time**      | Runtime        | Compile time              |
-| **Optimization level** | Profile-guided | Static analysis           |
-| **AggressiveInlining** | Strong hint    | May or may not be honored |
-| **Method size limit**  | Dynamic        | Often more conservative   |
-
-### IL2CPP-Specific Recommendations
-
-```csharp
-// ✅ IL2CPP typically inlines these automatically:
-// - Trivial property accessors
-// - Very small methods (<16 IL bytes)
-// - Methods called from one call site
-
-// ✅ Use AggressiveInlining for methods called from MANY sites
-// IL2CPP may not inline without the hint if called from multiple places
-[MethodImpl(MethodImplOptions.AggressiveInlining)]
-public static DataType GetType(DynValue value) => value.Type;
-
-// ⚠️ Be cautious with generics in IL2CPP
-// Each value type instantiation generates separate code
-// Aggressive inlining of generic methods can cause code bloat
-```
+IL2CPP makes inlining decisions at compile time, not runtime. It's more conservative than JIT. Use AggressiveInlining for methods called from many sites. Be cautious with generic methods (each value type = separate code).
 
 ______________________________________________________________________
 
 ## 🔴 Measuring Inlining Impact
 
-### BenchmarkDotNet with Disassembly
-
-```csharp
-[Benchmark]
-[DisassemblyDiagnoser(printSource: true)]
-public int WithInlining()
-{
-    int sum = 0;
-    for (int i = 0; i < 1000; i++)
-    {
-        sum += InlinedAdd(i, i);
-    }
-    return sum;
-}
-```
-
-### Checking if Method Was Inlined
-
-In .NET:
-
-```bash
-# Set environment variable to see JIT decisions
-DOTNET_JitDisasm=MethodName
-```
-
-### Signs That Inlining Helped
-
-| Before                     | After                               |
-| -------------------------- | ----------------------------------- |
-| Method appears in profile  | Method call disappears from profile |
-| Call instruction in disasm | Code appears inline                 |
-| ~5ns overhead per call     | Near-zero overhead                  |
+Use BenchmarkDotNet with `[DisassemblyDiagnoser]`. Check if method disappears from profile or disassembly shows code inline instead of call instruction.
 
 ______________________________________________________________________
 
-## 🔴 Inlining and Code Organization
+## 🔴 Key Patterns
 
-### Pattern: Inline the Fast Path, Outline the Slow Path
-
-```csharp
-// ✅ GOOD: Fast path is tiny and inlinable
-[MethodImpl(MethodImplOptions.AggressiveInlining)]
-public DynValue Get(string key)
-{
-    // Fast path: direct lookup
-    if (_fastCache.TryGetValue(key, out DynValue value))
-    {
-        return value;
-    }
-    
-    // Slow path: full lookup (not inlined)
-    return GetSlow(key);
-}
-
-[MethodImpl(MethodImplOptions.NoInlining)]  // Force separate method
-private DynValue GetSlow(string key)
-{
-    // Complex fallback logic
-    // Exception handling
-    // etc.
-}
-```
-
-### Pattern: NoInlining for Error Paths
+**Inline fast path, outline slow path**: Keep fast path tiny and inlinable. Move complex/error handling to `[NoInlining]` methods.
 
 ```csharp
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
 public void ValidateIndex(int index)
 {
     if ((uint)index >= (uint)_count)
-    {
         ThrowIndexOutOfRange(index);  // Cold path, not inlined
-    }
 }
 
 [MethodImpl(MethodImplOptions.NoInlining)]
-private static void ThrowIndexOutOfRange(int index)
-{
-    throw new IndexOutOfRangeException($"Index {index} is out of range");
-}
+private static void ThrowIndexOutOfRange(int index) => throw new IndexOutOfRangeException();
 ```
-
-This pattern keeps the hot path small (inlinable) while the error path doesn't bloat the code.
 
 ______________________________________________________________________
 
 ## 🔴 Related Attributes
 
-### AggressiveOptimization (NET 5+)
-
-```csharp
-// Tells JIT to spend more time optimizing this method
-[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-public void CriticalHotPath() { }
-```
-
-**Note**: Not available in Unity's .NET profile. Use AggressiveInlining instead.
-
-### NoInlining
-
-```csharp
-// Force method to NOT be inlined (for profiling, stack traces)
-[MethodImpl(MethodImplOptions.NoInlining)]
-public void AlwaysShowInStackTrace() { }
-```
-
-Useful for:
-
-- Error handling methods (keep cold code out of hot path)
-- Methods you want to appear in profiler
-- Preventing code bloat from large methods
-
-### NoOptimization
-
-```csharp
-// Disable all optimizations (debugging)
-[MethodImpl(MethodImplOptions.NoOptimization)]
-public void DebugThisMethod() { }
-```
-
-Rarely useful in production code.
+| Attribute                | Use                                            |
+| ------------------------ | ---------------------------------------------- |
+| `AggressiveInlining`     | Hint to inline method                          |
+| `NoInlining`             | Force separate method (error paths, profiling) |
+| `AggressiveOptimization` | .NET 5+ only, not in Unity                     |
 
 ______________________________________________________________________
 
 ## 🔴 Common Mistakes
 
-### Mistake 1: Over-Inlining Large Methods
-
-```csharp
-// ❌ BAD: 100+ line method with AggressiveInlining
-// Results in: Code bloat, instruction cache misses, SLOWER
-[MethodImpl(MethodImplOptions.AggressiveInlining)]
-public void ProcessEverything() { /* 100 lines */ }
-```
-
-### Mistake 2: Inlining Virtual Methods
-
-```csharp
-// ❌ BAD: Has no effect on virtual methods
-[MethodImpl(MethodImplOptions.AggressiveInlining)]
-public virtual void CannotInline() { }
-```
-
-### Mistake 3: Ignoring Exception Handling Impact
-
-```csharp
-// ❌ BAD: Try/catch prevents inlining
-[MethodImpl(MethodImplOptions.AggressiveInlining)]
-public int WontActuallyInline(int x)
-{
-    try { return x * 2; }
-    catch { return 0; }
-}
-```
-
-### Mistake 4: Not Measuring
-
-```csharp
-// ❌ BAD: Adding AggressiveInlining without benchmarking
-// The JIT often makes good decisions on its own
-// Adding the attribute can sometimes make things WORSE
-```
+- **Over-inlining large methods** — Causes code bloat, makes things SLOWER
+- **Inlining virtual methods** — Has no effect
+- **Inlining methods with try/catch** — Won't actually inline
+- **Not measuring** — JIT often makes good decisions; attribute can make things worse
 
 ______________________________________________________________________
 
@@ -340,4 +186,3 @@ ______________________________________________________________________
 
 - [high-performance-csharp](high-performance-csharp.md) — General performance patterns
 - [unity-gc-patterns](unity-gc-patterns.md) — Unity-specific patterns
-- [performance-audit](performance-audit.md) — Quick audit checklist

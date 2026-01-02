@@ -1,0 +1,631 @@
+{
+  "version": "1.0.0",
+  "generated_by": "tools/LlmSkillIndexer/llm_skill_indexer.py",
+  "skills_count": 25,
+  "categories": {
+    "core": [
+      "correctness-then-performance",
+      "defensive-programming"
+    ],
+    "lua": [
+      "adding-opcodes",
+      "clr-interop",
+      "lua-comparison-harness",
+      "lua-fixture-creation",
+      "lua-spec-verification"
+    ],
+    "meta": [
+      "adding-skills",
+      "use-extension-methods"
+    ],
+    "performance": [
+      "aggressive-inlining",
+      "allocation-traps",
+      "data-structures",
+      "high-performance-csharp",
+      "refactor-to-zero-alloc",
+      "span-optimization",
+      "unity-gc-patterns",
+      "zstring-migration"
+    ],
+    "testing": [
+      "coverage-analysis",
+      "exhaustive-test-coverage",
+      "test-failure-investigation",
+      "tunit-test-writing"
+    ],
+    "workflow": [
+      "ci-workflow",
+      "codebase-navigation",
+      "documentation-and-changelog",
+      "git-safe-operations"
+    ]
+  },
+  "skills": [
+    {
+      "name": "adding-opcodes",
+      "file_path": ".llm/skills/adding-opcodes.md",
+      "line_count": 177,
+      "triggers": [
+        "opcode",
+        "bytecode",
+        "VM instruction",
+        "add instruction",
+        "execution loop"
+      ],
+      "category": "lua",
+      "related": [
+        "codebase-navigation",
+        "tunit-test-writing",
+        "lua-fixture-creation"
+      ],
+      "priority": "reference",
+      "has_front_matter": true,
+      "title": "Skill: Adding New VM Opcodes",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "adding-skills",
+      "file_path": ".llm/skills/adding-skills.md",
+      "line_count": 206,
+      "triggers": [
+        "new skill",
+        "add skill",
+        "skill documentation",
+        "llm documentation"
+      ],
+      "category": "meta",
+      "related": [
+        "documentation-and-changelog"
+      ],
+      "priority": "reference",
+      "has_front_matter": true,
+      "title": "Skill: Adding New Skills",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "aggressive-inlining",
+      "file_path": ".llm/skills/aggressive-inlining.md",
+      "line_count": 186,
+      "triggers": [
+        "inlining",
+        "AggressiveInlining",
+        "MethodImpl",
+        "method inlining",
+        "hot path optimization"
+      ],
+      "category": "performance",
+      "related": [
+        "high-performance-csharp",
+        "unity-gc-patterns"
+      ],
+      "priority": "reference",
+      "has_front_matter": true,
+      "title": "Skill: Aggressive Inlining",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "allocation-traps",
+      "file_path": ".llm/skills/allocation-traps.md",
+      "line_count": 253,
+      "triggers": [
+        "allocation",
+        "GC pressure",
+        "memory leak",
+        "foreach allocation",
+        "delegate allocation",
+        "params allocation",
+        "closure allocation"
+      ],
+      "category": "performance",
+      "related": [
+        "high-performance-csharp",
+        "refactor-to-zero-alloc",
+        "zstring-migration"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Skill: Allocation Traps",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "ci-workflow",
+      "file_path": ".llm/skills/ci-workflow.md",
+      "line_count": 202,
+      "triggers": [
+        "CI",
+        "pre-commit",
+        "workflow",
+        "GitHub Actions",
+        "formatting",
+        "validation"
+      ],
+      "category": "workflow",
+      "related": [
+        "tunit-test-writing",
+        "test-failure-investigation"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Skill: CI/CD Workflow",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "clr-interop",
+      "file_path": ".llm/skills/clr-interop.md",
+      "line_count": 296,
+      "triggers": [
+        "CLR interop",
+        "C# interop",
+        "UserData",
+        "expose C# to Lua",
+        "call Lua from C#",
+        "type registration"
+      ],
+      "category": "lua",
+      "related": [
+        "lua-fixture-creation",
+        "tunit-test-writing"
+      ],
+      "priority": "reference",
+      "has_front_matter": true,
+      "title": "Skill: CLR Interop (C# \u2194 Lua Bridge)",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "codebase-navigation",
+      "file_path": ".llm/skills/codebase-navigation.md",
+      "line_count": 221,
+      "triggers": [
+        "search codebase",
+        "find code",
+        "grep",
+        "find file",
+        "debug interpreter",
+        "pipeline"
+      ],
+      "category": "workflow",
+      "related": [
+        "lua-spec-verification",
+        "test-failure-investigation"
+      ],
+      "priority": "recommended",
+      "has_front_matter": true,
+      "title": "Skill: Codebase Navigation",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "correctness-then-performance",
+      "file_path": ".llm/skills/correctness-then-performance.md",
+      "line_count": 221,
+      "triggers": [
+        "priority",
+        "correctness",
+        "Lua spec",
+        "compliance",
+        "behavior",
+        "optimization decision"
+      ],
+      "category": "core",
+      "related": [
+        "lua-spec-verification",
+        "high-performance-csharp"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Skill: Correctness-First Performance",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "coverage-analysis",
+      "file_path": ".llm/skills/coverage-analysis.md",
+      "line_count": 209,
+      "triggers": [
+        "coverage",
+        "code coverage",
+        "coverage report",
+        "test coverage",
+        "untested code"
+      ],
+      "category": "testing",
+      "related": [
+        "tunit-test-writing",
+        "lua-fixture-creation"
+      ],
+      "priority": "reference",
+      "has_front_matter": true,
+      "title": "Skill: Coverage Analysis",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "data-structures",
+      "file_path": ".llm/skills/data-structures.md",
+      "line_count": 255,
+      "triggers": [
+        "data structure",
+        "collection",
+        "dictionary",
+        "list vs array",
+        "complexity",
+        "big O"
+      ],
+      "category": "performance",
+      "related": [
+        "high-performance-csharp",
+        "allocation-traps"
+      ],
+      "priority": "recommended",
+      "has_front_matter": true,
+      "title": "Skill: Data Structures \u2014 When to Use What",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "defensive-programming",
+      "file_path": ".llm/skills/defensive-programming.md",
+      "line_count": 262,
+      "triggers": [
+        "defensive programming",
+        "error handling",
+        "robust code",
+        "graceful failure",
+        "null handling"
+      ],
+      "category": "core",
+      "related": [
+        "high-performance-csharp",
+        "correctness-then-performance"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Skill: Defensive Programming",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "documentation-and-changelog",
+      "file_path": ".llm/skills/documentation-and-changelog.md",
+      "line_count": 166,
+      "triggers": [
+        "documentation",
+        "changelog",
+        "XML docs",
+        "code comments",
+        "CHANGELOG.md",
+        "keep a changelog"
+      ],
+      "category": "workflow",
+      "related": [
+        "tunit-test-writing",
+        "lua-fixture-creation"
+      ],
+      "priority": "recommended",
+      "has_front_matter": true,
+      "title": "Skill: Documentation and Changelog Management",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "exhaustive-test-coverage",
+      "file_path": ".llm/skills/exhaustive-test-coverage.md",
+      "line_count": 238,
+      "triggers": [
+        "test coverage",
+        "write tests",
+        "test cases",
+        "edge cases",
+        "test patterns"
+      ],
+      "category": "testing",
+      "related": [
+        "tunit-test-writing",
+        "lua-fixture-creation",
+        "test-failure-investigation"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Skill: Exhaustive Test Coverage",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "git-safe-operations",
+      "file_path": ".llm/skills/git-safe-operations.md",
+      "line_count": 295,
+      "triggers": [
+        "git add",
+        "git index.lock",
+        "pre-commit hook",
+        "git staging",
+        "lock contention"
+      ],
+      "category": "workflow",
+      "related": [
+        "ci-workflow"
+      ],
+      "priority": "reference",
+      "has_front_matter": true,
+      "title": "Skill: Git-Safe Operations for Scripts and Hooks",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "high-performance-csharp",
+      "file_path": ".llm/skills/high-performance-csharp.md",
+      "line_count": 267,
+      "triggers": [
+        "performance",
+        "allocation",
+        "zero-alloc",
+        "GC pressure",
+        "hot path",
+        "pooling",
+        "optimization"
+      ],
+      "category": "performance",
+      "related": [
+        "correctness-then-performance",
+        "allocation-traps",
+        "zstring-migration",
+        "span-optimization"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "High-Performance C# Coding Guidelines",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "lua-comparison-harness",
+      "file_path": ".llm/skills/lua-comparison-harness.md",
+      "line_count": 173,
+      "triggers": [
+        "comparison harness",
+        "lua comparison",
+        "cross-interpreter",
+        "fixture verification",
+        "reference Lua",
+        "diff expected actual"
+      ],
+      "category": "lua",
+      "related": [
+        "lua-fixture-creation",
+        "lua-spec-verification",
+        "test-failure-investigation"
+      ],
+      "priority": "recommended",
+      "has_front_matter": true,
+      "title": "Skill: Lua Comparison Harness",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "lua-fixture-creation",
+      "file_path": ".llm/skills/lua-fixture-creation.md",
+      "line_count": 203,
+      "triggers": [
+        "lua fixture",
+        "lua test file",
+        "create .lua test",
+        "lua version test"
+      ],
+      "category": "lua",
+      "related": [
+        "lua-comparison-harness",
+        "lua-spec-verification",
+        "tunit-test-writing",
+        "exhaustive-test-coverage"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Skill: Creating Lua Test Fixtures",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "lua-spec-verification",
+      "file_path": ".llm/skills/lua-spec-verification.md",
+      "line_count": 240,
+      "triggers": [
+        "Lua spec",
+        "reference Lua",
+        "spec compliance",
+        "behavior verification",
+        "lua5.4",
+        "lua5.1"
+      ],
+      "category": "lua",
+      "related": [
+        "lua-fixture-creation",
+        "lua-comparison-harness",
+        "test-failure-investigation"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Skill: Verifying Lua Spec Compliance",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "refactor-to-zero-alloc",
+      "file_path": ".llm/skills/refactor-to-zero-alloc.md",
+      "line_count": 211,
+      "triggers": [
+        "refactor allocation",
+        "eliminate allocation",
+        "zero allocation",
+        "remove LINQ",
+        "closure elimination"
+      ],
+      "category": "performance",
+      "related": [
+        "high-performance-csharp",
+        "allocation-traps",
+        "zstring-migration"
+      ],
+      "priority": "recommended",
+      "has_front_matter": true,
+      "title": "Skill: Refactoring to Zero-Allocation Patterns",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "span-optimization",
+      "file_path": ".llm/skills/span-optimization.md",
+      "line_count": 263,
+      "triggers": [
+        "Span",
+        "ReadOnlySpan",
+        "stackalloc",
+        "slice",
+        "no allocation string",
+        "substring"
+      ],
+      "category": "performance",
+      "related": [
+        "high-performance-csharp",
+        "zstring-migration"
+      ],
+      "priority": "recommended",
+      "has_front_matter": true,
+      "title": "Span Optimization Guidelines",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "test-failure-investigation",
+      "file_path": ".llm/skills/test-failure-investigation.md",
+      "line_count": 256,
+      "triggers": [
+        "test failure",
+        "failing test",
+        "flaky test",
+        "test investigation",
+        "root cause",
+        "test debugging"
+      ],
+      "category": "testing",
+      "related": [
+        "codebase-navigation",
+        "lua-spec-verification",
+        "tunit-test-writing",
+        "lua-comparison-harness"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Skill: Test Failure Investigation",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "tunit-test-writing",
+      "file_path": ".llm/skills/tunit-test-writing.md",
+      "line_count": 248,
+      "triggers": [
+        "TUnit",
+        "write test",
+        "test writing",
+        "multi-version test",
+        "AllLuaVersions",
+        "test isolation"
+      ],
+      "category": "testing",
+      "related": [
+        "exhaustive-test-coverage",
+        "lua-fixture-creation",
+        "lua-spec-verification",
+        "test-failure-investigation"
+      ],
+      "priority": "core",
+      "has_front_matter": true,
+      "title": "Skill: Writing TUnit Tests for NovaSharp",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "unity-gc-patterns",
+      "file_path": ".llm/skills/unity-gc-patterns.md",
+      "line_count": 130,
+      "triggers": [
+        "Unity",
+        "Unity GC",
+        "IL2CPP",
+        "AOT",
+        "Boehm",
+        "Unity allocation"
+      ],
+      "category": "performance",
+      "related": [
+        "high-performance-csharp",
+        "refactor-to-zero-alloc",
+        "aggressive-inlining"
+      ],
+      "priority": "recommended",
+      "has_front_matter": true,
+      "title": "Skill: Unity Garbage Collection Patterns",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "use-extension-methods",
+      "file_path": ".llm/skills/use-extension-methods.md",
+      "line_count": 117,
+      "triggers": [
+        "extension method",
+        "existing utilities",
+        "helper methods",
+        "LinqHelpers",
+        "StringSpanExtensions"
+      ],
+      "category": "meta",
+      "related": [
+        "high-performance-csharp",
+        "span-optimization"
+      ],
+      "priority": "reference",
+      "has_front_matter": true,
+      "title": "Skill: Use Extension Methods",
+      "validation_warnings": [],
+      "validation_errors": []
+    },
+    {
+      "name": "zstring-migration",
+      "file_path": ".llm/skills/zstring-migration.md",
+      "line_count": 246,
+      "triggers": [
+        "ZString",
+        "string building",
+        "StringBuilder",
+        "string interpolation",
+        "string concatenation",
+        "zero-alloc string"
+      ],
+      "category": "performance",
+      "related": [
+        "high-performance-csharp",
+        "span-optimization"
+      ],
+      "priority": "recommended",
+      "has_front_matter": true,
+      "title": "ZString Migration Guidelines",
+      "validation_warnings": [],
+      "validation_errors": []
+    }
+  ],
+  "validation_summary": {
+    "total_warnings": 0,
+    "total_errors": 0,
+    "files_over_warning_threshold": 0,
+    "files_over_error_threshold": 0,
+    "files_missing_front_matter": 0
+  }
+}

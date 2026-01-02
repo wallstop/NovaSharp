@@ -1,4 +1,4 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
 -- Test: ipairs with mixed raw values and __index values in Lua 5.3+
