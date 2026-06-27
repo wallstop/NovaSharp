@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\MetatableTUnitTests.cs:377
 -- @test: MyObject.IpairsMixedRawAndIndexMetamethod53Plus
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 local underlying = {'a', 'b', 'c', 'd', 'e'}
                 local proxy = {nil, 'B', nil}
                 setmetatable(proxy, {

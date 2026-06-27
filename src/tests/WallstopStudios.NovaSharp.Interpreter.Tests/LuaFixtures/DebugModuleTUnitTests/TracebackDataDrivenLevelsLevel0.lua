@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs
 -- @test: DebugModuleTUnitTests.TracebackDataDrivenLevels
--- @compat-notes: Tests debug.traceback with level 0
+-- Tests debug.traceback with level 0
 
 -- Test: debug.traceback with level 0 includes traceback itself
 local function level3()

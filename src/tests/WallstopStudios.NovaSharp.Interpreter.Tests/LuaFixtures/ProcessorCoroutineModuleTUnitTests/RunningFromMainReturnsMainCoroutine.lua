@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineModuleTUnitTests.cs:45
 -- @test: ProcessorCoroutineModuleTUnitTests.RunningFromMainReturnsMainCoroutine
--- @compat-notes: Lua 5.2+: coroutine.running() returns (thread, isMain) tuple
+-- Lua 5.2+: coroutine.running() returns (thread, isMain) tuple
 
 -- Test: In Lua 5.2+, coroutine.running() returns (thread, true) from main thread
 -- Reference: Lua 5.2+ manual §6.2

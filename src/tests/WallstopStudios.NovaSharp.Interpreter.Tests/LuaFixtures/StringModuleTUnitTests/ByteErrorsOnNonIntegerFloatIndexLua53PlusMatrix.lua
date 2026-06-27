@@ -3,5 +3,5 @@
 -- @expects-error: true
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:2347
 -- @test: StringModuleTUnitTests.ByteErrorsOnNonIntegerFloatIndexLua53PlusMatrix
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
+-- NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
 return string.byte('Lua', {indexExpression})

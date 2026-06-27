@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:0
 -- @test: BasicModuleTUnitTests.IpairsRequiresTableArgument
--- @compat-notes: ipairs() requires table argument in Lua 5.1-5.2 (in 5.3+ nil arguments are accepted)
+-- ipairs() requires table argument in Lua 5.1-5.2 (in 5.3+ nil arguments are accepted)
 
 -- Test: ipairs() should error when called with non-table arguments
 -- Reference: All Lua versions (5.1-5.5)

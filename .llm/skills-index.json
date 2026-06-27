@@ -34,7 +34,7 @@
   "skills": [
     {
       "name": "adding-opcodes",
-      "file_path": ".llm\\skills\\adding-opcodes.md",
+      "file_path": ".llm/skills/adding-opcodes.md",
       "line_count": 180,
       "triggers": [],
       "category": "uncategorized",
@@ -50,7 +50,7 @@
     },
     {
       "name": "adding-skills",
-      "file_path": ".llm\\skills\\adding-skills.md",
+      "file_path": ".llm/skills/adding-skills.md",
       "line_count": 209,
       "triggers": [],
       "category": "uncategorized",
@@ -66,7 +66,7 @@
     },
     {
       "name": "aggressive-inlining",
-      "file_path": ".llm\\skills\\aggressive-inlining.md",
+      "file_path": ".llm/skills/aggressive-inlining.md",
       "line_count": 189,
       "triggers": [],
       "category": "uncategorized",
@@ -82,7 +82,7 @@
     },
     {
       "name": "allocation-traps",
-      "file_path": ".llm\\skills\\allocation-traps.md",
+      "file_path": ".llm/skills/allocation-traps.md",
       "line_count": 256,
       "triggers": [],
       "category": "uncategorized",
@@ -98,8 +98,8 @@
     },
     {
       "name": "ci-workflow",
-      "file_path": ".llm\\skills\\ci-workflow.md",
-      "line_count": 205,
+      "file_path": ".llm/skills/ci-workflow.md",
+      "line_count": 210,
       "triggers": [],
       "category": "uncategorized",
       "related": [],
@@ -114,7 +114,7 @@
     },
     {
       "name": "clr-interop",
-      "file_path": ".llm\\skills\\clr-interop.md",
+      "file_path": ".llm/skills/clr-interop.md",
       "line_count": 299,
       "triggers": [],
       "category": "uncategorized",
@@ -130,7 +130,7 @@
     },
     {
       "name": "codebase-navigation",
-      "file_path": ".llm\\skills\\codebase-navigation.md",
+      "file_path": ".llm/skills/codebase-navigation.md",
       "line_count": 224,
       "triggers": [],
       "category": "uncategorized",
@@ -146,7 +146,7 @@
     },
     {
       "name": "correctness-then-performance",
-      "file_path": ".llm\\skills\\correctness-then-performance.md",
+      "file_path": ".llm/skills/correctness-then-performance.md",
       "line_count": 224,
       "triggers": [],
       "category": "uncategorized",
@@ -162,7 +162,7 @@
     },
     {
       "name": "coverage-analysis",
-      "file_path": ".llm\\skills\\coverage-analysis.md",
+      "file_path": ".llm/skills/coverage-analysis.md",
       "line_count": 212,
       "triggers": [],
       "category": "uncategorized",
@@ -178,7 +178,7 @@
     },
     {
       "name": "data-structures",
-      "file_path": ".llm\\skills\\data-structures.md",
+      "file_path": ".llm/skills/data-structures.md",
       "line_count": 258,
       "triggers": [],
       "category": "uncategorized",
@@ -194,7 +194,7 @@
     },
     {
       "name": "defensive-programming",
-      "file_path": ".llm\\skills\\defensive-programming.md",
+      "file_path": ".llm/skills/defensive-programming.md",
       "line_count": 265,
       "triggers": [],
       "category": "uncategorized",
@@ -210,7 +210,7 @@
     },
     {
       "name": "documentation-and-changelog",
-      "file_path": ".llm\\skills\\documentation-and-changelog.md",
+      "file_path": ".llm/skills/documentation-and-changelog.md",
       "line_count": 170,
       "triggers": [],
       "category": "uncategorized",
@@ -226,7 +226,7 @@
     },
     {
       "name": "exhaustive-test-coverage",
-      "file_path": ".llm\\skills\\exhaustive-test-coverage.md",
+      "file_path": ".llm/skills/exhaustive-test-coverage.md",
       "line_count": 241,
       "triggers": [],
       "category": "uncategorized",
@@ -242,7 +242,7 @@
     },
     {
       "name": "git-safe-operations",
-      "file_path": ".llm\\skills\\git-safe-operations.md",
+      "file_path": ".llm/skills/git-safe-operations.md",
       "line_count": 298,
       "triggers": [],
       "category": "uncategorized",
@@ -258,7 +258,7 @@
     },
     {
       "name": "high-performance-csharp",
-      "file_path": ".llm\\skills\\high-performance-csharp.md",
+      "file_path": ".llm/skills/high-performance-csharp.md",
       "line_count": 270,
       "triggers": [],
       "category": "uncategorized",
@@ -274,8 +274,8 @@
     },
     {
       "name": "lua-comparison-harness",
-      "file_path": ".llm\\skills\\lua-comparison-harness.md",
-      "line_count": 176,
+      "file_path": ".llm/skills/lua-comparison-harness.md",
+      "line_count": 179,
       "triggers": [],
       "category": "uncategorized",
       "related": [],
@@ -290,7 +290,7 @@
     },
     {
       "name": "lua-fixture-creation",
-      "file_path": ".llm\\skills\\lua-fixture-creation.md",
+      "file_path": ".llm/skills/lua-fixture-creation.md",
       "line_count": 206,
       "triggers": [],
       "category": "uncategorized",
@@ -306,7 +306,7 @@
     },
     {
       "name": "lua-spec-verification",
-      "file_path": ".llm\\skills\\lua-spec-verification.md",
+      "file_path": ".llm/skills/lua-spec-verification.md",
       "line_count": 243,
       "triggers": [],
       "category": "uncategorized",
@@ -322,7 +322,7 @@
     },
     {
       "name": "refactor-to-zero-alloc",
-      "file_path": ".llm\\skills\\refactor-to-zero-alloc.md",
+      "file_path": ".llm/skills/refactor-to-zero-alloc.md",
       "line_count": 217,
       "triggers": [],
       "category": "uncategorized",
@@ -338,7 +338,7 @@
     },
     {
       "name": "span-optimization",
-      "file_path": ".llm\\skills\\span-optimization.md",
+      "file_path": ".llm/skills/span-optimization.md",
       "line_count": 266,
       "triggers": [],
       "category": "uncategorized",
@@ -354,8 +354,8 @@
     },
     {
       "name": "test-failure-investigation",
-      "file_path": ".llm\\skills\\test-failure-investigation.md",
-      "line_count": 259,
+      "file_path": ".llm/skills/test-failure-investigation.md",
+      "line_count": 262,
       "triggers": [],
       "category": "uncategorized",
       "related": [],
@@ -370,7 +370,7 @@
     },
     {
       "name": "tunit-test-writing",
-      "file_path": ".llm\\skills\\tunit-test-writing.md",
+      "file_path": ".llm/skills/tunit-test-writing.md",
       "line_count": 251,
       "triggers": [],
       "category": "uncategorized",
@@ -386,7 +386,7 @@
     },
     {
       "name": "unity-gc-patterns",
-      "file_path": ".llm\\skills\\unity-gc-patterns.md",
+      "file_path": ".llm/skills/unity-gc-patterns.md",
       "line_count": 133,
       "triggers": [],
       "category": "uncategorized",
@@ -402,7 +402,7 @@
     },
     {
       "name": "use-extension-methods",
-      "file_path": ".llm\\skills\\use-extension-methods.md",
+      "file_path": ".llm/skills/use-extension-methods.md",
       "line_count": 120,
       "triggers": [],
       "category": "uncategorized",
@@ -418,7 +418,7 @@
     },
     {
       "name": "zstring-migration",
-      "file_path": ".llm\\skills\\zstring-migration.md",
+      "file_path": ".llm/skills/zstring-migration.md",
       "line_count": 249,
       "triggers": [],
       "category": "uncategorized",

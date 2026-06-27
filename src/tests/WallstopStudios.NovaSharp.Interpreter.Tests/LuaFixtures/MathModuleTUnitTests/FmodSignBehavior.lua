@@ -6,7 +6,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.FmodSignBehavior
--- @compat-notes: fmod behavior is consistent across all Lua versions (sign matches dividend)
+-- fmod behavior is consistent across all Lua versions (sign matches dividend)
 
 -- Test: positive dividend, positive divisor -> positive result
 local r1 = math.fmod(5.5, 2)

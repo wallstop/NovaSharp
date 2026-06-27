@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs
 -- @test: OsExecuteVersionParityTUnitTests.OsExecuteFailureReturnsTupleInLua52Plus
--- @compat-notes: Lua 5.2+ os.execute returns (nil, "exit"|"signal", code) on failure
+-- Lua 5.2+ os.execute returns (nil, "exit"|"signal", code) on failure
 
 -- Test: os.execute returns failure tuple in Lua 5.2+ when command fails
 -- Reference: Lua 5.2+ Reference Manual §6.9

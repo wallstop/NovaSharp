@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:262
 -- @test: MathModuleTUnitTests.TypeDistinguishesIntegersAndFloats
--- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: math.type (5.3+)
+-- Test targets Lua 5.3+; Lua 5.3+: math.type (5.3+)
 return math.type(5), math.type(3.14)

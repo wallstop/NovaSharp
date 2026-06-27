@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Utf8ModuleTUnitTests.cs
 -- @test: Utf8ModuleTUnitTests.Utf8CodesLaxModeIgnoredPreLua54
--- @compat-notes: Lua 5.3 ignores the 2nd argument (lax not supported)
+-- Lua 5.3 ignores the 2nd argument (lax not supported)
 
 -- Test: In Lua 5.3, the lax parameter should be ignored
 -- Reference: Lua 5.3 manual §6.5 (no lax parameter)

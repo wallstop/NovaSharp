@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\SandboxMemoryLimitTUnitTests.cs:1311
 -- @test: SandboxMemoryLimitTUnitTests.ScriptCoroutineLimitThrowsWhenExceeded
--- @compat-notes: Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
+-- Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 co3 = coroutine.create(function() end)

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs
 -- @test: DebugModuleTUnitTests.GetInfoDataDrivenWhatFlags
--- @compat-notes: Tests 'l' what flag for line info
+-- Tests 'l' what flag for line info
 
 -- Test: debug.getinfo with 'l' flag populates currentline field
 local function sample(a, b)

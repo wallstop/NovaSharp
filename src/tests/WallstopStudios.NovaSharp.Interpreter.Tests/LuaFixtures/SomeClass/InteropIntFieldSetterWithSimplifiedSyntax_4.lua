@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataFieldsTUnitTests.cs:350
 -- @test: SomeClass.InteropIntFieldSetterWithSimplifiedSyntax
--- @compat-notes: Uses injected variable: myobj
+-- Uses injected variable: myobj
 myobj.IntProp = 19;

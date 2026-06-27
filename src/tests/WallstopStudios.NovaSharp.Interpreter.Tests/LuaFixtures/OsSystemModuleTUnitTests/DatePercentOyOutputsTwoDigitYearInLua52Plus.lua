@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsSystemModuleTUnitTests.cs:508
 -- @test: OsSystemModuleTUnitTests.DatePercentOyOutputsTwoDigitYearInLua52Plus
--- @compat-notes: Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
+-- Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
 return os.date('!%Oy', 0)

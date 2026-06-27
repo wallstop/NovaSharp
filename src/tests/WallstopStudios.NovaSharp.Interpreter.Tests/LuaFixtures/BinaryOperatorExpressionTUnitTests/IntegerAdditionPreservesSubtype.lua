@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Tree\Expressions\BinaryOperatorExpressionTUnitTests.cs:AdditionPreservesIntegerSubtype
 -- @test: BinaryOperatorExpressionTUnitTests.AdditionPreservesIntegerSubtype
--- @compat-notes: Integer addition should preserve integer subtype in Lua 5.3+
+-- Integer addition should preserve integer subtype in Lua 5.3+
 
 -- Test: Integer + integer should produce integer
 -- Expected: "integer" (not "float")

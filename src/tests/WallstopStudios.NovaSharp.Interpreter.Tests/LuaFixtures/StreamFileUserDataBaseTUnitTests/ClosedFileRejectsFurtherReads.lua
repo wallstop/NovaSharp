@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:359
 -- @test: StreamFileUserDataBaseTUnitTests.ClosedFileRejectsFurtherReads
--- @compat-notes: Uses injected variable: file
+-- Uses injected variable: file
 local f = file
                 f:close()
                 local ok, err = pcall(function()

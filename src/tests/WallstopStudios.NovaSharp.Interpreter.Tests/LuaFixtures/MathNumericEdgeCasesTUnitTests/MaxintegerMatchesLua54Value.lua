@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathNumericEdgeCasesTUnitTests.cs:28
 -- @test: MathNumericEdgeCasesTUnitTests.MaxintegerMatchesLua54Value
--- @compat-notes: Test targets Lua 5.4+; Lua 5.3+: math.maxinteger (5.3+)
+-- Test targets Lua 5.4+; Lua 5.3+: math.maxinteger (5.3+)
 return math.maxinteger

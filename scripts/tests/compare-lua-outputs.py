@@ -13,8 +13,8 @@ Usage:
     python3 scripts/tests/compare-lua-outputs.py [OPTIONS]
 
 Options:
-    --results-dir DIR       Directory with execution results (default: artifacts/lua-corpus-results)
-    --output-file FILE      Output comparison report (default: artifacts/lua-corpus-results/comparison.json)
+    --results-dir DIR       Directory with execution results (default: artifacts/lua-comparison-results)
+    --output-file FILE      Output comparison report (default: artifacts/lua-comparison-results/comparison.json)
     --lua-version VER       Lua version to compare against (default: 5.4)
     --allowlist FILE        JSON file with known divergences to exclude from failure (default: none)
     --verbose               Show detailed differences
@@ -34,10 +34,18 @@ from typing import Optional
 # Add tools directory to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
 
+from lua_error_ratchet import (
+    BothErrorEntry,
+    check_both_error_ratchet,
+    load_baseline_file,
+    normalize_fixture_id,
+)
 from lua_version_utils import parse_lua_versions, is_version_compatible
 
 # Default fixture directory for version compatibility checks
-DEFAULT_FIXTURES_DIR = Path(__file__).resolve().parents[2] / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests" / "LuaFixtures"
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_FIXTURES_DIR = ROOT / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests" / "LuaFixtures"
+DEFAULT_ERROR_RATCHET_BASELINE = Path("docs/testing/lua-error-ratchet.json")
 
 
 def parse_fixture_version_info(fixture_path: Path) -> tuple[list[str], bool]:
@@ -59,7 +67,10 @@ def parse_fixture_version_info(fixture_path: Path) -> tuple[list[str], bool]:
 
                 if "@lua-versions:" in line:
                     versions_part = line.split("@lua-versions:")[1].strip()
-                    if "novasharp-only" in versions_part.lower():
+                    versions_text = versions_part.lower()
+                    if versions_text == "none":
+                        lua_versions = ["none"]
+                    elif "novasharp-only" in versions_text:
                         novasharp_only = True
                     else:
                         # Use shared module for parsing
@@ -108,7 +119,7 @@ class ComparisonResult:
     """Result of comparing a single snippet's outputs."""
     file: str
     lua_version: str
-    status: str  # "match", "mismatch", "lua_only", "nova_only", "both_error", "skipped", "known_divergence"
+    status: str  # "match", "mismatch", "lua_only", "nova_only", "both_error", "skipped", "known_divergence", "missing_outputs"
     lua_output: str = ""
     nova_output: str = ""
     lua_error: str = ""
@@ -117,6 +128,20 @@ class ComparisonResult:
     nova_rc: int = 0
     normalized_match: bool = False
     diff_summary: str = ""
+
+
+def create_error_ratchet_entry(result: ComparisonResult) -> BothErrorEntry:
+    """Create a ratchet entry from a both-error comparison result."""
+    lua_error = (result.lua_output + "\n" + result.lua_error).strip()
+    nova_error = (result.nova_output + "\n" + result.nova_error).strip()
+    return BothErrorEntry.from_errors(
+        file=result.file,
+        lua_version=result.lua_version,
+        lua_rc=result.lua_rc,
+        nova_rc=result.nova_rc,
+        lua_error=lua_error,
+        nova_error=nova_error,
+    )
 
 
 def normalize_output(text: str, strict: bool = False) -> str:
@@ -195,9 +220,6 @@ def normalize_output(text: str, strict: bool = False) -> str:
     result = re.sub(r'\[C\]:\s*-?\d+:', '[C]:<line>:', result)
     result = re.sub(r'\[string "[^"]*"\]:\d+:', '[string "<chunk>"]:<line>:', result)
     
-    # Normalize NovaSharp-specific vs Lua-specific error message prefixes
-    result = re.sub(r'^lua\d?\.\d?: ', '', result, flags=re.MULTILINE)
-    
     # Normalize debug prompts (lua_debug> vs full path prefixes)
     result = re.sub(r'^lua_debug>', '<debug>', result, flags=re.MULTILINE)
     result = re.sub(r'^/[^\s:]+:', '<path>:', result, flags=re.MULTILINE)
@@ -211,10 +233,18 @@ def normalize_output(text: str, strict: bool = False) -> str:
     
     # Normalize path separators
     result = result.replace('\\', '/')
-    
+
+    # Normalize NovaSharp-specific vs Lua-specific error message prefixes
+    result = re.sub(
+        r'^(?:[A-Za-z]:)?(?:[^\n:]*/)?lua(?:\d+(?:\.\d+)?)?(?:\.exe)?: ',
+        '',
+        result,
+        flags=re.MULTILINE
+    )
+
     # Normalize trailing whitespace
     result = '\n'.join(line.rstrip() for line in result.split('\n'))
-    
+
     # Normalize multiple blank lines to single
     result = re.sub(r'\n{3,}', '\n\n', result)
     
@@ -239,6 +269,7 @@ def compare_snippet(
     strict: bool = False
 ) -> ComparisonResult:
     """Compare outputs for a single Lua snippet."""
+    rel_path = normalize_fixture_id(rel_path)
     base_path = results_dir / rel_path.replace('.lua', '')
     
     # Read Lua outputs
@@ -270,7 +301,8 @@ def compare_snippet(
     has_nova = nova_rc != -1
     
     if not has_lua and not has_nova:
-        result.status = "skipped"
+        result.status = "missing_outputs"
+        result.diff_summary = "No Lua or NovaSharp output artifacts were found"
         return result
     
     if not has_lua:
@@ -331,7 +363,7 @@ def find_lua_files(corpus_dir: Path) -> list[str]:
     """Find all Lua files in corpus, returning relative paths."""
     files = []
     for lua_file in corpus_dir.rglob('*.lua'):
-        rel_path = str(lua_file.relative_to(corpus_dir))
+        rel_path = lua_file.relative_to(corpus_dir).as_posix()
         files.append(rel_path)
     return sorted(files)
 
@@ -343,13 +375,13 @@ def main():
     parser.add_argument(
         '--results-dir',
         type=Path,
-        default=Path('artifacts/lua-corpus-results'),
+        default=Path('artifacts/lua-comparison-results'),
         help='Directory with execution results'
     )
     parser.add_argument(
         '--corpus-dir',
         type=Path,
-        default=Path('artifacts/lua-corpus'),
+        default=DEFAULT_FIXTURES_DIR,
         help='Directory with original Lua corpus (for file listing)'
     )
     parser.add_argument(
@@ -390,6 +422,17 @@ def main():
         action='store_true',
         help='Monitor mode - report results without failing (for experimental versions like 5.5)'
     )
+    parser.add_argument(
+        '--error-ratchet-baseline',
+        type=Path,
+        default=DEFAULT_ERROR_RATCHET_BASELINE,
+        help='JSON baseline for unclassified both_error entries'
+    )
+    parser.add_argument(
+        '--skip-error-ratchet',
+        action='store_true',
+        help='Skip both_error ratchet checking'
+    )
     
     args = parser.parse_args()
     
@@ -404,7 +447,7 @@ def main():
     
     if not args.results_dir.exists():
         print(f"Error: Results directory not found: {args.results_dir}", file=sys.stderr)
-        print("Run 'scripts/tests/run-lua-corpus.sh' first.", file=sys.stderr)
+        print("Run 'scripts/tests/run-lua-fixtures-fast.sh' first.", file=sys.stderr)
         sys.exit(1)
     
     # Find all Lua files
@@ -424,6 +467,7 @@ def main():
     print(f"Normalization: {'disabled' if args.strict else 'enabled'}")
     print(f"Known divergences: {len(allowlist)}")
     print(f"Enforce mode: {'enabled' if args.enforce else 'disabled'}")
+    print(f"Error ratchet: {'disabled' if args.skip_error_ratchet else args.error_ratchet_baseline}")
     print()
     
     # Compare all snippets
@@ -436,6 +480,7 @@ def main():
         'lua_only': 0,
         'nova_only': 0,
         'skipped': 0,
+        'missing_outputs': 0,
     }
     
     for i, rel_path in enumerate(lua_files):
@@ -443,16 +488,13 @@ def main():
             args.results_dir, rel_path, args.lua_version, args.strict
         )
         
-        # Check fixture version compatibility before flagging as mismatch
-        if result.status == 'mismatch':
-            # Try to find the fixture file and check its version metadata
-            fixture_path = DEFAULT_FIXTURES_DIR / rel_path
-            if fixture_path.exists():
-                lua_versions, novasharp_only = parse_fixture_version_info(fixture_path)
-                if not is_fixture_compatible(lua_versions, args.lua_version, novasharp_only):
-                    # This fixture should not have been run against this version
-                    result.status = 'skipped'
-                    result.diff_summary = f"Version incompatible: fixture targets {lua_versions}"
+        # Check fixture version compatibility before counting comparison status.
+        fixture_path = args.corpus_dir / rel_path
+        if fixture_path.exists():
+            lua_versions, novasharp_only = parse_fixture_version_info(fixture_path)
+            if not is_fixture_compatible(lua_versions, args.lua_version, novasharp_only):
+                result.status = 'skipped'
+                result.diff_summary = f"Version incompatible: fixture targets {lua_versions}"
         
         # Check if this is a known divergence
         if result.status == 'mismatch' and rel_path in allowlist:
@@ -481,6 +523,7 @@ def main():
     print(f"Lua only:       {stats['lua_only']}")
     print(f"Nova only:      {stats['nova_only']}")
     print(f"Skipped:        {stats['skipped']}")
+    print(f"Missing outputs: {stats['missing_outputs']}")
     
     # Calculate match rate (excluding skipped, partial runs, and known divergences)
     comparable = stats['match'] + stats['mismatch'] + stats['both_error'] + stats['known_divergence']
@@ -490,6 +533,52 @@ def main():
         print(f"\nEffective match rate: {match_rate:.1f}% ({effective_matches}/{comparable})")
         if stats['mismatch'] > 0:
             print(f"Unexpected mismatches: {stats['mismatch']}")
+
+    both_error_entries = [
+        create_error_ratchet_entry(r)
+        for r in results
+        if r.status == 'both_error'
+    ]
+    current_result_keys = {
+        (r.lua_version, r.file)
+        for r in results
+        if r.status not in ('skipped', 'missing_outputs')
+    }
+    current_versions = {
+        r.lua_version
+        for r in results
+    }
+    ratchet_result = None
+    ratchet_missing = False
+    if not args.skip_error_ratchet:
+        if args.error_ratchet_baseline.exists():
+            baseline_entries = load_baseline_file(args.error_ratchet_baseline)
+            ratchet_result = check_both_error_ratchet(
+                baseline_entries,
+                both_error_entries,
+                current_keys=current_result_keys,
+                current_versions=current_versions,
+            )
+            print()
+            print("=== Both-Error Ratchet ===")
+            print(f"Baseline:       {ratchet_result.baseline_count}")
+            print(f"Current:        {ratchet_result.current_count}")
+            print(f"Unchanged:      {ratchet_result.unchanged_count}")
+            print(f"Removed:        {len(ratchet_result.removed_entries)}")
+            print(f"New:            {len(ratchet_result.new_entries)}")
+            print(f"Changed:        {len(ratchet_result.changed_entries)}")
+            print(f"Missing:        {len(ratchet_result.missing_entries)}")
+            if not ratchet_result.passed:
+                for entry in ratchet_result.new_entries[:10]:
+                    print(f"[NEW BOTH_ERROR] {entry.lua_version} {entry.file}")
+                for entry in ratchet_result.changed_entries[:10]:
+                    print(f"[CHANGED BOTH_ERROR] {entry.current.lua_version} {entry.current.file}")
+                for entry in ratchet_result.missing_entries[:10]:
+                    print(f"[MISSING BOTH_ERROR BASELINE] {entry.lua_version} {entry.file}")
+        else:
+            ratchet_missing = True
+            print()
+            print(f"[WARN] Both-error ratchet baseline not found: {args.error_ratchet_baseline}")
     
     # Write JSON report
     report = {
@@ -508,15 +597,15 @@ def main():
             for r in results
             if r.status == 'mismatch'
         ][:100],  # Limit to first 100 mismatches
-        'both_errors': [
+        'both_errors': [],
+        'result_statuses': [
             {
                 'file': r.file,
-                'lua_error': r.lua_error[:500] if r.lua_error else '',
-                'nova_error': r.nova_error[:500] if r.nova_error else '',
+                'lua_version': r.lua_version,
+                'status': r.status,
             }
             for r in results
-            if r.status == 'both_error'
-        ][:50],  # Limit to first 50
+        ],
         'known_divergences': [
             {
                 'file': r.file,
@@ -525,7 +614,24 @@ def main():
             for r in results
             if r.status == 'known_divergence'
         ],
+        'error_ratchet': (
+            ratchet_result.to_json()
+            if ratchet_result is not None
+            else {
+                'passed': not ratchet_missing,
+                'skipped': args.skip_error_ratchet,
+                'baseline_missing': ratchet_missing,
+            }
+        ),
     }
+
+    for result in results:
+        if result.status != 'both_error':
+            continue
+        entry = create_error_ratchet_entry(result).to_json()
+        entry['lua_error'] = result.lua_error[:500] if result.lua_error else ''
+        entry['nova_error'] = result.nova_error[:500] if result.nova_error else ''
+        report['both_errors'].append(entry)
     
     args.output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(args.output_file, 'w', encoding='utf-8') as f:
@@ -542,10 +648,25 @@ def main():
         else:
             print("\n[OK] MONITOR MODE: All comparable fixtures match.")
         sys.exit(0)
-    elif args.enforce and stats['mismatch'] > 0:
-        print(f"\n[FAIL] ENFORCE MODE: {stats['mismatch']} unexpected mismatch(es) found!")
-        print("Add to KNOWN_DIVERGENCES in compare-lua-outputs.py if these are expected,")
-        print("or fix the divergence in NovaSharp runtime.")
+    elif args.enforce and (
+        stats['mismatch'] > 0
+        or stats['lua_only'] > 0
+        or stats['nova_only'] > 0
+        or stats['missing_outputs'] > 0
+    ):
+        print("\n[FAIL] ENFORCE MODE: hard comparison failure(s) found!")
+        print(f"Mismatch: {stats['mismatch']}")
+        print(f"Lua only: {stats['lua_only']}")
+        print(f"Nova only: {stats['nova_only']}")
+        print(f"Missing outputs: {stats['missing_outputs']}")
+        print("Fix the divergence in NovaSharp runtime or fixture metadata.")
+        sys.exit(1)
+    elif args.enforce and ratchet_missing:
+        print(f"\n[FAIL] ENFORCE MODE: both-error ratchet baseline missing: {args.error_ratchet_baseline}")
+        sys.exit(1)
+    elif args.enforce and ratchet_result is not None and not ratchet_result.passed:
+        print("\n[FAIL] ENFORCE MODE: unclassified both_error ratchet grew or changed!")
+        print("Classify the error parity or fix NovaSharp so both_error count/signatures do not regress.")
         sys.exit(1)
     elif stats['mismatch'] > 0:
         print(f"\n[WARN] {stats['mismatch']} mismatch(es) found (warn mode, not failing)")

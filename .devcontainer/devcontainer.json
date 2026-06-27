@@ -6,15 +6,17 @@
         "dockerfile": "Dockerfile",
         "context": "."
     },
+    // Block attach until onCreate finishes so extension activation sees a restored solution.
+    "waitFor": "onCreateCommand",
     // Mount configuration for better performance
     "mounts": [
         // Cache NuGet packages in a named volume for persistence across rebuilds
         "source=novasharp-nuget-cache,target=/home/vscode/.nuget,type=volume",
         // Cache dotnet tools
         "source=novasharp-dotnet-tools,target=/home/vscode/.dotnet/tools,type=volume",
-        // RAM disk for build artifacts - dramatically speeds up compilation I/O
-        // Uses tmpfs for obj/ and bin/ directories (persisted within session, not across rebuilds)
-        "source=novasharp-build-cache,target=/workspaces/NovaSharp/artifacts/build-cache,type=volume"
+        // Build artifact cache for faster compilation I/O
+        // Uses a named volume for build cache persistence across container rebuilds
+        "source=novasharp-build-cache,target=${containerWorkspaceFolder}/artifacts/build-cache,type=volume"
     ],
     // VS Code customizations
     "customizations": {
@@ -31,12 +33,18 @@
                 // Git
                 "eamodio.gitlens",
                 "mhutchie.git-graph",
+                "GitHub.vscode-pull-request-github",
+                "GitHub.vscode-github-actions",
+                "GitHub.remotehub",
                 // Lua (for test fixtures)
                 "sumneko.lua",
                 // Productivity
                 "streetsidesoftware.code-spell-checker",
                 "gruntfuggly.todo-tree",
                 "aaron-bond.better-comments",
+                "pkief.material-icon-theme",
+                "GitHub.github-vscode-theme",
+                "dracula-theme.theme-dracula",
                 // AI / Copilot
                 "github.copilot",
                 "github.copilot-chat",
@@ -90,6 +98,8 @@
                 "editor.tabSize": 4,
                 "editor.insertSpaces": true,
                 "editor.detectIndentation": false,
+                // UX polish
+                "workbench.iconTheme": "material-icon-theme",
                 // ============================================================
                 // File Associations & Exclusions
                 // ============================================================
@@ -193,18 +203,14 @@
     },
     // Port forwarding (if running test servers)
     "forwardPorts": [],
-    // Clean stale Windows build artifacts and fix line endings before container setup
-    // This runs on the HOST before the container is created, cleaning mounted volumes
-    // Using external script for stability (prevents VS Code from detecting "config changes")
-    "initializeCommand": "bash .devcontainer/init-host.sh \"${localWorkspaceFolder}\"",
     // onCreateCommand runs BEFORE extensions are activated
     // This ensures NuGet packages are restored before C# extension tries to load projects
-    "onCreateCommand": "bash .devcontainer/on-create.sh",
+    "onCreateCommand": "bash .devcontainer/on-create.sh \"${containerWorkspaceFolder}\"",
     // postCreateCommand runs after container is created but extensions may still race
-    "postCreateCommand": "bash .devcontainer/post-create.sh",
+    "postCreateCommand": "bash .devcontainer/post-create.sh \"${containerWorkspaceFolder}\"",
     // updateContentCommand runs after git pull/clone operations
     // Re-run NuGet restore to ensure packages are up to date
-    "updateContentCommand": "dotnet restore src/NovaSharp.sln --verbosity minimal",
+    "updateContentCommand": "bash .devcontainer/update-content.sh \"${containerWorkspaceFolder}\"",
     // postStartCommand runs after container starts
     "postStartCommand": "echo '✅ NovaSharp dev container ready! IntelliSense will load automatically.'",
     // Set the default user

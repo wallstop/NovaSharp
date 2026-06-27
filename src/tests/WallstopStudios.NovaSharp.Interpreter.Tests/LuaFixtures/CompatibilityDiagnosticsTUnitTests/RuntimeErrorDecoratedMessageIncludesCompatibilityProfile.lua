@@ -3,5 +3,5 @@
 -- @expects-error: true
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Compatibility\CompatibilityDiagnosticsTUnitTests.cs:39
 -- @test: CompatibilityDiagnosticsTUnitTests.RuntimeErrorDecoratedMessageIncludesCompatibilityProfile
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 error('boom')

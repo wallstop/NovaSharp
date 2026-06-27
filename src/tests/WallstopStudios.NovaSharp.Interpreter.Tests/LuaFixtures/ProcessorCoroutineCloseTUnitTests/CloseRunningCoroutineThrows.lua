@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineCloseTUnitTests.cs:201
 -- @test: ProcessorCoroutineCloseTUnitTests.CloseRunningCoroutineThrows
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 function close_running()
                     local worker = coroutine.create(function()
                         local current = coroutine.running()

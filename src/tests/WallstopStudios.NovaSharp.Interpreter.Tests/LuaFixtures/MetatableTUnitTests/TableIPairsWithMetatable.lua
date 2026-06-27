@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\MetatableTUnitTests.cs:45
 -- @test: MetatableTUnitTests.TableIPairsWithMetatable
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 test = { 2, 4, 6 }
                 meta = { }
                 function meta.__ipairs(t)

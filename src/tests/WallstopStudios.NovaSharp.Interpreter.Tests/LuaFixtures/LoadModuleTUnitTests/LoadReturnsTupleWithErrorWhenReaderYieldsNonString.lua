@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\LoadModuleTUnitTests.cs:133
 -- @test: LoadModuleTUnitTests.LoadReturnsTupleWithErrorWhenReaderYieldsNonString
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local called = false
                 local function badreader()
                     if called then

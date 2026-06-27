@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineModuleTUnitTests.cs:26
 -- @test: ProcessorCoroutineModuleTUnitTests.RunningFromMainReturnsNilInLua51
--- @compat-notes: Lua 5.1: coroutine.running() returns nil from main thread
+-- Lua 5.1: coroutine.running() returns nil from main thread
 
 -- Test: In Lua 5.1, coroutine.running() returns nil when called from the main thread
 -- Reference: Lua 5.1 manual §5.2

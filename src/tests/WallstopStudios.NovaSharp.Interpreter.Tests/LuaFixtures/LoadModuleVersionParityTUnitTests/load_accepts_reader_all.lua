@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:147
 -- @test: LoadModuleVersionParityTUnitTests.LoadAcceptsReaderFunctionInAllVersions
--- @compat-notes: load() with a reader function works in all Lua versions
+-- load() with a reader function works in all Lua versions
 
 -- Test: load() should accept reader functions in all Lua versions
 -- Reference: Lua Reference Manual - load with reader function

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs
 -- @test: DebugModuleTUnitTests.GetLocalDataDrivenEdgeCases
--- @compat-notes: Tests debug.getlocal with valid indices
+-- Tests debug.getlocal with valid indices
 
 -- Test: debug.getlocal with valid indices returns name and value
 local function sample(arg1, arg2, arg3)

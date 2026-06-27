@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathNumericEdgeCasesTUnitTests.cs:672
 -- @test: MathNumericEdgeCasesTUnitTests.UltWithMaxintegerAndMinintegerBehavior
--- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: math.ult (5.3+); Lua 5.3+: math.maxinteger (5.3+); Lua 5.3+: math.mininteger (5.3+)
+-- Test targets Lua 5.3+; Lua 5.3+: math.ult (5.3+); Lua 5.3+: math.maxinteger (5.3+); Lua 5.3+: math.mininteger (5.3+)
 return math.ult(math.maxinteger, math.mininteger)

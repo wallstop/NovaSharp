@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\Utf8ModuleTUnitTests.cs:544
 -- @test: Utf8ModuleTUnitTests.Utf8OffsetReturnsNilWhenMovingBeforeStart
--- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: utf8 library
+-- Test targets Lua 5.3+; Lua 5.3+: utf8 library
 return utf8.offset('ab', -3)

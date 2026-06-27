@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTapParityTUnitTests.cs:347
 -- @test: DebugModuleTapParityTUnitTests.UpvalueIdReturnsUserDataHandles
--- @compat-notes: Lua 5.2+: debug.upvalueid (5.2+)
+-- Lua 5.2+: debug.upvalueid (5.2+)
 local function make()
                     local captured = 1
                     return function()

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs
 -- @test: IoLinesVersionParityTUnitTests.IoLinesFileHandleCanBeClosedManuallyInLua54Plus
--- @compat-notes: Lua 5.4+ allows manual closing of the file handle returned by io.lines
+-- Lua 5.4+ allows manual closing of the file handle returned by io.lines
 
 -- Test: io.lines file handle can be closed manually in Lua 5.4+
 -- Reference: Lua 5.4 Reference Manual §6.8

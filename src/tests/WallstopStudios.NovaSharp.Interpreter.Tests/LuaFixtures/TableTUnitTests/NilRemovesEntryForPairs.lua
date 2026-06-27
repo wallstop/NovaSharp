@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\TableTUnitTests.cs:267
 -- @test: TableTUnitTests.NilRemovesEntryForPairs
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 str = ''
                 function showTable(t)
                     for i,j in pairs(t) do

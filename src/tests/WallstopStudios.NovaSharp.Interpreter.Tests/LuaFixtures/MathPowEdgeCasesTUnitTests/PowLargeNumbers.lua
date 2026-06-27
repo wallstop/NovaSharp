@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: standalone-fixture
 -- @test: MathPowEdgeCasesTUnitTests.PowLargeNumbers
--- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
+-- Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
 
 -- Test: math.pow with very large numbers (overflow to infinity)
 -- Expected: Proper overflow handling per IEEE 754

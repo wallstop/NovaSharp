@@ -4,7 +4,7 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 
 ## Environment & Tooling
 
-- Install the .NET SDK (8.0+). If your machine only has .NET 9, set `DOTNET_ROLL_FORWARD=Major` when running tests/coverage so the net8.0 testhost launches correctly.
+- Install the .NET SDK pinned by `global.json` (currently 9.0.100 with latest-minor roll-forward).
 - Install Python 3.10+ (CI uses 3.12) and restore the shared tooling dependencies once per clone:
   ```bash
   python -m pip install -r requirements.tooling.txt
@@ -21,9 +21,9 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 ## Build & Test Commands
 
 - Full solution build: `dotnet build src/NovaSharp.sln -c Release`
-- Interpreter-only build: `dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/NovaSharp.Interpreter.csproj`
+- Interpreter-only build: `dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj`
 - Interpreter tests (Release):\
-  `dotnet test --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx"`
+  `dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release -- --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx`
 
 ## Coverage
 
@@ -89,4 +89,4 @@ Before opening a PR:
 1. Update relevant docs (`docs/README.md`, `docs/Testing.md`, feature-specific guides).
 1. Update `PLAN.md` if you progressed a milestone item.
 
-Following these steps keeps CI green and makes reviews smoother. Thanks for contributing!
+Report each command you ran and whether it passed. If a check or PR CI was not run, mark it as `not run` and residual risk instead of describing the PR as green.

@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:2570
 -- @test: MathModuleTUnitTests.MathTypeDistinguishesNumericTypes
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
+-- NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
 return math.type({expression})

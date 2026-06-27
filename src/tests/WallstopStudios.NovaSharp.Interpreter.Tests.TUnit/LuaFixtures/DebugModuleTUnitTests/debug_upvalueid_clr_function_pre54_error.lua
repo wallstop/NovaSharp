@@ -6,7 +6,7 @@
 
 -- Test: debug.upvalueid throws error for C functions in Lua 5.2/5.3
 -- Reference: Lua 5.2/5.3 manual - debug.upvalueid
--- @compat-notes: Lua 5.2/5.3 throw "invalid upvalue index" for C functions; Lua 5.4+ return nil
+-- Lua 5.2/5.3 throw "invalid upvalue index" for C functions; Lua 5.4+ return nil
 
 -- print is a C function with no accessible upvalues
 -- In Lua 5.2/5.3, this throws an error

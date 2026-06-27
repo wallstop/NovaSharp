@@ -12,6 +12,7 @@
 #   --fixtures-dir <path>  Directory containing Lua fixtures
 #   --output-dir <path>    Output directory for results
 #   --lua-version <ver>    Lua version: 5.1, 5.2, 5.3, 5.4 (default: 5.4)
+#   --lua-cmd <command>    Reference Lua executable to use
 #   --jobs <n>             Parallel jobs (default: number of CPUs)
 #   --skip-lua             Skip reference Lua execution
 #   --skip-novasharp       Skip NovaSharp execution
@@ -27,17 +28,23 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 FIXTURES_DIR="${ROOT_DIR}/src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures"
 OUTPUT_DIR="${ROOT_DIR}/artifacts/lua-comparison-results"
 LUA_VERSION="5.4"
-JOBS=$(nproc 2>/dev/null || echo 4)
+if nproc_path="$(command -v nproc)"; then
+    JOBS="$("$nproc_path")"
+else
+    JOBS=4
+fi
 SKIP_LUA=false
 SKIP_NOVASHARP=false
 LIMIT=0
 VERBOSE=false
+LUA_CMD_OVERRIDE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --fixtures-dir) FIXTURES_DIR="$2"; shift 2 ;;
         --output-dir) OUTPUT_DIR="$2"; shift 2 ;;
         --lua-version) LUA_VERSION="$2"; shift 2 ;;
+        --lua-cmd) LUA_CMD_OVERRIDE="$2"; shift 2 ;;
         --jobs|-j) JOBS="$2"; shift 2 ;;
         --skip-lua) SKIP_LUA=true; shift ;;
         --skip-novasharp) SKIP_NOVASHARP=true; shift ;;
@@ -51,7 +58,20 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-LUA_CMD="lua${LUA_VERSION}"
+LUA_CMD="${LUA_CMD_OVERRIDE:-lua${LUA_VERSION}}"
+TIMEOUT_MODE="python"
+if timeout_path="$(command -v timeout)"; then
+    timeout_version_output="$("$timeout_path" --version 2>&1 || true)"
+    if [[ "$timeout_version_output" == *"GNU coreutils"* || "$timeout_version_output" == *"GNU timeout"* ]]; then
+        TIMEOUT_MODE="gnu"
+    fi
+fi
+if [[ "$TIMEOUT_MODE" == "python" ]]; then
+    if ! python3_path="$(command -v python3)"; then
+        echo "Error: python3 is required when GNU timeout is unavailable" >&2
+        exit 1
+    fi
+fi
 
 if [[ ! -d "$FIXTURES_DIR" ]]; then
     echo "Error: Fixtures directory not found: $FIXTURES_DIR" >&2
@@ -63,43 +83,69 @@ mkdir -p "$OUTPUT_DIR"
 # Create file list with version filtering
 echo "Scanning fixtures for Lua $LUA_VERSION compatibility..."
 file_list="${OUTPUT_DIR}/filelist.txt"
-> "$file_list"
+filter_summary="$(
+    python3 - "$ROOT_DIR" "$FIXTURES_DIR" "$LUA_VERSION" "$LIMIT" "$file_list" <<'PY'
+import sys
+from pathlib import Path
 
-compatible_count=0
-skipped_version=0
-skipped_novasharp=0
+root = Path(sys.argv[1])
+fixtures_dir = Path(sys.argv[2])
+lua_version = sys.argv[3]
+limit = int(sys.argv[4])
+file_list = Path(sys.argv[5])
 
-while IFS= read -r -d '' lua_file; do
-    # Check limit
-    if [[ $LIMIT -gt 0 && $compatible_count -ge $LIMIT ]]; then
-        break
-    fi
-    
-    # Read first 10 lines for metadata (comments end when non-comment starts)
-    header=$(head -10 "$lua_file")
-    
-    # Skip NovaSharp-only (check both formats)
-    # Format 1: @lua-versions: novasharp-only
-    # Format 2: @novasharp-only: true
-    if echo "$header" | grep -qE "(@lua-versions:\s*novasharp-only|@novasharp-only:\s*true)"; then
-        ((skipped_novasharp++)) || true
-        continue
-    fi
-    
-    # Check version compatibility from @lua-versions line
-    version_line=$(echo "$header" | grep "@lua-versions:" || true)
-    if [[ -n "$version_line" ]]; then
-        # Extract versions - need to check if this version is compatible
-        if ! echo "$version_line" | grep -qE "(5\.1\+|${LUA_VERSION})"; then
-            ((skipped_version++)) || true
+sys.path.insert(0, str(root / "tools"))
+from lua_version_utils import is_version_compatible, parse_lua_versions
+
+compatible = 0
+skipped_version = 0
+skipped_novasharp = 0
+
+with file_list.open("w", encoding="utf-8") as output:
+    for lua_file in sorted(fixtures_dir.rglob("*.lua")):
+        if limit > 0 and compatible >= limit:
+            break
+
+        lua_versions = []
+        versions_specified = False
+        no_reference_versions = False
+        novasharp_only = False
+
+        with lua_file.open("r", encoding="utf-8", errors="replace") as fixture:
+            for _ in range(10):
+                line = fixture.readline()
+                if not line.startswith("--"):
+                    break
+                lower = line.lower()
+                if "@lua-versions:" in lower:
+                    versions_specified = True
+                    versions_part = line.split("@lua-versions:", 1)[1].strip()
+                    versions_text = versions_part.lower()
+                    if versions_text == "none":
+                        no_reference_versions = True
+                    elif "novasharp-only" in versions_text:
+                        novasharp_only = True
+                    else:
+                        lua_versions = parse_lua_versions(versions_part)
+                if "@novasharp-only: true" in lower:
+                    novasharp_only = True
+
+        if novasharp_only:
+            skipped_novasharp += 1
             continue
-        fi
-    fi
-    
-    echo "$lua_file" >> "$file_list"
-    ((compatible_count++)) || true
-    
-done < <(find "$FIXTURES_DIR" -name "*.lua" -type f -print0 | sort -z)
+        if no_reference_versions or (
+            versions_specified and not is_version_compatible(lua_versions, lua_version)
+        ):
+            skipped_version += 1
+            continue
+
+        output.write(str(lua_file) + "\n")
+        compatible += 1
+
+print(f"{compatible}\t{skipped_version}\t{skipped_novasharp}")
+PY
+)"
+IFS=$'\t' read -r compatible_count skipped_version skipped_novasharp <<< "$filter_summary"
 
 total_files=$(wc -l < "$file_list")
 echo "Found $total_files compatible fixtures (skipped: $skipped_version version, $skipped_novasharp novasharp-only)"
@@ -109,6 +155,41 @@ if [[ $total_files -eq 0 ]]; then
     exit 0
 fi
 
+overall_start_time=$(date +%s)
+
+run_command_with_timeout() {
+    local timeout_mode="$1"
+    local timeout_seconds="$2"
+    local out_file="$3"
+    local err_file="$4"
+    shift 4
+
+    if [[ "$timeout_mode" == "gnu" ]]; then
+        timeout "${timeout_seconds}s" "$@" > "$out_file" 2> "$err_file"
+        return $?
+    fi
+
+    python3 -c '
+import subprocess
+import sys
+
+timeout_seconds = float(sys.argv[1])
+out_file = sys.argv[2]
+err_file = sys.argv[3]
+command = sys.argv[4:]
+
+with open(out_file, "wb") as stdout, open(err_file, "wb") as stderr:
+    try:
+        result = subprocess.run(command, stdout=stdout, stderr=stderr, timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        stderr.write(f"Process timed out after {timeout_seconds:g}s\n".encode("utf-8"))
+        sys.exit(124)
+
+sys.exit(result.returncode)
+' "$timeout_seconds" "$out_file" "$err_file" "$@"
+}
+export -f run_command_with_timeout
+
 # Function to run a single Lua file
 run_single_lua() {
     local lua_file="$1"
@@ -116,6 +197,7 @@ run_single_lua() {
     local lua_version="$3"
     local output_dir="$4"
     local fixtures_dir="$5"
+    local timeout_mode="$6"
     
     local rel_path="${lua_file#$fixtures_dir/}"
     local output_base="${output_dir}/${rel_path%.lua}"
@@ -125,7 +207,7 @@ run_single_lua() {
     local err_file="${output_base}.lua${lua_version}.err"
     local rc_file="${output_base}.lua${lua_version}.rc"
     
-    if timeout 5s "$lua_cmd" "$lua_file" > "$out_file" 2> "$err_file"; then
+    if run_command_with_timeout "$timeout_mode" 5 "$out_file" "$err_file" "$lua_cmd" "$lua_file"; then
         echo "0" > "$rc_file"
         echo "pass"
     else
@@ -137,9 +219,13 @@ export -f run_single_lua
 
 # Run reference Lua in parallel
 if [[ "$SKIP_LUA" != "true" ]]; then
-    if ! command -v "$LUA_CMD" &>/dev/null; then
+    if ! lua_path="$(command -v "$LUA_CMD")"; then
         echo "Error: $LUA_CMD not found" >&2
         exit 1
+    fi
+    echo "Using Lua command: $lua_path"
+    if [[ "$VERBOSE" == "true" ]]; then
+        echo "Using timeout mode: $TIMEOUT_MODE"
     fi
     
     echo ""
@@ -148,10 +234,10 @@ if [[ "$SKIP_LUA" != "true" ]]; then
     
     # Use xargs for parallel execution (more portable than GNU parallel)
     lua_results="${OUTPUT_DIR}/lua_results.txt"
-    cat "$file_list" | xargs -P "$JOBS" -I {} bash -c "run_single_lua '{}' '$LUA_CMD' '$LUA_VERSION' '$OUTPUT_DIR' '$FIXTURES_DIR'" > "$lua_results"
+    xargs -P "$JOBS" -I {} bash -c 'run_single_lua "$1" "$2" "$3" "$4" "$5" "$6"' _ {} "$LUA_CMD" "$LUA_VERSION" "$OUTPUT_DIR" "$FIXTURES_DIR" "$TIMEOUT_MODE" < "$file_list" > "$lua_results"
     
-    lua_pass=$(grep -c "^pass$" "$lua_results" || echo 0)
-    lua_fail=$(grep -c "^fail$" "$lua_results" || echo 0)
+    lua_pass=$(awk '$0 == "pass" { count++ } END { print count + 0 }' "$lua_results")
+    lua_fail=$(awk '$0 == "fail" { count++ } END { print count + 0 }' "$lua_results")
     
     end_time=$(date +%s)
     elapsed=$((end_time - start_time))
@@ -193,6 +279,8 @@ fi
 
 # Generate summary JSON
 results_file="${OUTPUT_DIR}/results.json"
+overall_end_time=$(date +%s)
+overall_elapsed=$((overall_end_time - overall_start_time))
 cat > "$results_file" << EOF
 {
   "summary": {
@@ -203,7 +291,9 @@ cat > "$results_file" << EOF
     "lua_pass": ${lua_pass:-0},
     "lua_fail": ${lua_fail:-0},
     "nova_pass": ${nova_pass:-0},
-    "nova_fail": ${nova_fail:-0}
+    "nova_fail": ${nova_fail:-0},
+    "elapsed_seconds": $overall_elapsed,
+    "workers": $JOBS
   }
 }
 EOF

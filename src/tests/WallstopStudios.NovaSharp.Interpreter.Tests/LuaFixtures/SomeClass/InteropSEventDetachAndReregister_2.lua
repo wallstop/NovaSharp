@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataEventsTUnitTests.cs:333
 -- @test: SomeClass.InteropSEventDetachAndReregister
--- @compat-notes: Uses injected variable: myobj
+-- Uses injected variable: myobj
 myobj.MySEvent.add(handler);

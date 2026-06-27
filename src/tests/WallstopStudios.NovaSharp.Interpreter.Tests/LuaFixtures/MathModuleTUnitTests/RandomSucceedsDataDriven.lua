@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:1950
 -- @test: MathModuleTUnitTests.RandomSucceedsDataDriven
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
+-- NovaSharp: unresolved C# interpolation placeholder
 return {luaExpression}

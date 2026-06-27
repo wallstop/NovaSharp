@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Compatibility\Bit32AvailabilityTUnitTests.cs:171
 -- @test: Bit32AvailabilityTUnitTests.NativeBitwiseOperatorsWorkInLua53Plus
--- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: bitwise AND; Lua 5.3+: bitwise OR; Lua 5.3+: bitwise XOR/NOT; Lua 5.3+: bit shift
+-- Test targets Lua 5.3+; Lua 5.3+: bitwise AND; Lua 5.3+: bitwise OR; Lua 5.3+: bitwise XOR/NOT; Lua 5.3+: bit shift
 local a = 0xFF
                 local b = 0x0F
                 local band = a & b

@@ -5,21 +5,21 @@
 NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches the official Lua reference implementation. When fixture comparisons reveal behavioral differences:
 
 1. **ASSUME NOVASHARP IS WRONG** until proven otherwise
-2. **FIX THE PRODUCTION CODE** to match Lua behavior
-3. **ADD REGRESSION TESTS** with standalone `.lua` fixtures runnable against real Lua
-4. **NEVER adjust tests to accommodate bugs** — fix the runtime instead
+1. **FIX THE PRODUCTION CODE** to match Lua behavior
+1. **ADD REGRESSION TESTS** with standalone `.lua` fixtures runnable against real Lua
+1. **NEVER adjust tests to accommodate bugs** — fix the runtime instead
 
-**Current Status**: 🔴 Lua fixture comparisons have **failures in CI/CD** across multiple OS/version combinations. See "Lua Comparison CI/CD Failure Resolution" below for systematic remediation plan.
+**Current Status**: Local comparison artifacts were rechecked on 2026-06-27 with `compare-lua-outputs.py --enforce` for Lua 5.1-5.5 and showed zero hard mismatches. A fresh PR CI run must still be observed passing before work is marked accepted.
 
----
+______________________________________________________________________
 
-## Repository Snapshot (Updated 2025-12-22)
+## Historical Repository Snapshot (2025-12-22)
 
 **Build & Tests**:
 
 - Zero warnings with `<TreatWarningsAsErrors>true` enforced
-- **11,901** interpreter tests via TUnit (Microsoft.Testing.Platform)
-- Coverage: ~75.3% line / ~76.1% branch (gating targets at 90%)
+- **11,901** interpreter tests via TUnit (Microsoft.Testing.Platform), as observed on 2025-12-22
+- Coverage: ~75.3% line / ~76.1% branch (gating targets at 80%)
 - CI: Tests on matrix of `[ubuntu-latest, windows-latest, macos-latest]`
 
 **TUnit Version Coverage Progress**:
@@ -30,7 +30,7 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 **Audits & Quality**:
 
-- `docs/audits/documentation_audit.log`, `docs/audits/naming_audit.log`, `docs/audits/spelling_audit.log` green
+- `docs/audits/documentation_audit.log`, `docs/audits/naming_audit.log`, and `docs/audits/spelling_audit.log` are tracked audit baselines; rerun the matching audit scripts before treating them as current.
 - Runtime/tooling/tests remain region-free
 - DAP golden tests: 20 tests validating VS Code debugger payloads
 - LuaNumber lint script (`check-luanumber-usage.py`) passing
@@ -45,7 +45,7 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 
 **Lua Compatibility**:
 
-- ✅ **0 unexpected mismatches** across all Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
+- Historical local comparison observation (2026-06-27): existing Lua 5.1-5.5 artifacts rechecked with `compare-lua-outputs.py --enforce` had 0 `mismatch`, 0 `lua_only`, and 0 `nova_only`.
 - Bytecode format version `0x151` preserves integer/float subtype
 - JSON/bytecode serialization preserves integer/float subtype
 - DynValue caching extended for negative integers and common floats
@@ -53,13 +53,13 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 - CLI argument registry (`CliArgumentRegistry`) with comprehensive Lua version support
 - VM state protection (Phase 1) prevents external corruption
 
----
+______________________________________________________________________
 
 ## 🔴 HIGH PRIORITY: Known Issues
 
-### Lua Comparison CI/CD Failure Resolution ✅ **COMPLETE**
+### Lua Comparison CI/CD Failure Resolution
 
-**Status**: ✅ **COMPLETE** — All 7 phases complete (2026-01-02).
+**Status**: Historical phases recorded on 2026-01-02; PR 30 follow-up remains active until fresh CI is observed passing.
 
 **Problem**: Lua comparison tests are failing across various OS/version combinations in CI/CD. Failures downloaded as `lua-comparison-VERSION-OS-latest.zip` artifacts need systematic extraction, categorization, and resolution while maintaining strict Lua spec compliance.
 
@@ -68,16 +68,23 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 - "Consolidate Lua Version Parsing Logic" (tech debt item below)
 - "Migrate Tests to Range-Based Version Annotations" (future-proofing item below)
 
-**Guiding Principle**: NovaSharp must match reference Lua exactly. Failures indicate either NovaSharp bugs (fix production code), metadata bugs (fix `@lua-versions`), or platform C library quirks (mark `@novasharp-only: true` with `@compat-notes`).
+**Guiding Principle**: NovaSharp must match reference Lua exactly. Failures indicate either NovaSharp bugs (fix production code), metadata bugs (fix `@lua-versions`), or documented platform C library/spec implementation-defined behavior (`@novasharp-only: true` is reserved for those cases and NovaSharp extensions).
+
+**PR 30 follow-up (2026-06-27)**:
+
+- Decouple `lua-comparison` and `code-coverage` from the full OS unit-test matrix so a Windows unit-test failure does not hide spec comparison or coverage signal.
+- Keep the 3 OS × 5 Lua comparison matrix, with bounded workers, reference Lua caching, and summaries that include `mismatch`, `lua_only`, `nova_only`, `both_error`, ratchet counts, and fixture runtime.
+- Add `docs/testing/lua-error-ratchet.json` so new or changed unclassified `both_error` signatures fail while reductions pass.
+- Acceptance requires observed local verification and a fresh passing PR CI run; unrun checks remain residual risk.
 
 **Analysis Results** (from Phase 1): 4 failures identified across 10 archives:
 
-| Fixture | Category | Action |
-| ------- | -------- | ------ |
-| `IndexSetDoesNotWrackStack.lua` | `novasharp_bug` | Fix table iteration order |
-| `UnicodeEscapeSequenceIsDecoded.lua` | `version_specific` | Fix to `@lua-versions: 5.3+` |
-| `DateSupportsOyModifierInLua52Plus.lua` | `os_specific` | Add `@novasharp-only: true` |
-| `CharHandlesPositiveInfinityAsZeroLua51And52.lua` | `isolated_failure` | Investigate macOS 5.1 |
+| Fixture                                           | Category           | Action                       |
+| ------------------------------------------------- | ------------------ | ---------------------------- |
+| `IndexSetDoesNotWrackStack.lua`                   | `novasharp_bug`    | Fix table iteration order    |
+| `UnicodeEscapeSequenceIsDecoded.lua`              | `version_specific` | Fix to `@lua-versions: 5.3+` |
+| `DateSupportsOyModifierInLua52Plus.lua`           | `os_specific`      | Add `@novasharp-only: true`  |
+| `CharHandlesPositiveInfinityAsZeroLua51And52.lua` | `isolated_failure` | Investigate macOS 5.1        |
 
 #### Implementation Steps
 
@@ -109,81 +116,88 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 **Phase 4: Batch-Convert C# Test Annotations** ✅ **COMPLETE** (2026-01-02)
 
 - Created `tools/migrate_csharp_version_annotations.py` with full migration capabilities
+
 - Scans 322 C# test files in `src/tests/.../Tests.TUnit/` directories
+
 - Supports `--dry-run` (default), `--apply`, `--verbose`, `--test` modes
+
 - Converts safe patterns:
 
-   | From | To |
-   |------|-----|
-   | `[Arguments(Lua51)][Arguments(Lua52)]...[Arguments(Lua55)]` | `[AllLuaVersions]` |
-   | `[Arguments(Lua53)][Arguments(Lua54)][Arguments(Lua55)]` | `[LuaVersionsFrom(Lua53)]` |
-   | `[Arguments(Lua51)][Arguments(Lua52)]` | `[LuaVersionsUntil(Lua52)]` |
-   | `[Arguments(Lua52)][Arguments(Lua53)][Arguments(Lua54)]` | `[LuaVersionRange(Lua52, Lua54)]` |
+  | From                                                        | To                                |
+  | ----------------------------------------------------------- | --------------------------------- |
+  | `[Arguments(Lua51)][Arguments(Lua52)]...[Arguments(Lua55)]` | `[AllLuaVersions]`                |
+  | `[Arguments(Lua53)][Arguments(Lua54)][Arguments(Lua55)]`    | `[LuaVersionsFrom(Lua53)]`        |
+  | `[Arguments(Lua51)][Arguments(Lua52)]`                      | `[LuaVersionsUntil(Lua52)]`       |
+  | `[Arguments(Lua52)][Arguments(Lua53)][Arguments(Lua54)]`    | `[LuaVersionRange(Lua52, Lua54)]` |
 
 - 9 attribute groups converted across 3 files
+
 - 25 entries flagged for manual review (extra parameters, non-contiguous patterns)
+
 - 35 unit tests in `tools/test_migrate_csharp_version_annotations.py`
-- All 13,163 tests pass after migration
+
+- Historical observation on 2026-01-02: 13,163 tests passed after migration; rerun the current suite before treating that count as current.
+
 - See [progress/session-101-csharp-annotation-migration-phase4.md](progress/session-101-csharp-annotation-migration-phase4.md)
 
 **Phase 5: Fix Failures by Category** ✅ **COMPLETE** (2026-01-02)
 
 All 4 failures from Phase 1 analysis were resolved:
 
-| Fixture | Resolution |
-|---------|------------|
-| `IndexSetDoesNotWrackStack.lua` | Added `@novasharp-only: true` — NovaSharp-specific behavior test |
-| `UnicodeEscapeSequenceIsDecoded.lua` | Fixed to `@lua-versions: 5.3+` — Unicode escapes added in Lua 5.3 |
-| `DateSupportsOyModifierInLua52Plus.lua` | Added `@novasharp-only: true` — Platform C library strftime differences |
-| `CharHandlesPositiveInfinityAsZeroLua51And52.lua` | Added `@novasharp-only: true` — macOS Lua 5.1 C library quirk |
+| Fixture                                           | Resolution                                                              |
+| ------------------------------------------------- | ----------------------------------------------------------------------- |
+| `IndexSetDoesNotWrackStack.lua`                   | Added `@novasharp-only: true` — NovaSharp-specific behavior test        |
+| `UnicodeEscapeSequenceIsDecoded.lua`              | Fixed to `@lua-versions: 5.3+` — Unicode escapes added in Lua 5.3       |
+| `DateSupportsOyModifierInLua52Plus.lua`           | Added `@novasharp-only: true` — Platform C library strftime differences |
+| `CharHandlesPositiveInfinityAsZeroLua51And52.lua` | Added `@novasharp-only: true` — macOS Lua 5.1 C library quirk           |
 
 See [progress/session-102-lua-ci-resolution-phases5-7.md](progress/session-102-lua-ci-resolution-phases5-7.md)
 
 **Phase 6: Full Matrix Verification** ✅ **COMPLETE** (2026-01-02)
 
-Verification results across all 5 Lua versions:
+Observed on 2026-06-27 from existing local comparison artifacts:
 
-| Lua Version | Matches | Mismatches | NovaSharp-Only | Status |
-|-------------|---------|------------|----------------|--------|
-| 5.1 | 1,931 | 0 | 98 | ✅ PASS |
-| 5.2 | 1,992 | 0 | 97 | ✅ PASS |
-| 5.3 | 2,039 | 0 | 96 | ✅ PASS |
-| 5.4 | 2,073 | 0 | 91 | ✅ PASS |
-| 5.5 | 2,085 | 0 | 91 | ✅ PASS |
+| Lua Version | Total | Match | Mismatch | Both Error | Skipped |
+| ----------- | ----- | ----- | -------- | ---------- | ------- |
+| 5.1         | 2,085 | 757   | 0        | 200        | 1,128   |
+| 5.2         | 2,085 | 545   | 0        | 148        | 1,392   |
+| 5.3         | 2,085 | 731   | 0        | 258        | 1,096   |
+| 5.4         | 2,085 | 777   | 0        | 259        | 1,049   |
+| 5.5         | 2,085 | 812   | 0        | 267        | 1,006   |
 
-**Success Criteria Met**: `mismatch == 0` for all 5 Lua versions.
+**Success Criteria**: all Lua comparison CI jobs are observed passing with 0 `mismatch`, 0 `lua_only`, 0 `nova_only`, and no new or changed unclassified `both_error` signatures.
 
 **Phase 7: Strengthen CI Enforcement** ✅ **COMPLETE** (2026-01-02)
 
-1. ✅ Verified `.github/workflows/tests.yml` uses `--enforce` flag
-2. ✅ CI matrix runs all 15 combinations (3 OS × 5 versions)
-3. ✅ All 13,163 TUnit tests passing
+1. `.github/workflows/tests.yml` contains the `--enforce` comparison step.
+1. The configured CI matrix covers 15 combinations (3 OS × 5 versions).
+1. Historical local observation from 2026-01-02 reported 13,163 TUnit tests passing; rerun the current suite before treating that count as current.
 
 #### Completion Summary
 
-The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete**. Key achievements:
+The "Lua Comparison CI/CD Failure Resolution" initiative recorded the following historical achievements:
 
-- **Zero mismatches** across all 5 Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
+- **Zero hard mismatches observed locally** across all 5 Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)
 - **4 failures fixed** via appropriate `@novasharp-only: true` or `@lua-versions` corrections
 - **Shared tooling** created: `lua_version_utils.py`, migration scripts for Lua and C# annotations
-- **CI enforcement** verified with `--enforce` flag blocking merges on mismatches
+- **CI enforcement** uses the `--enforce` flag to block merges on hard mismatches and ratchet regressions.
 - **Future-proof annotations**: Range syntax (`5.3+`, `all`) used throughout codebase
 
 #### Deliverables
 
-| Deliverable | Location | Status |
-|-------------|----------|--------|
-| Failure analysis tool | `tools/LuaComparisonAnalyzer/analyze_failures.py` | ✅ Complete |
-| Shared version utils | `tools/lua_version_utils.py` | ✅ Complete |
-| Lua migration script | `tools/migrate_version_annotations.py` | ✅ Complete |
-| C# migration script | `tools/migrate_csharp_version_annotations.py` | ✅ Complete |
-| C# migration tests | `tools/test_migrate_csharp_version_annotations.py` | ✅ Complete |
-| Progress: Phase 1-2 | `progress/session-099-lua-comparison-ci-resolution.md` | ✅ Complete |
-| Progress: Phase 3 | `progress/session-100-lua-fixture-migration-phase3.md` | ✅ Complete |
-| Progress: Phase 4 | `progress/session-101-csharp-annotation-migration-phase4.md` | ✅ Complete |
-| Progress: Phase 5-7 | `progress/session-102-lua-ci-resolution-phases5-7.md` | ✅ Complete |
-| Updated fixtures | `src/tests/.../LuaFixtures/` (range syntax) | ✅ Already optimal |
-| Updated C# tests | `src/tests/.../Tests.TUnit/` (range attributes) | ✅ Complete |
+| Deliverable           | Location                                                     | Status             |
+| --------------------- | ------------------------------------------------------------ | ------------------ |
+| Failure analysis tool | `tools/LuaComparisonAnalyzer/analyze_failures.py`            | ✅ Complete        |
+| Shared version utils  | `tools/lua_version_utils.py`                                 | ✅ Complete        |
+| Lua migration script  | `tools/migrate_version_annotations.py`                       | ✅ Complete        |
+| C# migration script   | `tools/migrate_csharp_version_annotations.py`                | ✅ Complete        |
+| C# migration tests    | `tools/test_migrate_csharp_version_annotations.py`           | ✅ Complete        |
+| Progress: Phase 1-2   | `progress/session-099-lua-comparison-ci-resolution.md`       | ✅ Complete        |
+| Progress: Phase 3     | `progress/session-100-lua-fixture-migration-phase3.md`       | ✅ Complete        |
+| Progress: Phase 4     | `progress/session-101-csharp-annotation-migration-phase4.md` | ✅ Complete        |
+| Progress: Phase 5-7   | `progress/session-102-lua-ci-resolution-phases5-7.md`        | ✅ Complete        |
+| Updated fixtures      | `src/tests/.../LuaFixtures/` (range syntax)                  | ✅ Already optimal |
+| Updated C# tests      | `src/tests/.../Tests.TUnit/` (range attributes)              | ✅ Complete        |
 
 #### References
 
@@ -192,7 +206,7 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
 - Skill: [lua-fixture-creation](.llm/skills/lua-fixture-creation.md)
 - Prior session: [session-050-fixture-comparison-version-filtering](progress/session-050-fixture-comparison-version-filtering.md)
 
----
+______________________________________________________________________
 
 ### LLM Context Audit & Reorganization ✅ **COMPLETE**
 
@@ -202,14 +216,14 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
 
 **Deliverables Completed**:
 
-| Deliverable | Result |
-|-------------|--------|
-| `tools/LlmSkillIndexer/` | Python script validates metadata & line counts |
-| `.llm/skills-index.json` | Auto-generated with 25 skills across 6 categories |
-| `.llm/code-samples/` | 6 files with extracted reusable examples |
-| `.llm/skills/` | 25 files, all <300 lines, all with YAML metadata |
-| `.llm/context.md` | 178 lines (target ~200) |
-| Agent files | AGENTS.md (33), CLAUDE.md (45), copilot-instructions.md (35), .cursorrules (35) |
+| Deliverable              | Result                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| `tools/LlmSkillIndexer/` | Python script validates metadata & line counts                                  |
+| `.llm/skills-index.json` | Auto-generated with 25 skills across 6 categories                               |
+| `.llm/code-samples/`     | 6 files with extracted reusable examples                                        |
+| `.llm/skills/`           | 25 files, all \<300 lines, all with YAML metadata                               |
+| `.llm/context.md`        | 178 lines (target ~200)                                                         |
+| Agent files              | AGENTS.md (33), CLAUDE.md (45), copilot-instructions.md (35), .cursorrules (35) |
 
 **Validation Criteria (All Met)**:
 
@@ -221,7 +235,7 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
 
 **Completed**: 2026-01-02. See [progress/session-098-llm-consolidation.md](progress/session-098-llm-consolidation.md).
 
----
+______________________________________________________________________
 
 ### Consolidate Lua Version Parsing Logic ✅ **INCORPORATED**
 
@@ -245,11 +259,11 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
    - `is_version_compatible(lua_versions: list[str], target: str) -> bool` - Check compatibility
    - Support for: explicit lists, `all`, `5.X+`, `5.X-5.Y` range syntax
 
-2. **Update consumers**: Refactor the three scripts to use the shared module
+1. **Update consumers**: Refactor the three scripts to use the shared module
 
-3. **Add tests**: Unit tests for the version parsing logic
+1. **Add tests**: Unit tests for the version parsing logic
 
-4. **Update corpus extractor**: Generate range syntax where appropriate (e.g., `5.3+` instead of `5.3, 5.4, 5.5`)
+1. **Update corpus extractor**: Generate range syntax where appropriate (e.g., `5.3+` instead of `5.3, 5.4, 5.5`)
 
 **Benefits**:
 
@@ -257,7 +271,7 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
 - Easier to add new range syntax features
 - Reduced risk of parsing inconsistencies between tools
 
----
+______________________________________________________________________
 
 ### Migrate Tests to Range-Based Version Annotations ✅ **INCORPORATED**
 
@@ -269,13 +283,13 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
 
 **Affected Patterns to Find and Replace**:
 
-| Pattern Type | Find (Explicit)                                       | Replace With (Range-Based)                                        |
-| ------------ | ----------------------------------------------------- | ----------------------------------------------------------------- |
-| Lua fixture  | `@lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5`              | `@lua-versions: all`                                              |
-| Lua fixture  | `@lua-versions: 5.3, 5.4, 5.5`                        | `@lua-versions: 5.3+`                                             |
-| Lua fixture  | `@lua-versions: 5.1, 5.2`                             | `@lua-versions: 5.1-5.2`                                          |
-| Lua fixture  | `@lua-versions: 5.2, 5.3, 5.4`                        | `@lua-versions: 5.2-5.4`                                          |
-| C# test      | Multiple `[Arguments(LuaCompatibilityVersion.LuaXX)]` | `[LuaVersionsFrom]`/`[LuaVersionsUntil]`/`[LuaVersionRange]`      |
+| Pattern Type | Find (Explicit)                                       | Replace With (Range-Based)                                   |
+| ------------ | ----------------------------------------------------- | ------------------------------------------------------------ |
+| Lua fixture  | `@lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5`              | `@lua-versions: all`                                         |
+| Lua fixture  | `@lua-versions: 5.3, 5.4, 5.5`                        | `@lua-versions: 5.3+`                                        |
+| Lua fixture  | `@lua-versions: 5.1, 5.2`                             | `@lua-versions: 5.1-5.2`                                     |
+| Lua fixture  | `@lua-versions: 5.2, 5.3, 5.4`                        | `@lua-versions: 5.2-5.4`                                     |
+| C# test      | Multiple `[Arguments(LuaCompatibilityVersion.LuaXX)]` | `[LuaVersionsFrom]`/`[LuaVersionsUntil]`/`[LuaVersionRange]` |
 
 **Implementation Steps**:
 
@@ -289,20 +303,20 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
    rg "\[Arguments\(LuaCompatibilityVersion\.Lua5" --type cs -c
    ```
 
-2. **Phase 2: Prioritize** — Categorize by conversion type:
+1. **Phase 2: Prioritize** — Categorize by conversion type:
 
    - `all` conversions (all 5 versions listed)
    - `5.X+` conversions (contiguous from version to latest)
    - `5.X-5.Y` conversions (contiguous range)
    - Manual review needed (non-contiguous, version-specific behavior)
 
-3. **Phase 3: Batch Conversion** — Use automated scripts where safe:
+1. **Phase 3: Batch Conversion** — Use automated scripts where safe:
 
    - `@lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5` → `@lua-versions: all`
    - `@lua-versions: 5.3, 5.4, 5.5` → `@lua-versions: 5.3+`
    - Validate with `python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`
 
-4. **Phase 4: Verify** — Run full test suite to ensure no regressions
+1. **Phase 4: Verify** — Run full test suite to ensure no regressions
 
 **Estimated Scope**:
 
@@ -316,7 +330,7 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
 - **Less maintenance**: No manual updates when 5.6/5.7 releases
 - **Consistency**: Uniform annotation style across codebase
 
----
+______________________________________________________________________
 
 ### TUnit Test Project Compilation Speed 🔴 **CRITICAL**
 
@@ -332,36 +346,36 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
 
 **Proposed Solution**: Split into multiple smaller test projects by domain:
 
-| Project Name | Source Folder | Estimated Tests |
-|--------------|---------------|-----------------|
-| `Tests.TUnit.Modules` | `Modules/` | ~4,000 |
-| `Tests.TUnit.EndToEnd` | `EndToEnd/` | ~2,000 |
-| `Tests.TUnit.Units` | `Units/` | ~1,500 |
-| `Tests.TUnit.Sandbox` | `Sandbox/` | ~800 |
-| `Tests.TUnit.Cli` | `Cli/` | ~500 |
-| `Tests.TUnit.Serialization` | `SerializationTests/` | ~400 |
-| `Tests.TUnit.Platforms` | `Platforms/` | ~300 |
-| `Tests.TUnit.Spec` | `Spec/` | ~300 |
-| `Tests.TUnit.PatternMatching` | `PatternMatching/` | ~200 |
-| `Tests.TUnit.Isolation` | `Isolation/` | ~200 |
-| `Tests.TUnit.Smoke` | `Smoke/` | ~100 |
-| `Tests.TUnit.Core` | `TestInfrastructure/`, `Descriptors/`, `Loaders/`, `Tap/` | Shared utilities |
+| Project Name                  | Source Folder                                             | Estimated Tests  |
+| ----------------------------- | --------------------------------------------------------- | ---------------- |
+| `Tests.TUnit.Modules`         | `Modules/`                                                | ~4,000           |
+| `Tests.TUnit.EndToEnd`        | `EndToEnd/`                                               | ~2,000           |
+| `Tests.TUnit.Units`           | `Units/`                                                  | ~1,500           |
+| `Tests.TUnit.Sandbox`         | `Sandbox/`                                                | ~800             |
+| `Tests.TUnit.Cli`             | `Cli/`                                                    | ~500             |
+| `Tests.TUnit.Serialization`   | `SerializationTests/`                                     | ~400             |
+| `Tests.TUnit.Platforms`       | `Platforms/`                                              | ~300             |
+| `Tests.TUnit.Spec`            | `Spec/`                                                   | ~300             |
+| `Tests.TUnit.PatternMatching` | `PatternMatching/`                                        | ~200             |
+| `Tests.TUnit.Isolation`       | `Isolation/`                                              | ~200             |
+| `Tests.TUnit.Smoke`           | `Smoke/`                                                  | ~100             |
+| `Tests.TUnit.Core`            | `TestInfrastructure/`, `Descriptors/`, `Loaders/`, `Tap/` | Shared utilities |
 
 **Implementation Steps**:
 
 1. Create `Tests.TUnit.Core` with shared infrastructure (`TestInfrastructure/`, `LuaFixtureHelper`, base classes)
-2. Create domain-specific projects referencing `Tests.TUnit.Core`
-3. Move test files to appropriate projects (preserve namespace structure)
-4. Update `quick.sh` scripts to build/test all projects (parallel build)
-5. Update CI workflows to run test projects in parallel
-6. Verify coverage aggregation still works
+1. Create domain-specific projects referencing `Tests.TUnit.Core`
+1. Move test files to appropriate projects (preserve namespace structure)
+1. Update `quick.sh` scripts to build/test all projects (parallel build)
+1. Update CI workflows to run test projects in parallel
+1. Verify coverage aggregation still works
 
 **Expected Benefits**:
 
 - **Parallel compilation**: Multiple projects compile simultaneously
 - **Incremental builds**: Changing one domain only recompiles that project
 - **Reduced generator overhead**: TUnit generators process smaller chunks
-- **Target compile time**: <15 seconds for incremental, <30 seconds for clean
+- **Target compile time**: \<15 seconds for incremental, \<30 seconds for clean
 
 **Risks**:
 
@@ -369,7 +383,7 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
 - Coverage aggregation may need adjustment
 - CI matrix configuration complexity increases
 
----
+______________________________________________________________________
 
 ### 🆕 Data Structures from Unity-Helpers 🟡 **EVALUATION**
 
@@ -380,13 +394,13 @@ The "Lua Comparison CI/CD Failure Resolution" initiative is now **fully complete
 
 #### High-Value Components to Port
 
-| Component | Source File | Use Case in NovaSharp | Priority |
-|-----------|-------------|----------------------|----------|
-| **Trie** | [Trie.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Trie.cs) | Lexer keyword lookup, string interning, autocomplete | 🔴 HIGH |
-| **LevenshteinDistance** | [StringExtensions.cs#L213](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/Extension/StringExtensions.cs#L213) | "Did you mean 'print'?" error messages | 🔴 HIGH |
-| **BitSet** | [BitSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/BitSet.cs) | Upvalue tracking, scope flags, VM state | 🟡 MEDIUM |
-| **Deque&lt;T&gt;** | [Deque.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Deque.cs) | VM execution stack, double-ended operations | 🟡 MEDIUM |
-| **SparseSet** | [SparseSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/SparseSet.cs) | O(1) membership with dense iteration for active tracking | 🟢 LOW |
+| Component               | Source File                                                                                                                     | Use Case in NovaSharp                                    | Priority  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------- |
+| **Trie**                | [Trie.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Trie.cs)                               | Lexer keyword lookup, string interning, autocomplete     | 🔴 HIGH   |
+| **LevenshteinDistance** | [StringExtensions.cs#L213](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/Extension/StringExtensions.cs#L213) | "Did you mean 'print'?" error messages                   | 🔴 HIGH   |
+| **BitSet**              | [BitSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/BitSet.cs)                           | Upvalue tracking, scope flags, VM state                  | 🟡 MEDIUM |
+| **Deque\<T>**           | [Deque.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Deque.cs)                             | VM execution stack, double-ended operations              | 🟡 MEDIUM |
+| **SparseSet**           | [SparseSet.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/SparseSet.cs)                     | O(1) membership with dense iteration for active tracking | 🟢 LOW    |
 
 #### Trie Details (Highest Value)
 
@@ -399,8 +413,8 @@ The unity-helpers `Trie` is an **array-backed, allocation-free prefix tree** opt
 **Use Cases for NovaSharp**:
 
 1. **Lexer Keyword Table**: Replace `Dictionary<string, TokenType>` for reserved words (`if`, `then`, `while`, `function`, `local`, etc.). Trie gives predictable per-character traversal.
-2. **String Interning**: Fast lookup for commonly-used Lua strings in the interpreter.
-3. **"Did You Mean" Suggestions**: `GetWordsWithPrefix()` for autocomplete-style error hints.
+1. **String Interning**: Fast lookup for commonly-used Lua strings in the interpreter.
+1. **"Did You Mean" Suggestions**: `GetWordsWithPrefix()` for autocomplete-style error hints.
 
 **API Example**:
 
@@ -444,21 +458,21 @@ Did you mean: 'print'?
 **Phase 1: Trie (Immediate Value)**
 
 1. Copy [Trie.cs](https://github.com/wallstop/unity-helpers/blob/main/Runtime/Core/DataStructure/Trie.cs) to `src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/Trie.cs`
-2. Remove Unity dependencies (`using UnityEngine;`, `Mathf.Max` → `Math.Max`)
-3. Replace `Buffers.GetStringBuilder` with NovaSharp's `ZStringBuilder.Create()` or equivalent
-4. Add TUnit tests adapted from [TrieTests.cs](https://github.com/wallstop/unity-helpers/blob/main/Tests/Runtime/DataStructures/TrieTests.cs)
-5. Evaluate replacing `Lexer.KeywordTable` with `Trie<TokenType>`
+1. Remove Unity dependencies (`using UnityEngine;`, `Mathf.Max` → `Math.Max`)
+1. Replace `Buffers.GetStringBuilder` with NovaSharp's `ZStringBuilder.Create()` or equivalent
+1. Add TUnit tests adapted from [TrieTests.cs](https://github.com/wallstop/unity-helpers/blob/main/Tests/Runtime/DataStructures/TrieTests.cs)
+1. Evaluate replacing `Lexer.KeywordTable` with `Trie<TokenType>`
 
 **Phase 2: LevenshteinDistance (Quick Win)**
 
 1. Add `LevenshteinDistance` extension to `src/runtime/.../Extension/StringExtensions.cs`
-2. Already uses `SystemArrayPool<int>` pattern compatible with NovaSharp
-3. Integrate into error message generation for undefined globals/functions
+1. Already uses `SystemArrayPool<int>` pattern compatible with NovaSharp
+1. Integrate into error message generation for undefined globals/functions
 
 **Phase 3: BitSet/Deque (Evaluate Need)**
 
 1. Profile current implementations for bottlenecks
-2. Port if performance analysis indicates value
+1. Port if performance analysis indicates value
 
 #### Considerations
 
@@ -466,7 +480,7 @@ Did you mean: 'print'?
 - **Same coding style**: Same author, same `using` inside namespace, same pooling patterns
 - **Well-tested**: 3,000+ tests in unity-helpers cover edge cases
 
----
+______________________________________________________________________
 
 ### TUnit & Build Configuration Investigation ✅ **COMPLETE**
 
@@ -477,8 +491,8 @@ Did you mean: 'print'?
 **Changes Implemented**:
 
 1. **Directory.Build.props** — Added `<EnableTUnitSourceGeneration>false</EnableTUnitSourceGeneration>` for test projects
-2. **GlobalSuppressions.cs** — Added `[assembly: ReflectionMode]` attribute to enable TUnit reflection-based discovery
-3. **Restored static analysis** — Warnings as errors, code style enforcement, and analyzers remain enabled for tests
+1. **GlobalSuppressions.cs** — Added `[assembly: ReflectionMode]` attribute to enable TUnit reflection-based discovery
+1. **Restored static analysis** — Warnings as errors, code style enforcement, and analyzers remain enabled for tests
 
 **Key Finding**: The TUnit source generator was the primary bottleneck, processing all ~101K lines of test code. By switching to reflection mode:
 
@@ -498,7 +512,7 @@ Did you mean: 'print'?
 
 **Completed**: 2025-12-24. Updated approach to disable only source generator while keeping static analysis.
 
----
+______________________________________________________________________
 
 ### Flaky Test: `MultipleConcurrentResumeAttemptsOnlyOneSucceeds` ✅ **FIXED**
 
@@ -522,9 +536,9 @@ _owningThreadId = threadId;  // Use/Set (not atomic with check!)
 When 4 threads simultaneously entered `EnterProcessor()`:
 
 1. All 4 threads read `_owningThreadId == -1` (initial value)
-2. All 4 passed the check (`_owningThreadId >= 0` is false)
-3. All 4 set `_owningThreadId = threadId`
-4. **All 4 succeeded** — no exceptions thrown!
+1. All 4 passed the check (`_owningThreadId >= 0` is false)
+1. All 4 set `_owningThreadId = threadId`
+1. **All 4 succeeded** — no exceptions thrown!
 
 **Fix Applied**: Changed to atomic `Interlocked.CompareExchange` pattern:
 
@@ -550,7 +564,7 @@ if (previousOwner != -1 && previousOwner != threadId)
 
 **Completed**: 2025-12-24.
 
----
+______________________________________________________________________
 
 ## Active Initiatives
 
@@ -568,7 +582,7 @@ if (previousOwner != -1 && previousOwner != threadId)
 **Remaining Areas to Consolidate** (Lower Priority):
 
 1. **Error messages**: `bad argument`, `attempt to`, `number has no integer representation`, etc.
-2. **Module names**: `string`, `table`, `math`, `io`, `os`, `debug`, `coroutine`, etc.
+1. **Module names**: `string`, `table`, `math`, `io`, `os`, `debug`, `coroutine`, etc.
 
 ### Initiative 21: Performance Parity Analysis — NovaSharp vs Native Lua 🔬
 
@@ -597,7 +611,7 @@ if (previousOwner != -1 && previousOwner != threadId)
 
 See progress reports: [session-086](progress/session-086-script-compilation-cache.md), [session-087](progress/session-087-vm-execution-pooling-phase2.md), [session-088](progress/session-088-lazy-line-splitting.md), [session-092](progress/session-092-ipairs-metamethod-parity.md).
 
----
+______________________________________________________________________
 
 ## Baseline Controls (must stay green)
 
@@ -606,7 +620,7 @@ See progress reports: [session-086](progress/session-086-script-compilation-cach
 - New helpers must live under `scripts/<area>/` with README updates.
 - Keep `docs/Testing.md`, `docs/Modernization.md`, and `scripts/README.md` aligned.
 
----
+______________________________________________________________________
 
 ## 🟡 MEDIUM Priority: Test Data-Driving Helper Migration
 
@@ -616,13 +630,13 @@ See progress reports: [session-086](progress/session-086-script-compilation-cach
 
 All helpers are in `src/tests/TestInfrastructure/TUnit/`:
 
-| Helper | Description |
-|--------|-------------|
-| `[AllLuaVersions]` | Expands to all 5 Lua versions (5.1-5.5) |
-| `[LuaVersionsFrom(5.3)]` | Versions from 5.3+ (inclusive) |
-| `[LuaVersionsUntil(5.2)]` | Versions up to 5.2 (inclusive) |
-| `[LuaVersionRange(5.2, 5.4)]` | Specific version range |
-| `[LuaTestMatrix]` | Full Cartesian product of versions × inputs |
+| Helper                        | Description                                 |
+| ----------------------------- | ------------------------------------------- |
+| `[AllLuaVersions]`            | Expands to all 5 Lua versions (5.1-5.5)     |
+| `[LuaVersionsFrom(5.3)]`      | Versions from 5.3+ (inclusive)              |
+| `[LuaVersionsUntil(5.2)]`     | Versions up to 5.2 (inclusive)              |
+| `[LuaVersionRange(5.2, 5.4)]` | Specific version range                      |
+| `[LuaTestMatrix]`             | Full Cartesian product of versions × inputs |
 
 ### Remaining Tasks
 
@@ -631,7 +645,7 @@ All helpers are in `src/tests/TestInfrastructure/TUnit/`:
 - [ ] Migrate Sandbox tests
 - [ ] Create automated migration script for common patterns
 
----
+______________________________________________________________________
 
 ## 🟡 MEDIUM Priority: Comprehensive Numeric Edge-Case Audit
 
@@ -649,7 +663,7 @@ All helpers are in `src/tests/TestInfrastructure/TUnit/`:
 - [ ] Create `NumericEdgeCaseTUnitTests.cs` with boundary values
 - [ ] Document version-specific behavior in `docs/testing/numeric-edge-cases.md`
 
----
+______________________________________________________________________
 
 ## Coverage Improvement Opportunities
 
@@ -660,7 +674,7 @@ Current coverage (~75% line, ~76% branch) has significant room for improvement. 
 - **DebugModule**: REPL loop branches not easily testable
 - **StreamFileUserDataBase**: Windows-specific CRLF paths cannot run on Linux CI
 
----
+______________________________________________________________________
 
 ## Codebase Organization (future)
 
@@ -668,14 +682,14 @@ Current coverage (~75% line, ~76% branch) has significant room for improvement. 
 - Restructure test tree by domain (`Runtime/VM`, `Runtime/Modules`, `Tooling/Cli`)
 - Add guardrails so new code lands in correct folders with consistent namespaces
 
----
+______________________________________________________________________
 
 ## Tooling, Docs, and Contributor Experience
 
 - Roslyn source generators/analyzers for NovaSharp descriptors.
 - DocFX (or similar) for API documentation.
 
----
+______________________________________________________________________
 
 ## Concurrency Improvements (optional)
 
@@ -685,7 +699,7 @@ Current coverage (~75% line, ~76% branch) has significant room for improvement. 
 
 See `docs/modernization/concurrency-inventory.md` for the full synchronization audit.
 
----
+______________________________________________________________________
 
 ## Lua Specification Parity
 
@@ -705,7 +719,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 - **Gating**: `enforce` mode. Known divergences documented in `docs/testing/lua-divergences.md`.
 - **Test authoring pattern**: Use `LuaFixtureHelper` to load `.lua` files from `LuaFixtures/` directory.
 
----
+______________________________________________________________________
 
 ## Remaining Lua Runtime Spec Items
 
@@ -748,7 +762,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 - [ ] Verify NovaSharp for loop handles integer limits correctly per version
 - [ ] Add edge case tests for near-maxinteger loop bounds
 
-### __gc Metamethod Handling (Lua 5.4)
+### \_\_gc Metamethod Handling (Lua 5.4)
 
 **Tasks**:
 
@@ -813,7 +827,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 - [ ] Create version migration guides (5.1→5.2, 5.2→5.3, 5.3→5.4)
 - [ ] Add "Breaking Changes by Version" quick-reference table
 
----
+______________________________________________________________________
 
 ## Testing Infrastructure
 
@@ -823,7 +837,7 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 - [ ] Add CI jobs that run test suite with each `LuaCompatibilityVersion`
 - [ ] Create version migration guide (`docs/LuaVersionMigration.md`)
 
----
+______________________________________________________________________
 
 ## Long-horizon Ideas
 
@@ -832,25 +846,27 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 - Native AOT/trimming validation.
 - Automated allocation regression harnesses.
 
----
+______________________________________________________________________
 
 ## Recommended Next Steps (Priority Order)
 
 ### 🟡 MEDIUM: Remaining Version Parity Items
 
 1. **Version migration guides**
+
    - `docs/LuaVersionMigration.md` with 5.1→5.2, 5.2→5.3, 5.3→5.4 guides
 
-2. **CI jobs per LuaCompatibilityVersion**
+1. **CI jobs per LuaCompatibilityVersion**
+
    - Run test suite explicitly with each version setting
 
 ### 🟢 LOWER PRIORITY: Polish and Infrastructure
 
 1. **CI Integration**
-   - Add CI job that runs `compare-lua-outputs.py --enforce` on PRs
+   - Maintain CI job that runs `compare-lua-outputs.py --enforce` with the `both_error` ratchet on PRs
    - Add CI lint rule that rejects PRs with tests missing version coverage
 
----
+______________________________________________________________________
 
 ## Future Research Initiatives
 
@@ -875,22 +891,22 @@ See `docs/modernization/concurrency-inventory.md` for the full synchronization a
 NovaSharp is a **bytecode VM**, not an AST interpreter:
 
 1. Source → Parser → **AST (temporary)** → Compiler → **Bytecode (permanent)** → VM
-2. AST nodes become garbage immediately after `Compile()` finishes
-3. Runtime execution uses only the `Instruction` stream, not AST
+1. AST nodes become garbage immediately after `Compile()` finishes
+1. Runtime execution uses only the `Instruction` stream, not AST
 
 **This means struct-based AST would only reduce GC pressure during script loading, NOT during execution.**
 
 #### Technical Challenges
 
-| Challenge | Severity | Mitigation |
-|-----------|----------|------------|
-| **Recursive struct references** | 🔴 Critical | Index-based children (store `int ChildIndex` into arrays) |
-| **Polymorphism without boxing** | 🔴 Critical | Discriminated union + switch dispatch, OR generic visitors |
-| **27 node types with different fields** | 🟡 High | Tagged union with parallel payload arrays per type |
-| **Parser builds via constructors** | 🟡 High | Requires arena allocator pattern rewrite |
-| **Virtual Compile() method** | 🟡 High | Replace with switch on `NodeKind` enum |
-| **Script/SourceRef references in nodes** | 🟡 Medium | Store as indices into context arrays |
-| **DynamicExprExpression keeps AST for Eval()** | 🟠 Medium | Exempt from conversion OR special handling |
+| Challenge                                      | Severity    | Mitigation                                                 |
+| ---------------------------------------------- | ----------- | ---------------------------------------------------------- |
+| **Recursive struct references**                | 🔴 Critical | Index-based children (store `int ChildIndex` into arrays)  |
+| **Polymorphism without boxing**                | 🔴 Critical | Discriminated union + switch dispatch, OR generic visitors |
+| **27 node types with different fields**        | 🟡 High     | Tagged union with parallel payload arrays per type         |
+| **Parser builds via constructors**             | 🟡 High     | Requires arena allocator pattern rewrite                   |
+| **Virtual Compile() method**                   | 🟡 High     | Replace with switch on `NodeKind` enum                     |
+| **Script/SourceRef references in nodes**       | 🟡 Medium   | Store as indices into context arrays                       |
+| **DynamicExprExpression keeps AST for Eval()** | 🟠 Medium   | Exempt from conversion OR special handling                 |
 
 #### Recommended Approach (If Proceeding)
 
@@ -926,20 +942,20 @@ expr.Initialize(value, sourceRef);
 
 #### Effort Estimate & ROI Analysis
 
-| Approach | Effort | Risk | Performance Gain |
-|----------|--------|------|------------------|
-| **Full struct conversion** | 3-4 weeks | 🔴 High | Parsing only (no runtime impact) |
-| **Node pooling** | 3-5 days | 🟢 Low | Similar to struct approach |
-| **Arena allocator** | 1-2 weeks | 🟡 Medium | Similar, cleaner GC profile |
+| Approach                   | Effort    | Risk      | Performance Gain                 |
+| -------------------------- | --------- | --------- | -------------------------------- |
+| **Full struct conversion** | 3-4 weeks | 🔴 High   | Parsing only (no runtime impact) |
+| **Node pooling**           | 3-5 days  | 🟢 Low    | Similar to struct approach       |
+| **Arena allocator**        | 1-2 weeks | 🟡 Medium | Similar, cleaner GC profile      |
 
 **Recommendation**: ❌ **NOT RECOMMENDED** for immediate implementation.
 
 **Rationale**:
 
 1. AST is discarded after compilation — zero runtime benefit
-2. Script caching (`ScriptBytecodeCache`) already eliminates repeated parsing
-3. Effort/risk ratio unfavorable compared to node pooling
-4. Roslyn (much larger AST) uses classes with pooling successfully
+1. Script caching (`ScriptBytecodeCache`) already eliminates repeated parsing
+1. Effort/risk ratio unfavorable compared to node pooling
+1. Roslyn (much larger AST) uses classes with pooling successfully
 
 **Alternative High-Value Targets** (same effort, runtime impact):
 
@@ -958,15 +974,15 @@ Proceed with **Option A** only if:
 **Implementation Plan** (if approved):
 
 1. Create `AstArena` class with pre-allocated node arrays
-2. Convert leaf nodes first (`LiteralExpression`, `BreakStatement`)
-3. Add `NodeKind` discriminated union wrapper
-4. Implement switch-based `Compile()` dispatch
-5. Convert remaining nodes incrementally
-6. Benchmark parsing memory usage before/after
+1. Convert leaf nodes first (`LiteralExpression`, `BreakStatement`)
+1. Add `NodeKind` discriminated union wrapper
+1. Implement switch-based `Compile()` dispatch
+1. Convert remaining nodes incrementally
+1. Benchmark parsing memory usage before/after
 
 See progress reports from AST analysis: Initiative 12 (allocation analysis), Initiative 18 (compiler memory).
 
----
+______________________________________________________________________
 
 ### Lua-to-C# Ahead-of-Time Compiler 🔬
 
@@ -996,28 +1012,28 @@ See progress reports from AST analysis: Initiative 12 (allocation analysis), Ini
 
 **Effort Estimate**: 1-2 days
 
----
+______________________________________________________________________
 
 ## Completed Initiatives (Archived)
 
 The following initiatives have been fully completed and their detailed documentation has been moved to the progress reports. They remain here as a summary for historical reference.
 
-| Initiative | Description | Completed | Progress Report |
-|------------|-------------|-----------|-----------------|
-| **9** | Version-Aware Lua Standard Library Parity | 2025-12-22 | Multiple sessions |
-| **10** | KopiLua Performance Hyper-Optimization | 2025-12-21 | [session-074](progress/session-074-kopilua-optimization-phase1.md) - [session-076](progress/session-076-kopilua-phase3-optimization.md) |
-| **11** | Comprehensive Helper Performance Audit | 2025-12-22 | [session-079](progress/session-079-helper-performance-audit.md) - [session-082](progress/session-082-helper-performance-audit-phase4.md) |
-| **12** | Deep Codebase Allocation Analysis | 2025-12-22 | [session-083](progress/session-083-initiative12-phase5-validation.md) |
-| **14** | SystemArrayPool Abstraction | 2025-12-21 | [session-063](progress/session-063-system-array-pool-abstraction.md) |
-| **15** | Boxing-Free IList Sort Extensions | 2025-12-21 | [session-066](progress/session-066-pdqsort-implementation.md) |
-| **16** | Boxing-Free pdqsort Integration | 2025-12-21 | [session-067](progress/session-067-pdqsort-integration.md) |
-| **17** | Metamethod Enum Optimization | ❌ Closed | [session-069](progress/session-069-metamethod-enum-investigation.md) (Not beneficial) |
-| **18** | Large Script Load/Compile Memory | 2025-12-22 | [session-070](progress/session-070-compiler-memory-investigation.md) - [session-084](progress/session-084-initiative18-phase3-investigation.md) |
-| **19** | HashCodeHelper Migration | 2025-12-21 | [session-072](progress/session-072-hashcode-helper-migration.md) |
-| **20** | NLua Architecture Investigation | 2025-12-21 | [session-077](progress/session-077-nlua-investigation.md) |
-| **22** | ZString Migration | 2025-12-22 | [session-089](progress/session-089-zstring-migration-complete.md) |
-| **23** | Span-Based Array Operation Migration | 2025-12-22 | [session-090](progress/session-090-span-array-migration-phase1.md) |
+| Initiative | Description                               | Completed  | Progress Report                                                                                                                                 |
+| ---------- | ----------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **9**      | Version-Aware Lua Standard Library Parity | 2025-12-22 | Multiple sessions                                                                                                                               |
+| **10**     | KopiLua Performance Hyper-Optimization    | 2025-12-21 | [session-074](progress/session-074-kopilua-optimization-phase1.md) - [session-076](progress/session-076-kopilua-phase3-optimization.md)         |
+| **11**     | Comprehensive Helper Performance Audit    | 2025-12-22 | [session-079](progress/session-079-helper-performance-audit.md) - [session-082](progress/session-082-helper-performance-audit-phase4.md)        |
+| **12**     | Deep Codebase Allocation Analysis         | 2025-12-22 | [session-083](progress/session-083-initiative12-phase5-validation.md)                                                                           |
+| **14**     | SystemArrayPool Abstraction               | 2025-12-21 | [session-063](progress/session-063-system-array-pool-abstraction.md)                                                                            |
+| **15**     | Boxing-Free IList Sort Extensions         | 2025-12-21 | [session-066](progress/session-066-pdqsort-implementation.md)                                                                                   |
+| **16**     | Boxing-Free pdqsort Integration           | 2025-12-21 | [session-067](progress/session-067-pdqsort-integration.md)                                                                                      |
+| **17**     | Metamethod Enum Optimization              | ❌ Closed  | [session-069](progress/session-069-metamethod-enum-investigation.md) (Not beneficial)                                                           |
+| **18**     | Large Script Load/Compile Memory          | 2025-12-22 | [session-070](progress/session-070-compiler-memory-investigation.md) - [session-084](progress/session-084-initiative18-phase3-investigation.md) |
+| **19**     | HashCodeHelper Migration                  | 2025-12-21 | [session-072](progress/session-072-hashcode-helper-migration.md)                                                                                |
+| **20**     | NLua Architecture Investigation           | 2025-12-21 | [session-077](progress/session-077-nlua-investigation.md)                                                                                       |
+| **22**     | ZString Migration                         | 2025-12-22 | [session-089](progress/session-089-zstring-migration-complete.md)                                                                               |
+| **23**     | Span-Based Array Operation Migration      | 2025-12-22 | [session-090](progress/session-090-span-array-migration-phase1.md)                                                                              |
 
----
+______________________________________________________________________
 
 Keep this plan aligned with `docs/Testing.md` and `docs/Modernization.md`.

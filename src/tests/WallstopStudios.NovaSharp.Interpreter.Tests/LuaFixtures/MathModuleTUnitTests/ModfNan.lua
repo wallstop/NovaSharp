@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.ModfNan
--- @compat-notes: math.modf(NaN) returns (NaN, NaN) - both parts are NaN
+-- math.modf(NaN) returns (NaN, NaN) - both parts are NaN
 
 local function is_nan(x)
     return x ~= x

@@ -6,7 +6,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.FmodZeroDivisorReturnsNanLua51And52
--- @compat-notes: Lua 5.1/5.2 return NaN for zero divisor; Lua 5.3+ throws error
+-- Lua 5.1/5.2 return NaN for zero divisor; Lua 5.3+ throws error
 
 -- Test positive dividend / zero
 local result1 = math.fmod(5, 0)

@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\StringLibTUnitTests.cs:468
 -- @test: StringLibTUnitTests.StringMatchMatchesErrorMessage
--- @compat-notes: Uses injected variable: s
+-- Uses injected variable: s
 return string.match(s, p)

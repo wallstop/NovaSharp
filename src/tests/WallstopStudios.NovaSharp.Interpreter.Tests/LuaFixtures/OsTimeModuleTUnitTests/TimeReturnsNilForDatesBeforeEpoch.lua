@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsTimeModuleTUnitTests.cs:98
 -- @test: OsTimeModuleTUnitTests.TimeReturnsNegativeForDatesBeforeEpoch
--- @compat-notes: Platform-dependent. Standard Lua's behavior depends on the underlying C mktime().
+-- Platform-dependent. Standard Lua's behavior depends on the underlying C mktime().
 -- On many Unix systems, pre-epoch dates throw "time result cannot be represented in this installation".
 -- NovaSharp returns negative timestamps for pre-epoch dates (valid on 64-bit systems).
 

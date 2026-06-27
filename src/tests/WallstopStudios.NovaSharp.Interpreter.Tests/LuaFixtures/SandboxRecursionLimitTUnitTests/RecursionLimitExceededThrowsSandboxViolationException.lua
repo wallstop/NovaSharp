@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\SandboxRecursionLimitTUnitTests.cs:29
 -- @test: SandboxRecursionLimitTUnitTests.RecursionLimitExceededThrowsSandboxViolationException
--- @compat-notes: Test class 'SandboxRecursionLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
+-- Test class 'SandboxRecursionLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 function recurse(n)
                     if n <= 0 then
                         return 0

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:206
 -- @test: LoadModuleVersionParityTUnitTests.LoadstringWithChunknameInLua51
--- @compat-notes: loadstring accepts optional chunkname parameter in Lua 5.1
+-- loadstring accepts optional chunkname parameter in Lua 5.1
 
 -- Test: loadstring with chunkname parameter in Lua 5.1
 -- Reference: Lua 5.1 Reference Manual §5.1 - loadstring (string [, chunkname])

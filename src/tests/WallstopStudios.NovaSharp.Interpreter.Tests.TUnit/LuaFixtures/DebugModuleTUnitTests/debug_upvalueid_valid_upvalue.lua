@@ -6,7 +6,7 @@
 
 -- Test: debug.upvalueid returns userdata for valid upvalue
 -- Reference: Lua 5.2+ manual - debug.upvalueid
--- @compat-notes: Returns unique identifier for upvalue reference
+-- Returns unique identifier for upvalue reference
 
 local x = 10
 local function f() return x end

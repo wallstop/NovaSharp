@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:717
 -- @test: MathModuleTUnitTests.FloorResultCanBeUsedInStringFormat
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 return string.format('%d', math.floor(3.7))

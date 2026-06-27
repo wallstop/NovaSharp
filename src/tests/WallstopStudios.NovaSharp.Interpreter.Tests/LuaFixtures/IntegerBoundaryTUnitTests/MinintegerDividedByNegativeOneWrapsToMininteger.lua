@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Compatibility\IntegerBoundaryTUnitTests.cs:555
 -- @test: IntegerBoundaryTUnitTests.MinintegerDividedByNegativeOneWrapsToMininteger
--- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: floor division; Lua 5.3+: math.mininteger (5.3+)
+-- Test targets Lua 5.3+; Lua 5.3+: floor division; Lua 5.3+: math.mininteger (5.3+)
 return math.mininteger // -1

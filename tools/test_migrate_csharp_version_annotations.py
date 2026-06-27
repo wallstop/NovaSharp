@@ -21,6 +21,7 @@ from migrate_csharp_version_annotations import (
     is_contiguous,
     determine_replacement,
     find_attribute_groups,
+    find_csharp_test_files,
 )
 
 
@@ -139,6 +140,29 @@ class TestDetermineReplacement(unittest.TestCase):
     def test_empty_returns_none(self):
         """Empty list should return None."""
         self.assertIsNone(determine_replacement([]))
+
+
+class TestFindCSharpTestFiles(unittest.TestCase):
+    """Tests for C# test file discovery."""
+
+    def test_excludes_generated_trees(self):
+        """Generated bin/obj/artifacts trees should not be scanned."""
+        with self.subTest("generated dirs are skipped"):
+            import tempfile
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                source_dir = root / "src" / "tests" / "Project.TUnit"
+                source_dir.mkdir(parents=True)
+                source_file = source_dir / "SampleTests.cs"
+                source_file.write_text("// source\n", encoding="utf-8")
+
+                for generated_dir in ("bin", "obj", "artifacts"):
+                    generated_path = source_dir / generated_dir / "Debug" / "GeneratedTests.cs"
+                    generated_path.parent.mkdir(parents=True)
+                    generated_path.write_text("// generated\n", encoding="utf-8")
+
+                self.assertEqual(find_csharp_test_files(root), [source_file])
 
 
 class TestArgumentsPattern(unittest.TestCase):

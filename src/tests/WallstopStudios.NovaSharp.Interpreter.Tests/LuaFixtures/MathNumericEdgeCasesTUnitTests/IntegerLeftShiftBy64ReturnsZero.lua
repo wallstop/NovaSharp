@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathNumericEdgeCasesTUnitTests.cs:510
 -- @test: MathNumericEdgeCasesTUnitTests.IntegerLeftShiftBy64ReturnsZero
--- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: bit shift
+-- Test targets Lua 5.3+; Lua 5.3+: bit shift
 return 1 << 64

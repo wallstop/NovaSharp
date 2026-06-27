@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.ModfSignPreservation
--- @compat-notes: math.modf sign behavior differs between Lua 5.2 and Lua 5.3+
+-- math.modf sign behavior differs between Lua 5.2 and Lua 5.3+
 -- Lua 5.2: Preserves signed zeros in both parts (uses copysign internally)
 -- Lua 5.3+: Integer part loses sign info due to integer subtype, fractional uses +0 for whole numbers
 -- Note: Lua 5.1 is excluded due to internal state bugs affecting signed zero behavior across calls

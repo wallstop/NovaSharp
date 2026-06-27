@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\SandboxMemoryLimitTUnitTests.cs:861
 -- @test: SandboxMemoryLimitTUnitTests.ScriptAllocationTrackerRecordsMultipleClosures
--- @compat-notes: Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
+-- Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 function f1() return 1 end
                 function f2() return 2 end
                 function f3() return 3 end

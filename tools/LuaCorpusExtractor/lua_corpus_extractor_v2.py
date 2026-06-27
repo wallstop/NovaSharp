@@ -307,7 +307,7 @@ class LuaSnippet:
             f"-- @test: {self.test_class}.{self.test_method}",
         ]
         if self.compatibility.reasons:
-            lines.append(f"-- @compat-notes: {'; '.join(self.compatibility.reasons)}")
+            lines.append(f"-- Compatibility notes: {'; '.join(self.compatibility.reasons)}")
         lines.append("")
         return "\n".join(lines)
 
@@ -467,6 +467,8 @@ NOVASHARP_ONLY_TEST_CLASS_PREFIXES = [
 # These test methods verify NovaSharp-specific behavior that differs from reference Lua by design
 NOVASHARP_ONLY_TEST_METHOD_SUBSTRINGS = [
     'IsUnsupported',  # Tests for intentionally unsupported features (e.g., io.popen)
+    'SetDefaultFileOverridesStdOutStream',  # Requires C#-configured stdout stream
+    'StdOutWritesHonorCustomScriptOptionStream',  # Requires C# ScriptOptions stdout stream
 ]
 
 

@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleTUnitTests.cs
 -- @test: LoadModuleTUnitTests.RequireErrorShowsSimpleMessageWhenLuaCompatibleErrorsDisabled
--- @compat-notes: Tests that require errors show simple message when LuaCompatibleErrors is disabled
+-- Tests that require errors show simple message when LuaCompatibleErrors is disabled
 -- @novasharp-options: LuaCompatibleErrors=false
 
 -- This test verifies that when require() fails to find a module and

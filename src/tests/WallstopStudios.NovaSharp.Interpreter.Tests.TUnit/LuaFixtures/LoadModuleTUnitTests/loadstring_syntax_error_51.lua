@@ -6,7 +6,7 @@
 
 -- Test: loadstring() with syntax error returns (nil, error_message) in Lua 5.1
 -- Reference: Lua 5.1 manual - loadstring
--- @compat-notes: loadstring is deprecated in Lua 5.2+ (use load instead)
+-- loadstring is deprecated in Lua 5.2+ (use load instead)
 
 local f, err = loadstring('function(')
 print("first return is nil:", f == nil)

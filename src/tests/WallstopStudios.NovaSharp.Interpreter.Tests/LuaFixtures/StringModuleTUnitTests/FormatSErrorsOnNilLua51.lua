@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:0
 -- @test: StringModuleTUnitTests.FormatSErrorsOnNilLua51
--- @compat-notes: string.format %s errors on nil in Lua 5.1
+-- string.format %s errors on nil in Lua 5.1
 
 -- In Lua 5.1, %s errors on nil type.
 -- This behavior changed in Lua 5.2+ which uses tostring() for automatic coercion.

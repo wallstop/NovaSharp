@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:1691
 -- @test: MathModuleTUnitTests.RandomSucceedsWithNegativeInfinityFirstArgLua51And52
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.1
+-- NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.1
 return {luaExpression}

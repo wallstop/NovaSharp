@@ -72,6 +72,8 @@ DEFAULT_SKIP_GLOBS: tuple[str, ...] = (
     "docs/coverage/*",
     "docs\\coverage",
     "docs\\coverage\\*",
+    "docs/testing/lua-error-ratchet.json",
+    "docs\\testing\\lua-error-ratchet.json",
     "build",
     "coverage-html.tgz",
     "*.dll",

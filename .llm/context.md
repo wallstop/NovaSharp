@@ -28,15 +28,16 @@ ______________________________________________________________________
 
 ## 🔴 Critical Rules
 
-1. **NEVER `git add` or `git commit`** — Leave version control to human
+1. **Scoped Git Operations Allowed When Requested** — If the user asks for commits, pushes, or PR/CI work, agents may run `git add`, `git commit`, and `git push` after reviewing the diff. Use small scoped commits and never use destructive git commands unless explicitly requested.
 1. **NEVER use absolute paths** — Relative to repo root only
-1. **NEVER discard output** — No `/dev/null` redirects
+1. **Do not discard diagnostic output in ad-hoc commands** — Repo helper scripts may intentionally quiet noisy tools, but failures must surface actionable output.
 1. **Lua Spec Compliance is HIGHEST PRIORITY** — Fix production code, never tests
 1. **Zero-Flaky Test Policy** — Every failure is a real bug
 1. **Always create BOTH C# tests AND `.lua` fixtures** — Regenerate corpus after
 1. **Multi-Version Testing** — Run tests against Lua 5.1-5.5
 1. **Lua Fixture Metadata** — Use ONLY `@lua-versions`, `@novasharp-only`, `@expects-error` **at TOP of file**
-1. **Pre-Commit Validation** — Run `./scripts/dev/pre-commit.sh` after changes
+1. **Pre-Commit Validation Allowed** — Run `./scripts/dev/pre-commit.sh` after changes; it may restage files it auto-formats or regenerates.
+1. **No False Green-Light** — Only say `green`, `verified`, `passes`, or `complete` after the exact local checks and PR CI were observed passing; otherwise report `not run` or residual risk.
 
 See individual skills for detailed guidance.
 
@@ -101,6 +102,8 @@ ______________________________________________________________________
 # Format code
 dotnet csharpier format .
 ```
+
+Before closing behavior or CI work, run the relevant targeted tests, `./scripts/build/quick.sh`, `./scripts/test/quick.sh`, formatting, Lua comparison when behavior changes, then poll PR CI until green or document the newly diagnosed failure. If any required check was not run, say exactly that and do not present the work as complete.
 
 ______________________________________________________________________
 

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\SandboxMemoryLimitTUnitTests.cs:924
 -- @test: SandboxMemoryLimitTUnitTests.ScriptAllocationTrackerRecordsMultipleCoroutines
--- @compat-notes: Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
+-- Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 function gen()
                     coroutine.yield(1)
                 end

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:740
 -- @test: CoroutineModuleTUnitTests.IsYieldableReturnsFalseInsideClrCallback
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 function invokeClrCheck()
                     return clrCheck()
                 end

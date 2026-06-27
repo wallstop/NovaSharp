@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathNumericEdgeCasesTUnitTests.cs:464
 -- @test: MathNumericEdgeCasesTUnitTests.MinintegerNegationWrapsToMininteger
--- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: math.mininteger (5.3+)
+-- Test targets Lua 5.3+; Lua 5.3+: math.mininteger (5.3+)
 return -math.mininteger

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Tree\Expressions\BinaryOperatorExpressionTUnitTests.cs:LessThanPreservesIntegerPrecisionAtBoundaries
 -- @test: BinaryOperatorExpressionTUnitTests.LessThanPreservesIntegerPrecisionAtBoundaries
--- @compat-notes: Verifies large integer comparisons preserve precision (Lua 5.3+ integers)
+-- Verifies large integer comparisons preserve precision (Lua 5.3+ integers)
 
 -- Test: Large integers near maxinteger should compare correctly
 -- Expected: true (maxinteger - 1 < maxinteger)

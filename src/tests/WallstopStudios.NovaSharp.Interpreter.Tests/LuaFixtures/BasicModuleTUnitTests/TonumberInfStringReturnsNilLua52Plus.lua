@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:0
 -- @test: BasicModuleTUnitTests.TonumberInfStringReturnsNilLua52Plus
--- @compat-notes: Lua 5.2+ rejects infinity string literals (returns nil); Lua 5.1 accepts them via C's strtod
+-- Lua 5.2+ rejects infinity string literals (returns nil); Lua 5.1 accepts them via C's strtod
 
 -- Test that Lua 5.2+ rejects various infinity string formats (returns nil)
 

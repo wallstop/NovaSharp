@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs
 -- @test: StringArithmeticCoercionTUnitTests.StringMetatableDoesNotHaveArithmeticMetamethodsInPreLua54
--- @compat-notes: Lua 5.1-5.3 use built-in operator coercion, not string metatable metamethods
+-- Lua 5.1-5.3 use built-in operator coercion, not string metatable metamethods
 
 -- Test: String metatable lacks arithmetic metamethods in pre-5.4 Lua
 -- Reference: Lua 5.1-5.3 manuals

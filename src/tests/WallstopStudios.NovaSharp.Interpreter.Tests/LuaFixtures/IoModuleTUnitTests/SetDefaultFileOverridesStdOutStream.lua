@@ -1,7 +1,7 @@
--- @lua-versions: 5.1
--- @novasharp-only: false
+-- @lua-versions: novasharp-only
+-- @novasharp-only: true
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\IoModuleTUnitTests.cs:533
 -- @test: IoModuleTUnitTests.SetDefaultFileOverridesStdOutStream
--- @compat-notes: Test targets Lua 5.1
+-- Requires C#-configured stdout stream
 io.write('buffered'); io.flush()

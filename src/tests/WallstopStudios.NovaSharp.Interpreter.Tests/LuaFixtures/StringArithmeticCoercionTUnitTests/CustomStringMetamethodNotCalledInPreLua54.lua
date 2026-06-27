@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\StringArithmeticCoercionTUnitTests.cs:253
 -- @test: StringArithmeticCoercionTUnitTests.CustomStringMetamethodNotCalledInPreLua54
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 local mt = getmetatable('')
                 local called = false
                 mt.__add = function(a, b)

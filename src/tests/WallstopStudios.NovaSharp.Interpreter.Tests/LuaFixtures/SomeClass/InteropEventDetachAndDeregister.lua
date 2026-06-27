@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataEventsTUnitTests.cs:204
 -- @test: SomeClass.InteropEventDetachAndDeregister
--- @compat-notes: Uses injected variable: myobj
+-- Uses injected variable: myobj
 local invocationCount = 0
                     function handler(o, a)
                         invocationCount = invocationCount + 1;

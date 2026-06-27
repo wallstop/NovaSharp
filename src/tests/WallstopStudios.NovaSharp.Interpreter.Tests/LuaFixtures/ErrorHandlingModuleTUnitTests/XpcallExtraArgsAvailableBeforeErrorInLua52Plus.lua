@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\CoreLib\ErrorHandlingModuleTUnitTests.cs:583
 -- @test: ErrorHandlingModuleTUnitTests.XpcallExtraArgsAvailableBeforeErrorInLua52Plus
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 local captured = nil
                 local ok, err = xpcall(function(a, b, c) 
                     captured = a + b + c

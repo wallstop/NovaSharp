@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\IoModuleTUnitTests.cs:570
 -- @test: IoModuleTUnitTests.LinesWithoutArgumentsReadFromDefaultInput
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local results = {}
                 for line in io.lines() do
                     table.insert(results, line)

@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathIntegerFunctionsTUnitTests.cs:568
 -- @test: MathIntegerFunctionsTUnitTests.IntegerFloatComparison
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
+-- NovaSharp: unresolved C# interpolation placeholder
 return {expression}

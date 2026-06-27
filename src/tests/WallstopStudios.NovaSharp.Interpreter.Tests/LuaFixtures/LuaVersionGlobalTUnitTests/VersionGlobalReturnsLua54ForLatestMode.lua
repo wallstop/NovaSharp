@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\LuaVersionGlobalTUnitTests.cs:49
 -- @test: LuaVersionGlobalTUnitTests.VersionGlobalReturnsLua54ForLatestMode
--- @compat-notes: Test targets Lua 5.4+
+-- Test targets Lua 5.4+
 return _VERSION

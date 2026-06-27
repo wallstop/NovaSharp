@@ -5,7 +5,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.FmodSpecialValues
--- @compat-notes: Behavior with special float values is consistent across Lua versions
+-- Behavior with special float values is consistent across Lua versions
 
 local inf = math.huge
 local ninf = -math.huge

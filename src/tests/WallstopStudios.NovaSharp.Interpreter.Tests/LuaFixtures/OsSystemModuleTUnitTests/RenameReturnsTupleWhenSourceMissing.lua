@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsSystemModuleTUnitTests.cs:235
 -- @test: OsSystemModuleTUnitTests.RenameReturnsTupleWhenSourceMissing
--- @compat-notes: Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
+-- Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
 return os.rename('nope', 'dest')

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:0
 -- @test: StringModuleTUnitTests.FormatSCoercionTypes
--- @compat-notes: string.format %s coerces all types via tostring() in Lua 5.2+
+-- string.format %s coerces all types via tostring() in Lua 5.2+
 
 -- In Lua 5.2+, %s uses tostring() to convert any value to string.
 -- This test verifies the coercion behavior for all Lua types.

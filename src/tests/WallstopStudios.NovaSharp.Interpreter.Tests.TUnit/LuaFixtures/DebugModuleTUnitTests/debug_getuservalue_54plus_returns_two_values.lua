@@ -6,7 +6,7 @@
 
 -- Test: debug.getuservalue returns (value, hasValue) tuple in Lua 5.4+
 -- Reference: Lua 5.4 manual - debug.getuservalue(u, n) returns n-th user value plus boolean
--- @compat-notes: Lua 5.4 changed getuservalue to return two values
+-- Lua 5.4 changed getuservalue to return two values
 
 -- This test requires userdata from C; standalone Lua can verify the API shape
 -- by calling on a non-userdata and checking return count

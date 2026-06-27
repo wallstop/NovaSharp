@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs
 -- @test: TableModuleTUnitTests.ConcatEmptyRangeEndBeforeStart
--- @compat-notes: table.concat returns empty string when end is before start
+-- table.concat returns empty string when end is before start
 
 local t = {'a', 'b', 'c', 'd'}
 local result = table.concat(t, '-', 3, 2)

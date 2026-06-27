@@ -3,5 +3,5 @@
 -- @expects-error: true
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataMetaTUnitTests.cs:317
 -- @test: ArithmOperatorsTestClass.InteropMetaOpLen
--- @compat-notes: Uses injected variable: o3
+-- Uses injected variable: o3
 return #o3

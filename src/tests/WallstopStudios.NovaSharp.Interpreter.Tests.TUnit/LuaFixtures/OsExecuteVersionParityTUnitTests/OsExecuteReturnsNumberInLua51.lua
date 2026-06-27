@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs
 -- @test: OsExecuteVersionParityTUnitTests.OsExecuteReturnsNumberInLua51
--- @compat-notes: Lua 5.1 os.execute returns just exit status code as number
+-- Lua 5.1 os.execute returns just exit status code as number
 
 -- Test: os.execute returns a single number in Lua 5.1
 -- Reference: Lua 5.1 Reference Manual §5.8

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.ModfBasicCases
--- @compat-notes: math.modf basic behavior for normal numeric values
+-- math.modf basic behavior for normal numeric values
 
 local function approx_equal(a, b, epsilon)
     epsilon = epsilon or 1e-10

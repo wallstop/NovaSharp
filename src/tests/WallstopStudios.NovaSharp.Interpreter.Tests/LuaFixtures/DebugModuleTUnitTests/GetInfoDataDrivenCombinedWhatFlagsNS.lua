@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs
 -- @test: DebugModuleTUnitTests.GetInfoDataDrivenCombinedWhatFlags
--- @compat-notes: Tests combined 'nS' what flags
+-- Tests combined 'nS' what flags
 
 -- Test: debug.getinfo with combined 'nS' flags populates name and source fields
 local function sample(a, b)

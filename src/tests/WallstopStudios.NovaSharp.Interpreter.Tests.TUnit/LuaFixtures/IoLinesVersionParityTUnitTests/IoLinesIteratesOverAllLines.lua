@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs
 -- @test: IoLinesVersionParityTUnitTests.IoLinesIteratesOverAllLines
--- @compat-notes: io.lines iteration works identically in all versions
+-- io.lines iteration works identically in all versions
 
 -- Test: io.lines iterates over all lines
 -- Reference: Lua Reference Manual §6.8

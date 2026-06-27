@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:175
 -- @test: LoadModuleVersionParityTUnitTests.LoadEnvParameterWorksInLua52Plus
--- @compat-notes: The env parameter was added in Lua 5.2
+-- The env parameter was added in Lua 5.2
 
 -- Test: load() env parameter works in Lua 5.2+
 -- Reference: Lua 5.2+ Reference Manual - load (chunk [, chunkname [, mode [, env]]])

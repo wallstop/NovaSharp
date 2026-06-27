@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\SetFenvGetFenvTUnitTests.cs:273
 -- @test: SetFenvGetFenvTUnitTests.SetFenvWithLevelChangesEnvironment
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local result = nil
                 local function test_level()
                     local new_env = { custom_value = 123 }

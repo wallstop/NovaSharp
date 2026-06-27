@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:38
 -- @test: LoadModuleVersionParityTUnitTests.LoadstringIsDeprecatedButAvailableInLua52
--- @compat-notes: Platform-specific: Windows Lua binary built without LUA_COMPAT_LOADSTRING. NovaSharp provides loadstring for Lua 5.2 compatibility
+-- Platform-specific: Windows Lua binary built without LUA_COMPAT_LOADSTRING. NovaSharp provides loadstring for Lua 5.2 compatibility
 
 -- Test: loadstring should be available (deprecated) in Lua 5.2
 -- Reference: Lua 5.2 Reference Manual Section 8.2 - "Function loadstring is deprecated"

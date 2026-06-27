@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:237
 -- @test: LoadModuleVersionParityTUnitTests.LoadstringSyntaxErrorReturnsNilAndMessageInLua51
--- @compat-notes: loadstring returns nil + error message on syntax error
+-- loadstring returns nil + error message on syntax error
 
 -- Test: loadstring returns nil and error message on syntax error in Lua 5.1
 -- Reference: Lua 5.1 Reference Manual §5.1 - loadstring

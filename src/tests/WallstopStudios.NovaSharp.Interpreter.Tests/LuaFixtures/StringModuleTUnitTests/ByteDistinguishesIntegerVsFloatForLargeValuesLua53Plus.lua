@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:447
 -- @test: StringModuleTUnitTests.ByteDistinguishesIntegerVsFloatForLargeValuesLua53Plus
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 local x = 9007199254740993; return string.byte('a', x)

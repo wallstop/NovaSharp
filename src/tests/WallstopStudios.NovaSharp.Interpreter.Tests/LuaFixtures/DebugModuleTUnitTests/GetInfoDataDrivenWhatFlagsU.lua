@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs
 -- @test: DebugModuleTUnitTests.GetInfoDataDrivenWhatFlags
--- @compat-notes: Tests 'u' what flag for upvalue count
+-- Tests 'u' what flag for upvalue count
 
 -- Test: debug.getinfo with 'u' flag populates nups field
 local function sample(a, b)

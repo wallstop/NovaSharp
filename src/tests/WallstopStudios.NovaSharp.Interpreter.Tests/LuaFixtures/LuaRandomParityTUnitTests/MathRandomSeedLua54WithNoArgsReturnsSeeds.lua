@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\LuaRandomParityTUnitTests.cs:325
 -- @test: LuaRandomParityTUnitTests.MathRandomSeedLua54WithNoArgsReturnsSeeds
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 return math.randomseed()

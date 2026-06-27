@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\CoreLib\ErrorHandlingModuleTUnitTests.cs:610
 -- @test: ErrorHandlingModuleTUnitTests.XpcallIgnoresAllExtraArgumentsInLua51
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local countWithExtras = 0
                 local countWithoutExtras = 0
                 

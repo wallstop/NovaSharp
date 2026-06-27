@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: standalone-fixture
 -- @test: MathPowEdgeCasesTUnitTests.PowBasicCases
--- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
+-- Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
 
 -- Test: Basic math.pow/^ operations
 -- Expected: Correct power results

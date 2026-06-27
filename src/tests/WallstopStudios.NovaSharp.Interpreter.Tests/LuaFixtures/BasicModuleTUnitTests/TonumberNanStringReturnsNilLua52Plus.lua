@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:0
 -- @test: BasicModuleTUnitTests.TonumberNanStringReturnsNilLua52Plus
--- @compat-notes: Lua 5.2+ rejects NaN string literals (returns nil); Lua 5.1 accepts them via C's strtod
+-- Lua 5.2+ rejects NaN string literals (returns nil); Lua 5.1 accepts them via C's strtod
 
 -- Test that Lua 5.2+ rejects various NaN string formats (returns nil)
 

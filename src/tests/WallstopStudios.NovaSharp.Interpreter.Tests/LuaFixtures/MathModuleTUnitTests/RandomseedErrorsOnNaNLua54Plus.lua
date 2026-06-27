@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:1008
 -- @test: MathModuleTUnitTests.RandomseedErrorsOnNaNLua54Plus
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 math.randomseed(0/0)

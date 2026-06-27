@@ -56,9 +56,9 @@ ______________________________________________________________________
 
 | Metric          | Description         | Target |
 | --------------- | ------------------- | ------ |
-| Line Coverage   | % of lines executed | > 80%  |
-| Branch Coverage | % of branches taken | > 70%  |
-| Method Coverage | % of methods called | > 90%  |
+| Line Coverage   | % of lines executed | >= 80% |
+| Branch Coverage | % of branches taken | >= 80% |
+| Method Coverage | % of methods called | >= 80% |
 
 ### Understanding the HTML report
 
@@ -183,7 +183,7 @@ ______________________________________________________________________
 
 ## CI Integration
 
-Coverage runs automatically in CI. Failed coverage gates block merges.
+Coverage runs automatically in CI after `lint`, independent of the OS unit-test matrix. Failed coverage gates block merges.
 
 ### Checking CI coverage results
 

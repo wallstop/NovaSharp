@@ -1,7 +1,7 @@
 -- @lua-versions: all
 -- @novasharp-only: true
 -- @expects-error: false
--- @compat-notes: Platform-specific: Windows strftime doesn't support POSIX %F specifier. NovaSharp implements POSIX-compliant behavior.
+-- Platform-specific: Windows strftime doesn't support POSIX %F specifier. NovaSharp implements POSIX-compliant behavior.
 -- %F should return YYYY-MM-DD (ISO 8601 date format)
 -- Epoch timestamp 0 is Thursday, January 1, 1970
 return os.date("!%F", 0)

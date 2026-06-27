@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:47
 -- @test: LoadModuleVersionParityTUnitTests.LoadstringIsNilInLua53Plus
--- @compat-notes: loadstring was removed in Lua 5.3 (not 5.2) - use load() instead
+-- loadstring was removed in Lua 5.3 (not 5.2) - use load() instead
 
 -- Test: loadstring should be nil in Lua 5.3+
 -- Reference: Lua 5.3+ Reference Manual - loadstring removed

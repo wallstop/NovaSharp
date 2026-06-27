@@ -3,5 +3,5 @@
 -- @expects-error: true
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:145
 -- @test: StringModuleTUnitTests.CharAcceptsBoundaryValues
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
+-- NovaSharp: unresolved C# interpolation placeholder
 return string.char({value})

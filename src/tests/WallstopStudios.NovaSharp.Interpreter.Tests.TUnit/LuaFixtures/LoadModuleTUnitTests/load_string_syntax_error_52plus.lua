@@ -6,7 +6,7 @@
 
 -- Test: load() with string containing syntax error returns (nil, error_message) in Lua 5.2+
 -- Reference: Lua 5.2+ manual - load
--- @compat-notes: Lua 5.1 load() only accepts functions, not strings (use loadstring for strings)
+-- Lua 5.1 load() only accepts functions, not strings (use loadstring for strings)
 
 local f, err = load('function(')
 print("first return is nil:", f == nil)

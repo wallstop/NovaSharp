@@ -231,7 +231,7 @@ When behavior differs by version:
 
 1. Create version-specific fixtures (`_51.lua`, `_53plus.lua`)
 1. Test BOTH positive and negative scenarios
-1. Document in `@compat-notes` metadata
+1. Document the version-specific behavior in a plain fixture comment or nearby test documentation; do not invent extra fixture metadata keys
 
 ______________________________________________________________________
 

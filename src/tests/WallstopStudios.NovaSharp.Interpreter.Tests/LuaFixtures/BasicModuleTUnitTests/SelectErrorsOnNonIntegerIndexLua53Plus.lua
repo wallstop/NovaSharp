@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\BasicModuleTUnitTests.cs:944
 -- @test: BasicModuleTUnitTests.SelectErrorsOnNonIntegerIndexLua53Plus
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 return select(1.5, 'a', 'b', 'c')

@@ -36,7 +36,7 @@ ______________________________________________________________________
 ### Run fixtures against a Lua version
 
 ```bash
-python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.4
+bash scripts/tests/run-lua-fixtures-fast.sh --lua-version 5.4
 ```
 
 ### Compare outputs
@@ -44,14 +44,15 @@ python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.4
 ```bash
 python3 scripts/tests/compare-lua-outputs.py \
     --lua-version 5.4 \
-    --results-dir artifacts/lua-comparison-5.4
+    --results-dir artifacts/lua-comparison-results
 ```
 
 ### Run against all versions
 
 ```bash
 for v in 5.1 5.2 5.3 5.4 5.5; do
-    python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version $v
+    bash scripts/tests/run-lua-fixtures-fast.sh --lua-version $v --output-dir artifacts/lua-comparison-results-$v
+    python3 scripts/tests/compare-lua-outputs.py --lua-version $v --results-dir artifacts/lua-comparison-results-$v --enforce
 done
 ```
 
@@ -92,28 +93,29 @@ ______________________________________________________________________
 
 ## Output Artifacts
 
-Results are stored in `artifacts/lua-comparison-{version}/`:
+Results are stored in `artifacts/lua-comparison-results/` by default:
 
 ```
-artifacts/lua-comparison-5.4/
-├── results.json          # Machine-readable results
-├── summary.txt           # Human-readable summary
-├── passed/               # Fixtures that matched
-├── failed/               # Fixtures with differences
-│   ├── fixture_name.lua.expected   # Reference Lua output
-│   ├── fixture_name.lua.actual     # NovaSharp output
-│   └── fixture_name.lua.diff       # Diff between outputs
-└── errors/               # Fixtures that crashed
+artifacts/lua-comparison-results/
+├── results.json                         # Runner summary
+├── comparison.json                      # Comparator report
+├── novasharp_summary.json               # Batch runner summary
+├── <TestClass>/<TestMethod>.lua5.4.out  # Reference Lua stdout
+├── <TestClass>/<TestMethod>.lua5.4.err  # Reference Lua stderr
+├── <TestClass>/<TestMethod>.lua5.4.rc   # Reference Lua exit code
+├── <TestClass>/<TestMethod>.nova.out    # NovaSharp stdout
+├── <TestClass>/<TestMethod>.nova.err    # NovaSharp stderr
+└── <TestClass>/<TestMethod>.nova.rc     # NovaSharp exit code
 ```
 
 ______________________________________________________________________
 
 ## Investigating Failures
 
-1. **Check the diff**: `cat artifacts/lua-comparison-5.4/failed/fixture_name.lua.diff`
+1. **Check the report**: `python3 scripts/tests/compare-lua-outputs.py --lua-version 5.4 --results-dir artifacts/lua-comparison-results --verbose`
 1. **Run against reference Lua**: `lua5.4 path/to/fixture.lua`
 1. **Run against NovaSharp**: `dotnet run -c Release --project src/tooling/WallstopStudios.NovaSharp.Cli -- path/to/fixture.lua`
-1. **Compare side-by-side**: `diff -y artifacts/.../fixture.lua.expected artifacts/.../fixture.lua.actual`
+1. **Compare side-by-side**: `diff -y artifacts/.../fixture.lua5.4.out artifacts/.../fixture.nova.out`
 
 **For cross-platform failures**: Check if failure is platform-specific, if NovaSharp output is consistent, if reference Lua varies by platform, or if it's a C library difference.
 
@@ -140,7 +142,7 @@ Reference Lua uses the platform's C library, causing legitimate differences that
 - **NaN formatting**: Windows outputs `-nan(ind)`, others output `nan`. Harness normalizes this.
 - **Missing compat functions**: Windows Lua may lack `math.log10`, `math.frexp`, `math.ldexp`, `math.pow`, `loadstring` (NovaSharp has all of these).
 
-**When to use `@novasharp-only: true`**: When NovaSharp is more correct than platform Lua, or when platform C library quirks cause differences. Always add `@compat-notes` explaining why.
+**When to use `@novasharp-only: true`**: Only for NovaSharp extensions or documented platform C-library/spec implementation-defined behavior. Keep the explanation in the C# test, fixture name, or nearby docs because fixture metadata is limited to `@lua-versions`, `@novasharp-only`, and `@expects-error`.
 
 ______________________________________________________________________
 
@@ -166,10 +168,11 @@ ______________________________________________________________________
 
 | Script                                                | Purpose                            |
 | ----------------------------------------------------- | ---------------------------------- |
-| `scripts/tests/run-lua-fixtures-parallel.py`          | Run fixtures in parallel           |
+| `scripts/tests/run-lua-fixtures-fast.sh`              | Run fixtures with batch NovaSharp  |
+| `scripts/tests/run-lua-fixtures-parallel.py`          | Debug runner with per-file process |
 | `scripts/tests/compare-lua-outputs.py`                | Compare outputs and generate diffs |
 | `tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py` | Extract fixtures from tests        |
 
-CI runs the harness for all Lua versions. Failures block merges. Check `artifacts/lua-comparison-*/failed/` for differences.
+CI runs the harness in a decoupled `lua-comparison` lane for Lua 5.1-5.5 across the supported OS matrix. `mismatch`, `lua_only`, and `nova_only` are hard failures under `--enforce`; `both_error` entries are checked against `docs/testing/lua-error-ratchet.json` so new or changed unclassified errors fail while reductions pass. Check the uploaded `lua-comparison-<version>-<os>` artifact for `comparison-<version>.json`, raw per-fixture output, and ratchet counts.
 
 See [lua-fixture-creation](lua-fixture-creation.md) for creating new fixtures.

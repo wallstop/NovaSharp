@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:1337
 -- @test: MathModuleTUnitTests.LogUsesBaseInLua52Plus
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 return math.log(100, 10)

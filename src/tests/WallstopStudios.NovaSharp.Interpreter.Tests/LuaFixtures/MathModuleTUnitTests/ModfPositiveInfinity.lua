@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.ModfPositiveInfinity
--- @compat-notes: math.modf(inf) returns (inf, 0) - fractional part is 0, not NaN
+-- math.modf(inf) returns (inf, 0) - fractional part is 0, not NaN
 
 local function is_negative_zero(x)
     return x == 0 and 1/x == -math.huge

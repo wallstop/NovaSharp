@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:3393
 -- @test: DebugModuleTUnitTests.GetInfoAllFieldsHaveExpectedTypes
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local function sample(a, b)
                     local c = a + b
                     return c

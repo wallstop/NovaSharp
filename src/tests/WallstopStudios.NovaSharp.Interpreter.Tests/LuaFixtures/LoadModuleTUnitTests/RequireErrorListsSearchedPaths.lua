@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleTUnitTests.cs
 -- @test: LoadModuleTUnitTests.RequireErrorListsSearchedPathsWhenLuaCompatibleErrorsEnabled
--- @compat-notes: Tests that require errors list all searched paths per Lua spec
+-- Tests that require errors list all searched paths per Lua spec
 -- @novasharp-options: LuaCompatibleErrors=true
 
 -- This test verifies that when require() fails to find a module and

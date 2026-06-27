@@ -3,5 +3,5 @@
 -- @expects-error: true
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\JsonModuleTUnitTests.cs:72
 -- @test: JsonModuleTUnitTests.ParseThrowsScriptRuntimeExceptionOnInvalidJson
--- @compat-notes: Test class 'JsonModuleTUnitTests' uses NovaSharp-specific JsonModule functionality
+-- Test class 'JsonModuleTUnitTests' uses NovaSharp-specific JsonModule functionality
 return require('json')

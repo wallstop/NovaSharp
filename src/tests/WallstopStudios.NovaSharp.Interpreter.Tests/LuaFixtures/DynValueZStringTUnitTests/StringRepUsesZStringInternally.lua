@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\DataTypes\DynValueZStringTUnitTests.cs:239
 -- @test: DynValueZStringTUnitTests.StringRepUsesZStringInternally
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 return string.rep('ab', 5)

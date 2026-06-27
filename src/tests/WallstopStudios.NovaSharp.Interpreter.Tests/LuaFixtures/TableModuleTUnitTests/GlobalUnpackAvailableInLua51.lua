@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\TableModuleTUnitTests.cs:498
 -- @test: TableModuleTUnitTests.GlobalUnpackAvailableInLua51
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 return unpack({10, 20, 30})

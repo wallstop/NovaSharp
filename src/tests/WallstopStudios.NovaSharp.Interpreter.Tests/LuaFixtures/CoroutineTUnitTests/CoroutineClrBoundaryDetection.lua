@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\CoroutineTUnitTests.cs:119
 -- @test: CoroutineTUnitTests.CoroutineClrBoundaryDetection
--- @compat-notes: Uses injected variable: callback
+-- Uses injected variable: callback
 function a()
                     callback(b)
                 end

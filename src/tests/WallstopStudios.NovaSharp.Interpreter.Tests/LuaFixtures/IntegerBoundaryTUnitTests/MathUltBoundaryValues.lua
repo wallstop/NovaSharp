@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Compatibility\IntegerBoundaryTUnitTests.cs:411
 -- @test: IntegerBoundaryTUnitTests.MathUltBoundaryValues
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
+-- NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
 return math.ult({left}, {right})

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.ModfNegativeInfinity
--- @compat-notes: math.modf(-inf) returns (-inf, 0) - fractional part is 0, not NaN
+-- math.modf(-inf) returns (-inf, 0) - fractional part is 0, not NaN
 -- Note: Lua 5.1/5.2 return -0 for fractional part, Lua 5.3+ return +0 (integer subtype change)
 
 local function is_negative_zero(x)

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.MaxNanBehavior
--- @compat-notes: NaN comparison behavior in Lua - NaN comparisons are always false
+-- NaN comparison behavior in Lua - NaN comparisons are always false
 -- The "current max" starts as the first argument and only updates if a later arg is greater
 -- Since NaN comparisons are always false, NaN never "wins" against a real value,
 -- but if NaN is the first arg, it becomes the initial max and is never replaced

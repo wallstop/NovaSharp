@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:186
 -- @test: TableModuleTUnitTests.RemoveIgnoresExtraArguments
--- @compat-notes: Lua ignores extra arguments to table.remove (consistent across all versions)
+-- Lua ignores extra arguments to table.remove (consistent across all versions)
 -- Reference: Lua manual §6.6 (table.remove) - no mention of argument count validation
 
 -- Test that table.remove silently ignores extra arguments (just like real Lua)

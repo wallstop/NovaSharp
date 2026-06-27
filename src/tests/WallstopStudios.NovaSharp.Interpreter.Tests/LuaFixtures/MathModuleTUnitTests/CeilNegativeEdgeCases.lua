@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:2458
 -- @test: MathModuleTUnitTests.CeilNegativeEdgeCases
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
+-- NovaSharp: unresolved C# interpolation placeholder
 return math.ceil({input})

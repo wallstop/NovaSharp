@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:59
 -- @test: CoroutineModuleTUnitTests.RunningInsideCoroutineReturnsFalse
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 function runningCheck()
                     local _, isMain = coroutine.running()
                     return isMain

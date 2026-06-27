@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\SimpleTUnitTests.cs:1525
 -- @test: SimpleTUnitTests.EnvTestSuite
--- @compat-notes: Lua 5.2+: _ENV variable
+-- Lua 5.2+: _ENV variable
 local RES = { }
 
 				RES.T1 = (_ENV == _G) 

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\BasicModuleTUnitTests.cs:1149
 -- @test: BasicModuleTUnitTests.PrintCallsGlobalTostringForNumbersInLua51To53
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 function tostring(v)
                     if type(v) == 'number' then
                         return 'NUM:' .. v

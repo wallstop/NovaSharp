@@ -15,13 +15,13 @@
 1. **Fixture conversion batches** — convert fixtures in clearly defined groups (VM core, stdlib, interop, CLI/tooling, debugger/platform, Lua spec/TAP) with owners and dates so progress is measurable.
 1. **Parity + gating** — dual-run converted fixtures (NUnit + TUnit) until their measurements match within ±5 % runtime and the coverage artefacts stay within ±0.1 % line/branch deltas. Once all batches are green, retire the NUnit project.
 
-## Host Project Specification (`NovaSharp.Interpreter.Tests.TUnit`)
+## Host Project Specification (`WallstopStudios.NovaSharp.Interpreter.Tests.TUnit`)
 
-- Location: `src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj`.
+- Location: `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj`.
 - Target framework: `net8.0`, `LangVersion=latest`, `<IsTestProject>true>`, `<UseMicrosoftTestingPlatform>true>`.
 - Package references: `TUnit` (runtime), `TUnit.Assertions`, `Microsoft.Testing.Platform.MSBuild`, `Microsoft.Testing.Extensions.VSTestBridge`. Match versions pinned in the NUnit csproj to avoid drift.
 - Project references: identical to the NUnit project (`runtime/NovaSharp.Interpreter`, `tooling/NovaSharp.Cli`, `tooling/NovaSharp.Hardwire`, `debuggers/NovaSharp.RemoteDebugger`, `debuggers/NovaSharp.VsCodeDebugger`).
-- Shared sources: link everything under `src/tests/NovaSharp.Interpreter.Tests/TestUtilities` plus the new adapter folder via `<Compile Include="..\NovaSharp.Interpreter.Tests\TestUtilities\**\*.cs" Link="TestUtilities\%(RecursiveDir)%(Filename)%(Extension)" />`.
+- Shared sources: link everything under `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/TestUtilities` plus the new adapter folder via `<Compile Include="..\WallstopStudios.NovaSharp.Interpreter.Tests\TestUtilities\**\*.cs" Link="TestUtilities\%(RecursiveDir)%(Filename)%(Extension)" />`.
 - Runsettings: Microsoft.Testing.Platform already honors the machine’s logical cores, so the legacy `scripts/tests/NovaSharp.Parallel.runsettings` profile was removed once the interpreter suites went TUnit-only (2025-12-01). No custom runsettings are required now.
 - Custom attributes: recreate `UserDataIsolation`, `ScriptGlobalOptionsIsolation`, and `PlatformDetectorIsolation` as TUnit fixtures by implementing `global::TUnit.Core.Lifecycle.ITestLifecycle` in the shared adapter. The TUnit versions must be API-compatible so fixtures only swap namespace aliases during conversion.
 
@@ -32,7 +32,7 @@
    - Create the TUnit csproj, shared adapter folder, and Microsoft.Testing.Platform integration.
    - Port isolation attributes + fixture catalog equivalents (if analyzers still require explicit references).
    - Add sample fixtures (reuse a subset of `ProcessorTests`) to validate the build/test loop and capture baseline runtimes.
-   - ✅ `src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj` now mirrors the runtime/tooling project references, links shared TestInfrastructure sources, and houses the initial `ScriptSmokeTests` fixture so the TUnit runner is exercised end-to-end (`dotnet test --project src/tests/NovaSharp.Interpreter.Tests.TUnit/NovaSharp.Interpreter.Tests.TUnit.csproj -c Release`).
+   - ✅ `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj` now mirrors the runtime/tooling project references, links shared TestInfrastructure sources, and houses the initial `ScriptSmokeTests` fixture so the TUnit runner is exercised end-to-end (`dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release`).
    - ✅ (Historical) `src/tests/TestInfrastructure/NUnit` briefly centralized the NUnit-only isolation attributes (`UserDataIsolation`, `ScriptGlobalOptionsIsolation`, `PlatformDetectorIsolation`) until the migration finished. The folder has since been deleted now that every fixture runs on the shared TUnit adapters.
    - ✅ Added the first `TestInfrastructure/TUnit/*IsolationAttribute.cs` implementations (built on the TUnit event receiver interfaces) so migrated fixtures can keep the same `[UserDataIsolation]`, `[ScriptGlobalOptionsIsolation]`, and `[PlatformDetectorIsolation]` annotations.
 
@@ -59,7 +59,7 @@
 
   ```powershell
   $tunit = @(
-      "--project", "src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj",
+      "src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj",
       "-c", "Release",
       "--no-build"
   )

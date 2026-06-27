@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\SandboxRecursionLimitTUnitTests.cs:183
 -- @test: SandboxRecursionLimitTUnitTests.MutualRecursionCountedCorrectly
--- @compat-notes: Test class 'SandboxRecursionLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
+-- Test class 'SandboxRecursionLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 function isEven(n)
                     if n == 0 then return true end
                     local result = isOdd(n - 1)

@@ -25,6 +25,10 @@ from pathlib import Path
 from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+
+from lua_version_utils import is_version_compatible, parse_lua_versions
+
 DEFAULT_FIXTURES_DIR = ROOT / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests" / "LuaFixtures"
 DEFAULT_OUTPUT_DIR = ROOT / "artifacts" / "lua-comparison-results"
 CLI_PROJECT = ROOT / "src" / "tooling" / "WallstopStudios.NovaSharp.Cli" / "WallstopStudios.NovaSharp.Cli.csproj"
@@ -52,30 +56,20 @@ class FixtureMetadata:
     """Metadata extracted from a fixture file."""
     path: Path
     lua_versions: list[str] = field(default_factory=list)
+    lua_versions_specified: bool = False
+    no_reference_versions: bool = False
     novasharp_only: bool = False
     expects_error: bool = False
     
     def is_compatible(self, version: str) -> bool:
         """Check if this fixture is compatible with the given Lua version."""
-        if self.novasharp_only:
+        if self.novasharp_only or self.no_reference_versions:
             return False
         
-        if not self.lua_versions:
+        if not self.lua_versions_specified:
             return True  # No version info, assume compatible
         
-        # Check for exact match
-        if version in self.lua_versions:
-            return True
-        
-        # Check for "5.1+" style patterns
-        version_num = int(version.replace(".", ""))
-        for v in self.lua_versions:
-            if v.endswith("+"):
-                base_version = int(v.rstrip("+").replace(".", ""))
-                if version_num >= base_version:
-                    return True
-        
-        return False
+        return is_version_compatible(self.lua_versions, version)
 
 
 def parse_fixture_metadata(path: Path) -> FixtureMetadata:
@@ -92,11 +86,14 @@ def parse_fixture_metadata(path: Path) -> FixtureMetadata:
                 
                 if "@lua-versions:" in line:
                     versions_part = line.split("@lua-versions:")[1].strip()
-                    if "novasharp-only" in versions_part:
+                    versions_text = versions_part.lower()
+                    meta.lua_versions_specified = True
+                    if versions_text == "none":
+                        meta.no_reference_versions = True
+                    elif "novasharp-only" in versions_text:
                         meta.novasharp_only = True
                     else:
-                        # Parse versions like "5.1, 5.2, 5.3" or "5.1+"
-                        meta.lua_versions = [v.strip() for v in versions_part.split(",")]
+                        meta.lua_versions = parse_lua_versions(versions_part)
                 
                 if "@novasharp-only: true" in line:
                     meta.novasharp_only = True
@@ -153,10 +150,10 @@ def run_novasharp_single(nova_project: str, fixture_path: Path, lua_version: str
 
 def process_fixture(args: tuple) -> FixtureResult:
     """Process a single fixture (worker function for parallel execution)."""
-    fixture_path, lua_version, lua_cmd, nova_project, output_dir, skip_lua, skip_nova = args
+    fixture_path, fixtures_dir, lua_version, lua_cmd, nova_project, output_dir, skip_lua, skip_nova = args
     
     meta = parse_fixture_metadata(fixture_path)
-    rel_path = fixture_path.relative_to(DEFAULT_FIXTURES_DIR)
+    rel_path = fixture_path.relative_to(fixtures_dir)
     
     result = FixtureResult(
         file=str(rel_path),
@@ -344,8 +341,16 @@ def main():
     
     # Prepare work items
     work_items = [
-        (f, args.lua_version, lua_cmd if not args.skip_lua else None, 
-         nova_exe, args.output_dir, args.skip_lua, args.skip_novasharp)
+        (
+            f,
+            args.fixtures_dir,
+            args.lua_version,
+            lua_cmd if not args.skip_lua else None,
+            nova_exe,
+            args.output_dir,
+            args.skip_lua,
+            args.skip_novasharp,
+        )
         for f in all_fixtures
     ]
     

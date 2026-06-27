@@ -6,6 +6,6 @@
 
 -- Test: load() throws error when given string in Lua 5.1
 -- Reference: Lua 5.1 manual - load only accepts functions
--- @compat-notes: Lua 5.1 load() only accepts functions; use loadstring() for strings
+-- Lua 5.1 load() only accepts functions; use loadstring() for strings
 
 return load('function(')

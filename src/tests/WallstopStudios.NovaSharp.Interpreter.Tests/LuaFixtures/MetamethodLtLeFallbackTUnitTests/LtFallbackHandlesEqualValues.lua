@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\MetamethodLtLeFallbackTUnitTests.cs:173
 -- @test: MetamethodLtLeFallbackTUnitTests.LtFallbackHandlesEqualValues
--- @compat-notes: Test targets Lua 5.4+
+-- Test targets Lua 5.4+
 local mt = {
                     __lt = function(a, b) return a.value < b.value end
                     -- __le intentionally NOT defined

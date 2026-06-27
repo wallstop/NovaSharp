@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.MaxMinMixedNan
--- @compat-notes: NaN comparison behavior in Lua - NaN comparisons are always false
+-- NaN comparison behavior in Lua - NaN comparisons are always false
 -- When NaN is not the first arg, it's effectively skipped since comparisons with NaN are false
 -- When NaN is the first arg, it becomes the initial value and may not be replaced
 

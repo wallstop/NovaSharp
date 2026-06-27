@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: standalone-fixture
 -- @test: MathPowEdgeCasesTUnitTests.PowNegativeZero
--- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
+-- Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
 
 -- Test: math.pow behavior with negative zero (-0.0)
 -- Expected: Proper IEEE 754 negative zero handling

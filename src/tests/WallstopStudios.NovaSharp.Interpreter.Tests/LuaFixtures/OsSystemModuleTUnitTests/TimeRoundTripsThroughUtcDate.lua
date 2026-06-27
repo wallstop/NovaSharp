@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsSystemModuleTUnitTests.cs:394
 -- @test: OsSystemModuleTUnitTests.TimeRoundTripsThroughUtcDate
--- @compat-notes: Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
+-- Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
 local stamp = os.time({
                     year = 2000,
                     month = 1,

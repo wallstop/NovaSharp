@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:91
 -- @test: LoadModuleVersionParityTUnitTests.LoadRejectsStringArgumentInLua51
--- @compat-notes: In Lua 5.1, load() only accepts reader functions, not strings
+-- In Lua 5.1, load() only accepts reader functions, not strings
 
 -- Test: load() should reject string arguments in Lua 5.1
 -- Reference: Lua 5.1 Reference Manual §5.1 - load (func [, chunkname])

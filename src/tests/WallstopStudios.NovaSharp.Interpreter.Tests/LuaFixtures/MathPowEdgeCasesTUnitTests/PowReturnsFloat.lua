@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: standalone-fixture
 -- @test: MathPowEdgeCasesTUnitTests.PowReturnsFloat
--- @compat-notes: Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
+-- Platform-specific: Windows Lua built without LUA_COMPAT_MATHLIB. NovaSharp provides deprecated math functions for compatibility.
 
 -- Test: Exponentiation always returns float subtype in Lua 5.3+
 -- Expected: math.type returns "float" for all pow results

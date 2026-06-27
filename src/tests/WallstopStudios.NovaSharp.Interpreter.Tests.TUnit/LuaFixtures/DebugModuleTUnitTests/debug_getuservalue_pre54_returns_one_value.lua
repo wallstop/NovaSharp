@@ -6,7 +6,7 @@
 
 -- Test: debug.getuservalue returns only one value in Lua 5.1-5.3
 -- Reference: Lua 5.3 manual - debug.getuservalue(u) returns single uservalue
--- @compat-notes: Pre-5.4, only single return value
+-- Pre-5.4, only single return value
 
 local results = {debug.getuservalue("not userdata")}
 local count = #results

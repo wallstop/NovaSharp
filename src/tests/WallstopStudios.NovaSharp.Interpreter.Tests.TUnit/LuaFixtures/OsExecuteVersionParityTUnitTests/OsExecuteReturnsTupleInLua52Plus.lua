@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs
 -- @test: OsExecuteVersionParityTUnitTests.OsExecuteReturnsTupleInLua52Plus
--- @compat-notes: Lua 5.2+ os.execute returns (true|nil, "exit"|"signal", code) tuple
+-- Lua 5.2+ os.execute returns (true|nil, "exit"|"signal", code) tuple
 
 -- Test: os.execute returns a tuple in Lua 5.2+
 -- Reference: Lua 5.2+ Reference Manual §6.9

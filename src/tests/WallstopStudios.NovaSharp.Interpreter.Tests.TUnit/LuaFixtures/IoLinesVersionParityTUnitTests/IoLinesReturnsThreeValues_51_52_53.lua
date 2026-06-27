@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/IoLinesVersionParityTUnitTests.cs
 -- @test: IoLinesVersionParityTUnitTests.IoLinesReturnsThreeValuesInLua51To53
--- @compat-notes: Lua 5.1-5.3 io.lines returns 3 values (iterator, nil, nil)
+-- Lua 5.1-5.3 io.lines returns 3 values (iterator, nil, nil)
 
 -- Test: io.lines returns 3 values in Lua 5.1-5.3
 -- Reference: Lua 5.3 Reference Manual §6.8

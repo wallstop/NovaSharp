@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs
 -- @test: StringArithmeticCoercionTUnitTests.StringMetamethodFallsBackToOtherOperandMetamethod
--- @compat-notes: Lua 5.4+ string metamethods fall back to other operand's metamethod when coercion fails
+-- Lua 5.4+ string metamethods fall back to other operand's metamethod when coercion fails
 
 -- Test: String + table uses table's __add metamethod, not string's
 -- Reference: Lua 5.4 manual §3.4.3 - "If the conversion fails, the library calls the metamethod of the other operand"

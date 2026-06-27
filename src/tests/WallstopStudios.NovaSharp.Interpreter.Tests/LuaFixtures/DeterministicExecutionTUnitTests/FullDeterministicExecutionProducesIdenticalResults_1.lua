@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\DeterministicExecutionTUnitTests.cs:502
 -- @test: DeterministicExecutionTUnitTests.FullDeterministicExecutionProducesIdenticalResults
--- @compat-notes: Lua 5.3+: bitwise OR
+-- Lua 5.3+: bitwise OR
 local results = {}
                 results[1] = math.random()
                 results[2] = math.random(1, 1000)

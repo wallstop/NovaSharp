@@ -6,7 +6,7 @@
 
 -- Test: debug.upvalueid returns nil for negative index in Lua 5.4+
 -- Reference: Lua 5.4 manual - debug.upvalueid
--- @compat-notes: Negative indices are invalid
+-- Negative indices are invalid
 
 local x = 10
 local function f() return x end

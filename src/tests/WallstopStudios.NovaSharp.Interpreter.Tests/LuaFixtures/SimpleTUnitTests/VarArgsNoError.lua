@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\SimpleTUnitTests.cs:1353
 -- @test: SimpleTUnitTests.VarArgsNoError
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 function x(...)
 
 					end

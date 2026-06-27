@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataMethodsTUnitTests.cs:727
 -- @test: SomeOtherClassWithDualInterfaces.Unknown
--- @compat-notes: Uses injected variable: myobj
+-- Uses injected variable: myobj
 t = { 'asd', 'qwe', 'zxc', ['x'] = 'X', ['y'] = 'Y' };
 				x = myobj.ConcatI(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;

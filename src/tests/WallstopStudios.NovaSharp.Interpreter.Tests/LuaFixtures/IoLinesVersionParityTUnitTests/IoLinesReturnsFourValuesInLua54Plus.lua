@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\IoLinesVersionParityTUnitTests.cs:60
 -- @test: IoLinesVersionParityTUnitTests.IoLinesReturnsFourValuesInLua54Plus
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.4+
+-- NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.4+
 local a, b, c, d = io.lines('{path}')
                 -- a is callable (either function or userdata with __call)
                 local isCallable = type(a) == 'function' or (type(a) == 'userdata' and pcall(function() return a() end))

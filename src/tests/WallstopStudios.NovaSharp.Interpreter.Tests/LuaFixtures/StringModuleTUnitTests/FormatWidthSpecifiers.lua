@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs
 -- @test: StringModuleTUnitTests.FormatWidthSpecifiersInteger, StringModuleTUnitTests.FormatWidthSpecifiersString
--- @compat-notes: string.format width specifier tests
+-- string.format width specifier tests
 
 local function test(format, value, expected, desc)
     local result = string.format(format, value)

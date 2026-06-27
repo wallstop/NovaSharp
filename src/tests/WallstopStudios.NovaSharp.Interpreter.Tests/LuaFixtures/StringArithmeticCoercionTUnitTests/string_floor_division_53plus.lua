@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs
 -- @test: StringArithmeticCoercionTUnitTests.FloorDivisionWorksWithStrings
--- @compat-notes: Floor division (//) requires Lua 5.3+
+-- Floor division (//) requires Lua 5.3+
 
 -- Test: Floor division with strings works
 -- Reference: Lua 5.3+ manual §3.4.1

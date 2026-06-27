@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\DynamicTUnitTests.cs:74
 -- @test: DynamicTUnitTests.DynamicAccessScopeSecurityReturnsNil
--- @compat-notes: NovaSharp: dynamic access; Test targets Lua 5.2+
+-- NovaSharp: dynamic access; Test targets Lua 5.2+
 -- Note: The worker function must reference a global so it captures the shadowed _ENV.
 -- In Lua 5.2+, closures only capture _ENV when they actually reference global variables.
 -- Without the dummy reference to `_`, the worker function wouldn't have _ENV as an upvalue,

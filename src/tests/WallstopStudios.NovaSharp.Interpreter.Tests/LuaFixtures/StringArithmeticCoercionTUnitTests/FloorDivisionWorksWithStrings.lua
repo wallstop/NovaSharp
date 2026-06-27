@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\StringArithmeticCoercionTUnitTests.cs:192
 -- @test: StringArithmeticCoercionTUnitTests.FloorDivisionWorksWithStrings
--- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: floor division
+-- Test targets Lua 5.3+; Lua 5.3+: floor division
 return '10' // 3

@@ -3,5 +3,5 @@
 -- @expects-error: true
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:1034
 -- @test: StringModuleTUnitTests.CharAcceptsNumericStringArguments
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 return string.char('65', '66')

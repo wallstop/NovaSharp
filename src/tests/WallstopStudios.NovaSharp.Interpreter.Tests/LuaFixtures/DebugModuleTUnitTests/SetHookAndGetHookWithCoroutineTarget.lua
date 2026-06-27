@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:1682
 -- @test: DebugModuleTUnitTests.SetHookAndGetHookWithCoroutineTarget
--- @compat-notes: Test targets Lua 5.1; Uses injected variable: r
+-- Test targets Lua 5.1; Uses injected variable: r
 local function hookfn() end
                 local co = coroutine.create(function()
                     debug.sethook(hookfn, 'r', 10)

@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:688
 -- @test: MathModuleTUnitTests.CeilPreservesIntegerZero
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 return math.ceil(0)

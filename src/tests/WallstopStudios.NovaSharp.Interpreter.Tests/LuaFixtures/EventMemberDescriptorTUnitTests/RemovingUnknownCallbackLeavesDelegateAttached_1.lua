@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Interop\Descriptors\EventMemberDescriptorTUnitTests.cs:268
 -- @test: EventMemberDescriptorTUnitTests.RemovingUnknownCallbackLeavesDelegateAttached
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder
+-- NovaSharp: unresolved C# interpolation placeholder
 return function(_, amount) {HitsVariable} = {HitsVariable} + amount end

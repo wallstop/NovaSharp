@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineApiTUnitTests.cs:145
 -- @test: ProcessorCoroutineApiTUnitTests.AsUnityCoroutineYieldsNullPerIteration
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 return function() coroutine.yield('a') coroutine.yield('b') return 'c' end

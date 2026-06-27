@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathVersionCompatibilityTUnitTests.cs:150
 -- @test: MathVersionCompatibilityTUnitTests.MathToIntegerConvertsInLua53Plus
--- @compat-notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
+-- NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
 return math.tointeger({input})

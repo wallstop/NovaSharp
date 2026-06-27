@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:66
 -- @test: LoadModuleVersionParityTUnitTests.LoadstringCompilesAndExecutesInLua51
--- @compat-notes: loadstring compiles a string and returns a function in Lua 5.1
+-- loadstring compiles a string and returns a function in Lua 5.1
 
 -- Test: loadstring compiles code and returns executable function in Lua 5.1
 -- Reference: Lua 5.1 Reference Manual §5.1 - loadstring

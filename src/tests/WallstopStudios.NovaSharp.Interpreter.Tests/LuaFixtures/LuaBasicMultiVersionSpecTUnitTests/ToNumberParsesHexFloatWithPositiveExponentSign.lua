@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\LuaBasicMultiVersionSpecTUnitTests.cs:344
 -- @test: LuaBasicMultiVersionSpecTUnitTests.ToNumberParsesHexFloatWithPositiveExponentSign
--- @compat-notes: Test targets Lua 5.1; Lua 5.2+: hex float with exponent (5.2+)
+-- Test targets Lua 5.1; Lua 5.2+: hex float with exponent (5.2+)
 return tonumber('0x1p+2')

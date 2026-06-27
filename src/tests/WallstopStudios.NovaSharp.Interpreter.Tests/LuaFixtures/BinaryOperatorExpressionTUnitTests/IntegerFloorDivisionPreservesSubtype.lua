@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Tree\Expressions\BinaryOperatorExpressionTUnitTests.cs:FloorDivisionPreservesIntegerSubtype
 -- @test: BinaryOperatorExpressionTUnitTests.FloorDivisionPreservesIntegerSubtype
--- @compat-notes: Integer floor division should preserve integer subtype in Lua 5.3+
+-- Integer floor division should preserve integer subtype in Lua 5.3+
 
 -- Test: Integer // integer should produce integer
 -- Expected: "integer" (not "float")

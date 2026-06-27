@@ -62,6 +62,7 @@ SHORT_VERSION_ORDER = {v: i for i, v in enumerate(SHORT_LUA_ENUM_VALUES)}
 
 # Combined order (matches both long and short forms)
 COMBINED_VERSION_ORDER = {**VERSION_ORDER, **SHORT_VERSION_ORDER}
+GENERATED_DIR_NAMES = {"bin", "obj", "artifacts"}
 
 
 @dataclass
@@ -401,6 +402,8 @@ def find_csharp_test_files(base_path: Path) -> list[Path]:
     for test_dir in test_dirs:
         if test_dir.exists():
             for cs_file in test_dir.rglob("*.cs"):
+                if GENERATED_DIR_NAMES.intersection(cs_file.relative_to(base_path).parts):
+                    continue
                 # Only process files in .TUnit directories (see TUNIT_PROJECT_MARKER)
                 if TUNIT_PROJECT_MARKER in str(cs_file):
                     cs_files.append(cs_file)

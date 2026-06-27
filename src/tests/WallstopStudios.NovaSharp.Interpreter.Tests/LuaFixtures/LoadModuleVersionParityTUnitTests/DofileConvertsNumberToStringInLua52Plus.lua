@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:0
 -- @test: LoadModuleVersionParityTUnitTests.DofileConvertsNumberToStringInLua52Plus
--- @compat-notes: dofile() converts number argument to string in Lua 5.2+ (number coercion)
+-- dofile() converts number argument to string in Lua 5.2+ (number coercion)
 
 -- Test: dofile() should convert number to string filename and return proper error
 -- Reference: Lua 5.2+ allows number-to-string coercion

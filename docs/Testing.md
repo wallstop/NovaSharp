@@ -11,17 +11,17 @@ NovaSharp ships with a comprehensive test suite that blends historical Lua fixtu
 ## Running the Tests Locally
 
 ```bash
-dotnet test --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx"
+dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release -- --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx
 ```
 
 - Produces a standards-based TRX file under `TestResults/` (or the supplied `--results-directory`) so failures can be inspected with the test explorer of your choice.
-- Mirrors the execution that now powers CI, ensuring branch/line coverage is captured with the same runner configuration.
+- Mirrors the test execution and TRX output that power CI. Use `scripts/coverage/coverage.ps1` or `scripts/coverage/coverage.sh` when you need branch/line coverage.
 
 ### Microsoft.Testing.Platform runner
 
-- `global.json` now pins `test.runner` to `Microsoft.Testing.Platform`, so every `dotnet test` invocation must pass an explicit target via `--project`/`--solution`/`--test-modules`. The command above mirrors the CI lane (`--project` is required; the legacy `dotnet test <csproj>` syntax no longer works on .NET 10 SDKs).
-- The interpreter TUnit suite (≈2.7 k Release tests) completes in roughly **7 s** on a 12-core workstation; expect ~1 s slower when a clean build is required because the Microsoft.Testing.Platform entry point is re-generated.
-- Visual Studio and Rider inherit the same configuration because the runner is set in `global.json`; if a local command fails with “VSTest target is no longer supported”, re-run it with the explicit `--project` form shown above so the Microsoft.Testing.Platform mode is engaged.
+- `global.json` pins `test.runner` to `Microsoft.Testing.Platform`, so every `dotnet test` invocation must pass an explicit target path, solution, or test module. Use the positional project path shown above; test-platform options still go after the `--` separator.
+- The interpreter TUnit suite completes quickly on a many-core workstation; expect a slower first run when a clean build is required because the Microsoft.Testing.Platform entry point is re-generated.
+- Visual Studio and Rider inherit the same configuration because the runner is set in `global.json`; if a local command fails with “VSTest target is no longer supported”, re-run it with the explicit target path shown above so the Microsoft.Testing.Platform mode is engaged.
 
 ### TUnit-first policy
 
@@ -71,28 +71,28 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - On macOS/Linux without PowerShell, run `bash ./scripts/coverage/coverage.sh` (identical flags/behaviour). Both scripts automatically set `DOTNET_ROLL_FORWARD=Major` when it isn’t already defined so .NET 9 runtimes can execute the net8.0 testhost; override the variable if you need different roll-forward behaviour.
 
-- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI now exports `COVERAGE_GATING_MODE=enforce` with **90 % line / 90 % branch / 90 % method** thresholds so coverage dips fail fast; set the mode to `monitor` locally if you need a warning-only rehearsal. To mirror the enforced gate (the default in CI), export the stricter settings before rerunning the script:
+- Both coverage helpers honour gating settings: set `COVERAGE_GATING_MODE` to `monitor` (warn) or `enforce` (fail), and override the per-metric targets via `COVERAGE_GATING_TARGET_LINE`, `COVERAGE_GATING_TARGET_BRANCH`, and `COVERAGE_GATING_TARGET_METHOD`. CI now exports `COVERAGE_GATING_MODE=enforce` with **80 % line / 80 % branch / 80 % method** thresholds so coverage dips fail fast; set the mode to `monitor` locally if you need a warning-only rehearsal. To mirror the enforced gate (the default in CI), export the same settings before rerunning the script:
 
   ```powershell
   $env:COVERAGE_GATING_MODE = "enforce"
-  $env:COVERAGE_GATING_TARGET_LINE = "90"
-  $env:COVERAGE_GATING_TARGET_BRANCH = "90"
-  $env:COVERAGE_GATING_TARGET_METHOD = "90"
+  $env:COVERAGE_GATING_TARGET_LINE = "80"
+  $env:COVERAGE_GATING_TARGET_BRANCH = "80"
+  $env:COVERAGE_GATING_TARGET_METHOD = "80"
   pwsh ./scripts/coverage/coverage.ps1 -SkipBuild
   ```
 
   ```bash
   COVERAGE_GATING_MODE=enforce \
-  COVERAGE_GATING_TARGET_LINE=90 \
-  COVERAGE_GATING_TARGET_BRANCH=90 \
-  COVERAGE_GATING_TARGET_METHOD=90 \
+  COVERAGE_GATING_TARGET_LINE=80 \
+  COVERAGE_GATING_TARGET_BRANCH=80 \
+  COVERAGE_GATING_TARGET_METHOD=80 \
   bash ./scripts/coverage/coverage.sh --skip-build
   ```
 
 ### Coverage in CI
 
-- `.github/workflows/tests.yml` now includes a `code-coverage` job that runs `pwsh ./scripts/coverage/coverage.ps1` after the primary test job (falling back to the Bash variant on runners without PowerShell).
-- The job now exports `COVERAGE_GATING_MODE=enforce` together with **90 % line / 90 % branch / 90 % method** targets so coverage dips fail fast. The PowerShell coverage helper enforces the same gate, and the workflow's `Evaluate coverage threshold` step double-checks all three metrics before publishing artefacts.
+- `.github/workflows/tests.yml` includes a `code-coverage` job that runs `pwsh ./scripts/coverage/coverage.ps1` after `lint`. It is independent of the OS unit-test matrix so coverage signal is not skipped by a platform-specific unit-test failure.
+- The job exports `COVERAGE_GATING_MODE=enforce` together with **80 % line / 80 % branch / 80 % method** targets so coverage dips fail fast. The PowerShell coverage helper enforces the same gate, and the workflow's `Evaluate coverage threshold` step double-checks all three metrics before publishing artefacts.
 - Coverage deltas surface automatically on pull requests; the comment is updated in-place on retries to avoid noise. When the gate passes, the Action log includes a "Coverage Gate" summary showing both the current percentages and thresholds.
 
 ### Cross-Platform CI Matrix
@@ -100,7 +100,8 @@ pwsh ./scripts/coverage/coverage.ps1
 - The `dotnet-tests` job uses a matrix strategy running on `ubuntu-latest`, `windows-latest`, and `macos-latest` in parallel.
 - Linux and macOS use `scripts/build/build.sh`; Windows uses `scripts/build/build.ps1` (same parameters).
 - Test results upload as separate artifacts per platform (`NovaSharp-test-results-<os>`).
-- Coverage collection runs only on Ubuntu (post-`dotnet-tests`) to avoid redundant computation.
+- Coverage collection runs only on Ubuntu after `lint` to avoid redundant computation.
+- Lua comparison runs in a separate `lua-comparison` matrix after `lint` for Lua 5.1-5.5 on Ubuntu, Windows, and macOS. It fails on `mismatch`, `lua_only`, `nova_only`, or new/changed unclassified `both_error` signatures.
 
 ## Pass/Fail Policy
 
@@ -108,9 +109,9 @@ pwsh ./scripts/coverage/coverage.ps1
 
 - Failures are captured in the generated TRX; the CI pipeline publishes the `artifacts/test-results` directory for inspection.
 
-- **Current baseline (Release via `scripts/coverage/coverage.ps1 -SkipBuild`, 2025-12-07 UTC)**: 96.2 % line / 93.69 % branch / 97.88 % method for `NovaSharp.Interpreter` across 3,235 Release tests.
+- **Historical baseline (Release via `scripts/coverage/coverage.ps1 -SkipBuild`, 2025-12-07 UTC)**: 96.2 % line / 93.69 % branch / 97.88 % method for `NovaSharp.Interpreter` across 3,235 Release tests.
 
-- **Fixtures**: ~45 `[TestFixture]` types, 2 731 active tests, 0 known failures (all Release suites are green; the only intentional skip is `TestMore/LanguageExtensions/310-debug.t` until the debug library ships).
+- **Fixtures**: The current authoritative counts are the observed local/CI test output and Lua comparison `results.json` summaries; do not report the suite as green unless the relevant command or PR check was observed passing.
 
 - **Key areas covered**: Parser/lexer, binary dump/load paths, JSON subsystem, coroutine scheduling, interop binding policies, debugger attach/detach hooks.
 
@@ -146,7 +147,7 @@ If you discover a production bug while writing tests, fix the production code fi
 
 1. Deepen unit coverage across parser error paths, metatable resolution, and CLI tooling to raise the interpreter namespace above 70 % line coverage.
 1. Introduce debugger protocol integration tests (attach, breakpoint, variable inspection) and capture golden transcripts for the CLI shell.
-1. Keep Lua fixtures under version control in `tests/WallstopStudios.NovaSharp.Interpreter.Tests` to avoid drift and simplify regeneration.
+1. Keep Lua fixtures under version control in `src/tests/WallstopStudios.NovaSharp.Interpreter.Tests` to avoid drift and simplify regeneration.
 1. Restore the skipped OS/IO TAP fixtures through conditional execution in trusted environments or provide managed equivalents.
 
 Track active goals and gaps in `PLAN.md`, and update this document as new harnesses or policies ship.
@@ -188,7 +189,7 @@ Validation checklist:
 ```powershell
 dotnet build src/debuggers/WallstopStudios.NovaSharp.VsCodeDebugger/WallstopStudios.NovaSharp.VsCodeDebugger.csproj -c Release -nologo
 dotnet build src/debuggers/WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj -c Release -nologo
-dotnet test --project src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
+dotnet test src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj -c Release --filter "FullyQualifiedName~RemoteDebugger"
 ```
 
 Document any new suppressions or analyzer exclusions in `PLAN.md` (with the CA rule, justification, and follow-up owner) before merging.

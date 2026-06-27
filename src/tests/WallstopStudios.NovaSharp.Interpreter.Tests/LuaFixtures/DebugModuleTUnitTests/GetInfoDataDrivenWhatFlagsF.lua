@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs
 -- @test: DebugModuleTUnitTests.GetInfoDataDrivenWhatFlags
--- @compat-notes: Tests 'f' what flag for function reference
+-- Tests 'f' what flag for function reference
 
 -- Test: debug.getinfo with 'f' flag populates func field
 local function sample(a, b)

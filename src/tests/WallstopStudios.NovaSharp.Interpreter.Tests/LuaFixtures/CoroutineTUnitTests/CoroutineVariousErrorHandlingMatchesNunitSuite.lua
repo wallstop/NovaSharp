@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\CoroutineTUnitTests.cs:177
 -- @test: CoroutineTUnitTests.CoroutineVariousErrorHandlingMatchesNunitSuite
--- @compat-notes: NovaSharp: NovaSharp string extension (method-style); NovaSharp: NovaSharp CLR-call boundary error message
+-- NovaSharp: NovaSharp string extension (method-style); NovaSharp: NovaSharp CLR-call boundary error message
 function checkresume(step, ex, ey)
                     local x, y = coroutine.resume(c)
                     assert(x == ex, 'Step ' .. step .. ': ' .. tostring(ex) .. ' was expected, got ' .. tostring(x));

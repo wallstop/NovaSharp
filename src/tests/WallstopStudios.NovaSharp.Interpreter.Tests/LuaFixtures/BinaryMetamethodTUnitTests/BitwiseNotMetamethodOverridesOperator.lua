@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\BinaryMetamethodTUnitTests.cs:45
 -- @test: BinaryMetamethodTUnitTests.BitwiseNotMetamethodOverridesOperator
--- @compat-notes: Test targets Lua 5.3+; Lua 5.3+: bitwise XOR/NOT
+-- Test targets Lua 5.3+; Lua 5.3+: bitwise XOR/NOT
 local meta = {}
                 function meta.__bnot(value)
                     assert(value.tag == 'payload')

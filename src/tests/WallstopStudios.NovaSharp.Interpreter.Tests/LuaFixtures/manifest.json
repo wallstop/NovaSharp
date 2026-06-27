@@ -1,10 +1,10 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
   "total_snippets": 1777,
-  "novasharp_only": 456,
-  "comparable": 1321,
+  "novasharp_only": 458,
+  "comparable": 1319,
   "by_version": {
-    "5.1": 875,
+    "5.1": 873,
     "5.2": 582,
     "5.3": 820,
     "5.4": 860,
@@ -6669,10 +6669,8 @@
       "path": "IoModuleTUnitTests/SetDefaultFileOverridesStdOutStream.lua",
       "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Modules\\IoModuleTUnitTests.cs:533",
       "test": "IoModuleTUnitTests.SetDefaultFileOverridesStdOutStream",
-      "lua_versions": [
-        "5.1"
-      ],
-      "novasharp_only": false,
+      "lua_versions": [],
+      "novasharp_only": true,
       "expects_error": false
     },
     {
@@ -6959,10 +6957,8 @@
       "path": "IoModuleTUnitTests/StdOutWritesHonorCustomScriptOptionStream.lua",
       "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Modules\\IoModuleTUnitTests.cs:1264",
       "test": "IoModuleTUnitTests.StdOutWritesHonorCustomScriptOptionStream",
-      "lua_versions": [
-        "5.1"
-      ],
-      "novasharp_only": false,
+      "lua_versions": [],
+      "novasharp_only": true,
       "expects_error": false
     },
     {

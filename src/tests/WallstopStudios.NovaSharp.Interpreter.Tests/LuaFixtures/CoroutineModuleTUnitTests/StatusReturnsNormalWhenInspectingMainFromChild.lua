@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:154
 -- @test: CoroutineModuleTUnitTests.StatusReturnsNormalWhenInspectingMainFromChild
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 local mainCoroutine = select(1, coroutine.running())
 
                 function queryMainStatus()

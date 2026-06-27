@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Utf8ModuleTUnitTests.cs
 -- @test: Utf8ModuleTUnitTests.Utf8CodepointLaxModeAcceptsSurrogates
--- @compat-notes: Lua 5.4+ utf8 lax mode allows lone surrogates
+-- Lua 5.4+ utf8 lax mode allows lone surrogates
 
 -- Test: utf8.codepoint with lax=true should accept lone surrogates
 -- Reference: Lua 5.4 manual §6.5

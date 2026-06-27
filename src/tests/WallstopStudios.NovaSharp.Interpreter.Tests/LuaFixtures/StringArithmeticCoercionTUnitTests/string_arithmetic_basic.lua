@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs
 -- @test: StringArithmeticCoercionTUnitTests.StringArithmeticWorksWithNumberStrings
--- @compat-notes: String-to-number coercion works in all Lua versions for arithmetic
+-- String-to-number coercion works in all Lua versions for arithmetic
 
 -- Test: String arithmetic with numeric strings works across all versions
 -- Reference: Lua 5.x manual §3.4.3

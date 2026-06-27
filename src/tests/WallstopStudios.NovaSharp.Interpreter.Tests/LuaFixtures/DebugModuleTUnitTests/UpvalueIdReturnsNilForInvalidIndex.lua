@@ -3,6 +3,6 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:230
 -- @test: DebugModuleTUnitTests.UpvalueIdReturnsNilForInvalidIndex
--- @compat-notes: Lua 5.2+: debug.upvalueid (5.2+)
+-- Lua 5.2+: debug.upvalueid (5.2+)
 local function f() end
                 return debug.upvalueid(f, 999)

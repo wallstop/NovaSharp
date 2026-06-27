@@ -46,6 +46,8 @@ This runs ALL validation checks:
 | Branding Check   | No legacy-brand references in new code | No          |
 | Namespace Align  | Namespaces match directory structure   | No          |
 | Shell Executable | `.sh` files have executable bit        | No          |
+| YAML Lint        | Staged YAML is syntactically valid     | No          |
+| Actionlint       | GitHub Actions workflows are valid     | No          |
 | Test Lint        | Test infrastructure patterns           | No          |
 
 ______________________________________________________________________
@@ -118,6 +120,8 @@ When modifying workflows or scripts, verify locally first:
 ./scripts/branding/ensure-novasharp-branding.sh # Branding check
 ./scripts/ci/check-csharpier.sh                 # CSharpier gate
 ./scripts/ci/check-markdown.sh                  # Markdown check
+yamllint -c .yamllint.yml .github .github/dependabot.yml # YAML syntax/style
+actionlint                                      # GitHub Actions workflows
 ```
 
 ### Verify Test Artifacts
@@ -195,10 +199,11 @@ ______________________________________________________________________
 
 ## Checklist Before Declaring Work Complete
 
-- [ ] Code compiles: `./scripts/build/quick.sh`
-- [ ] Tests pass: `./scripts/test/quick.sh`
-- [ ] Pre-commit passes: `bash ./scripts/dev/pre-commit.sh`
-- [ ] No remaining errors or warnings
-- [ ] Changes are ready for human review
+- [ ] Record the exact build command and observed result: `./scripts/build/quick.sh`
+- [ ] Record the exact test command and observed result: `./scripts/test/quick.sh`
+- [ ] Record the exact formatter/pre-commit command and observed result: `bash ./scripts/dev/pre-commit.sh`
+- [ ] For behavior changes, record the exact Lua comparison command and observed result.
+- [ ] For PR work, poll GitHub Actions until the PR run is green or document the newly diagnosed failing check.
+- [ ] Mark any unrun check as `not run` and residual risk.
 
-**If any check fails, the work is NOT complete.**
+Only say `green`, `verified`, `passes`, or `complete` when the exact check was observed passing. If any required check fails or was not run, the work is not green-lighted.

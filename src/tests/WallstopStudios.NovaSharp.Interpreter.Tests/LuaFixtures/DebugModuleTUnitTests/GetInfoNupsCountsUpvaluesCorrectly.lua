@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:3049
 -- @test: DebugModuleTUnitTests.GetInfoNupsCountsUpvaluesCorrectly
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local a, b, c = 1, 2, 3
                 local function noExplicitUpvalues() return 42 end
                 local function oneExplicitUpvalue() return a end

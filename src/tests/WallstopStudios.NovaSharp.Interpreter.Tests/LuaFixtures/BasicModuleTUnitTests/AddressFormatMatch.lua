@@ -2,7 +2,7 @@
 -- @novasharp-only: true
 -- @expects-error: false
 -- @test: BasicModuleTUnitTests.AddressFormatMatch
--- @compat-notes: NovaSharp intentionally uses a CONSISTENT address format across all platforms.
+-- NovaSharp intentionally uses a CONSISTENT address format across all platforms.
 --   Reference Lua address formats vary by platform:
 --     - Unix Lua: "table: 0x3f8" (0x prefix, lowercase hex)
 --     - Windows Lua: "table: 0000023111B24C20" (no 0x prefix, uppercase hex, fixed width)

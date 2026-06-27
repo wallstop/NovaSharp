@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:900
 -- @test: CoroutineModuleTUnitTests.IsYieldableInsideXpcallErrorHandlerWithinCoroutine
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 handlerYieldable = nil
 
                 function error_handler(err)

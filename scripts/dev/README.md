@@ -43,6 +43,8 @@ These hooks check for issues and **fail the commit** if problems are found:
 | ------------------- | --------------------------------------------------------- | ------------------- |
 | **Branding Check**  | Prevents legacy "MoonSharp" identifiers in staged content | All staged files    |
 | **Namespace Audit** | Validates declared namespaces match directory layout      | All `src/**/*.cs`   |
+| **YAML Lint**       | Validates staged `.yml`/`.yaml` files with yamllint       | YAML files          |
+| **Actionlint**      | Validates staged GitHub Actions workflows                 | Workflow YAML files |
 | **Test Lint Suite** | Enforces test infrastructure patterns (see below)         | `src/tests/**/*.cs` |
 
 #### Test Lint Suite
@@ -62,6 +64,8 @@ When test files are staged, these additional checks run:
 - **.NET SDK** — For CSharpier (`dotnet tool restore`)
 - **PowerShell** — For fixture catalog regeneration (`pwsh` or Windows PowerShell)
 - **Python 3.10+** — For Markdown formatting, audits, and lint scripts
+- **yamllint** — For staged YAML validation
+- **actionlint** — For staged GitHub Actions workflow validation
 
 ### Python Packages
 
@@ -71,7 +75,8 @@ Install with: `python -m pip install -r requirements.tooling.txt`
 - `mdformat-gfm==1.0.0` — GitHub Flavored Markdown support
 - `markdown-it-py==4.0.0` — Markdown link parsing
 - `requests==2.32.5` — HTTP link validation
-- `codespell==2.3.0` — Spelling audit
+- `codespell==2.4.1` — Spelling audit
+- `yamllint==1.37.1` — YAML validation fallback outside the devcontainer
 
 ### Optional
 

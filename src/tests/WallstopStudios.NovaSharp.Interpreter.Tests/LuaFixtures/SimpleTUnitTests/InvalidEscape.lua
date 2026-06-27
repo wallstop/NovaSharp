@@ -3,6 +3,6 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\SimpleTUnitTests.cs:283
 -- @test: SimpleTUnitTests.InvalidEscape
--- @compat-notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 x = 'ciao\k{41}';
 				return x;

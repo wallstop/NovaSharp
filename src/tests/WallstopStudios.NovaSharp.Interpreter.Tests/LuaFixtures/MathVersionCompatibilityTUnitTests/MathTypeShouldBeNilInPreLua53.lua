@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathVersionCompatibilityTUnitTests.cs:37
 -- @test: MathVersionCompatibilityTUnitTests.MathTypeShouldBeNilInPreLua53
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 return math.type

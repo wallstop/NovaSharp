@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\SetFenvGetFenvTUnitTests.cs:165
 -- @test: SetFenvGetFenvTUnitTests.GetFenvReflectsSetFenvChanges
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local function f() return 1 end
                 local env = { custom = true }
                 setmetatable(env, { __index = _G })

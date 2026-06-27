@@ -9,6 +9,14 @@ warn() {
   printf '%s\n' "[pre-commit] WARNING: $1" >&2
 }
 
+ACTIONLINT_VERSION="1.7.12"
+ACTIONLINT_LINUX_AMD64_SHA256="8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+ACTIONLINT_LINUX_ARM64_SHA256="325e971b6ba9bfa504672e29be93c24981eeb1c07576d730e9f7c8805afff0c6"
+ACTIONLINT_DARWIN_AMD64_SHA256="5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c644"
+ACTIONLINT_DARWIN_ARM64_SHA256="aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f"
+ACTIONLINT_CMD=""
+YAMLLINT_MODE=""
+
 # Cleans up stale git index.lock files left by crashed/killed processes.
 # A lock is considered stale if:
 #   1. The lock file exists, AND
@@ -161,6 +169,48 @@ ensure_tool_on_path() {
   fi
 }
 
+download_file() {
+  url="$1"
+  destination="$2"
+
+  if command -v curl >/dev/null 2>&1; then
+    curl -fsSL "$url" -o "$destination"
+    return
+  fi
+
+  if command -v wget >/dev/null 2>&1; then
+    wget -q --tries=5 --waitretry=2 --timeout=30 "$url" -O "$destination"
+    return
+  fi
+
+  printf '%s\n' "[pre-commit] curl or wget is required to install missing tooling from $url." >&2
+  return 1
+}
+
+verify_sha256_file() {
+  expected_checksum="$1"
+  file_path="$2"
+
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s  %s\n' "$expected_checksum" "$file_path" | sha256sum -c -
+    return
+  fi
+
+  if command -v shasum >/dev/null 2>&1; then
+    actual_checksum="$(shasum -a 256 "$file_path" | awk '{ print $1 }')"
+    if [ "$actual_checksum" = "$expected_checksum" ]; then
+      printf '%s\n' "$file_path: OK"
+      return 0
+    fi
+    printf '%s\n' "$file_path: FAILED" >&2
+    printf '%s\n' "[pre-commit] Expected SHA256 $expected_checksum but found $actual_checksum." >&2
+    return 1
+  fi
+
+  printf '%s\n' "[pre-commit] sha256sum or shasum is required to verify $file_path." >&2
+  return 1
+}
+
 run_python() {
   if [ -n "${PYTHON:-}" ]; then
     "$PYTHON" "$@"
@@ -204,6 +254,88 @@ install_python_tooling() {
 
   warn "Failed to install Python tooling dependencies. Run 'python -m pip install --break-system-packages -r requirements.tooling.txt'."
   return 1
+}
+
+ensure_yamllint_available() {
+  if command -v yamllint >/dev/null 2>&1; then
+    YAMLLINT_MODE="command"
+    return 0
+  fi
+
+  if run_python -c "import yamllint" >/dev/null 2>&1; then
+    YAMLLINT_MODE="python"
+    return 0
+  fi
+
+  warn "yamllint is not installed; installing Python tooling requirements..."
+  install_python_tooling || return 1
+
+  if command -v yamllint >/dev/null 2>&1; then
+    YAMLLINT_MODE="command"
+    return 0
+  fi
+
+  if run_python -c "import yamllint" >/dev/null 2>&1; then
+    YAMLLINT_MODE="python"
+    return 0
+  fi
+
+  printf '%s\n' "[pre-commit] yamllint is required but could not be installed." >&2
+  return 1
+}
+
+run_yamllint() {
+  if [ "$YAMLLINT_MODE" = "command" ]; then
+    yamllint "$@"
+    return
+  fi
+
+  run_python -m yamllint "$@"
+}
+
+ensure_actionlint_available() {
+  if command -v actionlint >/dev/null 2>&1; then
+    ACTIONLINT_CMD="$(command -v actionlint)"
+    return 0
+  fi
+
+  os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  machine="$(uname -m)"
+  case "$machine" in
+    x86_64|amd64) arch="amd64" ;;
+    aarch64|arm64) arch="arm64" ;;
+    *)
+      printf '%s\n' "[pre-commit] Unsupported architecture for actionlint auto-install: $machine" >&2
+      return 1
+      ;;
+  esac
+
+  case "$os:$arch" in
+    linux:amd64) checksum="$ACTIONLINT_LINUX_AMD64_SHA256" ;;
+    linux:arm64) checksum="$ACTIONLINT_LINUX_ARM64_SHA256" ;;
+    darwin:amd64) checksum="$ACTIONLINT_DARWIN_AMD64_SHA256" ;;
+    darwin:arm64) checksum="$ACTIONLINT_DARWIN_ARM64_SHA256" ;;
+    *)
+      printf '%s\n' "[pre-commit] Unsupported OS for actionlint auto-install: $os/$arch" >&2
+      return 1
+      ;;
+  esac
+
+  tool_dir="artifacts/pre-commit-tools/actionlint-${ACTIONLINT_VERSION}-${os}-${arch}"
+  ACTIONLINT_CMD="${tool_dir}/actionlint"
+  if [ -x "$ACTIONLINT_CMD" ]; then
+    return 0
+  fi
+
+  archive="actionlint_${ACTIONLINT_VERSION}_${os}_${arch}.tar.gz"
+  download_dir="${tool_dir}/download"
+  mkdir -p "$tool_dir" "$download_dir"
+
+  log "[pre-commit] Installing actionlint ${ACTIONLINT_VERSION} into ${tool_dir}..."
+  download_file "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}" "${download_dir}/${archive}"
+  verify_sha256_file "$checksum" "${download_dir}/${archive}"
+  tar -xzf "${download_dir}/${archive}" -C "$tool_dir" actionlint
+  chmod +x "$ACTIONLINT_CMD"
 }
 
 check_mdformat_version() {
@@ -418,7 +550,7 @@ check_namespace_alignment() {
 
 check_shell_executable() {
   log "[pre-commit] Checking shell script permissions..."
-  if ! run_python scripts/lint/check-shell-executable.py 2>/dev/null; then
+  if ! run_python scripts/lint/check-shell-executable.py; then
     printf '%s\n' "[pre-commit] ERROR: Shell scripts missing executable bit. See message above for fix." >&2
     exit 1
   fi
@@ -426,10 +558,62 @@ check_shell_executable() {
 
 check_shell_python_invocation() {
   log "[pre-commit] Checking shell script Python invocation patterns..."
-  if ! run_python scripts/lint/check-shell-python-invocation.py 2>/dev/null; then
+  if ! run_python scripts/lint/check-shell-python-invocation.py; then
     printf '%s\n' "[pre-commit] ERROR: Shell scripts must use explicit 'python' to invoke .py files. See message above." >&2
     exit 1
   fi
+}
+
+check_yaml_lint() {
+  yaml_output="$(git diff --cached --name-only --diff-filter=ACM -- '*.yml' '*.yaml' || printf '')"
+  if [ -z "$yaml_output" ]; then
+    return
+  fi
+
+  ensure_yamllint_available
+  log "[pre-commit] Running yamllint on staged YAML files..."
+
+  (
+    set -f
+    old_ifs=$IFS
+    IFS='
+'
+    set -- dummy
+    for file in $yaml_output; do
+      [ -z "$file" ] && continue
+      set -- "$@" "$file"
+    done
+    shift
+    IFS=$old_ifs
+
+    run_yamllint -c .yamllint.yml "$@"
+  )
+}
+
+check_github_actions_lint() {
+  workflow_output="$(git diff --cached --name-only --diff-filter=ACM -- '.github/workflows/*.yml' '.github/workflows/*.yaml' || printf '')"
+  if [ -z "$workflow_output" ]; then
+    return
+  fi
+
+  ensure_actionlint_available
+  log "[pre-commit] Running actionlint on staged GitHub Actions workflows..."
+
+  (
+    set -f
+    old_ifs=$IFS
+    IFS='
+'
+    set -- dummy
+    for file in $workflow_output; do
+      [ -z "$file" ] && continue
+      set -- "$@" "$file"
+    done
+    shift
+    IFS=$old_ifs
+
+    "$ACTIONLINT_CMD" "$@"
+  )
 }
 
 check_test_lint() {
@@ -443,22 +627,22 @@ check_test_lint() {
   lint_failed=0
 
   # Check for temp path usage violations
-  if ! run_python scripts/lint/check-temp-path-usage.py 2>/dev/null; then
+  if ! run_python scripts/lint/check-temp-path-usage.py; then
     lint_failed=1
   fi
 
   # Check for userdata scope violations
-  if ! run_python scripts/lint/check-userdata-scope-usage.py 2>/dev/null; then
+  if ! run_python scripts/lint/check-userdata-scope-usage.py; then
     lint_failed=1
   fi
 
   # Check for console capture violations
-  if ! run_python scripts/lint/check-console-capture-semaphore.py 2>/dev/null; then
+  if ! run_python scripts/lint/check-console-capture-semaphore.py; then
     lint_failed=1
   fi
 
   # Check for finally block violations
-  if ! run_python scripts/lint/check-test-finally.py 2>/dev/null; then
+  if ! run_python scripts/lint/check-test-finally.py; then
     lint_failed=1
   fi
 
@@ -505,6 +689,8 @@ check_branding
 check_namespace_alignment
 check_shell_executable
 check_shell_python_invocation
+check_yaml_lint
+check_github_actions_lint
 check_test_lint
 
 # Validate LLM skill metadata (strict mode - fail on errors)

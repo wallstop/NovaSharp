@@ -3,6 +3,6 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Descriptors\OverloadedMethodMemberDescriptorTUnitTests.cs:640
 -- @test: OverloadedMethodMemberDescriptorTUnitTests.VarArgsExactArrayTypePassthrough
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local obj = TestClass.__new()
                 return obj.WithVarArgsExact(testArray)

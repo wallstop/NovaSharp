@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs
 -- @test: DebugModuleTUnitTests.GetInfoDataDrivenWhatFlags
--- @compat-notes: Tests 'n' what flag for name fields
+-- Tests 'n' what flag for name fields
 
 -- Test: debug.getinfo with 'n' flag populates name field
 local function sample(a, b)

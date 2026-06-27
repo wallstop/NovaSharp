@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\LoadModuleTUnitTests.cs:348
 -- @test: LoadModuleTUnitTests.LoadSafeThrowsWhenEnvironmentCannotBeRetrieved
--- @compat-notes: NovaSharp-only: loadsafe is a NovaSharp extension; Lua 5.1 only: _ENV is always captured
+-- NovaSharp-only: loadsafe is a NovaSharp extension; Lua 5.1 only: _ENV is always captured
 -- This test is for Lua 5.1 only, where _ENV is always captured for setfenv/getfenv compatibility.
 -- In Lua 5.2+, if the calling function doesn't reference globals, it won't have _ENV as an upvalue,
 -- and loadsafe will successfully find the global environment from the script's globals.

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\DataTypes\VmCorrectnessRegressionTUnitTests.cs:126
 -- @test: VmCorrectnessRegressionTUnitTests.DebugSetUpValueStillWorks
--- @compat-notes: Lua 5.2+: _ENV variable
+-- Lua 5.2+: _ENV variable
 local x = 10
                 local function f()
                     return x

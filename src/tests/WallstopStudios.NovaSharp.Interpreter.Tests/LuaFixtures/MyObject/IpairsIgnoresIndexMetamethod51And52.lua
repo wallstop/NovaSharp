@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\MetatableTUnitTests.cs:350
 -- @test: MyObject.IpairsIgnoresIndexMetamethod51And52
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local underlying = {10, 20, 30}
                 local proxy = {}
                 setmetatable(proxy, {

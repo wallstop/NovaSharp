@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs
 -- @test: DebugModuleTUnitTests.GetLocalDataDrivenEdgeCases
--- @compat-notes: Tests debug.getlocal with invalid indices (0, negative, beyond bounds)
+-- Tests debug.getlocal with invalid indices (0, negative, beyond bounds)
 
 -- Test: debug.getlocal with invalid indices returns nil
 local function sample(arg1, arg2, arg3)

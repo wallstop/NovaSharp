@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\CoreLib\ErrorHandlingModuleTUnitTests.cs:551
 -- @test: ErrorHandlingModuleTUnitTests.XpcallPassesExtraArgumentsInLua52Plus
--- @compat-notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 local received = {}
                 local ok, a, b, c = xpcall(function(...) 
                     for i, v in ipairs({...}) do received[i] = v end

@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:0
 -- @test: BasicModuleTUnitTests.TonumberNanStringLua51
--- @compat-notes: Lua 5.1 accepts NaN string literals via C's strtod; Lua 5.2+ rejects them (returns nil)
+-- Lua 5.1 accepts NaN string literals via C's strtod; Lua 5.2+ rejects them (returns nil)
 -- @novasharp-only-reason: string.format %q escape sequence rendering differs between Lua and NovaSharp (tab displays as /9 vs \t)
 
 -- Test that Lua 5.1 accepts various NaN string formats and returns a number

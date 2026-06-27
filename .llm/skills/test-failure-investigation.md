@@ -157,7 +157,7 @@ ______________________________________________________________________
 
 ## 🔴 Cross-Platform Comparison Harness Failures
 
-The Lua comparison harness runs fixtures against reference Lua on 3 platforms (macOS, Windows, Ubuntu) × 5 versions (5.1-5.5). This creates unique failure patterns that require systematic investigation.
+The Lua comparison harness runs fixtures against reference Lua on 3 platforms (macOS, Windows, Ubuntu) × 5 versions (5.1-5.5) in a CI lane that depends on `lint`, not the unit-test OS matrix. Treat comparison failures as independent Lua-spec signals even if a unit-test job also failed.
 
 ### Step 1: Categorize the Failure Pattern
 
@@ -194,15 +194,18 @@ Common platform differences that are NOT NovaSharp bugs:
 | `math.pow`, `math.log10`, etc.    | Windows Lua may be built without compat flags                  | `@novasharp-only: true` |
 | `__le` metamethod fallback        | Lua 5.4 Windows build may lack this                            | `@novasharp-only: true` |
 
-### Step 4: Use @compat-notes to Document
+### Step 4: Document the Reason
 
-When marking tests as `@novasharp-only: true` due to platform differences, ALWAYS add `@compat-notes`:
+When marking tests as `@novasharp-only: true`, the fixture must document the
+NovaSharp extension or platform C-library/spec implementation-defined behavior
+that makes comparison against the local reference Lua inappropriate. Use a
+plain comment next to the metadata; do not invent extra fixture metadata keys.
 
 ```lua
 -- @lua-versions: 5.1, 5.2, 5.3, 5.4, 5.5
 -- @novasharp-only: true
 -- @expects-error: false
--- @compat-notes: Windows strftime does not support %C specifier; NovaSharp is POSIX-compliant on all platforms
+-- Windows strftime does not support %C; NovaSharp is POSIX-compliant on all platforms.
 
 print(os.date("%C"))
 ```
@@ -211,12 +214,12 @@ print(os.date("%C"))
 
 **Key insight**: NovaSharp uses pure C# implementations that are often MORE correct (POSIX-compliant) than platform-specific reference Lua.
 
-| Scenario                                        | Action                                        |
-| ----------------------------------------------- | --------------------------------------------- |
-| NovaSharp is MORE correct than platform Lua     | `@novasharp-only: true` with `@compat-notes`  |
-| NovaSharp differs from ALL platforms + versions | **Fix NovaSharp** - this is a real bug        |
-| NovaSharp matches some platforms but not others | Check if NovaSharp matches the POSIX standard |
-| Reference Lua varies between platforms          | NovaSharp should be consistently correct      |
+| Scenario                                        | Action                                                |
+| ----------------------------------------------- | ----------------------------------------------------- |
+| NovaSharp is MORE correct than platform Lua     | `@novasharp-only: true` with a plain explanatory note |
+| NovaSharp differs from ALL platforms + versions | **Fix NovaSharp** - this is a real bug                |
+| NovaSharp matches some platforms but not others | Check if NovaSharp matches the POSIX standard         |
+| Reference Lua varies between platforms          | NovaSharp should be consistently correct              |
 
 ______________________________________________________________________
 

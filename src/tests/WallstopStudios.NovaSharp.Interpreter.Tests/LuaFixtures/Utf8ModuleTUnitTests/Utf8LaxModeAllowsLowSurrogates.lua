@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Utf8ModuleTUnitTests.cs
 -- @test: Utf8ModuleTUnitTests.Utf8LaxModeAllowsLowSurrogates
--- @compat-notes: Lua 5.4+ utf8 lax mode allows low surrogates (not just high)
+-- Lua 5.4+ utf8 lax mode allows low surrogates (not just high)
 
 -- Test: utf8 lax mode should accept low surrogates
 -- Reference: Lua 5.4 manual §6.5

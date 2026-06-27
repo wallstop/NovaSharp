@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StringModuleTUnitTests.cs:1957
 -- @test: StringModuleTUnitTests.FormatSAcceptsZeroInLua51
--- @compat-notes: Test targets Lua 5.1; Uses injected variable: s
+-- Test targets Lua 5.1; Uses injected variable: s
 return string.format('%s', 0)

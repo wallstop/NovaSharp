@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:1505
 -- @test: MathModuleTUnitTests.ModfReturnsFloatSubtypeInLua51And52
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local i, f = math.modf(3.5); return type(i), i, type(f), f

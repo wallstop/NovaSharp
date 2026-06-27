@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsSystemModuleTUnitTests.cs:70
 -- @test: OsSystemModuleTUnitTests.ExecuteCommandReturnsNilTupleOnNonZeroExit
--- @compat-notes: Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
+-- Test class 'OsSystemModuleTUnitTests' uses NovaSharp-specific OsSystemModule functionality
 return os.execute('fail')

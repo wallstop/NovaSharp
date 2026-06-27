@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:0
 -- @test: StringModuleTUnitTests.FormatSNumberCoercionEdgeCasesLua51
--- @compat-notes: Number-to-string formatting varies between NovaSharp and reference Lua (decimal points, exponential notation)
+-- Number-to-string formatting varies between NovaSharp and reference Lua (decimal points, exponential notation)
 
 -- In Lua 5.1, %s accepts strings AND numbers (automatic coercion for numbers).
 -- This test covers edge cases for number-to-string coercion.

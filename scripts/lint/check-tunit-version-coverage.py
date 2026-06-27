@@ -101,6 +101,9 @@ CLASS_PATTERN = re.compile(r"(?:public\s+)?(?:sealed\s+)?class\s+(\w+)")
 EXCLUDED_DIRS = {
     "TestInfrastructure",
     "Isolation",
+    "artifacts",
+    "bin",
+    "obj",
 }
 
 # Files that are infrastructure-only (no Lua execution tests)

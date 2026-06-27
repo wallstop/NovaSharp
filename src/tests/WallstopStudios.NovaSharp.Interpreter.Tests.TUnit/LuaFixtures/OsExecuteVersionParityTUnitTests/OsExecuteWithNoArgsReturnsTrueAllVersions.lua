@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsExecuteVersionParityTUnitTests.cs
 -- @test: OsExecuteVersionParityTUnitTests.OsExecuteWithNoArgsReturnsTrueAllVersions
--- @compat-notes: os.execute() with no args returns true in all Lua versions to indicate shell availability
+-- os.execute() with no args returns true in all Lua versions to indicate shell availability
 
 -- Test: os.execute() with no arguments returns true in all versions
 -- Reference: Lua Reference Manual §6.9 (all versions)

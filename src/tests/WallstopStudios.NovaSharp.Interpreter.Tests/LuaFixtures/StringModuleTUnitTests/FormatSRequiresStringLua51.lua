@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:0
 -- @test: StringModuleTUnitTests.FormatSRequiresStringLua51
--- @compat-notes: string.format %s errors on boolean/nil/table/function in Lua 5.1
+-- string.format %s errors on boolean/nil/table/function in Lua 5.1
 
 -- In Lua 5.1, %s accepts strings and numbers (automatic coercion for numbers),
 -- but errors on boolean, nil, table, and function types.

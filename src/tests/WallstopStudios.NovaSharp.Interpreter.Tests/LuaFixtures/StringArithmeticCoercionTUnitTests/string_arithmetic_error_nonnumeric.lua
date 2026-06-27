@@ -3,7 +3,7 @@
 -- @expects-error: true
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/StringArithmeticCoercionTUnitTests.cs
 -- @test: StringArithmeticCoercionTUnitTests.NonNumericStringArithmeticErrors
--- @compat-notes: Non-numeric strings cause errors in arithmetic in all versions
+-- Non-numeric strings cause errors in arithmetic in all versions
 
 -- Test: Non-numeric strings in arithmetic should error
 -- Reference: Lua 5.x manual §3.4.3

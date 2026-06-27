@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:0
 -- @test: StringModuleTUnitTests.FormatSCoercesNonStringLua52Plus
--- @compat-notes: string.format %s coerces non-string values via tostring() in Lua 5.2+
+-- string.format %s coerces non-string values via tostring() in Lua 5.2+
 
 -- In Lua 5.2+, %s automatically converts non-string values using tostring().
 -- This is a change from Lua 5.1 which required string type for %s.

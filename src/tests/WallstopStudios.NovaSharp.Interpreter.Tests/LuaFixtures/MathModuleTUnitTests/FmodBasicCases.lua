@@ -5,7 +5,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.FmodBasicCases
--- @compat-notes: Basic fmod behavior is consistent across all Lua versions
+-- Basic fmod behavior is consistent across all Lua versions
 
 local function approxEqual(a, b, eps)
     eps = eps or 0.0000001

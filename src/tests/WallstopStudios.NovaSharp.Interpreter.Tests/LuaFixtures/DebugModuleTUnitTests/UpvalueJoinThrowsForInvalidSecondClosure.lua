@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:2025
 -- @test: DebugModuleTUnitTests.UpvalueJoinThrowsForInvalidSecondClosure
--- @compat-notes: Test targets Lua 5.1; Lua 5.2+: debug.upvaluejoin (5.2+)
+-- Test targets Lua 5.1; Lua 5.2+: debug.upvaluejoin (5.2+)
 local x = 1
                 local function f1() return x end
                 local function f2() end

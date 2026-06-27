@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:0
 -- @test: MathModuleTUnitTests.ModfNegativeZeroPreservation
--- @compat-notes: math.modf preserves negative zero for fractional part of negative integers
+-- math.modf preserves negative zero for fractional part of negative integers
 
 -- Helper functions to detect signed zeros
 local function is_negative_zero(x)

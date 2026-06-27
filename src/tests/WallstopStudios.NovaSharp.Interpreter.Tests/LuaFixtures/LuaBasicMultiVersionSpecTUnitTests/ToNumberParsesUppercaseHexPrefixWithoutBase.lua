@@ -3,5 +3,5 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\LuaBasicMultiVersionSpecTUnitTests.cs:158
 -- @test: LuaBasicMultiVersionSpecTUnitTests.ToNumberParsesUppercaseHexPrefixWithoutBase
--- @compat-notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 return tonumber('0XFF')
