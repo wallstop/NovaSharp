@@ -406,8 +406,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             return script.DoString(code, null, codeFriendlyName);
         }
 
-        /// <inheritdoc/>
-        public DynValue CallFunction(string functionName, params object[] args)
+        private DynValue GetCallableFunction(string functionName, out Script script)
         {
             if (string.IsNullOrEmpty(functionName))
             {
@@ -417,7 +416,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 );
             }
 
-            Script script = GetLoadedScriptOrThrow();
+            script = GetLoadedScriptOrThrow();
             DynValue function = script.Globals.Get(functionName);
 
             if (function.Type != DataType.Function)
@@ -429,6 +428,95 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 sb.Append(function.Type.ToLuaDebuggerString());
                 sb.Append(").");
                 throw new ScriptRuntimeException(sb.ToString());
+            }
+
+            return function;
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod without allocating a params array.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(string functionName)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with one CLR object argument.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(string functionName, object arg)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with two CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(string functionName, object arg1, object arg2)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg1, arg2);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with three CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(string functionName, object arg1, object arg2, object arg3)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg1, arg2, arg3);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with four CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(
+            string functionName,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4
+        )
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg1, arg2, arg3, arg4);
+        }
+
+        /// <inheritdoc/>
+        public DynValue CallFunction(string functionName, params object[] args)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+
+            if (args == null)
+            {
+                return script.Call(function, (object)null);
             }
 
             return script.Call(function, args);

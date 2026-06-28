@@ -1,10 +1,12 @@
 namespace WallstopStudios.NovaSharp.Benchmarks
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using BenchmarkDotNet.Attributes;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Modding;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -486,5 +488,123 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Table Set: new array 2 keys")]
         public void SetTwoNewArrayKeys() => _table.Set(new object[] { "child", "leaf" }, _value);
+    }
+
+    /// <summary>
+    /// Benchmarks Unity-facing mod function calls through fixed overloads and params-array paths.
+    /// </summary>
+    [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
+    public class ModCallBenchmarks
+    {
+        private ModContainer _mod;
+        private ModManager _manager;
+        private object _firstObject = 1d;
+        private object _secondObject = 2d;
+        private object _thirdObject = 3d;
+        private object _fourthObject = 4d;
+
+        /// <summary>
+        /// Loads a mod and manager with small Lua functions used by the call benchmarks.
+        /// </summary>
+        [GlobalSetup]
+        public void Setup()
+        {
+            _firstObject = 1d;
+            _secondObject = 2d;
+            _thirdObject = 3d;
+            _fourthObject = 4d;
+
+            _mod = new ModContainer("bench").AddEntryPoint(
+                """
+                function second(a, b) return b end
+                function fourth(a, b, c, d) return d end
+                """
+            );
+            _mod.Load();
+
+            _manager = new ModManager();
+            _manager.Register(
+                new ModContainer("bench").AddEntryPoint(
+                    """
+                    function second(a, b) return b end
+                    function fourth(a, b, c, d) return d end
+                    """
+                )
+            );
+            _manager.LoadAll();
+        }
+
+        /// <summary>
+        /// Calls a mod function through the fixed two-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod CallFunction: 2 fixed objects")]
+        public DynValue CallFunctionTwoFixedObjects() =>
+            _mod.CallFunction("second", _firstObject, _secondObject);
+
+        /// <summary>
+        /// Calls a mod function through the params-array overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Mod CallFunction: params 2 objects")]
+        public DynValue CallFunctionTwoParamsArray() =>
+            _mod.CallFunction("second", new object[] { _firstObject, _secondObject });
+
+        /// <summary>
+        /// Calls a mod function through the fixed four-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod CallFunction: 4 fixed objects")]
+        public DynValue CallFunctionFourFixedObjects() =>
+            _mod.CallFunction("fourth", _firstObject, _secondObject, _thirdObject, _fourthObject);
+
+        /// <summary>
+        /// Calls a mod function through the params-array overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Mod CallFunction: params 4 objects")]
+        public DynValue CallFunctionFourParamsArray() =>
+            _mod.CallFunction(
+                "fourth",
+                new object[] { _firstObject, _secondObject, _thirdObject, _fourthObject }
+            );
+
+        /// <summary>
+        /// Broadcasts a mod function through the fixed two-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod BroadcastCall: 2 fixed objects")]
+        public IDictionary<string, DynValue> BroadcastCallTwoFixedObjects() =>
+            _manager.BroadcastCall("second", _firstObject, _secondObject);
+
+        /// <summary>
+        /// Broadcasts a mod function through the params-array overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Mod BroadcastCall: params 2 objects")]
+        public IDictionary<string, DynValue> BroadcastCallTwoParamsArray() =>
+            _manager.BroadcastCall("second", new object[] { _firstObject, _secondObject });
+
+        /// <summary>
+        /// Broadcasts a mod function through the fixed four-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod BroadcastCall: 4 fixed objects")]
+        public IDictionary<string, DynValue> BroadcastCallFourFixedObjects() =>
+            _manager.BroadcastCall(
+                "fourth",
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject
+            );
+
+        /// <summary>
+        /// Broadcasts a mod function through the params-array overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Mod BroadcastCall: params 4 objects")]
+        public IDictionary<string, DynValue> BroadcastCallFourParamsArray() =>
+            _manager.BroadcastCall(
+                "fourth",
+                new object[] { _firstObject, _secondObject, _thirdObject, _fourthObject }
+            );
     }
 }

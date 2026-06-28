@@ -75,6 +75,92 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// </summary>
         public event EventHandler OnAllModsUnloaded;
 
+        private static void ValidateFunctionName(string functionName)
+        {
+            if (string.IsNullOrEmpty(functionName))
+            {
+                throw new ArgumentException(
+                    "Function name cannot be null or empty.",
+                    nameof(functionName)
+                );
+            }
+        }
+
+        private readonly struct FixedBroadcastArguments
+        {
+            private readonly int _count;
+            private readonly object _arg1;
+            private readonly object _arg2;
+            private readonly object _arg3;
+            private readonly object _arg4;
+
+            public FixedBroadcastArguments(object arg1)
+            {
+                _count = 1;
+                _arg1 = arg1;
+                _arg2 = null;
+                _arg3 = null;
+                _arg4 = null;
+            }
+
+            public FixedBroadcastArguments(object arg1, object arg2)
+            {
+                _count = 2;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = null;
+                _arg4 = null;
+            }
+
+            public FixedBroadcastArguments(object arg1, object arg2, object arg3)
+            {
+                _count = 3;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = null;
+            }
+
+            public FixedBroadcastArguments(object arg1, object arg2, object arg3, object arg4)
+            {
+                _count = 4;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = arg4;
+            }
+
+            /// <summary>
+            /// Dispatches the stored fixed arguments to a mod container.
+            /// </summary>
+            /// <param name="mod">The mod container to invoke.</param>
+            /// <param name="functionName">The function name to call.</param>
+            /// <returns>The function result.</returns>
+            public DynValue Call(IModContainer mod, string functionName)
+            {
+                if (mod is ModContainer modContainer)
+                {
+                    return _count switch
+                    {
+                        0 => modContainer.CallFunction(functionName),
+                        1 => modContainer.CallFunction(functionName, _arg1),
+                        2 => modContainer.CallFunction(functionName, _arg1, _arg2),
+                        3 => modContainer.CallFunction(functionName, _arg1, _arg2, _arg3),
+                        _ => modContainer.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4),
+                    };
+                }
+
+                return _count switch
+                {
+                    0 => mod.CallFunction(functionName),
+                    1 => mod.CallFunction(functionName, _arg1),
+                    2 => mod.CallFunction(functionName, _arg1, _arg2),
+                    3 => mod.CallFunction(functionName, _arg1, _arg2, _arg3),
+                    _ => mod.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4),
+                };
+            }
+        }
+
         /// <summary>
         /// Registers a mod container with the manager.
         /// </summary>
@@ -400,6 +486,129 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         }
 
         /// <summary>
+        /// Calls a function on all loaded mods that have it defined without allocating a params array.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        public IDictionary<string, DynValue> BroadcastCall(string functionName)
+        {
+            return BroadcastCallFixed(functionName, default);
+        }
+
+        /// <summary>
+        /// Calls a function on all loaded mods that have it defined with one CLR object argument.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        public IDictionary<string, DynValue> BroadcastCall(string functionName, object arg)
+        {
+            return BroadcastCallFixed(functionName, new FixedBroadcastArguments(arg));
+        }
+
+        /// <summary>
+        /// Calls a function on all loaded mods that have it defined with two CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        public IDictionary<string, DynValue> BroadcastCall(
+            string functionName,
+            object arg1,
+            object arg2
+        )
+        {
+            return BroadcastCallFixed(functionName, new FixedBroadcastArguments(arg1, arg2));
+        }
+
+        /// <summary>
+        /// Calls a function on all loaded mods that have it defined with three CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        public IDictionary<string, DynValue> BroadcastCall(
+            string functionName,
+            object arg1,
+            object arg2,
+            object arg3
+        )
+        {
+            return BroadcastCallFixed(functionName, new FixedBroadcastArguments(arg1, arg2, arg3));
+        }
+
+        /// <summary>
+        /// Calls a function on all loaded mods that have it defined with four CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        public IDictionary<string, DynValue> BroadcastCall(
+            string functionName,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4
+        )
+        {
+            return BroadcastCallFixed(
+                functionName,
+                new FixedBroadcastArguments(arg1, arg2, arg3, arg4)
+            );
+        }
+
+        [SuppressMessage(
+            "Design",
+            "CA1031:Do not catch general exception types",
+            Justification = "BroadcastCall must capture all errors to report them per-mod"
+        )]
+        private Dictionary<string, DynValue> BroadcastCallFixed(
+            string functionName,
+            FixedBroadcastArguments args
+        )
+        {
+            ValidateFunctionName(functionName);
+
+            IReadOnlyList<string> modIds = GetLoadOrder();
+            Dictionary<string, DynValue> results = new Dictionary<string, DynValue>(
+                StringComparer.Ordinal
+            );
+
+            foreach (string modId in modIds)
+            {
+                IModContainer mod = GetMod(modId);
+                if (mod == null || mod.State != ModLoadState.Loaded)
+                {
+                    continue;
+                }
+
+                DynValue func = mod.GetGlobal(functionName);
+                if (func.Type != DataType.Function)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    results[modId] = args.Call(mod, functionName);
+                }
+                catch (Exception ex)
+                {
+                    // Store error as string for debugging
+                    results[modId] = DynValue.NewString(ZString.Concat("Error: ", ex.Message));
+                }
+            }
+
+            return results;
+        }
+
+        /// <summary>
         /// Calls a function on all loaded mods that have it defined.
         /// </summary>
         /// <param name="functionName">The name of the function to call.</param>
@@ -415,12 +624,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             params object[] args
         )
         {
-            if (string.IsNullOrEmpty(functionName))
+            ValidateFunctionName(functionName);
+
+            if (args == null)
             {
-                throw new ArgumentException(
-                    "Function name cannot be null or empty.",
-                    nameof(functionName)
-                );
+                return BroadcastCallFixed(functionName, new FixedBroadcastArguments(null));
             }
 
             IReadOnlyList<string> modIds = GetLoadOrder();

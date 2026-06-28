@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modding;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
@@ -536,6 +537,79 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
+        public async Task ModContainerFixedCallOverloadsInvokeFunction()
+        {
+            ModContainer mod = new ModContainer("test").AddEntryPoint(
+                """
+                function argc(...) return select('#', ...) end
+                function add2(a, b) return a + b end
+                function add3(a, b, c) return a + b + c end
+                function add4(a, b, c, d) return a + b + c + d end
+                """
+            );
+
+            mod.Load();
+
+            DynValue zero = mod.CallFunction("argc");
+            DynValue one = mod.CallFunction("argc", "value");
+            DynValue two = mod.CallFunction("add2", 3, 4);
+            DynValue three = mod.CallFunction("add3", 1, 2, 3);
+            DynValue four = mod.CallFunction("add4", 1, 2, 3, 4);
+
+            await Assert.That(zero.Number).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(one.Number).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(two.Number).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(three.Number).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(four.Number).IsEqualTo(10).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModContainerFixedCallTreatsNullAsSingleNilArgument()
+        {
+            ModContainer mod = new ModContainer("test").AddEntryPoint(
+                "function inspect(a) if a == nil then return 'nil' else return type(a) end end"
+            );
+
+            mod.Load();
+            object[] nullArgs = null;
+
+            DynValue result = mod.CallFunction("inspect", null);
+            DynValue explicitNullArray = mod.CallFunction("inspect", nullArgs);
+
+            await Assert.That(result.String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(explicitNullArray.String).IsEqualTo("nil").ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModContainerObjectArrayCallPreservesSpreadAndSingleArgumentForms()
+        {
+            ModContainer mod = new ModContainer("test").AddEntryPoint(
+                "function argc(...) return select('#', ...) end"
+            );
+            object[] args = new object[] { 1, 2 };
+
+            mod.Load();
+
+            DynValue spread = mod.CallFunction("argc", args);
+            DynValue single = mod.CallFunction("argc", (object)args);
+
+            await Assert.That(spread.Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(single.Number).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModContainerFixedCallThrowsOnNonFunctionGlobal()
+        {
+            ModContainer mod = new ModContainer("test").AddEntryPoint("value = 1");
+            mod.Load();
+
+            await Assert
+                .That(() => mod.CallFunction("value", 1, 2))
+                .Throws<Errors.ScriptRuntimeException>()
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task ModContainerCallThrowsOnMissingFunction()
         {
             ModContainer mod = new ModContainer("test");
@@ -1052,6 +1126,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
+        public async Task ModManagerFixedBroadcastCallPassesArgumentsToLoadedMods()
+        {
+            ModManager manager = new ModManager();
+
+            ModContainer mod1 = new ModContainer("mod1").AddEntryPoint(
+                "function add4(a, b, c, d) return a + b + c + d end"
+            );
+
+            ModContainer mod2 = new ModContainer("mod2").AddEntryPoint(
+                "function add4(a, b, c, d) return (a + b + c + d) * 2 end"
+            );
+
+            manager.Register(mod1);
+            manager.Register(mod2);
+            manager.LoadAll();
+
+            IDictionary<string, DynValue> results = manager.BroadcastCall("add4", 1, 2, 3, 4);
+
+            await Assert.That(results.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(results["mod1"].Number).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(results["mod2"].Number).IsEqualTo(20).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerObjectArrayBroadcastPreservesSpreadAndSingleArgumentForms()
+        {
+            ModManager manager = new ModManager();
+            ModContainer mod = new ModContainer("mod1").AddEntryPoint(
+                "function argc(...) return select('#', ...) end"
+            );
+            object[] args = new object[] { 1, 2 };
+
+            manager.Register(mod);
+            manager.LoadAll();
+
+            IDictionary<string, DynValue> spread = manager.BroadcastCall("argc", args);
+            IDictionary<string, DynValue> single = manager.BroadcastCall("argc", (object)args);
+
+            await Assert.That(spread["mod1"].Number).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(single["mod1"].Number).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastTreatsNullAsSingleNilArgument()
+        {
+            ModManager manager = new ModManager();
+            ModContainer mod = new ModContainer("mod1").AddEntryPoint(
+                "function inspect(a) if a == nil then return 'nil' else return type(a) end end"
+            );
+
+            manager.Register(mod);
+            manager.LoadAll();
+            object[] nullArgs = null;
+
+            IDictionary<string, DynValue> results = manager.BroadcastCall("inspect", null);
+            IDictionary<string, DynValue> explicitNullArray = manager.BroadcastCall(
+                "inspect",
+                nullArgs
+            );
+
+            await Assert.That(results["mod1"].String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert
+                .That(explicitNullArray["mod1"].String)
+                .IsEqualTo("nil")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerFixedBroadcastCallFallsBackToCustomContainer()
+        {
+            ModManager manager = new ModManager();
+            CustomModContainer mod = new CustomModContainer();
+
+            manager.Register(mod);
+
+            IDictionary<string, DynValue> results = manager.BroadcastCall("target", 1, 2, 3);
+
+            await Assert.That(results.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(results["custom"].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(mod.LastFunctionName).IsEqualTo("target").ConfigureAwait(false);
+            await Assert.That(mod.LastArgumentCount).IsEqualTo(3).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task ModManagerGetModGlobalReturnsValue()
         {
             ModManager manager = new ModManager();
@@ -1148,6 +1306,116 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             await Assert.That(str).Contains("my-mod").ConfigureAwait(false);
             await Assert.That(str).Contains("Unloaded").ConfigureAwait(false);
+        }
+
+        private sealed class CustomModContainer : IModContainer
+        {
+            private readonly Script _script = new(CoreModulePresets.Default);
+            private readonly DynValue _function;
+
+            public CustomModContainer()
+            {
+                _function = _script.LoadString("return function() end");
+            }
+
+            public string ModId => "custom";
+
+            public string DisplayName => "custom";
+
+            public ModLoadState State => ModLoadState.Loaded;
+
+            public Script Script => _script;
+
+            public Table Globals => _script.Globals;
+
+            public Exception LastError => null;
+
+            public ScriptOptions ScriptOptions { get; set; } = Script.DefaultOptions;
+
+            public CoreModules CoreModules { get; set; } = CoreModulePresets.Default;
+
+            public event EventHandler<ModEventArgs> OnLoading
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnLoaded
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnUnloading
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnUnloaded
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnReloading
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnReloaded
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModErrorEventArgs> OnError
+            {
+                add { }
+                remove { }
+            }
+
+            public string LastFunctionName { get; private set; }
+
+            public int LastArgumentCount { get; private set; }
+
+            public ModOperationResult Load()
+            {
+                return ModOperationResult.Succeeded(ModLoadState.Loaded);
+            }
+
+            public ModOperationResult Unload()
+            {
+                return ModOperationResult.Succeeded(ModLoadState.Unloaded);
+            }
+
+            public ModOperationResult Reload()
+            {
+                return ModOperationResult.Succeeded(ModLoadState.Loaded);
+            }
+
+            public DynValue DoString(string code, string codeFriendlyName = null)
+            {
+                return _script.DoString(code, null, codeFriendlyName);
+            }
+
+            public DynValue CallFunction(string functionName, params object[] args)
+            {
+                LastFunctionName = functionName;
+                LastArgumentCount = args == null ? -1 : args.Length;
+                return DynValue.NewNumber(LastArgumentCount);
+            }
+
+            public DynValue GetGlobal(string name)
+            {
+                return name == "target" ? _function : DynValue.Nil;
+            }
+
+            public void SetGlobal(string name, DynValue value)
+            {
+                _script.Globals.Set(name, value);
+            }
         }
     }
 }
