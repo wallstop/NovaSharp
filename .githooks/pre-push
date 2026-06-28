@@ -8,8 +8,9 @@
 #   2. Markdown format check (documentation formatting)
 #   3. Branding check (NovaSharp naming consistency)
 #   4. Namespace alignment check (C# namespace conventions)
-#   5. YAML and GitHub Actions workflow linting
-#   6. Build check (solution compiles) - optional, skip with SKIP_BUILD_ON_PUSH=1
+#   5. Tooling setup consistency
+#   6. YAML and GitHub Actions workflow linting
+#   7. Build check (solution compiles) - optional, skip with SKIP_BUILD_ON_PUSH=1
 #
 # To skip the build check (useful for documentation-only changes):
 #   SKIP_BUILD_ON_PUSH=1 git push
@@ -48,8 +49,8 @@ cd "$repo_root"
 # -----------------------------------------------------------------------------
 log "Checking C# formatting with CSharpier..."
 
-if ! dotnet tool run csharpier check .; then
-  log_error "CSharpier check failed - run 'dotnet tool run csharpier .' to fix"
+if ! bash ./scripts/ci/check-csharpier.sh; then
+  log_error "CSharpier check failed - run 'dotnet tool run csharpier format .' to fix"
   exit 1
 fi
 
@@ -92,7 +93,19 @@ fi
 log_success "Namespace alignment check passed"
 
 # -----------------------------------------------------------------------------
-# Check 5: YAML and GitHub Actions lint checks
+# Check 5: Tooling setup consistency
+# -----------------------------------------------------------------------------
+log "Checking tooling setup consistency..."
+
+if ! python3 scripts/lint/check-tooling-consistency.py; then
+  log_error "Tooling setup consistency check failed - review output above for issues"
+  exit 1
+fi
+
+log_success "Tooling setup consistency check passed"
+
+# -----------------------------------------------------------------------------
+# Check 6: YAML and GitHub Actions lint checks
 # -----------------------------------------------------------------------------
 log "Checking YAML and GitHub Actions workflows..."
 
@@ -104,7 +117,7 @@ fi
 log_success "YAML and GitHub Actions lint passed"
 
 # -----------------------------------------------------------------------------
-# Check 6: Build check (optional)
+# Check 7: Build check (optional)
 # -----------------------------------------------------------------------------
 if [ "${SKIP_BUILD_ON_PUSH:-0}" = "1" ]; then
   log "Skipping build check (SKIP_BUILD_ON_PUSH=1)"

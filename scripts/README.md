@@ -28,7 +28,7 @@ For fast iterative development, use the quick build and test scripts:
 - `ci/` — Repository health guards (e.g., README/link enforcement) that run locally or in CI before builds/tests execute.
 - `dev/` — Local developer utilities, including the shared pre-commit hook installer/driver that auto-fixes formatting issues before commits.
 - `branding/` — Guardrail scripts (e.g., `ensure-novasharp-branding.sh`) that prevent regressions to the legacy brand.
-- `lint/` — Static analysis helpers that enforce test isolation patterns (console capture coordination, platform hooks, temp path usage, userdata scoping) and prevent manual `finally` blocks in tests.
+- `lint/` — Static analysis helpers that enforce test isolation patterns (console capture coordination, platform hooks, temp path usage, userdata scoping), prevent manual `finally` blocks in tests, and keep developer tooling setup aligned.
 - `modernization/` — One-off helpers such as `generate-moonsharp-audit.ps1` used during the modernization campaign.
 
 ## Usage Guidelines

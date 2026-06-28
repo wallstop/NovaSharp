@@ -130,7 +130,7 @@ $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 Push-Location $repoRoot
 try {
     Write-Host "Restoring local tools..."
-    dotnet tool restore | Out-Null
+    dotnet tool restore
 
     $coverageRoot = Join-Path $repoRoot "artifacts/coverage"
     New-Item -ItemType Directory -Force -Path $coverageRoot | Out-Null

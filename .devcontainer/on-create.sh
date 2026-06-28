@@ -57,6 +57,27 @@ run_with_retries() {
 echo "🔧 Step 0/3: Pre-flight check..."
 echo "   Working directory: $(pwd)"
 
+REQUIRED_DOTNET_SDK_PREFIX="$(python3 - <<'PY'
+import json
+
+with open("global.json", encoding="utf-8") as handle:
+    sdk_version = json.load(handle)["sdk"]["version"]
+
+print(".".join(sdk_version.split(".")[:2]))
+PY
+)"
+ACTUAL_DOTNET_SDK="$(dotnet --version)"
+case "${ACTUAL_DOTNET_SDK}" in
+    "${REQUIRED_DOTNET_SDK_PREFIX}".*)
+        echo "   .NET SDK: ${ACTUAL_DOTNET_SDK} (matches global.json ${REQUIRED_DOTNET_SDK_PREFIX}.x)"
+        ;;
+    *)
+        echo "❌ .NET SDK mismatch: global.json requires ${REQUIRED_DOTNET_SDK_PREFIX}.x, but dotnet --version reported ${ACTUAL_DOTNET_SDK}."
+        echo "   Rebuild the devcontainer image or install dotnet-sdk-${REQUIRED_DOTNET_SDK_PREFIX}."
+        exit 1
+        ;;
+esac
+
 # Fix VS Code Server extension permissions and clean corrupted installations
 # This addresses the "Cannot find module tikTokenizerWorker.js" error
 VSCODE_SERVER_DIR="/home/vscode/.vscode-server"

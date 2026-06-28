@@ -35,7 +35,7 @@ if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
 }
 
 Write-Host "Restoring local tools..."
-dotnet tool restore | Out-Null
+dotnet tool restore
 if ($LASTEXITCODE -ne 0) {
     throw "dotnet tool restore failed."
 }

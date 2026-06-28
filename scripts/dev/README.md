@@ -43,6 +43,7 @@ These hooks check for issues and **fail the commit** if problems are found:
 | ------------------- | --------------------------------------------------------- | ------------------- |
 | **Branding Check**  | Prevents legacy "MoonSharp" identifiers in staged content | All staged files    |
 | **Namespace Audit** | Validates declared namespaces match directory layout      | All `src/**/*.cs`   |
+| **Tooling Setup**   | Keeps devcontainer, hooks, and local tool setup aligned   | Always              |
 | **YAML Lint**       | Validates staged `.yml`/`.yaml` files with yamllint       | YAML files          |
 | **Actionlint**      | Validates staged GitHub Actions workflows                 | Workflow YAML files |
 | **Test Lint Suite** | Enforces test infrastructure patterns (see below)         | `src/tests/**/*.cs` |
@@ -102,6 +103,16 @@ Follow the guidance in the error message. Generally:
 
 - Use scope helpers (`TempFileScope`, `UserDataRegistrationScope`, etc.) instead of direct API calls
 - Avoid `finally` blocks in tests — use `IDisposable` scopes instead
+
+### Tooling setup consistency fails
+
+Run the reported command manually for full output:
+
+```bash
+python scripts/lint/check-tooling-consistency.py
+```
+
+Typical fixes are aligning `.devcontainer/Dockerfile` with `global.json`, using manifest-local tools through `dotnet tool restore` plus `dotnet tool run`, and avoiding devcontainer mounts over `.dotnet/tools`.
 
 ### Skipping hooks temporarily
 

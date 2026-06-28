@@ -44,4 +44,5 @@ run_with_retries() {
 }
 
 cd "${WORKSPACE_DIR}"
+run_with_retries 5 dotnet tool restore --verbosity minimal
 run_with_retries 5 dotnet restore src/NovaSharp.sln --verbosity minimal

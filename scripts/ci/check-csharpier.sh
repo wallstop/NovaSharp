@@ -8,7 +8,7 @@ if [[ -z "$repo_root" ]]; then
 fi
 cd "$repo_root"
 
-dotnet tool restore >/dev/null
+dotnet tool restore
 if ! dotnet tool run csharpier check .; then
   echo "CSharpier formatting issues detected. Run 'dotnet tool run csharpier format .' to fix." >&2
   exit 1

@@ -18,6 +18,17 @@ ACTIONLINT_WINDOWS_AMD64_SHA256="6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c
 ACTIONLINT_WINDOWS_ARM64_SHA256="cadcf7ea4efe3a68728893813643cebe1185e5b1d4be5b96245f65c9a4d5ea41"
 ACTIONLINT_CMD=""
 YAMLLINT_MODE=""
+DOTNET_TOOLS_RESTORED=0
+
+restore_dotnet_tools() {
+  if [ "$DOTNET_TOOLS_RESTORED" -eq 1 ]; then
+    return
+  fi
+
+  log "[pre-commit] Restoring dotnet tools..."
+  dotnet tool restore
+  DOTNET_TOOLS_RESTORED=1
+}
 
 # Cleans up stale git index.lock files left by crashed/killed processes.
 # A lock is considered stale if:
@@ -411,6 +422,7 @@ staged_files_for_pattern() {
 }
 
 format_all_csharp_files() {
+  restore_dotnet_tools
   log "[pre-commit] Running CSharpier across the entire repository..."
   dotnet tool run csharpier format . >/dev/null
   log "[pre-commit] CSharpier formatting complete."
@@ -595,6 +607,14 @@ check_shell_python_invocation() {
   fi
 }
 
+check_tooling_consistency() {
+  log "[pre-commit] Checking tooling setup consistency..."
+  if ! run_python scripts/lint/check-tooling-consistency.py; then
+    printf '%s\n' "[pre-commit] ERROR: Devcontainer, hooks, or CI tooling setup is inconsistent. See message above." >&2
+    exit 1
+  fi
+}
+
 check_yaml_lint() {
   yaml_output="$(git diff --cached --name-only --diff-filter=ACM -- '*.yml' '*.yaml' || printf '')"
   if [ -z "$yaml_output" ]; then
@@ -759,8 +779,7 @@ if [ "${1:-}" = "--lint-yaml-actions" ]; then
   exit 0
 fi
 
-log "[pre-commit] Restoring dotnet tools (CSharpier)..."
-dotnet tool restore >/dev/null
+restore_dotnet_tools
 
 # === Auto-fix / Auto-update Hooks ===
 # These hooks auto-fix issues and restage files
@@ -779,6 +798,7 @@ check_branding
 check_namespace_alignment
 check_shell_executable
 check_shell_python_invocation
+check_tooling_consistency
 check_yaml_lint
 check_github_actions_lint
 check_test_lint

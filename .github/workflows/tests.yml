@@ -116,6 +116,9 @@ jobs:
       - name: Enforce Python invocation pattern in shell scripts
         run: ./scripts/ci/check-shell-python-invocation.sh
         shell: bash
+      - name: Enforce tooling setup consistency
+        run: ./scripts/ci/check-tooling-consistency.sh
+        shell: bash
 
   dotnet-tests:
     needs: lint

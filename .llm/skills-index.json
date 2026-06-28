@@ -99,7 +99,7 @@
     {
       "name": "ci-workflow",
       "file_path": ".llm/skills/ci-workflow.md",
-      "line_count": 210,
+      "line_count": 212,
       "triggers": [],
       "category": "uncategorized",
       "related": [],

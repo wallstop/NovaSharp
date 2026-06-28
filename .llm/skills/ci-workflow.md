@@ -46,6 +46,7 @@ This runs ALL validation checks:
 | Branding Check   | No legacy-brand references in new code | No          |
 | Namespace Align  | Namespaces match directory structure   | No          |
 | Shell Executable | `.sh` files have executable bit        | No          |
+| Tooling Setup    | Devcontainer/hooks/CI match tool pins  | No          |
 | YAML Lint        | Staged YAML is syntactically valid     | No          |
 | Actionlint       | GitHub Actions workflows are valid     | No          |
 | Test Lint        | Test infrastructure patterns           | No          |
@@ -120,6 +121,7 @@ When modifying workflows or scripts, verify locally first:
 ./scripts/branding/ensure-novasharp-branding.sh # Branding check
 ./scripts/ci/check-csharpier.sh                 # CSharpier gate
 ./scripts/ci/check-markdown.sh                  # Markdown check
+./scripts/ci/check-tooling-consistency.sh       # Devcontainer/hook/tooling guard
 yamllint -c .yamllint.yml .github .github/dependabot.yml # YAML syntax/style
 actionlint                                      # GitHub Actions workflows
 ```

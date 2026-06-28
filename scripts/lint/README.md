@@ -76,6 +76,19 @@ Incorrect pattern:
 python scripts/lint/check-shell-python-invocation.py
 ```
 
+### check-tooling-consistency.py
+
+Validates that development setup entrypoints agree on the same .NET SDK and local .NET tool model. The check fails when:
+
+- `.devcontainer/Dockerfile` does not explicitly install the SDK feature band pinned by `global.json`
+- the devcontainer installs global .NET tools or mounts over `.dotnet/tools`
+- shell entrypoints run manifest-local tools without restoring them first
+- devcontainer lifecycle scripts install unpinned dotnet template packages
+
+```bash
+python scripts/lint/check-tooling-consistency.py
+```
+
 ### check-tunit-version-coverage.py
 
 Audits TUnit test files for Lua version coverage. NovaSharp supports Lua 5.1, 5.2, 5.3, 5.4, and 5.5, and every TUnit test that executes Lua code should declare which versions it targets via `[Arguments(LuaCompatibilityVersion.*)]` attributes.

@@ -100,7 +100,8 @@ ______________________________________________________________________
 ./scripts/test/quick.sh -c MathModule   # Class name
 
 # Format code
-dotnet csharpier format .
+dotnet tool restore
+dotnet tool run csharpier format .
 ```
 
 Before closing behavior or CI work, run the relevant targeted tests, `./scripts/build/quick.sh`, `./scripts/test/quick.sh`, formatting, Lua comparison when behavior changes, then poll PR CI until green or document the newly diagnosed failure. If any required check was not run, say exactly that and do not present the work as complete.

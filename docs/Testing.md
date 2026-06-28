@@ -154,7 +154,7 @@ Track active goals and gaps in `PLAN.md`, and update this document as new harnes
 
 ## Analyzer & Warning Policy
 
-- **Formatter gate**: Run `dotnet csharpier .` (or `dotnet csharpier --check .` if you only need verification) before every push. CI executes the same command via `scripts/ci/check-csharpier.sh` during the lint job, so any mismatch will fail PRs immediately. If `dotnet format` or another tool disagrees with CSharpier output, treat that as a tooling bug—update `.editorconfig`/workflow settings instead of reformatting away from CSharpier style.
+- **Formatter gate**: Run `dotnet tool restore` followed by `dotnet tool run csharpier format .` (or `dotnet tool run csharpier check .` if you only need verification) before every push. CI executes the same check via `scripts/ci/check-csharpier.sh` during the lint job, so any mismatch will fail PRs immediately. If `dotnet format` or another tool disagrees with CSharpier output, treat that as a tooling bug—update `.editorconfig`/workflow settings instead of reformatting away from CSharpier style.
 
 - **Solution baseline (2025-12-07)**: `Directory.Build.props` now sets `<TreatWarningsAsErrors>true>`, so `dotnet build src/NovaSharp.sln -c Release -nologo` fails on any compiler or analyzer warning. Run that command before every push and note it in your PR (the template now calls out analyzer commands explicitly). If a warning is unavoidable, add a targeted suppression plus a `PLAN.md` entry before merging.
 

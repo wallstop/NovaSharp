@@ -50,42 +50,89 @@ run_with_retries() {
     done
 }
 
-# ============================================================================
-# STEP 1: Install TUnit templates
-# ============================================================================
-echo "📦 Step 1/5: Installing TUnit templates..."
-if ! run_with_retries 5 dotnet new install TUnit.Templates --force; then
-    echo "   Warning: failed to install/update TUnit templates"
-fi
+ensure_python_venv() {
+    local venv_dir="$1"
+    local venv_python="${venv_dir}/bin/python"
+    local recreate=0
 
-# ============================================================================
-# STEP 2: Setup Python environment
-# ============================================================================
-echo ""
-echo "🐍 Step 2/5: Setting up Python environment..."
+    if [ -x "${venv_python}" ]; then
+        if ! "${venv_python}" - <<'PY'
+import sys
 
-VENV_DIR="${WORKSPACE_DIR}/.venv"
-python3 -m venv "${VENV_DIR}"
-run_with_retries 5 "${VENV_DIR}/bin/pip" install --upgrade pip --retries 5 --timeout 60
-run_with_retries 5 "${VENV_DIR}/bin/pip" install -r requirements.tooling.txt --retries 5 --timeout 60
+if sys.prefix == sys.base_prefix:
+    raise SystemExit("python is not running from a virtual environment")
+PY
+        then
+            echo "   Existing virtual environment is unhealthy; recreating."
+            recreate=1
+        fi
+    elif [ -e "${venv_dir}" ]; then
+        echo "   Existing .venv is not a usable Python environment; recreating."
+        recreate=1
+    else
+        recreate=1
+    fi
 
-# Ensure venv is on PATH for future sessions
-BASHRC_MARKER="# NovaSharp Python venv activation"
-if [ ! -f ~/.bashrc ] || ! grep -qF "${BASHRC_MARKER}" ~/.bashrc; then
+    if [ "${recreate}" = "1" ]; then
+        rm -rf "${venv_dir}"
+        python3 -m venv "${venv_dir}"
+    fi
+}
+
+refresh_bashrc_venv_path() {
+    local venv_dir="$1"
+    local bashrc="${HOME}/.bashrc"
+    local temp_bashrc
+    temp_bashrc="$(mktemp)"
+
+    if [ -f "${bashrc}" ]; then
+        awk '
+            $0 == "# >>> NovaSharp Python venv activation >>>" { skip = 1; next }
+            $0 == "# <<< NovaSharp Python venv activation <<<" { skip = 0; next }
+            skip != 1 { print }
+        ' "${bashrc}" > "${temp_bashrc}"
+    fi
+
     {
         echo ""
-        echo "${BASHRC_MARKER}"
-        echo "export PATH=\"${VENV_DIR}/bin:\${PATH}\""
-    } >> ~/.bashrc
-fi
+        echo "# >>> NovaSharp Python venv activation >>>"
+        echo "export PATH=\"${venv_dir}/bin:\${PATH}\""
+        echo "# <<< NovaSharp Python venv activation <<<"
+    } >> "${temp_bashrc}"
+
+    mv "${temp_bashrc}" "${bashrc}"
+}
+
+# ============================================================================
+# STEP 1: Setup Python environment
+# ============================================================================
+echo ""
+echo "🐍 Step 1/4: Setting up Python environment..."
+
+VENV_DIR="${WORKSPACE_DIR}/.venv"
+VENV_PYTHON="${VENV_DIR}/bin/python"
+ensure_python_venv "${VENV_DIR}"
+run_with_retries 5 "${VENV_PYTHON}" -m pip install --upgrade pip --retries 5 --timeout 60
+run_with_retries 5 "${VENV_PYTHON}" -m pip install -r requirements.tooling.txt --retries 5 --timeout 60
+"${VENV_PYTHON}" -m pip check
+"${VENV_PYTHON}" - <<'PY'
+import codespell_lib
+import markdown_it
+import mdformat
+import requests
+import yamllint
+PY
+
+# Ensure venv is on PATH for future sessions
+refresh_bashrc_venv_path "${VENV_DIR}"
 
 echo "   Virtual environment: ${VENV_DIR}"
 
 # ============================================================================
-# STEP 3: Install pre-commit hooks
+# STEP 2: Install pre-commit hooks
 # ============================================================================
 echo ""
-echo "🪝 Step 3/5: Installing pre-commit hooks..."
+echo "🪝 Step 2/4: Installing pre-commit hooks..."
 if [ -f "scripts/dev/install-hooks.sh" ]; then
     if ! bash scripts/dev/install-hooks.sh; then
         echo "   Warning: install-hooks.sh reported an error"
@@ -95,10 +142,10 @@ else
 fi
 
 # ============================================================================
-# STEP 4: Optional build cache pre-warm
+# STEP 3: Optional build cache pre-warm
 # ============================================================================
 echo ""
-echo "🔥 Step 4/5: Optional build cache pre-warm..."
+echo "🔥 Step 3/4: Optional build cache pre-warm..."
 if [ "${NOVA_PREWARM_BUILD:-0}" = "1" ]; then
     echo "   Prewarming build cache (NOVA_PREWARM_BUILD=1)"
     dotnet build src/NovaSharp.sln -c Release -m --verbosity minimal
@@ -107,16 +154,20 @@ else
 fi
 
 # ============================================================================
-# STEP 5: Environment verification
+# STEP 4: Environment verification
 # ============================================================================
 echo ""
-echo "🔎 Step 5/5: Verifying toolchain..."
+echo "🔎 Step 4/4: Verifying toolchain..."
 echo ""
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║           Environment Verification                             ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 
+echo "📌 Restoring local .NET tools:"
+run_with_retries 5 dotnet tool restore --verbosity minimal
+
+echo ""
 echo "📌 .NET SDKs:"
 dotnet --list-sdks | sed 's/^/   /'
 
@@ -150,14 +201,19 @@ else
 fi
 
 echo ""
-echo "📌 Global Tools:"
-if CSHARPIER_VERSION="$(csharpier --version 2>&1)"; then
+echo "📌 Local .NET Tools:"
+if CSHARPIER_VERSION="$(dotnet tool run csharpier --version 2>&1)"; then
     echo "   CSharpier:         ${CSHARPIER_VERSION}"
 else
     echo "   CSharpier:         NOT FOUND"
 fi
-if REPORTGENERATOR_PATH="$(command -v reportgenerator 2>/dev/null)"; then
-    echo "   ReportGenerator:   installed (${REPORTGENERATOR_PATH})"
+if REPORTGENERATOR_HELP="$(dotnet tool run reportgenerator -help 2>&1)"; then
+    REPORTGENERATOR_VERSION="$(printf '%s\n' "${REPORTGENERATOR_HELP}" | sed -n 's/^ReportGenerator //p' | head -1)"
+    if [ -n "${REPORTGENERATOR_VERSION}" ]; then
+        echo "   ReportGenerator:   ${REPORTGENERATOR_VERSION}"
+    else
+        echo "   ReportGenerator:   installed"
+    fi
 else
     echo "   ReportGenerator:   NOT FOUND"
 fi

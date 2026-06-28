@@ -62,9 +62,10 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 ## Formatting & Pre-commit Hooks
 
 - The shared pre-commit hook (`bash ./scripts/dev/pre-commit.sh`) runs automatically once `scripts/dev/install-hooks.sh` has been executed and the Python tooling requirements are installed. It performs the following before each commit:
-  - `dotnet csharpier .` (auto-fix all C# files).
+  - `dotnet tool restore` and `dotnet tool run csharpier format .` (auto-fix all C# files).
   - `python scripts/ci/format_markdown.py --fix --files <staged markdown>` to keep Markdown deterministic.
   - `python scripts/ci/check_markdown_links.py --files <staged markdown>` to ensure links stay healthy.
+  - `python scripts/lint/check-tooling-consistency.py` to keep the devcontainer, hooks, CI, `global.json`, and local .NET tool manifest aligned.
   - Restages the results so your commit includes the auto-fixes.
 - Run the hook manually if you need to double-check formatting outside of a commit:
   ```bash
@@ -85,7 +86,7 @@ Before opening a PR:
 1. Run the interpreter tests (see above).
 1. Run coverage if your change affects runtime/tooling behaviour.
 1. Run the branding + namespace scripts.
-1. Ensure formatting hooks have run (or run `dotnet csharpier .` + `python scripts/ci/format_markdown.py --check --all` + `bash ./scripts/ci/check-markdown.sh` manually) so CI doesn't reject style issues.
+1. Ensure formatting hooks have run (or run `dotnet tool restore` + `dotnet tool run csharpier format .` + `python scripts/ci/format_markdown.py --check --all` + `bash ./scripts/ci/check-markdown.sh` manually) so CI doesn't reject style issues.
 1. Update relevant docs (`docs/README.md`, `docs/Testing.md`, feature-specific guides).
 1. Update `PLAN.md` if you progressed a milestone item.
 

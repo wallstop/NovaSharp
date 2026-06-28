@@ -8,7 +8,7 @@ if [[ -z "$repo_root" ]]; then
 fi
 cd "$repo_root"
 
-dotnet tool restore >/dev/null
+dotnet tool restore
 
 echo "[autofix] Running CSharpier..."
 dotnet tool run csharpier format . >/dev/null

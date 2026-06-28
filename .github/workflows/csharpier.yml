@@ -25,4 +25,4 @@ jobs:
       - name: Restore tools
         run: dotnet tool restore
       - name: Check formatting
-        run: dotnet csharpier check .
+        run: dotnet tool run csharpier check .

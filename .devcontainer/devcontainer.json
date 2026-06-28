@@ -12,8 +12,6 @@
     "mounts": [
         // Cache NuGet packages in a named volume for persistence across rebuilds
         "source=novasharp-nuget-cache,target=/home/vscode/.nuget,type=volume",
-        // Cache dotnet tools
-        "source=novasharp-dotnet-tools,target=/home/vscode/.dotnet/tools,type=volume",
         // Build artifact cache for faster compilation I/O
         // Uses a named volume for build cache persistence across container rebuilds
         "source=novasharp-build-cache,target=${containerWorkspaceFolder}/artifacts/build-cache,type=volume"
