@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -99,6 +100,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RegisterModuleTypeAcceptsArgumentViewCallbacks(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModules.Basic);
+            Table globals = script.Globals;
+
+            globals.RegisterModuleType(typeof(ArgumentViewModule));
+
+            DynValue result = script.DoString("return argument_view_probe.count(1, 2, 3)");
+
+            await Assert.That(result.Number).IsEqualTo(3d);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task RegisterConstantsThrowsWhenTableIsNull()
         {
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
@@ -106,6 +123,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("table");
+        }
+
+        [NovaSharpModule(Namespace = "argument_view_probe")]
+        private static class ArgumentViewModule
+        {
+            [NovaSharpModuleMethod(Name = "count")]
+            public static DynValue Count(ScriptExecutionContext context, CallbackArgumentsView args)
+            {
+                return DynValue.NewNumber(args.Count);
+            }
         }
     }
 }

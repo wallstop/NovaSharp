@@ -230,7 +230,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                         continue;
                     }
 
-                    if (!CallbackFunction.CheckCallbackSignature(mi, true))
+                    bool hasArgumentViewSignature =
+                        CallbackFunction.CheckArgumentViewCallbackSignature(mi, true);
+                    bool hasLegacySignature = CallbackFunction.CheckLegacyCallbackSignature(
+                        mi,
+                        true
+                    );
+
+                    if (!hasArgumentViewSignature && !hasLegacySignature)
                     {
                         throw new ArgumentException(
                             ZString.Concat(
@@ -239,6 +246,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                                 " does not have the right signature."
                             )
                         );
+                    }
+
+                    if (hasArgumentViewSignature)
+                    {
+#if NETFX_CORE
+                        Delegate viewDeleg = mi.CreateDelegate(typeof(ScriptFunctionCallbackView));
+#else
+                        Delegate viewDeleg = Delegate.CreateDelegate(
+                            typeof(ScriptFunctionCallbackView),
+                            mi
+                        );
+#endif
+
+                        ScriptFunctionCallbackView viewFunc = (ScriptFunctionCallbackView)viewDeleg;
+
+                        foreach (string name in GetModuleNameVariants(attr.Name, mi.Name))
+                        {
+                            table.Set(name, DynValue.NewCallbackView(viewFunc, name));
+                        }
+                        continue;
                     }
 
 #if NETFX_CORE

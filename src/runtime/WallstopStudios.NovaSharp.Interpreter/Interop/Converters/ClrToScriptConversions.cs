@@ -125,6 +125,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 return DynValue.NewCallback(function);
             }
 
+            if (obj is ScriptFunctionCallbackView argumentViewCallback)
+            {
+                return DynValue.NewCallbackView(argumentViewCallback);
+            }
+
             if (obj is Delegate @delegate)
             {
 #if NETFX_CORE
@@ -133,10 +138,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 MethodInfo mi = @delegate.Method;
 #endif
 
-                if (CallbackFunction.CheckCallbackSignature(mi, false))
+                if (CallbackFunction.CheckArgumentViewCallbackSignature(mi, false))
+                {
+                    return DynValue.NewCallbackView(
+                        CreateDelegate<ScriptFunctionCallbackView>(@delegate, mi)
+                    );
+                }
+
+                if (CallbackFunction.CheckLegacyCallbackSignature(mi, false))
                 {
                     return DynValue.NewCallback(
-                        (Func<ScriptExecutionContext, CallbackArguments, DynValue>)@delegate
+                        CreateDelegate<Func<ScriptExecutionContext, CallbackArguments, DynValue>>(
+                            @delegate,
+                            mi
+                        )
                     );
                 }
             }
@@ -212,6 +227,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             }
 
             throw ScriptRuntimeException.ConvertObjectFailed(obj);
+        }
+
+        private static TDelegate CreateDelegate<TDelegate>(Delegate source, MethodInfo mi)
+            where TDelegate : Delegate
+        {
+            if (source is TDelegate typed)
+            {
+                return typed;
+            }
+
+            return (TDelegate)Delegate.CreateDelegate(typeof(TDelegate), source.Target, mi);
         }
 
         /// <summary>

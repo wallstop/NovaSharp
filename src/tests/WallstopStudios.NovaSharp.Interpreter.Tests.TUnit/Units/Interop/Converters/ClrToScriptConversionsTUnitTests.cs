@@ -199,6 +199,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .That(callbackResult.Type)
                 .IsEqualTo(DataType.ClrFunction)
                 .ConfigureAwait(false);
+
+            int? callbackViewCount = null;
+            ScriptFunctionCallbackView callbackView = (_, args) =>
+            {
+                callbackViewCount = args.Count;
+                return DynValue.NewNumber(args.Count);
+            };
+            DynValue callbackViewResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                callbackView
+            );
+            await Assert
+                .That(callbackViewResult.Type)
+                .IsEqualTo(DataType.ClrFunction)
+                .ConfigureAwait(false);
+
+            DynValue callbackViewReturn = script.Call(
+                callbackViewResult,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2)
+            );
+            await Assert.That(callbackViewReturn.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(callbackViewCount).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

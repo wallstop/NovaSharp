@@ -115,6 +115,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        public async Task InvokeArgumentViewTreatsMethodCallsOnlyForUserDataUnderDotBehaviour()
+        {
+            Script script = new();
+            script.Options.ColonOperatorClrCallbackBehaviour =
+                ColonOperatorBehaviour.TreatAsDotOnUserData;
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+
+            bool? capturedIsMethodCall = null;
+            CallbackFunction function = CallbackFunction.FromArgumentView(
+                (_, args) =>
+                {
+                    capturedIsMethodCall = args.IsMethodCall;
+                    return DynValue.Nil;
+                }
+            );
+
+            List<DynValue> nonUserData = new() { DynValue.NewString("self") };
+            function.Invoke(context, nonUserData, isMethodCall: true);
+            await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
+
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
+            registrationScope.RegisterType<SampleUserData>();
+
+            DynValue userData = UserData.Create(new SampleUserData());
+            List<DynValue> userDataArgs = new() { userData };
+
+            function.Invoke(context, userDataArgs, isMethodCall: true);
+            await Assert.That(capturedIsMethodCall).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task DefaultAccessModeRejectsUnsupportedValues()
         {
             using StaticValueScope<InteropAccessMode> modeScope =
@@ -210,6 +242,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             MethodInfo publicMethod = SampleUserData.GetPublicCallbackMethod();
             MethodInfo internalMethod = SampleUserData.GetInternalCallbackMethod();
             MethodInfo badMethod = SampleUserData.GetBadSignatureMethod();
+            MethodInfo argumentViewMethod = SampleUserData.GetArgumentViewCallbackMethod();
 
             await Assert
                 .That(CallbackFunction.CheckCallbackSignature(publicMethod, true))
@@ -231,12 +264,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .That(CallbackFunction.CheckCallbackSignature(badMethod, true))
                 .IsFalse()
                 .ConfigureAwait(false);
+            await Assert
+                .That(CallbackFunction.CheckCallbackSignature(argumentViewMethod, true))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(CallbackFunction.CheckArgumentViewCallbackSignature(argumentViewMethod, true))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(CallbackFunction.CheckLegacyCallbackSignature(argumentViewMethod, true))
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         private sealed class SampleUserData
         {
             private static readonly MethodInfo ValidCallbackMethodInfo = (
                 (Func<ScriptExecutionContext, CallbackArguments, DynValue>)ValidCallback
+            ).Method;
+
+            private static readonly MethodInfo ArgumentViewCallbackMethodInfo = (
+                (ScriptFunctionCallbackView)ValidArgumentViewCallback
             ).Method;
 
             private static readonly MethodInfo PrivateCallbackMethodInfo = (
@@ -260,6 +309,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 return DynValue.NewNumber(args[0].Number + 1);
             }
 
+            public static DynValue ValidArgumentViewCallback(
+                ScriptExecutionContext context,
+                CallbackArgumentsView args
+            )
+            {
+                return DynValue.NewNumber(args[0].Number + 1);
+            }
+
             internal static DynValue PrivateCallback(
                 ScriptExecutionContext context,
                 CallbackArguments args
@@ -276,6 +333,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             public static MethodInfo GetPublicCallbackMethod()
             {
                 return ValidCallbackMethodInfo;
+            }
+
+            public static MethodInfo GetArgumentViewCallbackMethod()
+            {
+                return ArgumentViewCallbackMethodInfo;
             }
 
             public static MethodInfo GetInternalCallbackMethod()

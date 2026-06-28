@@ -360,6 +360,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             bool requirePublicVisibility
         )
         {
+            return CheckLegacyCallbackSignature(mi, requirePublicVisibility)
+                || CheckArgumentViewCallbackSignature(mi, requirePublicVisibility);
+        }
+
+        /// <summary>
+        /// Checks whether a method has the classic callback signature.
+        /// </summary>
+        internal static bool CheckLegacyCallbackSignature(
+            System.Reflection.MethodInfo mi,
+            bool requirePublicVisibility
+        )
+        {
+            return CheckCallbackSignatureCore(
+                mi,
+                requirePublicVisibility,
+                typeof(CallbackArguments)
+            );
+        }
+
+        /// <summary>
+        /// Checks whether a method has the argument-view callback signature.
+        /// </summary>
+        internal static bool CheckArgumentViewCallbackSignature(
+            System.Reflection.MethodInfo mi,
+            bool requirePublicVisibility
+        )
+        {
+            return CheckCallbackSignatureCore(
+                mi,
+                requirePublicVisibility,
+                typeof(CallbackArgumentsView)
+            );
+        }
+
+        private static bool CheckCallbackSignatureCore(
+            System.Reflection.MethodInfo mi,
+            bool requirePublicVisibility,
+            Type argumentsType
+        )
+        {
             if (mi == null)
             {
                 throw new ArgumentNullException(nameof(mi));
@@ -370,7 +410,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return (
                 pi.Length == 2
                 && pi[0].ParameterType == typeof(ScriptExecutionContext)
-                && pi[1].ParameterType == typeof(CallbackArguments)
+                && pi[1].ParameterType == argumentsType
                 && mi.ReturnType == typeof(DynValue)
                 && (requirePublicVisibility || mi.IsPublic)
             );

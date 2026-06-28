@@ -471,6 +471,88 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     }
 
     /// <summary>
+    /// Benchmarks CLR callbacks calling back into Lua through <see cref="ScriptExecutionContext"/>.
+    /// </summary>
+    [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
+    public class ScriptExecutionContextCallBenchmarks
+    {
+        private Script _script;
+        private DynValue _threeArgFunction = DynValue.Nil;
+        private DynValue _fourArgFunction = DynValue.Nil;
+        private DynValue _contextFixedThreeCallback = DynValue.Nil;
+        private DynValue _contextParamsThreeCallback = DynValue.Nil;
+        private DynValue _contextFixedFourCallback = DynValue.Nil;
+        private DynValue _contextParamsFourCallback = DynValue.Nil;
+        private DynValue _first = DynValue.Nil;
+        private DynValue _second = DynValue.Nil;
+        private DynValue _third = DynValue.Nil;
+        private DynValue _fourth = DynValue.Nil;
+
+        /// <summary>
+        /// Prepares callback-to-Lua call benchmarks.
+        /// </summary>
+        [GlobalSetup]
+        public void Setup()
+        {
+            _script = new Script(CoreModulePresets.Complete);
+            _threeArgFunction = _script.DoString("return function(a, b, c) return c end");
+            _fourArgFunction = _script.DoString("return function(a, b, c, d) return d end");
+            _first = DynValue.NewNumber(1d);
+            _second = DynValue.NewNumber(2d);
+            _third = DynValue.NewNumber(3d);
+            _fourth = DynValue.NewNumber(4d);
+            _contextFixedThreeCallback = DynValue.NewCallbackView(
+                (context, _) => context.Call(_threeArgFunction, _first, _second, _third)
+            );
+            _contextParamsThreeCallback = DynValue.NewCallbackView(
+                (context, _) =>
+                    context.Call(_threeArgFunction, new DynValue[] { _first, _second, _third })
+            );
+            _contextFixedFourCallback = DynValue.NewCallbackView(
+                (context, _) => context.Call(_fourArgFunction, _first, _second, _third, _fourth)
+            );
+            _contextParamsFourCallback = DynValue.NewCallbackView(
+                (context, _) =>
+                    context.Call(
+                        _fourArgFunction,
+                        new DynValue[] { _first, _second, _third, _fourth }
+                    )
+            );
+        }
+
+        /// <summary>
+        /// Calls back into Lua from a CLR callback through the fixed three-argument context overload.
+        /// </summary>
+        [Benchmark(Description = "Context Call: 3 fixed DynValues")]
+        public DynValue CallContextThreeDynValues() => _script.Call(_contextFixedThreeCallback);
+
+        /// <summary>
+        /// Calls back into Lua from a CLR callback through the params-array context overload.
+        /// </summary>
+        [Benchmark(Description = "Context Call: params 3 DynValues")]
+        public DynValue CallContextThreeDynValuesParamsArray() =>
+            _script.Call(_contextParamsThreeCallback);
+
+        /// <summary>
+        /// Calls back into Lua from a CLR callback through the fixed four-argument context overload.
+        /// </summary>
+        [Benchmark(Description = "Context Call: 4 fixed DynValues")]
+        public DynValue CallContextFourDynValues() => _script.Call(_contextFixedFourCallback);
+
+        /// <summary>
+        /// Calls back into Lua from a CLR callback through the params-array context overload.
+        /// </summary>
+        [Benchmark(Description = "Context Call: params 4 DynValues")]
+        public DynValue CallContextFourDynValuesParamsArray() =>
+            _script.Call(_contextParamsFourCallback);
+    }
+
+    /// <summary>
     /// Benchmarks host-side nested table access through fixed key overloads and params-array paths.
     /// </summary>
     [MemoryDiagnoser]

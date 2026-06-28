@@ -205,6 +205,158 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// Calls the specified function, supporting most cases. The called function must not yield.
         /// </summary>
         /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <returns></returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func);
+            }
+
+            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            {
+                return CompleteDirectClrCall(func.Callback.InvokeArgumentViewFixed(this));
+            }
+
+            return Call(func, Array.Empty<DynValue>());
+        }
+
+        /// <summary>
+        /// Calls the specified function with one argument, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg">The argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func, DynValue arg)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg);
+            }
+
+            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            {
+                return CompleteDirectClrCall(func.Callback.InvokeArgumentViewFixed(this, arg));
+            }
+
+            return Call(func, new DynValue[] { arg });
+        }
+
+        /// <summary>
+        /// Calls the specified function with two arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func, DynValue arg1, DynValue arg2)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2);
+            }
+
+            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            {
+                return CompleteDirectClrCall(
+                    func.Callback.InvokeArgumentViewFixed(this, arg1, arg2)
+                );
+            }
+
+            return Call(func, new DynValue[] { arg1, arg2 });
+        }
+
+        /// <summary>
+        /// Calls the specified function with three arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func, DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3);
+            }
+
+            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            {
+                return CompleteDirectClrCall(
+                    func.Callback.InvokeArgumentViewFixed(this, arg1, arg2, arg3)
+                );
+            }
+
+            return Call(func, new DynValue[] { arg1, arg2, arg3 });
+        }
+
+        /// <summary>
+        /// Calls the specified function with four arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <param name="arg4">The fourth argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4
+        )
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3, arg4);
+            }
+
+            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            {
+                return CompleteDirectClrCall(
+                    func.Callback.InvokeArgumentViewFixed(this, arg1, arg2, arg3, arg4)
+                );
+            }
+
+            return Call(func, new DynValue[] { arg1, arg2, arg3, arg4 });
+        }
+
+        /// <summary>
+        /// Calls the specified function, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
@@ -275,6 +427,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 }
 
                 throw ScriptRuntimeException.LoopInCall();
+            }
+        }
+
+        private DynValue CompleteDirectClrCall(DynValue ret)
+        {
+            while (true)
+            {
+                if (ret.Type == DataType.YieldRequest)
+                {
+                    throw ScriptRuntimeException.CannotYield();
+                }
+
+                if (ret.Type != DataType.TailCallRequest)
+                {
+                    return ret;
+                }
+
+                TailCallData tail = ret.TailCallData;
+
+                if (tail.Continuation != null || tail.ErrorHandler != null)
+                {
+                    throw new ScriptRuntimeException(
+                        "the function passed cannot be called directly. wrap in a script function instead."
+                    );
+                }
+
+                ret = Call(tail.Function, tail.BorrowArgsBuffer());
             }
         }
 

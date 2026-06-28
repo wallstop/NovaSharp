@@ -256,6 +256,116 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FixedCallOverloadsInvokeLuaFunctions(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            script.DoString("function add4(a, b, c, d) return a + b + c + d end");
+            DynValue add4 = script.Globals.Get("add4");
+            DynValue callback = DynValue.NewCallbackView(
+                (context, _) =>
+                    context.Call(
+                        add4,
+                        DynValue.NewNumber(10),
+                        DynValue.NewNumber(20),
+                        DynValue.NewNumber(30),
+                        DynValue.NewNumber(40)
+                    )
+            );
+            script.Globals["callAdd4"] = callback;
+
+            DynValue result = script.DoString("return callAdd4()");
+            await Assert.That(result.Number).IsEqualTo(100d);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FixedCallOverloadsInvokeCallbackViews(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            DynValue inner = DynValue.NewCallbackView(
+                (_, args) =>
+                    DynValue.NewNumber(
+                        args.Count
+                            + args[0].Number
+                            + args[1].Number
+                            + args[2].Number
+                            + args[3].Number
+                    )
+            );
+            DynValue callback = DynValue.NewCallbackView(
+                (context, _) =>
+                    context.Call(
+                        inner,
+                        DynValue.NewNumber(10),
+                        DynValue.NewNumber(20),
+                        DynValue.NewNumber(30),
+                        DynValue.NewNumber(40)
+                    )
+            );
+            script.Globals["callInner"] = callback;
+
+            DynValue result = script.DoString("return callInner()");
+            await Assert.That(result.Number).IsEqualTo(104d);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FixedCallOverloadsPreserveLegacyCallbackArgumentsSpan(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            DynValue inner = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    return DynValue.NewTuple(
+                        DynValue.NewBoolean(success),
+                        DynValue.NewNumber(span.Length)
+                    );
+                }
+            );
+            DynValue callback = DynValue.NewCallbackView(
+                (context, _) =>
+                    context.Call(
+                        inner,
+                        DynValue.NewNumber(10),
+                        DynValue.NewNumber(20),
+                        DynValue.NewNumber(30)
+                    )
+            );
+            script.Globals["callInner"] = callback;
+
+            DynValue result = script.DoString("return callInner()");
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(3d);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FixedCallOverloadsRejectTailCallWithContinuation()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue func = DynValue.NewCallbackView(
+                (_, _) =>
+                    DynValue.NewTailCallReq(
+                        new TailCallData
+                        {
+                            Function = DynValue.NewCallback((_, _) => DynValue.NewNumber(1)),
+                            Continuation = new CallbackFunction((_, _) => DynValue.Nil),
+                        }
+                    )
+            );
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                context.Call(func, DynValue.NewNumber(1))
+            );
+            await Assert.That(exception.Message).Contains("cannot be called directly");
+        }
+
+        [global::TUnit.Core.Test]
         public async Task CallUsesCallMetamethod()
         {
             Script script = new(default(CoreModules));
