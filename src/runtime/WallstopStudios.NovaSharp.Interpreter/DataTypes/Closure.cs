@@ -124,6 +124,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Closure"/> class with a single _ENV upvalue.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <param name="idx">The bytecode entry point index.</param>
+        /// <param name="environmentValue">The mutable environment upvalue slot for this closure.</param>
+        internal Closure(Script script, int idx, DynValue environmentValue)
+        {
+            OwnerScript = script;
+            EntryPointByteCodeLocation = idx;
+            ClosureContext = new ClosureContext(environmentValue);
+            TrackAllocation(script, 1);
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Closure"/> class.
         /// </summary>
         /// <param name="script">The script.</param>

@@ -1352,7 +1352,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 // The first upvalue should be _ENV
                 if (
-                    closureScope.Symbols.Length > 0
+                    closureScope.Symbols.Count > 0
                     && closureScope.Symbols[0] == WellKnownSymbols.ENV
                 )
                 {
@@ -1450,7 +1450,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (
                 context != null
                 && context.Count > 0
-                && context.Symbols.Length > 0
+                && context.Symbols.Count > 0
                 && context.Symbols[0] == WellKnownSymbols.ENV
             )
             {

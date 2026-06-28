@@ -9,10 +9,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
     /// </summary>
     internal class ClosureContext : List<DynValue>
     {
+        private static readonly IReadOnlyList<string> EnvironmentSymbols = Array.AsReadOnly(
+            new[] { WellKnownSymbols.ENV }
+        );
+
         /// <summary>
         /// Gets the symbols.
         /// </summary>
-        public string[] Symbols { get; private set; }
+        public IReadOnlyList<string> Symbols { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ClosureContext"/> class from a list of values.
@@ -58,6 +62,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
             {
                 Add(values[i]);
             }
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ClosureContext"/> class for a single _ENV upvalue.
+        /// </summary>
+        /// <param name="environmentValue">The mutable environment upvalue slot for this closure.</param>
+        internal ClosureContext(DynValue environmentValue)
+            : base(1)
+        {
+            Symbols = EnvironmentSymbols;
+            Add(environmentValue);
         }
 
         internal ClosureContext(SymbolRef[] symbols, IEnumerable<DynValue> values)

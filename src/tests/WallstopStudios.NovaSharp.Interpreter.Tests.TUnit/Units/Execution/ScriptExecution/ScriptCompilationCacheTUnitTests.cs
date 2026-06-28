@@ -74,6 +74,98 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        public async Task CachedLoadStringAvoidsTemporaryClosureScaffoldingAllocations()
+        {
+            ScriptOptions options = new() { EnableScriptCaching = true };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "return value";
+
+            script.LoadString(code);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            const int iterations = 1024;
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                script.LoadString(code);
+            }
+
+            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            long allocatedPerLoad = allocated / iterations;
+
+            await Assert.That(allocatedPerLoad).IsLessThan(340).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CachedLoadStringClosuresKeepIndependentEnvironmentSlots(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            script.Globals["value"] = DynValue.NewNumber(20);
+
+            DynValue first = script.LoadString("return value");
+            DynValue second = script.LoadString("return value");
+            Table firstEnvironment = new(script);
+            firstEnvironment["value"] = DynValue.NewNumber(10);
+
+            await Assert
+                .That(first.Function.GetUpValueName(0))
+                .IsEqualTo(WellKnownSymbols.ENV)
+                .ConfigureAwait(false);
+            first.Function.SetUpValue(0, DynValue.NewTable(firstEnvironment));
+
+            await Assert.That(script.Call(first).Number).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(script.Call(second).Number).IsEqualTo(20).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CachedLoadStringSetFenvKeepsIndependentEnvironmentSlots()
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = LuaCompatibilityVersion.Lua51,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+
+            DynValue first = script.LoadString("return value");
+            DynValue second = script.LoadString("return value");
+
+            script.Globals["first"] = first;
+            script.Globals["second"] = second;
+
+            DynValue result = script.DoString(
+                @"
+                local firstEnv = { value = 11 }
+                local secondEnv = { value = 22 }
+                setfenv(first, firstEnv)
+                setfenv(second, secondEnv)
+                return first(), second(), getfenv(first) ~= getfenv(second)
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(22).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(2).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]

@@ -933,12 +933,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 // if we find the meta for a new chunk, we use the value in the meta for the _ENV upvalue
                 if ((meta != null) && (meta.NumVal2 == (int)OpCodeMetadataType.ChunkEntrypoint))
                 {
-                    c = new Closure(
-                        this,
-                        address,
-                        new SymbolRef[] { SymbolRef.UpValue(WellKnownSymbols.ENV, 0) },
-                        new DynValue[] { meta.Value }
-                    );
+                    c = new Closure(this, address, meta.Value);
                 }
                 else
                 {
@@ -952,20 +947,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
             else
             {
-                SymbolRef[] syms = new SymbolRef[]
-                {
-                    new()
-                    {
-                        EnvironmentRef = null,
-                        IndexValue = 0,
-                        NameValue = WellKnownSymbols.ENV,
-                        SymbolType = SymbolRefType.DefaultEnv,
-                    },
-                };
-
-                DynValue[] vals = new DynValue[] { DynValue.NewTable(envTable) };
-
-                c = new Closure(this, address, syms, vals);
+                c = new Closure(this, address, DynValue.NewTable(envTable));
             }
 
             return DynValue.NewClosure(c);
