@@ -1651,6 +1651,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Add(lnFast, rnFast)));
+                return instructionPtr;
+            }
+
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
@@ -1677,6 +1683,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
+
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Subtract(lnFast, rnFast)));
+                return instructionPtr;
+            }
 
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
@@ -1705,6 +1717,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Multiply(lnFast, rnFast)));
+                return instructionPtr;
+            }
+
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
@@ -1731,6 +1749,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
+
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                _valueStack.Push(
+                    DynValue.NewNumber(
+                        LuaNumber.Modulo(lnFast, rnFast, _script.Options.CompatibilityVersion)
+                    )
+                );
+                return instructionPtr;
+            }
 
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
@@ -1763,6 +1791,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                // Regular division always returns float per Lua spec
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Divide(lnFast, rnFast)));
+                return instructionPtr;
+            }
+
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
@@ -1790,6 +1825,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
+
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                // LuaNumber.FloorDivide handles Lua 5.3+ semantics:
+                // - Integer // integer with div-by-zero throws error
+                // - Float // float with div-by-zero returns inf/-inf
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.FloorDivide(lnFast, rnFast)));
+                return instructionPtr;
+            }
 
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
@@ -1820,6 +1864,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
+
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                // Power always returns float per Lua spec
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Power(lnFast, rnFast)));
+                return instructionPtr;
+            }
 
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
@@ -1940,23 +1991,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private int ExecNeg(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
+            if (r.Type == DataType.Number)
+            {
+                LuaNumber result = NegateNumberForVersion(r.LuaNumber);
+
+                _valueStack.Push(DynValue.NewNumber(result));
+                return instructionPtr;
+            }
+
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
 
             if (rn.HasValue)
             {
-                LuaNumber result = LuaNumber.Negate(rn.Value);
-
-                // Lua 5.1/5.2: negating integer zero should produce float negative zero
-                // In 5.3+, integers are a distinct subtype, so -0 stays integer 0
-                // But in 5.1/5.2, all numbers are floats, so -0 must be negative zero
-                if (
-                    result.IsInteger
-                    && result.AsInteger == 0
-                    && _script.Options.CompatibilityVersion < LuaCompatibilityVersion.Lua53
-                )
-                {
-                    result = LuaNumber.FromFloat(-0.0);
-                }
+                LuaNumber result = NegateNumberForVersion(rn.Value);
 
                 _valueStack.Push(DynValue.NewNumber(result));
                 return instructionPtr;
@@ -1973,6 +2020,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(r);
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool TryGetNumberOperands(
+            DynValue l,
+            DynValue r,
+            out LuaNumber ln,
+            out LuaNumber rn
+        )
+        {
+            if (l.Type == DataType.Number && r.Type == DataType.Number)
+            {
+                ln = l.LuaNumber;
+                rn = r.LuaNumber;
+                return true;
+            }
+
+            ln = default;
+            rn = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private LuaNumber NegateNumberForVersion(LuaNumber value)
+        {
+            LuaNumber result = LuaNumber.Negate(value);
+
+            // Lua 5.1/5.2: negating integer zero should produce float negative zero.
+            // In 5.3+, integers are a distinct subtype, so -0 stays integer 0.
+            if (
+                result.IsInteger
+                && result.AsInteger == 0
+                && _script.Options.CompatibilityVersion < LuaCompatibilityVersion.Lua53
+            )
+            {
+                return LuaNumber.FromFloat(-0.0);
+            }
+
+            return result;
         }
 
         private int ExecEq(Instruction i, int instructionPtr)
