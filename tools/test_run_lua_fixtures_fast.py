@@ -46,18 +46,29 @@ class RunLuaFixturesFastTests(unittest.TestCase):
 
     def write_fixture(self, relative_path: str, source: str = "print('ok')\n") -> Path:
         fixture = self.fixtures_dir / relative_path
-        fixture.parent.mkdir(parents=True)
+        fixture.parent.mkdir(parents=True, exist_ok=True)
         fixture.write_text(source, encoding="utf-8")
         return fixture
 
-    def run_script(self, *args: str) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(
-            ["bash", str(SCRIPT.relative_to(ROOT)), *args],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
+    def run_script(
+        self,
+        *args: str,
+        timeout: int = 180,
+    ) -> subprocess.CompletedProcess[str]:
+        try:
+            return subprocess.run(
+                ["bash", str(SCRIPT.relative_to(ROOT)), *args],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=timeout,
+            )
+        except subprocess.TimeoutExpired as ex:
+            self.fail(
+                "run-lua-fixtures-fast.sh timed out after "
+                f"{timeout}s\nstdout:\n{ex.stdout}\nstderr:\n{ex.stderr}"
+            )
 
     def assert_success(self, result: subprocess.CompletedProcess[str]) -> None:
         self.assertEqual(
@@ -137,6 +148,206 @@ class RunLuaFixturesFastTests(unittest.TestCase):
         rc_file = self.output_dir / "BatchRunnerTUnitTests" / "PrintOk.nova.rc"
         self.assertEqual("0", rc_file.read_text(encoding="utf-8").strip())
         self.assertEqual("batch ok", output_file.read_text(encoding="utf-8").strip())
+
+    def test_batch_runner_instruction_limit_does_not_skip_later_fixtures(self) -> None:
+        self.write_fixture(
+            "BatchRunnerTUnitTests/01InfiniteLoop.lua",
+            "while true do end\n",
+        )
+        self.write_fixture(
+            "BatchRunnerTUnitTests/02AfterInfiniteLoop.lua",
+            "print('after limit')\n",
+        )
+
+        result = self.run_script(
+            "--fixtures-dir",
+            str(self.fixtures_dir.relative_to(ROOT)),
+            "--output-dir",
+            str(self.output_dir.relative_to(ROOT)),
+            "--lua-version",
+            "5.4",
+            "--jobs",
+            "1",
+            "--skip-lua",
+            "--max-instructions",
+            "1000",
+        )
+        self.assert_success(result)
+
+        timeout_base = self.output_dir / "BatchRunnerTUnitTests" / "01InfiniteLoop"
+        self.assertEqual(
+            "4",
+            (timeout_base.with_suffix(".nova.rc")).read_text(encoding="utf-8").strip(),
+        )
+        self.assertIn(
+            "exceeded 1000 instructions",
+            (timeout_base.with_suffix(".nova.err")).read_text(encoding="utf-8"),
+        )
+
+        after_base = self.output_dir / "BatchRunnerTUnitTests" / "02AfterInfiniteLoop"
+        self.assertEqual(
+            "0",
+            (after_base.with_suffix(".nova.rc")).read_text(encoding="utf-8").strip(),
+        )
+        self.assertEqual(
+            "after limit",
+            (after_base.with_suffix(".nova.out")).read_text(encoding="utf-8").strip(),
+        )
+
+    def test_batch_runner_wall_clock_limit_does_not_skip_later_fixtures(self) -> None:
+        self.write_fixture(
+            "BatchRunnerTUnitTests/01InfiniteLoop.lua",
+            "while true do end\n",
+        )
+        self.write_fixture(
+            "BatchRunnerTUnitTests/02AfterInfiniteLoop.lua",
+            "print('after wall limit')\n",
+        )
+
+        result = self.run_script(
+            "--fixtures-dir",
+            str(self.fixtures_dir.relative_to(ROOT)),
+            "--output-dir",
+            str(self.output_dir.relative_to(ROOT)),
+            "--lua-version",
+            "5.4",
+            "--jobs",
+            "1",
+            "--skip-lua",
+            "--max-instructions",
+            "0",
+            "--max-wall-seconds",
+            "1",
+        )
+        self.assert_success(result)
+
+        timeout_base = self.output_dir / "BatchRunnerTUnitTests" / "01InfiniteLoop"
+        self.assertEqual(
+            "4",
+            (timeout_base.with_suffix(".nova.rc")).read_text(encoding="utf-8").strip(),
+        )
+        self.assertIn(
+            "timed out after 1 seconds",
+            (timeout_base.with_suffix(".nova.err")).read_text(encoding="utf-8"),
+        )
+
+        after_base = self.output_dir / "BatchRunnerTUnitTests" / "02AfterInfiniteLoop"
+        self.assertEqual(
+            "0",
+            (after_base.with_suffix(".nova.rc")).read_text(encoding="utf-8").strip(),
+        )
+        self.assertEqual(
+            "after wall limit",
+            (after_base.with_suffix(".nova.out")).read_text(encoding="utf-8").strip(),
+        )
+
+    def test_batch_runner_command_timeout_does_not_skip_later_fixtures(self) -> None:
+        self.write_fixture(
+            "BatchRunnerTUnitTests/01SlowCommand.lua",
+            'os.execute("python3 -c \\"import time; time.sleep(5)\\"")\n',
+        )
+        self.write_fixture(
+            "BatchRunnerTUnitTests/02AfterSlowCommand.lua",
+            "print('after command timeout')\n",
+        )
+
+        result = self.run_script(
+            "--fixtures-dir",
+            str(self.fixtures_dir.relative_to(ROOT)),
+            "--output-dir",
+            str(self.output_dir.relative_to(ROOT)),
+            "--lua-version",
+            "5.4",
+            "--jobs",
+            "1",
+            "--skip-lua",
+            "--max-command-seconds",
+            "1",
+        )
+        self.assert_success(result)
+
+        timeout_base = self.output_dir / "BatchRunnerTUnitTests" / "01SlowCommand"
+        self.assertEqual(
+            "4",
+            (timeout_base.with_suffix(".nova.rc")).read_text(encoding="utf-8").strip(),
+        )
+        self.assertIn(
+            "Command execution timed out after 1 seconds",
+            (timeout_base.with_suffix(".nova.err")).read_text(encoding="utf-8"),
+        )
+
+        after_base = self.output_dir / "BatchRunnerTUnitTests" / "02AfterSlowCommand"
+        self.assertEqual(
+            "0",
+            (after_base.with_suffix(".nova.rc")).read_text(encoding="utf-8").strip(),
+        )
+        self.assertEqual(
+            "after command timeout",
+            (after_base.with_suffix(".nova.out")).read_text(encoding="utf-8").strip(),
+        )
+
+    def test_batch_runner_wall_clock_bounds_host_command(self) -> None:
+        self.write_fixture(
+            "BatchRunnerTUnitTests/01SlowCommand.lua",
+            'os.execute("python3 -c \\"import time; time.sleep(5)\\"")\n',
+        )
+        self.write_fixture(
+            "BatchRunnerTUnitTests/02AfterSlowCommand.lua",
+            "print('after wall command timeout')\n",
+        )
+
+        result = self.run_script(
+            "--fixtures-dir",
+            str(self.fixtures_dir.relative_to(ROOT)),
+            "--output-dir",
+            str(self.output_dir.relative_to(ROOT)),
+            "--lua-version",
+            "5.4",
+            "--jobs",
+            "1",
+            "--skip-lua",
+            "--max-wall-seconds",
+            "1",
+            "--max-command-seconds",
+            "10",
+        )
+        self.assert_success(result)
+
+        timeout_base = self.output_dir / "BatchRunnerTUnitTests" / "01SlowCommand"
+        self.assertEqual(
+            "4",
+            (timeout_base.with_suffix(".nova.rc")).read_text(encoding="utf-8").strip(),
+        )
+        self.assertIn(
+            "timed out after 1 seconds",
+            (timeout_base.with_suffix(".nova.err")).read_text(encoding="utf-8"),
+        )
+
+        after_base = self.output_dir / "BatchRunnerTUnitTests" / "02AfterSlowCommand"
+        self.assertEqual(
+            "0",
+            (after_base.with_suffix(".nova.rc")).read_text(encoding="utf-8").strip(),
+        )
+        self.assertEqual(
+            "after wall command timeout",
+            (after_base.with_suffix(".nova.out")).read_text(encoding="utf-8").strip(),
+        )
+
+    def test_help_includes_all_options(self) -> None:
+        result = self.run_script("--help", timeout=30)
+        self.assert_success(result)
+
+        for option in (
+            "--max-instructions",
+            "--max-wall-seconds",
+            "--max-command-seconds",
+            "--batch-timeout-seconds",
+            "--skip-novasharp",
+            "--limit",
+            "--verbose",
+        ):
+            with self.subTest(option=option):
+                self.assertIn(option, result.stdout)
 
 
 if __name__ == "__main__":

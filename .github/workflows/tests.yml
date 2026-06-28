@@ -91,6 +91,16 @@ jobs:
         run: ./scripts/ci/check-csharpier.sh
         shell: bash
 
+      - name: Verify Lua comparison tooling
+        run: |
+          python3 tools/test_lua_version_utils.py
+          python3 tools/test_migrate_csharp_version_annotations.py
+          python3 tools/test_compare_lua_outputs.py
+          python3 tools/test_lua_error_ratchet.py
+          python3 tools/test_lua_fixture_metadata.py
+          python3 tools/test_run_lua_fixtures_fast.py
+        shell: bash
+
       - name: Enforce PlatformAutoDetector scope usage
         run: ./scripts/ci/check-platform-testhooks.sh
         shell: bash

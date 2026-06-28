@@ -12,17 +12,19 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Diagnostics;
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Runtime.InteropServices;
     using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
+    using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
     /// <summary>
     /// Exception thrown when a script calls os.exit() instead of terminating the process.
@@ -64,10 +66,21 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
     internal sealed class SafePlatformAccessor : IPlatformAccessor
     {
         private readonly IPlatformAccessor _inner;
+        private readonly TimeSpan _commandTimeout;
+        private readonly Func<TimeSpan> _getRemainingFixtureTime;
+        private readonly Func<string> _formatFixtureTimeoutMessage;
 
-        public SafePlatformAccessor(IPlatformAccessor inner)
+        public SafePlatformAccessor(
+            IPlatformAccessor inner,
+            TimeSpan commandTimeout,
+            Func<TimeSpan> getRemainingFixtureTime,
+            Func<string> formatFixtureTimeoutMessage
+        )
         {
             _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+            _commandTimeout = commandTimeout;
+            _getRemainingFixtureTime = getRemainingFixtureTime;
+            _formatFixtureTimeoutMessage = formatFixtureTimeoutMessage;
         }
 
         public CoreModules FilterSupportedCoreModules(CoreModules coreModules) =>
@@ -97,18 +110,150 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
 
         public void MoveFile(string src, string dst) => _inner.MoveFile(src, dst);
 
-        public int ExecuteCommand(string cmdline) => _inner.ExecuteCommand(cmdline);
+        public int ExecuteCommand(string cmdline)
+        {
+            bool hasFixtureTimeout = _getRemainingFixtureTime != null;
+            if (_commandTimeout <= TimeSpan.Zero && !hasFixtureTimeout)
+            {
+                return _inner.ExecuteCommand(cmdline);
+            }
+
+            if (string.IsNullOrWhiteSpace(cmdline))
+            {
+                return 0;
+            }
+
+            ProcessStartInfo startInfo = BuildShellProcessStartInfo(cmdline);
+            startInfo.UseShellExecute = false;
+            startInfo.CreateNoWindow = true;
+
+            try
+            {
+                TimeSpan effectiveTimeout = GetEffectiveCommandTimeout(
+                    out bool fixtureTimeoutBound
+                );
+                using Process process =
+                    Process.Start(startInfo)
+                    ?? throw new InvalidOperationException("Failed to start command process.");
+                if (process.WaitForExit(effectiveTimeout))
+                {
+                    ThrowIfFixtureTimedOut();
+                    return process.ExitCode;
+                }
+
+                KillProcessTree(process);
+                if (fixtureTimeoutBound)
+                {
+                    ThrowIfFixtureTimedOut(force: true);
+                }
+
+                throw new TimeoutException(FormatCommandTimeoutMessage(cmdline));
+            }
+            catch (Win32Exception ex)
+            {
+                throw new InvalidOperationException(ex.Message, ex);
+            }
+        }
+
+        private TimeSpan GetEffectiveCommandTimeout(out bool fixtureTimeoutBound)
+        {
+            fixtureTimeoutBound = false;
+            TimeSpan timeout =
+                _commandTimeout > TimeSpan.Zero ? _commandTimeout : TimeSpan.MaxValue;
+
+            if (_getRemainingFixtureTime == null)
+            {
+                return timeout;
+            }
+
+            TimeSpan remaining = _getRemainingFixtureTime();
+            if (remaining <= TimeSpan.Zero)
+            {
+                ThrowIfFixtureTimedOut(force: true);
+            }
+
+            if (remaining < timeout)
+            {
+                fixtureTimeoutBound = true;
+                return remaining;
+            }
+
+            return timeout;
+        }
+
+        private void ThrowIfFixtureTimedOut(bool force = false)
+        {
+            if (_getRemainingFixtureTime == null)
+            {
+                return;
+            }
+
+            if (force || _getRemainingFixtureTime() <= TimeSpan.Zero)
+            {
+                string message =
+                    _formatFixtureTimeoutMessage != null
+                        ? _formatFixtureTimeoutMessage()
+                        : "Script execution timed out";
+                throw new TimeoutException(message);
+            }
+        }
+
+        private string FormatCommandTimeoutMessage(string cmdline)
+        {
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "Command execution timed out after {0:g} seconds: {1}",
+                _commandTimeout.TotalSeconds,
+                cmdline
+            );
+        }
 
         public void ExitFast(int exitCode)
         {
             // Throw instead of exiting, so the batch runner can continue
             throw new ScriptExitException(exitCode);
         }
+
+        private static ProcessStartInfo BuildShellProcessStartInfo(string cmdline)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                startInfo.FileName = "cmd.exe";
+                startInfo.ArgumentList.Add("/C");
+                startInfo.ArgumentList.Add(cmdline);
+            }
+            else
+            {
+                startInfo.FileName = "/bin/sh";
+                startInfo.ArgumentList.Add("-c");
+                startInfo.ArgumentList.Add(cmdline);
+            }
+
+            return startInfo;
+        }
+
+        private static void KillProcessTree(Process process)
+        {
+            try
+            {
+                process.Kill(entireProcessTree: true);
+                process.WaitForExit();
+            }
+            catch (InvalidOperationException)
+            {
+                // The process exited between the timeout check and kill attempt.
+            }
+        }
     }
 
     internal static class Program
     {
-        private const int ScriptTimeoutMs = 5000; // 5 second timeout per script
+        private const long DefaultMaxInstructions = 50_000_000;
+        private const int DefaultMaxWallClockSeconds = 5;
+        private const int DefaultMaxCommandSeconds = 5;
+        private const long WallClockInstructionCheckInterval = 50_000;
         private static readonly char[] VersionSplitChars = new char[] { ',', ' ' };
 
         /// <summary>
@@ -255,12 +400,24 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                 Console.Error.WriteLine(
                     "       --lua-version <5.1|5.2|5.3|5.4|5.5>  Set Lua compatibility version"
                 );
+                Console.Error.WriteLine(
+                    "       --max-instructions <n>                Per-fixture VM instruction limit; 0 disables it"
+                );
+                Console.Error.WriteLine(
+                    "       --max-wall-seconds <n>                Per-fixture wall-clock timeout; 0 disables it"
+                );
+                Console.Error.WriteLine(
+                    "       --max-command-seconds <n>             Per-fixture os.execute timeout; 0 disables it"
+                );
                 return 1;
             }
 
             string outputDir = args[0];
             List<string> luaFiles = new List<string>();
             LuaCompatibilityVersion? cliLuaVersion = null;
+            long maxInstructions = DefaultMaxInstructions;
+            int maxWallClockSeconds = DefaultMaxWallClockSeconds;
+            int maxCommandSeconds = DefaultMaxCommandSeconds;
 
             // Parse arguments
             int i = 1;
@@ -300,6 +457,81 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                     }
                     i += 2;
                 }
+                else if (args[i] == "--max-instructions" && i + 1 < args.Length)
+                {
+                    if (
+                        !long.TryParse(
+                            args[i + 1],
+                            NumberStyles.None,
+                            CultureInfo.InvariantCulture,
+                            out long parsedMaxInstructions
+                        )
+                        || parsedMaxInstructions < 0
+                    )
+                    {
+                        Console.Error.WriteLine(
+                            string.Format(
+                                CultureInfo.InvariantCulture,
+                                "Invalid --max-instructions value '{0}'",
+                                args[i + 1]
+                            )
+                        );
+                        return 1;
+                    }
+
+                    maxInstructions = parsedMaxInstructions;
+                    i += 2;
+                }
+                else if (args[i] == "--max-wall-seconds" && i + 1 < args.Length)
+                {
+                    if (
+                        !int.TryParse(
+                            args[i + 1],
+                            NumberStyles.None,
+                            CultureInfo.InvariantCulture,
+                            out int parsedMaxWallClockSeconds
+                        )
+                        || parsedMaxWallClockSeconds < 0
+                    )
+                    {
+                        Console.Error.WriteLine(
+                            string.Format(
+                                CultureInfo.InvariantCulture,
+                                "Invalid --max-wall-seconds value '{0}'",
+                                args[i + 1]
+                            )
+                        );
+                        return 1;
+                    }
+
+                    maxWallClockSeconds = parsedMaxWallClockSeconds;
+                    i += 2;
+                }
+                else if (args[i] == "--max-command-seconds" && i + 1 < args.Length)
+                {
+                    if (
+                        !int.TryParse(
+                            args[i + 1],
+                            NumberStyles.None,
+                            CultureInfo.InvariantCulture,
+                            out int parsedMaxCommandSeconds
+                        )
+                        || parsedMaxCommandSeconds < 0
+                    )
+                    {
+                        Console.Error.WriteLine(
+                            string.Format(
+                                CultureInfo.InvariantCulture,
+                                "Invalid --max-command-seconds value '{0}'",
+                                args[i + 1]
+                            )
+                        );
+                        return 1;
+                    }
+
+                    maxCommandSeconds = parsedMaxCommandSeconds;
+                    i += 2;
+                }
                 else
                 {
                     luaFiles.Add(args[i]);
@@ -315,9 +547,30 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
 
             Directory.CreateDirectory(outputDir);
 
+            TimeSpan maxWallClock =
+                maxWallClockSeconds > 0 ? TimeSpan.FromSeconds(maxWallClockSeconds) : TimeSpan.Zero;
+            Stopwatch currentFixtureStopwatch = null;
+
             // Install safe platform that throws on os.exit() instead of terminating
             IPlatformAccessor originalPlatform = Script.GlobalOptions.Platform;
-            Script.GlobalOptions.Platform = new SafePlatformAccessor(originalPlatform);
+            Script.GlobalOptions.Platform = new SafePlatformAccessor(
+                originalPlatform,
+                TimeSpan.FromSeconds(maxCommandSeconds),
+                maxWallClock > TimeSpan.Zero
+                    ? () =>
+                    {
+                        if (currentFixtureStopwatch == null)
+                        {
+                            return TimeSpan.MaxValue;
+                        }
+
+                        return maxWallClock - currentFixtureStopwatch.Elapsed;
+                    }
+                    : null,
+                maxWallClock > TimeSpan.Zero
+                    ? () => FormatFixtureTimeoutMessage(maxWallClock)
+                    : null
+            );
 
             int passCount = 0;
             int failCount = 0;
@@ -381,6 +634,9 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                         effectiveVersion = fileVersion ?? LuaCompatibilityVersion.Lua51;
                     }
 
+                    Stopwatch fixtureStopwatch = Stopwatch.StartNew();
+                    currentFixtureStopwatch = fixtureStopwatch;
+
                     try
                     {
                         // Capture console output
@@ -403,37 +659,32 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                                 Console.SetOut(stdoutWriter);
                                 Console.SetError(stderrWriter);
 
-                                // Run script with timeout to handle infinite loops
                                 Exception caughtException = null;
-                                LuaCompatibilityVersion versionForTask = effectiveVersion;
-                                Task scriptTask = Task.Run(() =>
+                                try
                                 {
-                                    try
+                                    ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
                                     {
-                                        Script script = new Script(
-                                            versionForTask,
-                                            CoreModulePresets.Complete
-                                        );
-                                        script.DoFile(luaFile);
-                                    }
-#pragma warning disable CA1031 // Catch all exceptions from user scripts intentionally
-                                    catch (Exception ex)
-                                    {
-                                        caughtException = ex;
-                                    }
-#pragma warning restore CA1031
-                                });
-
-                                bool completed = scriptTask.Wait(ScriptTimeoutMs);
-                                if (!completed)
-                                {
-                                    stderrWriter.WriteLine(
-                                        "Script execution timed out after 5 seconds"
+                                        CompatibilityVersion = effectiveVersion,
+                                    };
+                                    SandboxOptions sandbox = CreateSandboxOptions(
+                                        maxInstructions,
+                                        maxWallClock,
+                                        fixtureStopwatch
                                     );
-                                    returnCode = 4;
-                                    timeoutCount++;
+                                    options.Sandbox = sandbox;
+
+                                    Script script = new Script(CoreModulePresets.Complete, options);
+                                    script.DoFile(luaFile);
+                                    ThrowIfFixtureWallClockExceeded(maxWallClock, fixtureStopwatch);
                                 }
-                                else if (caughtException != null)
+#pragma warning disable CA1031 // Catch all exceptions from user scripts intentionally
+                                catch (Exception ex)
+                                {
+                                    caughtException = ex;
+                                }
+#pragma warning restore CA1031
+
+                                if (caughtException != null)
                                 {
                                     // Handle the caught exception
                                     if (caughtException is ScriptExitException exitEx)
@@ -447,6 +698,42 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                                         stderrWriter.WriteLine(sex.Message);
                                         returnCode = 2;
                                         failCount++;
+                                    }
+                                    else if (
+                                        caughtException is SandboxViolationException sandboxEx
+                                        && sandboxEx.ViolationType
+                                            == SandboxViolationType.InstructionLimitExceeded
+                                    )
+                                    {
+                                        stderrWriter.WriteLine(
+                                            string.Format(
+                                                CultureInfo.InvariantCulture,
+                                                "Script execution exceeded {0} instructions",
+                                                sandboxEx.ConfiguredLimit
+                                            )
+                                        );
+                                        returnCode = 4;
+                                        timeoutCount++;
+                                    }
+                                    else if (
+                                        caughtException
+                                        is SandboxViolationException sandboxViolation
+                                    )
+                                    {
+                                        stderrWriter.WriteLine(sandboxViolation.Message);
+                                        returnCode = 3;
+                                        errorCount++;
+                                    }
+                                    else if (
+                                        TryGetTimeoutException(
+                                            caughtException,
+                                            out TimeoutException timeoutException
+                                        )
+                                    )
+                                    {
+                                        stderrWriter.WriteLine(timeoutException.Message);
+                                        returnCode = 4;
+                                        timeoutCount++;
                                     }
                                     else if (caughtException is ScriptRuntimeException rex)
                                     {
@@ -536,10 +823,17 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
                         returnCode = 4;
                         timeoutCount++;
                     }
+                    catch (TimeoutException timeoutException)
+                    {
+                        stderr = timeoutException.Message;
+                        returnCode = 4;
+                        timeoutCount++;
+                    }
 
                     File.WriteAllText(outFile, stdout);
                     File.WriteAllText(errFile, stderr);
                     File.WriteAllText(rcFile, returnCode.ToString(CultureInfo.InvariantCulture));
+                    currentFixtureStopwatch = null;
 
                     if (processed % 100 == 0)
                     {
@@ -586,6 +880,93 @@ namespace WallstopStudios.NovaSharp.LuaBatchRunner
             }
 
             return 0;
+        }
+
+        private static bool TryGetTimeoutException(
+            Exception exception,
+            out TimeoutException timeoutException
+        )
+        {
+            while (exception != null)
+            {
+                if (exception is TimeoutException currentTimeoutException)
+                {
+                    timeoutException = currentTimeoutException;
+                    return true;
+                }
+
+                exception = exception.InnerException;
+            }
+
+            timeoutException = null;
+            return false;
+        }
+
+        private static SandboxOptions CreateSandboxOptions(
+            long maxInstructions,
+            TimeSpan maxWallClock,
+            Stopwatch fixtureStopwatch
+        )
+        {
+            if (maxWallClock <= TimeSpan.Zero)
+            {
+                return maxInstructions > 0
+                    ? new SandboxOptions { MaxInstructions = maxInstructions }
+                    : SandboxOptions.Unrestricted;
+            }
+
+            long instructionCheckInterval =
+                maxInstructions > 0
+                    ? Math.Min(maxInstructions, WallClockInstructionCheckInterval)
+                    : WallClockInstructionCheckInterval;
+            long totalInstructions = 0;
+
+            return new SandboxOptions
+            {
+                MaxInstructions = instructionCheckInterval,
+                OnInstructionLimitExceeded = (_, executedInstructions) =>
+                {
+                    totalInstructions += executedInstructions;
+                    ThrowIfFixtureWallClockExceeded(maxWallClock, fixtureStopwatch);
+
+                    if (maxInstructions > 0 && totalInstructions > maxInstructions)
+                    {
+                        throw new SandboxViolationException(
+                            SandboxViolationType.InstructionLimitExceeded,
+                            maxInstructions,
+                            totalInstructions
+                        );
+                    }
+
+                    return true;
+                },
+            };
+        }
+
+        private static void ThrowIfFixtureWallClockExceeded(
+            TimeSpan maxWallClock,
+            Stopwatch fixtureStopwatch
+        )
+        {
+            if (
+                maxWallClock <= TimeSpan.Zero
+                || fixtureStopwatch == null
+                || fixtureStopwatch.Elapsed <= maxWallClock
+            )
+            {
+                return;
+            }
+
+            throw new TimeoutException(FormatFixtureTimeoutMessage(maxWallClock));
+        }
+
+        private static string FormatFixtureTimeoutMessage(TimeSpan maxWallClock)
+        {
+            return string.Format(
+                CultureInfo.InvariantCulture,
+                "Script execution timed out after {0:g} seconds",
+                maxWallClock.TotalSeconds
+            );
         }
 
         private static void WriteSummary(

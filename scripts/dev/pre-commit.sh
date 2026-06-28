@@ -14,6 +14,8 @@ ACTIONLINT_LINUX_AMD64_SHA256="8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b
 ACTIONLINT_LINUX_ARM64_SHA256="325e971b6ba9bfa504672e29be93c24981eeb1c07576d730e9f7c8805afff0c6"
 ACTIONLINT_DARWIN_AMD64_SHA256="5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c644"
 ACTIONLINT_DARWIN_ARM64_SHA256="aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f"
+ACTIONLINT_WINDOWS_AMD64_SHA256="6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9"
+ACTIONLINT_WINDOWS_ARM64_SHA256="cadcf7ea4efe3a68728893813643cebe1185e5b1d4be5b96245f65c9a4d5ea41"
 ACTIONLINT_CMD=""
 YAMLLINT_MODE=""
 
@@ -310,11 +312,27 @@ ensure_actionlint_available() {
       ;;
   esac
 
+  case "$os" in
+    mingw*|msys*|cygwin*) os="windows" ;;
+  esac
+
+  archive_extension="tar.gz"
+  executable_name="actionlint"
   case "$os:$arch" in
     linux:amd64) checksum="$ACTIONLINT_LINUX_AMD64_SHA256" ;;
     linux:arm64) checksum="$ACTIONLINT_LINUX_ARM64_SHA256" ;;
     darwin:amd64) checksum="$ACTIONLINT_DARWIN_AMD64_SHA256" ;;
     darwin:arm64) checksum="$ACTIONLINT_DARWIN_ARM64_SHA256" ;;
+    windows:amd64)
+      checksum="$ACTIONLINT_WINDOWS_AMD64_SHA256"
+      archive_extension="zip"
+      executable_name="actionlint.exe"
+      ;;
+    windows:arm64)
+      checksum="$ACTIONLINT_WINDOWS_ARM64_SHA256"
+      archive_extension="zip"
+      executable_name="actionlint.exe"
+      ;;
     *)
       printf '%s\n' "[pre-commit] Unsupported OS for actionlint auto-install: $os/$arch" >&2
       return 1
@@ -322,19 +340,32 @@ ensure_actionlint_available() {
   esac
 
   tool_dir="artifacts/pre-commit-tools/actionlint-${ACTIONLINT_VERSION}-${os}-${arch}"
-  ACTIONLINT_CMD="${tool_dir}/actionlint"
+  ACTIONLINT_CMD="${tool_dir}/${executable_name}"
   if [ -x "$ACTIONLINT_CMD" ]; then
     return 0
   fi
 
-  archive="actionlint_${ACTIONLINT_VERSION}_${os}_${arch}.tar.gz"
+  archive="actionlint_${ACTIONLINT_VERSION}_${os}_${arch}.${archive_extension}"
   download_dir="${tool_dir}/download"
   mkdir -p "$tool_dir" "$download_dir"
 
   log "[pre-commit] Installing actionlint ${ACTIONLINT_VERSION} into ${tool_dir}..."
   download_file "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}" "${download_dir}/${archive}"
   verify_sha256_file "$checksum" "${download_dir}/${archive}"
-  tar -xzf "${download_dir}/${archive}" -C "$tool_dir" actionlint
+  if [ "$archive_extension" = "zip" ]; then
+    if command -v unzip >/dev/null 2>&1; then
+      unzip -p "${download_dir}/${archive}" "$executable_name" > "$ACTIONLINT_CMD"
+    elif command -v pwsh >/dev/null 2>&1; then
+      pwsh -NoLogo -NoProfile -Command 'Expand-Archive -LiteralPath $args[0] -DestinationPath $args[1] -Force' "${download_dir}/${archive}" "$tool_dir"
+    elif command -v powershell >/dev/null 2>&1; then
+      powershell -NoLogo -NoProfile -Command 'Expand-Archive -LiteralPath $args[0] -DestinationPath $args[1] -Force' "${download_dir}/${archive}" "$tool_dir"
+    else
+      printf '%s\n' "[pre-commit] unzip or PowerShell is required to install actionlint on Windows." >&2
+      return 1
+    fi
+  else
+    tar -xzf "${download_dir}/${archive}" -C "$tool_dir" actionlint
+  fi
   chmod +x "$ACTIONLINT_CMD"
 }
 
@@ -590,6 +621,32 @@ check_yaml_lint() {
   )
 }
 
+check_yaml_lint_all() {
+  yaml_output="$(git ls-files '*.yml' '*.yaml' || printf '')"
+  if [ -z "$yaml_output" ]; then
+    return
+  fi
+
+  ensure_yamllint_available
+  log "[pre-commit] Running yamllint on tracked YAML files..."
+
+  (
+    set -f
+    old_ifs=$IFS
+    IFS='
+'
+    set -- dummy
+    for file in $yaml_output; do
+      [ -z "$file" ] && continue
+      set -- "$@" "$file"
+    done
+    shift
+    IFS=$old_ifs
+
+    run_yamllint -c .yamllint.yml "$@"
+  )
+}
+
 check_github_actions_lint() {
   workflow_output="$(git diff --cached --name-only --diff-filter=ACM -- '.github/workflows/*.yml' '.github/workflows/*.yaml' || printf '')"
   if [ -z "$workflow_output" ]; then
@@ -598,6 +655,32 @@ check_github_actions_lint() {
 
   ensure_actionlint_available
   log "[pre-commit] Running actionlint on staged GitHub Actions workflows..."
+
+  (
+    set -f
+    old_ifs=$IFS
+    IFS='
+'
+    set -- dummy
+    for file in $workflow_output; do
+      [ -z "$file" ] && continue
+      set -- "$@" "$file"
+    done
+    shift
+    IFS=$old_ifs
+
+    "$ACTIONLINT_CMD" "$@"
+  )
+}
+
+check_github_actions_lint_all() {
+  workflow_output="$(git ls-files '.github/workflows/*.yml' '.github/workflows/*.yaml' || printf '')"
+  if [ -z "$workflow_output" ]; then
+    return
+  fi
+
+  ensure_actionlint_available
+  log "[pre-commit] Running actionlint on tracked GitHub Actions workflows..."
 
   (
     set -f
@@ -668,6 +751,13 @@ cleanup_stale_index_lock
 
 ensure_tool_on_path "git" "Git"
 ensure_tool_on_path "dotnet" ".NET SDK"
+
+if [ "${1:-}" = "--lint-yaml-actions" ]; then
+  check_yaml_lint_all
+  check_github_actions_lint_all
+  log "[pre-commit] YAML and GitHub Actions lint checks completed successfully."
+  exit 0
+fi
 
 log "[pre-commit] Restoring dotnet tools (CSharpier)..."
 dotnet tool restore >/dev/null

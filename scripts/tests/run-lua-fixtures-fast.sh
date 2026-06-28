@@ -14,6 +14,10 @@
 #   --lua-version <ver>    Lua version: 5.1, 5.2, 5.3, 5.4 (default: 5.4)
 #   --lua-cmd <command>    Reference Lua executable to use
 #   --jobs <n>             Parallel jobs (default: number of CPUs)
+#   --max-instructions <n> NovaSharp per-fixture instruction limit (default: 50000000)
+#   --max-wall-seconds <n> NovaSharp per-fixture wall-clock timeout (default: 5)
+#   --max-command-seconds <n> NovaSharp os.execute timeout per host command (default: 5)
+#   --batch-timeout-seconds <n> NovaSharp batch process timeout (default: 900)
 #   --skip-lua             Skip reference Lua execution
 #   --skip-novasharp       Skip NovaSharp execution
 #   --limit <n>            Limit files to process
@@ -38,6 +42,10 @@ SKIP_NOVASHARP=false
 LIMIT=0
 VERBOSE=false
 LUA_CMD_OVERRIDE=""
+MAX_INSTRUCTIONS=50000000
+MAX_WALL_SECONDS=5
+MAX_COMMAND_SECONDS=5
+BATCH_TIMEOUT_SECONDS=900
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -46,12 +54,21 @@ while [[ $# -gt 0 ]]; do
         --lua-version) LUA_VERSION="$2"; shift 2 ;;
         --lua-cmd) LUA_CMD_OVERRIDE="$2"; shift 2 ;;
         --jobs|-j) JOBS="$2"; shift 2 ;;
+        --max-instructions) MAX_INSTRUCTIONS="$2"; shift 2 ;;
+        --max-wall-seconds) MAX_WALL_SECONDS="$2"; shift 2 ;;
+        --max-command-seconds) MAX_COMMAND_SECONDS="$2"; shift 2 ;;
+        --batch-timeout-seconds) BATCH_TIMEOUT_SECONDS="$2"; shift 2 ;;
         --skip-lua) SKIP_LUA=true; shift ;;
         --skip-novasharp) SKIP_NOVASHARP=true; shift ;;
         --limit) LIMIT="$2"; shift 2 ;;
         --verbose|-v) VERBOSE=true; shift ;;
         --help|-h)
-            head -20 "${BASH_SOURCE[0]}" | grep '^#' | sed 's/^# //'
+            awk '
+                NR == 1 { next }
+                $0 == "" { exit }
+                $0 == "#" { print ""; next }
+                substr($0, 1, 2) == "# " { print substr($0, 3) }
+            ' "${BASH_SOURCE[0]}"
             exit 0
             ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
@@ -273,9 +290,45 @@ if [[ "$SKIP_NOVASHARP" != "true" ]]; then
     
     start_time=$(date +%s)
     
-    # Run all files in a single process using the batch runner
-    # Pass --lua-version to ensure correct compatibility mode
-    DOTNET_ROLL_FORWARD=Major dotnet "$BATCH_RUNNER" "$OUTPUT_DIR" --lua-version "$LUA_VERSION" --files-from "$file_list"
+    batch_stdout="${OUTPUT_DIR}/novasharp_batch.out"
+    batch_stderr="${OUTPUT_DIR}/novasharp_batch.err"
+
+    # Run all files in a single process using the batch runner.
+    # Pass --lua-version to ensure correct compatibility mode.
+    if run_command_with_timeout \
+        "$TIMEOUT_MODE" \
+        "$BATCH_TIMEOUT_SECONDS" \
+        "$batch_stdout" \
+        "$batch_stderr" \
+        env DOTNET_ROLL_FORWARD="${DOTNET_ROLL_FORWARD:-Major}" \
+        dotnet "$BATCH_RUNNER" "$OUTPUT_DIR" \
+            --lua-version "$LUA_VERSION" \
+            --max-instructions "$MAX_INSTRUCTIONS" \
+            --max-wall-seconds "$MAX_WALL_SECONDS" \
+            --max-command-seconds "$MAX_COMMAND_SECONDS" \
+            --files-from "$file_list"; then
+        if [[ -s "$batch_stdout" ]]; then
+            cat "$batch_stdout"
+        fi
+        if [[ -s "$batch_stderr" ]]; then
+            cat "$batch_stderr" >&2
+        fi
+    else
+        batch_rc=$?
+        echo "NovaSharp batch runner failed with exit code $batch_rc" >&2
+        if [[ "$batch_rc" -eq 124 ]]; then
+            echo "NovaSharp batch runner timed out after ${BATCH_TIMEOUT_SECONDS}s" >&2
+        fi
+        if [[ -s "$batch_stdout" ]]; then
+            echo "--- NovaSharp batch stdout ---"
+            cat "$batch_stdout"
+        fi
+        if [[ -s "$batch_stderr" ]]; then
+            echo "--- NovaSharp batch stderr ---" >&2
+            cat "$batch_stderr" >&2
+        fi
+        exit "$batch_rc"
+    fi
     
     # Read results from summary
     if [[ -f "${OUTPUT_DIR}/novasharp_summary.json" ]]; then

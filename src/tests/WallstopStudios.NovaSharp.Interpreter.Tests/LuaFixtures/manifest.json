@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
   "total_snippets": 1777,
-  "novasharp_only": 458,
-  "comparable": 1319,
+  "novasharp_only": 460,
+  "comparable": 1317,
   "by_version": {
-    "5.1": 873,
-    "5.2": 582,
-    "5.3": 820,
-    "5.4": 860,
-    "5.5": 901
+    "5.1": 871,
+    "5.2": 580,
+    "5.3": 818,
+    "5.4": 858,
+    "5.5": 899
   },
   "snippets": [
     {
@@ -3467,8 +3467,8 @@
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
-      "expects_error": true
+      "novasharp_only": true,
+      "expects_error": false
     },
     {
       "path": "ArithmOperatorsTestClass/InteropMetaEquality_1.lua",
@@ -3523,7 +3523,7 @@
         "5.4",
         "5.5"
       ],
-      "novasharp_only": false,
+      "novasharp_only": true,
       "expects_error": false
     },
     {

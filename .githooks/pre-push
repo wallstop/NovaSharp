@@ -8,7 +8,8 @@
 #   2. Markdown format check (documentation formatting)
 #   3. Branding check (NovaSharp naming consistency)
 #   4. Namespace alignment check (C# namespace conventions)
-#   5. Build check (solution compiles) - optional, skip with SKIP_BUILD_ON_PUSH=1
+#   5. YAML and GitHub Actions workflow linting
+#   6. Build check (solution compiles) - optional, skip with SKIP_BUILD_ON_PUSH=1
 #
 # To skip the build check (useful for documentation-only changes):
 #   SKIP_BUILD_ON_PUSH=1 git push
@@ -91,18 +92,30 @@ fi
 log_success "Namespace alignment check passed"
 
 # -----------------------------------------------------------------------------
-# Check 5: Build check (optional)
+# Check 5: YAML and GitHub Actions lint checks
+# -----------------------------------------------------------------------------
+log "Checking YAML and GitHub Actions workflows..."
+
+if ! ./scripts/dev/pre-commit.sh --lint-yaml-actions; then
+  log_error "YAML or GitHub Actions lint failed - review output above for issues"
+  exit 1
+fi
+
+log_success "YAML and GitHub Actions lint passed"
+
+# -----------------------------------------------------------------------------
+# Check 6: Build check (optional)
 # -----------------------------------------------------------------------------
 if [ "${SKIP_BUILD_ON_PUSH:-0}" = "1" ]; then
   log "Skipping build check (SKIP_BUILD_ON_PUSH=1)"
 else
   log "Building solution..."
-  
+
   if ! ./scripts/build/quick.sh; then
     log_error "Build failed - fix build errors before pushing"
     exit 1
   fi
-  
+
   log_success "Build succeeded"
 fi
 
