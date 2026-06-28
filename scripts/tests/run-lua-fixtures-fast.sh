@@ -249,11 +249,15 @@ if [[ "$SKIP_NOVASHARP" != "true" ]]; then
     echo ""
     echo "Running $total_files fixtures against NovaSharp (batch mode)..."
     
-    BATCH_RUNNER="${ROOT_DIR}/src/tooling/WallstopStudios.NovaSharp.LuaBatchRunner/bin/Release/net8.0/WallstopStudios.NovaSharp.LuaBatchRunner.dll"
-    if [[ ! -f "$BATCH_RUNNER" ]]; then
-        echo "Building WallstopStudios.NovaSharp.LuaBatchRunner..."
-        dotnet build "${ROOT_DIR}/src/tooling/WallstopStudios.NovaSharp.LuaBatchRunner/WallstopStudios.NovaSharp.LuaBatchRunner.csproj" -c Release -v q --nologo
-    fi
+    BATCH_RUNNER_DIR="${OUTPUT_DIR}/batch-runner"
+    BATCH_RUNNER="${BATCH_RUNNER_DIR}/WallstopStudios.NovaSharp.LuaBatchRunner.dll"
+    echo "Building WallstopStudios.NovaSharp.LuaBatchRunner..."
+    dotnet build \
+        "${ROOT_DIR}/src/tooling/WallstopStudios.NovaSharp.LuaBatchRunner/WallstopStudios.NovaSharp.LuaBatchRunner.csproj" \
+        -c Release \
+        -o "$BATCH_RUNNER_DIR" \
+        -v q \
+        --nologo
     
     if [[ ! -f "$BATCH_RUNNER" ]]; then
         echo "Error: Batch runner not found at $BATCH_RUNNER" >&2

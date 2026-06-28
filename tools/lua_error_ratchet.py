@@ -13,6 +13,15 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_BASELINE_PATH = Path("docs/testing/lua-error-ratchet.json")
+MODULE_NOT_FOUND_PATTERN = re.compile(r"module '([^']+)' not found")
+NO_FILE_SEARCH_PATH_PATTERN = re.compile(r"^([ \t]*no file )['\"]([^'\"]+)['\"]$")
+REPO_ROOT_PATTERN = re.compile(
+    r"(^|[\s:'\"])(?:[A-Za-z]:)?/"
+    r"(?:workspaces/NovaSharp|home/runner/work/NovaSharp/NovaSharp|"
+    r"Users/runner/work/NovaSharp/NovaSharp|a/NovaSharp/NovaSharp|github/workspace)"
+    r"(?=/)",
+    flags=re.MULTILINE,
+)
 
 
 def normalize_fixture_id(file: str | Path) -> str:
@@ -23,6 +32,88 @@ def normalize_fixture_id(file: str | Path) -> str:
     return result
 
 
+def normalize_require_candidate_suffix(candidate: str, module_path: str) -> str:
+    """Return a host-root-independent require candidate suffix."""
+    basename = candidate.rsplit("/", 1)[-1]
+    segments = [segment for segment in candidate.split("/") if segment]
+    module_segments = [segment for segment in module_path.split("/") if segment]
+
+    module_file = f"{module_path}.lua"
+    module_init_file = f"{module_path}/init.lua"
+    if candidate == module_file or candidate.endswith(f"/{module_file}"):
+        return module_file
+    if candidate == module_init_file or candidate.endswith(f"/{module_init_file}"):
+        return module_init_file
+
+    module_extension_prefix = f"{module_path}."
+    if candidate == module_extension_prefix[:-1] or candidate.endswith(
+        f"/{module_extension_prefix[:-1]}"
+    ):
+        return module_path
+    if candidate.startswith(module_extension_prefix):
+        return candidate
+    module_extension_marker = f"/{module_extension_prefix}"
+    module_extension_index = candidate.rfind(module_extension_marker)
+    if module_extension_index >= 0:
+        return candidate[module_extension_index + 1 :]
+
+    module_directory_marker = f"/{module_path}/"
+    module_directory_index = candidate.rfind(module_directory_marker)
+    if module_directory_index >= 0:
+        return candidate[module_directory_index + 1 :]
+    if candidate.startswith(f"{module_path}/"):
+        return candidate
+    if candidate == module_path or candidate.endswith(f"/{module_path}"):
+        return module_path
+
+    if module_segments:
+        first_module_segment = module_segments[0]
+        for index, segment in enumerate(segments):
+            if first_module_segment not in segment:
+                continue
+            remaining_segments = segments[index + 1 :]
+            remaining_module_index = 1
+            for remaining_segment in remaining_segments:
+                if remaining_module_index >= len(module_segments):
+                    break
+                if module_segments[remaining_module_index] in remaining_segment:
+                    remaining_module_index += 1
+            if remaining_module_index >= len(module_segments):
+                return "/".join(segments[index:])
+
+    if basename.startswith("loadall."):
+        return basename
+
+    return f"<unmatched>/{basename}"
+
+
+def normalize_search_path_lines(text: str) -> str:
+    """Normalize Lua require search roots while preserving unique candidate shape/order."""
+    module_match = MODULE_NOT_FOUND_PATTERN.search(text)
+    module_path = module_match.group(1).replace(".", "/") if module_match else ""
+    seen_search_candidates: set[str] = set()
+    lines: list[str] = []
+
+    for line in text.split("\n"):
+        search_path_match = NO_FILE_SEARCH_PATH_PATTERN.match(line)
+        if not search_path_match:
+            lines.append(line)
+            continue
+
+        candidate = search_path_match.group(2).replace("\\", "/")
+        suffix = normalize_require_candidate_suffix(candidate, module_path)
+
+        normalized = f"{search_path_match.group(1)}'<search>/{suffix}'"
+        # Lua builds vary in how many install roots they print for the same
+        # candidate suffix; root multiplicity is host noise, not error cause.
+        if normalized.strip() in seen_search_candidates:
+            continue
+        seen_search_candidates.add(normalized.strip())
+        lines.append(normalized)
+
+    return "\n".join(lines)
+
+
 def normalize_error_text(text: str) -> str:
     """Normalize volatile error text before hashing."""
     result = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -30,6 +121,8 @@ def normalize_error_text(text: str) -> str:
     result = re.sub(r"0x[0-9a-fA-F]+", "<addr>", result)
     result = re.sub(r"(?<=[:\s])[0-9A-F]{8,16}(?=[:\s\n]|$)", "<addr>", result)
     result = re.sub(r"([A-Za-z]:)?[^:\n]*?LuaFixtures/", "LuaFixtures/", result)
+    result = REPO_ROOT_PATTERN.sub(r"\1<repo>", result)
+    result = normalize_search_path_lines(result)
     result = re.sub(r"(\.lua):\d+:", r"\1:<line>:", result)
     result = re.sub(r"\[string \"[^\"]*\"\]:\d+:", "[string \"<chunk>\"]:<line>:", result)
     result = re.sub(

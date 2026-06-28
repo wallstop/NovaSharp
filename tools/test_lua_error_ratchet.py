@@ -127,6 +127,327 @@ class TestCheckBothErrorRatchet(unittest.TestCase):
             expected,
         )
 
+    def test_cannot_open_absolute_workspace_path_normalizes(self) -> None:
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/DoFileExecutesLoadedChunk.lua",
+                lua_version="5.1",
+                nova_error=(
+                    "LuaFixtures/LoadModuleTUnitTests/DoFileExecutesLoadedChunk.lua:"
+                    "(7,0-27): cannot open /workspaces/NovaSharp/script.lua: "
+                    "No such file or directory [compatibility: Lua 5.1]"
+                ),
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/DoFileExecutesLoadedChunk.lua",
+                lua_version="5.1",
+                nova_error=(
+                    "LuaFixtures/LoadModuleTUnitTests/DoFileExecutesLoadedChunk.lua:"
+                    "(7,0-27): cannot open /home/runner/work/NovaSharp/NovaSharp/"
+                    "script.lua: No such file or directory [compatibility: Lua 5.1]"
+                ),
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertTrue(result.passed)
+
+    def test_non_workspace_absolute_path_stays_specific(self) -> None:
+        self.assertIn(
+            "cannot open /tmp/other-project/script.lua: No such file or directory",
+            normalize_error_text(
+                "cannot open /tmp/other-project/script.lua: No such file or directory"
+            ),
+        )
+
+    def test_non_workspace_path_containing_repo_shape_stays_specific(self) -> None:
+        self.assertIn(
+            "cannot open /tmp/home/runner/work/NovaSharp/NovaSharp/script.lua",
+            normalize_error_text(
+                "cannot open /tmp/home/runner/work/NovaSharp/NovaSharp/script.lua"
+            ),
+        )
+
+    def test_require_search_roots_normalize(self) -> None:
+        baseline_lua_error = (
+            "lua: LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:20: "
+            "module 'nonexistent_module_for_testing' not found:\n"
+            "\tno field package.preload['nonexistent_module_for_testing']\n"
+            "\tno file './nonexistent_module_for_testing.lua'\n"
+            "\tno file '/usr/local/share/lua/5.3/nonexistent_module_for_testing.lua'\n"
+            "\tno file '/usr/local/share/lua/5.3/nonexistent_module_for_testing/init.lua'\n"
+            "\tno file '/usr/local/lib/lua/5.3/nonexistent_module_for_testing.so'\n"
+            "\tno file '/usr/lib/lua/5.3/nonexistent_module_for_testing.so'\n"
+            "\tno file '/usr/local/lib/lua/5.3/loadall.so'\n"
+        )
+        current_lua_error = (
+            "/home/runner/work/NovaSharp/NovaSharp/.lua-cache/Linux/lua-5.3/"
+            "bin/lua5.3: LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:20: "
+            "module 'nonexistent_module_for_testing' not found:\n"
+            "\tno field package.preload['nonexistent_module_for_testing']\n"
+            "\tno file '/usr/local/share/lua/5.3/nonexistent_module_for_testing.lua'\n"
+            "\tno file '/usr/local/share/lua/5.3/nonexistent_module_for_testing/init.lua'\n"
+            "\tno file '/usr/local/lib/lua/5.3/nonexistent_module_for_testing.so'\n"
+            "\tno file '/usr/local/lib/lua/5.3/loadall.so'\n"
+        )
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=baseline_lua_error,
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=current_lua_error,
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertTrue(result.passed)
+
+    def test_require_duplicate_search_roots_are_host_noise(self) -> None:
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/usr/local/share/lua/5.3/missing/module.lua'\n"
+                    "\tno file '/usr/share/lua/5.3/missing/module.lua'\n"
+                    "\tno file '/usr/local/share/lua/5.3/missing/module/init.lua'\n"
+                    "\tno file '/usr/share/lua/5.3/missing/module/init.lua'\n"
+                ),
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/opt/lua/share/lua/5.3/missing/module.lua'\n"
+                    "\tno file '/opt/lua/share/lua/5.3/missing/module/init.lua'\n"
+                ),
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertTrue(result.passed)
+
+    def test_require_search_missing_suffix_changes_signature(self) -> None:
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/usr/share/lua/5.3/missing/module.lua'\n"
+                    "\tno file '/usr/share/lua/5.3/missing/module/init.lua'\n"
+                ),
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/usr/share/lua/5.3/missing/module.lua'\n"
+                ),
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertFalse(result.passed)
+
+    def test_require_search_order_change_changes_signature(self) -> None:
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/usr/share/lua/5.3/missing/module.lua'\n"
+                    "\tno file '/usr/share/lua/5.3/missing/module/init.lua'\n"
+                ),
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/usr/share/lua/5.3/missing/module/init.lua'\n"
+                    "\tno file '/usr/share/lua/5.3/missing/module.lua'\n"
+                ),
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertFalse(result.passed)
+
+    def test_require_loadall_suffix_stays_distinct_from_module_named_all(self) -> None:
+        normalized = normalize_error_text(
+            "lua: fixture.lua:1: module 'all' not found:\n"
+            "\tno field package.preload['all']\n"
+            "\tno file '/usr/lib/lua/5.3/all.so'\n"
+            "\tno file '/usr/local/lib/lua/5.3/loadall.so'\n"
+        )
+
+        self.assertIn("no file '<search>/all.so'", normalized)
+        self.assertIn("no file '<search>/loadall.so'", normalized)
+
+    def test_require_short_module_name_keeps_lua_and_init_suffixes_distinct(self) -> None:
+        normalized = normalize_error_text(
+            "lua: fixture.lua:1: module 'a' not found:\n"
+            "\tno field package.preload['a']\n"
+            "\tno file '/usr/share/lua/5.3/a.lua'\n"
+            "\tno file '/usr/share/lua/5.3/a/init.lua'\n"
+        )
+
+        self.assertIn("no file '<search>/a.lua'", normalized)
+        self.assertIn("no file '<search>/a/init.lua'", normalized)
+
+    def test_require_short_module_missing_init_suffix_changes_signature(self) -> None:
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'a' not found:\n"
+                    "\tno field package.preload['a']\n"
+                    "\tno file '/usr/share/lua/5.3/a.lua'\n"
+                    "\tno file '/usr/share/lua/5.3/a/init.lua'\n"
+                ),
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'a' not found:\n"
+                    "\tno field package.preload['a']\n"
+                    "\tno file '/usr/share/lua/5.3/a.lua'\n"
+                ),
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertFalse(result.passed)
+
+    def test_require_loadall_named_module_keeps_module_path(self) -> None:
+        normalized = normalize_error_text(
+            "lua: fixture.lua:1: module 'foo.loadall' not found:\n"
+            "\tno field package.preload['foo.loadall']\n"
+            "\tno file '/usr/share/lua/5.3/foo/loadall.lua'\n"
+            "\tno file '/usr/share/lua/5.3/foo/loadall/init.lua'\n"
+            "\tno file '/usr/lib/lua/5.3/foo/loadall.so'\n"
+            "\tno file '/usr/local/lib/lua/5.3/loadall.so'\n"
+        )
+
+        self.assertIn("no file '<search>/foo/loadall.lua'", normalized)
+        self.assertIn("no file '<search>/foo/loadall/init.lua'", normalized)
+        self.assertIn("no file '<search>/foo/loadall.so'", normalized)
+        self.assertIn("no file '<search>/loadall.so'", normalized)
+
+    def test_require_custom_template_suffixes_stay_distinct(self) -> None:
+        normalized = normalize_error_text(
+            "lua: fixture.lua:1: module 'missing.module' not found:\n"
+            "\tno field package.preload['missing.module']\n"
+            "\tno file '/opt/lua/missing/module/main.lua'\n"
+            "\tno file '/opt/lua/missing/module/other/main.lua'\n"
+        )
+
+        self.assertIn("no file '<search>/missing/module/main.lua'", normalized)
+        self.assertIn("no file '<search>/missing/module/other/main.lua'", normalized)
+
+    def test_require_custom_template_missing_suffix_changes_signature(self) -> None:
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/opt/lua/missing/module/main.lua'\n"
+                    "\tno file '/opt/lua/missing/module/other/main.lua'\n"
+                ),
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/opt/lua/missing/module/main.lua'\n"
+                ),
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertFalse(result.passed)
+
+    def test_require_embedded_template_prefix_stays_distinct(self) -> None:
+        normalized = normalize_error_text(
+            "lua: fixture.lua:1: module 'missing.module' not found:\n"
+            "\tno field package.preload['missing.module']\n"
+            "\tno file '/opt/lua/prefix_missing/module.lua'\n"
+            "\tno file '/opt/lua/other_missing/module.lua'\n"
+        )
+
+        self.assertIn("no file '<search>/prefix_missing/module.lua'", normalized)
+        self.assertIn("no file '<search>/other_missing/module.lua'", normalized)
+
+    def test_require_embedded_template_prefix_change_changes_signature(self) -> None:
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/opt/lua/prefix_missing/module.lua'\n"
+                ),
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.3",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/opt/lua/other_missing/module.lua'\n"
+                ),
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertFalse(result.passed)
+
     def test_removed_entry_passes_and_reports_reduction(self) -> None:
         baseline = [make_entry("Parser/BadSyntax.lua")]
 

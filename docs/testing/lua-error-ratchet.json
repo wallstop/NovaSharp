@@ -526,9 +526,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "304a0000ec4007cd9ed3119f762d3f350638ffc064a539290e7e8fdb0644ebad",
-      "nova_error_sha256": "2f3826c74ef2522b87f9933d92eab06ca40cc5850dafadbbca0f95ea1b8958e6",
+      "nova_error_sha256": "0ffcaada117c19fa7cfbfad15df413e6e047366ec68635c2fe2bc1ada46d7155",
       "lua_error_excerpt": "lua: cannot open script.lua: No such file or directory | stack traceback: | \t[C]: in function 'dofile' | \t...s/LoadModuleTUnitTests/DoFileExecutesLoadedChunk.lua:<line>: in main...",
-      "nova_error_excerpt": "LuaFixtures/LoadModuleTUnitTests/DoFileExecutesLoadedChunk.lua:(7,0-27): cannot open /workspaces/NovaSharp/script.lua: No such file or directory [compatibility: Lua 5.1]"
+      "nova_error_excerpt": "LuaFixtures/LoadModuleTUnitTests/DoFileExecutesLoadedChunk.lua:(7,0-27): cannot open <repo>/script.lua: No such file or directory [compatibility: Lua 5.1]"
     },
     {
       "file": "LoadModuleTUnitTests/DoFileWrapsSyntaxErrorsWithScriptRuntimeException.lua",
@@ -537,9 +537,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "3392fa14773249c025d899dee5ecea3cb147ffc373d7590cc922d863f361f7c7",
-      "nova_error_sha256": "9aa37db923691067203457a4aad1384324b5cd3e20aff7f310a3e23a7cf60e69",
+      "nova_error_sha256": "ca83296cb2ad8d11542478f18cbb5c75f3fdc63b96d30d439b9aa1e523a18416",
       "lua_error_excerpt": "lua: cannot open broken.lua: No such file or directory | stack traceback: | \t[C]: in function 'dofile' | \t...oFileWrapsSyntaxErrorsWithScriptRuntimeException.lua:<line>: in main...",
-      "nova_error_excerpt": "LuaFixtures/LoadModuleTUnitTests/DoFileWrapsSyntaxErrorsWithScriptRuntimeException.lua:(7,6-20): cannot open /workspaces/NovaSharp/broken.lua: No such file or directory [compati..."
+      "nova_error_excerpt": "LuaFixtures/LoadModuleTUnitTests/DoFileWrapsSyntaxErrorsWithScriptRuntimeException.lua:(7,6-20): cannot open <repo>/broken.lua: No such file or directory [compatibility: Lua 5.1]"
     },
     {
       "file": "LoadModuleTUnitTests/LoadFileHonorsExplicitEnvironmentParameter.lua",
@@ -591,7 +591,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "8773e91f67965ebaa9b350963592b5e8db2c58faebd411f85dfff42426868658",
+      "lua_error_sha256": "83faefaf6e3b29b255c5c71c1631bba62880e00b2d59611b0b40b4950950901e",
       "nova_error_sha256": "8e59224683059a86739769929d81280f230c3c3e1f06d0cc2268d2fa3179ea5f",
       "lua_error_excerpt": "lua: ...dModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_testi...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.1]"
@@ -602,9 +602,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "dc8ab83e1bbb6279131f80fedfd753ba0959d86837e5ca244839a83e0ecc6e15",
+      "lua_error_sha256": "313aa38d21305f1248f83c7613d8402ee653454fda4c9459dbbe7faa3da2941a",
       "nova_error_sha256": "e0b4dfe02ccd7e9b339778d4b199502bc1131de877776b8beea5f5437af8cfc0",
-      "lua_error_excerpt": "lua: ...ListsSearchedPathsWhenLuaCompatibleErrorsEnabled.lua:<line>: module 'nonexistent_module' not found: | \tno field package.preload['nonexistent_module'] | \tno file './nonex...",
+      "lua_error_excerpt": "lua: ...ListsSearchedPathsWhenLuaCompatibleErrorsEnabled.lua:<line>: module 'nonexistent_module' not found: | \tno field package.preload['nonexistent_module'] | \tno file '<search...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module' not found [compatibility: Lua 5.1]"
     },
     {
@@ -613,9 +613,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "fa115645eb3514a4f833c361d148fb1643c3167e3c1e0d7c6410a8e6d68de607",
+      "lua_error_sha256": "d495dc556fd92516b8d27627a71c656adbd8b36f5c1bc3b34b0ad0e273329a2c",
       "nova_error_sha256": "e0b4dfe02ccd7e9b339778d4b199502bc1131de877776b8beea5f5437af8cfc0",
-      "lua_error_excerpt": "lua: ...howsSimpleMessageWhenLuaCompatibleErrorsDisabled.lua:<line>: module 'nonexistent_module' not found: | \tno field package.preload['nonexistent_module'] | \tno file './nonex...",
+      "lua_error_excerpt": "lua: ...howsSimpleMessageWhenLuaCompatibleErrorsDisabled.lua:<line>: module 'nonexistent_module' not found: | \tno field package.preload['nonexistent_module'] | \tno file '<search...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module' not found [compatibility: Lua 5.1]"
     },
     {
@@ -624,9 +624,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "d09a1b65537b32696b0c164b2a1380b42ae6e6eebeb50cd0cab74f21b5b3cbf1",
+      "lua_error_sha256": "724205c7f4e41e0c203c823a822faed4d853581644b66a8e27ee47891dcbe4ea",
       "nova_error_sha256": "44f6a6efd237e52ec5c4fd90ba95f635282d8a18a2d264b5c8e983f390d47a05",
-      "lua_error_excerpt": "lua: ...nitTests/RequireThrowsWhenModuleCannotBeResolved.lua:<line>: module 'missing.module' not found: | \tno field package.preload['missing.module'] | \tno file './missing/modul...",
+      "lua_error_excerpt": "lua: ...nitTests/RequireThrowsWhenModuleCannotBeResolved.lua:<line>: module 'missing.module' not found: | \tno field package.preload['missing.module'] | \tno file '<search>/missin...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'missing.module' not found [compatibility: Lua 5.1]"
     },
     {
@@ -2758,7 +2758,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "18192eb5d95f7d854f01fd67ca0e5e44d5dae621da6aa9f984fdfcc14e43aa8b",
+      "lua_error_sha256": "bd9a12616e8a1d719708b19932173ab172e3cfc663428d6cb45f34d91d8a2249",
       "nova_error_sha256": "db4a37208319ffd08e94524721bead1390d431a463ba5cfbfed453442f88ed28",
       "lua_error_excerpt": "lua: .../LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_t...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.2]"
@@ -4485,7 +4485,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "b36f353e3f130c2fd566142a8b31232d3c73d10f67ce7a71507692a9df846dcf",
+      "lua_error_sha256": "bd9a12616e8a1d719708b19932173ab172e3cfc663428d6cb45f34d91d8a2249",
       "nova_error_sha256": "0064f938210d645cad0a1546d1ef460bbc0b2bf2bc01a6853e72f7060d8e1a72",
       "lua_error_excerpt": "lua: .../LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_t...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.3]"
@@ -7422,7 +7422,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "364b0376aee3c6f3222db7f0a4ff340140361b82ab28ec080da2a3ea91d1acef",
+      "lua_error_sha256": "bd9a12616e8a1d719708b19932173ab172e3cfc663428d6cb45f34d91d8a2249",
       "nova_error_sha256": "d4a280dea4edeb7881467c56f021fa5026203587a541e91324b4aa09cb5458e1",
       "lua_error_excerpt": "lua: .../LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_t...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.4]"
@@ -10326,7 +10326,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "48362b074efe0fa19b79be05206fd63a6a7aaa1468ee1f007b79943556564568",
+      "lua_error_sha256": "a7fdf28a3065add9f3b8c625abfa05ada0b33532f072e5baf4fe16667ddb8fb5",
       "nova_error_sha256": "d9399e492ad6f816f8a3ccb8f488b4f29deabad1298e09e5af9f3cff006ad8b4",
       "lua_error_excerpt": "lua: .../LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_t...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.5]"
