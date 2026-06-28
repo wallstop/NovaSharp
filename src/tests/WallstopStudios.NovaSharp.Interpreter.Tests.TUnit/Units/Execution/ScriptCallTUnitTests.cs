@@ -181,6 +181,151 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FourDynValueCallExecutesCallbackView(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                    DynValue.NewNumber(
+                        args.Count
+                            + args[0].Number
+                            + args[1].Number
+                            + args[2].Number
+                            + args[3].Number
+                    )
+            );
+
+            DynValue result = script.Call(
+                callback,
+                DynValue.NewNumber(10),
+                DynValue.NewNumber(20),
+                DynValue.NewNumber(30),
+                DynValue.NewNumber(40)
+            );
+
+            await Assert.That(result.Number).IsEqualTo(104d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedDynValueCallToCallbackViewExpandsTrailingTuple(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                    DynValue.NewNumber(
+                        args.Count + args[0].Number + args[1].Number + args[2].Number
+                    )
+            );
+
+            DynValue result = script.Call(
+                callback,
+                DynValue.NewNumber(10),
+                DynValue.NewTuple(DynValue.NewNumber(20), DynValue.NewNumber(30))
+            );
+
+            await Assert.That(result.Number).IsEqualTo(63d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedDynValueCallToCallbackViewIgnoresTrailingVoid(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) => DynValue.NewNumber(args.Count + args[0].Number)
+            );
+
+            DynValue result = script.Call(callback, DynValue.NewNumber(10), DynValue.Void);
+
+            await Assert.That(result.Number).IsEqualTo(11d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedDynValueCallToLegacyClrFunctionPreservesTryGetSpan(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue callback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    return DynValue.NewTuple(
+                        DynValue.NewBoolean(success),
+                        DynValue.NewNumber(span.Length)
+                    );
+                }
+            );
+
+            DynValue result = script.Call(
+                callback,
+                DynValue.NewNumber(10),
+                DynValue.NewNumber(20),
+                DynValue.NewNumber(30)
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedDynValueCallToCallbackViewMetamethodIncludesSelf(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            Table callable = new(script);
+            Table meta = new(script);
+            bool sawSelf = false;
+
+            meta.Set(
+                "__call",
+                DynValue.NewCallbackView(
+                    (_, args) =>
+                    {
+                        sawSelf = args.Count == 2 && ReferenceEquals(args[0].Table, callable);
+                        return DynValue.NewNumber(args[1].Number + args.Count);
+                    }
+                )
+            );
+            callable.MetaTable = meta;
+
+            DynValue result = script.Call(DynValue.NewTable(callable), DynValue.NewNumber(40));
+
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(sawSelf).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CallRejectsNonCallableValues(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);

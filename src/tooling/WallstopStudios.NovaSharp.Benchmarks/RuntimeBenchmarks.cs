@@ -380,6 +380,97 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     }
 
     /// <summary>
+    /// Benchmarks host calls into CLR callbacks through legacy and argument-view APIs.
+    /// </summary>
+    [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
+    public class ClrCallbackCallBenchmarks
+    {
+        private Script _script;
+        private DynValue _legacyCallback = DynValue.Nil;
+        private DynValue _viewCallback = DynValue.Nil;
+        private DynValue _first = DynValue.Nil;
+        private DynValue _second = DynValue.Nil;
+        private DynValue _third = DynValue.Nil;
+        private DynValue _fourth = DynValue.Nil;
+
+        /// <summary>
+        /// Prepares stable callback and argument values for CLR callback call benchmarks.
+        /// </summary>
+        [GlobalSetup]
+        public void Setup()
+        {
+            _script = new Script(CoreModulePresets.Complete);
+            _legacyCallback = DynValue.NewCallback((_, args) => args[args.Count - 1]);
+            _viewCallback = DynValue.NewCallbackView((_, args) => args[args.Count - 1]);
+            _first = DynValue.NewNumber(1d);
+            _second = DynValue.NewNumber(2d);
+            _third = DynValue.NewNumber(3d);
+            _fourth = DynValue.NewNumber(4d);
+        }
+
+        /// <summary>
+        /// Calls a legacy CLR callback with three fixed DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback Legacy Call: 3 fixed DynValues")]
+        public DynValue CallLegacyThreeDynValues() =>
+            _script.Call(_legacyCallback, _first, _second, _third);
+
+        /// <summary>
+        /// Calls an argument-view CLR callback with three fixed DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View Call: 3 fixed DynValues")]
+        public DynValue CallViewThreeDynValues() =>
+            _script.Call(_viewCallback, _first, _second, _third);
+
+        /// <summary>
+        /// Calls a legacy CLR callback through the params-array overload with three DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback Legacy Call: params 3 DynValues")]
+        public DynValue CallLegacyThreeDynValuesParamsArray() =>
+            _script.Call(_legacyCallback, new DynValue[] { _first, _second, _third });
+
+        /// <summary>
+        /// Calls an argument-view CLR callback through the params-array overload with three DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View Call: params 3 DynValues")]
+        public DynValue CallViewThreeDynValuesParamsArray() =>
+            _script.Call(_viewCallback, new DynValue[] { _first, _second, _third });
+
+        /// <summary>
+        /// Calls a legacy CLR callback with four fixed DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback Legacy Call: 4 fixed DynValues")]
+        public DynValue CallLegacyFourDynValues() =>
+            _script.Call(_legacyCallback, _first, _second, _third, _fourth);
+
+        /// <summary>
+        /// Calls an argument-view CLR callback with four fixed DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View Call: 4 fixed DynValues")]
+        public DynValue CallViewFourDynValues() =>
+            _script.Call(_viewCallback, _first, _second, _third, _fourth);
+
+        /// <summary>
+        /// Calls a legacy CLR callback through the params-array overload with four DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback Legacy Call: params 4 DynValues")]
+        public DynValue CallLegacyFourDynValuesParamsArray() =>
+            _script.Call(_legacyCallback, new DynValue[] { _first, _second, _third, _fourth });
+
+        /// <summary>
+        /// Calls an argument-view CLR callback through the params-array overload with four DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View Call: params 4 DynValues")]
+        public DynValue CallViewFourDynValuesParamsArray() =>
+            _script.Call(_viewCallback, new DynValue[] { _first, _second, _third, _fourth });
+    }
+
+    /// <summary>
     /// Benchmarks host-side nested table access through fixed key overloads and params-array paths.
     /// </summary>
     [MemoryDiagnoser]

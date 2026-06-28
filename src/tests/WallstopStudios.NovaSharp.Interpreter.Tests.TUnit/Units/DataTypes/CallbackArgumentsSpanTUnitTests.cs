@@ -54,6 +54,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return new TryGetSpanResult(result, span.Length, numbers);
         }
 
+        private static TryGetSpanResult ExecuteViewTryGetSpan(DynValue[] backing)
+        {
+            CallbackArgumentsView args = new((IList<DynValue>)backing, false);
+            bool result = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            double[] numbers = new double[span.Length];
+            for (int i = 0; i < span.Length; i++)
+            {
+                numbers[i] = span[i].Number;
+            }
+            return new TryGetSpanResult(result, span.Length, numbers);
+        }
+
         private static CopyToResult ExecuteCopyTo(
             CallbackArguments args,
             int bufferSize,
@@ -63,6 +75,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue[] buffer = new DynValue[bufferSize];
             int count =
                 skip == 0 ? args.CopyTo(buffer.AsSpan()) : args.CopyTo(buffer.AsSpan(), skip);
+            double[] numbers = new double[count];
+            for (int i = 0; i < count; i++)
+            {
+                numbers[i] = buffer[i].Number;
+            }
+            return new CopyToResult(count, numbers);
+        }
+
+        private static CopyToResult ExecuteViewCopyTo(
+            IList<DynValue> backing,
+            int bufferSize,
+            int skip = 0
+        )
+        {
+            CallbackArgumentsView args = new(backing, false);
+            DynValue[] buffer = new DynValue[bufferSize];
+            int count =
+                skip == 0 ? args.CopyTo(buffer.AsSpan()) : args.CopyTo(buffer.AsSpan(), skip);
+            double[] numbers = new double[count];
+            for (int i = 0; i < count; i++)
+            {
+                numbers[i] = buffer[i].Number;
+            }
+            return new CopyToResult(count, numbers);
+        }
+
+        private static CopyToResult ExecuteViewSkipMethodCall(DynValue[] backing)
+        {
+            CallbackArgumentsView args = new((IList<DynValue>)backing, true);
+            CallbackArgumentsView skipped = args.SkipMethodCall();
+            DynValue[] buffer = new DynValue[skipped.Count];
+            int count = skipped.CopyTo(buffer.AsSpan());
             double[] numbers = new double[count];
             for (int i = 0; i < count; i++)
             {
@@ -95,6 +139,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             CallbackArguments args = new(backing, false);
 
             TryGetSpanResult result = ExecuteTryGetSpan(args);
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Numbers[2]).IsEqualTo(3).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArgumentViewTryGetSpanReturnsTrueForArray()
+        {
+            DynValue[] backing = new[]
+            {
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+            };
+
+            TryGetSpanResult result = ExecuteViewTryGetSpan(backing);
 
             await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Length).IsEqualTo(3).ConfigureAwait(false);
@@ -202,6 +265,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(result.Numbers[0]).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(result.Numbers[1]).IsEqualTo(10).ConfigureAwait(false);
             await Assert.That(result.Numbers[2]).IsEqualTo(20).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArgumentViewCopyToSpanExpandsTuples()
+        {
+            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(20));
+            DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
+
+            CopyToResult result = ExecuteViewCopyTo(backing, 5);
+
+            await Assert.That(result.Count).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(result.Numbers[2]).IsEqualTo(20).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArgumentViewSkipMethodCallSkipsSelf()
+        {
+            DynValue[] backing = new[]
+            {
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+            };
+
+            CopyToResult result = ExecuteViewSkipMethodCall(backing);
+
+            await Assert.That(result.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [Test]

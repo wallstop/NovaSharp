@@ -974,6 +974,20 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function)
         {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+
+            if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
+            {
+                return function.Callback.InvokeArgumentViewFixed(
+                    CreateDynamicExecutionContext(function.Callback)
+                );
+            }
+
             return Call(function, Array.Empty<DynValue>());
         }
 
@@ -996,8 +1010,28 @@ namespace WallstopStudios.NovaSharp.Interpreter
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg);
 
+            if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
+            {
+                return function.Callback.InvokeArgumentViewFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg
+                );
+            }
+
+            if (function.Type == DataType.ClrFunction)
+            {
+                return Call(function, new DynValue[] { arg });
+            }
+
             if (function.Type != DataType.Function)
             {
+                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
+
+                if (metafunction != null)
+                {
+                    return Call(metafunction, function, arg);
+                }
+
                 return Call(function, new DynValue[] { arg });
             }
 
@@ -1028,8 +1062,29 @@ namespace WallstopStudios.NovaSharp.Interpreter
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
 
+            if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
+            {
+                return function.Callback.InvokeArgumentViewFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2
+                );
+            }
+
+            if (function.Type == DataType.ClrFunction)
+            {
+                return Call(function, new DynValue[] { arg1, arg2 });
+            }
+
             if (function.Type != DataType.Function)
             {
+                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
+
+                if (metafunction != null)
+                {
+                    return Call(metafunction, function, arg1, arg2);
+                }
+
                 return Call(function, new DynValue[] { arg1, arg2 });
             }
 
@@ -1062,8 +1117,30 @@ namespace WallstopStudios.NovaSharp.Interpreter
             this.CheckScriptOwnership(arg2);
             this.CheckScriptOwnership(arg3);
 
+            if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
+            {
+                return function.Callback.InvokeArgumentViewFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2,
+                    arg3
+                );
+            }
+
+            if (function.Type == DataType.ClrFunction)
+            {
+                return Call(function, new DynValue[] { arg1, arg2, arg3 });
+            }
+
             if (function.Type != DataType.Function)
             {
+                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
+
+                if (metafunction != null)
+                {
+                    return Call(metafunction, function, arg1, arg2, arg3);
+                }
+
                 return Call(function, new DynValue[] { arg1, arg2, arg3 });
             }
 
@@ -1105,8 +1182,31 @@ namespace WallstopStudios.NovaSharp.Interpreter
             this.CheckScriptOwnership(arg3);
             this.CheckScriptOwnership(arg4);
 
+            if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
+            {
+                return function.Callback.InvokeArgumentViewFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4
+                );
+            }
+
+            if (function.Type == DataType.ClrFunction)
+            {
+                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4 });
+            }
+
             if (function.Type != DataType.Function)
             {
+                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
+
+                if (metafunction != null)
+                {
+                    return Call(metafunction, function, arg1, arg2, arg3, arg4);
+                }
+
                 return Call(function, new DynValue[] { arg1, arg2, arg3, arg4 });
             }
 
@@ -1172,9 +1272,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
             else if (function.Type == DataType.ClrFunction)
             {
-                return function.Callback.ClrCallback(
+                return function.Callback.Invoke(
                     CreateDynamicExecutionContext(function.Callback),
-                    new CallbackArguments(args, false)
+                    args
                 );
             }
 

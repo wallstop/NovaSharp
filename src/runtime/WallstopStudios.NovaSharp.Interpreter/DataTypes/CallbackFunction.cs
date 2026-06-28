@@ -13,6 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     public sealed class CallbackFunction : RefIdObject
     {
         private static InteropAccessMode DefaultAccessModeValue = InteropAccessMode.LazyOptimized;
+        private readonly ScriptFunctionCallbackView _argumentViewCallback;
 
         /// <summary>
         /// Gets the name of the function
@@ -50,6 +51,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             Name = name;
         }
 
+        private CallbackFunction(ScriptFunctionCallbackView callBack, string name)
+        {
+            if (callBack == null)
+            {
+                throw new ArgumentNullException(nameof(callBack));
+            }
+
+            _argumentViewCallback = callBack;
+            ClrCallback = InvokeArgumentViewCallback;
+            Name = name;
+        }
+
+        /// <summary>
+        /// Creates a callback function that receives a stack-only argument view.
+        /// </summary>
+        /// <param name="callBack">The callback function to be called.</param>
+        /// <param name="name">The callback name, used in stacktraces, debugger, etc..</param>
+        /// <returns>The callback function.</returns>
+        public static CallbackFunction FromArgumentView(
+            ScriptFunctionCallbackView callBack,
+            string name = null
+        )
+        {
+            return new CallbackFunction(callBack, name);
+        }
+
+        internal bool HasArgumentViewCallback
+        {
+            get { return _argumentViewCallback != null; }
+        }
+
         /// <summary>
         /// Invokes the callback function
         /// </summary>
@@ -73,24 +105,147 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(args));
             }
 
-            if (isMethodCall)
-            {
-                ColonOperatorBehaviour colon = executionContext
-                    .Script
-                    .Options
-                    .ColonOperatorClrCallbackBehaviour;
+            isMethodCall = NormalizeMethodCall(
+                executionContext,
+                args.Count,
+                args.Count > 0 ? args[0] : null,
+                isMethodCall
+            );
 
-                if (colon == ColonOperatorBehaviour.TreatAsColon)
-                {
-                    isMethodCall = false;
-                }
-                else if (colon == ColonOperatorBehaviour.TreatAsDotOnUserData)
-                {
-                    isMethodCall = (args.Count > 0 && args[0].Type == DataType.UserData);
-                }
+            if (_argumentViewCallback != null)
+            {
+                return _argumentViewCallback(
+                    executionContext,
+                    new CallbackArgumentsView(args, isMethodCall)
+                );
             }
 
             return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with no arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 0, null, isMethodCall);
+            return _argumentViewCallback(executionContext, new CallbackArgumentsView(isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with one fixed argument.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 1, arg, isMethodCall);
+            return _argumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with two fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 2, arg1, isMethodCall);
+            return _argumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with three fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 3, arg1, isMethodCall);
+            return _argumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with four fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 4, arg1, isMethodCall);
+            return _argumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, isMethodCall)
+            );
+        }
+
+        private DynValue InvokeArgumentViewCallback(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
+        {
+            return _argumentViewCallback(executionContext, new CallbackArgumentsView(args));
+        }
+
+        private static bool NormalizeMethodCall(
+            ScriptExecutionContext executionContext,
+            int count,
+            DynValue firstArgument,
+            bool isMethodCall
+        )
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (!isMethodCall)
+            {
+                return false;
+            }
+
+            ColonOperatorBehaviour colon = executionContext
+                .Script
+                .Options
+                .ColonOperatorClrCallbackBehaviour;
+
+            if (colon == ColonOperatorBehaviour.TreatAsColon)
+            {
+                return false;
+            }
+
+            if (colon == ColonOperatorBehaviour.TreatAsDotOnUserData)
+            {
+                return count > 0 && firstArgument.Type == DataType.UserData;
+            }
+
+            return isMethodCall;
         }
 
         /// <summary>
