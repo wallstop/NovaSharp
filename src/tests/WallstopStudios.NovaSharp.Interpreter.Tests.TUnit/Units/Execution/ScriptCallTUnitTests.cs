@@ -100,6 +100,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FourDynValueCallInvokesMetamethodWhenValueHasCall(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                local mt = {}
+                function mt:__call(a, b, c, d)
+                    return a + b + c + d
+                end
+                callable = setmetatable({}, mt)
+            "
+            );
+
+            DynValue callable = script.Globals.Get("callable");
+            DynValue result = script.Call(
+                callable,
+                DynValue.NewNumber(10),
+                DynValue.NewNumber(20),
+                DynValue.NewNumber(30),
+                DynValue.NewNumber(40)
+            );
+
+            await Assert.That(result.Number).IsEqualTo(100d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CallExecutesClrFunction(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
@@ -109,6 +142,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
             await Assert.That(result.String).IsEqualTo("clr").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FourDynValueCallExecutesClrFunction(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue callback = DynValue.NewCallback(
+                (_, args) =>
+                    DynValue.NewNumber(
+                        args.Count
+                            + args[0].Number
+                            + args[1].Number
+                            + args[2].Number
+                            + args[3].Number
+                    )
+            );
+
+            DynValue result = script.Call(
+                callback,
+                DynValue.NewNumber(10),
+                DynValue.NewNumber(20),
+                DynValue.NewNumber(30),
+                DynValue.NewNumber(40)
+            );
+
+            await Assert.That(result.Number).IsEqualTo(104d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -186,6 +250,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .IsEqualTo("value")
                 .ConfigureAwait(false);
             await Assert.That(threeArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+
+            DynValue fourArgResult = script.Call(capture, (object)null, "value", 42, true);
+            await Assert.That(fourArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple[0].Number).IsEqualTo(4d).ConfigureAwait(false);
+            await Assert
+                .That(fourArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(fourArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -291,6 +370,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 nestedTail
             );
             await AssertTupleNumbers(threeArgResult, 5d, 1d, 2d, 3d, 4d, 5d).ConfigureAwait(false);
+
+            DynValue fourArgTail = DynValue.NewTuple(
+                DynValue.NewNumber(4),
+                DynValue.NewTuple(DynValue.NewNumber(5), DynValue.NewNumber(6))
+            );
+            DynValue fourArgResult = script.Call(
+                capture,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                fourArgTail
+            );
+            await AssertTupleNumbers(fourArgResult, 6d, 1d, 2d, 3d, 4d, 5d, 6d)
+                .ConfigureAwait(false);
+
+            DynValue nonTrailingTuple = DynValue.NewTuple(
+                DynValue.NewNumber(4),
+                DynValue.NewNumber(5)
+            );
+            DynValue trailingTuple = DynValue.NewTuple(
+                DynValue.NewNumber(6),
+                DynValue.NewTuple(DynValue.NewNumber(7), DynValue.NewNumber(8))
+            );
+            DynValue mixedTupleResult = script.Call(
+                capture,
+                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)),
+                DynValue.NewNumber(3),
+                nonTrailingTuple,
+                trailingTuple
+            );
+            await AssertTupleNumbers(mixedTupleResult, 6d, 1d, 3d, 4d, 6d, 7d, 8d)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -304,10 +415,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            script.DoString("function mul(a, b) return a * b end");
+            script.DoString("function mul(a, b, c, d) return a * b + c + d end");
             object closure = script.Globals.Get("mul").Function;
 
-            DynValue result = script.Call(closure, 6, 7);
+            DynValue result = script.Call(closure, 6, 7, -1, 1);
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
         }
@@ -593,6 +704,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 scriptB.Call(scriptB.Globals.Get("echo"), foreignTable)
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FourDynValueCallRejectsFourthValueOwnedByDifferentScript(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script scriptA = new(CoreModulePresets.Complete);
+            Script scriptB = new(CoreModulePresets.Complete);
+
+            DynValue foreignTable = scriptA.DoString("return {}");
+            scriptB.DoString("function echo(a, b, c, d) return d end");
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                scriptB.Call(
+                    scriptB.Globals.Get("echo"),
+                    DynValue.Nil,
+                    DynValue.Nil,
+                    DynValue.Nil,
+                    foreignTable
+                )
             );
 
             await Assert

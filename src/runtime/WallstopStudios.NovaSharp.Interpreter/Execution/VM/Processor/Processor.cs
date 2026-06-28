@@ -36,6 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             private readonly DynValue _arg0;
             private readonly DynValue _arg1;
             private readonly DynValue _arg2;
+            private readonly DynValue _arg3;
             private readonly int _count;
 
             internal ClrCallArguments(DynValue[] args)
@@ -44,6 +45,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg0 = null;
                 _arg1 = null;
                 _arg2 = null;
+                _arg3 = null;
                 _count = args != null ? args.Length : 0;
             }
 
@@ -53,6 +55,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg0 = arg;
                 _arg1 = null;
                 _arg2 = null;
+                _arg3 = null;
                 _count = 1;
             }
 
@@ -62,6 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = null;
+                _arg3 = null;
                 _count = 2;
             }
 
@@ -71,7 +75,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = arg3;
+                _arg3 = null;
                 _count = 3;
+            }
+
+            internal ClrCallArguments(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+            {
+                _array = null;
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _count = 4;
             }
 
             internal int Count
@@ -96,6 +111,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             return _arg1;
                         case 2:
                             return _arg2;
+                        case 3:
+                            return _arg3;
                         default:
                             throw new ArgumentOutOfRangeException(nameof(index));
                     }
@@ -122,6 +139,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         return DynValue.NewTuple(this[0], this[1]);
                     case 3:
                         return DynValue.NewTuple(this[0], this[1], this[2]);
+                    case 4:
+                        return DynValue.NewTuple(this[0], this[1], this[2], this[3]);
                     default:
                         DynValue[] values = new DynValue[_count];
                         for (int i = 0; i < _count; i++)
@@ -228,6 +247,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public DynValue Call(DynValue function, DynValue arg1, DynValue arg2, DynValue arg3)
         {
             return Call(function, new ClrCallArguments(arg1, arg2, arg3));
+        }
+
+        /// <summary>
+        /// Invokes the specified function with four arguments.
+        /// </summary>
+        public DynValue Call(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4
+        )
+        {
+            return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4));
         }
 
         private DynValue Call(DynValue function, ClrCallArguments args)

@@ -1075,6 +1075,55 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Calls the specified function with four arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4
+        )
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+            this.CheckScriptOwnership(arg4);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4 });
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4
+                    )
+            );
+        }
+
+        /// <summary>
         /// Calls the specified function.
         /// </summary>
         /// <param name="function">The Lua/NovaSharp function to be called</param>
@@ -1232,6 +1281,34 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Calls the specified function with four CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue function, object arg1, object arg2, object arg3, object arg4)
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            return Call(
+                function,
+                DynValue.FromObject(this, arg1),
+                DynValue.FromObject(this, arg2),
+                DynValue.FromObject(this, arg3),
+                DynValue.FromObject(this, arg4)
+            );
+        }
+
+        /// <summary>
         /// Calls the specified function.
         /// </summary>
         /// <param name="function">The Lua/NovaSharp function to be called</param>
@@ -1287,6 +1364,27 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 DynValue.FromObject(this, arg1),
                 DynValue.FromObject(this, arg2),
                 DynValue.FromObject(this, arg3)
+            );
+        }
+
+        /// <summary>
+        /// Calls the specified function with four CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called </param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object function, object arg1, object arg2, object arg3, object arg4)
+        {
+            return Call(
+                DynValue.FromObject(this, function),
+                DynValue.FromObject(this, arg1),
+                DynValue.FromObject(this, arg2),
+                DynValue.FromObject(this, arg3),
+                DynValue.FromObject(this, arg4)
             );
         }
 

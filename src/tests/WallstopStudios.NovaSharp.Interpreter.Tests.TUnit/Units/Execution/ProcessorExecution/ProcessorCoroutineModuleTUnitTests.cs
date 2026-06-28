@@ -250,12 +250,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             );
             await AssertTupleNumbers(threeArgResult, 5d, 1d, 2d, 3d, 4d, 5d).ConfigureAwait(false);
 
+            DynValue fourArgTail = DynValue.NewTuple(
+                DynValue.NewNumber(4),
+                DynValue.NewTuple(DynValue.NewNumber(5), DynValue.NewNumber(6))
+            );
+            DynValue fourArgCoroutine = script.CreateCoroutine(capture);
+            DynValue fourArgResult = fourArgCoroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                fourArgTail
+            );
+            await AssertTupleNumbers(fourArgResult, 6d, 1d, 2d, 3d, 4d, 5d, 6d)
+                .ConfigureAwait(false);
+
             DynValue emptyTailCoroutine = script.CreateCoroutine(capture);
             DynValue emptyTailResult = emptyTailCoroutine.Coroutine.Resume(
                 DynValue.NewNumber(1),
                 DynValue.EmptyTuple
             );
             await AssertTupleNumbers(emptyTailResult, 1d, 1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedResumeFixedFourDynValuesPreservesArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function() local a, b, c, d = coroutine.yield('ready') return select('#', a, b, c, d), a, b, c, d end"
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            DynValue first = coroutine.Coroutine.Resume();
+            await Assert.That(first.String).IsEqualTo("ready").ConfigureAwait(false);
+
+            DynValue resumed = coroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(4)
+            );
+
+            await AssertTupleNumbers(resumed, 4d, 1d, 2d, 3d, 4d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -297,6 +340,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 .IsEqualTo("value")
                 .ConfigureAwait(false);
             await Assert.That(threeArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+
+            DynValue fourArgCoroutine = script.CreateCoroutine(capture);
+            DynValue fourArgResult = fourArgCoroutine.Coroutine.Resume(
+                (object)null,
+                "value",
+                42,
+                true
+            );
+            await Assert.That(fourArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple[0].Number).IsEqualTo(4d).ConfigureAwait(false);
+            await Assert
+                .That(fourArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(fourArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

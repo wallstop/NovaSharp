@@ -200,6 +200,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Calls this function with four CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object arg1, object arg2, object arg3, object arg4)
+        {
+            return OwnerScript.Call(this, arg1, arg2, arg3, arg4);
+        }
+
+        /// <summary>
         /// Calls this function with the specified args
         /// </summary>
         /// <param name="args">The arguments to pass to the function.</param>

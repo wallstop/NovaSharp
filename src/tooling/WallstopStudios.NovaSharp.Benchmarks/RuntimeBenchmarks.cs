@@ -156,15 +156,21 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _oneArgFunction = DynValue.Nil;
         private DynValue _twoArgFunction = DynValue.Nil;
         private DynValue _threeArgFunction = DynValue.Nil;
+        private DynValue _fourArgFunction = DynValue.Nil;
         private DynValue _coroutineFunction = DynValue.Nil;
+        private DynValue _fourArgCoroutineFunction = DynValue.Nil;
         private Closure _threeArgClosure;
+        private Closure _fourArgClosure;
         private Coroutine _runningCoroutine;
+        private Coroutine _fourArgRunningCoroutine;
         private DynValue _first = DynValue.Nil;
         private DynValue _second = DynValue.Nil;
         private DynValue _third = DynValue.Nil;
+        private DynValue _fourth = DynValue.Nil;
         private object _firstObject = 1d;
         private object _secondObject = 2d;
         private object _thirdObject = 3d;
+        private object _fourthObject = 4d;
 
         [GlobalSetup]
         /// <summary>
@@ -176,18 +182,27 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _oneArgFunction = _script.DoString("return function(a) return a end");
             _twoArgFunction = _script.DoString("return function(a, b) return b end");
             _threeArgFunction = _script.DoString("return function(a, b, c) return c end");
+            _fourArgFunction = _script.DoString("return function(a, b, c, d) return d end");
             _threeArgClosure = _threeArgFunction.Function;
+            _fourArgClosure = _fourArgFunction.Function;
             _coroutineFunction = _script.DoString(
                 "return function(a, b, c) while true do a, b, c = coroutine.yield(c) end end"
+            );
+            _fourArgCoroutineFunction = _script.DoString(
+                "return function(a, b, c, d) while true do a, b, c, d = coroutine.yield(d) end end"
             );
             _first = DynValue.NewNumber(1d);
             _second = DynValue.NewNumber(2d);
             _third = DynValue.NewNumber(3d);
+            _fourth = DynValue.NewNumber(4d);
             _firstObject = 1d;
             _secondObject = 2d;
             _thirdObject = 3d;
+            _fourthObject = 4d;
             _runningCoroutine = _script.CreateCoroutine(_coroutineFunction).Coroutine;
             _runningCoroutine.Resume(_first, _second, _third);
+            _fourArgRunningCoroutine = _script.CreateCoroutine(_fourArgCoroutineFunction).Coroutine;
+            _fourArgRunningCoroutine.Resume(_first, _second, _third, _fourth);
         }
 
         /// <summary>
@@ -210,11 +225,25 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_threeArgFunction, _first, _second, _third);
 
         /// <summary>
+        /// Calls a Lua closure with four pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 4 DynValues")]
+        public DynValue CallFourDynValues() =>
+            _script.Call(_fourArgFunction, _first, _second, _third, _fourth);
+
+        /// <summary>
         /// Calls a Lua closure through the params-array overload for comparison with fixed overloads.
         /// </summary>
         [Benchmark(Description = "Host Call: params 3 DynValues")]
         public DynValue CallThreeDynValuesParamsArray() =>
             _script.Call(_threeArgFunction, new DynValue[] { _first, _second, _third });
+
+        /// <summary>
+        /// Calls a Lua closure through the params-array overload for comparison with fixed overloads.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 4 DynValues")]
+        public DynValue CallFourDynValuesParamsArray() =>
+            _script.Call(_fourArgFunction, new DynValue[] { _first, _second, _third, _fourth });
 
         /// <summary>
         /// Calls a Lua closure with three pre-created CLR object arguments.
@@ -224,6 +253,19 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_threeArgFunction, _firstObject, _secondObject, _thirdObject);
 
         /// <summary>
+        /// Calls a Lua closure with four pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 4 objects")]
+        public DynValue CallFourObjects() =>
+            _script.Call(
+                _fourArgFunction,
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject
+            );
+
+        /// <summary>
         /// Calls a Lua closure through the closure convenience API with three pre-created CLR object arguments.
         /// </summary>
         [Benchmark(Description = "Closure Call: 3 objects")]
@@ -231,11 +273,25 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _threeArgClosure.Call(_firstObject, _secondObject, _thirdObject);
 
         /// <summary>
+        /// Calls a Lua closure through the closure convenience API with four pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: 4 objects")]
+        public DynValue ClosureCallFourObjects() =>
+            _fourArgClosure.Call(_firstObject, _secondObject, _thirdObject, _fourthObject);
+
+        /// <summary>
         /// Calls a Lua closure through the object-function overload with three pre-created CLR object arguments.
         /// </summary>
         [Benchmark(Description = "Host Call: closure object + 3 objects")]
         public DynValue CallClosureObjectThreeObjects() =>
             _script.Call(_threeArgClosure, _firstObject, _secondObject, _thirdObject);
+
+        /// <summary>
+        /// Calls a Lua closure through the object-function overload with four pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: closure object + 4 objects")]
+        public DynValue CallClosureObjectFourObjects() =>
+            _script.Call(_fourArgClosure, _firstObject, _secondObject, _thirdObject, _fourthObject);
 
         /// <summary>
         /// Calls a Lua closure through the object params-array overload for comparison.
@@ -248,11 +304,28 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             );
 
         /// <summary>
+        /// Calls a Lua closure through the object params-array overload for comparison.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 4 objects")]
+        public DynValue CallFourObjectsParamsArray() =>
+            _script.Call(
+                _fourArgFunction,
+                new object[] { _firstObject, _secondObject, _thirdObject, _fourthObject }
+            );
+
+        /// <summary>
         /// Resumes a suspended Lua coroutine with three pre-created DynValue arguments.
         /// </summary>
         [Benchmark(Description = "Coroutine Suspended Resume: 3 DynValues")]
         public DynValue ResumeCoroutineThreeDynValues() =>
             _runningCoroutine.Resume(_first, _second, _third);
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine with four pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: 4 DynValues")]
+        public DynValue ResumeCoroutineFourDynValues() =>
+            _fourArgRunningCoroutine.Resume(_first, _second, _third, _fourth);
 
         /// <summary>
         /// Resumes a suspended Lua coroutine with three pre-created CLR object arguments.
@@ -262,6 +335,18 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _runningCoroutine.Resume(_firstObject, _secondObject, _thirdObject);
 
         /// <summary>
+        /// Resumes a suspended Lua coroutine with four pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: 4 objects")]
+        public DynValue ResumeCoroutineFourObjects() =>
+            _fourArgRunningCoroutine.Resume(
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject
+            );
+
+        /// <summary>
         /// Resumes a suspended Lua coroutine through the params-array overload for comparison.
         /// </summary>
         [Benchmark(Description = "Coroutine Suspended Resume: params 3 DynValues")]
@@ -269,10 +354,26 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _runningCoroutine.Resume(new DynValue[] { _first, _second, _third });
 
         /// <summary>
+        /// Resumes a suspended Lua coroutine through the params-array overload for comparison.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: params 4 DynValues")]
+        public DynValue ResumeCoroutineFourDynValuesParamsArray() =>
+            _fourArgRunningCoroutine.Resume(new DynValue[] { _first, _second, _third, _fourth });
+
+        /// <summary>
         /// Resumes a suspended Lua coroutine through the object params-array overload for comparison.
         /// </summary>
         [Benchmark(Description = "Coroutine Suspended Resume: params 3 objects")]
         public DynValue ResumeCoroutineThreeObjectsParamsArray() =>
             _runningCoroutine.Resume(new object[] { _firstObject, _secondObject, _thirdObject });
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine through the object params-array overload for comparison.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: params 4 objects")]
+        public DynValue ResumeCoroutineFourObjectsParamsArray() =>
+            _fourArgRunningCoroutine.Resume(
+                new object[] { _firstObject, _secondObject, _thirdObject, _fourthObject }
+            );
     }
 }

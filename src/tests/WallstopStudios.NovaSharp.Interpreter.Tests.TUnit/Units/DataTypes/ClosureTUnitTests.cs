@@ -168,16 +168,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             Script script = new(version);
             DynValue function = script.DoString(
-                "return function(a, b) return (a or 0) + (b or 0) end"
+                "return function(a, b, c, d) return (a or 0) + (b or 0) + (c or 0) + (d or 0) end"
             );
             Closure closure = function.Function;
 
             DynValue noArgs = closure.Call();
             DynValue objectArgs = closure.Call(2, 3);
+            DynValue fourObjectArgs = closure.Call(1, 2, 3, 4);
             DynValue dynValues = closure.Call(DynValue.NewNumber(10), DynValue.NewNumber(5));
 
             await Assert.That(noArgs.Number).IsEqualTo(0d).ConfigureAwait(false);
             await Assert.That(objectArgs.Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(fourObjectArgs.Number).IsEqualTo(10d).ConfigureAwait(false);
             await Assert.That(dynValues.Number).IsEqualTo(15d).ConfigureAwait(false);
         }
 

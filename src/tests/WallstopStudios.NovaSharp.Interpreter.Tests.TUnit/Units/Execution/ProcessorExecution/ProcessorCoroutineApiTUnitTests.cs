@@ -566,6 +566,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithFourthArgumentFromDifferentScriptThrows(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script owningScript = new();
+            DynValue function = owningScript.DoString("return function(a, b, c, d) return d end");
+            DynValue coroutine = owningScript.CreateCoroutine(function);
+
+            Script foreignScript = new();
+            DynValue foreignResource = DynValue.NewTable(foreignScript);
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                coroutine.Coroutine.Resume(
+                    DynValue.Nil,
+                    DynValue.Nil,
+                    DynValue.Nil,
+                    foreignResource
+                )
+            );
+            await Assert.That(exception.Message).Contains("different scripts");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task AutoYieldCounterProxiesProcessorValue(LuaCompatibilityVersion version)
         {
             Script script = new(version);
