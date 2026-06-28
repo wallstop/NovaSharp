@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -150,6 +151,173 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue callResult = script.Call(result);
 
             await Assert.That(callResult.Number).IsEqualTo(123d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadFileWithSameFilenameUsesNamedCompilationCache(
+            LuaCompatibilityVersion version
+        )
+        {
+            CountingStringScriptLoader loader = new("return 124");
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+                ScriptLoader = loader,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+
+            DynValue result1 = script.LoadFile("cached.lua");
+            DynValue result2 = script.LoadFile("cached.lua");
+
+            await Assert.That(script.Call(result1).Number).IsEqualTo(124d).ConfigureAwait(false);
+            await Assert.That(script.Call(result2).Number).IsEqualTo(124d).ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("cached.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadFileWithDifferentFilenamesKeepsSeparateNamedCacheEntries(
+            LuaCompatibilityVersion version
+        )
+        {
+            CountingStringScriptLoader loader = new("return 125");
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+                ScriptLoader = loader,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+
+            DynValue result1 = script.LoadFile("first.lua");
+            DynValue result2 = script.LoadFile("second.lua");
+
+            await Assert.That(script.Call(result1).Number).IsEqualTo(125d).ConfigureAwait(false);
+            await Assert.That(script.Call(result2).Number).IsEqualTo(125d).ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 2)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("first.lua")
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount + 1).Name)
+                .IsEqualTo("second.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadStreamWithSameFriendlyNameUsesNamedCompilationCache(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+            byte[] code = System.Text.Encoding.UTF8.GetBytes("return 126");
+
+            using MemoryStream stream1 = new(code);
+            using MemoryStream stream2 = new(code);
+            DynValue result1 = script.LoadStream(stream1, codeFriendlyName: "stream.lua");
+            DynValue result2 = script.LoadStream(stream2, codeFriendlyName: "stream.lua");
+
+            await Assert.That(script.Call(result1).Number).IsEqualTo(126d).ConfigureAwait(false);
+            await Assert.That(script.Call(result2).Number).IsEqualTo(126d).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("stream.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CachedNamedLoadStringRuntimeErrorUsesFriendlyName(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            const string code = "local f = nil; return f()";
+
+            script.LoadString(code, codeFriendlyName: "runtime_named.lua");
+            DynValue cachedChunk = script.LoadString(code, codeFriendlyName: "runtime_named.lua");
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.Call(cachedChunk)
+            );
+
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("runtime_named.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadStringBase64DumpDoesNotEnterCompilationCache(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script producer = new(version, CoreModulePresets.Complete);
+            DynValue chunk = producer.LoadString("return 127");
+            using MemoryStream dump = new();
+            producer.Dump(chunk, dump);
+            string encodedDump =
+                StringModule.Base64DumpHeader + Convert.ToBase64String(dump.ToArray());
+
+            Script consumer = new(version, CoreModulePresets.Complete);
+            DynValue result1 = consumer.LoadString(encodedDump, codeFriendlyName: "dump.lua");
+            DynValue result2 = consumer.LoadString(encodedDump, codeFriendlyName: "dump.lua");
+
+            await Assert.That(consumer.Call(result1).Number).IsEqualTo(127d).ConfigureAwait(false);
+            await Assert.That(consumer.Call(result2).Number).IsEqualTo(127d).ConfigureAwait(false);
+            await Assert.That(consumer.CompilationCacheCount).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -435,7 +603,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task LoadStringFriendlyNameBypassesCacheAndSignalsDebugger(
+        public async Task LoadStringNamedCacheHitDoesNotSignalDebuggerAgain(
             LuaCompatibilityVersion version
         )
         {
@@ -443,12 +611,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             RecordingDebugger debugger = new();
             script.AttachDebugger(debugger);
 
-            script.LoadString("return 42");
+            script.LoadString("return 42", codeFriendlyName: "named");
             int sourceNotifications = debugger.SourceCodeSetCount;
             int byteCodeNotifications = debugger.ByteCodeSetCount;
             int sourceCodeCount = script.SourceCodeCount;
 
             script.LoadString("return 42", codeFriendlyName: "named");
+
+            await Assert
+                .That(debugger.SourceCodeSetCount)
+                .IsEqualTo(sourceNotifications)
+                .ConfigureAwait(false);
+            await Assert
+                .That(debugger.ByteCodeSetCount)
+                .IsEqualTo(byteCodeNotifications)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(sourceCodeCount)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadStringDifferentFriendlyNameSignalsDebugger(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            RecordingDebugger debugger = new();
+            script.AttachDebugger(debugger);
+
+            script.LoadString("return 42", codeFriendlyName: "first");
+            int sourceNotifications = debugger.SourceCodeSetCount;
+            int byteCodeNotifications = debugger.ByteCodeSetCount;
+            int sourceCodeCount = script.SourceCodeCount;
+
+            script.LoadString("return 42", codeFriendlyName: "second");
 
             await Assert
                 .That(debugger.SourceCodeSetCount)
@@ -612,6 +815,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             {
                 byte[] bytes = System.Text.Encoding.UTF8.GetBytes(_code);
                 return new MemoryStream(bytes);
+            }
+
+            public override bool ScriptFileExists(string name) => true;
+        }
+
+        private sealed class CountingStringScriptLoader : ScriptLoaderBase
+        {
+            private readonly string _code;
+
+            public CountingStringScriptLoader(string code)
+            {
+                _code = code;
+            }
+
+            public int LoadCount { get; private set; }
+
+            public override object LoadFile(string file, Table globalContext)
+            {
+                LoadCount++;
+                return _code;
             }
 
             public override bool ScriptFileExists(string name) => true;

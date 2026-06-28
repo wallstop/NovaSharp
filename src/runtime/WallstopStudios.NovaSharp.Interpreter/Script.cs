@@ -557,14 +557,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             LuaCompatibilityVersion compatibilityVersion = Options.CompatibilityVersion;
 
-            // Try to use cached compilation if available
-            // Only use cache when no custom friendly name is specified (for proper debug tracking)
+            // Try to use cached compilation if available. Named chunks must match by name
+            // because emitted bytecode stores SourceRef instances for diagnostics.
             if (
                 _compilationCache != null
-                && codeFriendlyName == null
                 && _compilationCache.TryGet(
                     code,
                     compatibilityVersion,
+                    codeFriendlyName,
                     out Execution.CachedChunk cached
                 )
             )
@@ -588,10 +588,17 @@ namespace WallstopStudios.NovaSharp.Interpreter
             SignalSourceCodeChange(source);
             SignalByteCodeChange();
 
-            // Store in cache for future reuse (only when no custom friendly name)
-            if (_compilationCache != null && codeFriendlyName == null)
+            // Store in cache for future reuse. Anonymous chunks use a null name key so
+            // repeated anonymous loads continue to share the generated first source.
+            if (_compilationCache != null)
             {
-                _compilationCache.Store(code, compatibilityVersion, address, source.SourceId);
+                _compilationCache.Store(
+                    code,
+                    compatibilityVersion,
+                    codeFriendlyName,
+                    address,
+                    source.SourceId
+                );
             }
 
             return MakeClosure(address, globalTable ?? _globalTable);

@@ -19,8 +19,10 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     public class ScriptLoadingBenchmarks
     {
         private string _scriptSource = string.Empty;
+        private string _cachedFriendlyName = string.Empty;
         private Script _precompiledScript;
         private Script _cachedScript;
+        private Script _namedCachedScript;
         private DynValue _precompiledFunction = DynValue.Nil;
         private ScriptComplexity _currentComplexity;
 
@@ -63,6 +65,10 @@ namespace WallstopStudios.NovaSharp.Benchmarks
 
             _cachedScript = new Script(CoreModulePresets.Complete);
             _cachedScript.LoadString(_scriptSource);
+
+            _cachedFriendlyName = $"cached_{complexity}";
+            _namedCachedScript = new Script(CoreModulePresets.Complete);
+            _namedCachedScript.LoadString(_scriptSource, null, _cachedFriendlyName);
         }
 
         /// <summary>
@@ -90,6 +96,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Load Cached")]
         public DynValue LoadCached() => _cachedScript.LoadString(_scriptSource);
+
+        /// <summary>
+        /// Loads a named chunk already present in the script compilation cache.
+        /// </summary>
+        [Benchmark(Description = "Load Cached Named")]
+        public DynValue LoadCachedNamed() =>
+            _namedCachedScript.LoadString(_scriptSource, null, _cachedFriendlyName);
 
         /// <summary>
         /// Executes the precompiled chunk, isolating runtime overhead.

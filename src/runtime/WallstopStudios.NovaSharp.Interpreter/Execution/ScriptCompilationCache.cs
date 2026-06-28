@@ -8,7 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
     /// <summary>
     /// Caches compiled Lua scripts to avoid redundant lexing, parsing, and bytecode emission
-    /// for scripts that have already been loaded with the same source text.
+    /// for scripts that have already been loaded with the same source text and source name.
     /// Uses LRU (Least Recently Used) eviction policy.
     /// </summary>
     /// <remarks>
@@ -70,15 +70,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
-        /// Attempts to retrieve a cached compilation result for the given script text.
+        /// Attempts to retrieve a cached compilation result for the given script text and source name.
         /// On hit, promotes the entry to the front of the LRU list.
         /// </summary>
         /// <param name="code">The Lua source code text.</param>
         /// <param name="version">The Lua compatibility version used to compile the source.</param>
+        /// <param name="sourceName">The explicit source name used for diagnostics, or <c>null</c> for anonymous chunks.</param>
         /// <param name="result">When this method returns true, contains the cached chunk information.</param>
         /// <returns><c>true</c> if a cached entry was found; otherwise, <c>false</c>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool TryGet(string code, LuaCompatibilityVersion version, out CachedChunk result)
+        internal bool TryGet(
+            string code,
+            LuaCompatibilityVersion version,
+            string sourceName,
+            out CachedChunk result
+        )
         {
             if (_maxEntries == 0)
             {
@@ -86,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 return false;
             }
 
-            SourceCacheKey key = SourceCacheKey.Create(code, version);
+            SourceCacheKey key = SourceCacheKey.Create(code, version, sourceName);
 
             lock (_lock)
             {
@@ -109,6 +115,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// </summary>
         /// <param name="code">The Lua source code text that was compiled.</param>
         /// <param name="version">The Lua compatibility version used to compile the source.</param>
+        /// <param name="sourceName">The explicit source name used for diagnostics, or <c>null</c> for anonymous chunks.</param>
         /// <param name="entryPointAddress">The bytecode instruction pointer for the chunk's entry point.</param>
         /// <param name="sourceId">The source ID assigned to this chunk in the script's source list.</param>
         /// <remarks>
@@ -117,6 +124,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         internal void Store(
             string code,
             LuaCompatibilityVersion version,
+            string sourceName,
             int entryPointAddress,
             int sourceId
         )
@@ -126,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 return;
             }
 
-            SourceCacheKey key = SourceCacheKey.Create(code, version);
+            SourceCacheKey key = SourceCacheKey.Create(code, version, sourceName);
             CachedChunk chunk = new(entryPointAddress, sourceId);
 
             lock (_lock)
@@ -185,12 +193,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
     }
 
     /// <summary>
-    /// Cache key for compiled source text in a specific Lua compatibility mode.
+    /// Cache key for compiled source text and source name in a specific Lua compatibility mode.
     /// </summary>
     internal readonly struct SourceCacheKey : IEquatable<SourceCacheKey>
     {
         private readonly string _code;
         private readonly LuaCompatibilityVersion _version;
+        private readonly string _sourceName;
         private readonly int _hashCode;
 
         /// <summary>
@@ -198,35 +207,53 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// </summary>
         /// <param name="code">The Lua source code text.</param>
         /// <param name="version">The Lua compatibility version used for compilation.</param>
+        /// <param name="sourceName">The explicit source name used for diagnostics, or <c>null</c> for anonymous chunks.</param>
         /// <param name="hashCode">The precomputed hash code.</param>
-        internal SourceCacheKey(string code, LuaCompatibilityVersion version, int hashCode)
+        internal SourceCacheKey(
+            string code,
+            LuaCompatibilityVersion version,
+            string sourceName,
+            int hashCode
+        )
         {
             _code = code;
             _version = version;
+            _sourceName = sourceName;
             _hashCode = hashCode;
         }
 
         /// <summary>
-        /// Creates a cache key for the specified source text and compatibility version.
+        /// Creates a cache key for the specified source text, compatibility version, and source name.
         /// </summary>
         /// <param name="code">The Lua source code text.</param>
         /// <param name="version">The Lua compatibility version used for compilation.</param>
+        /// <param name="sourceName">The explicit source name used for diagnostics, or <c>null</c> for anonymous chunks.</param>
         /// <returns>A cache key with a precomputed hash code.</returns>
-        internal static SourceCacheKey Create(string code, LuaCompatibilityVersion version)
+        internal static SourceCacheKey Create(
+            string code,
+            LuaCompatibilityVersion version,
+            string sourceName
+        )
         {
-            return new SourceCacheKey(code, version, HashCodeHelper.HashCode(code, version));
+            return new SourceCacheKey(
+                code,
+                version,
+                sourceName,
+                HashCodeHelper.HashCode(code, version, sourceName)
+            );
         }
 
         /// <summary>
-        /// Determines whether this key matches another key by source text and compatibility version.
+        /// Determines whether this key matches another key by source text, compatibility version, and source name.
         /// </summary>
         /// <param name="other">The key to compare with this key.</param>
-        /// <returns><c>true</c> when both keys represent the same source text and compatibility version.</returns>
+        /// <returns><c>true</c> when both keys represent the same source text, compatibility version, and source name.</returns>
         public bool Equals(SourceCacheKey other)
         {
             return _hashCode == other._hashCode
                 && _version == other._version
-                && string.Equals(_code, other._code, StringComparison.Ordinal);
+                && string.Equals(_code, other._code, StringComparison.Ordinal)
+                && string.Equals(_sourceName, other._sourceName, StringComparison.Ordinal);
         }
 
         /// <summary>

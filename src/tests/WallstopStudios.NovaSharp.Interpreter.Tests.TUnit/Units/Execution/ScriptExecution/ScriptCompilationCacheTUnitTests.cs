@@ -108,7 +108,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task LoadStringWithFriendlyNameBypassesCache(LuaCompatibilityVersion version)
+        public async Task LoadStringWithSameFriendlyNameCachesScripts(
+            LuaCompatibilityVersion version
+        )
         {
             ScriptOptions options = new()
             {
@@ -118,17 +120,62 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             Script script = new(CoreModulePresets.Complete, options);
 
             string code = "return 42";
+            int initialSourceCount = script.SourceCodeCount;
 
-            // Load with a friendly name - should bypass cache
+            DynValue result1 = script.LoadString(code, null, "myScript");
+            DynValue result2 = script.LoadString(code, null, "myScript");
+
+            await Assert.That(script.Call(result1).Number).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(script.Call(result2).Number).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("myScript")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadStringWithDifferentFriendlyNamesCreatesDifferentCacheEntries(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+
+            string code = "return 42";
+            int initialSourceCount = script.SourceCodeCount;
+
             DynValue result1 = script.LoadString(code, null, "myScript1");
             DynValue result2 = script.LoadString(code, null, "myScript2");
 
-            // Both should work
             await Assert.That(script.Call(result1).Number).IsEqualTo(42).ConfigureAwait(false);
             await Assert.That(script.Call(result2).Number).IsEqualTo(42).ConfigureAwait(false);
-
-            // Cache should be empty because friendly names bypass caching
-            await Assert.That(script.CompilationCacheCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 2)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("myScript1")
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount + 1).Name)
+                .IsEqualTo("myScript2")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -298,13 +345,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             cache.Store(
                 "return 1",
                 LuaCompatibilityVersion.Lua54,
+                sourceName: null,
                 entryPointAddress: 11,
                 sourceId: 101
             );
 
             await Assert.That(cache.ApproximateCount).IsEqualTo(0).ConfigureAwait(false);
             await Assert
-                .That(cache.TryGet("return 1", LuaCompatibilityVersion.Lua54, out _))
+                .That(cache.TryGet("return 1", LuaCompatibilityVersion.Lua54, null, out _))
                 .IsFalse()
                 .ConfigureAwait(false);
         }
@@ -375,12 +423,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             cache.Store(
                 "return 1",
                 LuaCompatibilityVersion.Lua54,
+                sourceName: null,
                 entryPointAddress: 11,
                 sourceId: 101
             );
             cache.Store(
                 "return 2",
                 LuaCompatibilityVersion.Lua54,
+                sourceName: null,
                 entryPointAddress: 22,
                 sourceId: 202
             );
@@ -390,6 +440,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                     cache.TryGet(
                         "return 1",
                         LuaCompatibilityVersion.Lua54,
+                        null,
                         out CachedChunk promoted
                     )
                 )
@@ -400,21 +451,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             cache.Store(
                 "return 3",
                 LuaCompatibilityVersion.Lua54,
+                sourceName: null,
                 entryPointAddress: 33,
                 sourceId: 303
             );
 
             await Assert.That(cache.ApproximateCount).IsEqualTo(2).ConfigureAwait(false);
             await Assert
-                .That(cache.TryGet("return 2", LuaCompatibilityVersion.Lua54, out _))
+                .That(cache.TryGet("return 2", LuaCompatibilityVersion.Lua54, null, out _))
                 .IsFalse()
                 .ConfigureAwait(false);
             await Assert
-                .That(cache.TryGet("return 1", LuaCompatibilityVersion.Lua54, out _))
+                .That(cache.TryGet("return 1", LuaCompatibilityVersion.Lua54, null, out _))
                 .IsTrue()
                 .ConfigureAwait(false);
             await Assert
-                .That(cache.TryGet("return 3", LuaCompatibilityVersion.Lua54, out _))
+                .That(cache.TryGet("return 3", LuaCompatibilityVersion.Lua54, null, out _))
                 .IsTrue()
                 .ConfigureAwait(false);
         }
@@ -463,10 +515,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             const string secondCode = "return 2";
             const int forcedHashCode = 42;
 
-            SourceCacheKey firstKey = new(firstCode, LuaCompatibilityVersion.Lua54, forcedHashCode);
+            SourceCacheKey firstKey = new(
+                firstCode,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                hashCode: forcedHashCode
+            );
             SourceCacheKey secondKey = new(
                 secondCode,
                 LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                hashCode: forcedHashCode
+            );
+
+            await Assert.That(firstKey.GetHashCode()).IsEqualTo(secondKey.GetHashCode());
+            await Assert.That(firstKey.Equals(secondKey)).IsFalse().ConfigureAwait(false);
+
+            Dictionary<SourceCacheKey, int> entries = new(2) { [firstKey] = 11, [secondKey] = 22 };
+
+            await Assert.That(entries.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(entries[firstKey]).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(entries[secondKey]).IsEqualTo(22).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SourceCacheKeyDistinguishesFriendlyNamesWhenHashesCollide()
+        {
+            const string code = "return 1";
+            const int forcedHashCode = 42;
+
+            SourceCacheKey firstKey = new(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                "first.lua",
+                forcedHashCode
+            );
+            SourceCacheKey secondKey = new(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                "second.lua",
                 forcedHashCode
             );
 
@@ -486,24 +573,153 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ScriptCompilationCache cache = new(maxEntries: 4);
             const string code = "return 1";
 
-            cache.Store(code, LuaCompatibilityVersion.Lua51, entryPointAddress: 11, sourceId: 101);
-            cache.Store(code, LuaCompatibilityVersion.Lua54, entryPointAddress: 22, sourceId: 202);
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua51,
+                sourceName: null,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                entryPointAddress: 22,
+                sourceId: 202
+            );
 
             await Assert.That(cache.ApproximateCount).IsEqualTo(2).ConfigureAwait(false);
 
             await Assert
-                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua51, out CachedChunk lua51))
+                .That(
+                    cache.TryGet(code, LuaCompatibilityVersion.Lua51, null, out CachedChunk lua51)
+                )
                 .IsTrue()
                 .ConfigureAwait(false);
             await Assert.That(lua51._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
             await Assert.That(lua51._sourceId).IsEqualTo(101).ConfigureAwait(false);
 
             await Assert
-                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua54, out CachedChunk lua54))
+                .That(
+                    cache.TryGet(code, LuaCompatibilityVersion.Lua54, null, out CachedChunk lua54)
+                )
                 .IsTrue()
                 .ConfigureAwait(false);
             await Assert.That(lua54._entryPointAddress).IsEqualTo(22).ConfigureAwait(false);
             await Assert.That(lua54._sourceId).IsEqualTo(202).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheSeparatesSameSourceAcrossFriendlyNames()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 4);
+            const string code = "return 1";
+
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                "first.lua",
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                "second.lua",
+                entryPointAddress: 22,
+                sourceId: 202
+            );
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(2).ConfigureAwait(false);
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        code,
+                        LuaCompatibilityVersion.Lua54,
+                        "first.lua",
+                        out CachedChunk first
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(first._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(first._sourceId).IsEqualTo(101).ConfigureAwait(false);
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        code,
+                        LuaCompatibilityVersion.Lua54,
+                        "second.lua",
+                        out CachedChunk second
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(second._entryPointAddress).IsEqualTo(22).ConfigureAwait(false);
+            await Assert.That(second._sourceId).IsEqualTo(202).ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua54, null, out _))
+                .IsFalse()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CachePromotesNamedEntryBeforeEviction()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 2);
+            const string code = "return 1";
+
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                "first.lua",
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                "second.lua",
+                entryPointAddress: 22,
+                sourceId: 202
+            );
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        code,
+                        LuaCompatibilityVersion.Lua54,
+                        "first.lua",
+                        out CachedChunk promoted
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(promoted._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
+
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                "third.lua",
+                entryPointAddress: 33,
+                sourceId: 303
+            );
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua54, "second.lua", out _))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua54, "first.lua", out _))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua54, "third.lua", out _))
+                .IsTrue()
+                .ConfigureAwait(false);
         }
     }
 }
