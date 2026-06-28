@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -43,6 +44,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             }
         }
 
+        private readonly struct SubrangeResult
+        {
+            public bool NegativeRawGetIsNull { get; }
+            public DataType NegativeIndexerType { get; }
+            public double First { get; }
+            public double Second { get; }
+
+            public SubrangeResult(
+                bool negativeRawGetIsNull,
+                DataType negativeIndexerType,
+                double first,
+                double second
+            )
+            {
+                NegativeRawGetIsNull = negativeRawGetIsNull;
+                NegativeIndexerType = negativeIndexerType;
+                First = first;
+                Second = second;
+            }
+        }
+
         private static TryGetSpanResult ExecuteTryGetSpan(CallbackArguments args)
         {
             bool result = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
@@ -64,6 +86,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 numbers[i] = span[i].Number;
             }
             return new TryGetSpanResult(result, span.Length, numbers);
+        }
+
+        private static TryGetSpanResult ExecuteFastStackTryGetSpan(
+            FastStack<DynValue> stack,
+            int offset,
+            int count
+        )
+        {
+            bool result = stack.TryGetSpan(offset, count, out ReadOnlySpan<DynValue> span);
+            double[] numbers = new double[span.Length];
+            for (int i = 0; i < span.Length; i++)
+            {
+                numbers[i] = span[i].Number;
+            }
+
+            return new TryGetSpanResult(result, span.Length, numbers);
+        }
+
+        private static TryGetSpanResult ExecuteFastStackDynamicTryGetSpan(
+            FastStackDynamic<DynValue> stack,
+            int offset,
+            int count
+        )
+        {
+            bool result = stack.TryGetSpan(offset, count, out ReadOnlySpan<DynValue> span);
+            return new TryGetSpanResult(result, span.Length);
+        }
+
+        private static SubrangeResult ExecuteViewSubrange(FastStackDynamic<DynValue> backing)
+        {
+            CallbackArgumentsView args = new(backing, offset: 1, count: 2, isMethodCall: false);
+            return new SubrangeResult(
+                args.RawGet(-1, translateVoids: true) == null,
+                args[-1].Type,
+                args[0].Number,
+                args[1].Number
+            );
         }
 
         private static CopyToResult ExecuteCopyTo(
@@ -164,6 +223,80 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(result.Numbers[0]).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(result.Numbers[1]).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(result.Numbers[2]).IsEqualTo(3).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArgumentViewSubrangeDoesNotExposeValuesBeforeOffset()
+        {
+            FastStackDynamic<DynValue> backing = new(startingCapacity: 4);
+            backing.Push(DynValue.NewString("function-slot"));
+            backing.Push(DynValue.NewNumber(10));
+            backing.Push(DynValue.NewNumber(20));
+
+            SubrangeResult result = ExecuteViewSubrange(backing);
+
+            await Assert.That(result.NegativeRawGetIsNull).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.NegativeIndexerType)
+                .IsEqualTo(DataType.Void)
+                .ConfigureAwait(false);
+            await Assert.That(result.First).IsEqualTo(10d).ConfigureAwait(false);
+            await Assert.That(result.Second).IsEqualTo(20d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task FastStackTryGetSpanExposesValidRanges()
+        {
+            FastStack<DynValue> stack = new(4);
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+            stack.Push(DynValue.NewNumber(3));
+
+            TryGetSpanResult result = ExecuteFastStackTryGetSpan(stack, offset: 1, count: 2);
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task FastStackTryGetSpanRejectsInvalidRanges()
+        {
+            FastStack<DynValue> stack = new(2);
+            stack.Push(DynValue.NewNumber(1));
+
+            TryGetSpanResult negativeStart = ExecuteFastStackTryGetSpan(
+                stack,
+                offset: -1,
+                count: 1
+            );
+            TryGetSpanResult negativeLength = ExecuteFastStackTryGetSpan(
+                stack,
+                offset: 0,
+                count: -1
+            );
+            TryGetSpanResult tooLong = ExecuteFastStackTryGetSpan(stack, offset: 0, count: 2);
+
+            await Assert.That(negativeStart.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(negativeStart.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(negativeLength.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(negativeLength.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(tooLong.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(tooLong.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task FastStackDynamicTryGetSpanAlwaysReturnsFalse()
+        {
+            FastStackDynamic<DynValue> stack = new(startingCapacity: 2);
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+
+            TryGetSpanResult result = ExecuteFastStackDynamicTryGetSpan(stack, offset: 0, count: 2);
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [Test]

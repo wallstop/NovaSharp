@@ -471,6 +471,63 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     }
 
     /// <summary>
+    /// Benchmarks Lua bytecode calling CLR callbacks.
+    /// </summary>
+    [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
+    public class LuaToClrCallbackCallBenchmarks
+    {
+        private Script _script;
+        private DynValue _legacyThree = DynValue.Nil;
+        private DynValue _viewThree = DynValue.Nil;
+        private DynValue _legacyFour = DynValue.Nil;
+        private DynValue _viewFour = DynValue.Nil;
+
+        /// <summary>
+        /// Prepares Lua closures that call CLR callbacks from bytecode.
+        /// </summary>
+        [GlobalSetup]
+        public void Setup()
+        {
+            _script = new Script(CoreModulePresets.Complete);
+            _script.Globals["legacy"] = DynValue.NewCallback((_, args) => args[args.Count - 1]);
+            _script.Globals["view"] = DynValue.NewCallbackView((_, args) => args[args.Count - 1]);
+            _legacyThree = _script.DoString("return function() return legacy(1, 2, 3) end");
+            _viewThree = _script.DoString("return function() return view(1, 2, 3) end");
+            _legacyFour = _script.DoString("return function() return legacy(1, 2, 3, 4) end");
+            _viewFour = _script.DoString("return function() return view(1, 2, 3, 4) end");
+        }
+
+        /// <summary>
+        /// Runs Lua bytecode that calls a legacy CLR callback with three arguments.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback Legacy: 3 args")]
+        public DynValue CallLegacyThreeArgs() => _script.Call(_legacyThree);
+
+        /// <summary>
+        /// Runs Lua bytecode that calls an argument-view CLR callback with three arguments.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback View: 3 args")]
+        public DynValue CallViewThreeArgs() => _script.Call(_viewThree);
+
+        /// <summary>
+        /// Runs Lua bytecode that calls a legacy CLR callback with four arguments.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback Legacy: 4 args")]
+        public DynValue CallLegacyFourArgs() => _script.Call(_legacyFour);
+
+        /// <summary>
+        /// Runs Lua bytecode that calls an argument-view CLR callback with four arguments.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback View: 4 args")]
+        public DynValue CallViewFourArgs() => _script.Call(_viewFour);
+    }
+
+    /// <summary>
     /// Benchmarks CLR callbacks calling back into Lua through <see cref="ScriptExecutionContext"/>.
     /// </summary>
     [MemoryDiagnoser]

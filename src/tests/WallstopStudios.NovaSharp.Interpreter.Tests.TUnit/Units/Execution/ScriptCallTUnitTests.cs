@@ -259,6 +259,256 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LuaCallToCallbackViewExposesContiguousSpan(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            bool spanAvailable = false;
+            int spanLength = -1;
+            double first = -1;
+            double third = -1;
+
+            script.Globals["callback"] = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanLength = span.Length;
+                    if (spanAvailable)
+                    {
+                        first = span[0].Number;
+                        third = span[2].Number;
+                    }
+
+                    return DynValue.NewNumber(args.Count);
+                }
+            );
+
+            DynValue result = script.DoString("return callback(10, 20, 30)");
+
+            await Assert.That(result.Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
+            await Assert.That(spanLength).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(first).IsEqualTo(10d).ConfigureAwait(false);
+            await Assert.That(third).IsEqualTo(30d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LuaCallToCallbackViewHandlesZeroAndManyArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            int zeroCount = -1;
+            int manyCount = -1;
+            bool manySpanAvailable = false;
+            int manySpanLength = -1;
+
+            script.Globals["callback"] = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    if (args.Count == 0)
+                    {
+                        zeroCount = args.Count;
+                        return DynValue.NewNumber(0);
+                    }
+
+                    manyCount = args.Count;
+                    manySpanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    manySpanLength = span.Length;
+                    return DynValue.NewNumber(args[4].Number + args.Count);
+                }
+            );
+
+            DynValue result = script.DoString("callback(); return callback(1, 2, 3, 4, 5)");
+
+            await Assert.That(result.Number).IsEqualTo(10d).ConfigureAwait(false);
+            await Assert.That(zeroCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(manyCount).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(manySpanAvailable).IsTrue().ConfigureAwait(false);
+            await Assert.That(manySpanLength).IsEqualTo(5).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LuaCallToCallbackViewExpandsTrailingTuple(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            bool spanAvailable = true;
+
+            script.Globals["callback"] = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> ignored);
+                    spanAvailable = spanAvailable && ignored.Length >= 0;
+                    return DynValue.NewNumber(
+                        args.Count + args[0].Number + args[1].Number + args[2].Number
+                    );
+                }
+            );
+
+            DynValue result = script.DoString(
+                @"
+                local function values()
+                    return 20, 30
+                end
+
+                return callback(10, values())
+            "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(63d).ConfigureAwait(false);
+            await Assert.That(spanAvailable).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LuaCallToCallbackViewHandlesLuaNoReturnTrailingArgument(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            bool spanAvailable = true;
+            int spanLength = -1;
+
+            script.Globals["callback"] = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanLength = span.Length;
+                    return DynValue.NewNumber(args.Count + args[0].Number);
+                }
+            );
+
+            DynValue result = script.DoString(
+                @"
+                local function values()
+                end
+
+                return callback(10, values())
+            "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(11d).ConfigureAwait(false);
+            await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
+            await Assert.That(spanLength).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LuaCallToCallbackViewHandlesLuaSingleReturnTrailingArgument(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            bool spanAvailable = true;
+            int spanLength = -1;
+
+            script.Globals["callback"] = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanLength = span.Length;
+                    return DynValue.NewNumber(args.Count + args[0].Number + args[1].Number);
+                }
+            );
+
+            DynValue result = script.DoString(
+                @"
+                local function values()
+                    return 20
+                end
+
+                return callback(10, values())
+            "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(32d).ConfigureAwait(false);
+            await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
+            await Assert.That(spanLength).IsEqualTo(2).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LuaCallToCallbackViewHandlesClrEmptyTrailingTuple(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            bool spanAvailable = true;
+
+            script.Globals["empty"] = DynValue.NewCallbackView((_, _) => DynValue.EmptyTuple);
+            script.Globals["callback"] = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanAvailable = spanAvailable && span.Length >= 0;
+                    return DynValue.NewNumber(args.Count + args[0].Number);
+                }
+            );
+
+            DynValue result = script.DoString("return callback(10, empty())");
+
+            await Assert.That(result.Number).IsEqualTo(11d).ConfigureAwait(false);
+            await Assert.That(spanAvailable).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LuaCallToCallbackViewScalarizesNonFinalTuple(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+
+            script.Globals["callback"] = DynValue.NewCallbackView(
+                (_, args) => DynValue.NewNumber(args.Count + args[0].Number + args[1].Number)
+            );
+
+            DynValue result = script.DoString(
+                @"
+                local function values()
+                    return 10, 20
+                end
+
+                return callback(values(), 30)
+            "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task FixedDynValueCallToLegacyClrFunctionPreservesTryGetSpan(
             LuaCompatibilityVersion version
         )

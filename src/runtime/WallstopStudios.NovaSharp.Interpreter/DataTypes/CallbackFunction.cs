@@ -205,6 +205,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             );
         }
 
+        /// <summary>
+        /// Invokes an argument-view callback with a subrange of stack-backed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewStack(
+            ScriptExecutionContext executionContext,
+            IList<DynValue> args,
+            int offset,
+            int count,
+            bool isMethodCall = false
+        )
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                executionContext,
+                count,
+                count > 0 ? args[offset] : null,
+                isMethodCall
+            );
+            return _argumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(args, offset, count, isMethodCall)
+            );
+        }
+
         private DynValue InvokeArgumentViewCallback(
             ScriptExecutionContext executionContext,
             CallbackArguments args

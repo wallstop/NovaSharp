@@ -1396,17 +1396,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (fn.Type == DataType.ClrFunction)
             {
-                //IList<DynValue> args = new Slice<DynValue>(_valueStack, _valueStack.Count - argsCount, argsCount, false);
-                IList<DynValue> args = CreateArgsListForFunctionCall(argsCount, 0);
-                // we expand tuples before callbacks
-                // args = DynValue.ExpandArgumentsToList(args);
-
                 // instructionPtr - 1: instructionPtr already points to the next instruction at this moment
                 // but we need the current instruction here
                 SourceRef sref = GetCurrentSourceRef(instructionPtr - 1);
+                CallbackFunction callback = fn.Callback;
 
                 CallStackItem frame = CallStackItemPool.Rent();
-                frame.ClrFunction = fn.Callback;
+                frame.ClrFunction = callback;
                 frame.ReturnAddress = instructionPtr;
                 frame.CallingSourceRef = sref;
                 frame.BasePointer = -1;
@@ -1416,11 +1412,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.Flags = Flags;
                 _executionStack.Push(frame);
 
-                DynValue ret = fn.Callback.Invoke(
-                    new ScriptExecutionContext(this, fn.Callback, sref),
-                    args,
-                    isMethodCall: thisCall
-                );
+                ScriptExecutionContext context = new(this, callback, sref);
+                DynValue ret;
+                if (callback.HasArgumentViewCallback)
+                {
+                    ret = callback.InvokeArgumentViewStack(
+                        context,
+                        _valueStack,
+                        _valueStack.Count - argsCount,
+                        argsCount,
+                        isMethodCall: thisCall
+                    );
+                }
+                else
+                {
+                    // Legacy CallbackArguments keeps the previous adapter behavior.
+                    IList<DynValue> args = CreateArgsListForFunctionCall(argsCount, 0);
+                    ret = callback.Invoke(context, args, isMethodCall: thisCall);
+                }
+
                 _valueStack.RemoveLast(argsCount + 1);
                 _valueStack.Push(ret);
 

@@ -94,6 +94,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         }
 
         /// <summary>
+        /// Tries to expose a contiguous read-only span over a range currently stored in the stack.
+        /// </summary>
+        public bool TryGetSpan(int from, int length, out System.ReadOnlySpan<T> span)
+        {
+            span = default;
+            if (from < 0 || length < 0 || from > Count - length)
+            {
+                return false;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Trims the stack so only the first <paramref name="p"/> entries remain.
         /// </summary>
         public void CropAtCount(int p)

@@ -82,6 +82,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task PcallHandlesCallbackViewSuccess(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["clr"] = DynValue.NewCallbackView(
+                (context, args) =>
+                    DynValue.NewTuple(DynValue.NewString("hello"), DynValue.NewNumber(args.Count)),
+                "clr-view"
+            );
+
+            DynValue tuple = script.DoString("return pcall(clr, 1, 2, 3)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task PcallForwardsArgumentsToScriptFunction(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
@@ -109,6 +127,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             script.Globals["clr"] = DynValue.NewCallback(
                 (context, args) => throw new ScriptRuntimeException("fail"),
                 "clr-fail"
+            );
+
+            DynValue tuple = script.DoString("return pcall(clr)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("fail").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PcallDecoratesCallbackViewScriptRuntimeExceptions(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["clr"] = DynValue.NewCallbackView(
+                (context, args) => throw new ScriptRuntimeException("fail"),
+                "clr-view-fail"
             );
 
             DynValue tuple = script.DoString("return pcall(clr)");
@@ -165,6 +201,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task PcallWrapsCallbackViewTailCallRequestWithoutHandlers(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["tailing"] = DynValue.NewCallbackView(
+                (context, args) =>
+                    DynValue.NewTailCallReq(
+                        DynValue.NewCallbackView(
+                            (ctx, innerArgs) => DynValue.NewNumber(88),
+                            "inner-view"
+                        )
+                    ),
+                "tailing-view"
+            );
+
+            DynValue record = script.DoString(
+                @"
+                local ok, value = pcall(tailing)
+                return { ok = ok, value = value, valueType = type(value) }
+                "
+            );
+
+            await Assert.That(record.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+            Table table = record.Table;
+
+            DynValue ok = table.Get("ok");
+            DynValue valueType = table.Get("valueType");
+            DynValue value = table.Get("value");
+
+            await Assert.That(ok.Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(valueType.String == "number" || valueType.String == "nil")
+                .IsTrue()
+                .ConfigureAwait(false);
+
+            if (valueType.String == "number")
+            {
+                await Assert.That(value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                await Assert.That(value.Number).IsEqualTo(88d).ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task PcallRejectsClrTailCallWithContinuation(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
@@ -197,12 +282,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task PcallRejectsCallbackViewTailCallWithContinuation(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["tailing"] = DynValue.NewCallbackView(
+                (context, args) =>
+                {
+                    TailCallData tailCall = new()
+                    {
+                        Function = DynValue.NewCallbackView(
+                            (ctx, innerArgs) => DynValue.True,
+                            "inner-view"
+                        ),
+                        Args = System.Array.Empty<DynValue>(),
+                        Continuation = new CallbackFunction(
+                            (ctx, continuationArgs) => DynValue.True,
+                            "continuation"
+                        ),
+                    };
+
+                    return DynValue.NewTailCallReq(tailCall);
+                },
+                "tailing-view"
+            );
+
+            DynValue tuple = script.DoString("return pcall(tailing)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("wrap in a script function instead")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task PcallRejectsClrYieldRequest(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
             script.Globals["yielding"] = DynValue.NewCallback(
                 (context, args) => DynValue.NewYieldReq(System.Array.Empty<DynValue>()),
                 "yielding-clr"
+            );
+
+            DynValue tuple = script.DoString("return pcall(yielding)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("wrap in a script function instead")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PcallRejectsCallbackViewYieldRequest(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["yielding"] = DynValue.NewCallbackView(
+                (context, args) => DynValue.NewYieldReq(System.Array.Empty<DynValue>()),
+                "yielding-view"
             );
 
             DynValue tuple = script.DoString("return pcall(yielding)");
@@ -224,6 +365,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             script.Globals["clr"] = DynValue.NewCallback(
                 (context, args) => throw new ScriptRuntimeException("failure"),
                 "clr-fail"
+            );
+
+            script.DoString(
+                @"
+                function decorator(message)
+                    return 'decorated:' .. message
+                end
+                "
+            );
+
+            DynValue tuple = script.DoString("return xpcall(clr, decorator)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("decorated:").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("failure").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task XpcallDecoratesCallbackViewExceptionWithHandlerBeforeUnwind(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["clr"] = DynValue.NewCallbackView(
+                (context, args) => throw new ScriptRuntimeException("failure"),
+                "clr-view-fail"
             );
 
             script.DoString(

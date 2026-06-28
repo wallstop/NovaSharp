@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
 
     /// <summary>
     /// Stack-only view of arguments received by an opt-in <see cref="CallbackFunction"/>.
@@ -88,6 +89,77 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 args.Count,
                 isMethodCall
             ) { }
+
+        /// <summary>
+        /// Initializes a new argument view from a subrange of list backing storage.
+        /// </summary>
+        internal CallbackArgumentsView(
+            IList<DynValue> args,
+            int offset,
+            int count,
+            bool isMethodCall
+        )
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (offset < 0 || count < 0 || offset > args.Count - count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            }
+
+            ReadOnlySpan<DynValue> span = default;
+            bool hasSpan = false;
+            if (args is DynValue[] array)
+            {
+                span = new ReadOnlySpan<DynValue>(array, offset, count);
+                hasSpan = true;
+            }
+            else if (args is FastStack<DynValue> stack && stack.TryGetSpan(offset, count, out span))
+            {
+                hasSpan = true;
+            }
+
+            _span = span;
+            _list = args;
+            _callbackArguments = null;
+            _arg0 = null;
+            _arg1 = null;
+            _arg2 = null;
+            _arg3 = null;
+            _source = hasSpan ? SourceSpan : SourceList;
+            _offset = hasSpan ? 0 : offset;
+            _storedCount = hasSpan ? count : offset + count;
+            _isMethodCall = isMethodCall;
+
+            int visibleStoredCount = _storedCount - _offset;
+            if (visibleStoredCount <= 0)
+            {
+                _count = 0;
+                _lastIsTuple = false;
+            }
+            else
+            {
+                DynValue last = GetStoredArgument(_storedCount - 1);
+                if (last.Type == DataType.Tuple)
+                {
+                    _count = last.Tuple.Length - 1 + visibleStoredCount;
+                    _lastIsTuple = true;
+                }
+                else if (last.Type == DataType.Void)
+                {
+                    _count = visibleStoredCount - 1;
+                    _lastIsTuple = false;
+                }
+                else
+                {
+                    _count = visibleStoredCount;
+                    _lastIsTuple = false;
+                }
+            }
+        }
 
         /// <summary>
         /// Initializes a new argument view from a legacy callback argument container.
@@ -194,6 +266,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public DynValue RawGet(int index, bool translateVoids)
         {
+            if (index < 0)
+            {
+                return null;
+            }
+
             if (_source == SourceCallbackArguments)
             {
                 return _callbackArguments.RawGet(index, translateVoids);
