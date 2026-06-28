@@ -357,6 +357,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedSetOverloadsSetTwoAndThreeKeyPaths(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            Table table = new(script);
+            Table child = new(script);
+            Table grandchild = new(script);
+
+            table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+
+            table.Set("child", "leaf", DynValue.NewString("two"));
+            table.Set("child", "grandchild", "leaf", DynValue.NewString("three"));
+
+            await Assert.That(child.RawGet("leaf").String).IsEqualTo("two").ConfigureAwait(false);
+            await Assert
+                .That(grandchild.RawGet("leaf").String)
+                .IsEqualTo("three")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedSetRejectsForeignValue(LuaCompatibilityVersion version)
+        {
+            Script scriptA = new();
+            Script scriptB = new();
+            Table table = new(scriptA);
+            table.Set("child", DynValue.NewTable(scriptA));
+            DynValue foreignValue = DynValue.NewTable(scriptB);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set("child", "leaf", foreignValue)
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("resources owned by different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task GetParamsReturnsNestedValue(LuaCompatibilityVersion version)
         {
             Script script = new(version);
@@ -368,6 +420,114 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue value = table.Get("child", 1);
 
             await Assert.That(value.String).IsEqualTo("inner").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedGetAndRawGetOverloadsReturnNestedValues(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            Table table = new(script);
+            Table child = new(script);
+            Table grandchild = new(script);
+            table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+            child.Set("leaf", DynValue.NewString("two"));
+            grandchild.Set("leaf", DynValue.NewString("three"));
+
+            DynValue twoKeyGet = table.Get("child", "leaf");
+            DynValue twoKeyRawGet = table.RawGet("child", "leaf");
+            DynValue threeKeyGet = table.Get("child", "grandchild", "leaf");
+            DynValue threeKeyRawGet = table.RawGet("child", "grandchild", "leaf");
+
+            await Assert.That(twoKeyGet.String).IsEqualTo("two").ConfigureAwait(false);
+            await Assert.That(twoKeyRawGet.String).IsEqualTo("two").ConfigureAwait(false);
+            await Assert.That(threeKeyGet.String).IsEqualTo("three").ConfigureAwait(false);
+            await Assert.That(threeKeyRawGet.String).IsEqualTo("three").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedIndexersGetAndSetNestedValues(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            Table table = new(script);
+            Table child = new(script);
+            Table grandchild = new(script);
+            table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+
+            table["child", "leaf"] = "two";
+            table["child", "grandchild", "leaf"] = "three";
+
+            await Assert.That(table["child", "leaf"]).IsEqualTo("two").ConfigureAwait(false);
+            await Assert
+                .That(table["child", "grandchild", "leaf"])
+                .IsEqualTo("three")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedTerminalNullMatchesArrayPath(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            Table table = new(script);
+            table.Set("child", DynValue.NewTable(script));
+
+            DynValue fixedGet = table.Get("child", (object)null);
+            DynValue fixedRawGet = table.RawGet("child", (object)null);
+            bool removed = table.Remove("child", (object)null);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set("child", (object)null, DynValue.NewNumber(1))
+            );
+
+            await Assert.That(fixedGet.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(fixedRawGet).IsNull().ConfigureAwait(false);
+            await Assert.That(removed).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("table index is nil")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ObjectArrayNestedGetStillUsesArrayPath(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            Table table = new(script);
+            table.Set("child", DynValue.NewTable(script));
+            table.Set(new object[] { "child", "leaf" }, DynValue.NewString("array"));
+            object[] keys = new object[] { "child", "leaf" };
+
+            DynValue getValue = table.Get(keys);
+            DynValue rawValue = table.RawGet(keys);
+            DynValue castGetValue = table.Get((object)keys);
+            DynValue castRawValue = table.RawGet((object)keys);
+
+            await Assert.That(getValue.String).IsEqualTo("array").ConfigureAwait(false);
+            await Assert.That(rawValue.String).IsEqualTo("array").ConfigureAwait(false);
+            await Assert.That(castGetValue.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(castRawValue).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -441,6 +601,66 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RawGetObjectArrayThrowsWhenPathMissing(LuaCompatibilityVersion version)
+        {
+            Table table = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.RawGet(new object[] { "missing", "child" })
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to anything")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedGetThrowsWhenPathMissing(LuaCompatibilityVersion version)
+        {
+            Table table = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Get("missing", "child")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to anything")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedSetThrowsWhenPathMissing(LuaCompatibilityVersion version)
+        {
+            Table table = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set("missing", "child", DynValue.NewNumber(1))
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to anything")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task RawGetParamsThrowsWhenIntermediateIsNotTable(
             LuaCompatibilityVersion version
         )
@@ -450,6 +670,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.RawGet("leaf", "child")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to a table")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedRawGetThrowsWhenIntermediateIsNotTable(
+            LuaCompatibilityVersion version
+        )
+        {
+            Table table = new(new Script());
+            table.Set("leaf", DynValue.NewNumber(5));
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.RawGet("leaf", "child")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to a table")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedRemoveThrowsWhenIntermediateIsNotTable(
+            LuaCompatibilityVersion version
+        )
+        {
+            Table table = new(new Script());
+            table.Set("leaf", DynValue.NewNumber(5));
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Remove("leaf", "child")
             );
 
             await Assert
@@ -660,6 +926,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
             await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedRemoveOverloadsDeleteNestedEntries(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            Table table = new(script);
+            Table child = new(script);
+            Table grandchild = new(script);
+            table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+            child.Set("leaf", DynValue.NewNumber(2));
+            grandchild.Set("leaf", DynValue.NewNumber(3));
+
+            bool removedTwoKey = table.Remove("child", "leaf");
+            bool removedThreeKey = table.Remove("child", "grandchild", "leaf");
+
+            await Assert.That(removedTwoKey).IsTrue().ConfigureAwait(false);
+            await Assert.That(removedThreeKey).IsTrue().ConfigureAwait(false);
+            await Assert.That(child.RawGet("leaf")).IsNull().ConfigureAwait(false);
+            await Assert.That(grandchild.RawGet("leaf")).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

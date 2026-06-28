@@ -376,4 +376,115 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 new object[] { _firstObject, _secondObject, _thirdObject, _fourthObject }
             );
     }
+
+    /// <summary>
+    /// Benchmarks host-side nested table access through fixed key overloads and params-array paths.
+    /// </summary>
+    [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
+    public class TableAccessBenchmarks
+    {
+        private Script _script;
+        private Table _table;
+        private object[] _twoKeys = Array.Empty<object>();
+        private object[] _threeKeys = Array.Empty<object>();
+        private DynValue _value = DynValue.Nil;
+
+        /// <summary>
+        /// Builds a stable nested table graph for host-side lookup and mutation benchmarks.
+        /// </summary>
+        [GlobalSetup]
+        public void Setup()
+        {
+            _script = new Script(CoreModulePresets.Complete);
+            _table = new Table(_script);
+            Table child = new(_script);
+            Table grandchild = new(_script);
+            _value = DynValue.NewNumber(42);
+
+            _table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+            child.Set("leaf", _value);
+            grandchild.Set("leaf", _value);
+            _twoKeys = new object[] { "child", "leaf" };
+            _threeKeys = new object[] { "child", "grandchild", "leaf" };
+        }
+
+        /// <summary>
+        /// Reads a nested value through the fixed two-key raw lookup overload.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: 2 fixed keys")]
+        public DynValue RawGetTwoFixedKeys() => _table.RawGet("child", "leaf");
+
+        /// <summary>
+        /// Reads a nested value through the array-backed raw lookup overload with a stable key buffer.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: array 2 keys")]
+        public DynValue RawGetTwoArrayKeys() => _table.RawGet(_twoKeys);
+
+        /// <summary>
+        /// Reads a nested value through the array-backed raw lookup overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: new array 2 keys")]
+        public DynValue RawGetTwoNewArrayKeys() => _table.RawGet(new object[] { "child", "leaf" });
+
+        /// <summary>
+        /// Reads a nested value through the fixed three-key raw lookup overload.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: 3 fixed keys")]
+        public DynValue RawGetThreeFixedKeys() => _table.RawGet("child", "grandchild", "leaf");
+
+        /// <summary>
+        /// Reads a nested value through the array-backed raw lookup overload with a stable key buffer.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: array 3 keys")]
+        public DynValue RawGetThreeArrayKeys() => _table.RawGet(_threeKeys);
+
+        /// <summary>
+        /// Reads a nested value through the array-backed raw lookup overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: new array 3 keys")]
+        public DynValue RawGetThreeNewArrayKeys() =>
+            _table.RawGet(new object[] { "child", "grandchild", "leaf" });
+
+        /// <summary>
+        /// Reads a nested value through the fixed two-key lookup overload.
+        /// </summary>
+        [Benchmark(Description = "Table Get: 2 fixed keys")]
+        public DynValue GetTwoFixedKeys() => _table.Get("child", "leaf");
+
+        /// <summary>
+        /// Reads a nested value through the array-backed lookup overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Table Get: new array 2 keys")]
+        public DynValue GetTwoNewArrayKeys() => _table.Get(new object[] { "child", "leaf" });
+
+        /// <summary>
+        /// Reads a nested value through the fixed two-key indexer overload.
+        /// </summary>
+        [Benchmark(Description = "Table Indexer: 2 fixed keys")]
+        public object IndexerTwoFixedKeys() => _table["child", "leaf"];
+
+        /// <summary>
+        /// Writes a nested value through the fixed two-key setter overload.
+        /// </summary>
+        [Benchmark(Description = "Table Set: 2 fixed keys")]
+        public void SetTwoFixedKeys() => _table.Set("child", "leaf", _value);
+
+        /// <summary>
+        /// Writes a nested value through the array-backed setter overload with a stable key buffer.
+        /// </summary>
+        [Benchmark(Description = "Table Set: array 2 keys")]
+        public void SetTwoArrayKeys() => _table.Set(_twoKeys, _value);
+
+        /// <summary>
+        /// Writes a nested value through the array-backed setter overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Table Set: new array 2 keys")]
+        public void SetTwoNewArrayKeys() => _table.Set(new object[] { "child", "leaf" }, _value);
+    }
 }
