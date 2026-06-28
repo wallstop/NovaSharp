@@ -1,6 +1,5 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
-    using System;
     using System.Collections.Generic;
     using System.Globalization;
     using Debugging;
@@ -11,6 +10,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
+
+    /// <summary>
+    /// Emits bytecode immediately after a function closure declaration.
+    /// </summary>
+    internal interface IFunctionDeclarationPostEmitter
+    {
+        /// <summary>
+        /// Emits any caller-specific post-declaration bytecode.
+        /// </summary>
+        /// <param name="bc">The bytecode builder currently emitting instructions.</param>
+        /// <returns>The number of emitted opcodes that the closure jump must skip.</returns>
+        public int Emit(ByteCode bc);
+    }
+
+    /// <summary>
+    /// Emits no post-declaration bytecode for standalone function expressions.
+    /// </summary>
+    internal readonly struct NoOpFunctionDeclarationPostEmitter : IFunctionDeclarationPostEmitter
+    {
+        /// <inheritdoc />
+        public int Emit(ByteCode bc) => 0;
+    }
 
     /// <summary>
     /// Represents a parsed Lua function literal (including lambdas) and knows how to emit its body.
@@ -317,13 +338,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// Emits the closure wrapper for this function and allows the caller to insert extra opcodes.
         /// </summary>
         /// <param name="bc">The bytecode builder currently emitting instructions.</param>
-        /// <param name="afterDecl">
-        /// Callback that emits additional instructions immediately after the closure declaration and
-        /// returns how many opcodes it injected so jump offsets can be adjusted.
+        /// <param name="postEmitter">
+        /// Struct emitter that writes additional instructions immediately after the closure declaration
+        /// and returns how many opcodes it injected so jump offsets can be adjusted.
         /// </param>
         /// <param name="friendlyName">Optional name reported in debugger metadata.</param>
         /// <returns>The instruction pointer pointing at the start of the compiled function body.</returns>
-        public int Compile(ByteCode bc, Func<int> afterDecl, string friendlyName)
+        public int Compile<TPostEmitter>(ByteCode bc, TPostEmitter postEmitter, string friendlyName)
+            where TPostEmitter : struct, IFunctionDeclarationPostEmitter
         {
             using (bc.EnterSource(_begin))
             {
@@ -332,7 +354,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 .ToArray();
 
                 _closureInstruction = bc.EmitClosure(symbs, bc.GetJumpPointForNextInstruction());
-                int ops = afterDecl();
+                int ops = postEmitter.Emit(bc);
 
                 _closureInstruction.NumVal += 2 + ops;
             }
@@ -346,7 +368,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         /// <param name="bc">The bytecode builder currently emitting instructions.</param>
         public override void Compile(ByteCode bc)
         {
-            Compile(bc, () => 0, null);
+            Compile(bc, default(NoOpFunctionDeclarationPostEmitter), null);
         }
     }
 }
