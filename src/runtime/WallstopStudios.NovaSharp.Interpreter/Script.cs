@@ -285,7 +285,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (Options.EnableScriptCaching)
             {
                 _compilationCache = new Execution.ScriptCompilationCache(
-                    Options.CompatibilityVersion,
                     Options.ScriptCacheMaxEntries
                 );
             }
@@ -547,12 +546,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return LoadStream(ms, globalTable, codeFriendlyName);
             }
 
+            LuaCompatibilityVersion compatibilityVersion = Options.CompatibilityVersion;
+
             // Try to use cached compilation if available
             // Only use cache when no custom friendly name is specified (for proper debug tracking)
             if (
                 _compilationCache != null
                 && codeFriendlyName == null
-                && _compilationCache.TryGet(code, out Execution.CachedChunk cached)
+                && _compilationCache.TryGet(
+                    code,
+                    compatibilityVersion,
+                    out Execution.CachedChunk cached
+                )
             )
             {
                 // Cache hit: reuse the previously compiled bytecode
@@ -577,7 +582,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             // Store in cache for future reuse (only when no custom friendly name)
             if (_compilationCache != null && codeFriendlyName == null)
             {
-                _compilationCache.Store(code, address, source.SourceId);
+                _compilationCache.Store(code, compatibilityVersion, address, source.SourceId);
             }
 
             return MakeClosure(address, globalTable ?? _globalTable);

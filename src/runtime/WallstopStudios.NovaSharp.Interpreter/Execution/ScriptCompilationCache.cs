@@ -3,7 +3,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
-    using System.Threading;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
 
@@ -29,25 +28,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// </summary>
         internal const int DefaultMaxEntries = 64;
 
-        private readonly Dictionary<int, LinkedListNode<LruEntry>> _cache;
+        private readonly Dictionary<SourceCacheKey, LinkedListNode<LruEntry>> _cache;
         private readonly LinkedList<LruEntry> _lruList;
         private readonly int _maxEntries;
-        private readonly LuaCompatibilityVersion _version;
         private readonly object _lock = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptCompilationCache"/> class.
         /// </summary>
-        /// <param name="version">The Lua compatibility version used for this script's cache key generation.</param>
         /// <param name="maxEntries">Maximum number of cached entries before eviction (default: 64).</param>
-        internal ScriptCompilationCache(
-            LuaCompatibilityVersion version,
-            int maxEntries = DefaultMaxEntries
-        )
+        internal ScriptCompilationCache(int maxEntries = DefaultMaxEntries)
         {
-            _version = version;
             _maxEntries = maxEntries;
-            _cache = new Dictionary<int, LinkedListNode<LruEntry>>(Math.Min(maxEntries, 16));
+            _cache = new Dictionary<SourceCacheKey, LinkedListNode<LruEntry>>(
+                Math.Min(maxEntries, 16)
+            );
             _lruList = new LinkedList<LruEntry>();
         }
 
@@ -70,12 +65,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// On hit, promotes the entry to the front of the LRU list.
         /// </summary>
         /// <param name="code">The Lua source code text.</param>
+        /// <param name="version">The Lua compatibility version used to compile the source.</param>
         /// <param name="result">When this method returns true, contains the cached chunk information.</param>
         /// <returns><c>true</c> if a cached entry was found; otherwise, <c>false</c>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal bool TryGet(string code, out CachedChunk result)
+        internal bool TryGet(string code, LuaCompatibilityVersion version, out CachedChunk result)
         {
-            int key = ComputeCacheKey(code);
+            SourceCacheKey key = SourceCacheKey.Create(code, version);
 
             lock (_lock)
             {
@@ -97,16 +93,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// Stores a compiled chunk in the cache for future reuse.
         /// </summary>
         /// <param name="code">The Lua source code text that was compiled.</param>
+        /// <param name="version">The Lua compatibility version used to compile the source.</param>
         /// <param name="entryPointAddress">The bytecode instruction pointer for the chunk's entry point.</param>
         /// <param name="sourceId">The source ID assigned to this chunk in the script's source list.</param>
         /// <remarks>
         /// If the cache has reached its maximum capacity, the least recently used entry is evicted.
         /// </remarks>
-        internal void Store(string code, int entryPointAddress, int sourceId)
+        internal void Store(
+            string code,
+            LuaCompatibilityVersion version,
+            int entryPointAddress,
+            int sourceId
+        )
         {
-            int key = ComputeCacheKey(code);
+            SourceCacheKey key = SourceCacheKey.Create(code, version);
             CachedChunk chunk = new(entryPointAddress, sourceId);
-            LruEntry entry = new(key, chunk);
 
             lock (_lock)
             {
@@ -114,7 +115,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 if (_cache.TryGetValue(key, out LinkedListNode<LruEntry> existingNode))
                 {
                     // Update value and move to front
-                    existingNode.Value = entry;
+                    existingNode.Value = new LruEntry(existingNode.Value._key, chunk);
                     _lruList.Remove(existingNode);
                     _lruList.AddFirst(existingNode);
                     return;
@@ -129,6 +130,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 }
 
                 // Add new entry at front (most recently used)
+                LruEntry entry = new(key, chunk);
                 LinkedListNode<LruEntry> newNode = _lruList.AddFirst(entry);
                 _cache[key] = newNode;
             }
@@ -147,31 +149,83 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
-        /// Computes a cache key from the script source code and version.
-        /// </summary>
-        /// <param name="code">The Lua source code.</param>
-        /// <returns>A hash code suitable for use as a cache key.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int ComputeCacheKey(string code)
-        {
-            // Use HashCodeHelper for deterministic hashing
-            // Include both code hash and version to ensure different versions don't collide
-            return HashCodeHelper.HashCode(code, _version);
-        }
-
-        /// <summary>
-        /// Internal entry for the LRU linked list containing both the cache key and chunk data.
+        /// Internal entry for the LRU linked list containing both the source text and chunk data.
         /// </summary>
         private struct LruEntry
         {
-            internal int _key;
+            internal SourceCacheKey _key;
             internal CachedChunk _chunk;
 
-            internal LruEntry(int key, CachedChunk chunk)
+            internal LruEntry(SourceCacheKey key, CachedChunk chunk)
             {
                 _key = key;
                 _chunk = chunk;
             }
+        }
+    }
+
+    /// <summary>
+    /// Cache key for compiled source text in a specific Lua compatibility mode.
+    /// </summary>
+    internal readonly struct SourceCacheKey : IEquatable<SourceCacheKey>
+    {
+        private readonly string _code;
+        private readonly LuaCompatibilityVersion _version;
+        private readonly int _hashCode;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SourceCacheKey"/> struct.
+        /// </summary>
+        /// <param name="code">The Lua source code text.</param>
+        /// <param name="version">The Lua compatibility version used for compilation.</param>
+        /// <param name="hashCode">The precomputed hash code.</param>
+        internal SourceCacheKey(string code, LuaCompatibilityVersion version, int hashCode)
+        {
+            _code = code;
+            _version = version;
+            _hashCode = hashCode;
+        }
+
+        /// <summary>
+        /// Creates a cache key for the specified source text and compatibility version.
+        /// </summary>
+        /// <param name="code">The Lua source code text.</param>
+        /// <param name="version">The Lua compatibility version used for compilation.</param>
+        /// <returns>A cache key with a precomputed hash code.</returns>
+        internal static SourceCacheKey Create(string code, LuaCompatibilityVersion version)
+        {
+            return new SourceCacheKey(code, version, HashCodeHelper.HashCode(code, version));
+        }
+
+        /// <summary>
+        /// Determines whether this key matches another key by source text and compatibility version.
+        /// </summary>
+        /// <param name="other">The key to compare with this key.</param>
+        /// <returns><c>true</c> when both keys represent the same source text and compatibility version.</returns>
+        public bool Equals(SourceCacheKey other)
+        {
+            return _hashCode == other._hashCode
+                && _version == other._version
+                && string.Equals(_code, other._code, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Determines whether this key matches another object.
+        /// </summary>
+        /// <param name="obj">The object to compare with this key.</param>
+        /// <returns><c>true</c> when the object is an equivalent <see cref="SourceCacheKey"/>.</returns>
+        public override bool Equals(object obj)
+        {
+            return obj is SourceCacheKey other && Equals(other);
+        }
+
+        /// <summary>
+        /// Gets the precomputed hash code for dictionary lookup.
+        /// </summary>
+        /// <returns>The precomputed hash code.</returns>
+        public override int GetHashCode()
+        {
+            return _hashCode;
         }
     }
 

@@ -1,10 +1,12 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.ScriptExecution
 {
+    using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -258,11 +260,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 script.LoadString($"return {i}");
             }
 
-            // Cache should have evicted some entries - should be roughly around max size
-            // Due to probabilistic eviction, we allow some variance
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(5).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CachePromotesRecentlyUsedEntryBeforeEviction()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 2);
+
+            cache.Store(
+                "return 1",
+                LuaCompatibilityVersion.Lua54,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+            cache.Store(
+                "return 2",
+                LuaCompatibilityVersion.Lua54,
+                entryPointAddress: 22,
+                sourceId: 202
+            );
+
             await Assert
-                .That(script.CompilationCacheCount)
-                .IsLessThanOrEqualTo(15)
+                .That(
+                    cache.TryGet(
+                        "return 1",
+                        LuaCompatibilityVersion.Lua54,
+                        out CachedChunk promoted
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(promoted._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
+
+            cache.Store(
+                "return 3",
+                LuaCompatibilityVersion.Lua54,
+                entryPointAddress: 33,
+                sourceId: 303
+            );
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet("return 2", LuaCompatibilityVersion.Lua54, out _))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet("return 1", LuaCompatibilityVersion.Lua54, out _))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet("return 3", LuaCompatibilityVersion.Lua54, out _))
+                .IsTrue()
                 .ConfigureAwait(false);
         }
 
@@ -283,6 +332,74 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             // Should have caching enabled by default
             await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task LoadStringAfterCompatibilityVersionChangeCreatesSeparateCacheEntry()
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = LuaCompatibilityVersion.Lua51,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "return 42";
+
+            script.LoadString(code);
+            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua54;
+            script.LoadString(code);
+
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(2).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SourceCacheKeyDistinguishesSourceTextsWhenHashesCollide()
+        {
+            const string firstCode = "return 1";
+            const string secondCode = "return 2";
+            const int forcedHashCode = 42;
+
+            SourceCacheKey firstKey = new(firstCode, LuaCompatibilityVersion.Lua54, forcedHashCode);
+            SourceCacheKey secondKey = new(
+                secondCode,
+                LuaCompatibilityVersion.Lua54,
+                forcedHashCode
+            );
+
+            await Assert.That(firstKey.GetHashCode()).IsEqualTo(secondKey.GetHashCode());
+            await Assert.That(firstKey.Equals(secondKey)).IsFalse().ConfigureAwait(false);
+
+            Dictionary<SourceCacheKey, int> entries = new(2) { [firstKey] = 11, [secondKey] = 22 };
+
+            await Assert.That(entries.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(entries[firstKey]).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(entries[secondKey]).IsEqualTo(22).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheSeparatesSameSourceAcrossCompatibilityVersions()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 4);
+            const string code = "return 1";
+
+            cache.Store(code, LuaCompatibilityVersion.Lua51, entryPointAddress: 11, sourceId: 101);
+            cache.Store(code, LuaCompatibilityVersion.Lua54, entryPointAddress: 22, sourceId: 202);
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(2).ConfigureAwait(false);
+
+            await Assert
+                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua51, out CachedChunk lua51))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(lua51._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(lua51._sourceId).IsEqualTo(101).ConfigureAwait(false);
+
+            await Assert
+                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua54, out CachedChunk lua54))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(lua54._entryPointAddress).IsEqualTo(22).ConfigureAwait(false);
+            await Assert.That(lua54._sourceId).IsEqualTo(202).ConfigureAwait(false);
         }
     }
 }
