@@ -160,7 +160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call()
         {
-            return OwnerScript.Call(this);
+            return OwnerScript.Call(DynValue.FromClosure(this));
         }
 
         /// <summary>
@@ -214,6 +214,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Calls this function with two pre-created DynValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue arg1, DynValue arg2)
+        {
+            return OwnerScript.Call(
+                DynValue.FromClosure(this),
+                arg1 ?? DynValue.Nil,
+                arg2 ?? DynValue.Nil
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with three pre-created DynValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            return OwnerScript.Call(
+                DynValue.FromClosure(this),
+                arg1 ?? DynValue.Nil,
+                arg2 ?? DynValue.Nil,
+                arg3 ?? DynValue.Nil
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with four pre-created DynValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        {
+            return OwnerScript.Call(
+                DynValue.FromClosure(this),
+                arg1 ?? DynValue.Nil,
+                arg2 ?? DynValue.Nil,
+                arg3 ?? DynValue.Nil,
+                arg4 ?? DynValue.Nil
+            );
+        }
+
+        /// <summary>
         /// Calls this function with the specified args
         /// </summary>
         /// <param name="args">The arguments to pass to the function.</param>
@@ -232,7 +286,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(params DynValue[] args)
         {
-            return OwnerScript.Call(this, args);
+            return OwnerScript.Call(DynValue.FromClosure(this), NormalizeNullArguments(args));
+        }
+
+        private static DynValue[] NormalizeNullArguments(DynValue[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == null)
+                {
+                    DynValue[] normalizedArgs = new DynValue[args.Length];
+                    Array.Copy(args, normalizedArgs, i);
+                    normalizedArgs[i] = DynValue.Nil;
+
+                    for (int j = i + 1; j < args.Length; j++)
+                    {
+                        normalizedArgs[j] = args[j] ?? DynValue.Nil;
+                    }
+
+                    return normalizedArgs;
+                }
+            }
+
+            return args;
         }
 
         /// <summary>

@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ClosureTUnitTests
@@ -175,12 +176,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue noArgs = closure.Call();
             DynValue objectArgs = closure.Call(2, 3);
             DynValue fourObjectArgs = closure.Call(1, 2, 3, 4);
-            DynValue dynValues = closure.Call(DynValue.NewNumber(10), DynValue.NewNumber(5));
+            DynValue twoDynValues = closure.Call(DynValue.NewNumber(10), DynValue.NewNumber(5));
+            DynValue threeDynValues = closure.Call(
+                DynValue.NewNumber(10),
+                DynValue.NewNumber(5),
+                DynValue.NewNumber(2)
+            );
+            DynValue fourDynValues = closure.Call(
+                DynValue.NewNumber(10),
+                DynValue.NewNumber(5),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(1)
+            );
 
             await Assert.That(noArgs.Number).IsEqualTo(0d).ConfigureAwait(false);
             await Assert.That(objectArgs.Number).IsEqualTo(5d).ConfigureAwait(false);
             await Assert.That(fourObjectArgs.Number).IsEqualTo(10d).ConfigureAwait(false);
-            await Assert.That(dynValues.Number).IsEqualTo(15d).ConfigureAwait(false);
+            await Assert.That(twoDynValues.Number).IsEqualTo(15d).ConfigureAwait(false);
+            await Assert.That(threeDynValues.Number).IsEqualTo(17d).ConfigureAwait(false);
+            await Assert.That(fourDynValues.Number).IsEqualTo(18d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -198,6 +212,84 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task MultipleNullCallArgumentsRemainLuaNil(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            DynValue capture = script.DoString(
+                @"
+                return function(...)
+                    local a, b, c, d = ...
+                    return select('#', ...), a == nil, b == nil, c == nil, d == nil
+                end
+                "
+            );
+            Closure closure = capture.Function;
+
+            DynValue twoArgs = closure.Call(null, null);
+            DynValue threeArgs = closure.Call(null, DynValue.NewNumber(3), null);
+            DynValue fourArgs = closure.Call(null, null, null, null);
+            DynValue paramsArrayArgs = closure.Call(
+                new DynValue[] { null, DynValue.NewNumber(3), null }
+            );
+
+            await Assert.That(twoArgs.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(twoArgs.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(twoArgs.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(twoArgs.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(twoArgs.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(twoArgs.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+
+            await Assert.That(threeArgs.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(threeArgs.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(threeArgs.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(threeArgs.Tuple[2].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(threeArgs.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(threeArgs.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+
+            await Assert.That(fourArgs.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(fourArgs.Tuple[0].Number).IsEqualTo(4d).ConfigureAwait(false);
+            await Assert.That(fourArgs.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(fourArgs.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(fourArgs.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(fourArgs.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+
+            await Assert.That(paramsArrayArgs.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(paramsArrayArgs.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(paramsArrayArgs.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(paramsArrayArgs.Tuple[2].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(paramsArrayArgs.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(paramsArrayArgs.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FixedDynValueCallOverloadsRejectForeignResources(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            Script foreignScript = new(version);
+            DynValue function = script.DoString("return function(...) return ... end");
+            Closure closure = function.Function;
+            DynValue foreignTable = DynValue.NewTable(new Table(foreignScript));
+
+            ScriptRuntimeException twoArgException = Assert.Throws<ScriptRuntimeException>(() =>
+                closure.Call(DynValue.Nil, foreignTable)
+            );
+            ScriptRuntimeException threeArgException = Assert.Throws<ScriptRuntimeException>(() =>
+                closure.Call(DynValue.Nil, DynValue.Nil, foreignTable)
+            );
+            ScriptRuntimeException fourArgException = Assert.Throws<ScriptRuntimeException>(() =>
+                closure.Call(DynValue.Nil, DynValue.Nil, DynValue.Nil, foreignTable)
+            );
+
+            await Assert.That(twoArgException).IsNotNull().ConfigureAwait(false);
+            await Assert.That(threeArgException).IsNotNull().ConfigureAwait(false);
+            await Assert.That(fourArgException).IsNotNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

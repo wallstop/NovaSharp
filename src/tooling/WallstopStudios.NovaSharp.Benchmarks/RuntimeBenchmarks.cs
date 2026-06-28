@@ -248,6 +248,34 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_fourArgFunction, new DynValue[] { _first, _second, _third, _fourth });
 
         /// <summary>
+        /// Calls a Lua closure through the closure convenience API with three pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: 3 DynValues")]
+        public DynValue ClosureCallThreeDynValues() =>
+            _threeArgClosure.Call(_first, _second, _third);
+
+        /// <summary>
+        /// Calls a Lua closure through the closure convenience API with four pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: 4 DynValues")]
+        public DynValue ClosureCallFourDynValues() =>
+            _fourArgClosure.Call(_first, _second, _third, _fourth);
+
+        /// <summary>
+        /// Calls a Lua closure through the closure params-array overload for comparison.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: params 3 DynValues")]
+        public DynValue ClosureCallThreeDynValuesParamsArray() =>
+            _threeArgClosure.Call(new DynValue[] { _first, _second, _third });
+
+        /// <summary>
+        /// Calls a Lua closure through the closure params-array overload for comparison.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: params 4 DynValues")]
+        public DynValue ClosureCallFourDynValuesParamsArray() =>
+            _fourArgClosure.Call(new DynValue[] { _first, _second, _third, _fourth });
+
+        /// <summary>
         /// Calls a Lua closure with three pre-created CLR object arguments.
         /// </summary>
         [Benchmark(Description = "Host Call: 3 objects")]
