@@ -59,6 +59,108 @@ namespace WallstopStudios.NovaSharp.Interpreter
             Type,
             MethodInfo
         > LegacyResolveFileNameMethods = new();
+        private static readonly Func<LoadStringGuardState, DynValue> LoadStringGuardAction =
+            static state =>
+                state.Script.LoadStringCore(state.Code, state.GlobalTable, state.CodeFriendlyName);
+        private static readonly Func<LoadStreamGuardState, DynValue> LoadStreamGuardAction =
+            static state =>
+                state.Script.LoadStreamCore(
+                    state.Stream,
+                    state.GlobalTable,
+                    state.CodeFriendlyName
+                );
+
+        /// <summary>
+        /// Carries state through the compatibility guard for string loads without capturing a closure.
+        /// </summary>
+        private readonly struct LoadStringGuardState
+        {
+            /// <summary>
+            /// Initializes a new string load guard state.
+            /// </summary>
+            /// <param name="script">Script instance that owns the load operation.</param>
+            /// <param name="code">Lua source text to load.</param>
+            /// <param name="globalTable">Optional environment table for the loaded closure.</param>
+            /// <param name="codeFriendlyName">Optional debugger-facing chunk name.</param>
+            public LoadStringGuardState(
+                Script script,
+                string code,
+                Table globalTable,
+                string codeFriendlyName
+            )
+            {
+                Script = script;
+                Code = code;
+                GlobalTable = globalTable;
+                CodeFriendlyName = codeFriendlyName;
+            }
+
+            /// <summary>
+            /// Gets the script instance that owns the load operation.
+            /// </summary>
+            public Script Script { get; }
+
+            /// <summary>
+            /// Gets the Lua source text to load.
+            /// </summary>
+            public string Code { get; }
+
+            /// <summary>
+            /// Gets the optional environment table for the loaded closure.
+            /// </summary>
+            public Table GlobalTable { get; }
+
+            /// <summary>
+            /// Gets the optional debugger-facing chunk name.
+            /// </summary>
+            public string CodeFriendlyName { get; }
+        }
+
+        /// <summary>
+        /// Carries state through the compatibility guard for stream loads without capturing a closure.
+        /// </summary>
+        private readonly struct LoadStreamGuardState
+        {
+            /// <summary>
+            /// Initializes a new stream load guard state.
+            /// </summary>
+            /// <param name="script">Script instance that owns the load operation.</param>
+            /// <param name="stream">Stream containing Lua source or dumped bytecode.</param>
+            /// <param name="globalTable">Optional environment table for the loaded closure.</param>
+            /// <param name="codeFriendlyName">Optional debugger-facing chunk name.</param>
+            public LoadStreamGuardState(
+                Script script,
+                Stream stream,
+                Table globalTable,
+                string codeFriendlyName
+            )
+            {
+                Script = script;
+                Stream = stream;
+                GlobalTable = globalTable;
+                CodeFriendlyName = codeFriendlyName;
+            }
+
+            /// <summary>
+            /// Gets the script instance that owns the load operation.
+            /// </summary>
+            public Script Script { get; }
+
+            /// <summary>
+            /// Gets the stream containing Lua source or dumped bytecode.
+            /// </summary>
+            public Stream Stream { get; }
+
+            /// <summary>
+            /// Gets the optional environment table for the loaded closure.
+            /// </summary>
+            public Table GlobalTable { get; }
+
+            /// <summary>
+            /// Gets the optional debugger-facing chunk name.
+            /// </summary>
+            public string CodeFriendlyName { get; }
+        }
 
         /// <summary>
         /// Initializes the <see cref="Script"/> class.
@@ -420,61 +522,65 @@ namespace WallstopStudios.NovaSharp.Interpreter
             string codeFriendlyName = null
         )
         {
-            return ExecuteWithCompatibilityGuard(() =>
+            LoadStringGuardState state = new(this, code, globalTable, codeFriendlyName);
+            return ExecuteWithCompatibilityGuard(state, LoadStringGuardAction);
+        }
+
+        private DynValue LoadStringCore(
+            string code,
+            Table globalTable = null,
+            string codeFriendlyName = null
+        )
+        {
+            if (code == null)
             {
-                if (code == null)
-                {
-                    throw new ArgumentNullException(nameof(code));
-                }
+                throw new ArgumentNullException(nameof(code));
+            }
 
-                this.CheckScriptOwnership(globalTable);
+            this.CheckScriptOwnership(globalTable);
 
-                if (code.StartsWith(StringModule.Base64DumpHeader, StringComparison.Ordinal))
-                {
-                    code = code.Substring(StringModule.Base64DumpHeader.Length);
-                    byte[] data = Convert.FromBase64String(code);
-                    using MemoryStream ms = new(data);
-                    return LoadStream(ms, globalTable, codeFriendlyName);
-                }
+            if (code.StartsWith(StringModule.Base64DumpHeader, StringComparison.Ordinal))
+            {
+                code = code.Substring(StringModule.Base64DumpHeader.Length);
+                byte[] data = Convert.FromBase64String(code);
+                using MemoryStream ms = new(data);
+                return LoadStream(ms, globalTable, codeFriendlyName);
+            }
 
-                // Try to use cached compilation if available
-                // Only use cache when no custom friendly name is specified (for proper debug tracking)
-                if (
-                    _compilationCache != null
-                    && codeFriendlyName == null
-                    && _compilationCache.TryGet(code, out Execution.CachedChunk cached)
-                )
-                {
-                    // Cache hit: reuse the previously compiled bytecode
-                    // The SourceCode is already in _sources at cached.SourceId
-                    // Just create a new closure pointing to the cached entry point
-                    return MakeClosure(cached._entryPointAddress, globalTable ?? _globalTable);
-                }
+            // Try to use cached compilation if available
+            // Only use cache when no custom friendly name is specified (for proper debug tracking)
+            if (
+                _compilationCache != null
+                && codeFriendlyName == null
+                && _compilationCache.TryGet(code, out Execution.CachedChunk cached)
+            )
+            {
+                // Cache hit: reuse the previously compiled bytecode
+                // The SourceCode is already in _sources at cached.SourceId
+                // Just create a new closure pointing to the cached entry point
+                return MakeClosure(cached._entryPointAddress, globalTable ?? _globalTable);
+            }
 
-                string chunkName =
-                    codeFriendlyName
-                    ?? ZString.Concat(
-                        "chunk_",
-                        _sources.Count.ToString(CultureInfo.InvariantCulture)
-                    );
+            string chunkName =
+                codeFriendlyName
+                ?? ZString.Concat("chunk_", _sources.Count.ToString(CultureInfo.InvariantCulture));
 
-                SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
+            SourceCode source = new(codeFriendlyName ?? chunkName, code, _sources.Count, this);
 
-                _sources.Add(source);
+            _sources.Add(source);
 
-                int address = LoaderFast.LoadChunk(this, source, _byteCode);
+            int address = LoaderFast.LoadChunk(this, source, _byteCode);
 
-                SignalSourceCodeChange(source);
-                SignalByteCodeChange();
+            SignalSourceCodeChange(source);
+            SignalByteCodeChange();
 
-                // Store in cache for future reuse (only when no custom friendly name)
-                if (_compilationCache != null && codeFriendlyName == null)
-                {
-                    _compilationCache.Store(code, address, source.SourceId);
-                }
+            // Store in cache for future reuse (only when no custom friendly name)
+            if (_compilationCache != null && codeFriendlyName == null)
+            {
+                _compilationCache.Store(code, address, source.SourceId);
+            }
 
-                return MakeClosure(address, globalTable ?? _globalTable);
-            });
+            return MakeClosure(address, globalTable ?? _globalTable);
         }
 
         /// <summary>
@@ -492,64 +598,64 @@ namespace WallstopStudios.NovaSharp.Interpreter
             string codeFriendlyName = null
         )
         {
-            return ExecuteWithCompatibilityGuard(() =>
+            LoadStreamGuardState state = new(this, stream, globalTable, codeFriendlyName);
+            return ExecuteWithCompatibilityGuard(state, LoadStreamGuardAction);
+        }
+
+        private DynValue LoadStreamCore(
+            Stream stream,
+            Table globalTable = null,
+            string codeFriendlyName = null
+        )
+        {
+            if (stream == null)
             {
-                if (stream == null)
-                {
-                    throw new ArgumentNullException(nameof(stream));
-                }
+                throw new ArgumentNullException(nameof(stream));
+            }
 
-                this.CheckScriptOwnership(globalTable);
+            this.CheckScriptOwnership(globalTable);
 
-                Stream codeStream = new UndisposableStream(stream);
+            Stream codeStream = new UndisposableStream(stream);
 
-                if (!Processor.IsDumpStream(codeStream))
-                {
-                    using StreamReader sr = new(codeStream);
-                    string scriptCode = sr.ReadToEnd();
-                    return LoadString(scriptCode, globalTable, codeFriendlyName);
-                }
-                else
-                {
-                    string chunkName =
-                        codeFriendlyName
-                        ?? ZString.Concat(
-                            "dump_",
-                            _sources.Count.ToString(CultureInfo.InvariantCulture)
-                        );
+            if (!Processor.IsDumpStream(codeStream))
+            {
+                using StreamReader sr = new(codeStream);
+                string scriptCode = sr.ReadToEnd();
+                return LoadString(scriptCode, globalTable, codeFriendlyName);
+            }
 
-                    SourceCode source = new(
-                        codeFriendlyName ?? chunkName,
-                        ZString.Concat(
-                            "-- This script was decoded from a binary dump - dump_",
-                            _sources.Count
-                        ),
-                        _sources.Count,
-                        this
-                    );
+            string chunkName =
+                codeFriendlyName
+                ?? ZString.Concat("dump_", _sources.Count.ToString(CultureInfo.InvariantCulture));
 
-                    _sources.Add(source);
+            SourceCode source = new(
+                codeFriendlyName ?? chunkName,
+                ZString.Concat(
+                    "-- This script was decoded from a binary dump - dump_",
+                    _sources.Count
+                ),
+                _sources.Count,
+                this
+            );
 
-                    int address = _mainProcessor.Undump(
-                        codeStream,
-                        _sources.Count - 1,
-                        globalTable ?? _globalTable,
-                        out bool hasUpValues
-                    );
+            _sources.Add(source);
 
-                    SignalSourceCodeChange(source);
-                    SignalByteCodeChange();
+            int address = _mainProcessor.Undump(
+                codeStream,
+                _sources.Count - 1,
+                globalTable ?? _globalTable,
+                out bool hasUpValues
+            );
 
-                    if (hasUpValues)
-                    {
-                        return MakeClosure(address, globalTable ?? _globalTable);
-                    }
-                    else
-                    {
-                        return MakeClosure(address);
-                    }
-                }
-            });
+            SignalSourceCodeChange(source);
+            SignalByteCodeChange();
+
+            if (hasUpValues)
+            {
+                return MakeClosure(address, globalTable ?? _globalTable);
+            }
+
+            return MakeClosure(address);
         }
 
         /// <summary>

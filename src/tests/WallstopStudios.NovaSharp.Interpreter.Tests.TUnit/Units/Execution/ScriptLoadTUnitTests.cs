@@ -400,6 +400,76 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadStringCacheHitDoesNotSignalDebuggerAgain(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            RecordingDebugger debugger = new();
+            script.AttachDebugger(debugger);
+
+            script.LoadString("return 42");
+            int sourceNotifications = debugger.SourceCodeSetCount;
+            int byteCodeNotifications = debugger.ByteCodeSetCount;
+            int sourceCodeCount = script.SourceCodeCount;
+
+            script.LoadString("return 42");
+
+            await Assert
+                .That(debugger.SourceCodeSetCount)
+                .IsEqualTo(sourceNotifications)
+                .ConfigureAwait(false);
+            await Assert
+                .That(debugger.ByteCodeSetCount)
+                .IsEqualTo(byteCodeNotifications)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(sourceCodeCount)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadStringFriendlyNameBypassesCacheAndSignalsDebugger(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            RecordingDebugger debugger = new();
+            script.AttachDebugger(debugger);
+
+            script.LoadString("return 42");
+            int sourceNotifications = debugger.SourceCodeSetCount;
+            int byteCodeNotifications = debugger.ByteCodeSetCount;
+            int sourceCodeCount = script.SourceCodeCount;
+
+            script.LoadString("return 42", codeFriendlyName: "named");
+
+            await Assert
+                .That(debugger.SourceCodeSetCount)
+                .IsEqualTo(sourceNotifications + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(debugger.ByteCodeSetCount)
+                .IsEqualTo(byteCodeNotifications + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(sourceCodeCount + 1)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CreateDynamicExpressionRemovesSourceOnError(
             LuaCompatibilityVersion version
         )

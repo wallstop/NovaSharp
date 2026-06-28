@@ -20,6 +20,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     {
         private string _scriptSource = string.Empty;
         private Script _precompiledScript;
+        private Script _cachedScript;
         private DynValue _precompiledFunction = DynValue.Nil;
         private ScriptComplexity _currentComplexity;
 
@@ -59,6 +60,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 null,
                 $"precompiled_{complexity}"
             );
+
+            _cachedScript = new Script(CoreModulePresets.Complete);
+            _cachedScript.LoadString(_scriptSource);
         }
 
         /// <summary>
@@ -80,6 +84,12 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             Script script = new(CoreModulePresets.Complete);
             return script.LoadString(_scriptSource, null, $"compile_{_currentComplexity}");
         }
+
+        /// <summary>
+        /// Loads a chunk already present in the script compilation cache.
+        /// </summary>
+        [Benchmark(Description = "Load Cached")]
+        public DynValue LoadCached() => _cachedScript.LoadString(_scriptSource);
 
         /// <summary>
         /// Executes the precompiled chunk, isolating runtime overhead.
