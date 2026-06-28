@@ -223,11 +223,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Gets the value of an upvalue. To set the value, use GetUpValue(idx).Assign(...);
+        /// Gets a readonly copy of the value of an upvalue.
+        /// To set the value, use <see cref="SetUpValue(int, DynValue)"/>.
         /// </summary>
         /// <param name="idx">The index of the upvalue.</param>
-        /// <returns>The value of an upvalue </returns>
+        /// <returns>A readonly copy of the upvalue value.</returns>
         public DynValue GetUpValue(int idx)
+        {
+            return ClosureContext[idx]?.AsReadOnly() ?? DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Sets the value of an upvalue.
+        /// </summary>
+        /// <param name="idx">The index of the upvalue.</param>
+        /// <param name="value">The value to assign to the upvalue.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if idx is out of range.</exception>
+        public void SetUpValue(int idx, DynValue value)
+        {
+            if (idx < 0 || idx >= ClosureContext.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(idx));
+            }
+
+            DynValue slot = ClosureContext[idx];
+            if (slot == null)
+            {
+                ClosureContext[idx] = value?.Clone() ?? DynValue.NewNil();
+            }
+            else
+            {
+                slot.Assign(value ?? DynValue.Nil);
+            }
+        }
+
+        /// <summary>
+        /// Gets the mutable internal reference to an upvalue.
+        /// Internal use only - allows direct mutation via <see cref="DynValue.Assign(DynValue)"/>.
+        /// </summary>
+        /// <param name="idx">The index of the upvalue.</param>
+        /// <returns>The mutable internal DynValue reference.</returns>
+        internal DynValue GetUpValueMutable(int idx)
         {
             return ClosureContext[idx];
         }

@@ -41,9 +41,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         /// </summary>
         protected static Token UnexpectedTokenType(Token t)
         {
-            throw new SyntaxErrorException(t, "unexpected symbol near '{0}'", t.Text)
+            throw new SyntaxErrorException(t, "unexpected symbol near '{0}'", t.text)
             {
-                IsPrematureStreamTermination = (t.Type == TokenType.Eof),
+                IsPrematureStreamTermination = (t.type == TokenType.Eof),
             };
         }
 
@@ -56,7 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         protected static Token CheckTokenType(ScriptLoadingContext lcontext, TokenType tokenType)
         {
             Token t = lcontext.Lexer.Current;
-            if (t.Type != tokenType)
+            if (t.type != tokenType)
             {
                 return UnexpectedTokenType(t);
             }
@@ -80,7 +80,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         )
         {
             Token t = lcontext.Lexer.Current;
-            if (t.Type != tokenType1 && t.Type != tokenType2)
+            if (t.type != tokenType1 && t.type != tokenType2)
             {
                 return UnexpectedTokenType(t);
             }
@@ -106,7 +106,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         )
         {
             Token t = lcontext.Lexer.Current;
-            if (t.Type != tokenType1 && t.Type != tokenType2 && t.Type != tokenType3)
+            if (t.type != tokenType1 && t.type != tokenType2 && t.type != tokenType3)
             {
                 return UnexpectedTokenType(t);
             }
@@ -127,7 +127,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         )
         {
             Token t = lcontext.Lexer.Current;
-            if (t.Type != tokenType)
+            if (t.type != tokenType)
             {
                 UnexpectedTokenType(t);
             }
@@ -149,18 +149,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree
         )
         {
             Token t = lcontext.Lexer.Current;
-            if (t.Type != expectedTokenType)
+            if (t.type != expectedTokenType)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
                     "'{0}' expected (to close '{1}' at line {2}) near '{3}'",
                     expectedTokenText,
-                    originalToken.Text,
-                    originalToken.FromLine,
-                    t.Text
+                    originalToken.text,
+                    originalToken.fromLine,
+                    t.text
                 )
                 {
-                    IsPrematureStreamTermination = (t.Type == TokenType.Eof),
+                    IsPrematureStreamTermination = (t.type == TokenType.Eof),
                 };
             }
 

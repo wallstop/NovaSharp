@@ -43,6 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 | InstructionFieldUsage.Value
                 | InstructionFieldUsage.NumVal
                 | InstructionFieldUsage.NumVal2
+                | InstructionFieldUsage.Name
             )
         )]
         [global::TUnit.Core.Arguments(
@@ -53,7 +54,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 | InstructionFieldUsage.NumVal2
             )
         )]
-        [global::TUnit.Core.Arguments((int)OpCode.Index, (int)InstructionFieldUsage.Value)]
+        [global::TUnit.Core.Arguments(
+            (int)OpCode.Index,
+            (int)(InstructionFieldUsage.Value | InstructionFieldUsage.Name)
+        )]
         [global::TUnit.Core.Arguments((int)OpCode.Args, (int)InstructionFieldUsage.SymbolList)]
         [global::TUnit.Core.Arguments(
             (int)OpCode.BeginFn,

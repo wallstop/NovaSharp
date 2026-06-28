@@ -11,10 +11,9 @@ from typing import Iterable, List, Sequence
 try:
     import mdformat
 except ModuleNotFoundError as exc:  # pragma: no cover - guidance for missing deps
-    sys.stderr.write(
-        "mdformat is not installed. Run `python -m pip install -r requirements.tooling.txt`.\n"
-    )
-    raise
+    raise SystemExit(
+        "mdformat is not installed. Run `python -m pip install -r requirements.tooling.txt`."
+    ) from exc
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -23,6 +22,10 @@ EXCLUDE_DIRS = (
     "docs/coverage",
     "node_modules",
     ".git",
+    ".pytest_cache",
+    ".venv",
+    "BenchmarkDotNet.Artifacts",
+    "progress",
 )
 SKIP_FILES = {
     "AGENTS.md",

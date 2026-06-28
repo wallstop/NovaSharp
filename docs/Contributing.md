@@ -4,7 +4,7 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 
 ## Environment & Tooling
 
-- Install the .NET SDK (8.0+). If your machine only has .NET 9, set `DOTNET_ROLL_FORWARD=Major` when running tests/coverage so the net8.0 testhost launches correctly.
+- Install the .NET SDK pinned by `global.json` (currently 9.0.100 with latest-minor roll-forward).
 - Install Python 3.10+ (CI uses 3.12) and restore the shared tooling dependencies once per clone:
   ```bash
   python -m pip install -r requirements.tooling.txt
@@ -21,9 +21,9 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
 ## Build & Test Commands
 
 - Full solution build: `dotnet build src/NovaSharp.sln -c Release`
-- Interpreter-only build: `dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/NovaSharp.Interpreter.csproj`
+- Interpreter-only build: `dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj`
 - Interpreter tests (Release):\
-  `dotnet test --project src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release --logger "trx;LogFileName=NovaSharpInterpreterTUnit.trx"`
+  `dotnet test src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.csproj -c Release -- --report-trx --report-trx-filename NovaSharpInterpreterTUnit.trx`
 
 ## Coverage
 
@@ -55,16 +55,17 @@ This project keeps the build/test tooling and documentation in lockstep. Use thi
   The script flags non-conforming identifiers with file/line hints. Address the issues or update the allowlist when the names are intentionally generated.
 - Keep comments, docs, and diagnostic strings in plain English:
   ```bash
-  python3 tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log
+  python3 tools/SpellingAudit/spelling_audit.py --write-log docs/audits/spelling_audit.log
   ```
   This wraps `codespell` with the repository allowlist so you can fix or intentionally document any new wording before CI runs the audit.
 
 ## Formatting & Pre-commit Hooks
 
 - The shared pre-commit hook (`bash ./scripts/dev/pre-commit.sh`) runs automatically once `scripts/dev/install-hooks.sh` has been executed and the Python tooling requirements are installed. It performs the following before each commit:
-  - `dotnet csharpier .` (auto-fix all C# files).
+  - `dotnet tool restore` and `dotnet tool run csharpier format .` (auto-fix all C# files).
   - `python scripts/ci/format_markdown.py --fix --files <staged markdown>` to keep Markdown deterministic.
   - `python scripts/ci/check_markdown_links.py --files <staged markdown>` to ensure links stay healthy.
+  - `python scripts/lint/check-tooling-consistency.py` to keep the devcontainer, hooks, CI, `global.json`, and local .NET tool manifest aligned.
   - Restages the results so your commit includes the auto-fixes.
 - Run the hook manually if you need to double-check formatting outside of a commit:
   ```bash
@@ -85,8 +86,8 @@ Before opening a PR:
 1. Run the interpreter tests (see above).
 1. Run coverage if your change affects runtime/tooling behaviour.
 1. Run the branding + namespace scripts.
-1. Ensure formatting hooks have run (or run `dotnet csharpier .` + `python scripts/ci/format_markdown.py --check --all` + `bash ./scripts/ci/check-markdown.sh` manually) so CI doesn't reject style issues.
+1. Ensure formatting hooks have run (or run `dotnet tool restore` + `dotnet tool run csharpier format .` + `python scripts/ci/format_markdown.py --check --all` + `bash ./scripts/ci/check-markdown.sh` manually) so CI doesn't reject style issues.
 1. Update relevant docs (`docs/README.md`, `docs/Testing.md`, feature-specific guides).
 1. Update `PLAN.md` if you progressed a milestone item.
 
-Following these steps keeps CI green and makes reviews smoother. Thanks for contributing!
+Report each command you ran and whether it passed. If a check or PR CI was not run, mark it as `not run` and residual risk instead of describing the PR as green.

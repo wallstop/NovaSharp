@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -12,9 +13,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     public sealed class ProcessorCoroutineCloseTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task CloseBeforeStartReturnsTrueAndMarksDead()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseBeforeStartReturnsTrueAndMarksDead(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function ready() return 1 end");
 
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("ready"));
@@ -26,9 +32,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseWhileSuspendedEndsCoroutine()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseWhileSuspendedEndsCoroutine(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function pause()
@@ -55,9 +66,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseForceSuspendedCoroutineDrainsStack()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseForceSuspendedCoroutineDrainsStack(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function slow()
@@ -84,9 +100,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseAfterExceptionReturnsFalseTuple()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseAfterExceptionReturnsFalseTuple(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function blow()
@@ -109,9 +130,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseDeadCoroutineWithStoredErrorReturnsFalseTuple()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseDeadCoroutineWithStoredErrorReturnsFalseTuple(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function explode()
@@ -135,10 +163,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(subsequentClose.Tuple[1].String).Contains("kaboom");
         }
 
+        /// <summary>
+        /// Tests that coroutine.close() on the main coroutine throws an error.
+        /// Note: coroutine.close() is a Lua 5.4+ function.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task CloseMainCoroutineThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseMainCoroutineThrows(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function close_main()
@@ -154,10 +188,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(exception.Message).Contains("attempt to close the main coroutine");
         }
 
+        /// <summary>
+        /// Tests that coroutine.close() on a running coroutine throws an error.
+        /// Note: coroutine.close() is a Lua 5.4+ function.
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task CloseRunningCoroutineThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseRunningCoroutineThrows(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function close_running()
@@ -177,9 +217,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseUnknownStateThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseUnknownStateThrows(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function idle() coroutine.yield('pause') end");
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("idle"));
 
@@ -194,9 +239,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseDeadCoroutineWithoutErrorsReturnsTrue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseDeadCoroutineWithoutErrorsReturnsTrue(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString("function done() return 'ok' end");
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("done"));
 
@@ -210,9 +262,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseClrCallbackCoroutineReturnsTrue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseClrCallbackCoroutineReturnsTrue(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.NewNumber(1));
             DynValue coroutineValue = script.CreateCoroutine(callback);
 
@@ -223,9 +280,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseForceSuspendedCoroutineUnwindsSuccessfully()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseForceSuspendedCoroutineUnwindsSuccessfully(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 function heavy_close()
@@ -255,9 +319,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClosePropagatesErrorsFromCloseMetamethod()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClosePropagatesErrorsFromCloseMetamethod(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 local function new_closable()
@@ -289,9 +355,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CoroutineCloseFlushesAllClosersEvenWhenOneRaises()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineCloseFlushesAllClosersEvenWhenOneRaises(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 local log = {}
@@ -338,6 +408,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(log.Length).IsEqualTo(2);
             await Assert.That(log.Get(1).String).IsEqualTo("second:nil");
             await Assert.That(log.Get(2).String).IsEqualTo("first:nil");
+        }
+
+        // =====================================================
+        // Negative Tests: coroutine.close() not available pre-5.4
+        // =====================================================
+
+        /// <summary>
+        /// Tests that coroutine.close is nil in Lua 5.1-5.3.
+        /// The coroutine.close() function was introduced in Lua 5.4.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task CoroutineCloseIsNilInPreLua54(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue closeFunc = script.DoString("return coroutine.close");
+
+            await Assert
+                .That(closeFunc.Type)
+                .IsEqualTo(DataType.Nil)
+                .Because($"coroutine.close should be nil in {version}, got {closeFunc.Type}");
+        }
+
+        /// <summary>
+        /// Tests that coroutine.close is available in Lua 5.4+.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineCloseIsAvailableInLua54Plus(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue closeFunc = script.DoString("return coroutine.close");
+
+            await Assert
+                .That(closeFunc.Type)
+                .IsEqualTo(DataType.ClrFunction)
+                .Because(
+                    $"coroutine.close should be a function in {version}, got {closeFunc.Type}"
+                );
         }
 
         private static TException ExpectException<TException>(Action action)

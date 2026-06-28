@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Fixed-capacity, array-backed stack used by the VM for hot paths where dynamic allocation is undesirable.
@@ -21,13 +22,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
         public T this[int index]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _storage[index]; }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set { _storage[index] = value; }
         }
 
         /// <summary>
         /// Pushes a value onto the stack, returning the same value for fluent usage.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Push(T item)
         {
             _storage[_headIdx++] = item;
@@ -50,15 +54,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <summary>
         /// Returns the element at the given offset from the top without removing it.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Peek(int idxofs = 0)
         {
-            T item = _storage[_headIdx - 1 - idxofs];
-            return item;
+            return _storage[_headIdx - 1 - idxofs];
         }
 
         /// <summary>
         /// Overwrites the element at the given offset from the top.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(int idxofs, T item)
         {
             _storage[_headIdx - 1 - idxofs] = item;
@@ -103,6 +108,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <summary>
         /// Pops the top element off the stack and returns it.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Pop()
         {
             --_headIdx;
@@ -148,6 +154,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// </summary>
         public int Count
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _headIdx; }
         }
 

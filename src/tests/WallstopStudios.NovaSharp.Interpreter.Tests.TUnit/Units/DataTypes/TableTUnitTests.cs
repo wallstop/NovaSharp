@@ -5,15 +5,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     public sealed class TableTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task ConstructorWithArrayValuesInitializesSequentialEntries()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ConstructorWithArrayValuesInitializesSequentialEntries(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue[] values = new[] { DynValue.NewNumber(10), DynValue.NewString("two") };
 
             Table table = new(script, values);
@@ -24,7 +32,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClearRemovesAllEntries()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClearRemovesAllEntries(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set(1, DynValue.NewNumber(1));
@@ -38,9 +51,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task LengthCacheInvalidatesWhenEntriesChange()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LengthCacheInvalidatesWhenEntriesChange(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
             table.Set(1, DynValue.NewNumber(10));
             table.Set(2, DynValue.NewNumber(20));
@@ -58,7 +76,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task NextKeySkipsNilEntriesAndHandlesTermination()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NextKeySkipsNilEntriesAndHandlesTermination(
+            LuaCompatibilityVersion version
+        )
         {
             Table table = new(new Script());
             table.Set("first", DynValue.Nil);
@@ -81,7 +106,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task NextKeyReturnsNullWhenKeyUnknown()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NextKeyReturnsNullWhenKeyUnknown(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set(1, DynValue.NewNumber(1));
@@ -92,9 +122,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task NextKeyHandlesNonIntegralNumberKeys()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NextKeyHandlesNonIntegralNumberKeys(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
             DynValue fractionalKey = DynValue.NewNumber(2.5);
             table.Set(fractionalKey, DynValue.NewString("head"));
@@ -107,7 +142,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task CollectDeadKeysRemovesNilEntries()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CollectDeadKeysRemovesNilEntries(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set(1, DynValue.NewNumber(10));
@@ -122,7 +162,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task AppendThrowsWhenValueOwnedByDifferentScript()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AppendThrowsWhenValueOwnedByDifferentScript(
+            LuaCompatibilityVersion version
+        )
         {
             Script scriptA = new();
             Script scriptB = new();
@@ -140,7 +187,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetDynValueNaNThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetDynValueNaNThrows(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             DynValue nanKey = DynValue.NewNumber(double.NaN);
@@ -156,7 +208,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetKeysThrowsWhenPathMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetKeysThrowsWhenPathMissing(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -171,7 +228,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetKeysThrowsWhenIntermediateIsNotTable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetKeysThrowsWhenIntermediateIsNotTable(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set("leaf", DynValue.NewNumber(5));
@@ -187,7 +249,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetObjectArrayThrowsWhenKeysArrayIsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetObjectArrayThrowsWhenKeysArrayIsNull(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -202,7 +269,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetObjectArrayThrowsWhenKeysArrayEmpty()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetObjectArrayThrowsWhenKeysArrayEmpty(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -217,9 +289,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetObjectRoutesStringsNumbersAndValues()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetObjectRoutesStringsNumbersAndValues(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
 
             table.Set((object)"name", DynValue.NewString("nova"));
@@ -237,9 +314,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetDynValueNumberWithFractionStoresEntry()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetDynValueNumberWithFractionStoresEntry(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
             DynValue fractionalKey = DynValue.NewNumber(3.25);
 
@@ -250,9 +332,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetObjectArrayCreatesNestedTable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetObjectArrayCreatesNestedTable(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
             table.Set("child", DynValue.NewTable(script));
 
@@ -265,9 +352,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetParamsReturnsNestedValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetParamsReturnsNestedValue(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
             DynValue child = DynValue.NewTable(script);
             child.Table.Set(1, DynValue.NewString("inner"));
@@ -279,7 +371,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetObjectReturnsNilWhenKeyMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetObjectReturnsNilWhenKeyMissing(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -289,7 +386,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetParamsReturnsNilWhenNoKeysProvided()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetParamsReturnsNilWhenNoKeysProvided(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -299,7 +401,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RawGetParamsReturnsNullWhenKeysMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RawGetParamsReturnsNullWhenKeysMissing(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -309,7 +416,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RawGetParamsThrowsWhenPathMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RawGetParamsThrowsWhenPathMissing(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -324,7 +436,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RawGetParamsThrowsWhenIntermediateIsNotTable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RawGetParamsThrowsWhenIntermediateIsNotTable(
+            LuaCompatibilityVersion version
+        )
         {
             Table table = new(new Script());
             table.Set("leaf", DynValue.NewNumber(5));
@@ -340,7 +459,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveParamsReturnsFalseWhenNoKeys()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveParamsReturnsFalseWhenNoKeys(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -348,7 +472,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RawGetObjectReturnsNullWhenKeyIsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RawGetObjectReturnsNullWhenKeyIsNull(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -356,7 +485,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RawGetObjectReturnsValueWhenKeyExists()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RawGetObjectReturnsValueWhenKeyExists(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set("existing", DynValue.NewNumber(42));
@@ -367,7 +501,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RawGetParamsReturnsNullWhenArrayIsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RawGetParamsReturnsNullWhenArrayIsNull(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -377,7 +516,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetObjectThrowsWhenKeyIsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetObjectThrowsWhenKeyIsNull(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
 
@@ -392,7 +536,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveStringKeyDeletesEntry()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveStringKeyDeletesEntry(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set("key", DynValue.NewNumber(12));
@@ -404,7 +553,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveDynValueNumberUsesIntegralPath()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveDynValueNumberUsesIntegralPath(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set(1, DynValue.NewNumber(42));
@@ -416,7 +570,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveDynValueStringDeletesEntry()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveDynValueStringDeletesEntry(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set("value", DynValue.NewNumber(100));
@@ -428,7 +587,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveObjectTreatsBoxedStringAsStringKey()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveObjectTreatsBoxedStringAsStringKey(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set("boxed", DynValue.NewNumber(5));
@@ -440,7 +604,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveObjectTreatsBoxedIntAsArrayKey()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveObjectTreatsBoxedIntAsArrayKey(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set(3, DynValue.NewNumber(9));
@@ -452,9 +621,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveObjectDynValueKeyRemovesNonIntegralEntry()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveObjectDynValueKeyRemovesNonIntegralEntry(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
             DynValue fractionalKey = DynValue.NewNumber(8.5);
             table.Set(fractionalKey, DynValue.NewString("value"));
@@ -466,9 +642,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveObjectArrayDeletesNestedEntry()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveObjectArrayDeletesNestedEntry(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
             table.Set("branch", DynValue.NewTable(script));
             table.Set(new object[] { "branch", "leaf" }, DynValue.NewNumber(6));
@@ -482,9 +663,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RawGetParamsNavigatesNestedTables()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RawGetParamsNavigatesNestedTables(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
             Table inner = new(script);
             inner.Set("leaf", DynValue.NewNumber(99));
@@ -497,7 +683,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task KeysEnumeratesInsertedEntries()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task KeysEnumeratesInsertedEntries(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());
             table.Set("alpha", DynValue.NewNumber(1));

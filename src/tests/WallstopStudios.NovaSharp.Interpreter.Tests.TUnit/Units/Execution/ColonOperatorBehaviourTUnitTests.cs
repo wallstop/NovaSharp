@@ -3,19 +3,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Options;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class ColonOperatorBehaviourTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task TreatAsDotKeepsMethodCallForCallbacks()
+        [AllLuaVersions]
+        public async Task TreatAsDotKeepsMethodCallForCallbacks(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             bool? observed = null;
             DataType? firstArgumentType = null;
 
@@ -40,9 +43,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task TreatAsColonDisablesMethodCallFlag()
+        [AllLuaVersions]
+        public async Task TreatAsColonDisablesMethodCallFlag(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             bool? observed = null;
             DataType? firstArgumentType = null;
 
@@ -67,13 +71,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task TreatAsDotOnUserDataOnlyPreservesUserDataMethodCalls()
+        [AllLuaVersions]
+        public async Task TreatAsDotOnUserDataOnlyPreservesUserDataMethodCalls(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<Probe>(ensureUnregistered: true);
             registrationScope.RegisterType<Probe>();
 
-            Script script = new();
+            Script script = new(version);
             script.Options.ColonOperatorClrCallbackBehaviour =
                 ColonOperatorBehaviour.TreatAsDotOnUserData;
 

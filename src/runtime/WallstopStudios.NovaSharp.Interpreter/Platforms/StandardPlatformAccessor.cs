@@ -98,6 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
     using System.Diagnostics;
     using System.IO;
     using System.Text;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -305,7 +306,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Platforms
         public override int ExecuteCommand(string cmdline)
         {
             // This is windows only!
-            ProcessStartInfo psi = new("cmd.exe", $"/C {cmdline}") { ErrorDialog = false };
+            ProcessStartInfo psi = new("cmd.exe", ZString.Concat("/C ", cmdline))
+            {
+                ErrorDialog = false,
+            };
 
             Process proc = Process.Start(psi);
             proc.WaitForExit();

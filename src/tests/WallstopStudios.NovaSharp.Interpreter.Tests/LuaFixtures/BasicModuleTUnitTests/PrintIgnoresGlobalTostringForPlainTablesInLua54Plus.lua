@@ -1,0 +1,11 @@
+-- @lua-versions: 5.4+
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\BasicModuleTUnitTests.cs:1086
+-- @test: BasicModuleTUnitTests.PrintIgnoresGlobalTostringForPlainTablesInLua54Plus
+-- Test targets Lua 5.4+
+function tostring(v)
+                    return 'CUSTOM:' .. type(v)
+                end
+                t = {}  -- plain table, no metatable
+                print(t)

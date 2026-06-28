@@ -10,8 +10,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     {
         private const int MonotonicSampleCount = 10_000;
 
+        // Pattern matches Lua-compatible format: "Sample: 0x[lowercase hex]"
         private static readonly Regex RefPattern = new(
-            @"^Sample:\s[A-F0-9]{8}$",
+            @"^Sample: 0x[a-f0-9]+$",
             RegexOptions.Compiled
         );
 

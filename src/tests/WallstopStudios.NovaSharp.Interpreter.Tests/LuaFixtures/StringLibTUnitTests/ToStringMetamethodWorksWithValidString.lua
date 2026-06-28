@@ -1,0 +1,11 @@
+-- @lua-versions: 5.3+
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\StringLibTUnitTests.cs:343
+-- @test: StringLibTUnitTests.ToStringMetamethodWorksWithValidString
+-- Test targets Lua 5.3+
+t = {}
+				mt = {}
+				function mt.__tostring () return 'custom_tostring' end
+				setmetatable(t, mt)
+                return tostring(t)

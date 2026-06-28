@@ -8,12 +8,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class OsSystemModuleTUnitTests
@@ -22,7 +24,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         private static readonly string[] FailCommand = { "fail" };
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteCommandReturnsSuccessTuple()
+        [AllLuaVersions]
+        public async Task ExecuteCommandReturnsSuccessTuple(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.NextExecuteExitCode = 0;
@@ -38,7 +41,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteCommandReturnsNilTupleOnFailure()
+        [AllLuaVersions]
+        public async Task ExecuteCommandReturnsNilTupleOnFailure(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.ExecuteThrows = true;
@@ -53,7 +57,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteCommandReturnsNilTupleOnNonZeroExit()
+        [AllLuaVersions]
+        public async Task ExecuteCommandReturnsNilTupleOnNonZeroExit(
+            LuaCompatibilityVersion version
+        )
         {
             StubPlatformAccessor stub = new();
             stub.NextExecuteExitCode = 7;
@@ -68,7 +75,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteCommandReportsSignalWhenExitCodeNegative()
+        [AllLuaVersions]
+        public async Task ExecuteCommandReportsSignalWhenExitCodeNegative(
+            LuaCompatibilityVersion version
+        )
         {
             StubPlatformAccessor stub = new();
             stub.NextExecuteExitCode = -9;
@@ -83,7 +93,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteCommandReportsNotSupportedMessage()
+        [AllLuaVersions]
+        public async Task ExecuteCommandReportsNotSupportedMessage(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.ExecuteNotSupported = true;
@@ -97,7 +108,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteWithoutArgumentsReturnsTrue()
+        [AllLuaVersions]
+        public async Task ExecuteWithoutArgumentsReturnsTrue(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -108,7 +120,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExitInvokesPlatformAndThrowsExitException()
+        [AllLuaVersions]
+        public async Task ExitInvokesPlatformAndThrowsExitException(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -123,7 +136,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetEnvReturnsStoredValue()
+        [AllLuaVersions]
+        public async Task GetEnvReturnsStoredValue(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.Environment["HOME"] = "/tmp/home";
@@ -136,7 +150,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetEnvReturnsNilWhenMissing()
+        [AllLuaVersions]
+        public async Task GetEnvReturnsNilWhenMissing(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -147,7 +162,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveDeletesExistingFile()
+        [AllLuaVersions]
+        public async Task RemoveDeletesExistingFile(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.CreateFile("file.txt");
@@ -161,7 +177,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveReturnsErrorTupleWhenMissing()
+        [AllLuaVersions]
+        public async Task RemoveReturnsErrorTupleWhenMissing(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -175,7 +192,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RemoveReturnsErrorTupleWhenDeleteThrows()
+        [AllLuaVersions]
+        public async Task RemoveReturnsErrorTupleWhenDeleteThrows(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.CreateFile("locked.txt");
@@ -191,7 +209,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RenameMovesExistingFile()
+        [AllLuaVersions]
+        public async Task RenameMovesExistingFile(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.CreateFile("old.txt");
@@ -206,7 +225,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RenameReturnsTupleWhenSourceMissing()
+        [AllLuaVersions]
+        public async Task RenameReturnsTupleWhenSourceMissing(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -220,7 +240,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RenameReturnsTupleWhenMoveThrows()
+        [AllLuaVersions]
+        public async Task RenameReturnsTupleWhenMoveThrows(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.CreateFile("source");
@@ -236,7 +257,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DateUtcEpochMatchesExpectedFields()
+        [AllLuaVersions]
+        public async Task DateUtcEpochMatchesExpectedFields(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -260,7 +282,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DateUtcFormatMatchesExpectedString()
+        [AllLuaVersions]
+        public async Task DateUtcFormatMatchesExpectedString(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -271,7 +294,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DateInvalidSpecifierThrows()
+        [AllLuaVersions]
+        public async Task DateInvalidSpecifierThrows(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -286,7 +310,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DateLocalFormatMatchesClockPattern()
+        [AllLuaVersions]
+        public async Task DateLocalFormatMatchesClockPattern(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -298,7 +323,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DifftimeReturnsDelta()
+        [AllLuaVersions]
+        public async Task DifftimeReturnsDelta(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -309,7 +335,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DifftimeSingleArgumentReturnsValueInLua52()
+        [AllLuaVersions]
+        public async Task DifftimeSingleArgumentReturnsValueInLua52(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(
@@ -323,7 +350,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DifftimeSingleArgumentThrowsInLua53()
+        [AllLuaVersions]
+        public async Task DifftimeSingleArgumentThrowsInLua53(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(
@@ -345,7 +373,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeReturnsPositiveNumber()
+        [AllLuaVersions]
+        public async Task TimeReturnsPositiveNumber(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -356,7 +385,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeRoundTripsThroughUtcDate()
+        [AllLuaVersions]
+        public async Task TimeRoundTripsThroughUtcDate(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -387,7 +417,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeMissingFieldRaisesError()
+        [AllLuaVersions]
+        public async Task TimeMissingFieldRaisesError(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -406,7 +437,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClockReturnsMonotonicValues()
+        [AllLuaVersions]
+        public async Task ClockReturnsMonotonicValues(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -443,19 +475,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(result.Tuple[0].Number).IsGreaterThanOrEqualTo(0d);
         }
 
+        /// <summary>
+        /// Tests that Lua 5.1 outputs %Oy as literal text (not as year modifier).
+        /// Reference: lua5.1 -e "print(os.date('%Oy', 0))" outputs "%Oy"
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task DatePercentOyYieldsTwoDigitYear()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task DatePercentOyOutputsLiteralTextInLua51(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
-            using ScriptContext context = CreateScriptContext(stub);
+            using ScriptContext context = CreateScriptContext(stub, version);
             Script script = context.Script;
             DynValue result = script.DoString("return os.date('!%Oy', 0)");
 
+            await Assert.That(result.String).IsEqualTo("%Oy");
+        }
+
+        /// <summary>
+        /// Tests that Lua 5.2+ supports %Oy format modifier (POSIX alternate numerals).
+        /// Reference: lua5.2+ -e "print(os.date('%Oy', 0))" outputs "70"
+        /// %Oy is a valid POSIX O modifier combination with 'y' (2-digit year)
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task DatePercentOyOutputsTwoDigitYearInLua52Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            StubPlatformAccessor stub = new();
+            using ScriptContext context = CreateScriptContext(stub, version);
+            Script script = context.Script;
+            DynValue result = script.DoString("return os.date('!%Oy', 0)");
+
+            // %Oy uses alternate numerals representation of 2-digit year
+            // In C locale, this outputs the same as %y which is "70" for epoch
             await Assert.That(result.String).IsEqualTo("70");
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeWithNilArgumentReturnsTimestamp()
+        [AllLuaVersions]
+        public async Task TimeWithNilArgumentReturnsTimestamp(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -466,7 +525,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TmpNameReturnsPlatformTempFileName()
+        [AllLuaVersions]
+        public async Task TmpNameReturnsPlatformTempFileName(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.TempFileName = "stub-temp";
@@ -479,7 +539,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TmpNameReturnsQueuedPlatformValuesThenFallsBack()
+        [AllLuaVersions]
+        public async Task TmpNameReturnsQueuedPlatformValuesThenFallsBack(
+            LuaCompatibilityVersion version
+        )
         {
             StubPlatformAccessor stub = new();
             stub.TempFileSequence.Enqueue("queued-one");
@@ -495,7 +558,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TmpNamePropagatesPlatformExceptions()
+        [AllLuaVersions]
+        public async Task TmpNamePropagatesPlatformExceptions(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             stub.TempFileThrows = true;
@@ -511,7 +575,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetLocaleReturnsPlaceholderString()
+        [AllLuaVersions]
+        public async Task SetLocaleReturnsPlaceholderString(LuaCompatibilityVersion version)
         {
             StubPlatformAccessor stub = new();
             using ScriptContext context = CreateScriptContext(stub);
@@ -530,10 +595,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             ArgumentNullException.ThrowIfNull(stub);
 
             ScriptPlatformScope globalScope = ScriptPlatformScope.Override(stub);
-            Script script = new Script(CoreModulePresets.Complete);
+            Script script;
             if (version.HasValue)
             {
-                script.Options.CompatibilityVersion = version.Value;
+                script = CreateScriptWithVersion(version.Value);
+            }
+            else
+            {
+                script = new Script(CoreModulePresets.Complete);
             }
             script.Options.DebugPrint = _ => { };
             return new ScriptContext(script, globalScope);
@@ -681,6 +750,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             }
 
             public int ExitCode { get; }
+        }
+
+        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            script.Options.DebugPrint = _ => { };
+            return script;
         }
     }
 }

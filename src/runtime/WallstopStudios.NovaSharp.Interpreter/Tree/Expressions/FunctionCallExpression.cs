@@ -28,23 +28,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         public FunctionCallExpression(
             ScriptLoadingContext lcontext,
             Expression function,
-            Token thisCallName
+            Token? thisCallName
         )
             : base(lcontext)
         {
             Token callToken = thisCallName ?? lcontext.Lexer.Current;
 
-            _name = thisCallName != null ? thisCallName.Text : null;
+            _name = thisCallName.HasValue ? thisCallName.Value.text : null;
             _debugErr = function.GetFriendlyDebugName();
             _function = function;
 
-            switch (lcontext.Lexer.Current.Type)
+            switch (lcontext.Lexer.Current.type)
             {
                 case TokenType.BrkOpenRound:
                     Token openBrk = lcontext.Lexer.Current;
                     lcontext.Lexer.Next();
                     Token t = lcontext.Lexer.Current;
-                    if (t.Type == TokenType.BrkCloseRound)
+                    if (t.type == TokenType.BrkCloseRound)
                     {
                         _arguments = new List<Expression>();
                         SourceRef = callToken.GetSourceRef(t);
@@ -74,7 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                         _arguments.Add(
                             new TableConstructor(
                                 lcontext,
-                                lcontext.Lexer.Current.Type == TokenType.BrkOpenCurlyShared
+                                lcontext.Lexer.Current.type == TokenType.BrkOpenCurlyShared
                             )
                         );
                         SourceRef = callToken.GetSourceRefUpTo(lcontext.Lexer.Current);
@@ -87,7 +87,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     )
                     {
                         IsPrematureStreamTermination = (
-                            lcontext.Lexer.Current.Type == TokenType.Eof
+                            lcontext.Lexer.Current.type == TokenType.Eof
                         ),
                     };
             }

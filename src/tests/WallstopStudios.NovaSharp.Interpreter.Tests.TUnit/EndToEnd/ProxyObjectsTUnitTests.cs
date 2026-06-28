@@ -5,10 +5,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class ProxyObjectsTUnitTests
@@ -51,7 +53,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task ProxySurfaceAllowsAccessToRandom()
+        [AllLuaVersions]
+        public async Task ProxySurfaceAllowsAccessToRandom(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<Proxy>(ensureUnregistered: true);
@@ -61,7 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             bool callbackInvoked = false;
             Random capturedRandom = null;
 
-            Script script = new()
+            Script script = new(version)
             {
                 Globals =
                 {

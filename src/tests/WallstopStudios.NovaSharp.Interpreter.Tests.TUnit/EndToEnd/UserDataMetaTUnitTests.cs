@@ -6,12 +6,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class UserDataMetaTUnitTests
@@ -221,9 +223,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropMetaPairs()
+        [AllLuaVersions]
+        public async Task InteropMetaPairs(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
@@ -244,9 +247,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropMetaIPairs()
+        [AllLuaVersions]
+        public async Task InteropMetaIPairs(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
@@ -267,9 +271,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropMetaIterator()
+        [AllLuaVersions]
+        public async Task InteropMetaIterator(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
@@ -290,9 +295,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropMetaOpLen()
+        [AllLuaVersions]
+        public async Task InteropMetaOpLen(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
                 ensureUnregistered: true,
                 typeof(ArithmOperatorsTestClass),
@@ -320,9 +326,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropMetaEquality()
+        [AllLuaVersions]
+        public async Task InteropMetaEquality(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();
@@ -374,9 +381,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropMetaComparisons()
+        [AllLuaVersions]
+        public async Task InteropMetaComparisons(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<ArithmOperatorsTestClass>(ensureUnregistered: true);
             registrationScope.RegisterType<ArithmOperatorsTestClass>();

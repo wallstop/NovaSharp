@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
 
     /// <summary>
@@ -157,11 +158,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
                 || Action == ActionType.ClearBreakpoint
             )
             {
-                return $"{Action} {SourceId}:({SourceLine},{SourceCol})";
+                using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+                sb.Append(DebuggerActionTypeStrings.GetName(Action));
+                sb.Append(' ');
+                sb.Append(SourceId);
+                sb.Append(":(");
+                sb.Append(SourceLine);
+                sb.Append(',');
+                sb.Append(SourceCol);
+                sb.Append(')');
+                return sb.ToString();
             }
             else
             {
-                return Action.ToString();
+                return DebuggerActionTypeStrings.GetName(Action);
             }
         }
     }

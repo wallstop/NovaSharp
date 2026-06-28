@@ -649,7 +649,7 @@ def verify_log(path: Path, report: str) -> bool:
 
     print(
         f"Naming audit log at {resolved} is outdated. Run "
-        "`python tools/NamingAudit/naming_audit.py --write-log naming_audit.log` "
+        "`python tools/NamingAudit/naming_audit.py --write-log docs/audits/naming_audit.log` "
         "and commit the refreshed file."
     )
     return False

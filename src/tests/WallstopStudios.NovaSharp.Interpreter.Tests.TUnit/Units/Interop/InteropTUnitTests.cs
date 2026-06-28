@@ -5,7 +5,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class InteropTUnitTests
     {
@@ -43,9 +45,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableArgumentsAreConvertedToClrDictionaryParameters()
+        [AllLuaVersions]
+        public async Task TableArgumentsAreConvertedToClrDictionaryParameters(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new()
+            Script script = new(version)
             {
                 Globals =
                 {
@@ -60,9 +65,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         }
 
         [global::TUnit.Core.Test]
-        public async Task ObjectRoundTripTableToClrObjectAndBack()
+        [AllLuaVersions]
+        public async Task ObjectRoundTripTableToClrObjectAndBack(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue payload = DynValue.FromObject(
                 script,
                 new Dictionary<string, string> { ["name"] = "nova", ["role"] = "tester" }

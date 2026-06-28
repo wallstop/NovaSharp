@@ -4,23 +4,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Attributes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class NovaSharpHideMemberAttributeTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task HiddenMembersAreNotExposedToScripts()
+        [AllLuaVersions]
+        public async Task HiddenMembersAreNotExposedToScripts(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<HiddenMembersSample>(ensureUnregistered: true);
             registrationScope.RegisterType<HiddenMembersSample>();
-            Script script = new Script(CoreModulePresets.Complete);
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.Globals["sample"] = UserData.Create(new HiddenMembersSample());
 
             DynValue visibleResult = script.DoString("return sample.VisibleMethod()");
@@ -33,14 +36,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         }
 
         [global::TUnit.Core.Test]
-        public async Task HiddenMembersPropagateThroughInheritance()
+        [AllLuaVersions]
+        public async Task HiddenMembersPropagateThroughInheritance(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<DerivedHiddenMembersSample>(
                     ensureUnregistered: true
                 );
             registrationScope.RegisterType<DerivedHiddenMembersSample>();
-            Script script = new Script(CoreModulePresets.Complete);
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.Globals["sample"] = UserData.Create(new DerivedHiddenMembersSample());
 
             DynValue visibleResult = script.DoString("return sample.Visible()");

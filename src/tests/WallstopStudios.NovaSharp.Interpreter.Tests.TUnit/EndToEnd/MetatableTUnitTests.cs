@@ -5,17 +5,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using CoreLib;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class MetatableTUnitTests
     {
+        // __ipairs metamethod was added in Lua 5.2 and removed in Lua 5.3+
         [global::TUnit.Core.Test]
-        public async Task TableIPairsWithMetatable()
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua52)]
+        public async Task TableIPairsWithMetatable(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -38,12 +42,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return x;
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "321").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task TableAddWithMetatable()
+        [AllLuaVersions]
+        public async Task TableAddWithMetatable(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -59,7 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return v1 + v2;
                 ";
 
-            Script scriptHost = new();
+            Script scriptHost = new Script(version, CoreModulePresets.Complete);
             scriptHost.Globals.RegisterModuleType(typeof(TableIteratorsModule));
             scriptHost.Globals.RegisterModuleType(typeof(MetaTableModule));
             DynValue result = scriptHost.DoString(script);
@@ -67,7 +72,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableEqualityUsesSharedMetatable()
+        [AllLuaVersions]
+        public async Task MetatableEqualityUsesSharedMetatable(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -82,13 +88,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return ( t1a == t1b ), ( t1a == t2 )
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableCallReturnsValue()
+        [AllLuaVersions]
+        public async Task MetatableCallReturnsValue(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -101,14 +108,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return t;
                 ";
 
-            Script scriptHost = new();
+            Script scriptHost = new Script(version, CoreModulePresets.Complete);
             DynValue table = scriptHost.DoString(script);
             DynValue result = scriptHost.Call(table, 3);
             await EndToEndDynValueAssert.ExpectAsync(result, 468).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableCallUpdatesState()
+        [AllLuaVersions]
+        public async Task MetatableCallUpdatesState(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -123,12 +131,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return x;
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, 468).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableIndexAndSetIndexFunctions()
+        [AllLuaVersions]
+        public async Task MetatableIndexAndSetIndexFunctions(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -149,12 +158,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return s;
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableIndexAndSetIndexBounce()
+        [AllLuaVersions]
+        public async Task MetatableIndexAndSetIndexBounce(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -169,7 +179,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return s;
                 ";
 
-            DynValue result = new Script().DoString(script);
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
             await EndToEndDynValueAssert.ExpectAsync(result, "abc!bc").ConfigureAwait(false);
         }
 
@@ -189,7 +199,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableExtensibleObjectSample()
+        [AllLuaVersions]
+        public async Task MetatableExtensibleObjectSample(LuaCompatibilityVersion version)
         {
             string script =
                 @"
@@ -207,7 +218,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return myobj.extended() * myobj.getSomething();
                 ";
 
-            Script scriptHost = new();
+            Script scriptHost = new Script(version, CoreModulePresets.Complete);
             using UserDataRegistrationScope registrationScope =
                 UserDataRegistrationScope.Track<MyObject>(ensureUnregistered: true);
             registrationScope.RegisterType<MyObject>();
@@ -217,7 +228,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task IndexSetDoesNotWrackStack()
+        [AllLuaVersions]
+        public async Task IndexSetDoesNotWrackStack(LuaCompatibilityVersion version)
         {
             string scriptCode =
                 @"
@@ -230,7 +242,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            Script script = new(
+            Script script = new Script(
+                version,
                 CoreModules.Basic
                     | CoreModules.Table
                     | CoreModules.TableIterators
@@ -248,6 +261,127 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             }
 
             await Assert.That(exception).IsNull().ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that ipairs respects __index metamethod in Lua 5.3+ (function form).
+        /// In Lua 5.3+, ipairs uses metamethod-aware indexing, calling __index for missing keys.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua53, LuaCompatibilityVersion.Lua55)]
+        public async Task IpairsRespectsIndexMetamethodFunction53Plus(
+            LuaCompatibilityVersion version
+        )
+        {
+            string script =
+                @"
+                local underlying = {10, 20, 30}
+                local proxy = {}
+                setmetatable(proxy, {
+                    __index = function(t, k)
+                        return underlying[k]
+                    end
+                })
+                local result = ''
+                for i, v in ipairs(proxy) do
+                    result = result .. i .. ':' .. v .. ' '
+                end
+                return result
+                ";
+
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, "1:10 2:20 3:30 ")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that ipairs respects __index metamethod in Lua 5.3+ (table form).
+        /// When __index is a table, ipairs follows the chain to find values.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua53, LuaCompatibilityVersion.Lua55)]
+        public async Task IpairsRespectsIndexMetamethodTable53Plus(LuaCompatibilityVersion version)
+        {
+            string script =
+                @"
+                local underlying = {100, 200, 300, 400}
+                local proxy = {}
+                setmetatable(proxy, {
+                    __index = underlying
+                })
+                local result = ''
+                for i, v in ipairs(proxy) do
+                    result = result .. i .. ':' .. v .. ' '
+                end
+                return result
+                ";
+
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, "1:100 2:200 3:300 4:400 ")
+                .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that ipairs uses raw access (ignores __index) in Lua 5.1/5.2.
+        /// Prior to Lua 5.3, ipairs did not respect metamethods for indexing.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua52)]
+        public async Task IpairsIgnoresIndexMetamethod51And52(LuaCompatibilityVersion version)
+        {
+            string script =
+                @"
+                local underlying = {10, 20, 30}
+                local proxy = {}
+                setmetatable(proxy, {
+                    __index = function(t, k)
+                        return underlying[k]
+                    end
+                })
+                local result = ''
+                for i, v in ipairs(proxy) do
+                    result = result .. i .. ':' .. v .. ' '
+                end
+                return result
+                ";
+
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            // In Lua 5.1/5.2, ipairs uses raw access, so the empty proxy table yields no iteration
+            await EndToEndDynValueAssert.ExpectAsync(result, "").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that ipairs with mixed raw and __index values works correctly in Lua 5.3+.
+        /// Raw values should be found first; __index is used as fallback for missing keys.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua53, LuaCompatibilityVersion.Lua55)]
+        public async Task IpairsMixedRawAndIndexMetamethod53Plus(LuaCompatibilityVersion version)
+        {
+            string script =
+                @"
+                local underlying = {'a', 'b', 'c', 'd', 'e'}
+                local proxy = {nil, 'B', nil}
+                setmetatable(proxy, {
+                    __index = underlying
+                })
+                local result = ''
+                for i, v in ipairs(proxy) do
+                    result = result .. i .. ':' .. v .. ' '
+                end
+                return result
+                ";
+
+            DynValue result = new Script(version, CoreModulePresets.Complete).DoString(script);
+            // Index 1: raw nil -> __index returns 'a'
+            // Index 2: raw 'B' -> used directly
+            // Index 3: raw nil -> __index returns 'c'
+            // etc.
+            await EndToEndDynValueAssert
+                .ExpectAsync(result, "1:a 2:B 3:c 4:d 5:e ")
+                .ConfigureAwait(false);
         }
     }
 }

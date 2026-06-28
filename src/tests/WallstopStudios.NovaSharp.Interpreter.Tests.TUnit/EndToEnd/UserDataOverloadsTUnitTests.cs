@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 #if !DOTNET_CORE
     using System.Linq;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -375,9 +376,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
 #if !DOTNET_CORE
         [global::TUnit.Core.Test]
-        public async Task OverloadTestWithoutObjects()
+        [AllLuaVersions]
+        public async Task OverloadTestWithoutObjects(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             OverloadedMethodMemberDescriptor descriptor = new("Method1", GetType());
 

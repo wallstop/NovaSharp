@@ -32,9 +32,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task ScriptReportsLua55CompatibilityVersion()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ScriptReportsLua55CompatibilityVersion(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
 
             await Assert
                 .That(script.CompatibilityVersion)
@@ -47,9 +48,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         /// based on the active compatibility mode, matching the official Lua interpreter behavior.
         /// </remarks>
         [Test]
-        public async Task VersionGlobalReportsLuaVersion()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task VersionGlobalReportsLuaVersion(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return _VERSION");
 
             await Assert.That(result.String).IsEqualTo("Lua 5.5").ConfigureAwait(false);
@@ -60,27 +62,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task StringByteDefaultsToFirstCharacter()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StringByteDefaultsToFirstCharacter(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.byte('Lua')");
 
             await Assert.That(result.Number).IsEqualTo(76).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task StringCharProducesCorrectOutput()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StringCharProducesCorrectOutput(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.char(97, 98, 99)");
 
             await Assert.That(result.String).IsEqualTo("abc").ConfigureAwait(false);
         }
 
         [Test]
-        public async Task StringCharErrorsOnNonIntegerFloat()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StringCharErrorsOnNonIntegerFloat(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 "local ok, err = pcall(string.char, 65.5) return ok, err"
             );
@@ -93,18 +98,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task StringSubExtractsInclusiveRange()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StringSubExtractsInclusiveRange(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.sub('abcdefg', 2, 4)");
 
             await Assert.That(result.String).IsEqualTo("bcd").ConfigureAwait(false);
         }
 
         [Test]
-        public async Task StringRepSupportsOptionalSeparator()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StringRepSupportsOptionalSeparator(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return string.rep('ab', 3, '-')");
 
             await Assert.That(result.String).IsEqualTo("ab-ab-ab").ConfigureAwait(false);
@@ -115,9 +122,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task MathRandomReturnsValueInRange()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MathRandomReturnsValueInRange(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             script.DoString("math.randomseed(12345)");
             DynValue result = script.DoString("return math.random()");
 
@@ -126,9 +134,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task MathRandomseedReturnsSeedTuple()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MathRandomseedReturnsSeedTuple(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.randomseed(12345)");
 
             // Lua 5.4+ math.randomseed returns the seed tuple
@@ -137,36 +146,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task MathTointegerConvertsToInteger()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MathTointegerConvertsToInteger(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.tointeger(42.0)");
 
             await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task MathTointegerReturnsNilForNonIntegralFloat()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MathTointegerReturnsNilForNonIntegralFloat(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.tointeger(42.5)");
 
             await Assert.That(result.IsNil()).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
-        public async Task MathTypeReturnsIntegerForIntegers()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MathTypeReturnsIntegerForIntegers(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.type(42)");
 
             await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
         }
 
         [Test]
-        public async Task MathTypeReturnsFloatForFloats()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MathTypeReturnsFloatForFloats(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return math.type(42.0)");
 
             await Assert.That(result.String).IsEqualTo("float").ConfigureAwait(false);
@@ -177,9 +192,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task TableMoveShiftsElementsCorrectly()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableMoveShiftsElementsCorrectly(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local t = {1, 2, 3, 4, 5}
@@ -194,9 +210,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task TablePackCreatesTableWithNField()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TablePackCreatesTableWithNField(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local t = table.pack(10, 20, 30)
@@ -211,9 +228,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task TableUnpackExpandsTable()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TableUnpackExpandsTable(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local function sum3(a, b, c) return a + b + c end
@@ -229,27 +247,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task Utf8LenReturnsCharacterCount()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8LenReturnsCharacterCount(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return utf8.len('hello')");
 
             await Assert.That(result.Number).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task Utf8CharProducesUtf8String()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CharProducesUtf8String(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return utf8.char(72, 101, 108, 108, 111)");
 
             await Assert.That(result.String).IsEqualTo("Hello").ConfigureAwait(false);
         }
 
         [Test]
-        public async Task Utf8CodepointReturnsCodePoints()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task Utf8CodepointReturnsCodePoints(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return utf8.codepoint('ABC', 1, 3)");
 
             await Assert.That(result.Tuple[0].Number).IsEqualTo(65).ConfigureAwait(false);
@@ -262,9 +283,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task CoroutineCreateAndResume()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineCreateAndResume(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local co = coroutine.create(function(x) return x * 2 end)
@@ -278,9 +300,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task CoroutineStatusReportsCorrectState()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineStatusReportsCorrectState(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local co = coroutine.create(function() end)
@@ -300,45 +323,50 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task IntegerDivisionOperatorWorks()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IntegerDivisionOperatorWorks(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return 7 // 3");
 
             await Assert.That(result.Number).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task BitwiseAndOperatorWorks()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseAndOperatorWorks(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return 0xFF & 0x0F");
 
             await Assert.That(result.Number).IsEqualTo(15).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task BitwiseOrOperatorWorks()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseOrOperatorWorks(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return 0xF0 | 0x0F");
 
             await Assert.That(result.Number).IsEqualTo(255).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task BitwiseXorOperatorWorks()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseXorOperatorWorks(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return 0xFF ~ 0x0F");
 
             await Assert.That(result.Number).IsEqualTo(240).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task BitwiseNotOperatorWorks()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseNotOperatorWorks(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             // Using 32-bit mask for predictable result
             DynValue result = script.DoString("return (~0) & 0xFFFFFFFF");
 
@@ -346,18 +374,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task LeftShiftOperatorWorks()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LeftShiftOperatorWorks(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return 1 << 4");
 
             await Assert.That(result.Number).IsEqualTo(16).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task RightShiftOperatorWorks()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RightShiftOperatorWorks(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return 32 >> 2");
 
             await Assert.That(result.Number).IsEqualTo(8).ConfigureAwait(false);
@@ -368,9 +398,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task PcallCatchesErrors()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PcallCatchesErrors(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local function bad() error('test error') end
@@ -384,9 +415,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task XpcallUsesMessageHandler()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task XpcallUsesMessageHandler(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 local function bad() error('original') end
@@ -405,9 +437,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task ToNumberParsesHexadecimalStringWithoutBase()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexadecimalStringWithoutBase(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             // Per Lua §3.1, tonumber without base parses hex strings with 0x/0X prefix
             DynValue result = script.DoString("return tonumber('0xFF')");
 
@@ -415,9 +450,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task ToNumberParsesHexadecimalLiteral()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexadecimalLiteral(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             // Direct hex literals (0xFF) are parsed at lexer level
             DynValue result = script.DoString("return 0xFF");
 
@@ -425,9 +461,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task ToNumberParsesHexadecimalWithBase()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexadecimalWithBase(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             // tonumber with explicit base 16 parses hex strings
             DynValue result = script.DoString("return tonumber('FF', 16)");
 
@@ -435,18 +472,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task ToNumberWithBaseParsesBinary()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberWithBaseParsesBinary(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return tonumber('1010', 2)");
 
             await Assert.That(result.Number).IsEqualTo(10).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task TypeFunctionReturnsCorrectTypes()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TypeFunctionReturnsCorrectTypes(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 return type(nil), type(true), type(42), type('str'), type({})
@@ -461,9 +500,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task SelectReturnsArgumentsFromIndex()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelectReturnsArgumentsFromIndex(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return select(2, 'a', 'b', 'c')");
 
             await Assert.That(result.Tuple[0].String).IsEqualTo("b").ConfigureAwait(false);
@@ -471,9 +511,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task SelectWithHashReturnsArgumentCount()
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SelectWithHashReturnsArgumentCount(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return select('#', 'a', 'b', 'c')");
 
             await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);

@@ -6,10 +6,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class ExtensionMethodsRegistryTUnitTests
@@ -108,9 +110,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task ExtensionMethodCanBeCalledFromLua()
+        [AllLuaVersions]
+        public async Task ExtensionMethodCanBeCalledFromLua(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<ExtRegExtensibleTarget>();
             UserData.RegisterExtensionType(typeof(ExtRegTestExtensions));
             script.Globals["TestClass"] = typeof(ExtRegExtensibleTarget);

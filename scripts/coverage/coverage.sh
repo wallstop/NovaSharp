@@ -14,6 +14,7 @@ minimum_interpreter_coverage="70.0"
 minimum_interpreter_branch_coverage="0"
 minimum_interpreter_method_coverage="0"
 coverage_gating_mode="${COVERAGE_GATING_MODE:-}"
+dotnet_tools_restored=false
 
 usage() {
     cat <<'EOF'
@@ -81,6 +82,16 @@ error_exit() {
     exit 1
 }
 
+restore_dotnet_tools() {
+    if [[ "$dotnet_tools_restored" == true ]]; then
+        return
+    fi
+
+    log "Restoring local dotnet tools..."
+    dotnet tool restore
+    dotnet_tools_restored=true
+}
+
 ensure_python() {
     if command -v python3 >/dev/null 2>&1; then
         echo "python3"
@@ -119,6 +130,7 @@ run_coverlet() {
     local extra_args=("$@")
 
     log "Collecting coverage via coverlet ($label)..."
+    restore_dotnet_tools
 
     local cmd=(
         dotnet tool run coverlet "$runner_output"
@@ -160,8 +172,7 @@ fi
 export TESTINGPLATFORM_NOBANNER=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
-log "Restoring local dotnet tools..."
-dotnet tool restore >/dev/null
+restore_dotnet_tools
 
 if [[ "$skip_restore" != true ]]; then
     log "Restoring solution packages..."
@@ -269,6 +280,7 @@ run_coverlet "$remote_runner_output" "$remote_joined_target_args" "$coverage_bas
 log "Generating report set..."
 rm -rf "$report_target"
 mkdir -p "$report_target"
+restore_dotnet_tools
 
 cobertura_report="$coverage_base.cobertura.xml"
 [[ -f "$cobertura_report" ]] || error_exit "Coverage report not found at '$cobertura_report'."

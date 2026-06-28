@@ -6,7 +6,14 @@
 *.user
 *.sln.docstates
 
+tools/LuaCorpusExtractor/__pycache__/**
+tools/LuaCorpusExtractor/__pycache__
+
+*.pyc
+
 .vscode/**
+
+lua-comparison-results/**
 
 # Build results
 
@@ -30,8 +37,14 @@ old.txt
 virtual.txt
 temp_runner.ps1
 temp.lua
+coverage_output.txt
 .pytest_cache/**
 
+# Python virtual environment
+.venv/
+
+{escapedPath}
+{escapePath}
 
 # Remove generated docs
 
@@ -202,9 +215,9 @@ artifacts/
 
 docs/coverage/latest/
 !docs/coverage/README.md
-!documentation_audit.log
-!spelling_audit.log
-!naming_audit.log
+!docs/audits/documentation_audit.log
+!docs/audits/spelling_audit.log
+!docs/audits/naming_audit.log
 
 # Local scratch experiments
 scratch/
@@ -216,3 +229,6 @@ scratch/
 *.out
 *.err
 *.rc
+
+# Migration tool output files
+manual-review.txt

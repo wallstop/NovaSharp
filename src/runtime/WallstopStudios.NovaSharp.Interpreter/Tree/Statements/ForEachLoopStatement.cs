@@ -37,13 +37,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
             //	for namelist in explist do block end |
 
             List<string> names = new();
-            names.Add(firstNameToken.Text);
+            names.Add(firstNameToken.text);
 
-            while (lcontext.Lexer.Current.Type == TokenType.Comma)
+            while (lcontext.Lexer.Current.type == TokenType.Comma)
             {
                 lcontext.Lexer.Next();
                 Token name = CheckTokenType(lcontext, TokenType.Name);
-                names.Add(name.Text);
+                names.Add(name.text);
             }
 
             CheckTokenType(lcontext, TokenType.In);
@@ -85,70 +85,72 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 
             bc.PushSourceRef(_refFor);
 
-            Loop l = new() { Scope = _stackFrame };
-            bc.LoopTracker.Loops.Push(l);
-
-            // get iterator tuple
-            _rValues.Compile(bc);
-
-            // prepares iterator tuple - stack : iterator-tuple
-            bc.EmitIterPrep();
-
-            // loop start - stack : iterator-tuple
-            int start = bc.GetJumpPointForNextInstruction();
-            bc.EmitEnter(_stackFrame);
-
-            // expand the tuple - stack : iterator-tuple, f, var, s
-            bc.EmitExpTuple(0);
-
-            // calls f(s, var) - stack : iterator-tuple, iteration result
-            bc.EmitCall(2, "for..in");
-
-            // perform assignment of iteration result- stack : iterator-tuple, iteration result
-            for (int i = 0; i < _nameExps.Length; i++)
+            using (Loop l = new() { Scope = _stackFrame })
             {
-                _nameExps[i].CompileAssignment(bc, 0, i);
+                bc.LoopTracker.Loops.Push(l);
+
+                // get iterator tuple
+                _rValues.Compile(bc);
+
+                // prepares iterator tuple - stack : iterator-tuple
+                bc.EmitIterPrep();
+
+                // loop start - stack : iterator-tuple
+                int start = bc.GetJumpPointForNextInstruction();
+                bc.EmitEnter(_stackFrame);
+
+                // expand the tuple - stack : iterator-tuple, f, var, s
+                bc.EmitExpTuple(0);
+
+                // calls f(s, var) - stack : iterator-tuple, iteration result
+                bc.EmitCall(2, "for..in");
+
+                // perform assignment of iteration result- stack : iterator-tuple, iteration result
+                for (int i = 0; i < _nameExps.Length; i++)
+                {
+                    _nameExps[i].CompileAssignment(bc, 0, i);
+                }
+
+                // pops  - stack : iterator-tuple
+                bc.EmitPop();
+
+                // repushes the main iterator var - stack : iterator-tuple, main-iterator-var
+                bc.EmitLoad(_names[0]);
+
+                // updates the iterator tuple - stack : iterator-tuple, main-iterator-var
+                bc.EmitIterUpd();
+
+                // checks head, jumps if nil - stack : iterator-tuple, main-iterator-var
+                Instruction endjump = bc.EmitJump(OpCode.JNil, -1);
+
+                // executes the stuff - stack : iterator-tuple
+                _block.Compile(bc);
+
+                bc.PopSourceRef();
+                bc.PushSourceRef(_refEnd);
+
+                // loop back again - stack : iterator-tuple
+                bc.EmitLeave(_stackFrame);
+                bc.EmitJump(OpCode.Jump, start);
+
+                bc.LoopTracker.Loops.Pop();
+
+                int exitpointLoopExit = bc.GetJumpPointForNextInstruction();
+                bc.EmitLeave(_stackFrame);
+
+                int exitpointBreaks = bc.GetJumpPointForNextInstruction();
+
+                bc.EmitPop();
+
+                foreach (Instruction i in l.BreakJumps)
+                {
+                    i.NumVal = exitpointBreaks;
+                }
+
+                endjump.NumVal = exitpointLoopExit;
+
+                bc.PopSourceRef();
             }
-
-            // pops  - stack : iterator-tuple
-            bc.EmitPop();
-
-            // repushes the main iterator var - stack : iterator-tuple, main-iterator-var
-            bc.EmitLoad(_names[0]);
-
-            // updates the iterator tuple - stack : iterator-tuple, main-iterator-var
-            bc.EmitIterUpd();
-
-            // checks head, jumps if nil - stack : iterator-tuple, main-iterator-var
-            Instruction endjump = bc.EmitJump(OpCode.JNil, -1);
-
-            // executes the stuff - stack : iterator-tuple
-            _block.Compile(bc);
-
-            bc.PopSourceRef();
-            bc.PushSourceRef(_refEnd);
-
-            // loop back again - stack : iterator-tuple
-            bc.EmitLeave(_stackFrame);
-            bc.EmitJump(OpCode.Jump, start);
-
-            bc.LoopTracker.Loops.Pop();
-
-            int exitpointLoopExit = bc.GetJumpPointForNextInstruction();
-            bc.EmitLeave(_stackFrame);
-
-            int exitpointBreaks = bc.GetJumpPointForNextInstruction();
-
-            bc.EmitPop();
-
-            foreach (Instruction i in l.BreakJumps)
-            {
-                i.NumVal = exitpointBreaks;
-            }
-
-            endjump.NumVal = exitpointLoopExit;
-
-            bc.PopSourceRef();
         }
     }
 }

@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
+    using Cysharp.Text;
 
     /// <summary>
     /// Flags describing how a symbol reference should behave (constness, to-be-closed variables, etc.).
@@ -204,16 +205,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return "(default _ENV)";
             }
 
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+            sb.Append(_nameValue);
+            sb.Append(" : ");
+            sb.Append(SymbolRefTypeStrings.GetName(_symbolType));
             if (_symbolType == SymbolRefType.Global)
             {
-                return FormattableString.Invariant(
-                    $"{_nameValue} : {_symbolType} / {_environmentRef}"
-                );
+                sb.Append(" / ");
+                sb.Append(_environmentRef?.ToString() ?? "null");
             }
-
-            return FormattableString.Invariant(
-                $"{_nameValue} : {_symbolType}[{_indexValue.ToString(CultureInfo.InvariantCulture)}]"
-            );
+            else
+            {
+                sb.Append('[');
+                sb.Append(_indexValue.ToString(CultureInfo.InvariantCulture));
+                sb.Append(']');
+            }
+            return sb.ToString();
         }
 
         /// <summary>

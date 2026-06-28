@@ -6,7 +6,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
-    using CollectionAssert = NUnit.Framework.CollectionAssert;
 
     public sealed class MultiDictionaryTUnitTests
     {
@@ -22,7 +21,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
 
             await Assert.That(firstInsert).IsTrue().ConfigureAwait(false);
             await Assert.That(secondInsert).IsFalse().ConfigureAwait(false);
-            CollectionAssert.AreEqual(AlphaValues, dictionary.Find("alpha").ToArray());
+            await Assert
+                .That(dictionary.Find("alpha").ToArray())
+                .IsEquivalentTo(AlphaValues)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

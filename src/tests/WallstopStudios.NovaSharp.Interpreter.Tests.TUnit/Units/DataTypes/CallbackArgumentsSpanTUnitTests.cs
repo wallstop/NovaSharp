@@ -5,7 +5,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for <see cref="CallbackArguments"/> span-based access methods
@@ -264,9 +267,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
-        public async Task SpanAccessWorksWithScriptCallbacks()
+        [AllLuaVersions]
+        public async Task SpanAccessWorksWithScriptCallbacks(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             double[] capturedNumbers = null;
 
             script.Globals["capture"] =

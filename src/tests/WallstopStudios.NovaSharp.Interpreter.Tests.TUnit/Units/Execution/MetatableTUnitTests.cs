@@ -3,15 +3,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class MetatableTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task IndexMetatableResolvesMissingKeys()
+        [AllLuaVersions]
+        public async Task IndexMetatableResolvesMissingKeys(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Table table = new(script);
             Table metatable = new(script)
             {
@@ -30,9 +33,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetatableRawAccessStillRespectsMetatable()
+        [AllLuaVersions]
+        public async Task MetatableRawAccessStillRespectsMetatable(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModules.Metatables | CoreModules.Basic);
+            Script script = CreateScript(version);
 
             script.DoString(
                 @"
@@ -55,9 +59,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallMetatableAggregatesState()
+        [AllLuaVersions]
+        public async Task CallMetatableAggregatesState(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
 
             script.DoString(
                 @"
@@ -80,9 +85,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task PairsMetamethodControlsIteration()
+        [AllLuaVersions]
+        public async Task PairsMetamethodControlsIteration(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
 
             script.DoString(
                 @"
@@ -112,9 +118,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task ProtectedMetatablePreventsMutation()
+        [AllLuaVersions]
+        public async Task ProtectedMetatablePreventsMutation(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScript(version);
 
             script.DoString(
                 @"
@@ -141,6 +148,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .That(pcallResult.Tuple[1].String)
                 .Contains("cannot change a protected metatable")
                 .ConfigureAwait(false);
+        }
+
+        private static Script CreateScript(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new(Script.DefaultOptions) { CompatibilityVersion = version };
+            return new Script(CoreModulePresets.Complete, options);
         }
     }
 }

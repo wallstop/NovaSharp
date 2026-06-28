@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -42,7 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue table = args.AsType(0, "setmetatable", DataType.Table);
             DynValue metatable = args.AsType(1, "setmetatable", DataType.Table, true);
 
-            DynValue curmeta = executionContext.GetMetamethod(table, "__metatable");
+            DynValue curmeta = executionContext.GetMetamethod(table, Metamethods.Metatable);
 
             if (curmeta != null)
             {
@@ -93,9 +94,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 return DynValue.Nil;
             }
-            else if (meta.RawGet("__metatable") != null)
+            else if (meta.RawGet(Metamethods.Metatable) != null)
             {
-                return meta.Get("__metatable");
+                return meta.Get(Metamethods.Metatable);
             }
             else
             {

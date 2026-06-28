@@ -3,31 +3,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class DynamicTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessEval()
+        [AllLuaVersions]
+        public async Task DynamicAccessEval(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return dynamic.eval('5+1');");
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return dynamic.eval('5+1');");
             await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessPrepare()
+        [AllLuaVersions]
+        public async Task DynamicAccessPrepare(LuaCompatibilityVersion version)
         {
             string code =
                 @"
                 local prepared = dynamic.prepare('5+1');
                 return dynamic.eval(prepared);
                 ";
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessScope()
+        [AllLuaVersions]
+        public async Task DynamicAccessScope(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -40,13 +48,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return worker();
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 6).ConfigureAwait(false);
         }
 
+        // _ENV is a Lua 5.2+ feature
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessScopeSecurityReturnsNil()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task DynamicAccessScopeSecurityReturnsNil(LuaCompatibilityVersion version)
         {
+            // Note: The worker function must reference a global so it captures the shadowed _ENV.
+            // In Lua 5.2+, closures only capture _ENV when they actually reference global variables.
+            // Without the dummy reference to `_`, the worker function wouldn't have _ENV as an upvalue,
+            // and dynamic.eval would find the script's global _ENV instead of the empty local one.
             string code =
                 @"
                 a = 5;
@@ -54,19 +69,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 local eval = dynamic.eval;
                 local _ENV = { }
                 function worker()
+                    local _ = _  -- Force capture of _ENV by referencing a global
                     return eval(prepared);
                 end
                 return worker();
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await Assert.That(result.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynamicAccessFromCSharp()
+        [AllLuaVersions]
+        public async Task DynamicAccessFromCSharp(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new Script(version, CoreModulePresets.Complete);
             script.DoString("t = { ciao = { 'hello' } }");
 
             DynValue evaluation = script

@@ -1,4 +1,4 @@
--- @lua-versions: 5.1, 5.2
+-- @lua-versions: 5.1-5.2
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/NovaSharp.Interpreter.Tests.TUnit/Modules/StringModuleTUnitTests.cs:437

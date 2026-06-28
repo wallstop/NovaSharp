@@ -24,9 +24,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.2.2" />
-        <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.0" />
-        <PackageReference Include="System.Text.Json" Version="8.0.6" />
+        <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.4.0" />
+        <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.1" />
+        <PackageReference Include="System.Text.Json" Version="10.0.1" />
         <PackageReference Include="ZString" Version="2.6.0" />
     </ItemGroup>
 

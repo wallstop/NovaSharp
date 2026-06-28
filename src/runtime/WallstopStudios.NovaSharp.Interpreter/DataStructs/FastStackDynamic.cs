@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
 
 #if USE_DYNAMIC_STACKS
     /// <summary>
@@ -25,6 +26,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <summary>
         /// Replaces the value at the given offset from the top of the stack.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(int idxofs, T item)
         {
             this[Count - 1 - idxofs] = item;
@@ -33,6 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <summary>
         /// Pushes an item onto the stack, returning the value for convenience.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Push(T item)
         {
             Add(item);
@@ -61,10 +64,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <summary>
         /// Peeks at the element offset from the top without removal.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Peek(int idxofs = 0)
         {
-            T item = this[Count - 1 - idxofs];
-            return item;
+            return this[Count - 1 - idxofs];
         }
 
         /// <summary>
@@ -116,6 +119,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <summary>
         /// Pops the top element and returns it.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Pop()
         {
             T retval = this[Count - 1];

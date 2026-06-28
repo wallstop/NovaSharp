@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -14,6 +15,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Interop.Converters;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class ClrToScriptConversionsTUnitTests
@@ -64,9 +66,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task TryObjectToSimpleDynValueHandlesClosuresCallbacksAndDelegates()
+        [AllLuaVersions]
+        public async Task TryObjectToSimpleDynValueHandlesClosuresCallbacksAndDelegates(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue closureValue = script.DoString("return function(a) return a end");
 
             DynValue closureResult = ClrToScriptConversions.TryObjectToSimpleDynValue(

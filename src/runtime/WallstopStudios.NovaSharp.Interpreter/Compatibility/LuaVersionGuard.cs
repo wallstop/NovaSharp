@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
 {
     using System;
     using System.ComponentModel;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
@@ -44,9 +45,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
             {
                 string versionName = GetVersionDisplayName(resolvedMin);
                 string activeVersion = GetVersionDisplayName(resolved);
-                throw new ScriptRuntimeException(
-                    $"attempt to call a nil value (function '{functionName}' requires {versionName} or later, but script is running in {activeVersion} mode)"
-                );
+                using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+                sb.Append("attempt to call a nil value (function '");
+                sb.Append(functionName);
+                sb.Append("' requires ");
+                sb.Append(versionName);
+                sb.Append(" or later, but script is running in ");
+                sb.Append(activeVersion);
+                sb.Append(" mode)");
+                throw new ScriptRuntimeException(sb.ToString());
             }
         }
 
@@ -79,9 +86,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
             {
                 string removedInVersion = GetNextVersionDisplayName(resolvedMax);
                 string activeVersion = GetVersionDisplayName(resolved);
-                throw new ScriptRuntimeException(
-                    $"attempt to call a nil value (function '{functionName}' was removed in {removedInVersion}, but script is running in {activeVersion} mode)"
-                );
+                using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+                sb.Append("attempt to call a nil value (function '");
+                sb.Append(functionName);
+                sb.Append("' was removed in ");
+                sb.Append(removedInVersion);
+                sb.Append(", but script is running in ");
+                sb.Append(activeVersion);
+                sb.Append(" mode)");
+                throw new ScriptRuntimeException(sb.ToString());
             }
         }
 
@@ -184,18 +197,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Compatibility
             {
                 string versionName = GetVersionDisplayName(resolvedMin);
                 string activeVersion = GetVersionDisplayName(resolved);
-                throw new ScriptRuntimeException(
-                    $"attempt to call a nil value (function '{functionName}' requires {versionName} or later, but script is running in {activeVersion} mode)"
-                );
+                using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+                sb.Append("attempt to call a nil value (function '");
+                sb.Append(functionName);
+                sb.Append("' requires ");
+                sb.Append(versionName);
+                sb.Append(" or later, but script is running in ");
+                sb.Append(activeVersion);
+                sb.Append(" mode)");
+                throw new ScriptRuntimeException(sb.ToString());
             }
 
             if (resolved > resolvedMax)
             {
                 string removedInVersion = GetNextVersionDisplayName(resolvedMax);
                 string activeVersion = GetVersionDisplayName(resolved);
-                throw new ScriptRuntimeException(
-                    $"attempt to call a nil value (function '{functionName}' was removed in {removedInVersion}, but script is running in {activeVersion} mode)"
-                );
+                using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+                sb.Append("attempt to call a nil value (function '");
+                sb.Append(functionName);
+                sb.Append("' was removed in ");
+                sb.Append(removedInVersion);
+                sb.Append(", but script is running in ");
+                sb.Append(activeVersion);
+                sb.Append(" mode)");
+                throw new ScriptRuntimeException(sb.ToString());
             }
         }
 

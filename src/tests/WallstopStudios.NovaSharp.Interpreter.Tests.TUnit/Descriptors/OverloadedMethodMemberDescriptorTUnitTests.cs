@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -18,7 +19,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     public sealed class OverloadedMethodMemberDescriptorTUnitTests
     {
         [Test]
-        public async Task ConstructorWithNameAndDeclaringTypeSetsProperties()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ConstructorWithNameAndDeclaringTypeSetsProperties(
+            LuaCompatibilityVersion version
+        )
         {
             OverloadedMethodMemberDescriptor descriptor = new("TestMethod", typeof(string));
 
@@ -31,7 +39,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task AddOverloadIncreasesCount()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AddOverloadIncreasesCount(LuaCompatibilityVersion version)
         {
             OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
 
@@ -43,9 +56,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task GetValueReturnsCallback()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetValueReturnsCallback(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
 
             MethodInfo method = typeof(TestOverloadClass).GetMethod("NoArgs");
@@ -58,9 +76,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task SetValueThrowsBecauseCannotWrite()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetValueThrowsBecauseCannotWrite(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -74,7 +97,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task MemberAccessIncludesCanExecuteAndCanRead()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MemberAccessIncludesCanExecuteAndCanRead(LuaCompatibilityVersion version)
         {
             OverloadedMethodMemberDescriptor descriptor = new("Test", typeof(string));
 
@@ -93,7 +121,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task IsStaticReturnsTrueWhenAnyOverloadIsStatic()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IsStaticReturnsTrueWhenAnyOverloadIsStatic(
+            LuaCompatibilityVersion version
+        )
         {
             OverloadedMethodMemberDescriptor descriptor = new(
                 "StaticMethod",
@@ -108,7 +143,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task IsStaticReturnsFalseWhenNoOverloadsAreStatic()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IsStaticReturnsFalseWhenNoOverloadsAreStatic(
+            LuaCompatibilityVersion version
+        )
         {
             OverloadedMethodMemberDescriptor descriptor = new("NoArgs", typeof(TestOverloadClass));
 
@@ -120,7 +162,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task PrepareForWiringThrowsWhenTableNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrepareForWiringThrowsWhenTableNull(LuaCompatibilityVersion version)
         {
             OverloadedMethodMemberDescriptor descriptor = new("Test", typeof(string));
 
@@ -132,7 +179,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task PrepareForWiringWritesMetadata()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrepareForWiringWritesMetadata(LuaCompatibilityVersion version)
         {
             OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
 
@@ -159,7 +211,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task OptimizeCallsOptimizeOnOverloads()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OptimizeCallsOptimizeOnOverloads(LuaCompatibilityVersion version)
         {
             OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
 
@@ -174,9 +231,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task OverloadResolutionSelectsBestMatch()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OverloadResolutionSelectsBestMatch(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<TestOverloadClass>();
             script.Globals["TestClass"] = typeof(TestOverloadClass);
 
@@ -191,9 +253,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task OverloadResolutionThrowsWhenNoMatch()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task OverloadResolutionThrowsWhenNoMatch(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<TestOverloadClass>();
             script.Globals["TestClass"] = typeof(TestOverloadClass);
 
@@ -211,7 +278,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task ConstructorWithInitialDescriptor()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ConstructorWithInitialDescriptor(LuaCompatibilityVersion version)
         {
             MethodInfo method = typeof(TestOverloadClass).GetMethod("NoArgs");
             MethodMemberDescriptor overload = new(method);
@@ -226,7 +298,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task ConstructorWithDescriptorCollection()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ConstructorWithDescriptorCollection(LuaCompatibilityVersion version)
         {
             MethodInfo method1 = typeof(TestOverloadClass).GetMethod("NoArgs");
             MethodInfo method2 = typeof(TestOverloadClass).GetMethod("WithInt");
@@ -247,9 +324,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task GetCallbackReturnsWorkingDelegate()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetCallbackReturnsWorkingDelegate(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             OverloadedMethodMemberDescriptor descriptor = new("WithInt", typeof(TestOverloadClass));
 
             MethodInfo method = typeof(TestOverloadClass).GetMethod("WithInt");
@@ -264,9 +346,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task GetCallbackFunctionReturnsCallbackFunction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetCallbackFunctionReturnsCallbackFunction(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             OverloadedMethodMemberDescriptor descriptor = new("NoArgs", typeof(TestOverloadClass));
 
             MethodInfo method = typeof(TestOverloadClass).GetMethod("NoArgs");
@@ -283,7 +372,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task IgnoreExtensionMethodsProperty()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task IgnoreExtensionMethodsProperty(LuaCompatibilityVersion version)
         {
             OverloadedMethodMemberDescriptor descriptor = new("Test", typeof(string));
 
@@ -295,7 +389,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task CacheSizeSetterThrowsOnNegativeValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CacheSizeSetterThrowsOnNegativeValue(LuaCompatibilityVersion version)
         {
             OverloadedMethodMemberDescriptor descriptor = new("Test", typeof(string));
 
@@ -307,7 +406,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task TestHooksSetCacheSizeWorksWithZero()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TestHooksSetCacheSizeWorksWithZero(LuaCompatibilityVersion version)
         {
             OverloadedMethodMemberDescriptor descriptor = new("Test", typeof(string));
 
@@ -318,9 +422,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task CacheOverflowResetsCache()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CacheOverflowResetsCache(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<CacheTestClass>();
             script.Globals["TestClass"] = typeof(CacheTestClass);
 
@@ -364,9 +473,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task CacheHitWithDifferentObjectStateReturnsFalse()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CacheHitWithDifferentObjectStateReturnsFalse(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<CacheTestClass>();
 
             OverloadedMethodMemberDescriptor descriptor = new("WithInt", typeof(CacheTestClass));
@@ -392,9 +508,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task CacheWithUserDataArgumentMismatchReturnsFalse()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CacheWithUserDataArgumentMismatchReturnsFalse(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<CacheTestClass>();
             UserData.RegisterType<UserDataArg1>();
             UserData.RegisterType<UserDataArg2>();
@@ -424,9 +547,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task ExtensionMethodCacheInvalidatesOnVersionChange()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ExtensionMethodCacheInvalidatesOnVersionChange(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<ExtensibleClass>();
             UserData.RegisterExtensionType(typeof(ExtensibleClassExtensions));
             script.Globals["TestClass"] = typeof(ExtensibleClass);
@@ -443,9 +573,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task VarArgsEmptyArrayScoringPath()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task VarArgsEmptyArrayScoringPath(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<VarArgsClass>();
             script.Globals["TestClass"] = typeof(VarArgsClass);
 
@@ -461,9 +596,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task VarArgsSingleArrayArgumentExactMatch()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task VarArgsSingleArrayArgumentExactMatch(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<VarArgsClass>();
             script.Globals["TestClass"] = typeof(VarArgsClass);
 
@@ -479,11 +619,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task VarArgsExactArrayTypePassthrough()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task VarArgsExactArrayTypePassthrough(LuaCompatibilityVersion version)
         {
             // When a single UserData argument is passed that matches the exact array type,
             // the varargs scoring should use the scoreBeforeVarArgs path
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<VarArgsArrayClass>();
             UserData.RegisterType<int[]>();
             script.Globals["TestClass"] = typeof(VarArgsArrayClass);
@@ -503,9 +648,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task ZeroSizeCacheTriggersOverflowPath()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ZeroSizeCacheTriggersOverflowPath(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<CacheTestClass>();
 
             OverloadedMethodMemberDescriptor descriptor = new(
@@ -532,11 +682,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task CacheMismatchWhenCachedUserDataButCallWithNonUserData()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CacheMismatchWhenCachedUserDataButCallWithNonUserData(
+            LuaCompatibilityVersion version
+        )
         {
             // This tests the CheckMatch branch where argumentUserDataTypes[i] != null
             // but args[i].Type != DataType.UserData
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<MixedArgsClass>();
             UserData.RegisterType<UserDataArg1>();
             script.Globals["TestClass"] = typeof(MixedArgsClass);
@@ -565,7 +722,271 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task PrepareForWiringWithNonWireableOverload()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCachePopulatedAfterFirstCall(LuaCompatibilityVersion version)
+        {
+            // Verify that the last-call cache is populated after the first method call
+            // Note: Caching only kicks in when there are multiple overloads (or extension methods)
+            Script script = new(version);
+            OverloadedMethodMemberDescriptor descriptor = new(
+                "MultiOverload",
+                typeof(CacheTestClass)
+            );
+
+            // Add multiple overloads to exercise the caching path
+            MethodInfo method1 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(int) }
+            );
+            MethodInfo method2 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(string) }
+            );
+            descriptor.AddOverload(new MethodMemberDescriptor(method1));
+            descriptor.AddOverload(new MethodMemberDescriptor(method2));
+
+            // Verify no cached method initially
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.HasLastCallCached(descriptor))
+                .IsFalse()
+                .ConfigureAwait(false);
+
+            CacheTestClass instance = new();
+            CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
+
+            // Make a call with int argument
+            DynValue result = script.Call(callback, DynValue.NewNumber(42));
+
+            // Verify cache is now populated
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.HasLastCallCached(descriptor))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.GetLastCallArgCount(descriptor))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheHitOnRepeatedIdenticalCalls(LuaCompatibilityVersion version)
+        {
+            // Repeated calls with the same signature should hit the last-call cache
+            Script script = new(version);
+            UserData.RegisterType<CacheTestClass>();
+            script.Globals["TestClass"] = typeof(CacheTestClass);
+
+            // Multiple calls with same signature in a loop
+            DynValue result = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                local total = 0
+                for i = 1, 100 do
+                    total = total + obj.WithInt(i)
+                end
+                return total
+                "
+            );
+
+            // Sum of 1 to 100 = 5050
+            await Assert.That(result.Number).IsEqualTo(5050).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheMissOnDifferentArgCount(LuaCompatibilityVersion version)
+        {
+            // Cache should miss when argument count changes
+            Script script = new(version);
+            OverloadedMethodMemberDescriptor descriptor = new(
+                "MultiOverload",
+                typeof(CacheTestClass)
+            );
+
+            MethodInfo method1 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(int) }
+            );
+            MethodInfo method2 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(string) }
+            );
+            descriptor.AddOverload(new MethodMemberDescriptor(method1));
+            descriptor.AddOverload(new MethodMemberDescriptor(method2));
+
+            CacheTestClass instance = new();
+            CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
+
+            // First call with one int argument
+            DynValue result1 = script.Call(callback, DynValue.NewNumber(42));
+            await Assert.That(result1.Number).IsEqualTo(42).ConfigureAwait(false);
+
+            // Second call with string - different type, should resolve correctly
+            DynValue result2 = script.Call(callback, DynValue.NewString("hello"));
+            await Assert.That(result2.Number).IsEqualTo(5).ConfigureAwait(false);
+
+            // Third call with int again - should work
+            DynValue result3 = script.Call(callback, DynValue.NewNumber(99));
+            await Assert.That(result3.Number).IsEqualTo(99).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClearLastCallCacheResetsCache(LuaCompatibilityVersion version)
+        {
+            // Note: Caching only kicks in when there are multiple overloads
+            Script script = new(version);
+            OverloadedMethodMemberDescriptor descriptor = new(
+                "MultiOverload",
+                typeof(CacheTestClass)
+            );
+
+            // Add multiple overloads to exercise the caching path
+            MethodInfo method1 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(int) }
+            );
+            MethodInfo method2 = typeof(CacheTestClass).GetMethod(
+                "MultiOverload",
+                new[] { typeof(string) }
+            );
+            descriptor.AddOverload(new MethodMemberDescriptor(method1));
+            descriptor.AddOverload(new MethodMemberDescriptor(method2));
+
+            CacheTestClass instance = new();
+            CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
+
+            // Make a call to populate cache
+            script.Call(callback, DynValue.NewNumber(42));
+
+            // Verify cache is populated
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.HasLastCallCached(descriptor))
+                .IsTrue()
+                .ConfigureAwait(false);
+
+            // Clear the cache
+            OverloadedMethodMemberDescriptor.TestHooks.ClearLastCallCache(descriptor);
+
+            // Verify cache is cleared
+            await Assert
+                .That(OverloadedMethodMemberDescriptor.TestHooks.HasLastCallCached(descriptor))
+                .IsFalse()
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheWithZeroArguments(LuaCompatibilityVersion version)
+        {
+            // Test last-call cache with zero arguments
+            Script script = new(version);
+            UserData.RegisterType<TestOverloadClass>();
+            script.Globals["TestClass"] = typeof(TestOverloadClass);
+
+            // Multiple calls with no arguments
+            DynValue result = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                local total = 0
+                for i = 1, 10 do
+                    obj.NoArgs()
+                    total = total + 1
+                end
+                return total
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(10).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheWithThreeArguments(LuaCompatibilityVersion version)
+        {
+            // Test last-call cache with three arguments (maximum inline)
+            Script script = new(version);
+            UserData.RegisterType<MultiArgClass>();
+            script.Globals["TestClass"] = typeof(MultiArgClass);
+
+            DynValue result = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                local total = 0
+                for i = 1, 10 do
+                    total = total + obj.ThreeArgs(1, 2, 3)
+                end
+                return total
+                "
+            );
+
+            // 1+2+3 = 6, repeated 10 times = 60
+            await Assert.That(result.Number).IsEqualTo(60).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LastCallCacheFallsThroughForFourPlusArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Test that 4+ argument calls fall through to full cache
+            Script script = new(version);
+            UserData.RegisterType<MultiArgClass>();
+            script.Globals["TestClass"] = typeof(MultiArgClass);
+
+            DynValue result = script.DoString(
+                @"
+                local obj = TestClass.__new()
+                local total = 0
+                for i = 1, 10 do
+                    total = total + obj.FourArgs(1, 2, 3, 4)
+                end
+                return total
+                "
+            );
+
+            // 1+2+3+4 = 10, repeated 10 times = 100
+            await Assert.That(result.Number).IsEqualTo(100).ConfigureAwait(false);
+        }
+
+        [Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task PrepareForWiringWithNonWireableOverload(LuaCompatibilityVersion version)
         {
             // Test that PrepareForWiring handles non-wireable descriptors gracefully
             OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
@@ -584,7 +1005,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task SetExtensionMethodsSnapshotUpdatesVersion()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SetExtensionMethodsSnapshotUpdatesVersion(LuaCompatibilityVersion version)
         {
             OverloadedMethodMemberDescriptor descriptor = new("Method", typeof(TestOverloadClass));
 
@@ -601,9 +1027,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task MethodWithOutParameterIsSkippedInScoring()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MethodWithOutParameterIsSkippedInScoring(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<OutRefClass>();
             script.Globals["TestClass"] = typeof(OutRefClass);
 
@@ -621,9 +1052,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task MethodWithRefParameterIsHandled()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MethodWithRefParameterIsHandled(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<OutRefClass>();
             script.Globals["TestClass"] = typeof(OutRefClass);
 
@@ -642,9 +1078,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task ExtraArgumentsPenaltyApplied()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ExtraArgumentsPenaltyApplied(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<TestOverloadClass>();
             script.Globals["TestClass"] = typeof(TestOverloadClass);
 
@@ -661,9 +1102,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task MethodWithScriptParameterIsAutoInjected()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MethodWithScriptParameterIsAutoInjected(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<ScriptInjectedClass>();
             script.Globals["TestClass"] = typeof(ScriptInjectedClass);
 
@@ -679,9 +1125,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task MethodWithExecutionContextParameterIsAutoInjected()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MethodWithExecutionContextParameterIsAutoInjected(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<ScriptInjectedClass>();
             script.Globals["TestClass"] = typeof(ScriptInjectedClass);
 
@@ -696,7 +1149,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task ComparerHandlesNullLeftOperand()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ComparerHandlesNullLeftOperand(LuaCompatibilityVersion version)
         {
             // The comparer should return -1 when x is null
             OverloadedMethodMemberDescriptor descriptor = new("Test", typeof(TestOverloadClass));
@@ -717,9 +1175,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task VarArgsMalusAppliedForMultipleVarArgs()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task VarArgsMalusAppliedForMultipleVarArgs(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<VarArgsClass>();
             script.Globals["TestClass"] = typeof(VarArgsClass);
 
@@ -735,9 +1198,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task MethodCallWithCallbackArgumentsParameter()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MethodCallWithCallbackArgumentsParameter(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             UserData.RegisterType<ScriptInjectedClass>();
             script.Globals["TestClass"] = typeof(ScriptInjectedClass);
 
@@ -1019,6 +1487,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             {
                 ArgumentNullException.ThrowIfNull(args);
                 return args.Count;
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1034:Nested types should not be visible",
+            Justification = "Test helper class must be public for UserData registration."
+        )]
+        public sealed class MultiArgClass
+        {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int ThreeArgs(int a, int b, int c)
+            {
+                return a + b + c;
+            }
+
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int FourArgs(int a, int b, int c, int d)
+            {
+                return a + b + c + d;
             }
         }
     }

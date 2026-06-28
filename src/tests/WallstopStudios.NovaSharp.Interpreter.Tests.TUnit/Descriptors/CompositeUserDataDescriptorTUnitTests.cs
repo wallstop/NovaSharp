@@ -5,14 +5,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class CompositeUserDataDescriptorTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task IndexReturnsFirstNonNullValue()
+        [AllLuaVersions]
+        public async Task IndexReturnsFirstNonNullValue(LuaCompatibilityVersion version)
         {
             DynValue expected = DynValue.NewString("hit");
             StubDescriptor first = new(indexResult: null);
@@ -20,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
             DynValue value = descriptor.Index(
-                new Script(),
+                new Script(version),
                 new object(),
                 DynValue.NewString("name"),
                 true
@@ -32,7 +35,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task IndexStopsIteratingAfterMatch()
+        [AllLuaVersions]
+        public async Task IndexStopsIteratingAfterMatch(LuaCompatibilityVersion version)
         {
             DynValue expected = DynValue.NewString("first");
             StubDescriptor first = new(indexResult: expected);
@@ -40,7 +44,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
             DynValue value = descriptor.Index(
-                new Script(),
+                new Script(version),
                 new object(),
                 DynValue.NewString("name"),
                 isDirectIndexing: true
@@ -52,7 +56,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task IndexReturnsNullWhenDescriptorsReturnNull()
+        [AllLuaVersions]
+        public async Task IndexReturnsNullWhenDescriptorsReturnNull(LuaCompatibilityVersion version)
         {
             CompositeUserDataDescriptor descriptor = CreateComposite(
                 new StubDescriptor(indexResult: null),
@@ -60,7 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             DynValue value = descriptor.Index(
-                new Script(),
+                new Script(version),
                 new object(),
                 DynValue.NewString("missing"),
                 true
@@ -70,14 +75,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetIndexStopsAfterFirstHandler()
+        [AllLuaVersions]
+        public async Task SetIndexStopsAfterFirstHandler(LuaCompatibilityVersion version)
         {
             StubDescriptor first = new(indexResult: null, setResult: true);
             StubDescriptor second = new(indexResult: null, setResult: true);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
             bool handled = descriptor.SetIndex(
-                new Script(),
+                new Script(version),
                 new object(),
                 DynValue.NewString("k"),
                 DynValue.True,
@@ -90,7 +96,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetIndexReturnsFalseWhenAllDescriptorsDecline()
+        [AllLuaVersions]
+        public async Task SetIndexReturnsFalseWhenAllDescriptorsDecline(
+            LuaCompatibilityVersion version
+        )
         {
             CompositeUserDataDescriptor descriptor = CreateComposite(
                 new StubDescriptor(indexResult: null, setResult: false),
@@ -98,7 +107,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             bool handled = descriptor.SetIndex(
-                new Script(),
+                new Script(version),
                 new object(),
                 DynValue.NewString("k"),
                 DynValue.True,
@@ -109,14 +118,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetaIndexReturnsFirstNonNullValue()
+        [AllLuaVersions]
+        public async Task MetaIndexReturnsFirstNonNullValue(LuaCompatibilityVersion version)
         {
             DynValue expected = DynValue.NewString("__call");
             StubDescriptor first = new(indexResult: null, metaResult: null);
             StubDescriptor second = new(indexResult: null, metaResult: expected);
             CompositeUserDataDescriptor descriptor = CreateComposite(first, second);
 
-            DynValue value = descriptor.MetaIndex(new Script(), new object(), "__call");
+            DynValue value = descriptor.MetaIndex(new Script(version), new object(), "__call");
 
             await Assert.That(value).IsSameReferenceAs(expected);
             await Assert.That(first.MetaCallCount).IsEqualTo(1);
@@ -124,20 +134,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetaIndexReturnsNullWhenNoDescriptorProvidesMeta()
+        [AllLuaVersions]
+        public async Task MetaIndexReturnsNullWhenNoDescriptorProvidesMeta(
+            LuaCompatibilityVersion version
+        )
         {
             CompositeUserDataDescriptor descriptor = CreateComposite(
                 new StubDescriptor(indexResult: null, metaResult: null),
                 new StubDescriptor(indexResult: null, metaResult: null)
             );
 
-            DynValue value = descriptor.MetaIndex(new Script(), new object(), "__add");
+            DynValue value = descriptor.MetaIndex(new Script(version), new object(), "__add");
 
             await Assert.That(value).IsNull();
         }
 
         [global::TUnit.Core.Test]
-        public async Task DescriptorsPropertyIsMutable()
+        [AllLuaVersions]
+        public async Task DescriptorsPropertyIsMutable(LuaCompatibilityVersion version)
         {
             CompositeUserDataDescriptor descriptor = CreateComposite();
             DynValue expected = DynValue.NewNumber(5);
@@ -145,7 +159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             descriptor.Descriptors.Add(new StubDescriptor(indexResult: expected));
 
             DynValue value = descriptor.Index(
-                new Script(),
+                new Script(version),
                 new object(),
                 DynValue.NewString("value"),
                 true

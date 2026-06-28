@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Utilities
 {
     using System;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Common string/span helpers shared across runtime components to avoid repeated trimming/normalization logic.
@@ -10,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// <summary>
         /// Trims leading and trailing whitespace from the provided span without allocating.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ReadOnlySpan<char> TrimWhitespace(this ReadOnlySpan<char> span)
         {
             int start = 0;
@@ -31,6 +33,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// <summary>
         /// Returns <c>true</c> when the span contains at least one non-whitespace character.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasContent(this ReadOnlySpan<char> span)
         {
             foreach (char c in span)

@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for the <c>_VERSION</c> global variable across all supported Lua compatibility modes.
@@ -22,63 +23,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task VersionGlobalReturnsLua51InLua51Mode()
+        [Arguments(LuaCompatibilityVersion.Lua51, "Lua 5.1")]
+        [Arguments(LuaCompatibilityVersion.Lua52, "Lua 5.2")]
+        [Arguments(LuaCompatibilityVersion.Lua53, "Lua 5.3")]
+        [Arguments(LuaCompatibilityVersion.Lua54, "Lua 5.4")]
+        [Arguments(LuaCompatibilityVersion.Lua55, "Lua 5.5")]
+        public async Task VersionGlobalReturnsCorrectVersionPerMode(
+            LuaCompatibilityVersion version,
+            string expectedVersionString
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua51, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return _VERSION");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert.That(result.String).IsEqualTo("Lua 5.1").ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo(expectedVersionString).ConfigureAwait(false);
         }
 
         [Test]
-        public async Task VersionGlobalReturnsLua52InLua52Mode()
-        {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua52, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return _VERSION");
-
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert.That(result.String).IsEqualTo("Lua 5.2").ConfigureAwait(false);
-        }
-
-        [Test]
-        public async Task VersionGlobalReturnsLua53InLua53Mode()
-        {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua53, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return _VERSION");
-
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert.That(result.String).IsEqualTo("Lua 5.3").ConfigureAwait(false);
-        }
-
-        [Test]
-        public async Task VersionGlobalReturnsLua54InLua54Mode()
-        {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return _VERSION");
-
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert.That(result.String).IsEqualTo("Lua 5.4").ConfigureAwait(false);
-        }
-
-        [Test]
-        public async Task VersionGlobalReturnsLua55InLua55Mode()
-        {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua55, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return _VERSION");
-
-            await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert.That(result.String).IsEqualTo("Lua 5.5").ConfigureAwait(false);
-        }
-
-        [Test]
-        public async Task VersionGlobalReturnsLua54ForLatestMode()
+        [Arguments(LuaCompatibilityVersion.Latest)]
+        public async Task VersionGlobalReturnsLua54ForLatestMode(LuaCompatibilityVersion version)
         {
             // Latest currently maps to Lua 5.4 (the current default per LuaVersionDefaults)
-            Script script = CreateScript(
-                LuaCompatibilityVersion.Latest,
-                CoreModulePresets.Complete
-            );
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return _VERSION");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -90,29 +57,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task VersionGlobalIsAccessibleWithoutExplicitImport()
+        [AllLuaVersions]
+        public async Task VersionGlobalIsAccessibleWithoutExplicitImport(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("local v = _VERSION; return type(v)");
 
             await Assert.That(result.String).IsEqualTo("string").ConfigureAwait(false);
         }
 
         [Test]
-        public async Task VersionGlobalCanBeUsedInComparisons()
+        [Arguments(LuaCompatibilityVersion.Lua51, "Lua 5.1")]
+        [Arguments(LuaCompatibilityVersion.Lua52, "Lua 5.2")]
+        [Arguments(LuaCompatibilityVersion.Lua53, "Lua 5.3")]
+        [Arguments(LuaCompatibilityVersion.Lua54, "Lua 5.4")]
+        [Arguments(LuaCompatibilityVersion.Lua55, "Lua 5.5")]
+        public async Task VersionGlobalCanBeUsedInComparisons(
+            LuaCompatibilityVersion version,
+            string expectedVersionString
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Complete);
-            DynValue result = script.DoString("return _VERSION == 'Lua 5.4'");
+            Script script = CreateScript(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString($"return _VERSION == '{expectedVersionString}'");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Boolean).ConfigureAwait(false);
             await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
-        public async Task VersionGlobalCanBeUsedForVersionDetection()
+        [Arguments(LuaCompatibilityVersion.Lua51, 5, 1)]
+        [Arguments(LuaCompatibilityVersion.Lua52, 5, 2)]
+        [Arguments(LuaCompatibilityVersion.Lua53, 5, 3)]
+        [Arguments(LuaCompatibilityVersion.Lua54, 5, 4)]
+        [Arguments(LuaCompatibilityVersion.Lua55, 5, 5)]
+        public async Task VersionGlobalCanBeUsedForVersionDetection(
+            LuaCompatibilityVersion version,
+            int expectedMajor,
+            int expectedMinor
+        )
         {
             // Common pattern: checking Lua version at runtime
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             string code =
                 @"
                 local major, minor = _VERSION:match('Lua (%d+)%.(%d+)')
@@ -121,8 +108,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
             DynValue result = script.DoString(code);
 
             await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0].Number).IsEqualTo(5).ConfigureAwait(false);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(4).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo(expectedMajor)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(expectedMinor)
+                .ConfigureAwait(false);
         }
 
         // ========================================
@@ -130,10 +123,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [Test]
-        public async Task NovaSharpTableContainsVersionInfo()
+        [AllLuaVersions]
+        public async Task NovaSharpTableContainsVersionInfo(LuaCompatibilityVersion version)
         {
             // NovaSharp-specific version info is available in _NovaSharp table
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return _NovaSharp.version");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
@@ -141,13 +135,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [Test]
-        public async Task NovaSharpTableContainsLuaCompatInfo()
+        [Arguments(LuaCompatibilityVersion.Lua51, "Lua 5.1")]
+        [Arguments(LuaCompatibilityVersion.Lua52, "Lua 5.2")]
+        [Arguments(LuaCompatibilityVersion.Lua53, "Lua 5.3")]
+        [Arguments(LuaCompatibilityVersion.Lua54, "Lua 5.4")]
+        [Arguments(LuaCompatibilityVersion.Lua55, "Lua 5.5")]
+        public async Task NovaSharpTableContainsLuaCompatInfo(
+            LuaCompatibilityVersion version,
+            string expectedLuaCompat
+        )
         {
-            Script script = CreateScript(LuaCompatibilityVersion.Lua54, CoreModulePresets.Complete);
+            Script script = CreateScript(version, CoreModulePresets.Complete);
             DynValue result = script.DoString("return _NovaSharp.luacompat");
 
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert.That(result.String).IsEqualTo("Lua 5.4").ConfigureAwait(false);
+            await Assert.That(result.String).IsEqualTo(expectedLuaCompat).ConfigureAwait(false);
         }
     }
 }

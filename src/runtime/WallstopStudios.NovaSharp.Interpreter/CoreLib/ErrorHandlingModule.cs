@@ -188,6 +188,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <summary>
         /// Implements Lua's <c>xpcall</c>, invoking a function with a custom error handler when failures occur.
         /// </summary>
+        /// <remarks>
+        /// <para>Version-specific behavior for extra arguments:</para>
+        /// <list type="bullet">
+        /// <item><description><b>Lua 5.1</b>: <c>xpcall(f, err)</c> — Only 2 arguments supported. Extra arguments are ignored.</description></item>
+        /// <item><description><b>Lua 5.2+</b>: <c>xpcall(f, msgh [,arg1, ...])</c> — Extra arguments are passed to the function <c>f</c>.</description></item>
+        /// </list>
+        /// </remarks>
         /// <param name="executionContext">Current script execution context.</param>
         /// <param name="args">Arguments where index 0 is the function and index 1 is the error handler.</param>
         /// <returns>A tuple matching <c>pcall</c>'s result contract.</returns>
@@ -203,17 +210,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
+            // Get version early as it affects both extra args and handler validation
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                executionContext.Script.CompatibilityVersion
+            );
+            bool isLua51 = version == LuaCompatibilityVersion.Lua51;
+            bool isLua51Or52 = isLua51 || version == LuaCompatibilityVersion.Lua52;
+
+            // Build argument array for the function call.
+            // Version-specific behavior for extra arguments:
+            // - Lua 5.1: xpcall(f, err) — Only 2 arguments supported. Extra arguments are IGNORED.
+            // - Lua 5.2+: xpcall(f, msgh [,arg1, ...]) — Extra arguments are passed to f.
+            // Note: SetErrorHandlerStrategy expects args[0] to be the function, and args[1+] to be args to pass.
             DynValue[] a;
-            using (ListPool<DynValue>.Get(out List<DynValue> tempList))
+            if (isLua51)
             {
-                for (int i = 0; i < args.Count; i++)
+                // Lua 5.1: Only pass the function itself, no extra args
+                a = new DynValue[] { args[0] };
+            }
+            else
+            {
+                // Lua 5.2+: Pass function (index 0) and all extra args (index 2+), skip handler (index 1)
+                using (ListPool<DynValue>.Get(out List<DynValue> tempList))
                 {
-                    if (i != 1)
+                    for (int i = 0; i < args.Count; i++)
                     {
-                        tempList.Add(args[i]);
+                        if (i != 1) // Skip the handler at index 1
+                        {
+                            tempList.Add(args[i]);
+                        }
                     }
+                    a = ListPool<DynValue>.ToExactArray(tempList);
                 }
-                a = ListPool<DynValue>.ToExactArray(tempList);
             }
 
             // Version-specific handler validation:
@@ -222,12 +250,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             //   and cause secondary errors on failure.
             // Lua 5.3+: Pre-validate and throw "bad argument #2" if handler is not a function.
             // NOTE: All versions throw if no handler argument is provided at all.
-            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
-                executionContext.Script.CompatibilityVersion
-            );
-            bool isLua51Or52 =
-                version == LuaCompatibilityVersion.Lua51
-                || version == LuaCompatibilityVersion.Lua52;
 
             // Missing handler argument throws in all versions
             if (args.Count < 2)
@@ -235,7 +257,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgument(
                     1,
                     "xpcall",
-                    "function",
+                    LuaKeywords.Function,
                     "no value",
                     false
                 );
@@ -253,7 +275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 throw ScriptRuntimeException.BadArgument(
                     1,
                     "xpcall",
-                    "function",
+                    LuaKeywords.Function,
                     handlerArg.Type.ToLuaTypeString(),
                     false
                 );

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
@@ -61,6 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             if (modules.Has(CoreModules.StringLib))
             {
                 RegisterModuleType(table, typeof(StringModule));
+                RegisterModuleType(table, typeof(CoreLib.StringLib.StringPackModule));
 
                 if (profile.SupportsUtf8Library)
                 {
@@ -231,7 +233,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                     if (!CallbackFunction.CheckCallbackSignature(mi, true))
                     {
                         throw new ArgumentException(
-                            $"Method {mi.Name} does not have the right signature."
+                            ZString.Concat(
+                                "Method ",
+                                mi.Name,
+                                " does not have the right signature."
+                            )
                         );
                     }
 
@@ -354,7 +360,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             else
             {
                 throw new ArgumentException(
-                    $"Field {name} does not have the right type - it must be string, double, or long."
+                    ZString.Concat(
+                        "Field ",
+                        name,
+                        " does not have the right type - it must be string, double, or long."
+                    )
                 );
             }
 
@@ -376,7 +386,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             if (fi.FieldType != typeof(string))
             {
                 throw new ArgumentException(
-                    $"Field {memberName} does not have the right type - it must be string."
+                    ZString.Concat(
+                        "Field ",
+                        memberName,
+                        " does not have the right type - it must be string."
+                    )
                 );
             }
 

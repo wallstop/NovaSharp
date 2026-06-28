@@ -4,21 +4,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Errors
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class SyntaxErrorExceptionTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task RethrowWrapsExceptionWhenGlobalOptionEnabled()
+        [AllLuaVersions]
+        public async Task RethrowWrapsExceptionWhenGlobalOptionEnabled(
+            LuaCompatibilityVersion version
+        )
         {
             using ScriptGlobalOptionsScope globalScope = ScriptGlobalOptionsScope.Override(
                 options => options.RethrowExceptionNested = true
             );
-            Script script = new();
+            Script script = new(version);
 
             SyntaxErrorException captured = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("function broken(")
@@ -61,7 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Errors
             )!;
 
             await Assert.That(nested).IsNotSameReferenceAs(exception).ConfigureAwait(false);
-            await Assert.That(nested.Token).IsSameReferenceAs(token).ConfigureAwait(false);
+            await Assert.That(nested.Token).IsEqualTo(token).ConfigureAwait(false);
             await Assert
                 .That(nested.InnerException)
                 .IsSameReferenceAs(exception)
@@ -73,11 +78,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Errors
         {
             Script script = CreateScriptWithNamedSource("decorated", out int sourceId);
             Token token = CreateToken(sourceId);
-            SyntaxErrorException exception = new(token, "unexpected '{0}'", token.Text);
+            SyntaxErrorException exception = new(token, "unexpected '{0}'", token.text);
 
             exception.DecorateMessage(script);
 
-            await Assert.That(exception.Token).IsSameReferenceAs(token).ConfigureAwait(false);
+            await Assert.That(exception.Token).IsEqualTo(token).ConfigureAwait(false);
             await Assert
                 .That(exception.DecoratedMessage)
                 .StartsWith("decorated:")
@@ -177,7 +182,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Errors
 
         private static Token CreateToken(int sourceId = 0)
         {
-            return new Token(TokenType.Name, sourceId, 1, 1, 1, 3, 1, 0) { Text = "value" };
+            return new Token(TokenType.Name, sourceId, 1, 1, 1, 3, 1, 0, "value");
         }
     }
 }

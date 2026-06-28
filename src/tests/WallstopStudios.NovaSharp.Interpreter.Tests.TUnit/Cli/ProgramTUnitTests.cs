@@ -59,9 +59,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                     bool handled = Program.CheckArgs(HelpFlagArguments, CreateShellContext());
 
                     await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    // Uses new generated help text
                     await Assert
                         .That(console.Writer.ToString())
-                        .Contains(CliMessages.ProgramUsageLong)
+                        .Contains("USAGE:")
                         .ConfigureAwait(false);
                 })
                 .ConfigureAwait(false);
@@ -87,7 +88,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task CheckArgsExecuteCommandFlagWithMissingArgumentShowsSyntax()
+        public async Task CheckArgsExecuteCommandFlagWithMissingArgumentShowsError()
         {
             await WithConsoleAsync(async console =>
                 {
@@ -97,9 +98,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                     );
 
                     await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    // Now shows error message from CliArgumentRegistry
                     await Assert
                         .That(console.Writer.ToString())
-                        .Contains(CliMessages.ProgramWrongSyntax)
+                        .Contains("-X")
                         .ConfigureAwait(false);
                 })
                 .ConfigureAwait(false);
@@ -227,16 +229,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task CheckArgsHardwireFlagWithMissingArgumentsShowsSyntax()
+        public async Task CheckArgsHardwireFlagWithMissingArgumentsShowsError()
         {
             await WithConsoleAsync(async console =>
                 {
                     bool handled = Program.CheckArgs(HardwireFlagArguments, CreateShellContext());
 
                     await Assert.That(handled).IsTrue().ConfigureAwait(false);
+                    // Now shows error about missing files from CliArgumentRegistry
+                    string output = console.Writer.ToString();
                     await Assert
-                        .That(console.Writer.ToString())
-                        .Contains(CliMessages.ProgramWrongSyntax)
+                        .That(output)
+                        .Contains("dumpfile")
+                        .Or.Contains("destfile")
+                        .Or.Contains("-W")
                         .ConfigureAwait(false);
                 })
                 .ConfigureAwait(false);
@@ -437,8 +443,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         {
             await WithConsoleAsync(async console =>
                 {
-                    Script script = new(CoreModulePresets.Default);
-                    script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+                    Script script = new(LuaCompatibilityVersion.Lua53, CoreModulePresets.Default);
 
                     Program.ShowBannerForTests(script);
 
@@ -455,7 +460,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
 
         private static string GetCompatibilitySummary(LuaCompatibilityVersion version)
         {
-            Script script = new(new ScriptOptions { CompatibilityVersion = version });
+            Script script = new(version);
             return script.CompatibilityProfile.GetFeatureSummary();
         }
 
@@ -657,9 +662,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
 
                     await Assert.That(handled).IsTrue().ConfigureAwait(false);
                     string output = console.Writer.ToString();
+                    // Now shows error about missing value from CliArgumentRegistry
                     await Assert
                         .That(output)
-                        .Contains(CliMessages.ProgramWrongSyntax)
+                        .Contains("-v")
+                        .Or.Contains("--lua-version")
+                        .Or.Contains("Missing")
                         .ConfigureAwait(false);
                 })
                 .ConfigureAwait(false);

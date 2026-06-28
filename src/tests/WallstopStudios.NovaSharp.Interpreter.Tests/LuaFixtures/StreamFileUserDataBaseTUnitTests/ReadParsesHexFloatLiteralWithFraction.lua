@@ -3,7 +3,7 @@
 -- @expects-error: false
 -- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:534
 -- @test: StreamFileUserDataBaseTUnitTests.ReadParsesHexFloatLiteralWithFraction
--- @compat-notes: Lua 5.3+: bitwise operators; Uses injected variable: file
+-- Uses injected variable: file
 local f = file
                 local number = f:read('*n')
                 local remainder = f:read('*a')

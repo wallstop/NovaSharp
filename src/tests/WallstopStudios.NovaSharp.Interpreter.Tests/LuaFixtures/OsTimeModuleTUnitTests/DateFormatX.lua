@@ -1,0 +1,7 @@
+-- @lua-versions: 5.1
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsTimeModuleTUnitTests.cs:640
+-- @test: OsTimeModuleTUnitTests.DateFormatX
+-- Test targets Lua 5.1
+return os.date('!%x', 0)

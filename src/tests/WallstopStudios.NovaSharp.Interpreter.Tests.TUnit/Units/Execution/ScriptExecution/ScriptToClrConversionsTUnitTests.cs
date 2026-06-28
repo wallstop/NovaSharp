@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -15,6 +16,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Interop.Converters;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class ScriptToClrConversionsTUnitTests
@@ -422,9 +424,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynValueToObjectOfTypeWeightReturnsTableToDictionaryWeight()
+        [AllLuaVersions]
+        public async Task DynValueToObjectOfTypeWeightReturnsTableToDictionaryWeight(
+            LuaCompatibilityVersion version
+        )
         {
-            Table table = new(new Script());
+            Table table = new(new Script(version));
             table.Set(DynValue.NewString("key"), DynValue.NewNumber(42));
             DynValue tableValue = DynValue.NewTable(table);
 

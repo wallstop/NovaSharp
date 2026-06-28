@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -18,6 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     [UserDataIsolation]
@@ -31,10 +33,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         private static readonly int[] HostZeroSequence = { 0 };
 
         [global::TUnit.Core.Test]
-        public async Task ArithmeticOperatorsDispatchToClrOverloads()
+        [AllLuaVersions]
+        public async Task ArithmeticOperatorsDispatchToClrOverloads(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             DynValue sum = script.DoString("return (hostAdd + hostOther).value");
             DynValue difference = script.DoString("return (hostOther - hostAdd).value");
@@ -52,10 +55,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ComparisonOperatorsUseComparable()
+        [AllLuaVersions]
+        public async Task ComparisonOperatorsUseComparable(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             DynValue equality = script.DoString("return hostAdd == hostCopy");
             DynValue lessThan = script.DoString("return hostAdd < hostOther");
@@ -67,10 +71,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ComparisonMetamethodSupportsSecondOperandOwnership()
+        [AllLuaVersions]
+        public async Task ComparisonMetamethodSupportsSecondOperandOwnership(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(
+                version,
                 out DispatchHost hostAdd,
                 out DispatchHost hostOther,
                 out _,
@@ -91,10 +99,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetaIndexReturnsNullForUnsupportedMetamethod()
+        [AllLuaVersions]
+        public async Task MetaIndexReturnsNullForUnsupportedMetamethod(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out DispatchHost hostAdd, out _, out _, out _);
+            Script script = CreateScriptWithHosts(
+                version,
+                out DispatchHost hostAdd,
+                out _,
+                out _,
+                out _
+            );
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostAdd);
 
             DynValue meta = descriptor.MetaIndex(script, hostAdd, "__unknown");
@@ -103,10 +120,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task LenOperatorReturnsCount()
+        [AllLuaVersions]
+        public async Task LenOperatorReturnsCount(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             DynValue len = script.DoString("return #hostAdd");
 
@@ -114,10 +132,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task LenOperatorFallsBackToCountWhenLengthMissing()
+        [AllLuaVersions]
+        public async Task LenOperatorFallsBackToCountWhenLengthMissing(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             script.Globals["countOnly"] = UserData.Create(new CountOnlyHost(4));
 
             DynValue len = script.DoString("return #countOnly");
@@ -126,10 +147,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ComparisonMetamethodReturnsNullWhenObjectIsNotComparable()
+        [AllLuaVersions]
+        public async Task ComparisonMetamethodReturnsNullWhenObjectIsNotComparable(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
             DynValue lt = descriptor.MetaIndex(script, new DescriptorHost(), "__lt");
@@ -140,10 +164,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task LenMetamethodReturnsNullWhenTargetIsNull()
+        [AllLuaVersions]
+        public async Task LenMetamethodReturnsNullWhenTargetIsNull(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
 
             DynValue len = descriptor.MetaIndex(script, null, "__len");
@@ -152,10 +177,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberDispatchesImplicitConversion()
+        [AllLuaVersions]
+        public async Task ToNumberDispatchesImplicitConversion(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out DispatchHost hostOther, out _, out _);
+            Script script = CreateScriptWithHosts(
+                version,
+                out _,
+                out DispatchHost hostOther,
+                out _,
+                out _
+            );
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(hostOther);
             DynValue meta = descriptor.MetaIndex(script, hostOther, "__tonumber");
 
@@ -168,10 +200,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberSkipsMissingConvertersBeforeFindingMatch()
+        [AllLuaVersions]
+        public async Task ToNumberSkipsMissingConvertersBeforeFindingMatch(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             IntConversionOnlyHost host = new(9);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
             DynValue meta = descriptor.MetaIndex(script, host, "__tonumber");
@@ -185,10 +220,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberReturnsNilWhenNoConvertersExist()
+        [AllLuaVersions]
+        public async Task ToNumberReturnsNilWhenNoConvertersExist(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             NoConversionHost host = new(6);
             IUserDataDescriptor descriptor = UserData.GetDescriptorForObject(host);
 
@@ -198,10 +234,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToBoolUsesImplicitConversion()
+        [AllLuaVersions]
+        public async Task ToBoolUsesImplicitConversion(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             Script script = CreateScriptWithHosts(
+                version,
                 out DispatchHost hostAdd,
                 out _,
                 out _,
@@ -220,10 +258,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task IteratorDispatchEnumeratesClrEnumerable()
+        [AllLuaVersions]
+        public async Task IteratorDispatchEnumeratesClrEnumerable(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             DynValue sum = script.DoString(
                 @"
@@ -365,21 +404,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task IndexFallsBackToExtensionMethodsAfterRegistration()
+        [AllLuaVersions]
+        public async Task IndexFallsBackToExtensionMethodsAfterRegistration(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
             registrationScope.RegisterExtensionType(typeof(DispatchHostExtensionMethods));
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             DynValue result = script.DoString("return hostAdd:DescribeExt()");
 
             await Assert.That(result.String).IsEqualTo("ext:2");
         }
 
         [global::TUnit.Core.Test]
-        public async Task DivisionByZeroPropagatesInvocationException()
+        [AllLuaVersions]
+        public async Task DivisionByZeroPropagatesInvocationException(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             TargetInvocationException exception = ExpectException<TargetInvocationException>(() =>
                 script.DoString("return (hostAdd / hostZero).value")
@@ -389,10 +434,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConcatOperatorFallsBackToRegisteredMetamethod()
+        [AllLuaVersions]
+        public async Task ConcatOperatorFallsBackToRegisteredMetamethod(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
             script.Globals["concatLeft"] = UserData.Create(new MetaFallbackHost("L"));
             script.Globals["concatRight"] = UserData.Create(new MetaFallbackHost("R"));
 
@@ -402,7 +450,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetIndexUsesIndexerSetterForBracketSyntax()
+        [AllLuaVersions]
+        public async Task SetIndexUsesIndexerSetterForBracketSyntax(LuaCompatibilityVersion version)
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
             bool invoked = false;
@@ -427,7 +476,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             bool handled = descriptor.SetIndex(
                 script,
@@ -444,7 +493,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetIndexFallsBackToNamedMemberWhenDirectIndexing()
+        [AllLuaVersions]
+        public async Task SetIndexFallsBackToNamedMemberWhenDirectIndexing(
+            LuaCompatibilityVersion version
+        )
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
             bool invoked = false;
@@ -464,7 +516,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
 
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             bool handled = descriptor.SetIndex(
                 script,
@@ -480,11 +532,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetIndexReturnsFalseWhenNonStringIndexProvided()
+        [AllLuaVersions]
+        public async Task SetIndexReturnsFalseWhenNonStringIndexProvided(
+            LuaCompatibilityVersion version
+        )
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             bool handled = descriptor.SetIndex(
                 script,
@@ -498,11 +553,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetIndexReturnsFalseWhenMemberIsMissing()
+        [AllLuaVersions]
+        public async Task SetIndexReturnsFalseWhenMemberIsMissing(LuaCompatibilityVersion version)
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             bool handled = descriptor.SetIndex(
                 script,
@@ -533,11 +589,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task IndexThrowsWhenIndexIsNull()
+        [AllLuaVersions]
+        public async Task IndexThrowsWhenIndexIsNull(LuaCompatibilityVersion version)
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 descriptor.Index(script, new DescriptorHost(), index: null, isDirectIndexing: true)
@@ -547,11 +604,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetIndexThrowsWhenValueIsNull()
+        [AllLuaVersions]
+        public async Task SetIndexThrowsWhenValueIsNull(LuaCompatibilityVersion version)
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 descriptor.SetIndex(
@@ -567,11 +625,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetaIndexThrowsWhenMetanameIsNull()
+        [AllLuaVersions]
+        public async Task MetaIndexThrowsWhenMetanameIsNull(LuaCompatibilityVersion version)
         {
             DispatchingUserDataDescriptor descriptor = CreateDescriptorHostDescriptor();
             using UserDataRegistrationScope registrationScope = RegisterDispatchHosts();
-            Script script = CreateScriptWithHosts(out _, out _, out _, out _);
+            Script script = CreateScriptWithHosts(version, out _, out _, out _, out _);
 
             ArgumentNullException exception = ExpectException<ArgumentNullException>(() =>
                 descriptor.MetaIndex(script, new DescriptorHost(), metaname: null)
@@ -617,13 +676,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         private static Script CreateScriptWithHosts(
+            LuaCompatibilityVersion version,
             out DispatchHost hostAdd,
             out DispatchHost hostOther,
             out DispatchHost hostCopy,
             out DispatchHost hostZero
         )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             hostAdd = new DispatchHost(2, HostAddSequence);
             hostOther = new DispatchHost(3, HostOtherSequence);
             hostCopy = new DispatchHost(2, HostCopySequence);

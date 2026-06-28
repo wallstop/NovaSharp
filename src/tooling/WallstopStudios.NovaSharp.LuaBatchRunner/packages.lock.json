@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net8.0": {
+      "Microsoft.SourceLink.GitHub": {
+        "type": "Direct",
+        "requested": "[8.0.0, )",
+        "resolved": "8.0.0",
+        "contentHash": "G5q7OqtwIyGTkeIOAc3u2ZuV/kicQaec5EaRnc0pIeSnh9LUjj+PYQrJYBURvDt7twGl2PKA7nSN0kz1Zw5bnQ==",
+        "dependencies": {
+          "Microsoft.Build.Tasks.Git": "8.0.0",
+          "Microsoft.SourceLink.Common": "8.0.0"
+        }
+      },
+      "CommunityToolkit.HighPerformance": {
+        "type": "Transitive",
+        "resolved": "8.4.0",
+        "contentHash": "flxspiBs0G/0GMp7IK2J2ijV9bTG6hEwFc/z6ekHqB6nwRJ4Ry2yLdx+TkbCUYFCl4XhABkAwomeKbT6zM2Zlg=="
+      },
+      "Microsoft.Build.Tasks.Git": {
+        "type": "Transitive",
+        "resolved": "8.0.0",
+        "contentHash": "bZKfSIKJRXLTuSzLudMFte/8CempWjVamNUR5eHJizsy+iuOuO/k2gnh7W0dHJmYY0tBf+gUErfluCv5mySAOQ=="
+      },
+      "Microsoft.Extensions.ObjectPool": {
+        "type": "Transitive",
+        "resolved": "10.0.1",
+        "contentHash": "HqAEbtoAhgvH53c54IV5e4vQ60PYvl7Z/WIHsbet+UGGE7n+7dwVNXw1mb9LZlWbsxnupCevvtgIne5P//ZKpQ=="
+      },
+      "Microsoft.SourceLink.Common": {
+        "type": "Transitive",
+        "resolved": "8.0.0",
+        "contentHash": "dk9JPxTCIevS75HyEQ0E4OVAFhB2N+V9ShCXf8Q6FkUQZDkgLI12y679Nym1YqsiSysuQskT7Z+6nUf3yab6Vw=="
+      },
+      "System.IO.Pipelines": {
+        "type": "Transitive",
+        "resolved": "10.0.1",
+        "contentHash": "26LbFXHKd7PmRnWlkjnYgmjd5B6HYVG+1MpTO25BdxTJnx6D0O16JPAC/S4YBqjtt4YpfGj1QO/Ss6SPMGEGQw=="
+      },
+      "System.Text.Encodings.Web": {
+        "type": "Transitive",
+        "resolved": "10.0.1",
+        "contentHash": "cVAka0o1rJJ5/De0pjNs7jcaZk5hUGf1HGzUyVmE2MEB1Vf0h/8qsWxImk1zjitCbeD2Avaq2P2+usdvqgbeVQ=="
+      },
+      "System.Text.Json": {
+        "type": "Transitive",
+        "resolved": "10.0.1",
+        "contentHash": "EsgwDgU1PFqhrFA9l5n+RBu76wFhNGCEwu8ITrBNhjPP3MxLyklroU5GIF8o6JYpYg6T4KD/VICfMdgPAvNp5g==",
+        "dependencies": {
+          "System.IO.Pipelines": "10.0.1",
+          "System.Text.Encodings.Web": "10.0.1"
+        }
+      },
+      "ZString": {
+        "type": "Transitive",
+        "resolved": "2.6.0",
+        "contentHash": "XE8a+11nZg0LRaf+RGABEWaHIf8yGd5w8v/Ra1iWxMBmAVzwuKbW7G21mS0U7w7sh1lYcgckInWGgnz4qyET8A=="
+      },
+      "wallstopstudios.novasharp.interpreter": {
+        "type": "Project",
+        "dependencies": {
+          "CommunityToolkit.HighPerformance": "[8.4.0, )",
+          "Microsoft.Extensions.ObjectPool": "[10.0.1, )",
+          "System.Text.Json": "[10.0.1, )",
+          "WallstopStudios.NovaSharp.Interpreter.Infrastructure": "[3.0.0, )",
+          "ZString": "[2.6.0, )"
+        }
+      },
+      "wallstopstudios.novasharp.interpreter.infrastructure": {
+        "type": "Project"
+      }
+    }
+  }
+}

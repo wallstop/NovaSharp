@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Static functions to handle conversions of numeric types
@@ -167,6 +168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// </summary>
         /// <param name="type">The type to check.</param>
         /// <returns>true if the type is an integer type; otherwise, false.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsIntegerType(Type type)
         {
             return IntegerTypes.Contains(type);
@@ -178,6 +180,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// </summary>
         /// <param name="type">The type to check.</param>
         /// <returns>true if the type is a floating-point type; otherwise, false.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsFloatingPointType(Type type)
         {
             return FloatingPointTypes.Contains(type);
@@ -189,6 +192,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
         /// <param name="type">The type of the object.</param>
         /// <param name="obj">The object to convert.</param>
         /// <returns>The integer representation of the value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static long TypeToLong(Type type, object obj)
         {
             return Convert.ToInt64(obj, CultureInfo.InvariantCulture);

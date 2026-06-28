@@ -3,13 +3,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
+    /// <summary>
+    /// Tests for the goto statement, which was introduced in Lua 5.2.
+    /// All tests target Lua 5.2+ only.
+    /// </summary>
     public sealed class GotoTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task GotoSimpleForwardJump()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoSimpleForwardJump(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -23,12 +31,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return test()
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoSimpleBackwardJump()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoSimpleBackwardJump(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -42,17 +52,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return test()
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoUndefinedLabelThrows()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoUndefinedLabelThrows(LuaCompatibilityVersion version)
         {
             string code = "goto there";
+            Script script = new Script(version, CoreModulePresets.Complete);
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
             {
-                Script.RunString(code);
+                script.DoString(code);
             });
 
             await Assert
@@ -62,20 +75,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoDoubleDefinedLabelThrows()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoDoubleDefinedLabelThrows(LuaCompatibilityVersion version)
         {
             string code =
                 @"
                 ::label::
                 ::label::
                 ";
-            _ = Assert.Throws<SyntaxErrorException>(() => Script.RunString(code));
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoSupportsRedeclaringInsideBlock()
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua53)]
+        public async Task GotoSupportsRedeclaringInsideBlock(LuaCompatibilityVersion version)
         {
+            // In Lua 5.2/5.3, labels can be shadowed in nested blocks
             string code =
                 @"
                 ::label::
@@ -84,13 +101,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(code);
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoRedeclaredLabelAllowsJump()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task GotoLabelShadowingProhibitedInLua54Plus(LuaCompatibilityVersion version)
         {
+            // In Lua 5.4+, labels cannot shadow visible labels (even in nested blocks)
+            // See: https://www.lua.org/manual/5.4/manual.html#8 ("Goto labels cannot shadow visible labels")
+            string code =
+                @"
+                ::label::
+                do
+                    ::label::
+                end
+                ";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionRange(LuaCompatibilityVersion.Lua52, LuaCompatibilityVersion.Lua53)]
+        public async Task GotoRedeclaredLabelAllowsJump(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.2/5.3, goto jumps to the innermost label when shadowed
             string code =
                 @"
                 ::label::
@@ -102,12 +141,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoUndefinedInnerLabelThrows()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task GotoRedeclaredLabelThrowsInLua54Plus(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.4+, label redeclaration in inner scope is a syntax error
+            string code =
+                @"
+                ::label::
+                do
+                    goto label
+                    do return 5 end
+                    ::label::
+                    return 3
+                end
+                ";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoUndefinedInnerLabelThrows(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -119,26 +181,59 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            _ = Assert.Throws<SyntaxErrorException>(() => Script.RunString(code));
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoCannotJumpOverLocalDeclarations()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoCanJumpOverLocalWhenLabelAtEndOfBlock(LuaCompatibilityVersion version)
         {
+            // Per Lua 5.4 §3.5: "The scope of a local variable begins at the first statement
+            // after its declaration and lasts until the last non-void statement of the
+            // innermost block that includes the declaration. Void statements are labels
+            // and empty statements."
+            //
+            // This means when a label is at the end of a block (followed only by void
+            // statements), locals declared before the label are NOT in scope at the label,
+            // so the goto does NOT "jump into scope".
+            string code =
+                @"
+                goto f
+                local x = 1
+                ::f::
+                ";
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(code); // Should not throw
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoCannotJumpOverLocalDeclarations(LuaCompatibilityVersion version)
+        {
+            // Note: Per Lua 5.4 §3.5, if the label is at the end of a block (followed only by
+            // void statements like other labels or semicolons), then locals declared before
+            // the label are NOT in scope at the label. This code adds a statement after the
+            // label to ensure the label is NOT at the end of the block.
             string code =
                 @"
                 goto f
                 local x
                 ::f::
+                print(x)
                 ";
 
-            _ = Assert.Throws<SyntaxErrorException>(() => Script.RunString(code));
+            Script script = new Script(version, CoreModulePresets.Complete);
+            _ = Assert.Throws<SyntaxErrorException>(() => script.DoString(code));
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoJumpOutOfBlocksReturnsValue()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoJumpOutOfBlocksReturnsValue(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -158,12 +253,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 return 3
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task GotoJumpOutOfScopesPreservesVariables()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task GotoJumpOutOfScopesPreservesVariables(LuaCompatibilityVersion version)
         {
             string code =
                 @"
@@ -189,7 +286,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 end
                 ";
 
-            DynValue result = Script.RunString(code);
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(code);
             await EndToEndDynValueAssert.ExpectAsync(result, 67).ConfigureAwait(false);
         }
     }

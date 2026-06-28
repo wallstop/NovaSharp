@@ -11,13 +11,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Lexer;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Statements;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class AssignmentStatementTUnitTests
     {
         [global::TUnit.Core.Test]
         public async Task LocalAssignmentAcceptsConstAndCloseAttributes()
         {
-            ScriptLoadingContext context = CreateContext("local resource <const><close> = 1");
+            Script script = new(LuaCompatibilityVersion.Lua54);
+            ScriptLoadingContext context = CreateContext(
+                "local resource <const><close> = 1",
+                script
+            );
             Token localToken = context.Lexer.Current;
             context.Lexer.Next();
 
@@ -34,8 +39,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         [global::TUnit.Core.Test]
         public async Task LocalAssignmentRejectsDuplicateAttributes()
         {
+            Script script = new(LuaCompatibilityVersion.Lua54);
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
-                ParseLocalAssignment("local duplicate <const><const> = 1")
+                ParseLocalAssignment("local duplicate <const><const> = 1", script)
             )!;
 
             await Assert
@@ -60,8 +66,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         [global::TUnit.Core.Test]
         public async Task ConstAttributeRequiresLua54Compatibility()
         {
-            Script script = new();
-            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+            Script script = new(LuaCompatibilityVersion.Lua53);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 ParseLocalAssignment("local legacy <const> = 1", script)
@@ -77,8 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         [global::TUnit.Core.Test]
         public async Task CloseAttributeRequiresLua54Compatibility()
         {
-            Script script = new();
-            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua53;
+            Script script = new(LuaCompatibilityVersion.Lua53);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 ParseLocalAssignment("local guard <close> = newcloser()", script)
@@ -92,9 +96,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Statement
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignmentRequiresWritableVariables()
+        [AllLuaVersions]
+        public async Task AssignmentRequiresWritableVariables(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("1 = 2")

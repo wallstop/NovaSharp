@@ -228,16 +228,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             // Get the Lua version for version-aware number formatting
             LuaCompatibilityVersion version = executionContext.Script.CompatibilityVersion;
 
-            if (
-                (this[argNum].Type == DataType.Table)
-                && (this[argNum].Table.MetaTable != null)
-                && (this[argNum].Table.MetaTable.RawGet("__tostring") != null)
-            )
+            DynValue argument = this[argNum];
+            if ((argument.Type == DataType.Table) && (argument.Table.MetaTable != null))
             {
-                DynValue v = executionContext.Script.Call(
-                    this[argNum].Table.MetaTable.RawGet("__tostring"),
-                    this[argNum]
-                );
+                DynValue stringMeta = argument.Table.MetaTable.RawGet(Metamethods.ToStringMeta);
+                if (stringMeta == null)
+                {
+                    return argument.ToPrintString(version);
+                    ;
+                }
+
+                DynValue v = executionContext.Script.Call(stringMeta, argument);
 
                 if (v.Type != DataType.String)
                 {
@@ -251,7 +252,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
             else
             {
-                return this[argNum].ToPrintString(version);
+                return argument.ToPrintString(version);
             }
         }
 

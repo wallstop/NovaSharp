@@ -328,8 +328,7 @@ public sealed class LuaNumberTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
+    [LuaVersionsUntil(LuaCompatibilityVersion.Lua52)]
     public async Task ModuloByZeroReturnsNaNInLua51And52(LuaCompatibilityVersion version)
     {
         // In Lua 5.1/5.2, integer modulo by zero returns nan (promotes to float)
@@ -585,9 +584,12 @@ public sealed class LuaNumberTUnitTests
     [Test]
     public async Task ToStringForNaNReturnsNan()
     {
+        // Note: double.NaN in .NET has a negative sign bit (0xFFF8000000000000),
+        // so LuaNumber.NaN.ToString() returns "-nan" to match Lua's behavior.
+        // Reference Lua also outputs "-nan" for 0/0 across all versions.
         LuaNumber num = LuaNumber.NaN;
 
-        await Assert.That(num.ToString()).IsEqualTo("nan").ConfigureAwait(false);
+        await Assert.That(num.ToString()).IsEqualTo("-nan").ConfigureAwait(false);
     }
 
     [Test]

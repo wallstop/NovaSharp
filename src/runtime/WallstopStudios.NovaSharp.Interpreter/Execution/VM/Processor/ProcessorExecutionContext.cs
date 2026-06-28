@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <content>
@@ -10,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Gets the metatable associated with the specified value, honoring type metatables when needed.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Table GetMetatable(DynValue value)
         {
             if (value.Type == DataType.Table)
@@ -106,6 +108,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Resolves the metamethod from the metatable only (no userdata descriptor lookup).
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal DynValue GetMetamethodRaw(DynValue value, string metamethod)
         {
             Table metatable = GetMetatable(value);
@@ -128,6 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Gets the owning script for this processor.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal Script GetScript()
         {
             return _script;

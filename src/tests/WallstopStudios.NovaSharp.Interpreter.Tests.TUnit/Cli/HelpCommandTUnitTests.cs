@@ -9,6 +9,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
     using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     [PlatformDetectorIsolation]
@@ -23,14 +24,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteWithoutArgumentsListsRegisteredCommands()
+        [AllLuaVersions]
+        public async Task ExecuteWithoutArgumentsListsRegisteredCommands(
+            LuaCompatibilityVersion version
+        )
         {
             await ConsoleTestUtilities
                 .WithConsoleCaptureAsync(
                     async consoleScope =>
                     {
                         HelpCommand command = new();
-                        ShellContext context = new(CreateScript(LuaCompatibilityVersion.Lua53));
+                        ShellContext context = new(CreateScript(version));
 
                         command.Execute(context, string.Empty);
 
@@ -61,7 +65,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteWithKnownCommandWritesLongHelp()
+        [AllLuaVersions]
+        public async Task ExecuteWithKnownCommandWritesLongHelp(LuaCompatibilityVersion version)
         {
             await ConsoleTestUtilities
                 .WithConsoleCaptureAsync(
@@ -69,10 +74,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                     {
                         HelpCommand command = new();
 
-                        command.Execute(
-                            new ShellContext(CreateScript(LuaCompatibilityVersion.Lua54)),
-                            "run"
-                        );
+                        command.Execute(new ShellContext(CreateScript(version)), "run");
 
                         await Assert
                             .That(consoleScope.Writer.ToString())
@@ -85,7 +87,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteWithUnknownCommandPrintsError()
+        [AllLuaVersions]
+        public async Task ExecuteWithUnknownCommandPrintsError(LuaCompatibilityVersion version)
         {
             await ConsoleTestUtilities
                 .WithConsoleCaptureAsync(
@@ -93,10 +96,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
                     {
                         HelpCommand command = new();
 
-                        command.Execute(
-                            new ShellContext(CreateScript(LuaCompatibilityVersion.Lua52)),
-                            "garbage"
-                        );
+                        command.Execute(new ShellContext(CreateScript(version)), "garbage");
 
                         await Assert
                             .That(consoleScope.Writer.ToString())

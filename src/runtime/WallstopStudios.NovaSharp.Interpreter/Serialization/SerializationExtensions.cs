@@ -14,32 +14,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
     /// </summary>
     public static class SerializationExtensions
     {
-        private static readonly HashSet<string> Luakeywords = new()
-        {
-            "and",
-            "break",
-            "do",
-            "else",
-            "elseif",
-            "end",
-            "false",
-            "for",
-            "function",
-            "goto",
-            "if",
-            "in",
-            "local",
-            "nil",
-            "not",
-            "or",
-            "repeat",
-            "return",
-            "then",
-            "true",
-            "until",
-            "while",
-        };
-
         /// <summary>
         /// Serializes a prime (ownerless) table into Lua syntax.
         /// </summary>
@@ -67,7 +41,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
                 builder.Append("return ");
             }
 
-            if (!table.Values.Any())
+            if (table.Count == 0)
             {
                 builder.Append("{}");
 
@@ -120,7 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
                 return false;
             }
 
-            if (Luakeywords.Contains(dynValue.String))
+            if (LuaKeywords.All.Contains(dynValue.String))
             {
                 return false;
             }
@@ -156,11 +130,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
 
             if (dynValue.Type == DataType.Nil || dynValue.Type == DataType.Void)
             {
-                return "nil";
+                return LuaKeywords.Nil;
             }
             else if (dynValue.Type == DataType.Tuple)
             {
-                return dynValue.Tuple.Length > 0 ? SerializeValue(dynValue.Tuple[0], tabs) : "nil";
+                return dynValue.Tuple.Length > 0
+                    ? SerializeValue(dynValue.Tuple[0], tabs)
+                    : LuaKeywords.Nil;
             }
             else if (dynValue.Type == DataType.Number)
             {
@@ -168,7 +144,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization
             }
             else if (dynValue.Type == DataType.Boolean)
             {
-                return dynValue.Boolean ? "true" : "false";
+                return dynValue.Boolean ? LuaKeywords.True : LuaKeywords.False;
             }
             else if (dynValue.Type == DataType.String)
             {

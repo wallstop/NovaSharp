@@ -26,8 +26,8 @@ Runs both the NovaSharp runtime benchmarks and the NLua comparison suite that ex
 ### Prerequisites
 
 - PowerShell 7 (`pwsh`)
-- .NET SDK 8.0 (or later) available on `PATH`
-- Run once per clone: `dotnet tool restore`
+- The .NET SDK pinned by `global.json` available on `PATH`
+- Local .NET tools are restored automatically by the script
 
 ### Usage
 
@@ -47,8 +47,8 @@ Equivalent bash script for Linux/macOS environments and CI runners.
 ### Prerequisites
 
 - Bash 4.0+
-- .NET SDK 8.0 (or later) available on `PATH`
-- Run once per clone: `dotnet tool restore`
+- The .NET SDK pinned by `global.json` available on `PATH`
+- Local .NET tools are restored automatically by the script
 
 ### Usage
 

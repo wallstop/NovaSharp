@@ -1030,6 +1030,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue EmptyString { get; private set; }
 
+        /// <summary>
+        /// A preinitialized, readonly instance representing an empty tuple (0 elements).
+        /// This is semantically different from Nil: an empty tuple means "no values"
+        /// while Nil means "the value nil". This distinction is important for varargs
+        /// handling where select("#", ...) should return 0 for empty varargs, not 1.
+        /// </summary>
+        public static DynValue EmptyTuple { get; private set; }
+
         static DynValue()
         {
             Nil = new DynValue() { _type = DataType.Nil }.AsReadOnly();
@@ -1037,6 +1045,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             True = NewBoolean(true).AsReadOnly();
             False = NewBoolean(false).AsReadOnly();
             EmptyString = NewString(string.Empty).AsReadOnly();
+            EmptyTuple = new DynValue()
+            {
+                _object = Array.Empty<DynValue>(),
+                _type = DataType.Tuple,
+            }.AsReadOnly();
         }
 
         /// <summary>
@@ -1142,17 +1155,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.Void:
                     return "void";
                 case DataType.Nil:
-                    return "nil";
+                    return LuaKeywords.Nil;
                 case DataType.Boolean:
-                    return Boolean ? "true" : "false";
+                    return Boolean ? LuaKeywords.True : LuaKeywords.False;
                 case DataType.Number:
-                    return Number.ToString(CultureInfo.InvariantCulture);
+                    // Use LuaNumber.ToString() to properly format infinity as "inf" and NaN as "nan"
+                    return LuaNumber.ToString();
                 case DataType.String:
                     // Use ZString.Concat for zero-allocation string building.
                     // JoinTupleStrings already uses notNested: false so recursive calls are safe.
                     return ZString.Concat("\"", String, "\"");
                 case DataType.Function:
-                    return ZString.Format("(Function {0:X8})", Function.EntryPointByteCodeLocation);
+                    return ZString.Format(
+                        "(Function 0x{0:x})",
+                        Function.EntryPointByteCodeLocation
+                    );
                 case DataType.ClrFunction:
                     return "(Function CLR)";
                 case DataType.Table:
@@ -1167,7 +1184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 case DataType.UserData:
                     return "(UserData)";
                 case DataType.Thread:
-                    return ZString.Format("(Coroutine {0:X8})", Coroutine.ReferenceId);
+                    return ZString.Format("(Coroutine 0x{0:x})", Coroutine.ReferenceId);
                 default:
                     return "(???)";
             }
@@ -1257,9 +1274,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     _hashCode = hash.ToHashCode();
                     break;
                 case DataType.UserData:
+                    if (UserData?.Object != null)
+                    {
+                        hash.AddInt(UserData.Object.GetHashCode());
+                    }
+                    else if (UserData != null)
+                    {
+                        hash.AddInt(UserData.ReferenceId);
+                    }
+                    _hashCode = hash.ToHashCode();
+                    break;
                 case DataType.Thread:
+                    if (Coroutine != null)
+                    {
+                        hash.AddInt(Coroutine.ReferenceId);
+                    }
+                    _hashCode = hash.ToHashCode();
+                    break;
                 default:
-                    _hashCode = 999;
+                    _hashCode = hash.ToHashCode();
                     break;
             }
 
@@ -1350,14 +1383,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Casts this DynValue to string, using coercion if the type is number.
+        /// Uses Lua 5.3+ formatting by default.
         /// </summary>
         /// <returns>The string representation, or null if not number, not string.</returns>
         public string CastToString()
         {
+            // Default to Lua 5.3+ formatting for backwards compatibility
+            return CastToString(LuaCompatibilityVersion.Lua53);
+        }
+
+        /// <summary>
+        /// Casts this DynValue to string, using coercion if the type is number,
+        /// with version-specific number formatting.
+        /// </summary>
+        /// <param name="version">The Lua compatibility version to use for number formatting.</param>
+        /// <returns>The string representation, or null if not number, not string.</returns>
+        /// <remarks>
+        /// Number formatting differences by version:
+        /// - Lua 5.1/5.2: Integer-like floats (e.g., 42.0) format as "42"
+        /// - Lua 5.3+: Integer-like floats format as "42.0" to distinguish from integers
+        /// </remarks>
+        public string CastToString(LuaCompatibilityVersion version)
+        {
             DynValue rv = ToScalar();
             if (rv.Type == DataType.Number)
             {
-                return rv.Number.ToString(CultureInfo.InvariantCulture);
+                // Use version-aware LuaNumber.ToLuaString() for correct number formatting
+                return rv.LuaNumber.ToLuaString(version);
             }
             else if (rv.Type == DataType.String)
             {
@@ -1462,10 +1514,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         /// <summary>
         /// Performs an assignment, overwriting the value with the specified one.
+        /// This method is internal to prevent external code from corrupting VM state.
+        /// External code should use <see cref="Clone"/> and variable assignment instead.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <exception cref="ScriptRuntimeException">If the value is readonly.</exception>
-        public void Assign(DynValue value)
+        internal void Assign(DynValue value)
         {
             if (value == null)
             {

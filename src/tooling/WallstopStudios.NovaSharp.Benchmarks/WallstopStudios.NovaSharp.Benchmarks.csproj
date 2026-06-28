@@ -13,6 +13,6 @@
         <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="BenchmarkDotNet" Version="0.15.6" />
+        <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
     </ItemGroup>
 </Project>

@@ -1,5 +1,8 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
+    using System.Globalization;
+    using Cysharp.Text;
+
     /// <summary>
     /// A base class for many NovaSharp objects.
     /// Helds a ReferenceID property which gets a different value for every object instance, for debugging
@@ -29,7 +32,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public string FormatTypeString(string typeString)
         {
-            return $"{typeString}: {_refId:X8}";
+            using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+            sb.Append(typeString);
+            sb.Append(": 0x");
+            sb.Append(_refId.ToString("x", CultureInfo.InvariantCulture));
+            return sb.ToString();
         }
     }
 }

@@ -13,7 +13,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
     public sealed class LuaBasicMultiVersionSpecTUnitTests : LuaSpecTestBase
     {
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesIntegersAcrossSupportedBases()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesIntegersAcrossSupportedBases(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -35,7 +42,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberReturnsNilWhenDigitsExceedBase()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberReturnsNilWhenDigitsExceedBase(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -48,7 +60,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberErrorsWhenBaseIsOutOfRange()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberErrorsWhenBaseIsOutOfRange(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -63,7 +80,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberErrorsWhenBaseIsFractional()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberErrorsWhenBaseIsFractional(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -84,7 +106,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         // ========================================
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesHexStringWithoutBase()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexStringWithoutBase(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -96,7 +123,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesLowercaseHexStringWithoutBase()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesLowercaseHexStringWithoutBase(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -108,7 +142,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesUppercaseHexPrefixWithoutBase()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesUppercaseHexPrefixWithoutBase(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -120,7 +161,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesNegativeHexStringWithoutBase()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesNegativeHexStringWithoutBase(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -132,7 +180,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesPositiveHexStringWithPlusSign()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesPositiveHexStringWithPlusSign(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -144,7 +199,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesHexStringWithWhitespace()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexStringWithWhitespace(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -156,7 +216,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberReturnsNilForIncompleteHexString()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberReturnsNilForIncompleteHexString(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -169,7 +234,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberReturnsNilForHexStringWithInvalidChars()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberReturnsNilForHexStringWithInvalidChars(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -182,7 +254,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesLargeHexStringWithoutBase()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesLargeHexStringWithoutBase(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -194,7 +271,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesHexFloatWithFraction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexFloatWithFraction(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -207,7 +289,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesHexFloatWithExponent()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexFloatWithExponent(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -220,7 +307,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesHexFloatWithNegativeExponent()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexFloatWithNegativeExponent(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,
@@ -233,7 +327,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Spec
         }
 
         [global::TUnit.Core.Test]
-        public async Task ToNumberParsesHexFloatWithPositiveExponentSign()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ToNumberParsesHexFloatWithPositiveExponentSign(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = CreateScript(
                 LuaCompatibilityVersion.Latest,

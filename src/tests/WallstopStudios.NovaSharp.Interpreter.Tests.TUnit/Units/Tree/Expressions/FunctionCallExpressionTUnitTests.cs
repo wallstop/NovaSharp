@@ -140,13 +140,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
                 Lexer = new Lexer(0, argumentSource, true),
             };
             Expression callee = new FunctionExpressionStub(context, "stub::callee");
-            Token methodToken = methodName == null ? null : CreateToken(TokenType.Name, methodName);
+            Token? methodToken =
+                methodName == null ? (Token?)null : CreateToken(TokenType.Name, methodName);
             return new FunctionCallExpression(context, callee, methodToken);
         }
 
         private static Token CreateToken(TokenType type, string text)
         {
-            return new Token(type, 0, 0, 0, 0, 0, 0, 0) { Text = text };
+            return new Token(type, 0, 0, 0, 0, 0, 0, 0, text);
         }
 
         private sealed class FunctionExpressionStub : Expression

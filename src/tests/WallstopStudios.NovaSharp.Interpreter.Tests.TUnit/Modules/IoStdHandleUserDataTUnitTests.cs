@@ -4,23 +4,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib.IO;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class IoStdHandleUserDataTUnitTests
     {
-        private static Script CreateScript()
+        private static Script CreateScript(LuaCompatibilityVersion version)
         {
-            return new Script(CoreModulePresets.Complete);
+            return new Script(version, CoreModulePresets.Complete);
         }
 
         [Test]
-        public async Task StdInIsFileUserDataHandle()
+        [AllLuaVersions]
+        public async Task StdInIsFileUserDataHandle(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue stdin = script.DoString("return io.stdin");
 
             await Assert.That(stdin.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
@@ -31,9 +34,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task StdInEqualsItselfButNotStdOut()
+        [AllLuaVersions]
+        public async Task StdInEqualsItselfButNotStdOut(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 "return io.stdin == io.stdin, io.stdin ~= io.stdout, io.stdin == 1, io.stdin ~= 1"
             );
@@ -45,9 +49,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task StdOutIsFileUserDataHandle()
+        [AllLuaVersions]
+        public async Task StdOutIsFileUserDataHandle(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue stdout = script.DoString("return io.stdout");
 
             await Assert.That(stdout.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
@@ -58,9 +63,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task StdErrIsFileUserDataHandle()
+        [AllLuaVersions]
+        public async Task StdErrIsFileUserDataHandle(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue stderr = script.DoString("return io.stderr");
 
             await Assert.That(stderr.Type).IsEqualTo(DataType.UserData).ConfigureAwait(false);
@@ -71,9 +77,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task RequireIoExposesSameStdHandles()
+        [AllLuaVersions]
+        public async Task RequireIoExposesSameStdHandles(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString(
                 @"
                 local io_module = require('io')
@@ -86,27 +93,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task IoInputReturnsCurrentStdInHandle()
+        [AllLuaVersions]
+        public async Task IoInputReturnsCurrentStdInHandle(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return io.input() == io.stdin");
 
             await Assert.That(result.CastToBool()).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
-        public async Task IoOutputReturnsCurrentStdOutHandle()
+        [AllLuaVersions]
+        public async Task IoOutputReturnsCurrentStdOutHandle(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             DynValue result = script.DoString("return io.output() == io.stdout");
 
             await Assert.That(result.CastToBool()).IsTrue().ConfigureAwait(false);
         }
 
         [Test]
-        public async Task StdInCannotBeIndexedOrAssigned()
+        [AllLuaVersions]
+        public async Task StdInCannotBeIndexedOrAssigned(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             DynValue indexResult = script.DoString("return io.stdin[1]");
             await Assert.That(indexResult.IsNil()).IsTrue().ConfigureAwait(false);
@@ -123,9 +133,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task StdOutCannotBeIndexedOrAssigned()
+        [AllLuaVersions]
+        public async Task StdOutCannotBeIndexedOrAssigned(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             DynValue indexResult = script.DoString("return io.stdout[1]");
             await Assert.That(indexResult.IsNil()).IsTrue().ConfigureAwait(false);
@@ -142,9 +153,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task StdInArithmeticThrows()
+        [AllLuaVersions]
+        public async Task StdInArithmeticThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             await AssertThrowsAsync(script, "return io.stdin + 1", "attempt to perform arithmetic")
                 .ConfigureAwait(false);
@@ -165,9 +177,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task StdOutArithmeticThrows()
+        [AllLuaVersions]
+        public async Task StdOutArithmeticThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             await AssertThrowsAsync(script, "return io.stdout + 1", "attempt to perform arithmetic")
                 .ConfigureAwait(false);
@@ -188,25 +201,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task StdInConcatenationThrows()
+        [AllLuaVersions]
+        public async Task StdInConcatenationThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             await AssertThrowsAsync(script, "return io.stdin .. 'tail'", "attempt to concatenate")
                 .ConfigureAwait(false);
         }
 
         [Test]
-        public async Task StdOutConcatenationThrows()
+        [AllLuaVersions]
+        public async Task StdOutConcatenationThrows(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             await AssertThrowsAsync(script, "return io.stdout .. 'tail'", "attempt to concatenate")
                 .ConfigureAwait(false);
         }
 
         [Test]
-        public async Task StdInComparisonsThrow()
+        [AllLuaVersions]
+        public async Task StdInComparisonsThrow(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             await AssertThrowsAsync(script, "return io.stdin < io.stdout", "attempt to compare")
                 .ConfigureAwait(false);
@@ -227,9 +243,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [Test]
-        public async Task StdOutComparisonsThrow()
+        [AllLuaVersions]
+        public async Task StdOutComparisonsThrow(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
 
             await AssertThrowsAsync(script, "return io.stdout < io.stdin", "attempt to compare")
                 .ConfigureAwait(false);

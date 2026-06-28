@@ -4,8 +4,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using System.Diagnostics.CodeAnalysis;
     using System.Linq;
     using System.Reflection;
-    using NUnit.Framework;
+    using System.Threading.Tasks;
+    using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -15,6 +17,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.ReflectionMemberDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class EventMemberDescriptorTUnitTests
     {
@@ -26,7 +29,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
         }
 
         [global::TUnit.Core.Test]
-        public void TryCreateIfVisibleReturnsDescriptorForPublicEvent()
+        public async Task TryCreateIfVisibleReturnsDescriptorForPublicEvent()
         {
             EventInfo eventInfo = typeof(SampleEventSource).GetEvent(
                 nameof(SampleEventSource.PublicEvent)
@@ -36,19 +39,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 InteropAccessMode.Default
             );
 
-            Assert.That(descriptor, Is.Not.Null);
-            Assert.Multiple(() =>
-            {
-                Assert.That(descriptor.EventInfo, Is.EqualTo(eventInfo));
-                Assert.That(descriptor.IsStatic, Is.False);
-            });
+            await Assert.That(descriptor).IsNotNull().ConfigureAwait(false);
+            await Assert.That(descriptor.EventInfo).IsEqualTo(eventInfo).ConfigureAwait(false);
+            await Assert.That(descriptor.IsStatic).IsFalse().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void RemoveCallbackWithoutExistingSubscriptionDoesNotUnregister()
+        [AllLuaVersions]
+        public async Task RemoveCallbackWithoutExistingSubscriptionDoesNotUnregister(
+            LuaCompatibilityVersion version
+        )
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             DynValue handler = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
@@ -59,32 +62,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(source.AddInvokeCount, Is.EqualTo(0));
-                Assert.That(source.RemoveInvokeCount, Is.EqualTo(0));
-            });
+            await Assert.That(source.AddInvokeCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(source.RemoveInvokeCount).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void GetValueReturnsFacadeGrantingAddRemove()
+        [AllLuaVersions]
+        public async Task GetValueReturnsFacadeGrantingAddRemove(LuaCompatibilityVersion version)
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             EventMemberDescriptor descriptor = new(
                 typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
             );
 
             DynValue facadeValue = descriptor.GetValue(script, source);
-            Assert.That(facadeValue.UserData.Object, Is.InstanceOf<EventFacade>());
+            await Assert
+                .That(facadeValue.UserData.Object)
+                .IsTypeOf<EventFacade>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void AddAndRemoveCallbacksManageDelegatesAndClosures()
+        [AllLuaVersions]
+        public async Task AddAndRemoveCallbacksManageDelegatesAndClosures(
+            LuaCompatibilityVersion version
+        )
         {
             const string HitsVariable = "hits";
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString($"{HitsVariable} = 0");
             DynValue handler1 = script.DoString(
                 $"return function(sender, arg) {HitsVariable} = {HitsVariable} + 1 end"
@@ -103,43 +110,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler2));
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    source.AddInvokeCount,
-                    Is.EqualTo(1),
-                    "First add should register delegate once"
-                );
-                Assert.That(source.RemoveInvokeCount, Is.EqualTo(0));
-            });
+            await Assert
+                .That(source.AddInvokeCount)
+                .IsEqualTo(1)
+                .Because("First add should register delegate once")
+                .ConfigureAwait(false);
+            await Assert.That(source.RemoveInvokeCount).IsEqualTo(0).ConfigureAwait(false);
 
             source.RaiseEvent(DynValue.NewString("payload"));
             double hits = script.Globals.Get(HitsVariable).Number;
-            Assert.That(hits, Is.EqualTo(11));
+            await Assert.That(hits).IsEqualTo(11).ConfigureAwait(false);
 
             descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler1));
 
-            Assert.That(
-                source.RemoveInvokeCount,
-                Is.EqualTo(0),
-                "Delegate detached only when last handler removed"
-            );
+            await Assert
+                .That(source.RemoveInvokeCount)
+                .IsEqualTo(0)
+                .Because("Delegate detached only when last handler removed")
+                .ConfigureAwait(false);
 
             descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler2));
 
-            Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
+            await Assert.That(source.RemoveInvokeCount).IsEqualTo(1).ConfigureAwait(false);
 
             source.RaiseEvent(DynValue.NewString("payload2"));
             hits = script.Globals.Get(HitsVariable).Number;
-            Assert.That(hits, Is.EqualTo(11), "No handlers remain after removal");
+            await Assert
+                .That(hits)
+                .IsEqualTo(11)
+                .Because("No handlers remain after removal")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void StaticEventsDispatchHandlersAndTrackSubscriptions()
+        [AllLuaVersions]
+        [NotInParallel(nameof(StaticSampleEventSource))]
+        public async Task StaticEventsDispatchHandlersAndTrackSubscriptions(
+            LuaCompatibilityVersion version
+        )
         {
             const string HitsVariable = "staticHits";
             StaticSampleEventSource.Reset();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString($"{HitsVariable} = 0");
             DynValue handler = script.DoString(
                 $"return function(_, amount) {HitsVariable} = {HitsVariable} + amount end"
@@ -155,60 +167,76 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             descriptor.AddCallback(descriptor, context, TestHelpers.CreateArguments(handler));
 
-            Assert.That(descriptor.IsStatic, Is.True);
-            Assert.Multiple(() =>
-            {
-                Assert.That(StaticSampleEventSource.AddInvokeCount, Is.EqualTo(1));
-                Assert.That(StaticSampleEventSource.RemoveInvokeCount, Is.EqualTo(0));
-            });
+            await Assert.That(descriptor.IsStatic).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(StaticSampleEventSource.AddInvokeCount)
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(StaticSampleEventSource.RemoveInvokeCount)
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
 
             StaticSampleEventSource.Raise(DynValue.NewNumber(2));
             StaticSampleEventSource.Raise(DynValue.NewNumber(3));
 
             double hits = script.Globals.Get(HitsVariable).Number;
-            Assert.That(hits, Is.EqualTo(5));
+            await Assert.That(hits).IsEqualTo(5).ConfigureAwait(false);
 
             descriptor.RemoveCallback(descriptor, context, TestHelpers.CreateArguments(handler));
-            Assert.That(StaticSampleEventSource.RemoveInvokeCount, Is.EqualTo(1));
+            await Assert
+                .That(StaticSampleEventSource.RemoveInvokeCount)
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
 
             StaticSampleEventSource.Raise(DynValue.NewNumber(10));
             hits = script.Globals.Get(HitsVariable).Number;
-            Assert.That(hits, Is.EqualTo(5), "Handlers removed from static event");
+            await Assert
+                .That(hits)
+                .IsEqualTo(5)
+                .Because("Handlers removed from static event")
+                .ConfigureAwait(false);
             StaticSampleEventSource.Reset();
         }
 
         [global::TUnit.Core.Test]
-        public void EventDescriptorExposesNameAndGuardsAssignments()
+        [AllLuaVersions]
+        public async Task EventDescriptorExposesNameAndGuardsAssignments(
+            LuaCompatibilityVersion version
+        )
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             EventMemberDescriptor descriptor = new(
                 typeof(SampleEventSource).GetEvent(nameof(SampleEventSource.PublicEvent))
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(descriptor.Name, Is.EqualTo(nameof(SampleEventSource.PublicEvent)));
-                Assert.That(descriptor.MemberAccess, Is.EqualTo(MemberDescriptorAccess.CanRead));
-                Assert.That(
-                    () =>
-                        descriptor.SetValue(
-                            script,
-                            source,
-                            DynValue.NewString("should fail assignment")
-                        ),
-                    Throws
-                        .TypeOf<ScriptRuntimeException>()
-                        .With.Message.Contains("cannot be assigned")
-                );
-            });
+            await Assert
+                .That(descriptor.Name)
+                .IsEqualTo(nameof(SampleEventSource.PublicEvent))
+                .ConfigureAwait(false);
+            await Assert
+                .That(descriptor.MemberAccess)
+                .IsEqualTo(MemberDescriptorAccess.CanRead)
+                .ConfigureAwait(false);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.SetValue(script, source, DynValue.NewString("should fail assignment"))
+            )!;
+            await Assert
+                .That(exception.Message)
+                .Contains("cannot be assigned")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void RemovingSameCallbackTwiceDoesNotDetachDelegateAgain()
+        [AllLuaVersions]
+        public async Task RemovingSameCallbackTwiceDoesNotDetachDelegateAgain(
+            LuaCompatibilityVersion version
+        )
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             DynValue handler = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
@@ -220,19 +248,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
             descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler));
 
-            Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
+            await Assert.That(source.RemoveInvokeCount).IsEqualTo(1).ConfigureAwait(false);
 
             descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler));
 
-            Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
+            await Assert.That(source.RemoveInvokeCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void RemovingUnknownCallbackLeavesDelegateAttached()
+        [AllLuaVersions]
+        public async Task RemovingUnknownCallbackLeavesDelegateAttached(
+            LuaCompatibilityVersion version
+        )
         {
             const string HitsVariable = "unknownRemovalHits";
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString($"{HitsVariable} = 0");
             DynValue registered = script.DoString(
                 $"return function(_, amount) {HitsVariable} = {HitsVariable} + amount end"
@@ -249,21 +280,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(unknown));
 
-            Assert.That(source.RemoveInvokeCount, Is.EqualTo(0));
+            await Assert.That(source.RemoveInvokeCount).IsEqualTo(0).ConfigureAwait(false);
 
             source.RaiseEvent(DynValue.NewNumber(2));
             double hits = script.Globals.Get(HitsVariable).Number;
-            Assert.That(hits, Is.EqualTo(2));
+            await Assert.That(hits).IsEqualTo(2).ConfigureAwait(false);
 
             descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(registered));
-            Assert.That(source.RemoveInvokeCount, Is.EqualTo(1));
+            await Assert.That(source.RemoveInvokeCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void AddingSameClosureTwiceDoesNotRegisterDuplicateDelegates()
+        [AllLuaVersions]
+        public async Task AddingSameClosureTwiceDoesNotRegisterDuplicateDelegates(
+            LuaCompatibilityVersion version
+        )
         {
             SampleEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             DynValue handler = script.DoString("return function() end");
 
             EventMemberDescriptor descriptor = new(
@@ -275,11 +309,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
             descriptor.AddCallback(source, context, TestHelpers.CreateArguments(handler));
 
-            Assert.That(source.AddInvokeCount, Is.EqualTo(1));
+            await Assert.That(source.AddInvokeCount).IsEqualTo(1).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TryCreateIfVisibleRejectsPrivateEvents()
+        public async Task TryCreateIfVisibleRejectsPrivateEvents()
         {
             EventInfo hiddenEvent = PrivateEventSourceMetadata.HiddenEvent;
 
@@ -288,11 +322,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 InteropAccessMode.Default
             );
 
-            Assert.That(descriptor, Is.Null);
+            await Assert.That(descriptor).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TryCreateIfVisibleRejectsIncompatibleEvents()
+        public async Task TryCreateIfVisibleRejectsIncompatibleEvents()
         {
             EventInfo valueTypeEvent = typeof(ValueTypeEventSource).GetEvent(
                 nameof(ValueTypeEventSource.ValueTypeEvent)
@@ -303,132 +337,127 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
                 InteropAccessMode.Default
             );
 
-            Assert.That(descriptor, Is.Null);
+            await Assert.That(descriptor).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CheckEventIsCompatibleRejectsValueTypeEvents()
+        public async Task CheckEventIsCompatibleRejectsValueTypeEvents()
         {
             EventInfo valueTypeEvent = typeof(ValueTypeEventSource).GetEvent(
                 nameof(ValueTypeEventSource.ValueTypeEvent)
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    EventMemberDescriptor.CheckEventIsCompatible(valueTypeEvent, false),
-                    Is.False
-                );
-                Assert.That(
-                    () => EventMemberDescriptor.CheckEventIsCompatible(valueTypeEvent, true),
-                    Throws.ArgumentException.With.Message.Contains("value types")
-                );
-            });
+            await Assert
+                .That(EventMemberDescriptor.CheckEventIsCompatible(valueTypeEvent, false))
+                .IsFalse()
+                .ConfigureAwait(false);
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                EventMemberDescriptor.CheckEventIsCompatible(valueTypeEvent, true)
+            )!;
+            await Assert.That(exception.Message).Contains("value types").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CheckEventIsCompatibleRejectsHandlersReturningValues()
+        public async Task CheckEventIsCompatibleRejectsHandlersReturningValues()
         {
             EventInfo returning = typeof(IncompatibleEventSource).GetEvent(
                 nameof(IncompatibleEventSource.ReturnsValue)
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    EventMemberDescriptor.CheckEventIsCompatible(returning, false),
-                    Is.False
-                );
-                Assert.That(
-                    () => EventMemberDescriptor.CheckEventIsCompatible(returning, true),
-                    Throws.ArgumentException.With.Message.Contains("return type")
-                );
-            });
+            await Assert
+                .That(EventMemberDescriptor.CheckEventIsCompatible(returning, false))
+                .IsFalse()
+                .ConfigureAwait(false);
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                EventMemberDescriptor.CheckEventIsCompatible(returning, true)
+            )!;
+            await Assert.That(exception.Message).Contains("return type").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CheckEventIsCompatibleRejectsHandlersWithValueTypeParameters()
+        public async Task CheckEventIsCompatibleRejectsHandlersWithValueTypeParameters()
         {
             EventInfo valueParameter = typeof(IncompatibleEventSource).GetEvent(
                 nameof(IncompatibleEventSource.ValueParameter)
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(
-                    EventMemberDescriptor.CheckEventIsCompatible(valueParameter, false),
-                    Is.False
-                );
-                Assert.That(
-                    () => EventMemberDescriptor.CheckEventIsCompatible(valueParameter, true),
-                    Throws.ArgumentException.With.Message.Contains("value type parameters")
-                );
-            });
+            await Assert
+                .That(EventMemberDescriptor.CheckEventIsCompatible(valueParameter, false))
+                .IsFalse()
+                .ConfigureAwait(false);
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                EventMemberDescriptor.CheckEventIsCompatible(valueParameter, true)
+            )!;
+            await Assert
+                .That(exception.Message)
+                .Contains("value type parameters")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CheckEventIsCompatibleRejectsHandlersWithByRefParameters()
+        public async Task CheckEventIsCompatibleRejectsHandlersWithByRefParameters()
         {
             EventInfo byRef = typeof(IncompatibleEventSource).GetEvent(
                 nameof(IncompatibleEventSource.ByRefParameter)
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(EventMemberDescriptor.CheckEventIsCompatible(byRef, false), Is.False);
-                Assert.That(
-                    () => EventMemberDescriptor.CheckEventIsCompatible(byRef, true),
-                    Throws.ArgumentException.With.Message.Contains("by-ref type parameters")
-                );
-            });
+            await Assert
+                .That(EventMemberDescriptor.CheckEventIsCompatible(byRef, false))
+                .IsFalse()
+                .ConfigureAwait(false);
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                EventMemberDescriptor.CheckEventIsCompatible(byRef, true)
+            )!;
+            await Assert
+                .That(exception.Message)
+                .Contains("by-ref type parameters")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CheckEventIsCompatibleRejectsHandlersExceedingMaxArguments()
+        public async Task CheckEventIsCompatibleRejectsHandlersExceedingMaxArguments()
         {
             EventInfo tooMany = typeof(IncompatibleEventSource).GetEvent(
                 nameof(IncompatibleEventSource.TooManyArguments)
             );
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(EventMemberDescriptor.CheckEventIsCompatible(tooMany, false), Is.False);
-                Assert.That(
-                    () => EventMemberDescriptor.CheckEventIsCompatible(tooMany, true),
-                    Throws.ArgumentException.With.Message.Contains(
-                        $"{EventMemberDescriptor.MaxArgsInDelegate}"
-                    )
-                );
-            });
+            await Assert
+                .That(EventMemberDescriptor.CheckEventIsCompatible(tooMany, false))
+                .IsFalse()
+                .ConfigureAwait(false);
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                EventMemberDescriptor.CheckEventIsCompatible(tooMany, true)
+            )!;
+            await Assert
+                .That(exception.Message)
+                .Contains($"{EventMemberDescriptor.MaxArgsInDelegate}")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TryCreateIfVisibleThrowsWhenEventInfoIsNull()
+        public async Task TryCreateIfVisibleThrowsWhenEventInfoIsNull()
         {
-            Assert.That(
-                () => EventMemberDescriptor.TryCreateIfVisible(null, InteropAccessMode.Default),
-                Throws
-                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
-                    .EqualTo("ei")
-            );
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                EventMemberDescriptor.TryCreateIfVisible(null, InteropAccessMode.Default)
+            )!;
+            await Assert.That(exception.ParamName).IsEqualTo("ei").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CheckEventIsCompatibleThrowsWhenEventInfoIsNull()
+        public async Task CheckEventIsCompatibleThrowsWhenEventInfoIsNull()
         {
-            Assert.That(
-                () => EventMemberDescriptor.CheckEventIsCompatible(null, throwException: true),
-                Throws
-                    .ArgumentNullException.With.Property(nameof(ArgumentNullException.ParamName))
-                    .EqualTo("ei")
-            );
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                EventMemberDescriptor.CheckEventIsCompatible(null, throwException: true)
+            )!;
+            await Assert.That(exception.ParamName).IsEqualTo("ei").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void DispatchEventInvokesZeroArgumentHandlers()
+        [AllLuaVersions]
+        public async Task DispatchEventInvokesZeroArgumentHandlers(LuaCompatibilityVersion version)
         {
             MultiSignatureEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString("hits = 0");
             DynValue handler = script.DoString("return function() hits = hits + 1 end");
 
@@ -446,14 +475,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
             source.RaiseZeroArgs();
 
             double hits = script.Globals.Get("hits").Number;
-            Assert.That(hits, Is.EqualTo(2));
+            await Assert.That(hits).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void DispatchEventForwardsMultipleArguments()
+        [AllLuaVersions]
+        public async Task DispatchEventForwardsMultipleArguments(LuaCompatibilityVersion version)
         {
             MultiSignatureEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString("payload = nil");
             DynValue handler = script.DoString(
                 "return function(a, b, c) payload = table.concat({a, b, c}, \":\") end"
@@ -470,14 +500,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Descri
 
             source.RaiseThreeArgs("one", "two", "three");
 
-            Assert.That(script.Globals.Get("payload").String, Is.EqualTo("one:two:three"));
+            await Assert
+                .That(script.Globals.Get("payload").String)
+                .IsEqualTo("one:two:three")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void CreateDelegateHandlesWideRangeOfArgumentCounts()
+        [AllLuaVersions]
+        public async Task CreateDelegateHandlesWideRangeOfArgumentCounts(
+            LuaCompatibilityVersion version
+        )
         {
             MultiArityEventSource source = new();
-            Script script = new Script();
+            Script script = new Script(version);
             script.DoString("hits = {}");
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
 
@@ -508,37 +544,37 @@ end";
                 @case.Raise(source);
 
                 DynValue entry = script.Globals.Get("hits").Table.Get(@case.Id);
-                Assert.That(entry.Type, Is.EqualTo(DataType.Table));
+                await Assert.That(entry.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
                 DynValue count = entry.Table.Get("count");
-                Assert.That(count.Type, Is.EqualTo(DataType.Number));
-                Assert.That(
-                    count.Number,
-                    Is.EqualTo(@case.Arity),
-                    $"Arity mismatch for {@case.EventName}"
-                );
+                await Assert.That(count.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                await Assert
+                    .That(count.Number)
+                    .IsEqualTo(@case.Arity)
+                    .Because($"Arity mismatch for {@case.EventName}")
+                    .ConfigureAwait(false);
 
                 DynValue args = entry.Table.Get("args");
-                Assert.That(args.Type, Is.EqualTo(DataType.Table));
+                await Assert.That(args.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
                 for (int i = 1; i <= @case.Arity; i++)
                 {
                     DynValue argValue = args.Table.Get(i);
-                    Assert.That(
-                        argValue.String,
-                        Is.EqualTo($"a{i}"),
-                        $"Unexpected argument {i} for {@case.EventName}"
-                    );
+                    await Assert
+                        .That(argValue.String)
+                        .IsEqualTo($"a{i}")
+                        .Because($"Unexpected argument {i} for {@case.EventName}")
+                        .ConfigureAwait(false);
                 }
 
                 if (@case.Arity < MultiArityEventSource.MaxArity)
                 {
                     DynValue next = args.Table.Get(@case.Arity + 1);
-                    Assert.That(
-                        next.IsNil(),
-                        Is.True,
-                        $"Trailing argument should be nil for {@case.EventName}"
-                    );
+                    await Assert
+                        .That(next.IsNil())
+                        .IsTrue()
+                        .Because($"Trailing argument should be nil for {@case.EventName}")
+                        .ConfigureAwait(false);
                 }
 
                 descriptor.RemoveCallback(source, context, TestHelpers.CreateArguments(handler));
@@ -546,7 +582,7 @@ end";
         }
 
         [global::TUnit.Core.Test]
-        public void TryCreateIfVisibleReturnsDescriptorWhenExplicitlyMarkedVisible()
+        public async Task TryCreateIfVisibleReturnsDescriptorWhenExplicitlyMarkedVisible()
         {
             EventInfo eventInfo = typeof(VisibilityTestEventSource).GetEvent(
                 nameof(VisibilityTestEventSource.ExplicitlyVisibleEvent),
@@ -558,12 +594,12 @@ end";
                 InteropAccessMode.Default
             );
 
-            Assert.That(descriptor, Is.Not.Null);
-            Assert.That(descriptor.EventInfo, Is.EqualTo(eventInfo));
+            await Assert.That(descriptor).IsNotNull().ConfigureAwait(false);
+            await Assert.That(descriptor.EventInfo).IsEqualTo(eventInfo).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TryCreateIfVisibleReturnsNullWhenExplicitlyMarkedHidden()
+        public async Task TryCreateIfVisibleReturnsNullWhenExplicitlyMarkedHidden()
         {
             EventInfo eventInfo = typeof(VisibilityTestEventSource).GetEvent(
                 nameof(VisibilityTestEventSource.ExplicitlyHiddenEvent)
@@ -574,11 +610,11 @@ end";
                 InteropAccessMode.Default
             );
 
-            Assert.That(descriptor, Is.Null);
+            await Assert.That(descriptor).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void TryCreateIfVisibleReturnsNullWhenPublicMethodsNotAvailable()
+        public async Task TryCreateIfVisibleReturnsNullWhenPublicMethodsNotAvailable()
         {
             EventInfo eventInfo = typeof(VisibilityTestEventSource).GetEvent(
                 nameof(VisibilityTestEventSource.NonPublicAccessorEvent),
@@ -590,7 +626,7 @@ end";
                 InteropAccessMode.Default
             );
 
-            Assert.That(descriptor, Is.Null);
+            await Assert.That(descriptor).IsNull().ConfigureAwait(false);
         }
 
         private sealed class SampleEventSource

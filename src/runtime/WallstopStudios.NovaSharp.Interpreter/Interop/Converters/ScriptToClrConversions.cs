@@ -515,6 +515,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             return WeightNoMatch;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(
+            System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining
+        )]
         private static int GetNumericTypeWeight(Type desiredType)
         {
             if (desiredType == typeof(double) || desiredType == typeof(decimal))

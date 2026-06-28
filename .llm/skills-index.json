@@ -1,0 +1,443 @@
+{
+  "version": "1.0.0",
+  "generated_by": "tools/LlmSkillIndexer/llm_skill_indexer.py",
+  "skills_count": 25,
+  "categories": {
+    "uncategorized": [
+      "adding-opcodes",
+      "adding-skills",
+      "aggressive-inlining",
+      "allocation-traps",
+      "ci-workflow",
+      "clr-interop",
+      "codebase-navigation",
+      "correctness-then-performance",
+      "coverage-analysis",
+      "data-structures",
+      "defensive-programming",
+      "documentation-and-changelog",
+      "exhaustive-test-coverage",
+      "git-safe-operations",
+      "high-performance-csharp",
+      "lua-comparison-harness",
+      "lua-fixture-creation",
+      "lua-spec-verification",
+      "refactor-to-zero-alloc",
+      "span-optimization",
+      "test-failure-investigation",
+      "tunit-test-writing",
+      "unity-gc-patterns",
+      "use-extension-methods",
+      "zstring-migration"
+    ]
+  },
+  "skills": [
+    {
+      "name": "adding-opcodes",
+      "file_path": ".llm/skills/adding-opcodes.md",
+      "line_count": 180,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Adding New VM Opcodes",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "adding-skills",
+      "file_path": ".llm/skills/adding-skills.md",
+      "line_count": 209,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Adding New Skills",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "aggressive-inlining",
+      "file_path": ".llm/skills/aggressive-inlining.md",
+      "line_count": 189,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Aggressive Inlining",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "allocation-traps",
+      "file_path": ".llm/skills/allocation-traps.md",
+      "line_count": 256,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Allocation Traps",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "ci-workflow",
+      "file_path": ".llm/skills/ci-workflow.md",
+      "line_count": 212,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: CI/CD Workflow",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "clr-interop",
+      "file_path": ".llm/skills/clr-interop.md",
+      "line_count": 299,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: CLR Interop (C# \u2194 Lua Bridge)",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "codebase-navigation",
+      "file_path": ".llm/skills/codebase-navigation.md",
+      "line_count": 224,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Codebase Navigation",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "correctness-then-performance",
+      "file_path": ".llm/skills/correctness-then-performance.md",
+      "line_count": 224,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Correctness-First Performance",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "coverage-analysis",
+      "file_path": ".llm/skills/coverage-analysis.md",
+      "line_count": 212,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Coverage Analysis",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "data-structures",
+      "file_path": ".llm/skills/data-structures.md",
+      "line_count": 258,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Data Structures \u2014 When to Use What",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "defensive-programming",
+      "file_path": ".llm/skills/defensive-programming.md",
+      "line_count": 265,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Defensive Programming",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "documentation-and-changelog",
+      "file_path": ".llm/skills/documentation-and-changelog.md",
+      "line_count": 170,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Documentation and Changelog Management",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "exhaustive-test-coverage",
+      "file_path": ".llm/skills/exhaustive-test-coverage.md",
+      "line_count": 241,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Exhaustive Test Coverage",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "git-safe-operations",
+      "file_path": ".llm/skills/git-safe-operations.md",
+      "line_count": 298,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Git-Safe Operations for Scripts and Hooks",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "high-performance-csharp",
+      "file_path": ".llm/skills/high-performance-csharp.md",
+      "line_count": 270,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "High-Performance C# Coding Guidelines",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "lua-comparison-harness",
+      "file_path": ".llm/skills/lua-comparison-harness.md",
+      "line_count": 179,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Lua Comparison Harness",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "lua-fixture-creation",
+      "file_path": ".llm/skills/lua-fixture-creation.md",
+      "line_count": 206,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Creating Lua Test Fixtures",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "lua-spec-verification",
+      "file_path": ".llm/skills/lua-spec-verification.md",
+      "line_count": 243,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Verifying Lua Spec Compliance",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "refactor-to-zero-alloc",
+      "file_path": ".llm/skills/refactor-to-zero-alloc.md",
+      "line_count": 217,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Refactoring to Zero-Allocation Patterns",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "span-optimization",
+      "file_path": ".llm/skills/span-optimization.md",
+      "line_count": 266,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Span Optimization Guidelines",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "test-failure-investigation",
+      "file_path": ".llm/skills/test-failure-investigation.md",
+      "line_count": 262,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Test Failure Investigation",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "tunit-test-writing",
+      "file_path": ".llm/skills/tunit-test-writing.md",
+      "line_count": 251,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Writing TUnit Tests for NovaSharp",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "unity-gc-patterns",
+      "file_path": ".llm/skills/unity-gc-patterns.md",
+      "line_count": 133,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Unity Garbage Collection Patterns",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "use-extension-methods",
+      "file_path": ".llm/skills/use-extension-methods.md",
+      "line_count": 120,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "Skill: Use Extension Methods",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    },
+    {
+      "name": "zstring-migration",
+      "file_path": ".llm/skills/zstring-migration.md",
+      "line_count": 249,
+      "triggers": [],
+      "category": "uncategorized",
+      "related": [],
+      "priority": "reference",
+      "has_front_matter": false,
+      "title": "ZString Migration Guidelines",
+      "validation_warnings": [
+        "Unknown category 'uncategorized'. Valid: core, lua, meta, performance, testing, workflow",
+        "Missing YAML front-matter. Add triggers, category, and priority metadata."
+      ],
+      "validation_errors": []
+    }
+  ],
+  "validation_summary": {
+    "total_warnings": 50,
+    "total_errors": 0,
+    "files_over_warning_threshold": 0,
+    "files_over_error_threshold": 0,
+    "files_missing_front_matter": 25
+  }
+}

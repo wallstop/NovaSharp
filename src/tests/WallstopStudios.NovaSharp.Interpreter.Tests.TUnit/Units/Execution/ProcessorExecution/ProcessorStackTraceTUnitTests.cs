@@ -6,17 +6,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ProcessorStackTraceTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task CoroutineStackTraceIncludesCurrentFrames()
+        [AllLuaVersions]
+        public async Task CoroutineStackTraceIncludesCurrentFrames(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
 
             script.DoString(
                 @"
@@ -51,9 +54,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task InterpreterExceptionIncludesCallStackFrames()
+        [AllLuaVersions]
+        public async Task InterpreterExceptionIncludesCallStackFrames(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
 
             script.DoString(
                 @"

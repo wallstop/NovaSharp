@@ -41,7 +41,7 @@ if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
 fi
 
 echo "Restoring local tools..."
-dotnet tool restore > /dev/null
+dotnet tool restore
 
 echo "Building solution (configuration: $CONFIGURATION)..."
 dotnet build "src/NovaSharp.sln" -c "$CONFIGURATION"

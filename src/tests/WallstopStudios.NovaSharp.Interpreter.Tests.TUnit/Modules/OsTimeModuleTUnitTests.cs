@@ -15,9 +15,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     public sealed class OsTimeModuleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task TimeReturnsUnixSecondsForTableInput()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeReturnsUnixSecondsForTableInput(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 return os.time({
@@ -35,9 +40,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeThrowsWhenDayFieldMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeThrowsWhenDayFieldMissing(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString(
@@ -54,9 +64,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeThrowsWhenMonthFieldMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeThrowsWhenMonthFieldMissing(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString(
@@ -73,9 +88,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeThrowsWhenYearFieldMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeThrowsWhenYearFieldMissing(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString(
@@ -92,9 +112,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeReturnsNegativeForDatesBeforeEpoch()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeReturnsNegativeForDatesBeforeEpoch(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 @"
                 return os.time({
@@ -115,16 +140,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClockReturnsElapsedSeconds()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClockReturnsElapsedSeconds(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue elapsed = script.DoString("return os.clock()");
 
             await Assert.That(elapsed.Number).IsGreaterThanOrEqualTo(0.0);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClockReturnsZeroWhenTimeProviderMovesBackward()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClockReturnsZeroWhenTimeProviderMovesBackward(
+            LuaCompatibilityVersion version
+        )
         {
             DateTimeOffset later = DateTimeOffset.FromUnixTimeSeconds(1_000_000);
             DateTimeOffset earlier = DateTimeOffset.FromUnixTimeSeconds(999_990);
@@ -136,18 +173,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DiffTimeHandlesTwoArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DiffTimeHandlesTwoArguments(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue diff = script.DoString("return os.difftime(200, 150)");
 
             await Assert.That(diff.Number).IsEqualTo(50);
         }
 
         [global::TUnit.Core.Test]
-        public async Task DiffTimeOptionalSecondArgumentInLua52()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DiffTimeOptionalSecondArgumentInLua52(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(LuaCompatibilityVersion.Lua52, CoreModulePresets.Complete);
             DynValue diffFromZero = script.DoString("return os.difftime(200)");
 
             // In Lua 5.1/5.2, second argument is optional and defaults to 0
@@ -155,9 +202,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DateFormatsUtcTimestampWhenPrefixedWithBang()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatsUtcTimestampWhenPrefixedWithBang(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue formatted = script.DoString(
                 "return os.date('!%Y-%m-%d %H:%M:%S', 1609459200)"
             );
@@ -166,9 +220,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DateReturnsTableWhenRequested()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateReturnsTableWhenRequested(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue tableValue = script.DoString("return os.date('!*t', 1609459200)");
 
             await Assert.That(tableValue.Type).IsEqualTo(DataType.Table);
@@ -179,10 +238,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DateReturnsLocalTableWhenPrefixOmitted()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateReturnsLocalTableWhenPrefixOmitted(LuaCompatibilityVersion version)
         {
             DateTime localTime = DateTimeOffset.FromUnixTimeSeconds(1609459200).LocalDateTime;
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue tableValue = script.DoString("return os.date('*t', 1609459200)");
 
             await Assert.That(tableValue.Type).IsEqualTo(DataType.Table);
@@ -198,9 +262,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DateFormatsWeekPatterns()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatsWeekPatterns(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue epochWeeks = script.DoString("return os.date('!%U-%W-%V', 0)");
             DynValue marchWeeks = script.DoString("return os.date('!%U-%W-%V', 345600)");
 
@@ -208,50 +277,103 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(marchWeeks.String).IsEqualTo("01-01-02");
         }
 
+        /// <summary>
+        /// Tests that Lua 5.1 outputs unsupported %O and %E format modifiers as literal text.
+        /// Reference: lua5.1 -e "print(os.date('%OY-%Ew', 0))" outputs "%OY-%Ew"
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task DateIgnoresOAndEFormatModifiers()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task DateOutputsUnsupportedOAndEAsLiteralTextInLua51(
+            LuaCompatibilityVersion version
+        )
         {
-            // NOTE: This documents a NovaSharp extension. Standard Lua rejects %O and %E
-            // format modifiers as invalid conversion specifiers. NovaSharp strips them and
-            // treats the following character as the format specifier (POSIX-style behavior).
-            // For example, %OY becomes %Y (year) and %Ew becomes %w (weekday).
-            // This is a known divergence from standard Lua behavior.
-            Script script = CreateScript();
+            // Lua 5.1 behavior: Unknown conversion specifiers pass through as literal text
+            // lua5.1 -e "print(os.date('%OY-%Ew', 0))" outputs "%OY-%Ew"
+            // %OY and %Ew are not valid POSIX combinations
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue formatted = script.DoString("return os.date('!%OY-%Ew', 0)");
 
-            await Assert.That(formatted.String).IsEqualTo("1970-4");
+            await Assert.That(formatted.String).IsEqualTo("%OY-%Ew");
         }
 
-        // This is a documentation comment explaining the known spec divergence.
-        // No test assertion needed - the DateIgnoresOAndEFormatModifiers test above
-        // already validates NovaSharp's behavior, and this comment documents
-        // that it differs from standard Lua.
-        //
-        // Standard Lua behavior:
-        //   lua5.2 -e "print(os.date('%OY-%Ew', 0))"
-        //   lua5.2: (command line):1: bad argument #1 to 'date' (invalid conversion specifier '%OY-%Ew')
-        //
-        // NovaSharp behavior:
-        //   NovaSharp accepts %O and %E as POSIX-style modifier prefixes and strips them.
-        //   This results in %OY -> %Y (year: 1970) and %Ew -> %w (weekday: 4 for Thursday)
-        //   Output: "1970-4"
-        //
-        // If we want to match standard Lua behavior, we would need to add a check
-        // in OsTimeModule.cs to reject %O and %E as unknown specifiers.
-
+        /// <summary>
+        /// Tests that Lua 5.2+ throws "invalid conversion specifier" for unsupported %O/%E combinations.
+        /// Reference: lua5.2 -e "print(os.date('%OY', 0))" throws error
+        /// %OY is not a valid POSIX combination (Y doesn't support O modifier)
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task DateSupportsOyModifier()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task DateThrowsForUnsupportedOModifierInLua52Plus(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            // Lua 5.2+ behavior: Unsupported O/E modifier combinations throw an error
+            // lua5.2 -e "print(os.date('%OY', 0))" throws error
+            Script script = new Script(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return os.date('!%OY', 0)")
+            );
+
+            await Assert.That(exception.Message).Contains("invalid conversion specifier");
+        }
+
+        /// <summary>
+        /// Tests that Lua 5.1 outputs %Oy as literal text (unknown specifier pass-through).
+        /// Reference: lua5.1 -e "print(os.date('%Oy', 0))" outputs "%Oy"
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task DateOutputsOyAsLiteralTextInLua51(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue formatted = script.DoString("return os.date('!%Oy', 0)");
+
+            // Lua 5.1 outputs unknown specifiers as literal text
+            await Assert.That(formatted.String).IsEqualTo("%Oy");
+        }
+
+        /// <summary>
+        /// Tests that Lua 5.2+ supports %Oy format modifier (POSIX alternate representation).
+        /// Reference: lua5.2+ -e "print(os.date('%Oy', 0))" outputs "70"
+        /// %Oy is a valid POSIX combination (y supports O modifier for alternate numerals)
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task DateSupportsOyModifierInLua52Plus(LuaCompatibilityVersion version)
+        {
+            // Lua 5.2+ with glibc strftime supports %Oy (alternate representation of year)
+            // lua5.2 -e "print(os.date('!%Oy', 0))" outputs "70"
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue formatted = script.DoString("return os.date('!%Oy', 0)");
 
             await Assert.That(formatted.String).IsEqualTo("70");
         }
 
+        /// <summary>
+        /// Tests that Lua 5.2+ supports %EY format modifier (POSIX era-based year).
+        /// Reference: lua5.2+ -e "print(os.date('%EY', 0))" outputs "1970"
+        /// </summary>
         [global::TUnit.Core.Test]
-        public async Task DateSupportsEscapeAndExtendedSpecifiers()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task DateSupportsEYModifierInLua52Plus(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            // lua5.2 -e "print(os.date('!%EY', 0))" outputs "1970"
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue formatted = script.DoString("return os.date('!%EY', 0)");
+
+            await Assert.That(formatted.String).IsEqualTo("1970");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateSupportsEscapeAndExtendedSpecifiers(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue formatted = script.DoString(
                 "return os.date('!%e|%n|%t|%%|%C|%j|%u|%w', 1609459200)"
             );
@@ -261,9 +383,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.2+ throws for unknown conversion specifiers
         [global::TUnit.Core.Test]
-        public async Task DateThrowsWhenConversionSpecifierUnknownInLua52Plus()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateThrowsWhenConversionSpecifierUnknownInLua52Plus(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(LuaCompatibilityVersion.Lua52, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
                 script.DoString("return os.date('%Q', 1609459200)")
@@ -274,9 +403,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Lua 5.1 returns the literal specifier for unknown conversion specifiers
         [global::TUnit.Core.Test]
-        public async Task DateReturnsLiteralForUnknownSpecifierInLua51()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateReturnsLiteralForUnknownSpecifierInLua51(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
+            Script script = new Script(LuaCompatibilityVersion.Lua51, CoreModulePresets.Complete);
 
             DynValue result = script.DoString("return os.date('%Q', 1609459200)");
 
@@ -299,7 +435,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             string scenarioDescription
         )
         {
-            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(LuaCompatibilityVersion.Lua52, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
             {
@@ -332,17 +468,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         // Data-driven tests for Lua 5.1 literal output (unknown specifiers pass through)
         [global::TUnit.Core.Test]
-        [Arguments("%Ja", "%J", "Specifier J with trailing char - outputs literal %J")]
-        [Arguments("%Qb", "%Q", "Specifier Q with trailing char - outputs literal %Q")]
-        [Arguments("%J", "%J", "Specifier J at end - outputs literal %J")]
-        [Arguments("hello %Q world", "hello %Q world", "Specifier in middle - preserves context")]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            "%Ja",
+            "%J",
+            "Specifier J with trailing char - outputs literal %J"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            "%Qb",
+            "%Q",
+            "Specifier Q with trailing char - outputs literal %Q"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            "%J",
+            "%J",
+            "Specifier J at end - outputs literal %J"
+        )]
+        [global::TUnit.Core.Arguments(
+            LuaCompatibilityVersion.Lua51,
+            "hello %Q world",
+            "hello %Q world",
+            "Specifier in middle - preserves context"
+        )]
         public async Task DateLua51OutputsLiteralForUnknownSpecifiers(
+            LuaCompatibilityVersion version,
             string formatString,
             string expectedOutput,
             string scenarioDescription
         )
         {
-            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua51);
+            Script script = new Script(version, CoreModulePresets.Complete);
 
             DynValue result = script.DoString($"return os.date('{formatString}', 1609459200)");
 
@@ -356,7 +513,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeReturnsCurrentProviderTimestampWhenNoArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeReturnsCurrentProviderTimestampWhenNoArguments(
+            LuaCompatibilityVersion version
+        )
         {
             long unixSeconds = 1_234_567;
             DateTimeOffset stamp = DateTimeOffset.FromUnixTimeSeconds(unixSeconds);
@@ -368,9 +532,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeDefaultsHourToNoonWhenFieldsOmitted()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeDefaultsHourToNoonWhenFieldsOmitted(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = new Script(version, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 "return os.time({ year = 1970, month = 1, day = 1 })"
             );
@@ -379,9 +548,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeIgnoresNonNumericOptionalFieldsInLua52()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeIgnoresNonNumericOptionalFieldsInLua52(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua52);
+            Script script = new Script(LuaCompatibilityVersion.Lua52, CoreModulePresets.Complete);
             DynValue result = script.DoString(
                 "return os.time({ year = 1970, month = 1, day = 1, hour = 'ignored' })"
             );
@@ -392,9 +568,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task TimeThrowsForNonNumericFieldsInLua53()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeThrowsForNonNumericFieldsInLua53(LuaCompatibilityVersion version)
         {
-            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua53);
+            Script script = new Script(LuaCompatibilityVersion.Lua53, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = await Assert
                 .ThrowsAsync<ScriptRuntimeException>(() =>
@@ -412,18 +593,103 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .ConfigureAwait(false);
         }
 
+        // Tests for os.time integer return type in Lua 5.3+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task TimeReturnsIntegerInLua53Plus(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                "return math.type(os.time({year=2000, month=1, day=1, hour=0, min=0, sec=0}))"
+            );
+
+            await Assert.That(result.String).IsEqualTo("integer").ConfigureAwait(false);
+        }
+
+        // Tests for os.date format specifiers matching reference Lua output
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatC(LuaCompatibilityVersion version)
+        {
+            // %c format should match Lua's "ddd MMM dd HH:mm:ss yyyy" format
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%c', 0)");
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("Thu Jan  1 00:00:00 1970")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatX(LuaCompatibilityVersion version)
+        {
+            // %x format should match Lua's "MM/DD/YY" format
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%x', 0)");
+
+            await Assert.That(result.String).IsEqualTo("01/01/70").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatZForUtc(LuaCompatibilityVersion version)
+        {
+            // %z format for UTC should return +0000 (without colon)
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%z', 0)");
+
+            await Assert.That(result.String).IsEqualTo("+0000").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatZCapitalForUtc(LuaCompatibilityVersion version)
+        {
+            // %Z format for UTC should return "GMT"
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%Z', 0)");
+
+            await Assert.That(result.String).IsEqualTo("GMT").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DateFormatCombined(LuaCompatibilityVersion version)
+        {
+            // Combined format string test
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString("return os.date('!%Y-%m-%d %H:%M:%S', 0)");
+
+            await Assert.That(result.String).IsEqualTo("1970-01-01 00:00:00").ConfigureAwait(false);
+        }
+
         private static Script CreateScript()
         {
             return new Script(CoreModulePresets.Complete);
-        }
-
-        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
-        {
-            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
-            {
-                CompatibilityVersion = version,
-            };
-            return new Script(CoreModulePresets.Complete, options);
         }
 
         private static Script CreateScriptWithTimeProvider(params DateTimeOffset[] timestamps)

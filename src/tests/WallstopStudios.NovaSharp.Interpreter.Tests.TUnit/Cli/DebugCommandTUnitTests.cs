@@ -7,8 +7,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Cli;
     using WallstopStudios.NovaSharp.Cli.Commands.Implementations;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.RemoteDebugger;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
     using static NovaSharp.Interpreter.Tests.TUnit.Cli.CliTestHelpers;
 
     public sealed class DebugCommandTUnitTests
@@ -16,14 +18,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         private static readonly SemaphoreSlim DebugCommandGate = new(1, 1);
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteAttachesDebuggerAndLaunchesBrowser()
+        [AllLuaVersions]
+        public async Task ExecuteAttachesDebuggerAndLaunchesBrowser(LuaCompatibilityVersion version)
         {
             SemaphoreSlimLease gateLease = await SemaphoreSlimScope
                 .WaitAsync(DebugCommandGate)
                 .ConfigureAwait(false);
             await using ConfiguredAsyncDisposable gateLeaseScope = gateLease.ConfigureAwait(false);
 
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             ShellContext context = CreateShellContext(script);
             DebugCommand command = new();
 
@@ -59,14 +62,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecuteDoesNotReattachAfterFirstInvocation()
+        [AllLuaVersions]
+        public async Task ExecuteDoesNotReattachAfterFirstInvocation(
+            LuaCompatibilityVersion version
+        )
         {
             SemaphoreSlimLease gateLease = await SemaphoreSlimScope
                 .WaitAsync(DebugCommandGate)
                 .ConfigureAwait(false);
             await using ConfiguredAsyncDisposable gateLeaseScope = gateLease.ConfigureAwait(false);
 
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             ShellContext context = CreateShellContext(script);
             DebugCommand command = new();
 

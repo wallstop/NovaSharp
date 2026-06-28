@@ -5,18 +5,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class DebuggerBreakpointTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task DebuggerActionsUpdateBreakpointsAndRefreshes()
+        [AllLuaVersions]
+        public async Task DebuggerActionsUpdateBreakpointsAndRefreshes(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.DoString(
                 @"
                 sharedValue = 3

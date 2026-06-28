@@ -5,7 +5,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System.IO;
     using System.Linq;
     using System.Text;
+    using Cysharp.Text;
     using Debugging;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure.IO;
 
@@ -165,9 +167,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (version != DumpChunkVersion)
             {
-                throw new ArgumentException(
-                    $"Invalid version: {version}, NovaSharp supports version {DumpChunkVersion}"
-                );
+                using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                sb.Append("Invalid version: ");
+                sb.Append(version);
+                sb.Append(", NovaSharp supports version ");
+                sb.Append(DumpChunkVersion);
+                throw new ArgumentException(sb.ToString());
             }
 
             hasUpValues = br.ReadBoolean();

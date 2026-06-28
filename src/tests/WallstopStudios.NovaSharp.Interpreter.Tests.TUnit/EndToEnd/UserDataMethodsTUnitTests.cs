@@ -15,6 +15,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using WallstopStudios.NovaSharp.Interpreter.Interop.RegistrationPolicies;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     [ScriptGlobalOptionsIsolation]
@@ -1094,7 +1095,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropTestAutoregisterPolicy()
+        [AllLuaVersions]
+        public async Task InteropTestAutoregisterPolicy(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationPolicyScope policyScope =
                 UserDataRegistrationPolicyScope.Override(InteropRegistrationPolicy.Automatic);
@@ -1103,7 +1105,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
             string script = @"return myobj:Test1()";
 
-            Script s = new();
+            Script s = new(version);
 
             SomeOtherClass obj = new();
 
@@ -1116,11 +1118,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropDualInterfaces()
+        [AllLuaVersions]
+        public async Task InteropDualInterfaces(LuaCompatibilityVersion version)
         {
             string script = @"return myobj:Test1() .. myobj:Test2()";
 
-            Script s = new();
+            Script s = new(version);
 
             using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Track(
                 ensureUnregistered: true,
@@ -1141,7 +1144,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropTestNamesCamelized()
+        [AllLuaVersions]
+        public async Task InteropTestNamesCamelized(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterSomeClass();
 
@@ -1155,7 +1159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return a + b + c + d;
 			";
 
-            Script s = new();
+            Script s = new(version);
 
             SomeClass obj = new();
 
@@ -1168,7 +1172,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropTestSelfDescribingType()
+        [AllLuaVersions]
+        public async Task InteropTestSelfDescribingType(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -1179,7 +1184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return a + b + c;
 			";
 
-            Script s = new();
+            Script s = new(version);
 
             SelfDescribingClass obj = new();
 
@@ -1196,7 +1201,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropTestCustomDescribedType()
+        [AllLuaVersions]
+        public async Task InteropTestCustomDescribedType(LuaCompatibilityVersion version)
         {
             string script =
                 @"    
@@ -1207,7 +1213,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				return a + b + c;
 			";
 
-            Script s = new();
+            Script s = new(version);
 
             SomeOtherClassCustomDescriptor obj = new();
 
@@ -1226,7 +1232,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task InteropStaticInstanceAccessRaisesError()
+        [AllLuaVersions]
+        public async Task InteropStaticInstanceAccessRaisesError(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = RegisterSomeClass();
             try
@@ -1237,7 +1244,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 				x = mystatic.ConcatI(1, 'ciao', myobj, true, t, t, 'eheh', t, myobj);
 				return x;";
 
-                Script s = new();
+                Script s = new(version);
 
                 SomeClass obj = new();
 

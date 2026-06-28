@@ -1,0 +1,8 @@
+-- @lua-versions: 5.2+
+-- @novasharp-only: false
+-- @expects-error: false
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\LoadModuleVersionParityTUnitTests.cs:166
+-- @test: LoadModuleVersionParityTUnitTests.LoadAcceptsStringsInLua52Plus
+-- Test targets Lua 5.2+; Lua 5.2+: load with string arg (5.2+)
+local f = load('return 42')
+                return f()

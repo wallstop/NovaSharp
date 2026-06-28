@@ -235,7 +235,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             string text
         )
         {
-            Token token = new(TokenType.String, 0, 0, 0, 0, 0, 0, 0) { Text = text };
+            Token token = new Token(TokenType.String, 0, 0, 0, 0, 0, 0, 0, text);
             return new LiteralExpression(context, token);
         }
 

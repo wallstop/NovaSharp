@@ -25,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// </remarks>
     internal static class DynValueArrayPool
     {
-        private const int MaxSmallArraySize = 8;
+        private const int MaxSmallArraySize = 16;
         private const int MaxCachedLargeArraySize = 1024;
 
         [ThreadStatic]

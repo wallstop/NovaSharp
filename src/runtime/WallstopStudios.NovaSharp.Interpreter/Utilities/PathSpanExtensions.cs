@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Utilities
 {
     using System;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Path-related helpers that operate on spans to avoid transient string allocations.
@@ -14,6 +15,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Utilities
         /// Returns the substring that follows the last directory separator in <paramref name="path"/>,
         /// reusing the original string when no trimming is required.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string SliceAfterLastSeparator(this string path)
         {
             if (string.IsNullOrEmpty(path))

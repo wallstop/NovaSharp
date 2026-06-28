@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\SandboxMemoryLimitTUnitTests.cs:830
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\SandboxMemoryLimitTUnitTests.cs:959
 -- @test: SandboxMemoryLimitTUnitTests.ScriptAllocationTrackerCombinedTableClosureCoroutine
--- @compat-notes: Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
+-- Test class 'SandboxMemoryLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 -- Tables
                 local t1 = { a = 1, b = 2 }
                 local t2 = { x = 10, y = 20, z = 30 }

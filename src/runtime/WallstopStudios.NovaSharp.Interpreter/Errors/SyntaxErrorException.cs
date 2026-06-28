@@ -19,7 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// Gets the lexer token that triggered the syntax failure (not serialized to keep payloads small).
         /// </summary>
         [field: NonSerialized]
-        internal Token Token { get; private set; }
+        internal Token? Token { get; private set; }
 
         /// <summary>
         /// Initializes a new <see cref="SyntaxErrorException"/> with no message; primarily used by serializers/reflection.
@@ -129,9 +129,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// <param name="script">Script owning the current chunk, required for formatting source references.</param>
         internal void DecorateMessage(Script script)
         {
-            if (Token != null)
+            if (Token.HasValue)
             {
-                DecorateMessage(script, Token.GetSourceRef(false));
+                DecorateMessage(script, Token.Value.GetSourceRef(false));
             }
         }
 

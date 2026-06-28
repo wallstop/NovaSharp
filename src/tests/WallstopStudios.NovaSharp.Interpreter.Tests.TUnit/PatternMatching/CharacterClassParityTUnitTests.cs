@@ -10,6 +10,7 @@ using global::TUnit.Core;
 using WallstopStudios.NovaSharp.Interpreter.Compatibility;
 using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 using WallstopStudios.NovaSharp.Interpreter.Modules;
+using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
 /// <summary>
 /// Tests that NovaSharp's character class implementations in pattern matching
@@ -450,118 +451,82 @@ public sealed class CharacterClassParityTUnitTests
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task AlphaClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%a");
         await Assert.That(actual).IsEquivalentTo(ExpectedAlpha).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task ControlClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%c");
         await Assert.That(actual).IsEquivalentTo(ExpectedControl).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task DigitClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%d");
         await Assert.That(actual).IsEquivalentTo(ExpectedDigit).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task LowerClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%l");
         await Assert.That(actual).IsEquivalentTo(ExpectedLower).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task PunctClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%p");
         await Assert.That(actual).IsEquivalentTo(ExpectedPunct).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task SpaceClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%s");
         await Assert.That(actual).IsEquivalentTo(ExpectedSpace).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task UpperClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%u");
         await Assert.That(actual).IsEquivalentTo(ExpectedUpper).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task AlnumClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%w");
         await Assert.That(actual).IsEquivalentTo(ExpectedAlnum).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task XdigitClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%x");
         await Assert.That(actual).IsEquivalentTo(ExpectedXdigit).ConfigureAwait(false);
     }
@@ -570,13 +535,10 @@ public sealed class CharacterClassParityTUnitTests
     /// Tests %g (graph) character class - available in Lua 5.2+ only.
     /// </summary>
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
     public async Task GraphClassMatchesLuaReference(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%g");
         await Assert.That(actual).IsEquivalentTo(ExpectedGraph).ConfigureAwait(false);
     }
@@ -586,70 +548,50 @@ public sealed class CharacterClassParityTUnitTests
     /// The uppercase version of a character class matches the complement of the lowercase.
     /// </summary>
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedAlphaClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%A");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedAlpha).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedDigitClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%D");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedDigit).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedLowerClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%L");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedLower).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedSpaceClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%S");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedSpace).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
     }
 
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51)]
-    [Arguments(LuaCompatibilityVersion.Lua52)]
-    [Arguments(LuaCompatibilityVersion.Lua53)]
-    [Arguments(LuaCompatibilityVersion.Lua54)]
-    [Arguments(LuaCompatibilityVersion.Lua55)]
+    [AllLuaVersions]
     public async Task NegatedUpperClassMatchesComplement(LuaCompatibilityVersion version)
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         int[] actual = GetMatchingCharCodes(script, "%U");
         int[] expected = Enumerable.Range(0, 128).Except(ExpectedUpper).ToArray();
         await Assert.That(actual).IsEquivalentTo(expected).ConfigureAwait(false);
@@ -664,97 +606,27 @@ public sealed class CharacterClassParityTUnitTests
     /// in .NET (Char.IsPunctuation): $ + &lt; = &gt; ^ ` | ~
     /// </remarks>
     [Test]
-    [Arguments(LuaCompatibilityVersion.Lua51, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "!", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "@", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "#", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "%", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "&", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "*", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "(", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ")", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "-", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "_", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "[", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "]", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "{", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "}", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "\\", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "/", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ":", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ";", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "\"", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "'", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ",", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, ".", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "?", true)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "Z", false)]
-    [Arguments(LuaCompatibilityVersion.Lua51, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua51, " ", false)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua52, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua52, " ", false)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua53, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua53, " ", false)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua54, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua54, " ", false)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "$", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "+", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "<", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "=", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, ">", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "^", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "`", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "|", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "~", true)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "a", false)]
-    [Arguments(LuaCompatibilityVersion.Lua55, "0", false)]
-    [Arguments(LuaCompatibilityVersion.Lua55, " ", false)]
+    [LuaTestMatrix(
+        new object[] { "$", true },
+        new object[] { "+", true },
+        new object[] { "<", true },
+        new object[] { "=", true },
+        new object[] { ">", true },
+        new object[] { "^", true },
+        new object[] { "`", true },
+        new object[] { "|", true },
+        new object[] { "~", true },
+        new object[] { "a", false },
+        new object[] { "0", false },
+        new object[] { " ", false }
+    )]
     public async Task PunctMatchesSpecificCharacters(
         LuaCompatibilityVersion version,
         string character,
         bool shouldMatch
     )
     {
-        Script script = CreateScriptWithVersion(version);
+        Script script = new Script(version);
         DynValue result = script.DoString(
             $"return string.match({EscapeString(character)}, '%p') ~= nil"
         );
@@ -770,15 +642,5 @@ public sealed class CharacterClassParityTUnitTests
             "\"" => "'\"'",
             _ => $"'{s}'",
         };
-    }
-
-    private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
-    {
-        ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
-        {
-            CompatibilityVersion = version,
-        };
-        Script script = new Script(CoreModulePresets.Default, options);
-        return script;
     }
 }

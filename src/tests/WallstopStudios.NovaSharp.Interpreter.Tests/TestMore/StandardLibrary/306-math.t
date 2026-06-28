@@ -73,11 +73,9 @@ like(math.log(47), '^3%.85', "function log")
 like(math.log(47, 2), '^5%.554', "function log (base 2)")
 like(math.log(47, 10), '^1%.672', "function log (base 10)")
 
-if (platform and platform.compat) or jit then
-    like(math.log10(47), '^1%.672', "function log10")
-else
-    is(math.log10, nil, "function log10 (removed)")
-end
+-- math.log10 is available in ALL Lua versions (5.1 through 5.4+)
+-- Verified against reference interpreters: lua5.1, lua5.2, lua5.3, lua5.4 all have math.log10
+like(math.log10(47), '^1%.672', "function log10")
 
 error_like(function () math.max() end,
            "^[^:]+:%d+: bad argument #1 to 'max' %(number expected, got no value%)",
@@ -113,27 +111,34 @@ like(math.random(9), '^%d$', "function random 1 arg")
 
 like(math.random(10, 19), '^1%d$', "function random 2 arg")
 
---[[
-NovaSharp : math.random normalizes inputs, and we are happy with that
-
-if jit then
-    todo("LuaJIT intentional. Don't check empty interval.", 2)
+-- math.random(0) behavior is version-specific:
+-- Lua 5.1-5.3: throws "interval is empty"
+-- Lua 5.4+: returns a random integer (full 64-bit range)
+if _VERSION == "Lua 5.1" or _VERSION == "Lua 5.2" or _VERSION == "Lua 5.3" then
+    if jit then
+        todo("LuaJIT intentional. Don't check empty interval.", 1)
+    end
+    error_like(function () math.random(0) end,
+               "^[^:]+:%d+: bad argument #1 to 'random' %(interval is empty%)",
+               "function random(0) empty interval (5.1-5.3)")
+else
+    -- Lua 5.4+: math.random(0) returns a random integer
+    local r = math.random(0)
+    ok(type(r) == "number", "function random(0) returns number in 5.4+")
 end
-error_like(function () math.random(0) end,
-           "^[^:]+:%d+: bad argument #1 to 'random' %(interval is empty%)",
-           "function random empty interval")
 
+-- math.random with m > n always throws in all versions
 error_like(function () math.random(19, 10) end,
-           "^[^:]+:%d+: bad argument #2 to 'random' %(interval is empty%)",
-           "function random empty interval")
+           "^[^:]+:%d+: bad argument #%d to 'random' %(interval is empty%)",
+           "function random(19, 10) empty interval")
 
+-- math.random with wrong number of arguments always throws in all versions
 if jit then
-    todo("LuaJIT intentional. Don't care about extra arguments.")
+    todo("LuaJIT intentional. Don't care about extra arguments.", 1)
 end
 error_like(function () math.random(1, 2, 3) end,
            "^[^:]+:%d+: wrong number of arguments",
            "function random too many arg")
-		   --]]
 
 math.randomseed(12)
 a = math.random()

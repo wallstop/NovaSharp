@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:18
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:23
 -- @test: MathModuleTUnitTests.LogUsesDefaultBaseWhenOmitted
+-- Test targets Lua 5.2+
 return math.log(8)

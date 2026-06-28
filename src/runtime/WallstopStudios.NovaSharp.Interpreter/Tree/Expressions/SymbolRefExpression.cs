@@ -20,9 +20,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         public SymbolRefExpression(Token t, ScriptLoadingContext lcontext)
             : base(lcontext)
         {
-            _varName = t.Text;
+            _varName = t.text;
 
-            if (t.Type == TokenType.VarArgs)
+            if (t.type == TokenType.VarArgs)
             {
                 _ref = lcontext.Scope.Find(WellKnownSymbols.VARARGS);
 
@@ -90,6 +90,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         public override DynValue Eval(ScriptExecutionContext context)
         {
             return context.EvaluateSymbolByName(_varName);
+        }
+
+        /// <summary>
+        /// Gets the underlying symbol reference for this expression.
+        /// </summary>
+        /// <returns>The <see cref="SymbolRef" /> associated with this expression, or null if not available.</returns>
+        internal SymbolRef GetSymbolRef()
+        {
+            return _ref;
         }
 
         /// <summary>

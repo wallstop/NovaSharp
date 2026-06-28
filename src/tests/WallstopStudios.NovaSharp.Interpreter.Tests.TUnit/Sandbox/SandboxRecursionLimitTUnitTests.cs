@@ -3,8 +3,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     using System;
     using System.Threading.Tasks;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for <see cref="SandboxOptions"/> recursion depth limits.
@@ -12,11 +14,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     public sealed class SandboxRecursionLimitTUnitTests
     {
         [Test]
-        public async Task RecursionLimitExceededThrowsSandboxViolationException()
+        [AllLuaVersions]
+        public async Task RecursionLimitExceededThrowsSandboxViolationException(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions sandbox = new SandboxOptions { MaxCallStackDepth = 5 };
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // Define a deeply recursive function
             script.DoString(
@@ -42,11 +49,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ScriptExecutesWithinRecursionLimit()
+        [AllLuaVersions]
+        public async Task ScriptExecutesWithinRecursionLimit(LuaCompatibilityVersion version)
         {
             SandboxOptions sandbox = new SandboxOptions { MaxCallStackDepth = 100 };
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // Shallow recursion that should complete
             script.DoString(
@@ -66,11 +76,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task UnlimitedRecursionDoesNotThrow()
+        [AllLuaVersions]
+        public async Task UnlimitedRecursionDoesNotThrow(LuaCompatibilityVersion version)
         {
             SandboxOptions sandbox = new SandboxOptions { MaxCallStackDepth = 0 }; // 0 = unlimited
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             script.DoString(
                 @"
@@ -90,7 +103,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task RecursionLimitCallbackCanAllowContinuation()
+        [AllLuaVersions]
+        public async Task RecursionLimitCallbackCanAllowContinuation(
+            LuaCompatibilityVersion version
+        )
         {
             int callbackInvocations = 0;
             SandboxOptions sandbox = new SandboxOptions
@@ -104,7 +120,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 },
             };
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             script.DoString(
                 @"
@@ -152,11 +170,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task MutualRecursionCountedCorrectly()
+        [AllLuaVersions]
+        public async Task MutualRecursionCountedCorrectly(LuaCompatibilityVersion version)
         {
             SandboxOptions sandbox = new SandboxOptions { MaxCallStackDepth = 10 };
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // Use non-tail-call recursion to avoid TCO
             script.DoString(

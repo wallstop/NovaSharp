@@ -4,9 +4,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class StructAssignmentTechniqueTUnitTests
@@ -82,7 +84,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
-        public async Task StructFieldCantSetThroughLua()
+        [AllLuaVersions]
+        public async Task StructFieldCantSetThroughLua(LuaCompatibilityVersion version)
         {
             using UserDataRegistrationScope registrationScope = UserDataRegistrationScope.Create();
             registrationScope.Add<Transform>(ensureUnregistered: true);
@@ -91,7 +94,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             registrationScope.RegisterType<Transform>();
             registrationScope.RegisterType<Vector3>();
 
-            Script script = new();
+            Script script = new(version);
             Transform transform = new();
             _ = new Vector3Accessor(transform);
 

@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\ScriptConstructorConsistencyTUnitTests.cs:237
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\ScriptConstructorConsistencyTUnitTests.cs:321
 -- @test: ScriptConstructorConsistencyTUnitTests.DeterministicRandomProviderProducesReproducibleSequences
+-- Test targets Lua 5.3+
 return math.random(), math.random(), math.random()

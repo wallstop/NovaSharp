@@ -415,15 +415,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             return WithRegistrationAsync(
                 scope => scope.RegisterType<SomeClass>(mode),
-                () =>
+                async () =>
                 {
                     Script script = new();
                     SomeClass obj = new() { IntProp = 321 };
                     script.Globals.Set("myobj", UserData.Create(obj));
-                    Assert.Throws<ScriptRuntimeException>(() =>
-                        script.DoString("myobj.IntProp = '19';")
-                    );
-                    return Task.FromResult(obj);
+                    await Assert
+                        .That(() => script.DoString("myobj.IntProp = '19';"))
+                        .ThrowsExactly<ScriptRuntimeException>()
+                        .ConfigureAwait(false);
+                    return obj;
                 },
                 async obj => await Assert.That(obj.IntProp).IsEqualTo(321).ConfigureAwait(false)
             );
@@ -466,15 +467,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             return WithRegistrationAsync(
                 scope => scope.RegisterType<SomeClass>(mode),
-                () =>
+                async () =>
                 {
                     Script script = new();
                     SomeClass obj = new();
                     script.Globals.Set("myobj", UserData.Create(obj));
-                    ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                        script.DoString("myobj.ConstIntProp = 1; return myobj.ConstIntProp;")
-                    );
-                    return Task.FromResult(exception);
+                    ScriptRuntimeException exception = await Assert
+                        .That(() =>
+                            script.DoString("myobj.ConstIntProp = 1; return myobj.ConstIntProp;")
+                        )
+                        .ThrowsExactly<ScriptRuntimeException>()
+                        .ConfigureAwait(false);
+                    return exception;
                 },
                 _ => Task.CompletedTask
             );
@@ -500,15 +504,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         {
             return WithRegistrationAsync(
                 scope => scope.RegisterType<SomeClass>(mode),
-                () =>
+                async () =>
                 {
                     Script script = new();
                     SomeClass obj = new();
                     script.Globals.Set("myobj", UserData.Create(obj));
-                    ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                        script.DoString("myobj.RoIntProp = 1; return myobj.RoIntProp;")
-                    );
-                    return Task.FromResult(exception);
+                    ScriptRuntimeException exception = await Assert
+                        .That(() => script.DoString("myobj.RoIntProp = 1; return myobj.RoIntProp;"))
+                        .ThrowsExactly<ScriptRuntimeException>()
+                        .ConfigureAwait(false);
+                    return exception;
                 },
                 _ => Task.CompletedTask
             );

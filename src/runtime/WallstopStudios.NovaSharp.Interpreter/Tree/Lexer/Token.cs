@@ -7,52 +7,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
     /// <summary>
     /// Represents a single token produced by the lexer, including location metadata.
     /// </summary>
-    internal class Token
+    internal readonly struct Token : IEquatable<Token>
     {
         /// <summary>
         /// Gets the identifier of the source chunk that produced the token.
         /// </summary>
-        public int SourceId { get; }
+        public readonly int sourceId;
 
         /// <summary>
         /// Gets the starting column (1-based) of the token.
         /// </summary>
-        public int FromCol { get; }
+        public readonly int fromCol;
 
         /// <summary>
         /// Gets the ending column (1-based, inclusive) of the token.
         /// </summary>
-        public int ToCol { get; }
+        public readonly int toCol;
 
         /// <summary>
         /// Gets the starting line (1-based) of the token.
         /// </summary>
-        public int FromLine { get; }
+        public readonly int fromLine;
 
         /// <summary>
         /// Gets the ending line (1-based) of the token.
         /// </summary>
-        public int ToLine { get; }
+        public readonly int toLine;
 
         /// <summary>
         /// Gets the previous column recorded by the lexer (useful for exclusive spans).
         /// </summary>
-        public int PrevCol { get; }
+        public readonly int prevCol;
 
         /// <summary>
         /// Gets the previous line recorded by the lexer (useful for exclusive spans).
         /// </summary>
-        public int PrevLine { get; }
+        public readonly int prevLine;
 
         /// <summary>
         /// Gets the token classification (identifier, keyword, operator, etc.).
         /// </summary>
-        public TokenType Type { get; }
+        public readonly TokenType type;
 
         /// <summary>
-        /// Gets or sets the textual payload associated with the token.
+        /// Gets the textual payload associated with the token.
         /// </summary>
-        public string Text { get; set; }
+        public readonly string text;
 
         public Token(
             TokenType tokenType,
@@ -62,18 +62,101 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             int toLine,
             int toCol,
             int prevLine,
-            int prevCol
+            int prevCol,
+            string text = null
         )
         {
-            Type = tokenType;
+            type = tokenType;
+            this.sourceId = sourceId;
+            this.fromLine = fromLine;
+            this.fromCol = fromCol;
+            this.toCol = toCol;
+            this.toLine = toLine;
+            this.prevCol = prevCol;
+            this.prevLine = prevLine;
+            this.text = text;
+        }
 
-            SourceId = sourceId;
-            FromLine = fromLine;
-            FromCol = fromCol;
-            ToCol = toCol;
-            ToLine = toLine;
-            PrevCol = prevCol;
-            PrevLine = prevLine;
+        /// <summary>
+        /// Creates a new Token with the specified text, preserving all other fields.
+        /// </summary>
+        /// <param name="text">The new text value.</param>
+        /// <returns>A new Token with the updated text.</returns>
+        public Token WithText(string text)
+        {
+            return new Token(
+                type,
+                sourceId,
+                fromLine,
+                fromCol,
+                toLine,
+                toCol,
+                prevLine,
+                prevCol,
+                text
+            );
+        }
+
+        /// <summary>
+        /// Determines whether this token equals another token.
+        /// </summary>
+        /// <param name="other">The other token to compare.</param>
+        /// <returns>true if all fields are equal; otherwise, false.</returns>
+        public bool Equals(Token other)
+        {
+            return sourceId == other.sourceId
+                && fromCol == other.fromCol
+                && toCol == other.toCol
+                && fromLine == other.fromLine
+                && toLine == other.toLine
+                && prevCol == other.prevCol
+                && prevLine == other.prevLine
+                && type == other.type
+                && string.Equals(text, other.text, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Determines whether this token equals another object.
+        /// </summary>
+        /// <param name="obj">The object to compare.</param>
+        /// <returns>true if the object is a Token with equal fields; otherwise, false.</returns>
+        public override bool Equals(object obj)
+        {
+            return obj is Token other && Equals(other);
+        }
+
+        /// <summary>
+        /// Returns a hash code for this token.
+        /// </summary>
+        /// <returns>A hash code based on all fields.</returns>
+        public override int GetHashCode()
+        {
+            return DataStructs.HashCodeHelper.HashCode(
+                    sourceId,
+                    fromCol,
+                    toCol,
+                    fromLine,
+                    toLine,
+                    prevCol,
+                    prevLine,
+                    (int)type
+                ) ^ (text != null ? DataStructs.HashCodeHelper.HashCode(text) : 0);
+        }
+
+        /// <summary>
+        /// Determines whether two tokens are equal.
+        /// </summary>
+        public static bool operator ==(Token left, Token right)
+        {
+            return left.Equals(right);
+        }
+
+        /// <summary>
+        /// Determines whether two tokens are not equal.
+        /// </summary>
+        public static bool operator !=(Token left, Token right)
+        {
+            return !left.Equals(right);
         }
 
         /// <summary>
@@ -84,7 +167,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         {
             using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
 
-            string tokenTypeStr = Type.ToString();
+            string tokenTypeStr = TokenTypeStrings.GetName(type);
             sb.Append(tokenTypeStr);
             int tokenTypePadding = 16 - tokenTypeStr.Length;
             if (tokenTypePadding > 0)
@@ -93,23 +176,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             }
 
             sb.Append("  - ");
-            sb.Append(FromLine);
+            sb.Append(fromLine);
             sb.Append(':');
-            sb.Append(FromCol);
+            sb.Append(fromCol);
             sb.Append('-');
-            sb.Append(ToLine);
+            sb.Append(toLine);
             sb.Append(':');
-            sb.Append(ToCol);
+            sb.Append(toCol);
 
             // Calculate how much padding we need for location (target: 10 chars)
             int locationLength =
-                DigitCount(FromLine)
+                DigitCount(fromLine)
                 + 1
-                + DigitCount(FromCol)
+                + DigitCount(fromCol)
                 + 1
-                + DigitCount(ToLine)
+                + DigitCount(toLine)
                 + 1
-                + DigitCount(ToCol);
+                + DigitCount(toCol);
             int locationPadding = 10 - locationLength;
             if (locationPadding > 0)
             {
@@ -117,7 +200,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             }
 
             sb.Append(" - '");
-            sb.Append(Text ?? "");
+            sb.Append(text ?? "");
             sb.Append('\'');
 
             return sb.ToString();
@@ -154,49 +237,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         {
             switch (reservedWord)
             {
-                case "and":
+                case LuaKeywords.And:
                     return TokenType.And;
-                case "break":
+                case LuaKeywords.Break:
                     return TokenType.Break;
-                case "do":
+                case LuaKeywords.Do:
                     return TokenType.Do;
-                case "else":
+                case LuaKeywords.Else:
                     return TokenType.Else;
-                case "elseif":
+                case LuaKeywords.ElseIf:
                     return TokenType.ElseIf;
-                case "end":
+                case LuaKeywords.End:
                     return TokenType.End;
-                case "false":
+                case LuaKeywords.False:
                     return TokenType.False;
-                case "for":
+                case LuaKeywords.For:
                     return TokenType.For;
-                case "function":
+                case LuaKeywords.Function:
                     return TokenType.Function;
-                case "goto":
+                case LuaKeywords.Goto:
                     return TokenType.Goto;
-                case "if":
+                case LuaKeywords.If:
                     return TokenType.If;
-                case "in":
+                case LuaKeywords.In:
                     return TokenType.In;
-                case "local":
+                case LuaKeywords.Local:
                     return TokenType.Local;
-                case "nil":
+                case LuaKeywords.Nil:
                     return TokenType.Nil;
-                case "not":
+                case LuaKeywords.Not:
                     return TokenType.Not;
-                case "or":
+                case LuaKeywords.Or:
                     return TokenType.Or;
-                case "repeat":
+                case LuaKeywords.Repeat:
                     return TokenType.Repeat;
-                case "return":
+                case LuaKeywords.Return:
                     return TokenType.Return;
-                case "then":
+                case LuaKeywords.Then:
                     return TokenType.Then;
-                case "true":
+                case LuaKeywords.True:
                     return TokenType.True;
-                case "until":
+                case LuaKeywords.Until:
                     return TokenType.Until;
-                case "while":
+                case LuaKeywords.While:
                     return TokenType.While;
                 default:
                     return null;
@@ -212,15 +295,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// </exception>
         public double GetNumberValue()
         {
-            if (Type == TokenType.Number)
+            if (type == TokenType.Number)
             {
                 return LexerUtils.ParseNumber(this);
             }
-            else if (Type == TokenType.NumberHex)
+            else if (type == TokenType.NumberHex)
             {
                 return LexerUtils.ParseHexInteger(this);
             }
-            else if (Type == TokenType.NumberHexFloat)
+            else if (type == TokenType.NumberHexFloat)
             {
                 return LexerUtils.ParseHexFloat(this);
             }
@@ -244,14 +327,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// </exception>
         public bool TryGetIntegerValue(out long value)
         {
-            if (Type == TokenType.NumberHex)
+            if (type == TokenType.NumberHex)
             {
                 return LexerUtils.TryParseHexIntegerAsLong(this, out value);
             }
-            else if (Type == TokenType.Number && !IsFloatLiteralSyntax())
+            else if (type == TokenType.Number && !IsFloatLiteralSyntax())
             {
                 return long.TryParse(
-                    Text,
+                    text,
                     System.Globalization.NumberStyles.None,
                     System.Globalization.CultureInfo.InvariantCulture,
                     out value
@@ -278,21 +361,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// </exception>
         public bool IsFloatLiteralSyntax()
         {
-            if (Type == TokenType.NumberHexFloat)
+            if (type == TokenType.NumberHexFloat)
             {
                 return true;
             }
-            else if (Type == TokenType.NumberHex)
+            else if (type == TokenType.NumberHex)
             {
                 return false;
             }
-            else if (Type == TokenType.Number)
+            else if (type == TokenType.Number)
             {
                 // Check if the text contains a decimal point or exponent indicator
                 // Examples: "1.0" -> true, "1e5" -> true, "1" -> false, "123" -> false
-                return Text.Contains('.', StringComparison.Ordinal)
-                    || Text.Contains('e', StringComparison.OrdinalIgnoreCase)
-                    || Text.Contains('E', StringComparison.Ordinal);
+                return text.Contains('.', StringComparison.Ordinal)
+                    || text.Contains('e', StringComparison.OrdinalIgnoreCase)
+                    || text.Contains('E', StringComparison.Ordinal);
             }
             else
             {
@@ -308,7 +391,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// <returns><c>true</c> when the token is a block terminator.</returns>
         public bool IsEndOfBlock()
         {
-            switch (Type)
+            switch (type)
             {
                 case TokenType.Else:
                 case TokenType.ElseIf:
@@ -327,10 +410,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// <returns><c>true</c> when the token starts a unary operation.</returns>
         public bool IsUnaryOperator()
         {
-            return Type == TokenType.OpMinusOrSub
-                || Type == TokenType.Not
-                || Type == TokenType.OpLen
-                || Type == TokenType.OpBitNotOrXor;
+            return type == TokenType.OpMinusOrSub
+                || type == TokenType.Not
+                || type == TokenType.OpLen
+                || type == TokenType.OpBitNotOrXor;
         }
 
         /// <summary>
@@ -339,7 +422,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// <returns><c>true</c> when the token represents a binary operator.</returns>
         public bool IsBinaryOperator()
         {
-            switch (Type)
+            switch (type)
             {
                 case TokenType.And:
                 case TokenType.Or:
@@ -376,11 +459,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         internal NovaSharp.Interpreter.Debugging.SourceRef GetSourceRef(bool isStepStop = true)
         {
             return new NovaSharp.Interpreter.Debugging.SourceRef(
-                SourceId,
-                FromCol,
-                ToCol,
-                FromLine,
-                ToLine,
+                sourceId,
+                fromCol,
+                toCol,
+                fromLine,
+                toLine,
                 isStepStop
             );
         }
@@ -398,11 +481,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         )
         {
             return new NovaSharp.Interpreter.Debugging.SourceRef(
-                SourceId,
-                FromCol,
-                to.ToCol,
-                FromLine,
-                to.ToLine,
+                sourceId,
+                fromCol,
+                to.toCol,
+                fromLine,
+                to.toLine,
                 isStepStop
             );
         }
@@ -420,11 +503,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         )
         {
             return new NovaSharp.Interpreter.Debugging.SourceRef(
-                SourceId,
-                FromCol,
-                to.PrevCol,
-                FromLine,
-                to.PrevLine,
+                sourceId,
+                fromCol,
+                to.prevCol,
+                fromLine,
+                to.prevLine,
                 isStepStop
             );
         }

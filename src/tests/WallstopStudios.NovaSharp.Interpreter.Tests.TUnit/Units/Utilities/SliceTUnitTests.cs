@@ -7,7 +7,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
-    using CollectionAssert = NUnit.Framework.CollectionAssert;
 
     public sealed class SliceTUnitTests
     {
@@ -65,8 +64,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
             List<int> source = new() { 5, 6, 7, 8 };
             Slice<int> slice = new(source, from: 1, length: 2, reversed: false);
 
-            CollectionAssert.AreEqual(ToArrayForwardExpected, slice.ToArray());
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Assert
+                .That(slice.ToArray())
+                .IsEquivalentTo(ToArrayForwardExpected)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -75,8 +76,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
             List<int> source = new() { 5, 6, 7, 8 };
             Slice<int> slice = new(source, from: 1, length: 2, reversed: true);
 
-            CollectionAssert.AreEqual(ToArrayReversedExpected, slice.ToList().ToArray());
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Assert
+                .That(slice.ToList().ToArray())
+                .IsEquivalentTo(ToArrayReversedExpected)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -85,8 +88,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
             List<int> source = new() { 5, 6, 7, 8 };
             Slice<int> slice = new(source, from: 0, length: 3, reversed: false);
 
-            CollectionAssert.AreEqual(EnumeratorForwardExpected, slice.ToArray());
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Assert
+                .That(slice.ToArray())
+                .IsEquivalentTo(EnumeratorForwardExpected)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -95,18 +100,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
             List<int> source = new() { 5, 6, 7, 8 };
             Slice<int> slice = new(source, from: 0, length: 3, reversed: true);
 
-            CollectionAssert.AreEqual(EnumeratorReversedExpected, slice.ToArray());
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Assert
+                .That(slice.ToArray())
+                .IsEquivalentTo(EnumeratorReversedExpected)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void IndexerThrowsOnOutOfRange()
+        public async Task IndexerThrowsOnOutOfRange()
         {
             List<int> source = new() { 1, 2, 3 };
             Slice<int> slice = new(source, from: 0, length: 3, reversed: false);
 
-            Assert.Throws<ArgumentOutOfRangeException>(() => _ = slice[-1]);
-            Assert.Throws<ArgumentOutOfRangeException>(() => _ = slice[3]);
+            await Assert
+                .That(() => _ = slice[-1])
+                .ThrowsExactly<ArgumentOutOfRangeException>()
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => _ = slice[3])
+                .ThrowsExactly<ArgumentOutOfRangeException>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -131,21 +144,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
             int[] target = { 0, 0, 0, 0 };
             slice.CopyTo(target, 1);
 
-            CollectionAssert.AreEqual(CopyToTargetExpected, target);
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Assert.That(target).IsEquivalentTo(CopyToTargetExpected).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public void MutatingMethodsThrowInvalidOperation()
+        public async Task MutatingMethodsThrowInvalidOperation()
         {
             List<int> source = new() { 1, 2, 3 };
             Slice<int> slice = new(source, from: 0, length: 3, reversed: false);
 
-            Assert.Throws<InvalidOperationException>(() => slice.Add(4));
-            Assert.Throws<InvalidOperationException>(() => slice.Remove(2));
-            Assert.Throws<InvalidOperationException>(() => slice.Insert(0, 9));
-            Assert.Throws<InvalidOperationException>(() => slice.Clear());
-            Assert.Throws<InvalidOperationException>(() => slice.RemoveAt(0));
+            await Assert
+                .That(() => slice.Add(4))
+                .ThrowsExactly<InvalidOperationException>()
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => slice.Remove(2))
+                .ThrowsExactly<InvalidOperationException>()
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => slice.Insert(0, 9))
+                .ThrowsExactly<InvalidOperationException>()
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => slice.Clear())
+                .ThrowsExactly<InvalidOperationException>()
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => slice.RemoveAt(0))
+                .ThrowsExactly<InvalidOperationException>()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -155,11 +182,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
             Slice<int> slice = new(source, from: 0, length: 2, reversed: false);
             IEnumerable enumerable = slice;
 
-            CollectionAssert.AreEqual(
-                NonGenericEnumeratorExpected,
-                enumerable.Cast<int>().ToArray()
-            );
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Assert
+                .That(enumerable.Cast<int>().ToArray())
+                .IsEquivalentTo(NonGenericEnumeratorExpected)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

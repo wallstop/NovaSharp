@@ -6,8 +6,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ProcessorBinaryDumpTUnitTests
     {
@@ -17,9 +19,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         private const int DumpChunkVersion = 0x151;
 
         [global::TUnit.Core.Test]
-        public async Task UndumpThrowsWhenHeaderMissing()
+        [AllLuaVersions]
+        public async Task UndumpThrowsWhenHeaderMissing(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Processor processor = script.GetMainProcessorForTests();
 
             using MemoryStream stream = new();
@@ -38,9 +41,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task UndumpThrowsWhenVersionInvalid()
+        [AllLuaVersions]
+        public async Task UndumpThrowsWhenVersionInvalid(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Processor processor = script.GetMainProcessorForTests();
 
             using MemoryStream stream = new();
@@ -60,9 +64,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task DumpThrowsWhenMetaInstructionMissing()
+        [AllLuaVersions]
+        public async Task DumpThrowsWhenMetaInstructionMissing(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue chunk = script.LoadString("return 1");
             Processor processor = script.GetMainProcessorForTests();
             ByteCode byteCode = script.GetByteCodeForTests();

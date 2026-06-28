@@ -3,8 +3,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     using System;
     using System.Threading.Tasks;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for <see cref="SandboxOptions"/> function and module restrictions.
@@ -12,11 +14,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
     public sealed class SandboxAccessRestrictionTUnitTests
     {
         [Test]
-        public async Task RestrictedFunctionLoadThrowsSandboxViolationException()
+        [AllLuaVersions]
+        public async Task RestrictedFunctionLoadThrowsSandboxViolationException(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions sandbox = new SandboxOptions().RestrictFunction("load");
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             SandboxViolationException ex = await Assert
                 .That(() => script.DoString("return load('return 42')()"))
@@ -31,11 +38,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task RestrictedFunctionLoadfileThrowsSandboxViolationException()
+        [AllLuaVersions]
+        public async Task RestrictedFunctionLoadfileThrowsSandboxViolationException(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions sandbox = new SandboxOptions().RestrictFunction("loadfile");
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             SandboxViolationException ex = await Assert
                 .That(() => script.DoString("return loadfile('test.lua')"))
@@ -50,11 +62,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task RestrictedFunctionDofileThrowsSandboxViolationException()
+        [AllLuaVersions]
+        public async Task RestrictedFunctionDofileThrowsSandboxViolationException(
+            LuaCompatibilityVersion version
+        )
         {
             SandboxOptions sandbox = new SandboxOptions().RestrictFunction("dofile");
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             SandboxViolationException ex = await Assert
                 .That(() => script.DoString("dofile('test.lua')"))
@@ -69,11 +86,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task UnrestrictedFunctionExecutesNormally()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task UnrestrictedFunctionExecutesNormally(LuaCompatibilityVersion version)
         {
+            // In Lua 5.2+, load() accepts a string directly
+            // In Lua 5.1, load() requires a function (chunk reader), use loadstring instead
             SandboxOptions sandbox = new SandboxOptions().RestrictFunction("dofile"); // Only restrict dofile
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // load should work
             DynValue result = script.DoString("return load('return 42')()");
@@ -82,8 +104,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task FunctionAccessCallbackCanAllowAccess()
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task UnrestrictedFunctionExecutesNormallyLua51(LuaCompatibilityVersion version)
         {
+            // In Lua 5.1, loadstring is used for loading strings
+            SandboxOptions sandbox = new SandboxOptions().RestrictFunction("dofile"); // Only restrict dofile
+            ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
+
+            // loadstring should work in 5.1
+            DynValue result = script.DoString("return loadstring('return 42')()");
+
+            await Assert.That(result.Number).IsEqualTo(42).ConfigureAwait(false);
+        }
+
+        [Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task FunctionAccessCallbackCanAllowAccess(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.2+, load() accepts a string directly
             bool callbackInvoked = false;
             SandboxOptions sandbox = new SandboxOptions
             {
@@ -96,10 +137,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             sandbox.RestrictFunction("load");
 
             ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
-            Script script = new Script(options);
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
 
             // Should succeed because callback allows it
             DynValue result = script.DoString("return load('return 99')()");
+
+            await Assert.That(result.Number).IsEqualTo(99).ConfigureAwait(false);
+            await Assert.That(callbackInvoked).IsTrue().ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task FunctionAccessCallbackCanAllowAccessLua51(LuaCompatibilityVersion version)
+        {
+            // In Lua 5.1, loadstring is used for loading strings
+            bool callbackInvoked = false;
+            SandboxOptions sandbox = new SandboxOptions
+            {
+                OnFunctionAccessDenied = (s, name) =>
+                {
+                    callbackInvoked = true;
+                    return true; // Allow access
+                },
+            };
+            sandbox.RestrictFunction("loadstring");
+
+            ScriptOptions options = new ScriptOptions { Sandbox = sandbox };
+            Script script = new Script(
+                new ScriptOptions(options) { CompatibilityVersion = version }
+            );
+
+            // Should succeed because callback allows it
+            DynValue result = script.DoString("return loadstring('return 99')()");
 
             await Assert.That(result.Number).IsEqualTo(99).ConfigureAwait(false);
             await Assert.That(callbackInvoked).IsTrue().ConfigureAwait(false);

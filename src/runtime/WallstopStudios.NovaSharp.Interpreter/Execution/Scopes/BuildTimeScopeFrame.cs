@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
 {
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Statements;
@@ -143,9 +144,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// <summary>
         /// Registers a label within the active block.
         /// </summary>
-        internal void DefineLabel(LabelStatement label)
+        /// <param name="label">The label being declared.</param>
+        /// <param name="version">Target Lua version for version-specific validation.</param>
+        internal void DefineLabel(LabelStatement label, LuaCompatibilityVersion version)
         {
-            _scopeTreeHead.DefineLabel(label);
+            _scopeTreeHead.DefineLabel(label, version);
         }
 
         /// <summary>
@@ -154,6 +157,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         internal void RegisterGoto(GotoStatement gotostat)
         {
             _scopeTreeHead.RegisterGoto(gotostat);
+        }
+
+        /// <summary>
+        /// Called before parsing a statement to snapshot the current var count.
+        /// </summary>
+        internal void BeforeStatement()
+        {
+            _scopeTreeHead.BeforeStatement();
+        }
+
+        /// <summary>
+        /// Marks that a non-void statement was parsed in the current block.
+        /// </summary>
+        internal void MarkNonVoidStatement()
+        {
+            _scopeTreeHead.MarkNonVoidStatement();
         }
     }
 }

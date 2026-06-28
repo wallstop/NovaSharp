@@ -5,11 +5,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class DynValueTUnitTests
@@ -639,9 +641,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task NewCoroutineWrapsCoroutineHandles()
+        [AllLuaVersions]
+        public async Task NewCoroutineWrapsCoroutineHandles(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.Call(
                 script.LoadString("return function(x) coroutine.yield(x); return x end")
             );

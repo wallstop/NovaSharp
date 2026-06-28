@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -13,6 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class StandardEnumUserDataDescriptorTUnitTests
     {
@@ -60,10 +62,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallbackOrCombinesUnsignedValues()
+        [AllLuaVersions]
+        public async Task CallbackOrCombinesUnsignedValues(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue result = descriptor.CallbackOr(
                 context,
@@ -80,10 +85,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallbackXorComputesExclusiveBits()
+        [AllLuaVersions]
+        public async Task CallbackXorComputesExclusiveBits(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue result = descriptor.CallbackXor(
                 context,
@@ -100,10 +108,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallbackNotOnUnsignedFlagsReturnsComplement()
+        [AllLuaVersions]
+        public async Task CallbackNotOnUnsignedFlagsReturnsComplement(
+            LuaCompatibilityVersion version
+        )
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue result = descriptor.CallbackBwNot(
                 context,
@@ -117,10 +130,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallbackOrAcceptsNumericArguments()
+        [AllLuaVersions]
+        public async Task CallbackOrAcceptsNumericArguments(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue result = descriptor.CallbackOr(
                 context,
@@ -134,10 +150,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallbackHasAllReturnsBooleanResult()
+        [AllLuaVersions]
+        public async Task CallbackHasAllReturnsBooleanResult(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue hasAll = descriptor.CallbackHasAll(
                 context,
@@ -152,10 +171,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallbackHasAnyReturnsBoolean()
+        [AllLuaVersions]
+        public async Task CallbackHasAnyReturnsBoolean(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue hasAny = descriptor.CallbackHasAny(
                 context,
@@ -170,10 +192,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallbackAndUsesSignedArithmeticWhenEnumIsSigned()
+        [AllLuaVersions]
+        public async Task CallbackAndUsesSignedArithmeticWhenEnumIsSigned(
+            LuaCompatibilityVersion version
+        )
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue result = descriptor.CallbackAnd(
                 context,
@@ -190,10 +217,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallbackXorUsesSignedArithmeticWhenEnumIsSigned()
+        [AllLuaVersions]
+        public async Task CallbackXorUsesSignedArithmeticWhenEnumIsSigned(
+            LuaCompatibilityVersion version
+        )
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue result = descriptor.CallbackXor(
                 context,
@@ -210,10 +242,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SignedFlagsHasAllReturnsBoolean()
+        [AllLuaVersions]
+        public async Task SignedFlagsHasAllReturnsBoolean(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue hasAll = descriptor.CallbackHasAll(
                 context,
@@ -228,10 +263,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SignedFlagsHasAnyReturnsBoolean()
+        [AllLuaVersions]
+        public async Task SignedFlagsHasAnyReturnsBoolean(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue hasAny = descriptor.CallbackHasAny(
                 context,
@@ -246,10 +284,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SignedBinaryOperationThrowsWhenArgumentCountInvalid()
+        [AllLuaVersions]
+        public async Task SignedBinaryOperationThrowsWhenArgumentCountInvalid(
+            LuaCompatibilityVersion version
+        )
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.CallbackAnd(
@@ -265,10 +308,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SignedEnumsUseSignedArithmetic()
+        [AllLuaVersions]
+        public async Task SignedEnumsUseSignedArithmetic(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleSignedEnum));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue result = descriptor.CallbackBwNot(
                 context,
@@ -285,12 +331,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SignedConversionSupportsAllUnderlyingTypes()
+        [AllLuaVersions]
+        public async Task SignedConversionSupportsAllUnderlyingTypes(
+            LuaCompatibilityVersion version
+        )
         {
             foreach ((Type enumType, object flagValue) in SignedEnumCases())
             {
                 StandardEnumUserDataDescriptor descriptor = new(enumType);
-                ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+                ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                    new Script(version)
+                );
                 DynValue left = UserData.Create(flagValue, descriptor);
                 DynValue result = descriptor.CallbackAnd(
                     context,
@@ -306,12 +357,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task UnsignedConversionSupportsAllUnderlyingTypes()
+        [AllLuaVersions]
+        public async Task UnsignedConversionSupportsAllUnderlyingTypes(
+            LuaCompatibilityVersion version
+        )
         {
             foreach ((Type enumType, object flagValue) in UnsignedEnumCases())
             {
                 StandardEnumUserDataDescriptor descriptor = new(enumType);
-                ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+                ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                    new Script(version)
+                );
                 DynValue left = UserData.Create(flagValue, descriptor);
                 DynValue result = descriptor.CallbackAnd(
                     context,
@@ -330,10 +386,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task BinaryOperationSignedAcceptsNumericArguments()
+        [AllLuaVersions]
+        public async Task BinaryOperationSignedAcceptsNumericArguments(
+            LuaCompatibilityVersion version
+        )
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleSignedEnum));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             DynValue result = descriptor.CallbackOr(
                 context,
@@ -344,10 +405,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task BinaryOperationRejectsInvalidOperandType()
+        [AllLuaVersions]
+        public async Task BinaryOperationRejectsInvalidOperandType(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.CallbackOr(
@@ -363,11 +427,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task BinaryOperationRejectsForeignDescriptor()
+        [AllLuaVersions]
+        public async Task BinaryOperationRejectsForeignDescriptor(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
             StandardEnumUserDataDescriptor foreignDescriptor = new(typeof(SampleEnum));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.CallbackOr(
@@ -386,11 +453,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task SignedBinaryOperationRejectsForeignDescriptor()
+        [AllLuaVersions]
+        public async Task SignedBinaryOperationRejectsForeignDescriptor(
+            LuaCompatibilityVersion version
+        )
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SignedIntFlags));
             StandardEnumUserDataDescriptor foreignDescriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.CallbackOr(
@@ -409,10 +481,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task BinaryOperationThrowsWhenArgumentCountInvalid()
+        [AllLuaVersions]
+        public async Task BinaryOperationThrowsWhenArgumentCountInvalid(
+            LuaCompatibilityVersion version
+        )
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.CallbackOr(
@@ -428,10 +505,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task UnaryOperationThrowsWhenArgumentCountInvalid()
+        [AllLuaVersions]
+        public async Task UnaryOperationThrowsWhenArgumentCountInvalid(
+            LuaCompatibilityVersion version
+        )
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
-            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(new Script());
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(
+                new Script(version)
+            );
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 descriptor.CallbackBwNot(context, TestHelpers.CreateArguments())
@@ -444,20 +526,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetaIndexReturnsConcatForFlags()
+        [AllLuaVersions]
+        public async Task MetaIndexReturnsConcatForFlags(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleFlags));
 
-            DynValue meta = descriptor.MetaIndex(new Script(), SampleFlags.Fast, "__concat");
+            DynValue meta = descriptor.MetaIndex(new Script(version), SampleFlags.Fast, "__concat");
 
             await Assert.That(meta.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task MetaIndexReturnsNullForNonFlags()
+        [AllLuaVersions]
+        public async Task MetaIndexReturnsNullForNonFlags(LuaCompatibilityVersion version)
         {
             StandardEnumUserDataDescriptor descriptor = new(typeof(SampleEnum));
-            DynValue meta = descriptor.MetaIndex(new Script(), SampleEnum.One, "__concat");
+            DynValue meta = descriptor.MetaIndex(new Script(version), SampleEnum.One, "__concat");
 
             await Assert.That(meta).IsNull().ConfigureAwait(false);
         }

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Threading;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -236,22 +237,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             int threadId = GetThreadId();
 
-            if (
-                _owningThreadId >= 0
-                && _owningThreadId != threadId
-                && _script.Options.CheckThreadAccess
-            )
+            if (_script.Options.CheckThreadAccess)
             {
-                string msg = string.Format(
-                    CultureInfo.InvariantCulture,
-                    "Cannot enter the same NovaSharp processor from two different threads : {0} and {1}",
-                    _owningThreadId,
-                    threadId
-                );
-                throw new InvalidOperationException(msg);
-            }
+                // Use atomic compare-exchange to prevent TOCTOU race conditions.
+                // Try to claim ownership from unowned state (-1 -> threadId).
+                int previousOwner = Interlocked.CompareExchange(ref _owningThreadId, threadId, -1);
 
-            _owningThreadId = threadId;
+                // If we didn't get -1, someone already owns the processor
+                if (previousOwner != -1 && previousOwner != threadId)
+                {
+                    string msg = string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Cannot enter the same NovaSharp processor from two different threads : {0} and {1}",
+                        previousOwner,
+                        threadId
+                    );
+                    throw new InvalidOperationException(msg);
+                }
+            }
+            else
+            {
+                _owningThreadId = threadId;
+            }
 
             _executionNesting += 1;
 

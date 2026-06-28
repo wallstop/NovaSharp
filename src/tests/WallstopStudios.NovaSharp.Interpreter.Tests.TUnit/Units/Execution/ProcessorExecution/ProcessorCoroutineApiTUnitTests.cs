@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -20,9 +21,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         private static readonly int[] YieldedValues = { 1, 2, 3 };
 
         [global::TUnit.Core.Test]
-        public async Task ResumeAfterCompletionThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeAfterCompletionThrows(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 1 end");
             DynValue coroutine = script.CreateCoroutine(function);
 
@@ -36,9 +42,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task AsTypedEnumerableIteratesAllResults()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AsTypedEnumerableIteratesAllResults(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 "return function() coroutine.yield(1) coroutine.yield(2) return 3 end"
             );
@@ -54,9 +65,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task AsTypedEnumerableThrowsForClrCallbacks()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AsTypedEnumerableThrowsForClrCallbacks(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
             DynValue coroutine = script.CreateCoroutine(callback);
 
@@ -71,9 +87,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task AsEnumerableReturnsObjects()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AsEnumerableReturnsObjects(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 "return function() coroutine.yield(10) coroutine.yield(20) return 30 end"
             );
@@ -95,9 +116,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task AsEnumerableOfTReturnsTypedScalars()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AsEnumerableOfTReturnsTypedScalars(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 "return function() coroutine.yield(1) coroutine.yield(2) return 3 end"
             );
@@ -108,9 +134,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task AsUnityCoroutineYieldsNullPerIteration()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AsUnityCoroutineYieldsNullPerIteration(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 "return function() coroutine.yield('a') coroutine.yield('b') return 'c' end"
             );
@@ -130,9 +161,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task MarkClrCallbackAsDeadTransitionsType()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MarkClrCallbackAsDeadTransitionsType(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
             DynValue coroutine = script.CreateCoroutine(callback);
 
@@ -142,9 +178,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task MarkClrCallbackAsDeadThrowsWhenCoroutineNotCallback()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task MarkClrCallbackAsDeadThrowsWhenCoroutineNotCallback(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 1 end");
             DynValue coroutine = script.CreateCoroutine(function);
 
@@ -155,9 +198,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task StateTransitionsFollowCoroutineLifecycle()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task StateTransitionsFollowCoroutineLifecycle(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString(
                 "return function() coroutine.yield(1) coroutine.yield(2) end"
             );
@@ -176,9 +224,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeClrCallbackExecutesAndMarksDead()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeClrCallbackExecutesAndMarksDead(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             DynValue callback = DynValue.NewCallback(
                 (ctx, args) =>
@@ -197,9 +250,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeClrCallbackTwiceThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeClrCallbackTwiceThrows(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
             DynValue callback = DynValue.NewCallback((ctx, _) => DynValue.NewNumber(1));
             DynValue coroutine = script.CreateCoroutine(callback);
@@ -215,9 +273,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithExplicitContextUsesDefaultArguments()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithExplicitContextUsesDefaultArguments(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 5 end");
             DynValue coroutine = script.CreateCoroutine(function);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
@@ -229,9 +294,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithObjectArgumentsConvertsValues()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithObjectArgumentsConvertsValues(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function(a, b) return a + b end");
             DynValue coroutine = script.CreateCoroutine(function);
 
@@ -241,9 +311,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithContextObjectArgumentsConvertsValues()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithContextObjectArgumentsConvertsValues(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function(a, b) return a + b end");
             DynValue coroutine = script.CreateCoroutine(function);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
@@ -255,9 +332,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithObjectArgumentsOnClrCallbackThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithObjectArgumentsOnClrCallbackThrows(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
             DynValue coroutine = script.CreateCoroutine(callback);
 
@@ -268,9 +352,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithDynValueArgumentsThrowsWhenNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithDynValueArgumentsThrowsWhenNull(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 1 end");
             DynValue coroutine = script.CreateCoroutine(function);
 
@@ -281,9 +370,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithDynValueArgumentsThrowsForClrCallbacks()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithDynValueArgumentsThrowsForClrCallbacks(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
             DynValue coroutine = script.CreateCoroutine(callback);
 
@@ -294,9 +390,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithContextArgsThrowsWhenContextNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithContextArgsThrowsWhenContextNull(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 1 end");
             DynValue coroutine = script.CreateCoroutine(function);
 
@@ -307,9 +410,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithContextArgsThrowsWhenArgsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithContextArgsThrowsWhenArgsNull(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 1 end");
             DynValue coroutine = script.CreateCoroutine(function);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
@@ -321,9 +429,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithObjectArgsThrowsWhenArgsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithObjectArgsThrowsWhenArgsNull(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 1 end");
             DynValue coroutine = script.CreateCoroutine(function);
 
@@ -334,9 +447,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithContextObjectArgsThrowsWhenArgsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithContextObjectArgsThrowsWhenArgsNull(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 1 end");
             DynValue coroutine = script.CreateCoroutine(function);
             ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
@@ -348,9 +468,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task AutoYieldCounterForcesSuspendUntilResumed()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AutoYieldCounterForcesSuspendUntilResumed(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() return 42 end");
             DynValue coroutine = script.CreateCoroutine(function);
             coroutine.Coroutine.AutoYieldCounter = 1;
@@ -368,7 +493,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithContextFromDifferentScriptThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithContextFromDifferentScriptThrows(
+            LuaCompatibilityVersion version
+        )
         {
             Script owningScript = new();
             DynValue function = owningScript.DoString("return function() return 1 end");
@@ -386,7 +518,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ResumeWithArgumentsFromDifferentScriptThrows()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithArgumentsFromDifferentScriptThrows(
+            LuaCompatibilityVersion version
+        )
         {
             Script owningScript = new();
             DynValue function = owningScript.DoString("return function(value) return value end");
@@ -402,9 +541,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task AutoYieldCounterProxiesProcessorValue()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task AutoYieldCounterProxiesProcessorValue(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue function = script.DoString("return function() coroutine.yield(1) end");
             DynValue coroutine = script.CreateCoroutine(function);
 
@@ -414,9 +558,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetProcessorForTestsThrowsForClrCallbacks()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetProcessorForTestsThrowsForClrCallbacks(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
             DynValue coroutine = script.CreateCoroutine(callback);
 
@@ -427,9 +576,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task ForceStateForTestsThrowsForClrCallbacks()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ForceStateForTestsThrowsForClrCallbacks(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
             DynValue coroutine = script.CreateCoroutine(callback);
 
@@ -440,9 +594,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseReturnsTrueForClrCallbacks()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CloseReturnsTrueForClrCallbacks(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
             DynValue coroutine = script.CreateCoroutine(callback);
 
@@ -454,9 +613,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetStackTraceUsesSuspendedLocationWhenNotRunning()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetStackTraceUsesSuspendedLocationWhenNotRunning(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             script.Options.DebugPrint = _ => { };
             DynValue function = script.DoString(
                 @"

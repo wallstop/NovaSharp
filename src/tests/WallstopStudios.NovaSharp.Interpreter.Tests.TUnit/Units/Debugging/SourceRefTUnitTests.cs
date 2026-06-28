@@ -4,7 +4,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class SourceRefTUnitTests
     {
@@ -84,12 +86,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         }
 
         [global::TUnit.Core.Test]
-        public async Task ClrLocationAndCopyConstructorPreserveMetadata()
+        [AllLuaVersions]
+        public async Task ClrLocationAndCopyConstructorPreserveMetadata(
+            LuaCompatibilityVersion version
+        )
         {
             SourceRef clr = SourceRef.GetClrLocation();
             await Assert.That(clr.IsClrLocation).IsTrue().ConfigureAwait(false);
             await Assert
-                .That(clr.FormatLocation(new Script()))
+                .That(clr.FormatLocation(new Script(version)))
                 .IsEqualTo("[clr]")
                 .ConfigureAwait(false);
 

@@ -29,12 +29,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 
             _block = new CompositeStatement(lcontext);
 
-            if (lcontext.Lexer.Current.Type != TokenType.Eof)
+            if (lcontext.Lexer.Current.type != TokenType.Eof)
             {
                 throw new SyntaxErrorException(
                     lcontext.Lexer.Current,
                     "<eof> expected near '{0}'",
-                    lcontext.Lexer.Current.Text
+                    lcontext.Lexer.Current.text
                 );
             }
 

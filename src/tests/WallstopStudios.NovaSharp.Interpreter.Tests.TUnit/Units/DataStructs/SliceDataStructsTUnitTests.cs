@@ -6,7 +6,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
-    using CollectionAssert = NUnit.Framework.CollectionAssert;
 
     public sealed class SliceDataStructsTUnitTests
     {
@@ -44,8 +43,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             List<string> source = new() { "a", "b", "c", "d" };
             Slice<string> slice = new(source, from: 1, length: 2, reversed: false);
 
-            CollectionAssert.AreEqual(ExpectedStringSlice, slice.ToArray());
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Assert
+                .That(slice.ToArray())
+                .IsEquivalentTo(ExpectedStringSlice)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -54,8 +55,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             List<int> source = new() { 10, 20, 30, 40, 50 };
             Slice<int> slice = new(source, from: 1, length: 3, reversed: true);
 
-            CollectionAssert.AreEqual(ReversedSlice, slice.ToArray());
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Assert.That(slice.ToArray()).IsEquivalentTo(ReversedSlice).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -77,8 +77,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
 
             slice.CopyTo(buffer, 1);
 
-            CollectionAssert.AreEqual(CopyBufferExpectation, buffer);
-            await Task.CompletedTask.ConfigureAwait(false);
+            await Assert.That(buffer).IsEquivalentTo(CopyBufferExpectation).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

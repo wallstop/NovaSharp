@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -190,7 +191,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
                     t.Set(
                         "error",
                         DynValue.NewString(
-                            $"Wiring of '{Value.Type.ToErrorTypeString()}' value members not supported."
+                            ZString.Concat(
+                                "Wiring of '",
+                                Value.Type.ToErrorTypeString(),
+                                "' value members not supported."
+                            )
                         )
                     );
                     break;

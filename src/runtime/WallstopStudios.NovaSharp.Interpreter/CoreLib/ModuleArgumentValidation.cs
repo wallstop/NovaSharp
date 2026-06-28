@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -18,6 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="context">Execution context supplied by the caller.</param>
         /// <param name="parameterName">Name of the parameter being validated.</param>
         /// <returns>The validated context for fluent usage.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [return: NotNull]
         public static ScriptExecutionContext RequireExecutionContext(
             [NotNull] ScriptExecutionContext context,
@@ -38,6 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="args">Arguments passed into the module method.</param>
         /// <param name="parameterName">Name of the parameter being validated.</param>
         /// <returns>The validated <see cref="CallbackArguments"/> instance.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [return: NotNull]
         public static CallbackArguments RequireArguments(
             [NotNull] CallbackArguments args,
@@ -59,6 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="table">Table argument supplied by the host.</param>
         /// <param name="parameterName">Name of the parameter being validated.</param>
         /// <returns>The validated table.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [return: NotNull]
         public static Table RequireTable([NotNull] Table table, string parameterName)
         {
@@ -76,6 +80,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         /// <param name="script">Script instance provided by the host.</param>
         /// <param name="parameterName">Name of the parameter being validated.</param>
         /// <returns>The validated script.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [return: NotNull]
         public static Script RequireScript([NotNull] Script script, string parameterName)
         {

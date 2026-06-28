@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 {
     using System;
     using System.Collections.Generic;
+    using Cysharp.Text;
     using Debugging;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -461,7 +462,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     new WatchItem()
                     {
                         Address = referenceId,
-                        Name = FormattableString.Invariant($"coroutine #{referenceId}"),
+                        Name = ZString.Concat("coroutine #", referenceId),
                     }
                 );
             }

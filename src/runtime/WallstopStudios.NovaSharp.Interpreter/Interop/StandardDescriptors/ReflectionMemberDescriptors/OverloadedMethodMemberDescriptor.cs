@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
     using BasicDescriptors;
     using Compatibility;
     using Converters;
+    using Cysharp.Text;
     using DataTypes;
     using Errors;
     using Execution;
@@ -71,6 +72,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
             public int hitIndexAtLastHit;
         }
 
+        /// <summary>
+        /// Lightweight structure for last-call caching optimization.
+        /// Stored as a struct to avoid extra heap allocation; copied atomically by assignment.
+        /// This enables a very fast check before the full cache lookup.
+        /// </summary>
+        private struct LastCallCacheEntry
+        {
+            public IOverloadableMemberDescriptor method;
+            public int argCount;
+            public bool hasObject;
+            public DataType arg0Type;
+            public DataType arg1Type;
+            public DataType arg2Type;
+            public Type arg0UserDataType;
+            public Type arg1UserDataType;
+            public Type arg2UserDataType;
+        }
+
         private readonly List<IOverloadableMemberDescriptor> _overloads = new();
         private IReadOnlyList<IOverloadableMemberDescriptor> _extOverloads =
             Array.Empty<IOverloadableMemberDescriptor>();
@@ -78,6 +97,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         private OverloadCacheItem[] _cache = new OverloadCacheItem[CacheSize];
         private int _cacheHits;
         private int _extensionMethodVersion;
+
+        // Last-call cache: stores the most recently resolved method for fast repeated calls.
+        // This is a per-instance field (not static) for thread safety.
+        private LastCallCacheEntry _lastCall;
 
         /// <summary>
         /// Gets or sets a value indicating whether this instance ignores extension methods.
@@ -205,6 +228,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
 
             if (extMethodCacheNotExpired)
             {
+                // OPTIMIZATION: Last-call fast path - check if this call matches the most recent one.
+                // This avoids iterating through the full cache array for tight loops that call
+                // the same method repeatedly with the same argument signature.
+                if (CheckLastCallMatch(obj != null, args))
+                {
+#if DEBUG_OVERLOAD_RESOLVER
+                    System.Diagnostics.Debug.WriteLine("[OVERLOAD] : LAST-CALL HIT!");
+#endif
+                    return _lastCall.method.Execute(script, obj, context, args);
+                }
+
                 for (int i = 0; i < _cache.Length; i++)
                 {
                     if (_cache[i] != null && CheckMatch(obj != null, args, _cache[i]))
@@ -272,6 +306,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
             IOverloadableMemberDescriptor bestOverload
         )
         {
+            // Update last-call cache for fast repeated calls with same signature
+            UpdateLastCallCache(hasObject, args, bestOverload);
+
             int lowestHits = int.MaxValue;
             OverloadCacheItem found = null;
             for (int i = 0; i < _cache.Length; i++)
@@ -368,6 +405,158 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
 
             overloadCacheItem.hitIndexAtLastHit = ++_cacheHits;
             return true;
+        }
+
+        /// <summary>
+        /// Fast check for last-call cache hit. This method is optimized for the common case
+        /// where the same method is called repeatedly with the same argument signature
+        /// (e.g., in a tight loop). It avoids iterating through the full cache array.
+        /// </summary>
+        /// <remarks>
+        /// The check handles up to 3 arguments inline (common case) without allocations.
+        /// For calls with more arguments, falls through to the full cache lookup.
+        /// </remarks>
+        private bool CheckLastCallMatch(bool hasObject, CallbackArguments args)
+        {
+            // No cached method yet
+            if (_lastCall.method == null)
+            {
+                return false;
+            }
+
+            // Object state mismatch (instance vs static call)
+            if (_lastCall.hasObject && !hasObject)
+            {
+                return false;
+            }
+
+            // Argument count mismatch
+            if (args.Count != _lastCall.argCount)
+            {
+                return false;
+            }
+
+            // For 0-3 arguments, do inline comparison (most common cases)
+            // This avoids any loop overhead for typical method calls
+            int argCount = args.Count;
+
+            if (argCount > 3)
+            {
+                // Fall through to full cache for 4+ arguments
+                return false;
+            }
+
+            // Check argument 0
+            if (argCount >= 1)
+            {
+                if (args[0].Type != _lastCall.arg0Type)
+                {
+                    return false;
+                }
+
+                if (args[0].Type == DataType.UserData)
+                {
+                    if (args[0].UserData.Descriptor.Type != _lastCall.arg0UserDataType)
+                    {
+                        return false;
+                    }
+                }
+                else if (_lastCall.arg0UserDataType != null)
+                {
+                    return false;
+                }
+            }
+
+            // Check argument 1
+            if (argCount >= 2)
+            {
+                if (args[1].Type != _lastCall.arg1Type)
+                {
+                    return false;
+                }
+
+                if (args[1].Type == DataType.UserData)
+                {
+                    if (args[1].UserData.Descriptor.Type != _lastCall.arg1UserDataType)
+                    {
+                        return false;
+                    }
+                }
+                else if (_lastCall.arg1UserDataType != null)
+                {
+                    return false;
+                }
+            }
+
+            // Check argument 2
+            if (argCount >= 3)
+            {
+                if (args[2].Type != _lastCall.arg2Type)
+                {
+                    return false;
+                }
+
+                if (args[2].Type == DataType.UserData)
+                {
+                    if (args[2].UserData.Descriptor.Type != _lastCall.arg2UserDataType)
+                    {
+                        return false;
+                    }
+                }
+                else if (_lastCall.arg2UserDataType != null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Updates the last-call cache entry with the current call's signature.
+        /// </summary>
+        private void UpdateLastCallCache(
+            bool hasObject,
+            CallbackArguments args,
+            IOverloadableMemberDescriptor method
+        )
+        {
+            _lastCall.method = method;
+            _lastCall.hasObject = hasObject;
+            _lastCall.argCount = args.Count;
+
+            // Clear UserData types first
+            _lastCall.arg0UserDataType = null;
+            _lastCall.arg1UserDataType = null;
+            _lastCall.arg2UserDataType = null;
+
+            // Store up to 3 arguments inline
+            if (args.Count >= 1)
+            {
+                _lastCall.arg0Type = args[0].Type;
+                if (args[0].Type == DataType.UserData)
+                {
+                    _lastCall.arg0UserDataType = args[0].UserData.Descriptor.Type;
+                }
+            }
+
+            if (args.Count >= 2)
+            {
+                _lastCall.arg1Type = args[1].Type;
+                if (args[1].Type == DataType.UserData)
+                {
+                    _lastCall.arg1UserDataType = args[1].UserData.Descriptor.Type;
+                }
+            }
+
+            if (args.Count >= 3)
+            {
+                _lastCall.arg2Type = args[2].Type;
+                if (args[2].Type == DataType.UserData)
+                {
+                    _lastCall.arg2UserDataType = args[2].UserData.Descriptor.Type;
+                }
+            }
         }
 
         /// <summary>
@@ -658,7 +847,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                     mst.Table.Set(
                         ++i,
                         DynValue.NewString(
-                            $"unsupported - {m.GetType().FullName} is not serializable"
+                            ZString.Concat(
+                                "unsupported - ",
+                                m.GetType().FullName,
+                                " is not serializable"
+                            )
                         )
                     );
                 }
@@ -701,6 +894,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
 
                 descriptor._cache = new OverloadCacheItem[size];
                 descriptor._cacheHits = 0;
+            }
+
+            /// <summary>
+            /// Clears the last-call cache for testing purposes.
+            /// </summary>
+            public static void ClearLastCallCache(OverloadedMethodMemberDescriptor descriptor)
+            {
+                descriptor._lastCall = default;
+            }
+
+            /// <summary>
+            /// Checks if the last-call cache has a cached method.
+            /// </summary>
+            public static bool HasLastCallCached(OverloadedMethodMemberDescriptor descriptor)
+            {
+                return descriptor._lastCall.method != null;
+            }
+
+            /// <summary>
+            /// Gets the argument count stored in the last-call cache.
+            /// </summary>
+            public static int GetLastCallArgCount(OverloadedMethodMemberDescriptor descriptor)
+            {
+                return descriptor._lastCall.argCount;
             }
         }
     }

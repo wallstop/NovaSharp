@@ -4,10 +4,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
     public sealed class ArrayMemberDescriptorTUnitTests
@@ -69,9 +72,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task GetterReturnsArrayElement()
+        [AllLuaVersions]
+        public async Task GetterReturnsArrayElement(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             int[] array = { 10, 20, 30 };
             UserData.RegisterType<int[]>();
             script.Globals["arr"] = array;
@@ -82,9 +86,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
-        public async Task SetterModifiesArrayElement()
+        [AllLuaVersions]
+        public async Task SetterModifiesArrayElement(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             int[] array = { 10, 20, 30 };
             UserData.RegisterType<int[]>();
             script.Globals["arr"] = array;
@@ -95,14 +100,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
+        [AllLuaVersions]
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Performance",
             "CA1814:Prefer jagged arrays over multidimensional",
             Justification = "Test specifically verifies multi-dimensional array support."
         )]
-        public async Task MultiDimensionalArrayAccess()
+        public async Task MultiDimensionalArrayAccess(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             int[,] array = new int[2, 2];
             array[0, 0] = 1;
             array[0, 1] = 2;
@@ -117,14 +123,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
+        [AllLuaVersions]
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Performance",
             "CA1814:Prefer jagged arrays over multidimensional",
             Justification = "Test specifically verifies multi-dimensional array support."
         )]
-        public async Task MultiDimensionalArraySet()
+        public async Task MultiDimensionalArraySet(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             int[,] array = new int[2, 2];
             UserData.RegisterType<int[,]>();
             script.Globals["arr"] = array;

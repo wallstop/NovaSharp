@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using global::TUnit.Assertions;
     using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
@@ -18,9 +19,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     public sealed class ScriptRunTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task RunStringExecutesCodeWithDefaultScript()
+        [AllLuaVersions]
+        public async Task RunStringExecutesCodeWithDefaultScript(LuaCompatibilityVersion version)
         {
-            DynValue result = Script.RunString("return 123");
+            Script script = new(version);
+            DynValue result = script.DoString("return 123");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number);
             await Assert.That(result.Number).IsEqualTo(123);
@@ -127,7 +130,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task DoFileWithExplicitLoaderThrowsWhenFileMissing()
+        [AllLuaVersions]
+        public async Task DoFileWithExplicitLoaderThrowsWhenFileMissing(
+            LuaCompatibilityVersion version
+        )
         {
             using TempFileScope missingFileScope = TempFileScope.Create(
                 extension: ".lua",
@@ -135,7 +141,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             );
             string path = missingFileScope.FilePath;
 
-            ScriptOptions options = new() { ScriptLoader = new FileSystemScriptLoader() };
+            ScriptOptions options = new(Script.DefaultOptions)
+            {
+                ScriptLoader = new FileSystemScriptLoader(),
+                CompatibilityVersion = version,
+            };
             Script script = new(options);
 
             FileNotFoundException exception = ExpectException<FileNotFoundException>(
@@ -147,33 +157,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task RunStringExecutesBase64Dump()
+        [AllLuaVersions]
+        public async Task RunStringExecutesBase64Dump(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue chunk = script.LoadString("return 77");
 
             string encoded = EncodeFunctionAsBase64(script, chunk);
-            DynValue result = Script.RunString(encoded);
+            DynValue result = script.DoString(encoded);
 
             await Assert.That(result.Type).IsEqualTo(DataType.Number);
             await Assert.That(result.Number).IsEqualTo(77);
         }
 
         [global::TUnit.Core.Test]
-        [Arguments("return 42", DataType.Number, 42.0, null)]
-        [Arguments("return 'hello'", DataType.String, null, "hello")]
-        [Arguments("return true", DataType.Boolean, null, null)]
-        [Arguments("return nil", DataType.Nil, null, null)]
-        [Arguments("return 1 + 2 * 3", DataType.Number, 7.0, null)]
-        [Arguments("return 'foo' .. 'bar'", DataType.String, null, "foobar")]
+        [LuaTestMatrix(
+            new object[] { "return 42", DataType.Number, 42.0, null },
+            new object[] { "return 'hello'", DataType.String, null, "hello" },
+            new object[] { "return true", DataType.Boolean, null, null },
+            new object[] { "return nil", DataType.Nil, null, null },
+            new object[] { "return 1 + 2 * 3", DataType.Number, 7.0, null },
+            new object[] { "return 'foo' .. 'bar'", DataType.String, null, "foobar" }
+        )]
         public async Task RunStringReturnsExpectedValue(
+            LuaCompatibilityVersion version,
             string code,
             DataType expectedType,
             double? expectedNumber,
             string expectedString
         )
         {
-            DynValue result = Script.RunString(code);
+            Script script = new(version);
+            DynValue result = script.DoString(code);
 
             await Assert.That(result.Type).IsEqualTo(expectedType).ConfigureAwait(false);
 

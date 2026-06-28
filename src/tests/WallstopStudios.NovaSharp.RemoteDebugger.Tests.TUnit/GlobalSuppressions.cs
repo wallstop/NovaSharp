@@ -1,4 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
+using TUnit.Core;
+
+// Use reflection mode since source generation is disabled for faster builds
+[assembly: ReflectionMode]
 
 [assembly: SuppressMessage(
     "Usage",

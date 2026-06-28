@@ -14,13 +14,13 @@ python -m pip install -r requirements.tooling.txt
 Run the audit locally and refresh the committed log:
 
 ```bash
-python tools/SpellingAudit/spelling_audit.py --write-log spelling_audit.log
+python tools/SpellingAudit/spelling_audit.py --write-log docs/audits/spelling_audit.log
 ```
 
 To verify (used by CI), call:
 
 ```bash
-python tools/SpellingAudit/spelling_audit.py --verify-log spelling_audit.log
+python tools/SpellingAudit/spelling_audit.py --verify-log docs/audits/spelling_audit.log
 ```
 
 The script supports additional arguments (e.g., extra skip globs or specific paths). Run with `--help` for the full set of options.

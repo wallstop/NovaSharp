@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
 {
     using System.Collections;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Converters;
@@ -132,7 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData
         /// </summary>
         public DynValue MetaIndex(Script script, string metaname)
         {
-            if (metaname == "__call")
+            if (metaname == Metamethods.Call)
             {
                 return DynValue.NewCallback(LuaIteratorCallback);
             }

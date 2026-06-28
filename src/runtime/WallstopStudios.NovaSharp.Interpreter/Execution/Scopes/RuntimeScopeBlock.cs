@@ -1,6 +1,8 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
 {
     using System;
+    using Cysharp.Text;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -33,7 +35,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// </summary>
         public override string ToString()
         {
-            return $"ScopeBlock : {From} -> {To} --> {ToInclusive}";
+            using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+            sb.Append("ScopeBlock : ");
+            sb.Append(From);
+            sb.Append(" -> ");
+            sb.Append(To);
+            sb.Append(" --> ");
+            sb.Append(ToInclusive);
+            return sb.ToString();
         }
     }
 }

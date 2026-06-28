@@ -11,7 +11,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure
 
         public ConsoleCaptureScope(bool captureError)
         {
-            Writer = new StringWriter();
+            // Use ThreadSafeStringWriter instead of StringWriter to prevent race conditions.
+            // StringWriter uses StringBuilder internally, which is not thread-safe.
+            // When both Console.Out and Console.Error are redirected to the same writer,
+            // concurrent writes can corrupt StringBuilder's internal state, causing
+            // ArgumentOutOfRangeException ("chunkLength") on ToString().
+            Writer = new ThreadSafeStringWriter();
             _originalOut = Console.Out;
             _originalError = Console.Error;
 
@@ -23,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure
             }
         }
 
-        public StringWriter Writer { get; }
+        public ThreadSafeStringWriter Writer { get; }
 
         public void Dispose()
         {

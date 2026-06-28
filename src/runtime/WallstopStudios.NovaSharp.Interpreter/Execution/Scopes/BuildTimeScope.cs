@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
 {
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Tree.Statements;
@@ -114,7 +115,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         }
 
         /// <summary>
-        /// Forces the current function to capture <c>_ENV</c> as an upvalue so globals remain addressable even when not explicitly referenced.
+        /// Forces the current function to capture <c>_ENV</c> as an upvalue.
+        /// This is needed for Lua 5.1 compatibility where setfenv/getfenv can operate
+        /// on any function, even those that don't explicitly reference globals.
+        /// For Lua 5.2+, this should NOT be called - _ENV is only captured when needed.
         /// </summary>
         public void ForceEnvUpValue()
         {
@@ -178,9 +182,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         /// Registers a label inside the active block so <c>goto</c> statements can resolve against it.
         /// </summary>
         /// <param name="label">The label being declared.</param>
-        internal void DefineLabel(LabelStatement label)
+        /// <param name="version">Target Lua version for version-specific validation.</param>
+        internal void DefineLabel(LabelStatement label, LuaCompatibilityVersion version)
         {
-            CurrentFrame.DefineLabel(label);
+            CurrentFrame.DefineLabel(label, version);
         }
 
         /// <summary>
@@ -190,6 +195,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         internal void RegisterGoto(GotoStatement gotostat)
         {
             CurrentFrame.RegisterGoto(gotostat);
+        }
+
+        /// <summary>
+        /// Called before parsing a statement to snapshot the current var count.
+        /// </summary>
+        /// <remarks>
+        /// This captures the var count before any locals declared in the statement,
+        /// needed for the void statement rule in Lua 5.4 §3.5.
+        /// </remarks>
+        internal void BeforeStatement()
+        {
+            CurrentFrame.BeforeStatement();
+        }
+
+        /// <summary>
+        /// Marks that a non-void statement was parsed in the current block.
+        /// </summary>
+        /// <remarks>
+        /// Per Lua 5.4 §3.5, void statements are labels and empty statements.
+        /// All other statements are non-void. This tracking is needed to implement
+        /// the rule that local scope ends at the "last non-void statement".
+        /// </remarks>
+        internal void MarkNonVoidStatement()
+        {
+            CurrentFrame.MarkNonVoidStatement();
         }
     }
 }

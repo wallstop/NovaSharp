@@ -3,21 +3,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using System;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
+    using global::TUnit.Core;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ModuleRegisterTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task RegisterCoreModulesRemovesWarnWhenProfileDoesNotSupportIt()
+        [Arguments(LuaCompatibilityVersion.Lua53)]
+        public async Task RegisterCoreModulesRemovesWarnWhenProfileDoesNotSupportIt(
+            LuaCompatibilityVersion version
+        )
         {
-            ScriptOptions options = new ScriptOptions
-            {
-                CompatibilityVersion = LuaCompatibilityVersion.Lua53,
-            };
+            ScriptOptions options = new ScriptOptions { CompatibilityVersion = version };
             Script script = new Script(CoreModules.Basic, options);
             Table globals = new Table(script);
 
@@ -28,12 +30,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
-        public async Task RegisterCoreModulesRemovesTableMoveWhenProfileDoesNotSupportIt()
+        [Arguments(LuaCompatibilityVersion.Lua52)]
+        public async Task RegisterCoreModulesRemovesTableMoveWhenProfileDoesNotSupportIt(
+            LuaCompatibilityVersion version
+        )
         {
-            ScriptOptions options = new ScriptOptions
-            {
-                CompatibilityVersion = LuaCompatibilityVersion.Lua52,
-            };
+            ScriptOptions options = new ScriptOptions { CompatibilityVersion = version };
             Script script = new Script(CoreModules.Table, options);
             Table globals = new Table(script);
 
@@ -55,9 +57,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
-        public async Task RegisterModuleTypeThrowsWhenArgumentsAreNull()
+        [AllLuaVersions]
+        public async Task RegisterModuleTypeThrowsWhenArgumentsAreNull(
+            LuaCompatibilityVersion version
+        )
         {
-            Table globals = new Table(new Script(CoreModules.Basic));
+            Table globals = new Table(new Script(version, CoreModules.Basic));
 
             ArgumentNullException tableException = Assert.Throws<ArgumentNullException>(() =>
                 ModuleRegister.RegisterModuleType(null, typeof(BasicModule))
@@ -71,9 +76,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
-        public async Task RegisterModuleTypeCreatesNamespaceAndPackageEntries()
+        [AllLuaVersions]
+        public async Task RegisterModuleTypeCreatesNamespaceAndPackageEntries(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new Script(CoreModules.Basic);
+            Script script = new Script(version, CoreModules.Basic);
             Table globals = new Table(script);
 
             globals.RegisterModuleType(typeof(Bit32Module));

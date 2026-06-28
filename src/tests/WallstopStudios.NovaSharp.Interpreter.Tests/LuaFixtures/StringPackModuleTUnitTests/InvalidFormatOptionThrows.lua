@@ -1,0 +1,7 @@
+-- @lua-versions: 5.3+
+-- @novasharp-only: false
+-- @expects-error: true
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\StringPackModuleTUnitTests.cs:352
+-- @test: StringPackModuleTUnitTests.InvalidFormatOptionThrows
+-- Test targets Lua 5.3+; Lua 5.3+: string.pack (5.3+)
+string.pack('Q', 42)

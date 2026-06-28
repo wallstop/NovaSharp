@@ -1,191 +1,245 @@
 #!/usr/bin/env bash
 # Post-create script for NovaSharp dev container
-# Installs all Lua versions (5.1, 5.2, 5.3, 5.4, 5.5) for specification comparison testing
-#
-# Supported platforms:
-#   - Linux (apt-based: Debian, Ubuntu)
-#   - macOS (via Homebrew)
-#   - Windows (via MSYS2/Git Bash - limited support)
+# NOTE: NuGet restore is done in on-create.sh (before extensions load)
+# This script handles remaining setup: Python environment, hooks, verification
 
 set -euo pipefail
 
-echo "=== NovaSharp Dev Container Setup ==="
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║           NovaSharp Post-Create Setup                          ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
 
-# Detect operating system
-detect_os() {
-    case "$(uname -s)" in
-        Linux*)     echo "linux";;
-        Darwin*)    echo "macos";;
-        CYGWIN*|MINGW*|MSYS*) echo "windows";;
-        *)          echo "unknown";;
-    esac
-}
-
-OS=$(detect_os)
-echo "Detected OS: $OS"
-
-# Install Lua 5.1-5.4 based on platform
-install_lua_from_package_manager() {
-    case "$OS" in
-        linux)
-            echo "Installing Lua 5.1-5.4 from apt..."
-            sudo apt-get update
-            sudo apt-get install -y lua5.1 lua5.2 lua5.3 lua5.4 build-essential libreadline-dev curl
-            ;;
-        macos)
-            echo "Installing Lua 5.1-5.4 from Homebrew..."
-            # Ensure Homebrew is available
-            if ! command -v brew &> /dev/null; then
-                echo "Error: Homebrew not found. Please install Homebrew first."
-                exit 1
-            fi
-            # Install dependencies and Lua versions
-            brew install readline curl
-            # Note: Homebrew typically only has the latest Lua version
-            # For multiple versions, we may need to build from source or use luaenv
-            brew install lua@5.1 lua@5.3 lua@5.4 || true
-            # Create versioned symlinks if they don't exist
-            for ver in 5.1 5.3 5.4; do
-                if [[ -f "/usr/local/opt/lua@${ver}/bin/lua" ]] && ! command -v "lua${ver}" &> /dev/null; then
-                    sudo ln -sf "/usr/local/opt/lua@${ver}/bin/lua" "/usr/local/bin/lua${ver}"
-                fi
-                if [[ -f "/opt/homebrew/opt/lua@${ver}/bin/lua" ]] && ! command -v "lua${ver}" &> /dev/null; then
-                    sudo ln -sf "/opt/homebrew/opt/lua@${ver}/bin/lua" "/usr/local/bin/lua${ver}"
-                fi
-            done
-            ;;
-        windows)
-            echo "Windows detected. Please install Lua versions manually or via Chocolatey/Scoop."
-            echo "Skipping package manager installation..."
-            ;;
-        *)
-            echo "Unknown OS. Skipping package manager installation..."
-            ;;
-    esac
-}
-
-# Build Lua 5.5 from source (works on Linux and macOS)
-build_lua55_from_source() {
-    echo "Building Lua 5.5 from source..."
-    
-    # Version info - the tarball name includes "-rc2" but extracts to just the base version
-    local LUA55_TARBALL_VERSION="5.5.0-rc2"
-    local LUA55_EXTRACT_DIR="lua-5.5.0"  # Directory name after extraction (without -rc2)
-    local LUA55_URL="https://www.lua.org/work/lua-${LUA55_TARBALL_VERSION}.tar.gz"
-    local LUA55_INSTALL_PREFIX="/usr/local/lua55"
-
-    # Determine make target based on OS
-    local MAKE_TARGET
-    case "$OS" in
-        linux)
-            MAKE_TARGET="linux"
-            ;;
-        macos)
-            MAKE_TARGET="macosx"
-            ;;
-        windows)
-            echo "Building Lua 5.5 from source is not supported on Windows via this script."
-            echo "Please use pre-built binaries or build manually with MinGW/MSVC."
-            return 1
-            ;;
-        *)
-            echo "Unknown OS. Attempting generic build..."
-            MAKE_TARGET="generic"
-            ;;
-    esac
-
-    # Create temp directory for build
-    local BUILD_DIR
-    BUILD_DIR=$(mktemp -d)
-    cd "$BUILD_DIR"
-
-    # Download and extract
-    echo "Downloading Lua ${LUA55_TARBALL_VERSION}..."
-    curl -L -o "lua-${LUA55_TARBALL_VERSION}.tar.gz" "$LUA55_URL"
-    tar xzf "lua-${LUA55_TARBALL_VERSION}.tar.gz"
-    
-    # Find the extracted directory (handle potential naming variations)
-    local EXTRACTED_DIR
-    if [[ -d "$LUA55_EXTRACT_DIR" ]]; then
-        EXTRACTED_DIR="$LUA55_EXTRACT_DIR"
-    elif [[ -d "lua-${LUA55_TARBALL_VERSION}" ]]; then
-        EXTRACTED_DIR="lua-${LUA55_TARBALL_VERSION}"
-    else
-        # Fallback: find any lua-5.5* directory
-        EXTRACTED_DIR=$(find . -maxdepth 1 -type d -name "lua-5.5*" | head -1)
-        if [[ -z "$EXTRACTED_DIR" ]]; then
-            echo "Error: Could not find extracted Lua 5.5 directory"
-            ls -la
-            return 1
-        fi
-    fi
-    
-    echo "Extracted to: $EXTRACTED_DIR"
-    cd "$EXTRACTED_DIR"
-
-    # Build for the detected platform
-    echo "Compiling Lua 5.5 with target: ${MAKE_TARGET}..."
-    make "$MAKE_TARGET"
-
-    # Install to dedicated prefix to avoid conflicts
-    echo "Installing Lua 5.5 to ${LUA55_INSTALL_PREFIX}..."
-    sudo make install INSTALL_TOP="$LUA55_INSTALL_PREFIX"
-
-    # Create symlinks for lua5.5 command
-    sudo ln -sf "${LUA55_INSTALL_PREFIX}/bin/lua" /usr/local/bin/lua5.5
-    sudo ln -sf "${LUA55_INSTALL_PREFIX}/bin/luac" /usr/local/bin/luac5.5
-
-    # Cleanup
-    cd /
-    rm -rf "$BUILD_DIR"
-    
-    echo "Lua 5.5 installation complete."
-}
-
-# Install packages from package manager
-install_lua_from_package_manager
-
-# Build Lua 5.5 from source
-if [[ "$OS" != "windows" ]]; then
-    build_lua55_from_source
-else
-    echo "Skipping Lua 5.5 build on Windows. Please install manually."
+WORKSPACE_DIR="${1:-$(pwd)}"
+if [ ! -d "${WORKSPACE_DIR}" ]; then
+    echo "❌ Workspace not found: ${WORKSPACE_DIR}"
+    exit 1
 fi
 
-# Restore dotnet tools
-echo "Restoring .NET tools..."
-cd /workspaces/NovaSharp
-dotnet tool restore
+cd "${WORKSPACE_DIR}"
 
-# Install Python tooling dependencies
-echo "Installing Python tooling dependencies..."
-pip install --user -r requirements.tooling.txt
+run_with_retries() {
+    local max_attempts="$1"
+    shift
 
-# Verify installations
-echo ""
-echo "=== Lua Version Verification ==="
+    local attempt=1
+    local delay_seconds=2
+    while true; do
+        if "$@"; then
+            return 0
+        else
+            local exit_code=$?
+        fi
+        if [ "${attempt}" -ge "${max_attempts}" ]; then
+            return "${exit_code}"
+        fi
 
-verify_lua_version() {
-    local cmd=$1
-    local label=$2
-    if command -v "$cmd" &> /dev/null; then
-        echo -n "${label}: " && $cmd -v 2>&1 | head -1
+        local jitter=$((RANDOM % 3))
+        local sleep_seconds=$((delay_seconds + jitter))
+        local next_attempt=$((attempt + 1))
+        echo "   Retry ${next_attempt}/${max_attempts} in ${sleep_seconds}s: $*"
+        sleep "${sleep_seconds}"
+        attempt="${next_attempt}"
+        if [ "${delay_seconds}" -lt 30 ]; then
+            delay_seconds=$((delay_seconds * 2))
+            if [ "${delay_seconds}" -gt 30 ]; then
+                delay_seconds=30
+            fi
+        fi
+    done
+}
+
+ensure_python_venv() {
+    local venv_dir="$1"
+    local venv_python="${venv_dir}/bin/python"
+    local recreate=0
+
+    if [ -x "${venv_python}" ]; then
+        if ! "${venv_python}" - <<'PY'
+import sys
+
+if sys.prefix == sys.base_prefix:
+    raise SystemExit("python is not running from a virtual environment")
+PY
+        then
+            echo "   Existing virtual environment is unhealthy; recreating."
+            recreate=1
+        fi
+    elif [ -e "${venv_dir}" ]; then
+        echo "   Existing .venv is not a usable Python environment; recreating."
+        recreate=1
     else
-        echo "${label}: NOT INSTALLED"
+        recreate=1
+    fi
+
+    if [ "${recreate}" = "1" ]; then
+        rm -rf "${venv_dir}"
+        python3 -m venv "${venv_dir}"
     fi
 }
 
-verify_lua_version "lua5.1" "Lua 5.1"
-verify_lua_version "lua5.2" "Lua 5.2"
-verify_lua_version "lua5.3" "Lua 5.3"
-verify_lua_version "lua5.4" "Lua 5.4"
-verify_lua_version "lua5.5" "Lua 5.5"
+refresh_bashrc_venv_path() {
+    local venv_dir="$1"
+    local bashrc="${HOME}/.bashrc"
+    local temp_bashrc
+    temp_bashrc="$(mktemp)"
+
+    if [ -f "${bashrc}" ]; then
+        awk '
+            $0 == "# >>> NovaSharp Python venv activation >>>" { skip = 1; next }
+            $0 == "# <<< NovaSharp Python venv activation <<<" { skip = 0; next }
+            skip != 1 { print }
+        ' "${bashrc}" > "${temp_bashrc}"
+    fi
+
+    {
+        echo ""
+        echo "# >>> NovaSharp Python venv activation >>>"
+        echo "export PATH=\"${venv_dir}/bin:\${PATH}\""
+        echo "# <<< NovaSharp Python venv activation <<<"
+    } >> "${temp_bashrc}"
+
+    mv "${temp_bashrc}" "${bashrc}"
+}
+
+# ============================================================================
+# STEP 1: Setup Python environment
+# ============================================================================
+echo ""
+echo "🐍 Step 1/4: Setting up Python environment..."
+
+VENV_DIR="${WORKSPACE_DIR}/.venv"
+VENV_PYTHON="${VENV_DIR}/bin/python"
+ensure_python_venv "${VENV_DIR}"
+run_with_retries 5 "${VENV_PYTHON}" -m pip install --upgrade pip --retries 5 --timeout 60
+run_with_retries 5 "${VENV_PYTHON}" -m pip install -r requirements.tooling.txt --retries 5 --timeout 60
+"${VENV_PYTHON}" -m pip check
+"${VENV_PYTHON}" - <<'PY'
+import codespell_lib
+import markdown_it
+import mdformat
+import requests
+import yamllint
+PY
+
+# Ensure venv is on PATH for future sessions
+refresh_bashrc_venv_path "${VENV_DIR}"
+
+echo "   Virtual environment: ${VENV_DIR}"
+
+# ============================================================================
+# STEP 2: Install pre-commit hooks
+# ============================================================================
+echo ""
+echo "🪝 Step 2/4: Installing pre-commit hooks..."
+if [ -f "scripts/dev/install-hooks.sh" ]; then
+    if ! bash scripts/dev/install-hooks.sh; then
+        echo "   Warning: install-hooks.sh reported an error"
+    fi
+else
+    echo "   Skipped (install-hooks.sh not found)"
+fi
+
+# ============================================================================
+# STEP 3: Optional build cache pre-warm
+# ============================================================================
+echo ""
+echo "🔥 Step 3/4: Optional build cache pre-warm..."
+if [ "${NOVA_PREWARM_BUILD:-0}" = "1" ]; then
+    echo "   Prewarming build cache (NOVA_PREWARM_BUILD=1)"
+    dotnet build src/NovaSharp.sln -c Release -m --verbosity minimal
+else
+    echo "   Skipped (set NOVA_PREWARM_BUILD=1 to enable)"
+fi
+
+# ============================================================================
+# STEP 4: Environment verification
+# ============================================================================
+echo ""
+echo "🔎 Step 4/4: Verifying toolchain..."
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║           Environment Verification                             ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""
+
+echo "📌 Restoring local .NET tools:"
+run_with_retries 5 dotnet tool restore --verbosity minimal
 
 echo ""
-echo "=== Python Verification ==="
-echo -n "Python: " && python3 --version 2>&1
-echo -n "pip: " && pip --version 2>&1
+echo "📌 .NET SDKs:"
+dotnet --list-sdks | sed 's/^/   /'
 
 echo ""
-echo "=== Dev Container Setup Complete ==="
-echo "All available Lua versions installed and ready for specification comparison testing."
+echo "📌 Lua Interpreters:"
+for v in 5.1 5.2 5.3 5.4 5.5; do
+    cmd="lua${v}"
+    if command -v "$cmd" >/dev/null 2>&1; then
+        printf "   %-10s %s\n" "Lua ${v}:" "$($cmd -v 2>&1 | head -1)"
+    else
+        printf "   %-10s %s\n" "Lua ${v}:" "NOT FOUND"
+    fi
+done
+
+echo ""
+echo "📌 JavaScript Tooling:"
+if NODE_VERSION="$(node --version 2>&1)"; then
+    echo "   Node.js:           ${NODE_VERSION}"
+else
+    echo "   Node.js:           NOT FOUND"
+fi
+if NPM_VERSION="$(npm --version 2>&1)"; then
+    echo "   npm:               ${NPM_VERSION}"
+else
+    echo "   npm:               NOT FOUND"
+fi
+if CODEX_VERSION="$(codex --version 2>&1)"; then
+    echo "   Codex CLI:         ${CODEX_VERSION}"
+else
+    echo "   Codex CLI:         NOT FOUND"
+fi
+
+echo ""
+echo "📌 Local .NET Tools:"
+if CSHARPIER_VERSION="$(dotnet tool run csharpier --version 2>&1)"; then
+    echo "   CSharpier:         ${CSHARPIER_VERSION}"
+else
+    echo "   CSharpier:         NOT FOUND"
+fi
+if REPORTGENERATOR_HELP="$(dotnet tool run reportgenerator -help 2>&1)"; then
+    REPORTGENERATOR_VERSION="$(printf '%s\n' "${REPORTGENERATOR_HELP}" | sed -n 's/^ReportGenerator //p' | head -1)"
+    if [ -n "${REPORTGENERATOR_VERSION}" ]; then
+        echo "   ReportGenerator:   ${REPORTGENERATOR_VERSION}"
+    else
+        echo "   ReportGenerator:   installed"
+    fi
+else
+    echo "   ReportGenerator:   NOT FOUND"
+fi
+
+echo ""
+echo "📌 Workflow/YAML Linting:"
+if ACTIONLINT_VERSION="$(actionlint -version 2>&1)"; then
+    echo "   actionlint:        ${ACTIONLINT_VERSION}"
+else
+    echo "   actionlint:        NOT FOUND"
+fi
+if YAMLLINT_VERSION="$(yamllint --version 2>&1)"; then
+    echo "   yamllint:          ${YAMLLINT_VERSION}"
+else
+    echo "   yamllint:          NOT FOUND"
+fi
+
+echo ""
+echo "╔════════════════════════════════════════════════════════════════╗"
+echo "║           ✅ Setup Complete!                                    ║"
+echo "╠════════════════════════════════════════════════════════════════╣"
+echo "║  Quick commands:                                               ║"
+echo "║    ./scripts/build/quick.sh      - Build interpreter           ║"
+echo "║    ./scripts/test/quick.sh       - Run all tests               ║"
+echo "║    ./scripts/test/quick.sh Floor - Run tests matching 'Floor'  ║"
+echo "║                                                                ║"
+echo "║  IntelliSense will load automatically via Roslyn LSP.          ║"
+echo "╚════════════════════════════════════════════════════════════════╝"
+echo ""

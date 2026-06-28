@@ -3,15 +3,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class TailCallTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task TailRecursionHandlesThousandsOfFrames()
+        [AllLuaVersions]
+        public async Task TailRecursionHandlesThousandsOfFrames(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local function accumulate(n, acc)
@@ -30,9 +33,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task TailCallPreservesMultipleReturnValues()
+        [AllLuaVersions]
+        public async Task TailCallPreservesMultipleReturnValues(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local function id(a, b, c)
@@ -55,9 +59,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RecursiveSumMatchesArithmeticBaseline()
+        [AllLuaVersions]
+        public async Task RecursiveSumMatchesArithmeticBaseline(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local function recsum(n, partial)
@@ -76,9 +81,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RecursiveSumHandlesVeryDeepTailRecursion()
+        [AllLuaVersions]
+        public async Task RecursiveSumHandlesVeryDeepTailRecursion(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local function recsum(n, partial)
@@ -97,9 +103,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task TailCallRequestPropagatesAcrossClrCallback()
+        [AllLuaVersions]
+        public async Task TailCallRequestPropagatesAcrossClrCallback(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             script.Globals.Set(
                 "clrtail",
                 DynValue.NewCallback(
@@ -127,9 +136,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task BasicModuleToStringConvertsNumbers()
+        [AllLuaVersions]
+        public async Task BasicModuleToStringConvertsNumbers(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModules.Basic);
+            Script script = new(version, CoreModules.Basic);
             DynValue result = script.DoString(
                 @"
                 return tostring(9)
@@ -141,9 +151,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task TostringUsesMetamethodsWhenAvailable()
+        [AllLuaVersions]
+        public async Task TostringUsesMetamethodsWhenAvailable(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             DynValue result = script.DoString(
                 @"
                 local target = {}

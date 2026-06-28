@@ -3,31 +3,37 @@
 Utilities that keep the interpreter test metadata in sync now that all fixtures run on
 Microsoft.Testing.Platform/TUnit, plus Lua specification parity harnesses.
 
+> **Note:** For quick test execution with filtering, see [`../test/quick.sh`](../test/README.md).
+
 ## Lua Specification Parity Harness
 
-### run-lua-fixtures-parallel.py (Recommended)
+### run-lua-fixtures-fast.sh (Recommended)
 
-- **Purpose:** High-performance parallel runner for comparing Lua fixtures against reference Lua and NovaSharp.
-- **Performance:** ~27 fixtures/second with 8 workers (vs ~1/second sequential).
+- **Purpose:** Batch-mode runner for comparing Lua fixtures against reference Lua and NovaSharp. Reference Lua runs in parallel; NovaSharp runs through `WallstopStudios.NovaSharp.LuaBatchRunner` to avoid per-file process startup.
+- **Filtering:** Uses `tools/lua_version_utils.py` semantics for `@lua-versions`, including `all`, ranges, open-ended ranges, `novasharp-only`, and explicit `none`.
 - **Usage:**
   ```bash
   # Run against Lua 5.1 with 8 workers (default: CPU count)
-  python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.1 -j 8
+  ./scripts/tests/run-lua-fixtures-fast.sh --lua-version 5.1 --jobs 8
 
   # Full comparison against Lua 5.4
-  python3 scripts/tests/run-lua-fixtures-parallel.py --lua-version 5.4
+  ./scripts/tests/run-lua-fixtures-fast.sh --lua-version 5.4
 
   # Limit fixtures for quick testing
-  python3 scripts/tests/run-lua-fixtures-parallel.py --limit 100 -v
+  ./scripts/tests/run-lua-fixtures-fast.sh --limit 100 --verbose
 
   # Skip NovaSharp (only run reference Lua)
-  python3 scripts/tests/run-lua-fixtures-parallel.py --skip-novasharp
+  ./scripts/tests/run-lua-fixtures-fast.sh --skip-novasharp
 
   # Custom output directory
-  python3 scripts/tests/run-lua-fixtures-parallel.py --output-dir artifacts/my-comparison
+  ./scripts/tests/run-lua-fixtures-fast.sh --output-dir artifacts/my-comparison
   ```
-- **Output:** Results written to `artifacts/lua-comparison-results/` with per-fixture output files and `results.json` summary including elapsed time and throughput metrics.
-- **expects-error handling:** Correctly handles `@expects-error: true` fixtures - non-zero exit code is treated as pass.
+- **Output:** Results written to `artifacts/lua-comparison-results/` with per-fixture output files and `results.json` summary including elapsed time and worker count.
+- **Error handling:** Records raw stdout, stderr, and exit code for every fixture. The comparator classifies `match`, `mismatch`, `lua_only`, `nova_only`, and `both_error` outcomes.
+
+### run-lua-fixtures-parallel.py
+
+- **Purpose:** Per-file Python runner retained for isolated debugging and runner development. Prefer `run-lua-fixtures-fast.sh` for local verification and CI.
 
 ### run-lua-fixtures.sh (Legacy)
 
@@ -69,6 +75,9 @@ Microsoft.Testing.Platform/TUnit, plus Lua specification parity harnesses.
 
   # Verbose output with diff details
   python3 scripts/tests/compare-lua-outputs.py --verbose
+
+  # CI-style enforcement, including hard failures and both-error ratchet
+  python3 scripts/tests/compare-lua-outputs.py --lua-version 5.4 --results-dir artifacts/lua-comparison-results --enforce
   ```
 - **Normalizations applied:**
   - Removes NovaSharp CLI `[compatibility]` info lines
@@ -76,7 +85,27 @@ Microsoft.Testing.Platform/TUnit, plus Lua specification parity harnesses.
   - Replaces memory addresses with `<addr>`
   - Normalizes line numbers in error messages
   - Normalizes platform-specific paths
-- **Output:** `comparison.json` with match/mismatch statistics and Markdown summary.
+- **Output:** `comparison.json` with match/mismatch statistics, full `both_error` ratchet entries, and CI summary data.
+- **Enforcement:** `mismatch`, `lua_only`, and `nova_only` fail under `--enforce`. New or changed unclassified `both_error` signatures fail against `docs/testing/lua-error-ratchet.json`; removed entries are allowed.
+
+### tools/lua_error_ratchet.py
+
+- **Purpose:** Check or regenerate the unclassified `both_error` ratchet baseline.
+- **Usage:**
+  ```bash
+  # Check one or more comparison reports against the committed baseline
+  python3 tools/lua_error_ratchet.py \
+      --comparison-file artifacts/lua-comparison-local-5.4/comparison-5.4.json
+
+  # Regenerate intentionally after reviewing reductions/classifications
+  python3 tools/lua_error_ratchet.py \
+      --comparison-file artifacts/lua-comparison-local-5.1/comparison-5.1.json \
+      --comparison-file artifacts/lua-comparison-local-5.2/comparison-5.2.json \
+      --comparison-file artifacts/lua-comparison-local-5.3/comparison-5.3.json \
+      --comparison-file artifacts/lua-comparison-local-5.4/comparison-5.4.json \
+      --comparison-file artifacts/lua-comparison-local-5.5/comparison-5.5.json \
+      --write-baseline
+  ```
 
 ## Fixture Catalog
 
@@ -97,7 +126,7 @@ Microsoft.Testing.Platform/TUnit, plus Lua specification parity harnesses.
       -Name remote-debugger-final `
       -BaselineArtefactPath artifacts/tunit-migration/remote-debugger-sample.json `
       -TUnitArguments @(
-          "--project", "src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj",
+          "src/tests/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit/WallstopStudios.NovaSharp.RemoteDebugger.Tests.TUnit.csproj",
           "-c", "Release"
       )
   ```

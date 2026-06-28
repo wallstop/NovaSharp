@@ -7,7 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
     //
     // This part taken from KopiLua - https://github.com/NLua/KopiLua
     //
-    // =========================================================================================================
+    // =======================================================================================
     //
     // Kopi Lua License
     // ----------------
@@ -52,107 +52,173 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
     using System;
     using System.Diagnostics;
+    using System.Runtime.CompilerServices;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
 
-    public class CharPtr
+    /// <summary>
+    /// A lightweight pointer-like structure for efficient character array traversal.
+    /// Converted from class to readonly struct to eliminate heap allocations in hot paths.
+    /// </summary>
+    /// <remarks>
+    /// This struct mimics C pointer semantics for KopiLua string operations.
+    /// A "null" CharPtr is represented by <see cref="IsNull"/> being true (when chars array is null).
+    /// Use <see cref="Null"/> to get a null-equivalent instance.
+    /// </remarks>
+    public readonly struct CharPtr : IEquatable<CharPtr>
     {
-        internal char[] chars;
-        internal int index;
+        internal readonly char[] chars;
+        internal readonly int index;
+
+        /// <summary>
+        /// Gets a null-equivalent CharPtr instance.
+        /// </summary>
+        public static CharPtr Null => default;
+
+        /// <summary>
+        /// Returns true if this CharPtr represents a null pointer (no backing array).
+        /// </summary>
+        public bool IsNull
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => chars == null;
+        }
 
         public char this[int offset]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return chars[index + offset]; }
             set { chars[index + offset] = value; }
         }
 
         public char this[uint offset]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return chars[index + offset]; }
             set { chars[index + offset] = value; }
         }
+
         public char this[long offset]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return chars[index + (int)offset]; }
             set { chars[index + (int)offset] = value; }
         }
 
         public static implicit operator CharPtr(string str)
         {
+            if (str == null)
+            {
+                return Null;
+            }
             return new CharPtr(str);
         }
 
         public static implicit operator CharPtr(char[] chars)
         {
+            if (chars == null)
+            {
+                return Null;
+            }
             return new CharPtr(chars);
         }
 
         public static implicit operator CharPtr(byte[] bytes)
         {
+            if (bytes == null)
+            {
+                return Null;
+            }
             return new CharPtr(bytes);
         }
 
         public static CharPtr FromString(string value)
         {
+            if (value == null)
+            {
+                return Null;
+            }
             return new CharPtr(value);
         }
 
         public static CharPtr FromCharArray(char[] value)
         {
+            if (value == null)
+            {
+                return Null;
+            }
             return new CharPtr(value);
         }
 
         public static CharPtr FromByteArray(byte[] value)
         {
+            if (value == null)
+            {
+                return Null;
+            }
             return new CharPtr(value);
-        }
-
-        public CharPtr()
-        {
-            chars = null;
-            index = 0;
         }
 
         public CharPtr(string str)
         {
-            string validated = EnsureArgument(str, nameof(str));
-            chars = (validated + '\0').ToCharArray();
+            if (str == null)
+            {
+                throw new ArgumentNullException(nameof(str));
+            }
+            chars = (str + '\0').ToCharArray();
             index = 0;
         }
 
         public CharPtr(CharPtr ptr)
         {
-            CharPtr validatedPtr = EnsureArgument(ptr, nameof(ptr));
-            chars = validatedPtr.chars;
-            index = validatedPtr.index;
+            if (ptr.IsNull)
+            {
+                throw new ArgumentException("CharPtr cannot be null", nameof(ptr));
+            }
+            chars = ptr.chars;
+            index = ptr.index;
         }
 
         public CharPtr(CharPtr ptr, int index)
         {
-            CharPtr validatedPtr = EnsureArgument(ptr, nameof(ptr));
-            chars = validatedPtr.chars;
+            if (ptr.IsNull)
+            {
+                throw new ArgumentException("CharPtr cannot be null", nameof(ptr));
+            }
+            chars = ptr.chars;
             this.index = index;
         }
 
         public CharPtr(char[] chars)
         {
-            this.chars = EnsureArgument(chars, nameof(chars));
+            if (chars == null)
+            {
+                throw new ArgumentNullException(nameof(chars));
+            }
+            this.chars = chars;
             index = 0;
         }
 
         public CharPtr(char[] chars, int index)
         {
-            this.chars = EnsureArgument(chars, nameof(chars));
+            if (chars == null)
+            {
+                throw new ArgumentNullException(nameof(chars));
+            }
+            this.chars = chars;
             this.index = index;
         }
 
         public CharPtr(byte[] bytes)
         {
-            byte[] validatedBytes = EnsureArgument(bytes, nameof(bytes));
-            chars = new char[validatedBytes.Length];
-            for (int i = 0; i < validatedBytes.Length; i++)
+            if (bytes == null)
             {
-                chars[i] = (char)validatedBytes[i];
+                throw new ArgumentNullException(nameof(bytes));
             }
-
+            chars = new char[bytes.Length];
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                chars[i] = (char)bytes[i];
+            }
             index = 0;
         }
 
@@ -162,28 +228,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             index = 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CharPtr operator +(CharPtr ptr, int offset)
         {
-            CharPtr validated = EnsureArgument(ptr, nameof(ptr));
-            return new CharPtr(validated.chars, validated.index + offset);
+            return new CharPtr(ptr.chars, ptr.index + offset);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CharPtr operator -(CharPtr ptr, int offset)
         {
-            CharPtr validated = EnsureArgument(ptr, nameof(ptr));
-            return new CharPtr(validated.chars, validated.index - offset);
+            return new CharPtr(ptr.chars, ptr.index - offset);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CharPtr operator +(CharPtr ptr, uint offset)
         {
-            CharPtr validated = EnsureArgument(ptr, nameof(ptr));
-            return new CharPtr(validated.chars, validated.index + (int)offset);
+            return new CharPtr(ptr.chars, ptr.index + (int)offset);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CharPtr operator -(CharPtr ptr, uint offset)
         {
-            CharPtr validated = EnsureArgument(ptr, nameof(ptr));
-            return new CharPtr(validated.chars, validated.index - (int)offset);
+            return new CharPtr(ptr.chars, ptr.index - (int)offset);
         }
 
         public static CharPtr Subtract(CharPtr ptr, int offset)
@@ -201,65 +267,62 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return left - right;
         }
 
-        public void Inc()
-        {
-            index++;
-        }
-
-        public void Dec()
-        {
-            index--;
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CharPtr Next()
         {
             return new CharPtr(chars, index + 1);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CharPtr Prev()
         {
             return new CharPtr(chars, index - 1);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CharPtr Add(int ofs)
         {
             return new CharPtr(chars, index + ofs);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CharPtr Subtract(int ofs)
         {
             return new CharPtr(chars, index - ofs);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CharPtr Sub(int ofs)
         {
             return Subtract(ofs);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(CharPtr ptr, char ch)
         {
-            return EnsureArgument(ptr, nameof(ptr))[0] == ch;
+            return ptr[0] == ch;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(char ch, CharPtr ptr)
         {
-            return EnsureArgument(ptr, nameof(ptr))[0] == ch;
+            return ptr[0] == ch;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(CharPtr ptr, char ch)
         {
-            return EnsureArgument(ptr, nameof(ptr))[0] != ch;
+            return ptr[0] != ch;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(char ch, CharPtr ptr)
         {
-            return EnsureArgument(ptr, nameof(ptr))[0] != ch;
+            return ptr[0] != ch;
         }
 
         public static CharPtr operator +(CharPtr ptr1, CharPtr ptr2)
         {
-            EnsureArgument(ptr1, nameof(ptr1));
-            EnsureArgument(ptr2, nameof(ptr2));
             string result = "";
             for (int i = 0; ptr1[i] != '\0'; i++)
             {
@@ -274,93 +337,92 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return new CharPtr(result);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int operator -(CharPtr ptr1, CharPtr ptr2)
         {
-            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
-            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
-            Debug.Assert(left.chars == right.chars);
-            return left.index - right.index;
+            Debug.Assert(ptr1.chars == ptr2.chars);
+            return ptr1.index - ptr2.index;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator <(CharPtr ptr1, CharPtr ptr2)
         {
-            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
-            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
-            Debug.Assert(left.chars == right.chars);
-            return left.index < right.index;
+            Debug.Assert(ptr1.chars == ptr2.chars);
+            return ptr1.index < ptr2.index;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator <=(CharPtr ptr1, CharPtr ptr2)
         {
-            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
-            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
-            Debug.Assert(left.chars == right.chars);
-            return left.index <= right.index;
+            Debug.Assert(ptr1.chars == ptr2.chars);
+            return ptr1.index <= ptr2.index;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator >(CharPtr ptr1, CharPtr ptr2)
         {
-            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
-            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
-            Debug.Assert(left.chars == right.chars);
-            return left.index > right.index;
+            Debug.Assert(ptr1.chars == ptr2.chars);
+            return ptr1.index > ptr2.index;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator >=(CharPtr ptr1, CharPtr ptr2)
         {
-            CharPtr left = EnsureArgument(ptr1, nameof(ptr1));
-            CharPtr right = EnsureArgument(ptr2, nameof(ptr2));
-            Debug.Assert(left.chars == right.chars);
-            return left.index >= right.index;
+            Debug.Assert(ptr1.chars == ptr2.chars);
+            return ptr1.index >= ptr2.index;
         }
 
         public static int Compare(CharPtr left, CharPtr right)
         {
-            CharPtr validatedLeft = EnsureArgument(left, nameof(left));
-            CharPtr validatedRight = EnsureArgument(right, nameof(right));
-            Debug.Assert(validatedLeft.chars == validatedRight.chars);
+            Debug.Assert(left.chars == right.chars);
 
-            if (validatedLeft.index == validatedRight.index)
+            if (left.index == right.index)
             {
                 return 0;
             }
 
-            return validatedLeft.index < validatedRight.index ? -1 : 1;
+            return left.index < right.index ? -1 : 1;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(CharPtr ptr1, CharPtr ptr2)
         {
-            if (ReferenceEquals(ptr1, ptr2))
-            {
-                return true;
-            }
-
-            if (ptr1 is null || ptr2 is null)
-            {
-                return false;
-            }
-
             return (ptr1.chars == ptr2.chars) && (ptr1.index == ptr2.index);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator !=(CharPtr ptr1, CharPtr ptr2)
         {
             return !(ptr1 == ptr2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Equals(CharPtr other)
+        {
+            return (chars == other.chars) && (index == other.index);
+        }
+
         public override bool Equals(object obj)
         {
-            return this == (obj as CharPtr);
+            return obj is CharPtr other && Equals(other);
         }
 
         public override int GetHashCode()
         {
-            return 0;
+            if (chars == null)
+            {
+                return 0;
+            }
+            return HashCodeHelper.HashCode(RuntimeHelpers.GetHashCode(chars), index);
         }
 
         public override string ToString()
         {
-            using Cysharp.Text.Utf16ValueStringBuilder result = DataStructs.ZStringBuilder.Create();
+            if (chars == null)
+            {
+                return string.Empty;
+            }
+            using Cysharp.Text.Utf16ValueStringBuilder result = ZStringBuilder.Create();
             for (int i = index; (i < chars.Length) && (chars[i] != '\0'); i++)
             {
                 result.Append(chars[i]);
@@ -371,24 +433,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
 
         public string ToString(int length)
         {
-            using Cysharp.Text.Utf16ValueStringBuilder result = DataStructs.ZStringBuilder.Create();
+            if (chars == null)
+            {
+                return string.Empty;
+            }
+            using Cysharp.Text.Utf16ValueStringBuilder result = ZStringBuilder.Create();
             for (int i = index; (i < chars.Length) && i < (length + index); i++)
             {
                 result.Append(chars[i]);
             }
 
             return result.ToString();
-        }
-
-        private static T EnsureArgument<T>(T value, string paramName)
-            where T : class
-        {
-            if (value == null)
-            {
-                throw new ArgumentNullException(paramName);
-            }
-
-            return value;
         }
     }
 }

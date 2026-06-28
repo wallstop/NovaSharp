@@ -2,16 +2,21 @@ name: Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
   pull-requests: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
@@ -32,18 +37,18 @@ jobs:
       - name: Enforce naming conventions
         run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp
       - name: Verify naming audit log
-        run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log naming_audit.log
+        run: python3 tools/NamingAudit/naming_audit.py --namespace-prefix WallstopStudios.NovaSharp --namespace-prefix NovaSharp --verify-log docs/audits/naming_audit.log
       - name: Enforce spelling conventions
         run: python3 tools/SpellingAudit/spelling_audit.py
       - name: Verify spelling audit log
-        run: python3 tools/SpellingAudit/spelling_audit.py --verify-log spelling_audit.log
+        run: python3 tools/SpellingAudit/spelling_audit.py --verify-log docs/audits/spelling_audit.log
       - name: Generate documentation audit log
-        run: python3 tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log
+        run: python3 tools/DocumentationAudit/documentation_audit.py --write-log docs/audits/documentation_audit.log
       - name: Verify documentation audit log
         run: |
-          if ! git diff --quiet -- documentation_audit.log; then
-            echo "::error file=documentation_audit.log::documentation_audit.log is out of date. Run 'python tools/DocumentationAudit/documentation_audit.py --write-log documentation_audit.log' and commit the result."
-            git --no-pager diff -- documentation_audit.log
+          if ! git diff --quiet -- docs/audits/documentation_audit.log; then
+            echo "::error file=docs/audits/documentation_audit.log::docs/audits/documentation_audit.log is out of date. Run 'python tools/DocumentationAudit/documentation_audit.py --write-log docs/audits/documentation_audit.log' and commit the result."
+            git --no-pager diff -- docs/audits/documentation_audit.log
             exit 1
           fi
       - name: Determine documentation diff base
@@ -79,11 +84,21 @@ jobs:
       - name: Setup .NET (formatting gate)
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '8.0.x'
+          global-json-file: global.json
       - name: Restore dotnet tools
         run: dotnet tool restore
       - name: CSharpier formatting gate
         run: ./scripts/ci/check-csharpier.sh
+        shell: bash
+
+      - name: Verify Lua comparison tooling
+        run: |
+          python3 tools/test_lua_version_utils.py
+          python3 tools/test_migrate_csharp_version_annotations.py
+          python3 tools/test_compare_lua_outputs.py
+          python3 tools/test_lua_error_ratchet.py
+          python3 tools/test_lua_fixture_metadata.py
+          python3 tools/test_run_lua_fixtures_fast.py
         shell: bash
 
       - name: Enforce PlatformAutoDetector scope usage
@@ -101,9 +116,13 @@ jobs:
       - name: Enforce Python invocation pattern in shell scripts
         run: ./scripts/ci/check-shell-python-invocation.sh
         shell: bash
+      - name: Enforce tooling setup consistency
+        run: ./scripts/ci/check-tooling-consistency.sh
+        shell: bash
 
   dotnet-tests:
     needs: lint
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -118,7 +137,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '8.0.x'
+          global-json-file: global.json
           cache: true
           cache-dependency-path: 'src/**/packages.lock.json'
       - name: Restore dependencies
@@ -148,6 +167,7 @@ jobs:
       contents: write
       pull-requests: write
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
         with:
@@ -164,7 +184,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '8.0.x'
+          global-json-file: global.json
           # Note: cache not needed here - this job only runs formatters, not restore
       - name: Apply repository formatters
         run: ./scripts/ci/apply-formatters.sh
@@ -198,17 +218,20 @@ jobs:
 
   code-coverage:
     runs-on: ubuntu-latest
-    needs: dotnet-tests
+    needs: lint
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      # Lint checks already passed in the 'lint' job (via dotnet-tests dependency).
+      # Lint checks already passed in the 'lint' job.
       # Skip redundant branding/namespace checks.
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '8.0.x'
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: 'src/**/packages.lock.json'
       - name: Restore dependencies
         run: dotnet restore src/NovaSharp.sln --locked-mode
       - name: Restore tools
@@ -402,33 +425,255 @@ jobs:
           if-no-files-found: error
 
   lua-comparison:
-    runs-on: ubuntu-latest
-    needs: dotnet-tests
+    needs: lint
+    timeout-minutes: 60
     strategy:
       matrix:
-        lua-version: ['5.1', '5.2', '5.3', '5.4']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        lua-version: ['5.1', '5.2', '5.3', '5.4', '5.5']
       fail-fast: false
+    runs-on: ${{ matrix.os }}
+    env:
+      LUA_COMPARISON_WORKERS: "4"
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Install Lua ${{ matrix.lua-version }}
+
+      - name: Cache reference Lua ${{ matrix.lua-version }}
+        uses: actions/cache@v4
+        with:
+          path: .lua-cache/${{ runner.os }}/lua-${{ matrix.lua-version }}
+          key: reference-lua-${{ runner.os }}-${{ matrix.lua-version }}-${{ hashFiles('.github/workflows/tests.yml') }}
+
+      # ========== Linux Lua Installation ==========
+      - name: Install Lua ${{ matrix.lua-version }} (Linux)
+        if: runner.os == 'Linux'
         run: |
+          LUA_VERSION="${{ matrix.lua-version }}"
+          LUA_CACHE_DIR="$PWD/.lua-cache/Linux/lua-${LUA_VERSION}"
+          if [[ -x "${LUA_CACHE_DIR}/bin/lua${LUA_VERSION}" ]]; then
+            echo "Using cached Lua ${LUA_VERSION} from ${LUA_CACHE_DIR}"
+            echo "${LUA_CACHE_DIR}/bin" >> "$GITHUB_PATH"
+            "${LUA_CACHE_DIR}/bin/lua${LUA_VERSION}" -v
+            exit 0
+          fi
+
           sudo apt-get update
-          sudo apt-get install -y lua${{ matrix.lua-version }}
+          sudo apt-get install -y build-essential libreadline-dev
+          case "$LUA_VERSION" in
+            5.1) FULL_VERSION="5.1.5" ;;
+            5.2) FULL_VERSION="5.2.4" ;;
+            5.3) FULL_VERSION="5.3.6" ;;
+            5.4) FULL_VERSION="5.4.7" ;;
+            5.5) FULL_VERSION="5.5.0" ;;
+            *) echo "Unknown version $LUA_VERSION"; exit 1 ;;
+          esac
+          mkdir -p "$LUA_CACHE_DIR"
+          curl -fsSL "https://www.lua.org/ftp/lua-${FULL_VERSION}.tar.gz" | tar xz
+          cd "lua-${FULL_VERSION}"
+          make linux
+          make install "INSTALL_TOP=${LUA_CACHE_DIR}"
+          ln -sf "${LUA_CACHE_DIR}/bin/lua" "${LUA_CACHE_DIR}/bin/lua${LUA_VERSION}"
+          echo "${LUA_CACHE_DIR}/bin" >> "$GITHUB_PATH"
+        shell: bash
+
+      # ========== macOS Lua Installation ==========
+      - name: Install Lua ${{ matrix.lua-version }} (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          LUA_VERSION="${{ matrix.lua-version }}"
+          LUA_CACHE_DIR="$PWD/.lua-cache/macOS/lua-${LUA_VERSION}"
+          if [[ -x "${LUA_CACHE_DIR}/bin/lua${LUA_VERSION}" ]]; then
+            echo "Using cached Lua ${LUA_VERSION} from ${LUA_CACHE_DIR}"
+            echo "${LUA_CACHE_DIR}/bin" >> "$GITHUB_PATH"
+            "${LUA_CACHE_DIR}/bin/lua${LUA_VERSION}" -v
+            exit 0
+          fi
+
+          case "$LUA_VERSION" in
+            5.1) FULL_VERSION="5.1.5" ;;
+            5.2) FULL_VERSION="5.2.4" ;;
+            5.3) FULL_VERSION="5.3.6" ;;
+            5.4) FULL_VERSION="5.4.7" ;;
+            5.5) FULL_VERSION="5.5.0" ;;
+            *) echo "Unknown version $LUA_VERSION"; exit 1 ;;
+          esac
+          mkdir -p "$LUA_CACHE_DIR"
+          curl -fsSL "https://www.lua.org/ftp/lua-${FULL_VERSION}.tar.gz" | tar xz
+          cd "lua-${FULL_VERSION}"
+          make macosx
+          make install "INSTALL_TOP=${LUA_CACHE_DIR}"
+          ln -sf "${LUA_CACHE_DIR}/bin/lua" "${LUA_CACHE_DIR}/bin/lua${LUA_VERSION}"
+          echo "${LUA_CACHE_DIR}/bin" >> "$GITHUB_PATH"
+        shell: bash
+
+      # ========== Windows Lua Installation ==========
+      # Build from official lua.org source using MSVC (most reliable approach).
+      # SourceForge downloads are unreliable and often return HTML instead of zip files.
+      # We need to set up the Visual Studio Developer environment first to make cl.exe available.
+      - name: Setup MSVC Developer Command Prompt (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Lua ${{ matrix.lua-version }} (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $LuaVersion = "${{ matrix.lua-version }}"
+
+          # Map version to full patch version
+          $VersionMap = @{
+            "5.1" = "5.1.5"
+            "5.2" = "5.2.4"
+            "5.3" = "5.3.6"
+            "5.4" = "5.4.7"
+            "5.5" = "5.5.0"
+          }
+
+          if (-not $VersionMap.ContainsKey($LuaVersion)) {
+            Write-Error "Unknown Lua version: $LuaVersion"
+            exit 1
+          }
+
+          $FullVersion = $VersionMap[$LuaVersion]
+          $LuaDir = Join-Path (Get-Location) ".lua-cache\Windows\lua-$LuaVersion"
+          $LuaBinDir = Join-Path $LuaDir "bin"
+          $LuaVersionedExe = Join-Path $LuaBinDir "lua$LuaVersion.exe"
+          if (Test-Path $LuaVersionedExe) {
+            Write-Host "Using cached Lua $LuaVersion from $LuaDir"
+            "$LuaBinDir" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+            & $LuaVersionedExe -v
+            return
+          }
+          $CreatedDirectory = New-Item -ItemType Directory -Force -Path $LuaBinDir
+          Write-Host "Lua cache directory: $($CreatedDirectory.FullName)"
+
+          # Download official Lua source from lua.org (always works, no SourceForge issues)
+          $LuaSrcUrl = "https://www.lua.org/ftp/lua-$FullVersion.tar.gz"
+          Write-Host "Downloading Lua $FullVersion source from $LuaSrcUrl..."
+          Invoke-WebRequest -Uri $LuaSrcUrl -OutFile "$env:TEMP\lua.tar.gz" -UseBasicParsing
+
+          # Extract using tar (available on Windows 10+)
+          Push-Location $env:TEMP
+          tar -xzf lua.tar.gz
+          Pop-Location
+
+          # Build with MSVC (cl.exe is now available via msvc-dev-cmd action)
+          $SrcDir = "$env:TEMP\lua-$FullVersion\src"
+          Write-Host "Building Lua from source in $SrcDir..."
+          Push-Location $SrcDir
+
+          # Define source files (common to all versions)
+          $CoreFiles = @(
+            "lapi.c", "lcode.c", "ldebug.c", "ldo.c", "ldump.c",
+            "lfunc.c", "lgc.c", "llex.c", "lmem.c", "lobject.c", "lopcodes.c",
+            "lparser.c", "lstate.c", "lstring.c", "ltable.c", "ltm.c",
+            "lundump.c", "lvm.c", "lzio.c"
+          )
+          $LibFiles = @(
+            "lauxlib.c", "lbaselib.c", "ldblib.c", "liolib.c",
+            "lmathlib.c", "loadlib.c", "loslib.c", "lstrlib.c", "ltablib.c", "linit.c"
+          )
+          # Version-specific files (filtered to existing files below):
+          # - lctype.c: 5.2+ (character type functions)
+          # - lbitlib.c: 5.2-5.3 (bit32 library, removed in 5.4)
+          # - lcorolib.c: 5.2+ (coroutine library as separate file)
+          # - lutf8lib.c: 5.3+ (utf8 library)
+          $VersionSpecificFiles = @("lctype.c", "lbitlib.c", "lcorolib.c", "lutf8lib.c")
+
+          # Filter to existing files (handles version differences automatically)
+          $AllCFiles = ($CoreFiles + $LibFiles + $VersionSpecificFiles) | Where-Object { Test-Path $_ }
+
+          Write-Host "Compiling $($AllCFiles.Count) source files..."
+
+          # Define compatibility macros based on Lua version
+          # These match what Linux/macOS package managers typically enable:
+          # - LUA_COMPAT_5_1: Enables deprecated Lua 5.1 functions (loadstring, etc.) in 5.2+
+          # - LUA_COMPAT_5_2: Enables deprecated Lua 5.2 functions (math.pow, etc.) in 5.3+
+          # Without these, Lua 5.2+ builds lack functions that most distributions include.
+          $CompatDefs = @()
+          switch ($LuaVersion) {
+            "5.2" { $CompatDefs = @("/DLUA_COMPAT_5_1") }
+            "5.3" { $CompatDefs = @("/DLUA_COMPAT_5_2") }
+            "5.4" { $CompatDefs = @("/DLUA_COMPAT_5_3") }
+            "5.5" { $CompatDefs = @("/DLUA_COMPAT_5_4") }
+          }
+          if ($CompatDefs.Count -gt 0) {
+            Write-Host "Adding compatibility defines: $($CompatDefs -join ', ')"
+          }
+
+          # Compile all library .c files to .obj
+          foreach ($f in $AllCFiles) {
+            $output = & cl.exe /c /O2 /MD /W3 /nologo @CompatDefs $f 2>&1
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "Failed to compile ${f}:"
+              Write-Host $output
+              exit 1
+            }
+          }
+
+          # Compile lua.c for the interpreter
+          $output = & cl.exe /c /O2 /MD /W3 /nologo @CompatDefs lua.c 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Failed to compile lua.c:"
+            Write-Host $output
+            exit 1
+          }
+
+          # Link the interpreter (all .obj files including lua.obj)
+          $ObjFiles = (Get-ChildItem -Filter "*.obj").Name
+          Write-Host "Linking $($ObjFiles.Count) object files..."
+          $output = & cl.exe /nologo /Fe:lua.exe $ObjFiles 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Failed to link:"
+            Write-Host $output
+            exit 1
+          }
+
+          if (Test-Path "lua.exe") {
+            Copy-Item "lua.exe" $LuaBinDir -Force
+            Write-Host "Successfully built lua.exe"
+          }
+          else {
+            Write-Error "lua.exe not found after build"
+            exit 1
+          }
+          Pop-Location
+
+          # Create versioned alias (lua5.4.exe -> lua.exe)
+          $LuaExe = Join-Path $LuaBinDir "lua.exe"
+          $LuaVersionedExe = Join-Path $LuaBinDir "lua$LuaVersion.exe"
+          Copy-Item $LuaExe $LuaVersionedExe -Force
+
+          # Add to PATH for this job
+          Write-Host "Adding $LuaBinDir to PATH"
+          "$LuaBinDir" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+
+          # Verify installation
+          $env:PATH = "$LuaBinDir;$env:PATH"
+          & "$LuaBinDir\lua.exe" -v
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '8.0.x'
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: 'src/**/packages.lock.json'
+
       - name: Restore dependencies
         run: dotnet restore src/NovaSharp.sln --locked-mode
+
       - name: Build NovaSharp CLI
         run: dotnet build src/tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj -c Release --no-restore
-      - name: Verify Lua fixtures exist
+
+      - name: Verify Lua fixtures exist (Unix)
+        if: runner.os != 'Windows'
         run: |
           if [ ! -d "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures" ]; then
             echo "Error: Lua fixtures not found. Run 'python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py' and commit the results."
@@ -437,15 +682,72 @@ jobs:
           fixture_count=$(find src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures -name "*.lua" | wc -l)
           echo "Found $fixture_count Lua fixture files"
         shell: bash
-      - name: Run fixtures against Lua ${{ matrix.lua-version }} and NovaSharp (parallel)
+
+      - name: Verify Lua fixtures exist (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $FixturesDir = "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures"
+          if (-not (Test-Path $FixturesDir)) {
+            Write-Error "Lua fixtures not found. Run 'python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py' and commit the results."
+            exit 1
+          }
+          $FixtureCount = (Get-ChildItem -Path $FixturesDir -Recurse -Filter "*.lua").Count
+          Write-Host "Found $FixtureCount Lua fixture files"
+
+      - name: Determine Lua command
+        id: lua-cmd
+        shell: bash
+        run: |
+          LUA_VERSION="${{ matrix.lua-version }}"
+
+          # On Windows, Lua was installed into the repository-local cache.
+          # The PATH update from GITHUB_PATH is available, but we need to check explicitly
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            # Windows path with versioned executable
+            WIN_LUA_DIR=".lua-cache/Windows/lua-${LUA_VERSION}/bin"
+            if [[ -f "${WIN_LUA_DIR}/lua${LUA_VERSION}.exe" ]]; then
+              LUA_CMD="${WIN_LUA_DIR}/lua${LUA_VERSION}.exe"
+            elif [[ -f "${WIN_LUA_DIR}/lua.exe" ]]; then
+              LUA_CMD="${WIN_LUA_DIR}/lua.exe"
+            else
+              echo "Error: Lua not found in ${WIN_LUA_DIR}"
+              ls -la "${WIN_LUA_DIR}" || echo "Directory does not exist"
+              exit 1
+            fi
+          else
+            # Unix: Try versioned command first, then unversioned
+            if LUA_CMD="$(command -v "lua${LUA_VERSION}")"; then
+              :
+            elif LUA_CMD="$(command -v "lua$LUA_VERSION")"; then
+              :
+            elif LUA_CMD="$(command -v lua)"; then
+              :
+            else
+              echo "Warning: Lua command not found in PATH"
+              LUA_CMD="lua"
+            fi
+          fi
+
+          echo "lua_cmd=$LUA_CMD" >> "$GITHUB_OUTPUT"
+          echo "Using Lua command: $LUA_CMD"
+
+          # Verify the command works
+          $LUA_CMD -v
+
+      - name: Run fixtures against Lua ${{ matrix.lua-version }} and NovaSharp (batch)
         env:
           DOTNET_ROLL_FORWARD: Major
         run: |
-          python3 scripts/tests/run-lua-fixtures-parallel.py \
+          ./scripts/tests/run-lua-fixtures-fast.sh \
+            --fixtures-dir src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures \
             --lua-version ${{ matrix.lua-version }} \
+            --lua-cmd "${{ steps.lua-cmd.outputs.lua_cmd }}" \
             --output-dir artifacts/lua-comparison-results \
-            -v
+            --jobs "$LUA_COMPARISON_WORKERS" \
+            --verbose
         shell: bash
+
       - name: Compare outputs
         id: compare
         run: |
@@ -456,146 +758,62 @@ jobs:
             --output-file artifacts/lua-comparison-results/comparison-${{ matrix.lua-version }}.json \
             --enforce
         shell: bash
+
       - name: Publish comparison summary
         if: always()
+        env:
+          LUA_VERSION: ${{ matrix.lua-version }}
+          MATRIX_OS: ${{ matrix.os }}
         run: |
           comparison_file="artifacts/lua-comparison-results/comparison-${{ matrix.lua-version }}.json"
           if [ -f "$comparison_file" ]; then
-            python3 -c "
+            python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
-          with open('$comparison_file') as f:
+          import os
+          from pathlib import Path
+
+          comparison_file = Path("artifacts/lua-comparison-results/comparison-" + os.environ["LUA_VERSION"] + ".json")
+          results_file = Path("artifacts/lua-comparison-results/results.json")
+          with comparison_file.open(encoding="utf-8") as f:
               data = json.load(f)
-          summary = data.get('summary', {})
-          match_rate = data.get('match_rate')
-          print('## Lua ${{ matrix.lua-version }} Specification Comparison')
+          summary = data.get("summary", {})
+          match_rate = data.get("match_rate")
+          ratchet = data.get("error_ratchet", {})
+          run_summary = {}
+          if results_file.exists():
+              with results_file.open(encoding="utf-8") as f:
+                  run_summary = json.load(f).get("summary", {})
+
+          print(f"## Lua {os.environ['LUA_VERSION']} on {os.environ['MATRIX_OS']} Specification Comparison")
           print()
-          print('| Metric | Count |')
-          print('| --- | --- |')
-          print(f\"| Match | {summary.get('match', 0)} |\")
-          print(f\"| Mismatch | {summary.get('mismatch', 0)} |\")
-          print(f\"| Both Error | {summary.get('both_error', 0)} |\")
-          print(f\"| Skipped | {summary.get('skipped', 0)} |\")
+          print("| Metric | Count |")
+          print("| --- | --- |")
+          print(f"| Match | {summary.get('match', 0)} |")
+          print(f"| Mismatch | {summary.get('mismatch', 0)} |")
+          print(f"| Lua only | {summary.get('lua_only', 0)} |")
+          print(f"| Nova only | {summary.get('nova_only', 0)} |")
+          print(f"| Both error | {summary.get('both_error', 0)} |")
+          print(f"| Missing outputs | {summary.get('missing_outputs', 0)} |")
+          print(f"| Skipped | {summary.get('skipped', 0)} |")
+          print(f"| Error ratchet new | {ratchet.get('new_count', 0)} |")
+          print(f"| Error ratchet changed | {ratchet.get('changed_count', 0)} |")
+          print(f"| Error ratchet removed | {ratchet.get('removed_count', 0)} |")
+          print(f"| Error ratchet missing | {ratchet.get('missing_count', 0)} |")
           print()
           if match_rate is not None:
-              print(f'**Match Rate**: {match_rate:.1f}%')
-          " >> "\$GITHUB_STEP_SUMMARY"
+              print(f"**Match Rate**: {match_rate:.1f}%")
+          if run_summary:
+              print(f"**Fixture Runtime**: {run_summary.get('elapsed_seconds', 'n/a')} seconds with {run_summary.get('workers', 'n/a')} workers")
+          PY
           else
-            echo "Comparison results for Lua ${{ matrix.lua-version }} not found." >> "\$GITHUB_STEP_SUMMARY"
+            echo "Comparison results for Lua ${{ matrix.lua-version }} on ${{ matrix.os }} not found." >> "$GITHUB_STEP_SUMMARY"
           fi
         shell: bash
+
       - name: Upload Lua ${{ matrix.lua-version }} comparison results
         if: always()
         uses: actions/upload-artifact@v5
         with:
-          name: lua-comparison-${{ matrix.lua-version }}
-          path: artifacts/lua-comparison-results
-          if-no-files-found: warn
-
-  # Lua 5.5 comparison job (builds from source since 5.5 is not yet in package managers)
-  lua-55-comparison:
-    runs-on: ubuntu-latest
-    needs: dotnet-tests
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libreadline-dev
-      - name: Download and build Lua 5.5
-        run: |
-          curl -L -o lua-5.5.0-rc2.tar.gz https://www.lua.org/work/lua-5.5.0-rc2.tar.gz
-          echo "=== Tarball contents (first 10 entries) ==="
-          tar tzf lua-5.5.0-rc2.tar.gz | head -10 || true
-          echo "=== Extracting tarball ==="
-          tar xzf lua-5.5.0-rc2.tar.gz
-          echo "=== Directory listing after extraction ==="
-          ls -la
-          echo "=== Entering Lua source directory ==="
-          cd lua-5.5.0
-          make linux
-          sudo make install INSTALL_TOP=/usr/local
-          echo "/usr/local/bin" >> $GITHUB_PATH
-        shell: bash
-      - name: Verify Lua 5.5 installation
-        run: |
-          /usr/local/bin/lua -v
-        shell: bash
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: '8.0.x'
-      - name: Restore dependencies
-        run: dotnet restore src/NovaSharp.sln --locked-mode
-      - name: Build NovaSharp CLI
-        run: dotnet build src/tooling/WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj -c Release --no-restore
-      - name: Verify Lua fixtures exist
-        run: |
-          if [ ! -d "src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures" ]; then
-            echo "Error: Lua fixtures not found. Run 'python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py' and commit the results."
-            exit 1
-          fi
-          fixture_count=$(find src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures -name "*.lua" | wc -l)
-          echo "Found $fixture_count Lua fixture files"
-        shell: bash
-      - name: Run fixtures against Lua 5.5 and NovaSharp (parallel)
-        env:
-          DOTNET_ROLL_FORWARD: Major
-        run: |
-          python3 scripts/tests/run-lua-fixtures-parallel.py \
-            --lua-version 5.5 \
-            --lua-cmd /usr/local/bin/lua \
-            --output-dir artifacts/lua-comparison-results \
-            -v
-        shell: bash
-      - name: Compare outputs
-        id: compare
-        run: |
-          python3 scripts/tests/compare-lua-outputs.py \
-            --results-dir artifacts/lua-comparison-results \
-            --corpus-dir src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures \
-            --lua-version 5.5 \
-            --output-file artifacts/lua-comparison-results/comparison-5.5.json \
-            --enforce
-        shell: bash
-      - name: Publish comparison summary
-        if: always()
-        run: |
-          comparison_file="artifacts/lua-comparison-results/comparison-5.5.json"
-          if [ -f "$comparison_file" ]; then
-            python3 -c "
-          import json
-          with open('$comparison_file') as f:
-              data = json.load(f)
-          summary = data.get('summary', {})
-          match_rate = data.get('match_rate')
-          print('## Lua 5.5 Specification Comparison')
-          print()
-          print('> **Note**: Lua 5.5 is currently in release candidate phase. Full compatibility is required.')
-          print()
-          print('| Metric | Count |')
-          print('| --- | --- |')
-          print(f\"| Match | {summary.get('match', 0)} |\")
-          print(f\"| Mismatch | {summary.get('mismatch', 0)} |\")
-          print(f\"| Both Error | {summary.get('both_error', 0)} |\")
-          print(f\"| Skipped | {summary.get('skipped', 0)} |\")
-          print()
-          if match_rate is not None:
-              print(f'**Match Rate**: {match_rate:.1f}%')
-          " >> "\$GITHUB_STEP_SUMMARY"
-          else
-            echo "Comparison results for Lua 5.5 not found." >> "\$GITHUB_STEP_SUMMARY"
-          fi
-        shell: bash
-      - name: Upload Lua 5.5 comparison results
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: lua-comparison-5.5
+          name: lua-comparison-${{ matrix.lua-version }}-${{ matrix.os }}
           path: artifacts/lua-comparison-results
           if-no-files-found: warn

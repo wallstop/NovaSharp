@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -21,7 +22,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         )
             : base(lcontext)
         {
-            _opText = unaryOpToken.Text;
+            _opText = unaryOpToken.text;
             _exp = subExpression;
         }
 
@@ -35,7 +36,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             switch (_opText)
             {
-                case "not":
+                case LuaKeywords.Not:
                     bc.EmitOperator(OpCode.Not);
                     break;
                 case "#":
@@ -66,7 +67,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             switch (_opText)
             {
-                case "not":
+                case LuaKeywords.Not:
                     return DynValue.FromBoolean(!v.CastToBool());
                 case "#":
                     return v.GetLength();

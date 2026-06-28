@@ -20,7 +20,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// <exception cref="SyntaxErrorException">Thrown when the literal is malformed.</exception>
         public static double ParseNumber(Token t)
         {
-            string txt = t.Text;
+            string txt = t.text;
             if (
                 !double.TryParse(
                     txt,
@@ -47,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// </exception>
         public static double ParseHexInteger(Token t)
         {
-            string txt = t.Text;
+            string txt = t.text;
             if ((txt.Length < 2) || (txt[0] != '0' && (char.ToUpperInvariant(txt[1]) != 'X')))
             {
                 throw new InternalErrorException(
@@ -82,7 +82,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// <returns>true if the value fits in a signed 64-bit integer; false otherwise.</returns>
         public static bool TryParseHexIntegerAsLong(Token t, out long value)
         {
-            string txt = t.Text;
+            string txt = t.text;
             if (txt.Length < 2 || txt[0] != '0' || (txt[1] != 'x' && txt[1] != 'X'))
             {
                 value = 0;
@@ -156,7 +156,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// </exception>
         public static double ParseHexFloat(Token t)
         {
-            string s = t.Text;
+            string s = t.text;
 
             try
             {

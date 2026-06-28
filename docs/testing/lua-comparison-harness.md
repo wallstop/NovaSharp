@@ -1,10 +1,10 @@
 # Lua Comparison Harness
 
-> **Status**: ✅ Implemented (Phases 1–4 complete). CI runs multi-version comparison on every PR.
+> **Status**: Implemented. CI runs multi-version comparison on every PR in a lane that is independent of the OS unit-test matrix.
 
 ## Overview
 
-NovaSharp tests contain thousands of inline Lua snippets executed via `Script.DoString(...)`. To ensure semantic parity with canonical Lua (5.1–5.4), this harness:
+NovaSharp tests contain thousands of inline Lua snippets executed via `Script.DoString(...)`. To ensure semantic parity with canonical Lua (5.1–5.5), this harness:
 
 1. Extracts all inline Lua snippets from C# test files with automatic version compatibility detection
 1. Runs each snippet through both NovaSharp and reference Lua interpreters
@@ -13,7 +13,7 @@ NovaSharp tests contain thousands of inline Lua snippets executed via `Script.Do
 ## Quick Start
 
 ```bash
-# Run fixtures against Lua 5.4 and NovaSharp (fast batch mode, ~32s for 830 files)
+# Run fixtures against Lua 5.4 and NovaSharp (fast batch mode)
 bash scripts/tests/run-lua-fixtures-fast.sh --lua-version 5.4
 
 # Run fixtures against specific Lua version (slower, spawns processes per file)
@@ -29,7 +29,7 @@ cat artifacts/lua-comparison-results/comparison.json | jq '.summary'
 ## Directory Structure
 
 ```
-src/tests/NovaSharp.Interpreter.Tests/LuaFixtures/
+src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/
 ├── <TestClass>/
 │   ├── <TestMethod>.lua      # Extracted fixture with metadata header
 │   └── ...
@@ -37,9 +37,9 @@ src/tests/NovaSharp.Interpreter.Tests/LuaFixtures/
 └── ...
 
 artifacts/lua-comparison-results/
-├── <TestClass>/<TestMethod>.lua.5.4.out    # Lua stdout
-├── <TestClass>/<TestMethod>.lua.5.4.err    # Lua stderr
-├── <TestClass>/<TestMethod>.lua.5.4.rc     # Lua exit code
+├── <TestClass>/<TestMethod>.lua5.4.out     # Lua stdout
+├── <TestClass>/<TestMethod>.lua5.4.err     # Lua stderr
+├── <TestClass>/<TestMethod>.lua5.4.rc      # Lua exit code
 ├── <TestClass>/<TestMethod>.nova.out       # NovaSharp stdout
 ├── <TestClass>/<TestMethod>.nova.err       # NovaSharp stderr
 ├── <TestClass>/<TestMethod>.nova.rc        # NovaSharp exit code
@@ -49,7 +49,7 @@ artifacts/lua-comparison-results/
 
 ## Fixture Metadata Headers
 
-Each extracted `.lua` file includes a metadata header specifying compatibility:
+Each extracted `.lua` file includes a metadata header specifying compatibility. Author-controlled metadata is limited to `@lua-versions`, `@novasharp-only`, and `@expects-error`; the extractor may add generated provenance fields for traceability.
 
 ```lua
 -- @lua-versions: 5.3, 5.4
@@ -63,15 +63,20 @@ local x = 1 + 2
 return x
 ```
 
-### Metadata Fields
+### Author-Controlled Metadata
 
 | Field             | Description                                                                     |
 | ----------------- | ------------------------------------------------------------------------------- |
-| `@lua-versions`   | Comma-separated list of compatible Lua versions (5.1, 5.2, 5.3, 5.4)            |
+| `@lua-versions`   | Comma-separated list of compatible Lua versions (5.1, 5.2, 5.3, 5.4, 5.5)       |
 | `@novasharp-only` | `true` if fixture uses NovaSharp-specific features (CLR interop, `!=` operator) |
 | `@expects-error`  | `true` if the test expects a runtime error                                      |
-| `@source`         | Original C# source file and line number                                         |
-| `@test`           | Fully qualified test class and method name                                      |
+
+### Generated Provenance
+
+| Field     | Description                                |
+| --------- | ------------------------------------------ |
+| `@source` | Original C# source file and line number    |
+| `@test`   | Fully qualified test class and method name |
 
 ### Version Compatibility Detection
 
@@ -122,7 +127,7 @@ public async Task TableMoveShiftsElements()
 ```
 
 ```lua
--- src/tests/NovaSharp.Interpreter.Tests/LuaFixtures/TableModuleTUnitTests/TableMoveShiftsElements.lua
+-- src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures/TableModuleTUnitTests/TableMoveShiftsElements.lua
 -- @lua-versions: 5.3, 5.4
 -- @novasharp-only: false
 
@@ -167,25 +172,35 @@ The semantic mode applies these normalizations:
 
 ## CI Integration
 
-The `lua-comparison` job in `.github/workflows/tests.yml` runs a **matrix** of Lua versions:
+The `lua-comparison` job in `.github/workflows/tests.yml` runs after `lint`, not after the full `dotnet-tests` OS matrix. That keeps specification-comparison signal visible even if one platform's unit-test job fails. The job still runs a **matrix** of Lua versions across all supported platforms:
 
 ```yaml
 strategy:
   matrix:
-    lua-version: ['5.1', '5.2', '5.3', '5.4']
+    os: [ubuntu-latest, windows-latest, macos-latest]
+    lua-version: ['5.1', '5.2', '5.3', '5.4', '5.5']
 ```
 
 Each matrix job:
 
-1. Installs the specific Lua version (`lua5.1`, `lua5.2`, etc.)
+1. Installs the specific Lua version using platform-appropriate methods
 1. Builds NovaSharp CLI
 1. Runs all compatible fixtures through both interpreters
 1. Compares outputs with semantic normalization
-1. Uploads version-specific artifacts (e.g., `lua-5.4-comparison-results`)
+1. Checks `both_error` signatures against `docs/testing/lua-error-ratchet.json`
+1. Uploads version and platform-specific artifacts (e.g., `lua-comparison-5.4-ubuntu-latest`)
+
+### Platform-Specific Lua Installation
+
+| Platform | Method                                                                       |
+| -------- | ---------------------------------------------------------------------------- |
+| Linux    | `apt-get install lua5.x` or source build cached under `.lua-cache`           |
+| macOS    | Homebrew (`brew install lua` or `lua@5.x`) or source build cached locally    |
+| Windows  | Official `lua.org` source build with MSVC, cached under `.lua-cache/Windows` |
 
 ### CI Gating
 
-Currently in `warn` mode—discrepancies are reported but don't fail the build. Promote to `enforce` once the baseline is fully validated.
+CI runs `compare-lua-outputs.py --enforce`. `mismatch`, `lua_only`, and `nova_only` are hard failures. `both_error` entries are allowed only when their current normalized signatures match `docs/testing/lua-error-ratchet.json`; new or changed unclassified entries fail, while reductions pass.
 
 ## Performance Optimization
 
@@ -197,10 +212,10 @@ For local development, use the optimized batch runner:
 bash scripts/tests/run-lua-fixtures-fast.sh --lua-version 5.4
 ```
 
-This uses `src/tooling/NovaSharp.LuaBatchRunner/`, which:
+This uses `src/tooling/WallstopStudios.NovaSharp.LuaBatchRunner/`, which:
 
 - Processes all fixtures in a **single .NET process** (no per-file spawn overhead)
-- Completes **830 files in ~32 seconds** (vs. 10+ minutes with sequential CLI)
+- Runtime and fixture counts vary with the current fixture manifest and runner; use `artifacts/lua-comparison-results/results.json` for the observed count, elapsed time, and worker count.
 - Includes 5-second per-script timeout for infinite loops
 - Intercepts `os.exit()` to prevent process termination
 
@@ -212,17 +227,13 @@ For CI or when you need per-file isolation:
 bash scripts/tests/run-lua-fixtures.sh --lua-version 5.4
 ```
 
-## Extraction Statistics (2025-12-08)
+## Extraction Statistics (baseline varies by fixture catalog)
 
-| Metric                           | Count |
-| -------------------------------- | ----- |
-| Total fixtures extracted         | 855   |
-| NovaSharp-only (skipped for Lua) | 68    |
-| Comparable across interpreters   | 787   |
-| Lua 5.1 compatible               | 440   |
-| Lua 5.2 compatible               | 605   |
-| Lua 5.3 compatible               | 762   |
-| Lua 5.4 compatible               | 787   |
+| Metric                          | Source                           |
+| ------------------------------- | -------------------------------- |
+| Total fixtures compared         | Latest comparison `results.json` |
+| Per-version comparable fixtures | `artifacts/.../results.json`     |
+| Match/mismatch/error counts     | `artifacts/.../comparison.json`  |
 
 ## Re-extracting Fixtures
 
@@ -230,8 +241,8 @@ To re-extract fixtures after test changes:
 
 ```bash
 python3 tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py \
-    --source-dir src/tests/NovaSharp.Interpreter.Tests.TUnit \
-    --output-dir src/tests/NovaSharp.Interpreter.Tests/LuaFixtures \
+    --source-dir src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit \
+    --output-dir src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/LuaFixtures \
     --verbose
 ```
 
@@ -260,8 +271,10 @@ The batch runner has a 5-second timeout per script. Scripts waiting for stdin or
 
 - [x] Phase 1: Lua snippet extraction infrastructure (`lua_corpus_extractor_v2.py`)
 - [x] Phase 2: Multi-version Lua execution harness (`run-lua-fixtures.sh`, `compare-lua-outputs.py`)
-- [x] Phase 3: CI integration (matrix job for 5.1–5.4)
-- [x] Phase 4: Performance optimization (`NovaSharp.LuaBatchRunner`)
-- [ ] Phase 5: File-first test authoring pattern (migrate existing tests)
+- [x] Phase 3: CI integration (decoupled matrix job for 5.1–5.5)
+- [x] Phase 4: Performance optimization (`WallstopStudios.NovaSharp.LuaBatchRunner`)
+- [x] Phase 5: Multi-platform CI (ubuntu, windows, macos)
+- [x] Phase 6: `both_error` ratchet for unclassified error parity gaps
+- [ ] Phase 7: File-first test authoring pattern (migrate existing tests)
 
 See `PLAN.md` → "Reference Lua comparison harness" for the implementation timeline.

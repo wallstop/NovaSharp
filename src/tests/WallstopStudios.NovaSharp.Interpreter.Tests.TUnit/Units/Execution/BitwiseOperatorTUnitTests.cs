@@ -10,10 +10,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     public sealed class BitwiseOperatorTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task BitwiseOperatorsRequireLua53Compatibility()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseOperatorsRequireLua53Compatibility(LuaCompatibilityVersion version)
         {
-            Script script = new();
-            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua52;
+            Script script = new(LuaCompatibilityVersion.Lua52);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("return 1 & 1")
@@ -26,10 +30,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorDivisionRequiresLua53Compatibility()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FloorDivisionRequiresLua53Compatibility(LuaCompatibilityVersion version)
         {
-            Script script = new();
-            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua52;
+            Script script = new(LuaCompatibilityVersion.Lua52);
 
             SyntaxErrorException exception = Assert.Throws<SyntaxErrorException>(() =>
                 script.DoString("return 5 // 2")
@@ -42,7 +50,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task BitwiseAndEvaluatesUsingIntegerSemantics()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseAndEvaluatesUsingIntegerSemantics(LuaCompatibilityVersion version)
         {
             DynValue result = Script.RunString("return 0xF0 & 0x0F");
 
@@ -51,7 +64,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task BitwiseOrEvaluatesCorrectly()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseOrEvaluatesCorrectly(LuaCompatibilityVersion version)
         {
             DynValue result = Script.RunString("return 0xF0 | 0x0F");
 
@@ -59,7 +77,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task BitwiseXorEvaluatesCorrectly()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseXorEvaluatesCorrectly(LuaCompatibilityVersion version)
         {
             DynValue result = Script.RunString("return 0xAA ~ 0x55");
 
@@ -67,7 +90,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task ShiftOperatorsFollowLuaSemantics()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ShiftOperatorsFollowLuaSemantics(LuaCompatibilityVersion version)
         {
             // Per Lua 5.3+ spec (§3.4.2): right shift is logical (unsigned), not arithmetic.
             // (-8) >> 2 = 0xFFFFFFFFFFFFFFF8 >> 2 = 0x3FFFFFFFFFFFFFFE = 4611686018427387902
@@ -84,7 +112,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task UnaryBitwiseNotProducesTwoComplement()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task UnaryBitwiseNotProducesTwoComplement(LuaCompatibilityVersion version)
         {
             DynValue result = Script.RunString("return ~0");
 
@@ -92,7 +125,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task BitwiseOperatorsAcceptConvertibleStrings()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseOperatorsAcceptConvertibleStrings(LuaCompatibilityVersion version)
         {
             DynValue result = Script.RunString("return '3' & '1'");
 
@@ -100,7 +138,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task BitwiseOperatorsRejectNonIntegers()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task BitwiseOperatorsRejectNonIntegers(LuaCompatibilityVersion version)
         {
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 Script.RunString("return 0.5 & 1")
@@ -113,7 +156,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        public async Task FloorDivisionMatchesLuaSemantics()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FloorDivisionMatchesLuaSemantics(LuaCompatibilityVersion version)
         {
             DynValue result = Script.RunString("return -5 // 2, 5 // 2, 5 // -2");
 

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -18,8 +19,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     public static class TableModule
     {
         /// <summary>
-        /// Implements Lua `table.unpack`, returning a tuple of array elements between the provided indices (§6.6).
+        /// Struct-based comparer for table.sort to avoid closure allocations (Initiative 12 Phase 4).
         /// </summary>
+        private readonly struct LuaSortComparer : IComparer<DynValue>
+        {
+            private readonly ScriptExecutionContext _ctx;
+            private readonly DynValue _lt;
+
+            public LuaSortComparer(ScriptExecutionContext ctx, DynValue lt)
+            {
+                _ctx = ctx;
+                _lt = lt;
+            }
+
+            public int Compare(DynValue a, DynValue b) => SortComparer(_ctx, a, b, _lt);
+        }
+
+        /// <summary>
+        /// Implements Lua `table.unpack`, returning a tuple of array elements between the provided indices (§6.6).
+        /// This function was added in Lua 5.2, replacing the global <c>unpack</c> function from Lua 5.1.
+        /// </summary>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "unpack")]
         public static DynValue Unpack(
             ScriptExecutionContext executionContext,
@@ -98,7 +118,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             double maxKey = 0;
 
-            foreach (TablePair pair in table.Pairs)
+            foreach (TablePair pair in table.GetPairsEnumerator())
             {
                 if (pair.Key.Type == DataType.Number)
                 {
@@ -115,7 +135,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         /// <summary>
         /// Implements Lua `table.pack`, wrapping arbitrary arguments into a table with field `n` (§6.6).
+        /// This function was added in Lua 5.2.
         /// </summary>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua52)]
         [NovaSharpModuleMethod(Name = "pack")]
         public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
         {
@@ -169,7 +191,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 try
                 {
-                    values.Sort((a, b) => SortComparer(executionContext, a, b, lt));
+                    // Use struct comparer with boxing-free pdqsort (Initiative 16)
+                    values.Sort<DynValue, LuaSortComparer>(
+                        new LuaSortComparer(executionContext, lt)
+                    );
                 }
                 catch (InvalidOperationException ex)
                 {
@@ -197,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             if (lt == null || lt.IsNil())
             {
-                lt = executionContext.GetBinaryMetamethod(a, b, "__lt");
+                lt = executionContext.GetBinaryMetamethod(a, b, Metamethods.Lt);
 
                 if (lt == null || lt.IsNil())
                 {
@@ -230,6 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int LuaComparerToClrComparer(DynValue dynValue1, DynValue dynValue2)
         {
             bool v1 = dynValue1.CastToBool();
@@ -513,7 +539,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private static int GetTableLength(ScriptExecutionContext executionContext, DynValue vlist)
         {
-            DynValue len = executionContext.GetMetamethod(vlist, "__len");
+            DynValue len = executionContext.GetMetamethod(vlist, Metamethods.Len);
 
             if (len != null)
             {
@@ -536,14 +562,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     }
 
     /// <summary>
-    /// Class exposing table.unpack and table.pack in the global namespace (to work around the most common Lua 5.1 compatibility issue).
+    /// Class exposing <c>unpack</c> in the global namespace for Lua 5.1 compatibility.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// In Lua 5.1, <c>unpack</c> was a global function.
+    /// In Lua 5.2+, it was moved to the <c>table</c> library as <c>table.unpack</c>.
+    /// </para>
+    /// <para>
+    /// Note: Unlike <c>unpack</c>, <c>table.pack</c> was introduced NEW in Lua 5.2;
+    /// there was no global <c>pack</c> function in Lua 5.1 or any other version.
+    /// </para>
+    /// </remarks>
     [NovaSharpModule]
     public static class TableModuleGlobals
     {
         /// <summary>
-        /// Global alias for `table.unpack` to maintain Lua 5.1 compatibility.
+        /// Global <c>unpack</c> function for Lua 5.1 compatibility.
+        /// This function was moved to <c>table.unpack</c> in Lua 5.2 and removed from the global namespace.
         /// </summary>
+        [LuaCompatibility(LuaCompatibilityVersion.Lua51, LuaCompatibilityVersion.Lua51)]
         [NovaSharpModuleMethod(Name = "unpack")]
         public static DynValue Unpack(
             ScriptExecutionContext executionContext,
@@ -551,15 +589,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         )
         {
             return TableModule.Unpack(executionContext, args);
-        }
-
-        /// <summary>
-        /// Global alias for `table.pack` to maintain Lua 5.1 compatibility.
-        /// </summary>
-        [NovaSharpModuleMethod(Name = "pack")]
-        public static DynValue Pack(ScriptExecutionContext executionContext, CallbackArguments args)
-        {
-            return TableModule.Pack(executionContext, args);
         }
     }
 }

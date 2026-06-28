@@ -4,17 +4,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class CoroutineLifecycleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task ResumeAfterCompletionThrowsCannotResumeNotSuspended()
+        [AllLuaVersions]
+        public async Task ResumeAfterCompletionThrowsCannotResumeNotSuspended(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString("function simple() return 5 end");
 
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("simple"));
@@ -38,9 +43,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RecycleCoroutineCreatesReusableInstance()
+        [AllLuaVersions]
+        public async Task RecycleCoroutineCreatesReusableInstance(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString(
                 @"
                 function first()
@@ -92,9 +98,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task RecycleCoroutineThrowsWhenNotDead()
+        [AllLuaVersions]
+        public async Task RecycleCoroutineThrowsWhenNotDead(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString("function sample() coroutine.yield(1) end");
 
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("sample"));
@@ -111,9 +118,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task AutoYieldCounterForcesYieldAndResumesCleanly()
+        [AllLuaVersions]
+        public async Task AutoYieldCounterForcesYieldAndResumesCleanly(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString(
                 @"
                 function heavy()
@@ -149,9 +159,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task ForceSuspendedCoroutineRejectsArgumentsAndBecomesDead()
+        [AllLuaVersions]
+        public async Task ForceSuspendedCoroutineRejectsArgumentsAndBecomesDead(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString(
                 @"
                 function busy()
@@ -186,9 +199,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task ForceSuspendedCoroutineResumesWithContextWithoutArguments()
+        [AllLuaVersions]
+        public async Task ForceSuspendedCoroutineResumesWithContextWithoutArguments(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString(
                 @"
                 function heavyweight()
@@ -225,9 +241,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task SuspendedCoroutineReceivesResumeArguments()
+        [AllLuaVersions]
+        public async Task SuspendedCoroutineReceivesResumeArguments(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString(
                 @"
                 function accumulator()
@@ -258,9 +275,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseSuspendedCoroutineReturnsTrue()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseSuspendedCoroutineReturnsTrue(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString(
                 @"
                 function closable_success()
@@ -290,9 +308,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseSuspendedCoroutinePropagatesErrors()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseSuspendedCoroutinePropagatesErrors(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString(
                 @"
                 function closable_failure()
@@ -328,9 +347,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseNotStartedCoroutineReturnsTrue()
+        [AllLuaVersions]
+        public async Task CloseNotStartedCoroutineReturnsTrue(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString("function never_started() return 5 end");
 
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("never_started"));
@@ -346,9 +366,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task CloseDeadCoroutineReturnsLastErrorTuple()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CloseDeadCoroutineReturnsLastErrorTuple(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript();
+            Script script = CreateScript(version);
             script.DoString(
                 @"
                 function closable_failure()
@@ -382,9 +403,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .ConfigureAwait(false);
         }
 
-        private static Script CreateScript()
+        private static Script CreateScript(LuaCompatibilityVersion version)
         {
-            return new Script(CoreModulePresets.Complete);
+            return new Script(version, CoreModulePresets.Complete);
         }
     }
 }

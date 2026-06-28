@@ -7,8 +7,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.Converters;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class TableConversionsTUnitTests
     {
@@ -81,11 +83,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConvertIListToTableCopiesValues()
+        [AllLuaVersions]
+        public async Task ConvertIListToTableCopiesValues(LuaCompatibilityVersion version)
         {
             IList values = new ArrayList { 1, "two" };
 
-            Table table = TableConversions.ConvertIListToTable(new Script(), values);
+            Table table = TableConversions.ConvertIListToTable(new Script(version), values);
 
             await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(table.Get(1).Number).IsEqualTo(1).ConfigureAwait(false);
@@ -93,11 +96,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConvertIDictionaryToTablePreservesEntries()
+        [AllLuaVersions]
+        public async Task ConvertIDictionaryToTablePreservesEntries(LuaCompatibilityVersion version)
         {
             IDictionary dictionary = new Hashtable { ["name"] = "NovaSharp", ["version"] = 5 };
 
-            Table table = TableConversions.ConvertIDictionaryToTable(new Script(), dictionary);
+            Table table = TableConversions.ConvertIDictionaryToTable(
+                new Script(version),
+                dictionary
+            );
 
             await Assert
                 .That(table.Get("name").String)

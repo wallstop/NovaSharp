@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -14,9 +15,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     public sealed class LoadModuleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task RequireCachesModuleResult()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RequireCachesModuleResult(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             RecordingScriptLoader loader = new()
             {
                 ModuleBody = "local name = ...; return { value = name, timestamp = os.time() }",
@@ -37,9 +43,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task RequireThrowsWhenModuleCannotBeResolved()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RequireThrowsWhenModuleCannotBeResolved(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             script.Options.ScriptLoader = new NullResolvingScriptLoader();
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -50,9 +61,75 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadReturnsTupleWithErrorWhenReaderYieldsNonString()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RequireErrorListsSearchedPathsWhenLuaCompatibleErrorsEnabled(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            // Test that when LuaCompatibleErrors is enabled and a module is not found,
+            // the error message lists all searched paths matching reference Lua behavior
+            Script script = CreateScriptWithVersion(version);
+            script.Options.LuaCompatibleErrors = true;
+            script.Options.ScriptLoader = new PathListingScriptLoader();
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return require('nonexistent_module')")
+            );
+
+            // Verify the error message format matches reference Lua:
+            // module 'foo' not found:
+            //     no field package.preload['foo']
+            //     no file './foo.lua'
+            //     ...
+            await Assert.That(exception.Message).Contains("module 'nonexistent_module' not found:");
+            await Assert
+                .That(exception.Message)
+                .Contains("no field package.preload['nonexistent_module']");
+            await Assert.That(exception.Message).Contains("no file './nonexistent_module.lua'");
+            await Assert
+                .That(exception.Message)
+                .Contains("no file '/usr/share/lua/nonexistent_module.lua'");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RequireErrorShowsSimpleMessageWhenLuaCompatibleErrorsDisabled(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Test that when LuaCompatibleErrors is disabled (default), the error message
+            // is simple for backward compatibility
+            Script script = CreateScriptWithVersion(version);
+            script.Options.LuaCompatibleErrors = false;
+            script.Options.ScriptLoader = new PathListingScriptLoader();
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return require('nonexistent_module')")
+            );
+
+            // Verify the error message is simple (no search paths listed)
+            await Assert.That(exception.Message).IsEqualTo("module 'nonexistent_module' not found");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadReturnsTupleWithErrorWhenReaderYieldsNonString(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
             DynValue loadResult = script.DoString(
                 @"
                 local called = false
@@ -76,9 +153,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadPropagatesDecoratedMessageWhenReaderThrowsSyntaxError()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadPropagatesDecoratedMessageWhenReaderThrowsSyntaxError(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             script.Globals["throw_reader_helper"] = DynValue.NewCallback(
                 (_, _) => throw new SyntaxErrorException("reader failure")
             );
@@ -99,9 +183,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadConcatenatesReaderFragmentsAndUsesProvidedEnvironment()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadConcatenatesReaderFragmentsAndUsesProvidedEnvironment(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString(
                 @"
                 local fragments = { 'return ', 'value', nil }
@@ -121,9 +212,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadCompilesStringChunksAndUsesProvidedSourceName()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadCompilesStringChunksAndUsesProvidedSourceName(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             Table env = new(script);
             env["value"] = DynValue.NewNumber(321);
 
@@ -147,9 +245,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadRejectsChunkSourcesThatAreNeitherStringNorFunction()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadRejectsChunkSourcesThatAreNeitherStringNorFunction(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("load(true)")
@@ -159,9 +264,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadReturnsTupleWithSyntaxErrorWhenStringIsInvalid()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadReturnsTupleWithSyntaxErrorWhenStringIsInvalidLua52Plus(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            // Lua 5.2+ load() accepts strings directly
+            Script script = CreateScriptWithVersion(version);
             DynValue result = script.DoString("return load('function(')");
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
@@ -170,9 +282,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadFileSafeUsesSafeEnvironmentWhenNotProvided()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task LoadRejectsStringArgumentInLua51(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            // Lua 5.1 load() only accepts functions, not strings (use loadstring for strings)
+            Script script = CreateScriptWithVersion(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString("return load('function(')")
+            );
+
+            await Assert.That(exception.Message).Contains("function expected");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task LoadstringReturnsTupleWithSyntaxErrorWhenStringIsInvalid(
+            LuaCompatibilityVersion version
+        )
+        {
+            // Lua 5.1 uses loadstring for string chunks
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString("return loadstring('function(')");
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[1].String).Contains("unexpected symbol near '('");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadFileSafeUsesSafeEnvironmentWhenNotProvided(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
             RecordingScriptLoader loader = new() { ModuleBody = "return marker" };
             script.Options.ScriptLoader = loader;
             script.Globals["marker"] = DynValue.NewString("global");
@@ -186,9 +334,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadSafeThrowsWhenEnvironmentCannotBeRetrieved()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        public async Task LoadSafeThrowsWhenEnvironmentCannotBeRetrieved(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            // This test is for Lua 5.1 only, where _ENV is always captured for setfenv/getfenv compatibility.
+            // In Lua 5.2+, if the calling function doesn't reference globals, it won't have _ENV as an upvalue,
+            // and loadsafe will successfully find the global environment from the script's globals.
+            //
+            // For Lua 5.1: We can test that when _ENV is nil in the calling function, loadsafe fails.
+            // The inner function must NOT reference any globals (otherwise it would fail before calling loadsafe).
+            Script script = CreateScriptWithVersion(version);
 
             DynValue result = script.DoString(
                 @"
@@ -196,6 +353,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 local ls = loadsafe
                 local pc = pcall
                 _ENV = nil
+                -- In Lua 5.1, even though we only use locals, _ENV is still captured as an upvalue.
+                -- So when loadsafe looks for _ENV, it finds nil and fails.
                 local ok, err = pc(function() return ls('return 1') end)
                 _ENV = original_env
                 return ok, err
@@ -209,9 +368,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadFileHonorsExplicitEnvironmentParameter()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadSafeUsesGlobalEnvWhenCallerHasNoEnvUpvalue(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            // In Lua 5.2+, if the calling function doesn't reference any globals, it won't have _ENV
+            // as an upvalue. In this case, loadsafe should successfully use the script's global environment.
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local ls = loadsafe
+                -- This function only uses the local 'ls', so it has no _ENV upvalue in Lua 5.2+.
+                -- loadsafe should fall back to using the script's global environment.
+                local fn = ls('return 42')
+                return fn()
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(42d);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadFileHonorsExplicitEnvironmentParameter(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
             RecordingScriptLoader loader = new() { ModuleBody = "return value" };
             script.Options.ScriptLoader = loader;
             script.Globals["value"] = DynValue.NewString("global");
@@ -229,9 +421,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadFileReturnsTupleWithSyntaxErrorMessage()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadFileReturnsTupleWithSyntaxErrorMessage(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             script.Options.ScriptLoader = new SyntaxErrorScriptLoader();
 
             DynValue loadFileResult = script.DoString("return loadfile('broken.lua')");
@@ -244,9 +443,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task LoadFileUsesRawMessageWhenScriptLoaderThrowsSyntaxErrorWithoutDecoration()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadFileUsesRawMessageWhenScriptLoaderThrowsSyntaxErrorWithoutDecoration(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             script.Options.ScriptLoader = new ThrowingSyntaxErrorScriptLoader();
 
             DynValue result = script.DoString("return loadfile('anything.lua')");
@@ -257,7 +463,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetSyntaxErrorMessagePrefersDecoratedTextWhenAvailable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetSyntaxErrorMessagePrefersDecoratedTextWhenAvailable(
+            LuaCompatibilityVersion version
+        )
         {
             SyntaxErrorException exception = new("raw message")
             {
@@ -270,7 +483,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetSyntaxErrorMessageFallsBackToRawMessageWhenDecorationMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetSyntaxErrorMessageFallsBackToRawMessageWhenDecorationMissing(
+            LuaCompatibilityVersion version
+        )
         {
             SyntaxErrorException exception = new("raw message") { DecoratedMessage = null };
 
@@ -280,15 +500,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetSyntaxErrorMessageReturnsEmptyStringWhenExceptionIsNull()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetSyntaxErrorMessageReturnsEmptyStringWhenExceptionIsNull(
+            LuaCompatibilityVersion version
+        )
         {
             await Assert.That(LoadModule.GetSyntaxErrorMessage(null)).IsEqualTo(string.Empty);
         }
 
         [global::TUnit.Core.Test]
-        public async Task DoFileExecutesLoadedChunk()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DoFileExecutesLoadedChunk(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             RecordingScriptLoader loader = new() { ModuleBody = "return 777" };
             script.Options.ScriptLoader = loader;
 
@@ -299,9 +531,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task DoFileWrapsSyntaxErrorsWithScriptRuntimeException()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DoFileWrapsSyntaxErrorsWithScriptRuntimeException(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             script.Options.ScriptLoader = new SyntaxErrorScriptLoader();
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -312,9 +551,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task NovaSharpInitCreatesPackageTableWhenMissing()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NovaSharpInitCreatesPackageTableWhenMissing(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             Table globals = new(script);
             Table ioTable = new(script);
 
@@ -328,9 +574,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task NovaSharpInitThrowsWhenPackageIsNotTable()
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task NovaSharpInitThrowsWhenPackageIsNotTable(LuaCompatibilityVersion version)
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = CreateScriptWithVersion(version);
             Table globals = new(script);
             globals["package"] = DynValue.NewNumber(42);
 
@@ -419,6 +670,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             {
                 return modname;
             }
+        }
+
+        /// <summary>
+        /// A script loader that extends ScriptLoaderBase to test path listing in error messages.
+        /// All files are reported as non-existent to trigger the "module not found" error.
+        /// </summary>
+        private sealed class PathListingScriptLoader : ScriptLoaderBase
+        {
+            public PathListingScriptLoader()
+            {
+                ModulePaths = new[]
+                {
+                    "./?.lua",
+                    "/usr/share/lua/?.lua",
+                    "/usr/local/lib/lua/?.lua",
+                };
+            }
+
+            public override object LoadFile(string file, Table globalContext)
+            {
+                throw new InvalidOperationException(
+                    "LoadFile should not be invoked for non-existent modules."
+                );
+            }
+
+            public override bool ScriptFileExists(string name)
+            {
+                // All files are reported as non-existent to trigger the error
+                return false;
+            }
+        }
+
+        private static Script CreateScriptWithVersion(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new ScriptOptions(Script.DefaultOptions)
+            {
+                CompatibilityVersion = version,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            script.Options.DebugPrint = _ => { };
+            return script;
         }
     }
 }

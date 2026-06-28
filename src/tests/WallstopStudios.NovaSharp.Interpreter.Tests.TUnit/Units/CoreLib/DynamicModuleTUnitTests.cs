@@ -3,18 +3,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class DynamicModuleTUnitTests
     {
         [global::TUnit.Core.Test]
-        public async Task EvalExecutesExpressionAgainstCurrentGlobals()
+        [AllLuaVersions]
+        public async Task EvalExecutesExpressionAgainstCurrentGlobals(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDummyType();
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.Globals["value"] = DynValue.NewNumber(6);
 
             DynValue result = script.DoString("return dynamic.eval('value * 3')");
@@ -24,9 +29,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
-        public async Task PreparedExpressionCanBeEvaluatedMultipleTimes()
+        [AllLuaVersions]
+        public async Task PreparedExpressionCanBeEvaluatedMultipleTimes(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
 
             DynValue prepared = script.DoString("return dynamic.prepare('a + b')");
             script.Globals["expr"] = prepared;
@@ -44,10 +52,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalThrowsWhenUserDataIsNotPreparedExpression()
+        [AllLuaVersions]
+        public async Task EvalThrowsWhenUserDataIsNotPreparedExpression(
+            LuaCompatibilityVersion version
+        )
         {
             using UserDataRegistrationScope registrationScope = RegisterDummyType();
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
             script.Globals["bad"] = UserData.Create(new Dummy());
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
@@ -61,9 +72,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
-        public async Task EvalThrowsScriptRuntimeExceptionOnSyntaxError()
+        [AllLuaVersions]
+        public async Task EvalThrowsScriptRuntimeExceptionOnSyntaxError(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return dynamic.eval('function(')")
@@ -73,9 +87,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
-        public async Task PrepareThrowsScriptRuntimeExceptionOnSyntaxError()
+        [AllLuaVersions]
+        public async Task PrepareThrowsScriptRuntimeExceptionOnSyntaxError(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(CoreModulePresets.Complete);
+            Script script = new(version, CoreModulePresets.Complete);
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 script.DoString("return dynamic.prepare('function(')")

@@ -6,12 +6,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ProcessorStackOperationsTUnitTests
     {
@@ -129,9 +131,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task SetGlobalSymbolStoresValueAndTreatsNullAsNil()
+        [AllLuaVersions]
+        public async Task SetGlobalSymbolStoresValueAndTreatsNullAsNil(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue env = DynValue.NewTable(script.Globals);
 
             Processor.SetGlobalSymbolForTests(env, "answer", DynValue.NewNumber(42));
@@ -153,9 +158,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignGenericSymbolUpdatesGlobalScope()
+        [AllLuaVersions]
+        public async Task AssignGenericSymbolUpdatesGlobalScope(LuaCompatibilityVersion version)
         {
-            Script script = new();
+            Script script = new(version);
             Processor processor = script.GetMainProcessorForTests();
 
             SymbolRef global = SymbolRef.Global("greeting", SymbolRef.DefaultEnv);

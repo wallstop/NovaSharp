@@ -49,6 +49,12 @@
         <!-- Opt into NuGet lock files so setup-dotnet cache keys stay deterministic -->
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 
+        <!-- Build performance optimizations -->
+        <!-- Use shared compilation server for all projects (warm Roslyn process) -->
+        <UseSharedCompilation>true</UseSharedCompilation>
+        <!-- Enable graph-based restore for faster dependency resolution -->
+        <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
+
         <!-- Enable SourceLink for debuggable NuGet packages -->
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -57,6 +63,28 @@
 
         <!-- Default version (can be overridden by CI) -->
         <Version Condition="'$(Version)' == ''">3.0.0</Version>
+    </PropertyGroup>
+
+    <!-- ========================================================================
+         TEST PROJECT BUILD SETTINGS
+         Applied only to IsTestProject=true projects.
+         ======================================================================== -->
+    <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
+        <!-- Disable TUnit source generator for faster builds - use reflection instead -->
+        <EnableTUnitSourceGeneration>false</EnableTUnitSourceGeneration>
+
+        <!-- Skip documentation file generation for tests -->
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+        <!-- Skip reference assembly generation (not needed for test projects) -->
+        <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+
+        <!-- Skip NRT analysis for test projects (already disabled globally) -->
+        <Nullable>disable</Nullable>
+
+        <!-- Skip SourceLink for tests (not packaged) -->
+        <EmbedUntrackedSources>false</EmbedUntrackedSources>
+        <IncludeSymbols>false</IncludeSymbols>
     </PropertyGroup>
 
     <!-- SourceLink package for GitHub -->

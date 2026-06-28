@@ -68,6 +68,82 @@ namespace WallstopStudios.NovaSharp.Interpreter.Loaders
         }
 
         /// <summary>
+        /// Resolves the name of a module on a set of paths, returning both the resolved path
+        /// and the list of paths that were searched. This is used to generate detailed error
+        /// messages matching reference Lua behavior.
+        /// </summary>
+        /// <param name="modname">The module name to resolve.</param>
+        /// <param name="paths">The paths to search.</param>
+        /// <returns>A <see cref="ModuleResolutionResult"/> containing the result and searched paths.</returns>
+        protected virtual ModuleResolutionResult ResolveModuleNameWithSearchedPaths(
+            string modname,
+            IEnumerable<string> paths
+        )
+        {
+            if (modname == null)
+            {
+                throw new ArgumentNullException(nameof(modname));
+            }
+
+            if (paths == null)
+            {
+                return ModuleResolutionResult.NotFound(EmptyModulePaths);
+            }
+
+            string normalizedModule = NormalizeModuleName(modname);
+            List<string> searchedPaths = new();
+
+            foreach (string path in paths)
+            {
+                string file = path.Replace("?", normalizedModule, StringComparison.Ordinal);
+                searchedPaths.Add(file);
+
+                if (ScriptFileExists(file))
+                {
+                    return ModuleResolutionResult.Success(file, searchedPaths);
+                }
+            }
+
+            return ModuleResolutionResult.NotFound(searchedPaths);
+        }
+
+        /// <summary>
+        /// Resolves the name of a module to a filename, returning both the resolved path
+        /// and the list of paths that were searched. This is used to generate detailed error
+        /// messages matching reference Lua behavior when a module is not found.
+        /// </summary>
+        /// <param name="modname">The module name to resolve.</param>
+        /// <param name="globalContext">The global context.</param>
+        /// <returns>A <see cref="ModuleResolutionResult"/> containing the result and searched paths.</returns>
+        public virtual ModuleResolutionResult TryResolveModuleName(
+            string modname,
+            Table globalContext
+        )
+        {
+            if (modname == null)
+            {
+                throw new ArgumentNullException(nameof(modname));
+            }
+
+            if (globalContext == null)
+            {
+                throw new ArgumentNullException(nameof(globalContext));
+            }
+
+            if (!IgnoreLuaPathGlobal)
+            {
+                DynValue s = globalContext.RawGet("LUA_PATH");
+
+                if (s != null && s.Type == DataType.String)
+                {
+                    return ResolveModuleNameWithSearchedPaths(modname, UnpackStringPaths(s.String));
+                }
+            }
+
+            return ResolveModuleNameWithSearchedPaths(modname, ModulePaths);
+        }
+
+        /// <summary>
         /// Resolves the name of a module to a filename (which will later be passed to OpenScriptFile).
         /// The resolution happens first on paths included in the LUA_PATH global variable (if and only if
         /// the IgnoreLuaPathGlobal is false), and - if the variable does not exist - by consulting the

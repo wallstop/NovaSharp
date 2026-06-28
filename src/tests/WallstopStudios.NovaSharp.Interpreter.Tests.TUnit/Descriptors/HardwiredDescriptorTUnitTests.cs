@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -13,6 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     [UserDataIsolation]
@@ -212,11 +214,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynValueMemberDescriptorReturnsStoredDynValue()
+        [AllLuaVersions]
+        public async Task DynValueMemberDescriptorReturnsStoredDynValue(
+            LuaCompatibilityVersion version
+        )
         {
             DynValueMemberDescriptor descriptor = new("constant", DynValue.NewNumber(123));
 
-            DynValue result = descriptor.GetValue(new Script(), obj: null);
+            DynValue result = descriptor.GetValue(new Script(version), obj: null);
 
             await Assert.That(descriptor.IsStatic).IsTrue().ConfigureAwait(false);
             await Assert.That(descriptor.Name).IsEqualTo("constant").ConfigureAwait(false);
@@ -243,12 +248,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynValueMemberDescriptorSetValueThrows()
+        [AllLuaVersions]
+        public async Task DynValueMemberDescriptorSetValueThrows(LuaCompatibilityVersion version)
         {
             DynValueMemberDescriptor descriptor = new("number", DynValue.NewNumber(1));
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                descriptor.SetValue(new Script(), obj: null, DynValue.NewNumber(2))
+                descriptor.SetValue(new Script(version), obj: null, DynValue.NewNumber(2))
             );
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
@@ -336,9 +342,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
-        public async Task DynValueMemberDescriptorPrepareForWiringHandlesUnsupportedTypes()
+        [AllLuaVersions]
+        public async Task DynValueMemberDescriptorPrepareForWiringHandlesUnsupportedTypes(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new();
+            Script script = new(version);
             DynValue closure = script.DoString("return function() return 1 end");
             DynValueMemberDescriptor descriptor = new("closure", closure);
             Table wiring = new(null);

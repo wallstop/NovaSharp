@@ -30,7 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             { 'A', "dddd" },
             { 'b', "MMM" },
             { 'B', "MMMM" },
-            { 'c', "f" },
+            // %c - handled in switch below for Lua-compatible format
             { 'd', "dd" },
             { 'D', "MM/dd/yy" },
             { 'F', "yyyy-MM-dd" },
@@ -48,16 +48,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             { 'T', "HH:mm:ss" },
             { 'y', "yy" },
             { 'Y', "yyyy" },
-            { 'x', "d" },
-            { 'X', "T" },
-            { 'z', "zzz" },
-            { 'Z', "zzz" },
+            // %x - handled in switch below for Lua-compatible format
+            { 'X', "HH:mm:ss" },
+            // %z - handled in switch below for Lua-compatible format (+0000 not +00:00)
+            // %Z - handled in switch below for timezone name
         };
 
-        private static DynValue GetUnixTime(DateTime dateTime, DateTime? epoch = null)
+        private static DynValue GetUnixTime(
+            DateTime dateTime,
+            LuaCompatibilityVersion version,
+            DateTime? epoch = null
+        )
         {
             double time = (dateTime - (epoch ?? Epoch)).TotalSeconds;
             // Negative times (before epoch) are valid in Lua
+
+            // In Lua 5.3+, os.time() returns an integer
+            LuaCompatibilityVersion resolvedVersion = LuaVersionDefaults.Resolve(version);
+            if (resolvedVersion >= LuaCompatibilityVersion.Lua53)
+            {
+                return DynValue.NewInteger((long)time);
+            }
+
             return DynValue.NewNumber(time);
         }
 
@@ -178,7 +190,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 }
             }
 
-            return GetUnixTime(date);
+            return GetUnixTime(date, version);
         }
 
         private static DateTime ParseTimeTable(Table t, LuaCompatibilityVersion version)
@@ -223,7 +235,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 if (v.Type != DataType.Number)
                 {
-                    throw new ScriptRuntimeException($"field '{key}' is not an integer");
+                    using Utf16ValueStringBuilder sb = ZStringBuilder.Create();
+                    sb.Append("field '");
+                    sb.Append(key);
+                    sb.Append("' is not an integer");
+                    throw new ScriptRuntimeException(sb.ToString());
                 }
 
                 // Check if it's a valid integer
@@ -241,7 +257,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     return (int)floored;
                 }
 
-                throw new ScriptRuntimeException($"field '{key}' is not an integer");
+                using (Utf16ValueStringBuilder sb = ZStringBuilder.Create())
+                {
+                    sb.Append("field '");
+                    sb.Append(key);
+                    sb.Append("' is not an integer");
+                    throw new ScriptRuntimeException(sb.ToString());
+                }
             }
 
             // Lua 5.1/5.2: use CastToNumber which accepts strings
@@ -374,9 +396,93 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     continue;
                 }
 
+                // Handle POSIX O and E locale modifiers
+                // O = alternate numeric symbols, E = alternate era-based representation
+                //
+                // Lua 5.1 behavior: processes format specifiers one character at a time.
+                // %O and %E are treated as unknown specifiers and passed to strftime individually.
+                // This results in literal "%O" or "%E" output, followed by the next character
+                // being processed normally. For example, "%Oy" outputs "%O" + "y" = "%Oy".
+                //
+                // Lua 5.2+ behavior: validates against a known list of 2-char specifiers.
+                // Supported O combinations: d, e, H, I, m, M, S, u, U, V, w, W, y
+                // Supported E combinations: c, C, x, X, y, Y
+                // For supported combinations, processes the full %Ox/%Ex specifier.
+                // For unsupported combinations, throws "invalid conversion specifier".
                 if (c is 'O' or 'E')
                 {
-                    continue; // no modifiers
+                    // In Lua 5.1, O and E are NOT special modifiers - they're processed
+                    // one char at a time like any other unknown specifier.
+                    // The result is "%O" or "%E" literal, with the next char processed normally.
+                    if (version == LuaCompatibilityVersion.Lua51)
+                    {
+                        // Output as literal "%O" or "%E" (unknown specifier passthrough)
+                        sb.Append('%');
+                        sb.Append(c);
+                        isEscapeSequence = false;
+                        continue;
+                    }
+
+                    // Lua 5.2+: Handle O/E as locale modifiers with the next character
+                    if (i + 1 >= format.Length)
+                    {
+                        // O/E at end of string - invalid
+                        throw new ScriptRuntimeException(
+                            ZString.Concat(
+                                "bad argument #1 to 'date' (invalid conversion specifier '%",
+                                c,
+                                "')"
+                            )
+                        );
+                    }
+
+                    char nextChar = format[i + 1];
+                    bool isSupported = false;
+
+                    // Check if this O/E + next char combination is supported
+                    if (c == 'O')
+                    {
+                        // O modifier: alternate numeric representation
+                        // Supported: d, e, H, I, m, M, S, u, U, V, w, W, y
+                        isSupported =
+                            nextChar
+                                is 'd'
+                                    or 'e'
+                                    or 'H'
+                                    or 'I'
+                                    or 'm'
+                                    or 'M'
+                                    or 'S'
+                                    or 'u'
+                                    or 'U'
+                                    or 'V'
+                                    or 'w'
+                                    or 'W'
+                                    or 'y';
+                    }
+                    else // c == 'E'
+                    {
+                        // E modifier: alternate era-based representation
+                        // Supported: c, C, x, X, y, Y
+                        isSupported = nextChar is 'c' or 'C' or 'x' or 'X' or 'y' or 'Y';
+                    }
+
+                    if (!isSupported)
+                    {
+                        // Lua 5.2+: throw error for unsupported combination
+                        throw new ScriptRuntimeException(
+                            ZString.Concat(
+                                "bad argument #1 to 'date' (invalid conversion specifier '%",
+                                c,
+                                nextChar,
+                                "')"
+                            )
+                        );
+                    }
+
+                    // Skip the O/E modifier and let the next iteration handle the actual specifier
+                    // The modifier doesn't change the output in NovaSharp (we don't have locale-specific alternate numerals)
+                    continue;
                 }
 
                 isEscapeSequence = false;
@@ -389,6 +495,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 {
                     switch (c)
                     {
+                        case 'c':
+                        {
+                            // Lua %c format: "ddd MMM dd HH:mm:ss yyyy" (e.g., "Thu Jan  1 00:00:00 1970")
+                            // Note: day is space-padded to 2 chars
+                            string dayPadded = d.Day.ToString(CultureInfo.InvariantCulture);
+                            if (dayPadded.Length < 2)
+                            {
+                                dayPadded = " " + dayPadded;
+                            }
+
+                            sb.Append(d.ToString("ddd MMM ", CultureInfo.InvariantCulture));
+                            sb.Append(dayPadded);
+                            sb.Append(d.ToString(" HH:mm:ss yyyy", CultureInfo.InvariantCulture));
+                            break;
+                        }
                         case 'e':
                         {
                             string s = d.ToString("%d", CultureInfo.InvariantCulture);
@@ -427,6 +548,93 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                         {
                             int weekDay = (int)d.DayOfWeek;
                             sb.Append(weekDay);
+                            break;
+                        }
+                        case 'x':
+                        {
+                            // Lua %x format: MM/DD/YY (e.g., "01/01/70")
+                            sb.Append(d.ToString("MM/dd/yy", CultureInfo.InvariantCulture));
+                            break;
+                        }
+                        case 'z':
+                        {
+                            // Lua %z format: timezone offset as +HHMM or -HHMM (no colon)
+                            // For UTC, this is "+0000"
+                            // Note: d is already converted to local time or kept as UTC depending on ! prefix
+                            // For UTC input, we output +0000
+                            if (d.Kind == DateTimeKind.Utc)
+                            {
+                                sb.Append("+0000");
+                            }
+                            else
+                            {
+                                TimeSpan offset = TimeZoneInfo.Local.GetUtcOffset(d);
+                                string sign = offset < TimeSpan.Zero ? "-" : "+";
+                                int hours = Math.Abs(offset.Hours);
+                                int minutes = Math.Abs(offset.Minutes);
+                                sb.Append(sign);
+                                sb.Append(hours.ToString("00", CultureInfo.InvariantCulture));
+                                sb.Append(minutes.ToString("00", CultureInfo.InvariantCulture));
+                            }
+
+                            break;
+                        }
+                        case 'Z':
+                        {
+                            // Lua %Z format: timezone name/abbreviation
+                            // For UTC, this is "GMT" or "UTC"
+                            if (d.Kind == DateTimeKind.Utc)
+                            {
+                                sb.Append("GMT");
+                            }
+                            else
+                            {
+                                // For local time, use the standard name abbreviation
+                                // Note: .NET doesn't have a direct way to get timezone abbreviations,
+                                // so we use the TimeZoneInfo's standard/daylight name
+                                TimeZoneInfo localZone = TimeZoneInfo.Local;
+                                bool isDst = localZone.IsDaylightSavingTime(d);
+                                string name = isDst
+                                    ? localZone.DaylightName
+                                    : localZone.StandardName;
+                                // Try to extract abbreviation (first letters of each word) if name has spaces
+                                bool hasSpace = false;
+                                for (int j = 0; j < name.Length; j++)
+                                {
+                                    if (name[j] == ' ')
+                                    {
+                                        hasSpace = true;
+                                        break;
+                                    }
+                                }
+
+                                if (name.Length > 5 && hasSpace)
+                                {
+                                    // Build abbreviation from first letter of each word
+                                    Utf16ValueStringBuilder abbr = ZString.CreateStringBuilder();
+                                    bool newWord = true;
+                                    for (int j = 0; j < name.Length; j++)
+                                    {
+                                        char ch = name[j];
+                                        if (ch == ' ')
+                                        {
+                                            newWord = true;
+                                        }
+                                        else if (newWord && char.IsLetter(ch))
+                                        {
+                                            abbr.Append(char.ToUpperInvariant(ch));
+                                            newWord = false;
+                                        }
+                                    }
+                                    sb.Append(abbr.ToString());
+                                    abbr.Dispose();
+                                }
+                                else
+                                {
+                                    sb.Append(name);
+                                }
+                            }
+
                             break;
                         }
                         case 'U':

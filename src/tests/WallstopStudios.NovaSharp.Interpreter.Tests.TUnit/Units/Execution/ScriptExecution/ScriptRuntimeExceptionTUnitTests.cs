@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -12,6 +13,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [ScriptGlobalOptionsIsolation]
     public sealed class ScriptRuntimeExceptionTUnitTests
@@ -28,9 +30,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task ArithmeticOnNonNumberReturnsExceptionWhenLeftIsNonNumeric()
+        [AllLuaVersions]
+        public async Task ArithmeticOnNonNumberReturnsExceptionWhenLeftIsNonNumeric(
+            LuaCompatibilityVersion version
+        )
         {
-            DynValue left = DynValue.NewTable(new Table(new Script()));
+            DynValue left = DynValue.NewTable(new Table(new Script(version)));
             ScriptRuntimeException ex = ScriptRuntimeException.ArithmeticOnNonNumber(left);
             await Assert
                 .That(ex.Message)
@@ -112,9 +117,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task ConcatOnNonStringReturnsExceptionWhenLeftIsNonConcatenable()
+        [AllLuaVersions]
+        public async Task ConcatOnNonStringReturnsExceptionWhenLeftIsNonConcatenable(
+            LuaCompatibilityVersion version
+        )
         {
-            DynValue left = DynValue.NewTable(new Table(new Script()));
+            DynValue left = DynValue.NewTable(new Table(new Script(version)));
             DynValue right = DynValue.NewString("abc");
             ScriptRuntimeException ex = ScriptRuntimeException.ConcatOnNonString(left, right);
             await Assert.That(ex.Message).IsEqualTo("attempt to concatenate a table value");
@@ -179,6 +187,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             await Assert
                 .That(() => ScriptRuntimeException.IndexType(null))
                 .ThrowsExactly<ArgumentNullException>()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IndexTypeReturnsMessageWithoutVariableDescription()
+        {
+            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(DynValue.Nil);
+            await Assert
+                .That(ex.Message)
+                .IsEqualTo("attempt to index a nil value")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IndexTypeReturnsMessageWithVariableDescription()
+        {
+            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(
+                DynValue.Nil,
+                "global 'foo'"
+            );
+            await Assert
+                .That(ex.Message)
+                .IsEqualTo("attempt to index a nil value (global 'foo')")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IndexTypeIncludesLocalVariableDescription()
+        {
+            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(
+                DynValue.Nil,
+                "local 'bar'"
+            );
+            await Assert
+                .That(ex.Message)
+                .IsEqualTo("attempt to index a nil value (local 'bar')")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task IndexTypeIncludesUpvalueVariableDescription()
+        {
+            ScriptRuntimeException ex = ScriptRuntimeException.IndexType(
+                DynValue.Nil,
+                "upvalue 'baz'"
+            );
+            await Assert
+                .That(ex.Message)
+                .IsEqualTo("attempt to index a nil value (upvalue 'baz')")
                 .ConfigureAwait(false);
         }
 

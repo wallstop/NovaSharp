@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -196,7 +197,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 {
                     return ModOperationResult.Failed(
                         _state,
-                        $"Cannot load mod while in state {_state}."
+                        ZString.Concat("Cannot load mod while in state ", _state, ".")
                     );
                 }
 
@@ -221,7 +222,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 RaiseEvent(OnLoaded, new ModEventArgs(this, ModLoadState.Loaded));
                 return ModOperationResult.Succeeded(
                     ModLoadState.Loaded,
-                    $"Mod '{DisplayName}' loaded successfully."
+                    ZString.Concat("Mod '", DisplayName, "' loaded successfully.")
                 );
             }
             catch (Exception ex)
@@ -237,7 +238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 return ModOperationResult.Failed(
                     ModLoadState.Faulted,
                     ex,
-                    $"Failed to load mod '{DisplayName}'."
+                    ZString.Concat("Failed to load mod '", DisplayName, "'.")
                 );
             }
         }
@@ -270,7 +271,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 {
                     return ModOperationResult.Failed(
                         _state,
-                        $"Cannot unload mod while in state {_state}."
+                        ZString.Concat("Cannot unload mod while in state ", _state, ".")
                     );
                 }
 
@@ -298,7 +299,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 RaiseEvent(OnUnloaded, new ModEventArgs(this, ModLoadState.Unloaded));
                 return ModOperationResult.Succeeded(
                     ModLoadState.Unloaded,
-                    $"Mod '{DisplayName}' unloaded successfully."
+                    ZString.Concat("Mod '", DisplayName, "' unloaded successfully.")
                 );
             }
             catch (Exception ex)
@@ -315,7 +316,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 return ModOperationResult.Failed(
                     ModLoadState.Unloaded,
                     ex,
-                    $"Error during mod '{DisplayName}' unload (mod is still unloaded)."
+                    ZString.Concat(
+                        "Error during mod '",
+                        DisplayName,
+                        "' unload (mod is still unloaded)."
+                    )
                 );
             }
         }
@@ -340,7 +345,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 {
                     return ModOperationResult.Failed(
                         _state,
-                        $"Cannot reload mod while in state {_state}."
+                        ZString.Concat("Cannot reload mod while in state ", _state, ".")
                     );
                 }
 
@@ -373,7 +378,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 RaiseEvent(OnReloaded, new ModEventArgs(this, ModLoadState.Loaded));
                 return ModOperationResult.Succeeded(
                     ModLoadState.Loaded,
-                    $"Mod '{DisplayName}' reloaded successfully."
+                    ZString.Concat("Mod '", DisplayName, "' reloaded successfully.")
                 );
             }
             catch (Exception ex)
@@ -389,7 +394,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 return ModOperationResult.Failed(
                     ModLoadState.Faulted,
                     ex,
-                    $"Failed to reload mod '{DisplayName}'."
+                    ZString.Concat("Failed to reload mod '", DisplayName, "'.")
                 );
             }
         }
@@ -417,9 +422,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
 
             if (function.Type != DataType.Function)
             {
-                throw new ScriptRuntimeException(
-                    $"Global '{functionName}' is not a function (type: {function.Type})."
-                );
+                using Utf16ValueStringBuilder sb = ZString.CreateStringBuilder();
+                sb.Append("Global '");
+                sb.Append(functionName);
+                sb.Append("' is not a function (type: ");
+                sb.Append(function.Type.ToLuaDebuggerString());
+                sb.Append(").");
+                throw new ScriptRuntimeException(sb.ToString());
             }
 
             return script.Call(function, args);
@@ -480,7 +489,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             for (int i = 0; i < _entryPoints.Count; i++)
             {
                 string entryPoint = _entryPoints[i];
-                string friendlyName = $"{ModId}:entry[{i}]";
+                string friendlyName = ZString.Concat(ModId, ":entry[", i, "]");
                 script.DoString(entryPoint, null, friendlyName);
             }
         }
@@ -517,7 +526,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 if (_state != ModLoadState.Loaded || _script == null)
                 {
                     throw new InvalidOperationException(
-                        $"Mod '{ModId}' is not loaded (state: {_state})."
+                        ZString.Concat("Mod '", ModId, "' is not loaded (state: ", _state, ").")
                     );
                 }
 
@@ -568,7 +577,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <inheritdoc/>
         public override string ToString()
         {
-            return $"ModContainer[{ModId}] ({State})";
+            return ZString.Concat("ModContainer[", ModId, "] (", State, ")");
         }
     }
 }
