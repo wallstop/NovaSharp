@@ -1428,7 +1428,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     // Legacy CallbackArguments keeps the previous adapter behavior.
                     IList<DynValue> args = CreateArgsListForFunctionCall(argsCount, 0);
-                    ret = callback.Invoke(context, args, isMethodCall: thisCall);
+                    ret = callback.InvokeLegacy(context, args, isMethodCall: thisCall);
                 }
 
                 _valueStack.RemoveLast(argsCount + 1);

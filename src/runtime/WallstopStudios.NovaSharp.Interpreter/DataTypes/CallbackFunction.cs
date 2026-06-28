@@ -238,6 +238,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             );
         }
 
+        /// <summary>
+        /// Invokes a legacy callback that receives materialized <see cref="CallbackArguments"/>.
+        /// </summary>
+        internal DynValue InvokeLegacy(
+            ScriptExecutionContext executionContext,
+            IList<DynValue> args,
+            bool isMethodCall = false
+        )
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                executionContext,
+                args.Count,
+                args.Count > 0 ? args[0] : null,
+                isMethodCall
+            );
+            return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
+        }
+
         private DynValue InvokeArgumentViewCallback(
             ScriptExecutionContext executionContext,
             CallbackArguments args
