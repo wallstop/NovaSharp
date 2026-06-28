@@ -15,6 +15,7 @@ from typing import Any
 DEFAULT_BASELINE_PATH = Path("docs/testing/lua-error-ratchet.json")
 MODULE_NOT_FOUND_PATTERN = re.compile(r"module '([^']+)' not found")
 NO_FILE_SEARCH_PATH_PATTERN = re.compile(r"^([ \t]*no file )['\"]([^'\"]+)['\"]$")
+NATIVE_LIBRARY_EXTENSIONS = (".so", ".dll", ".dylib")
 REPO_ROOT_PATTERN = re.compile(
     r"(^|[\s:'\"])(?:[A-Za-z]:)?/"
     r"(?:workspaces/NovaSharp|home/runner/work/NovaSharp/NovaSharp|"
@@ -22,6 +23,14 @@ REPO_ROOT_PATTERN = re.compile(
     r"(?=/)",
     flags=re.MULTILINE,
 )
+
+
+def normalize_native_library_suffix(candidate: str) -> str:
+    """Normalize platform-specific native loader extensions in require candidates."""
+    for extension in NATIVE_LIBRARY_EXTENSIONS:
+        if candidate.endswith(extension):
+            return f"{candidate[: -len(extension)]}.<native>"
+    return candidate
 
 
 def normalize_fixture_id(file: str | Path) -> str:
@@ -51,11 +60,11 @@ def normalize_require_candidate_suffix(candidate: str, module_path: str) -> str:
     ):
         return module_path
     if candidate.startswith(module_extension_prefix):
-        return candidate
+        return normalize_native_library_suffix(candidate)
     module_extension_marker = f"/{module_extension_prefix}"
     module_extension_index = candidate.rfind(module_extension_marker)
     if module_extension_index >= 0:
-        return candidate[module_extension_index + 1 :]
+        return normalize_native_library_suffix(candidate[module_extension_index + 1 :])
 
     module_directory_marker = f"/{module_path}/"
     module_directory_index = candidate.rfind(module_directory_marker)
@@ -65,6 +74,9 @@ def normalize_require_candidate_suffix(candidate: str, module_path: str) -> str:
         return candidate
     if candidate == module_path or candidate.endswith(f"/{module_path}"):
         return module_path
+
+    if basename.startswith("loadall."):
+        return normalize_native_library_suffix(basename)
 
     if module_segments:
         first_module_segment = module_segments[0]
@@ -79,12 +91,9 @@ def normalize_require_candidate_suffix(candidate: str, module_path: str) -> str:
                 if module_segments[remaining_module_index] in remaining_segment:
                     remaining_module_index += 1
             if remaining_module_index >= len(module_segments):
-                return "/".join(segments[index:])
+                return normalize_native_library_suffix("/".join(segments[index:]))
 
-    if basename.startswith("loadall."):
-        return basename
-
-    return f"<unmatched>/{basename}"
+    return f"<unmatched>/{normalize_native_library_suffix(basename)}"
 
 
 def normalize_search_path_lines(text: str) -> str:
@@ -120,17 +129,22 @@ def normalize_error_text(text: str) -> str:
     result = result.replace("\\", "/")
     result = re.sub(r"0x[0-9a-fA-F]+", "<addr>", result)
     result = re.sub(r"(?<=[:\s])[0-9A-F]{8,16}(?=[:\s\n]|$)", "<addr>", result)
-    result = re.sub(r"([A-Za-z]:)?[^:\n]*?LuaFixtures/", "LuaFixtures/", result)
-    result = REPO_ROOT_PATTERN.sub(r"\1<repo>", result)
-    result = normalize_search_path_lines(result)
-    result = re.sub(r"(\.lua):\d+:", r"\1:<line>:", result)
-    result = re.sub(r"\[string \"[^\"]*\"\]:\d+:", "[string \"<chunk>\"]:<line>:", result)
     result = re.sub(
         r"^(?:[A-Za-z]:)?(?:[^:\n]*/)?lua(?:\d+(?:\.\d+)?)?(?:\.exe)?:\s*",
         "lua: ",
         result,
         flags=re.MULTILINE,
     )
+    result = re.sub(
+        r"(^|[\s])(?:[A-Za-z]:)?(?:[^:\n\s]*/)+LuaFixtures/",
+        r"\1LuaFixtures/",
+        result,
+        flags=re.MULTILINE,
+    )
+    result = REPO_ROOT_PATTERN.sub(r"\1<repo>", result)
+    result = normalize_search_path_lines(result)
+    result = re.sub(r"(\.lua):\d+:", r"\1:<line>:", result)
+    result = re.sub(r"\[string \"[^\"]*\"\]:\d+:", "[string \"<chunk>\"]:<line>:", result)
     result = re.sub(
         r"^Unhandled exception\. WallstopStudios\.NovaSharp\.Interpreter\.Errors\.",
         "",

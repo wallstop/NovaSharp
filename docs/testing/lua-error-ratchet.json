@@ -591,7 +591,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "83faefaf6e3b29b255c5c71c1631bba62880e00b2d59611b0b40b4950950901e",
+      "lua_error_sha256": "95a5ab8b46d586e26205c268bb22a8d6ca5153b383d25a895574576d6bfb4086",
       "nova_error_sha256": "8e59224683059a86739769929d81280f230c3c3e1f06d0cc2268d2fa3179ea5f",
       "lua_error_excerpt": "lua: ...dModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_testi...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.1]"
@@ -602,7 +602,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "313aa38d21305f1248f83c7613d8402ee653454fda4c9459dbbe7faa3da2941a",
+      "lua_error_sha256": "6a5db90f442efcc5854df6b3c319df815a51c85eb9f8f7986357c0dbffe714a1",
       "nova_error_sha256": "e0b4dfe02ccd7e9b339778d4b199502bc1131de877776b8beea5f5437af8cfc0",
       "lua_error_excerpt": "lua: ...ListsSearchedPathsWhenLuaCompatibleErrorsEnabled.lua:<line>: module 'nonexistent_module' not found: | \tno field package.preload['nonexistent_module'] | \tno file '<search...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module' not found [compatibility: Lua 5.1]"
@@ -613,7 +613,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "d495dc556fd92516b8d27627a71c656adbd8b36f5c1bc3b34b0ad0e273329a2c",
+      "lua_error_sha256": "21d3d940e78158e300e3c5227025bce4bbf61615f882b6c8a4d5e55ccedab828",
       "nova_error_sha256": "e0b4dfe02ccd7e9b339778d4b199502bc1131de877776b8beea5f5437af8cfc0",
       "lua_error_excerpt": "lua: ...howsSimpleMessageWhenLuaCompatibleErrorsDisabled.lua:<line>: module 'nonexistent_module' not found: | \tno field package.preload['nonexistent_module'] | \tno file '<search...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module' not found [compatibility: Lua 5.1]"
@@ -624,7 +624,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "724205c7f4e41e0c203c823a822faed4d853581644b66a8e27ee47891dcbe4ea",
+      "lua_error_sha256": "78f3749d2c5dbf53a6194c8901f2f3a02f02b2e3a3cc981fc7809c2dcffab5f7",
       "nova_error_sha256": "44f6a6efd237e52ec5c4fd90ba95f635282d8a18a2d264b5c8e983f390d47a05",
       "lua_error_excerpt": "lua: ...nitTests/RequireThrowsWhenModuleCannotBeResolved.lua:<line>: module 'missing.module' not found: | \tno field package.preload['missing.module'] | \tno file '<search>/missin...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'missing.module' not found [compatibility: Lua 5.1]"
@@ -2758,7 +2758,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "bd9a12616e8a1d719708b19932173ab172e3cfc663428d6cb45f34d91d8a2249",
+      "lua_error_sha256": "cd6fa1642b0d25fd80ac13de0f67134ee672ee967c35a05a270ee25fe6a41477",
       "nova_error_sha256": "db4a37208319ffd08e94524721bead1390d431a463ba5cfbfed453442f88ed28",
       "lua_error_excerpt": "lua: .../LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_t...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.2]"
@@ -2879,9 +2879,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "ced836727c9d5585e769f2cf705f8f2ccea533de29f739ea951b8429b7b9749a",
+      "lua_error_sha256": "0ff36bb9c0c1afdd5fd8851aa5741afd7597603032756d538761cb4119e87365",
       "nova_error_sha256": "490a2b24aea0cdc5750ff0c04213579902dd24d7bcf49458a430677d7091e463",
-      "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_51and52.lua:<line>: bad argument #1 to 'random' (interval is empty) | stack traceback: | \t[C]: in function 'random' | LuaFixtures...",
+      "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_51and52.lua:<line>: bad argument #1 to 'random' (interval is empty) | stack traceback: | \t[C]: in function 'random' | \tLuaFixture...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomNaN_51and52.lua:(8,0-10,0): bad argument #1 to 'random' (interval is empty) [compatibility: Lua 5.2]"
     },
     {
@@ -2890,9 +2890,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "61b10f08271154c62214c79192c1cf4a677c4bbc4126df658b3b8e0f9334ced9",
+      "lua_error_sha256": "067ecbd9ebbf6f5304718c82a780b916b684aa9e583da7b8ca43d1fd9a1efde0",
       "nova_error_sha256": "1ecedd7e430abc5760cd605df2d6a753f5775768f9ef7a4277bab6e74e1a7a4f",
-      "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_53plus.lua:<line>: bad argument #1 to 'random' (interval is empty) | stack traceback: | \t[C]: in function 'random' | LuaFixtures/...",
+      "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_53plus.lua:<line>: bad argument #1 to 'random' (interval is empty) | stack traceback: | \t[C]: in function 'random' | \tLuaFixtures...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomNaN_53plus.lua:(8,11-16): bad argument #1 to 'random' (interval is empty) [compatibility: Lua 5.2]"
     },
     {
@@ -3033,9 +3033,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "d42ac5b962f1a94198134a1631af70e07fa79a0b804cd13af1658b40708b6709",
+      "lua_error_sha256": "d380642ab95ecc17d2cbaedf7c784d6ff3dc70205fe5ca22c70e7f2ecc910792",
       "nova_error_sha256": "fbc83c2de23a4e7dec3e240f5c4671b1d728bff7135df4a4b780e9b4ee33ffbc",
-      "lua_error_excerpt": "lua: LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call field 'getSomething' (a nil value) | stack traceback: | LuaFixtures/MyObject/MetatableExten...",
+      "lua_error_excerpt": "lua: ...LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call field 'getSomething' (a nil value) | stack traceback: | \t...LuaFixtures/MyObject/Metatab...",
       "nova_error_excerpt": "LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:(17,16-62): attempt to call a no value value [compatibility: Lua 5.2]"
     },
     {
@@ -3298,9 +3298,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "48891aa2ebdfe01becb425e42bc19f736df5bc5d9c3a0aaac4ffd8245d15d277",
-      "nova_error_sha256": "dcbe562a214a6c76b7aedddae61edee680736397f8f299f3e31c1dd1e4f33d0a",
+      "nova_error_sha256": "32b5cf92d0bb84eea999bd9cfd0fb758b658b83d03e0f5c979adf115c347b532",
       "lua_error_excerpt": "lua: ...GetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:<line>: Error should mention 'invalid level', got: ...GetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:<...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:(18,6-97): Error should mention 'invalid level', goLuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithIn..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:(18,6-97): Error should mention 'invalid level', got: LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWit..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua",
@@ -3309,9 +3309,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "7b67c856ccd1a8537cbe96848c8d0377a8f77ee6a80244126e1a8f611983940e",
-      "nova_error_sha256": "5b36b7120b791bac1763b621a7fa22d5bd99b637903013c169c3e6416333c225",
+      "nova_error_sha256": "665e446832b6379e8a52b047a8a61fdf89eb651cb5ccd2edcd6a3fba2139ac00",
       "lua_error_excerpt": "lua: ...etFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:<line>: Error should mention 'table expected', got: ...etFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:(19,6-99): Error should mention 'table expected', goLuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTab..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:(19,6-99): Error should mention 'table expected', got: LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequires..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua",
@@ -3320,9 +3320,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "189b939b59f0e42f5ff9b25c47e0054bd1a80035158dc37afb12351586aa819c",
-      "nova_error_sha256": "32d09634c8180f42e369eba3fe5382fb8d8f2060780cfdae3fb283d2997c4be3",
+      "nova_error_sha256": "23c387764ec5dcfc225f6ca9894f30de93318e2fa53049dcd554a4d28f4a7bf3",
       "lua_error_excerpt": "lua: ...GetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:<line>: Error should mention 'invalid level', got: ...GetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:<...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:(19,6-97): Error should mention 'invalid level', goLuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithIn..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:(19,6-97): Error should mention 'invalid level', got: LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWit..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/getfenv_basic_51.lua",
@@ -3375,9 +3375,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "55c91e07988dc4790f8a6cae40243cbf36f8fe079b1ef0751071b0d7c3e08289",
-      "nova_error_sha256": "4dca317fbb800a4fbeecf10f7a476acb9e4a7274aa82e29d940db845835d5d24",
+      "nova_error_sha256": "e4ec81e54a90b9aa32b53858d5b2cee0d18de365e10dda2b1e0738efc11ffb12",
       "lua_error_excerpt": "lua: ...aFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:<line>: Error should say 'number expected', got: ...aFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:<li...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(15,6-99): Error should say 'number expected', goLuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(13,42-56)..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(15,6-99): Error should say 'number expected', got: LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(13,42-..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/setfenv_level_51.lua",
@@ -3418,9 +3418,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "646a4443ec50e14708cdd52a6e0782f8eca7d245e2f5869dd752900a4c78fca0",
+      "lua_error_sha256": "07ad278d7a25dfacb5ad02b9e56a13039ed6c746e8c808bddbdb9bb75889729b",
       "nova_error_sha256": "ee320af5080a10e1f3afa417844d80d640617d1990f6b6bf171f4460314367b4",
-      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:<line>: attempt to call global 'action' (a nil value) | stack traceback: | LuaFixtures/SimpleTUnitTests/SimpleDelega...",
+      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:<line>: attempt to call global 'action' (a nil value) | stack traceback: | \tLuaFixtures/SimpleTUnitTests/SimpleDeleg...",
       "nova_error_excerpt": "LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:(6,6-8): attempt to call a nil value [compatibility: Lua 5.2]"
     },
     {
@@ -3429,9 +3429,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "7f1cf7a915078ffe5416452eb828361a19403232429a038563fa164f38cf3443",
+      "lua_error_sha256": "4a49e8575ba5c3af1ca2fc459227ea607c521c30f092220cb4b88d3202301cd5",
       "nova_error_sha256": "3dd39f00517d5fb78e0ba42bd980fe4eb92c7f95e33d3e6b6fdd408ab5923051",
-      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:<line>: attempt to call global 'action' (a nil value) | stack traceback: | LuaFixtures/SimpleTUnitTests/SimpleDelega...",
+      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:<line>: attempt to call global 'action' (a nil value) | stack traceback: | \tLuaFixtures/SimpleTUnitTests/SimpleDeleg...",
       "nova_error_excerpt": "LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:(6,6-8): attempt to call a nil value [compatibility: Lua 5.2]"
     },
     {
@@ -3891,9 +3891,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "7e808f3294ffcb562ea83c678e871cdc05d8801fbeb8b67406edc69a4d47cac8",
+      "lua_error_sha256": "3235d583e7fb94880030c777c188e7a74c794ee6ae99607b9add88c9ba361457",
       "nova_error_sha256": "dcc7e91a5359e445ace919e90e9a5766124272aaa20c76e40fe0b61f12bec602",
-      "lua_error_excerpt": "lua: LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:<line>: attempt to call global 'EscapeString' (a nil value) | stack traceback: | LuaFixtures/matches/PunctMatchesSpec...",
+      "lua_error_excerpt": "lua: LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:<line>: attempt to call global 'EscapeString' (a nil value) | stack traceback: | \tLuaFixtures/matches/PunctMatchesSpe...",
       "nova_error_excerpt": "LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:(6,0-59): attempt to call a nil value [compatibility: Lua 5.2]"
     },
     {
@@ -4485,7 +4485,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "bd9a12616e8a1d719708b19932173ab172e3cfc663428d6cb45f34d91d8a2249",
+      "lua_error_sha256": "cd6fa1642b0d25fd80ac13de0f67134ee672ee967c35a05a270ee25fe6a41477",
       "nova_error_sha256": "0064f938210d645cad0a1546d1ef460bbc0b2bf2bc01a6853e72f7060d8e1a72",
       "lua_error_excerpt": "lua: .../LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_t...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.3]"
@@ -4793,7 +4793,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "275d56806ae204673efff73e9f37a465f8ea7acad9581066c0db99baa6e19c69",
+      "lua_error_sha256": "b54e3ebb664e2aa03d4df443c483bf31c551e1d9fbd600febb15a6bd3d701786",
       "nova_error_sha256": "e00406698278fba53c6c4eebdff9c3d998c0fb0cfb1d28e89c8a4ec9239864d4",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomInfinity_51.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in function 'ma...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomInfinity_51.lua:(9,0-11,0): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.3]"
@@ -4804,7 +4804,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "4c92b773ab20583e0a1982039d483c4d3d5427eb707226e32b14362852db46b1",
+      "lua_error_sha256": "0a6c3f2eabb3dc79768b8d2061a380eeb797fd79bedb6e92655958b75625eacd",
       "nova_error_sha256": "e2d1a22e9b14698dce3fab8085c1fb862d7b8943b07aeffc31cfe444f6a9d6d8",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomInfinity_52.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in function 'ma...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomInfinity_52.lua:(9,0-11,0): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.3]"
@@ -4892,7 +4892,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "b3a959b95beae9e56a141f15246e730172ccedc1397ac6e709dfde3bdee376b4",
+      "lua_error_sha256": "7b0e282f1ba52ee5eb412d8f24e65d6385888488ed04692bc17218358c6ea48d",
       "nova_error_sha256": "73a1d2549c4a68abdfd7b9296c33249d26c17762d4543714518b95f5bd1fa781",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_51and52.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in function 'ma...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomNaN_51and52.lua:(8,0-10,0): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.3]"
@@ -4903,7 +4903,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "0ecad2967a28c09430ae6569afb1d82871252eeb6324ebf95fe37e08da4d6999",
+      "lua_error_sha256": "4f466b45d383d3962103da13d5b7dfc0671195a83e4749c0fa397fcb7f42b236",
       "nova_error_sha256": "68f0fd6c1700ed99cd5fc776dbd182b53b8c7949ea1bfb9d31d73b7e0e05c72c",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_53plus.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in function 'mat...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomNaN_53plus.lua:(8,11-16): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.3]"
@@ -5178,9 +5178,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "e401873b59f246040891f48bfd8c784e0167fe74e2426366c656f82085a43d30",
+      "lua_error_sha256": "f47242194bc7bc889a81331022f3ad672be3cd39852824c198488d78eba5e8fe",
       "nova_error_sha256": "63a76f4e7ffb476c7c67d0e4c7cbc00336f2d75371ea4326e047886c8034c0bd",
-      "lua_error_excerpt": "lua: LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call a nil value (field 'getSomething') | stack traceback: | LuaFixtures/MyObject/MetatableExten...",
+      "lua_error_excerpt": "lua: ...LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call a nil value (field 'getSomething') | stack traceback: | \t...LuaFixtures/MyObject/Metatab...",
       "nova_error_excerpt": "LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:(17,16-62): attempt to call a no value value [compatibility: Lua 5.3]"
     },
     {
@@ -5476,9 +5476,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "a689b4359cf18940f0cd1ad6c898a6daaceea328f781ad15e3754411123fce68",
-      "nova_error_sha256": "21895c327044c65c82e9a5cc4a2715fcc241ce0d94c1810c371e59bd3ead1aac",
+      "nova_error_sha256": "e64d03e12de93b951f82ca571cd0dca919b0998be863ee21d88d46e411ac5c99",
       "lua_error_excerpt": "lua: ...GetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:<line>: Error should mention 'invalid level', got: ...GetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:<...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:(18,6-97): Error should mention 'invalid level', goLuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithIn..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:(18,6-97): Error should mention 'invalid level', got: LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWit..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua",
@@ -5487,9 +5487,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "6b167602c8e6c2954c719c07c9844f08782df998df8733d1f8e1ac2056ce9ead",
-      "nova_error_sha256": "e9f2377f356a4d91103c02a26b14ac6da90f8ac57bcebb9a5914d5854497f105",
+      "nova_error_sha256": "1a76d8420a4d65981ba7e2c15551ed2ec0be03268786d65da25cd046e2cb3670",
       "lua_error_excerpt": "lua: ...etFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:<line>: Error should mention 'table expected', got: ...etFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:(19,6-99): Error should mention 'table expected', goLuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTab..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:(19,6-99): Error should mention 'table expected', got: LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequires..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua",
@@ -5498,9 +5498,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "c20d9be2c81deae15f4a93f0d91233cd94fc6b9921c03250a6007135daaf0b44",
-      "nova_error_sha256": "bfc8800b78a396ee567900376af66a82aa8e05e7e75ed2e6e231d78aa661b984",
+      "nova_error_sha256": "63281356d7035527f0e81ab895a5e2290707106d525f7fda8916731a82df5097",
       "lua_error_excerpt": "lua: ...GetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:<line>: Error should mention 'invalid level', got: ...GetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:<...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:(19,6-97): Error should mention 'invalid level', goLuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithIn..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:(19,6-97): Error should mention 'invalid level', got: LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWit..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/getfenv_basic_51.lua",
@@ -5553,9 +5553,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "c6dab51c5b5f2feb3f216b610c21a7bf1494094a5dd7a686d0174c4a9f9733d9",
-      "nova_error_sha256": "a1aa600ca7582c500fde6106bf7b9850cb0a34cd460a8e63458c20b0ad23f7c6",
+      "nova_error_sha256": "74f838384c54449faa3046c424d6b38de28acbd8e65078cc9543344be6fd8eb1",
       "lua_error_excerpt": "lua: ...aFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:<line>: Error should say 'number expected', got: ...aFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:<li...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(15,6-99): Error should say 'number expected', goLuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(13,42-56)..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(15,6-99): Error should say 'number expected', got: LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(13,42-..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/setfenv_level_51.lua",
@@ -5607,9 +5607,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "3e2e1e07fd93652c36e704247d800cab404a27d8e4f58832b4bbaf314deea27b",
+      "lua_error_sha256": "e92d3837b9072b560241695bd161a0857dc5489365a54f5c422953d33d89f299",
       "nova_error_sha256": "599a029047050ad96b2da506767c76609f0551a09b13f042324b2befeee6772a",
-      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | LuaFixtures/SimpleTUnitTests/SimpleDelega...",
+      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | \tLuaFixtures/SimpleTUnitTests/SimpleDeleg...",
       "nova_error_excerpt": "LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:(6,6-8): attempt to call a nil value [compatibility: Lua 5.3]"
     },
     {
@@ -5618,9 +5618,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "41c1e96726595af1bba95a920a27714d99f7440bbef5b872f4f9bdc075a369c3",
+      "lua_error_sha256": "b0de224bda6ee7a844fafebce38de5fe2e5d3fdb18ac70b429f1ab5567a07f84",
       "nova_error_sha256": "6ec3a3d6e3156eac80045ef590770c5687f027c7b09b109f409997fa6840cfa8",
-      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | LuaFixtures/SimpleTUnitTests/SimpleDelega...",
+      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | \tLuaFixtures/SimpleTUnitTests/SimpleDeleg...",
       "nova_error_excerpt": "LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:(6,6-8): attempt to call a nil value [compatibility: Lua 5.3]"
     },
     {
@@ -6421,7 +6421,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "605af665b2db075d136b7db2e197e89cd7013eb2bf99f92b9d1fefd78fb754cb",
+      "lua_error_sha256": "023438a831aebdd852746ae41747770a691e41298d95b920243031db7424dc6b",
       "nova_error_sha256": "7f76dc423e26611ad624cde4f0e9637a94da1180a7f287cd4e674aaab5f7b84b",
       "lua_error_excerpt": "lua: LuaFixtures/Utf8ModuleTUnitTests/Utf8CharRejectsNaN.lua:<line>: bad argument #1 to 'char' (number has no integer representation) | stack traceback: | \t[C]: in function 'utf...",
       "nova_error_excerpt": "LuaFixtures/Utf8ModuleTUnitTests/Utf8CharRejectsNaN.lua:(7,0-21): bad argument #1 to 'utf8.char' (number has no integer representation) [compatibility: Lua 5.3]"
@@ -6784,9 +6784,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "b759dd9966155cb03b83298b8f198b41f43b9b19e73816aa7b3e7d2ccd326fe4",
+      "lua_error_sha256": "cb2d58a7111fa1ab712e4b02ec1c32d2edbc466931aae0026dc2c5cf24d3a22f",
       "nova_error_sha256": "53740aa8273570a744dbca0762ebf5c13e3b6b71f2ddd9f13af07c2a50357f0e",
-      "lua_error_excerpt": "lua: LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:<line>: attempt to call a nil value (global 'EscapeString') | stack traceback: | LuaFixtures/matches/PunctMatchesSpec...",
+      "lua_error_excerpt": "lua: LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:<line>: attempt to call a nil value (global 'EscapeString') | stack traceback: | \tLuaFixtures/matches/PunctMatchesSpe...",
       "nova_error_excerpt": "LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:(6,0-59): attempt to call a nil value [compatibility: Lua 5.3]"
     },
     {
@@ -7422,7 +7422,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "bd9a12616e8a1d719708b19932173ab172e3cfc663428d6cb45f34d91d8a2249",
+      "lua_error_sha256": "cd6fa1642b0d25fd80ac13de0f67134ee672ee967c35a05a270ee25fe6a41477",
       "nova_error_sha256": "d4a280dea4edeb7881467c56f021fa5026203587a541e91324b4aa09cb5458e1",
       "lua_error_excerpt": "lua: .../LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_t...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.4]"
@@ -7686,7 +7686,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "275d56806ae204673efff73e9f37a465f8ea7acad9581066c0db99baa6e19c69",
+      "lua_error_sha256": "b54e3ebb664e2aa03d4df443c483bf31c551e1d9fbd600febb15a6bd3d701786",
       "nova_error_sha256": "564aecf5434d73229224d70e1dc854c9098fb7bb5f90be75dbaa9a554a5e2aa2",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomInfinity_51.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in function 'ma...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomInfinity_51.lua:(9,0-11,0): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.4]"
@@ -7697,7 +7697,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "4c92b773ab20583e0a1982039d483c4d3d5427eb707226e32b14362852db46b1",
+      "lua_error_sha256": "0a6c3f2eabb3dc79768b8d2061a380eeb797fd79bedb6e92655958b75625eacd",
       "nova_error_sha256": "f12b1167a4ac27de3a225606f95bcbe8c749885bcf9736248b35836456736ccd",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomInfinity_52.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in function 'ma...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomInfinity_52.lua:(9,0-11,0): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.4]"
@@ -7785,7 +7785,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "b3a959b95beae9e56a141f15246e730172ccedc1397ac6e709dfde3bdee376b4",
+      "lua_error_sha256": "7b0e282f1ba52ee5eb412d8f24e65d6385888488ed04692bc17218358c6ea48d",
       "nova_error_sha256": "43578cbd725d62c9858552cf03d68f745e4a11a06aa4edee258687abc514e350",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_51and52.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in function 'ma...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomNaN_51and52.lua:(8,0-10,0): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.4]"
@@ -7796,7 +7796,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "0ecad2967a28c09430ae6569afb1d82871252eeb6324ebf95fe37e08da4d6999",
+      "lua_error_sha256": "4f466b45d383d3962103da13d5b7dfc0671195a83e4749c0fa397fcb7f42b236",
       "nova_error_sha256": "a3dcb4f9fc0ca1b17444cf7a97d27f801097060af5653b4cc5e22d01acb80bc8",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_53plus.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in function 'mat...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomNaN_53plus.lua:(8,11-16): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.4]"
@@ -8104,9 +8104,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "e401873b59f246040891f48bfd8c784e0167fe74e2426366c656f82085a43d30",
+      "lua_error_sha256": "f47242194bc7bc889a81331022f3ad672be3cd39852824c198488d78eba5e8fe",
       "nova_error_sha256": "087d1524c62cbca3be255f1503a1e79870356a63b414d060344cc37758a86141",
-      "lua_error_excerpt": "lua: LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call a nil value (field 'getSomething') | stack traceback: | LuaFixtures/MyObject/MetatableExten...",
+      "lua_error_excerpt": "lua: ...LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call a nil value (field 'getSomething') | stack traceback: | \t...LuaFixtures/MyObject/Metatab...",
       "nova_error_excerpt": "LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:(17,16-62): attempt to call a no value value [compatibility: Lua 5.4]"
     },
     {
@@ -8402,9 +8402,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "a689b4359cf18940f0cd1ad6c898a6daaceea328f781ad15e3754411123fce68",
-      "nova_error_sha256": "109ff5457a6dd1aac9d966bb5e53074fbb9e5422ecb0c740af960fc79fd1db57",
+      "nova_error_sha256": "6c874544cae2ea658bf77a3c8f75b29fbba7892dc220ee8c665fc61f5c867030",
       "lua_error_excerpt": "lua: ...GetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:<line>: Error should mention 'invalid level', got: ...GetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:<...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:(18,6-97): Error should mention 'invalid level', goLuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithIn..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:(18,6-97): Error should mention 'invalid level', got: LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWit..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua",
@@ -8413,9 +8413,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "6b167602c8e6c2954c719c07c9844f08782df998df8733d1f8e1ac2056ce9ead",
-      "nova_error_sha256": "007bbce9c1166eb9ff280f8f0634aa41611d3d9e009367e68db7d3014c9138ac",
+      "nova_error_sha256": "d7034835a309538b48003f00690c9a8fb80d2274a267743e9c4a34ecf7af46b1",
       "lua_error_excerpt": "lua: ...etFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:<line>: Error should mention 'table expected', got: ...etFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:(19,6-99): Error should mention 'table expected', goLuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTab..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:(19,6-99): Error should mention 'table expected', got: LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequires..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua",
@@ -8424,9 +8424,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "c20d9be2c81deae15f4a93f0d91233cd94fc6b9921c03250a6007135daaf0b44",
-      "nova_error_sha256": "d290831e70432ac37bfa89be9372e21cb1d8747212e836a686013082935ecc76",
+      "nova_error_sha256": "0fcb968e23d49a39b00f88b606aa69b72fec9734331cf1b2659869b5c713469e",
       "lua_error_excerpt": "lua: ...GetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:<line>: Error should mention 'invalid level', got: ...GetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:<...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:(19,6-97): Error should mention 'invalid level', goLuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithIn..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:(19,6-97): Error should mention 'invalid level', got: LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWit..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/getfenv_basic_51.lua",
@@ -8479,9 +8479,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "c6dab51c5b5f2feb3f216b610c21a7bf1494094a5dd7a686d0174c4a9f9733d9",
-      "nova_error_sha256": "6d90cf841c11d82b470be3e966a2f923be3960eaef20763c7029b3a5ac74178c",
+      "nova_error_sha256": "981537cbcc6406c9362491f3bb0df1eb1b82b0ee4af792a3d16f6bf0aef46449",
       "lua_error_excerpt": "lua: ...aFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:<line>: Error should say 'number expected', got: ...aFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:<li...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(15,6-99): Error should say 'number expected', goLuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(13,42-56)..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(15,6-99): Error should say 'number expected', got: LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(13,42-..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/setfenv_level_51.lua",
@@ -8533,9 +8533,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "3e2e1e07fd93652c36e704247d800cab404a27d8e4f58832b4bbaf314deea27b",
+      "lua_error_sha256": "e92d3837b9072b560241695bd161a0857dc5489365a54f5c422953d33d89f299",
       "nova_error_sha256": "f53c7dbe0799a172d61cc32f780ab67f2c095b3043c941b4a7252c60f9abde71",
-      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | LuaFixtures/SimpleTUnitTests/SimpleDelega...",
+      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | \tLuaFixtures/SimpleTUnitTests/SimpleDeleg...",
       "nova_error_excerpt": "LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:(6,6-8): attempt to call a nil value [compatibility: Lua 5.4]"
     },
     {
@@ -8544,9 +8544,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "41c1e96726595af1bba95a920a27714d99f7440bbef5b872f4f9bdc075a369c3",
+      "lua_error_sha256": "b0de224bda6ee7a844fafebce38de5fe2e5d3fdb18ac70b429f1ab5567a07f84",
       "nova_error_sha256": "a5230a0fa4cf6e935d135ea623895b1bfcbfcd7f3c8d627c518985041363903a",
-      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | LuaFixtures/SimpleTUnitTests/SimpleDelega...",
+      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | \tLuaFixtures/SimpleTUnitTests/SimpleDeleg...",
       "nova_error_excerpt": "LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:(6,6-8): attempt to call a nil value [compatibility: Lua 5.4]"
     },
     {
@@ -9347,7 +9347,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "605af665b2db075d136b7db2e197e89cd7013eb2bf99f92b9d1fefd78fb754cb",
+      "lua_error_sha256": "023438a831aebdd852746ae41747770a691e41298d95b920243031db7424dc6b",
       "nova_error_sha256": "259063d2386aa54c699a0f7f59b7e4c25e8229b6e305c4e99fe3d4f26ff2ec63",
       "lua_error_excerpt": "lua: LuaFixtures/Utf8ModuleTUnitTests/Utf8CharRejectsNaN.lua:<line>: bad argument #1 to 'char' (number has no integer representation) | stack traceback: | \t[C]: in function 'utf...",
       "nova_error_excerpt": "LuaFixtures/Utf8ModuleTUnitTests/Utf8CharRejectsNaN.lua:(7,0-21): bad argument #1 to 'utf8.char' (number has no integer representation) [compatibility: Lua 5.4]"
@@ -9688,9 +9688,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "b759dd9966155cb03b83298b8f198b41f43b9b19e73816aa7b3e7d2ccd326fe4",
+      "lua_error_sha256": "cb2d58a7111fa1ab712e4b02ec1c32d2edbc466931aae0026dc2c5cf24d3a22f",
       "nova_error_sha256": "ffb1c58b3b5d957745a51cc479f52f66ddf05d07c1efbd3cee8830237fcfc7f5",
-      "lua_error_excerpt": "lua: LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:<line>: attempt to call a nil value (global 'EscapeString') | stack traceback: | LuaFixtures/matches/PunctMatchesSpec...",
+      "lua_error_excerpt": "lua: LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:<line>: attempt to call a nil value (global 'EscapeString') | stack traceback: | \tLuaFixtures/matches/PunctMatchesSpe...",
       "nova_error_excerpt": "LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:(6,0-59): attempt to call a nil value [compatibility: Lua 5.4]"
     },
     {
@@ -10326,7 +10326,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "a7fdf28a3065add9f3b8c625abfa05ada0b33532f072e5baf4fe16667ddb8fb5",
+      "lua_error_sha256": "9c92fa62984365725e0495de8b0d78a303d19aefb633a00aa8d0ed667914bcd7",
       "nova_error_sha256": "d9399e492ad6f816f8a3ccb8f488b4f29deabad1298e09e5af9f3cff006ad8b4",
       "lua_error_excerpt": "lua: .../LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua:<line>: module 'nonexistent_module_for_testing' not found: | \tno field package.preload['nonexistent_module_for_t...",
       "nova_error_excerpt": "libfunc_require:(12,0-43): module 'nonexistent_module_for_testing' not found [compatibility: Lua 5.5]"
@@ -10634,7 +10634,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "f3c49973ae2e8ea86416494b64e2ba752fb2a16582ca0b71d034e583d304f212",
+      "lua_error_sha256": "25ba7c817235bfe9a5fe7ee98755be2c367389afa6c1a472ad63f6cbc4f612d4",
       "nova_error_sha256": "adc661c5634ead527ebb0d9fe522888243843436825006b2c8096437cbdf8a2e",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomInfinity_51.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in field 'rando...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomInfinity_51.lua:(9,0-11,0): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.5]"
@@ -10645,7 +10645,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "555f4a830f264abb5fbc85f123e13b5cb359439c2300c92fb1d1cb56f7a741c2",
+      "lua_error_sha256": "21b27e2353264ded522813e2c091c67283b041f4c072714848bbb4f869e09826",
       "nova_error_sha256": "f0a96c66535a97fbdc65011aa079ef7f01c319bcbca97baaf4d07bbb080a8f4f",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomInfinity_52.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in field 'rando...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomInfinity_52.lua:(9,0-11,0): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.5]"
@@ -10733,7 +10733,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "acacfbed41f8043370f1d7119f66cbe192e7b2e819723efb0b02fcb6d3db7971",
+      "lua_error_sha256": "0dc37e4890052f776c81806e15cba619962cc0c4e6ff0007ed88c00c863ad4a0",
       "nova_error_sha256": "7eb028b34db95291e1ffc12eedf019e5ba76bc2909486b01969f4b51043c6942",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_51and52.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in field 'rando...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomNaN_51and52.lua:(8,0-10,0): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.5]"
@@ -10744,7 +10744,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "0549d9843fa6aa8c358a95be3521aa3970ed1e7968fe1cdfe8f5443f943448e5",
+      "lua_error_sha256": "82dd381d2c19a10fe5b943ea9a2163634547c842131cdaa89709d361b5e1d945",
       "nova_error_sha256": "5ee90aad9e8f8432e193013e98a880a4f218b09b2019d83f94b926a8d8018548",
       "lua_error_excerpt": "lua: LuaFixtures/MathModuleTUnitTests/RandomNaN_53plus.lua:<line>: bad argument #1 to 'random' (number has no integer representation) | stack traceback: | \t[C]: in field 'random...",
       "nova_error_excerpt": "LuaFixtures/MathModuleTUnitTests/RandomNaN_53plus.lua:(8,11-16): bad argument #1 to 'random' (number has no integer representation) [compatibility: Lua 5.5]"
@@ -11085,9 +11085,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "e401873b59f246040891f48bfd8c784e0167fe74e2426366c656f82085a43d30",
+      "lua_error_sha256": "f47242194bc7bc889a81331022f3ad672be3cd39852824c198488d78eba5e8fe",
       "nova_error_sha256": "e7205252543bb5617b06a8aba661ad1afdad0e056cc2d8ee8ec8ab3afc057a84",
-      "lua_error_excerpt": "lua: LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call a nil value (field 'getSomething') | stack traceback: | LuaFixtures/MyObject/MetatableExten...",
+      "lua_error_excerpt": "lua: ...LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:<line>: attempt to call a nil value (field 'getSomething') | stack traceback: | \t...LuaFixtures/MyObject/Metatab...",
       "nova_error_excerpt": "LuaFixtures/MyObject/MetatableExtensibleObjectSample.lua:(17,16-62): attempt to call a no value value [compatibility: Lua 5.5]"
     },
     {
@@ -11383,9 +11383,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "ce9ccc40747003f92af303849675d433cda24f929aeeaaa3b8afd07a51ddc0ab",
-      "nova_error_sha256": "1aeebc2d6717d78e070ec41a511751eed67801811fd78e7f60389ad1a9f5878a",
+      "nova_error_sha256": "49d8fe043db57b274b19c0c1bfca16a58f01883e9a511b8442df09bc14d416c8",
       "lua_error_excerpt": "lua: ...GetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:<line>: Error should mention 'invalid level', got: ...GetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:<...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:(18,6-97): Error should mention 'invalid level', goLuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithIn..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWithInvalidLevelThrowsError.lua:(18,6-97): Error should mention 'invalid level', got: LuaFixtures/SetFenvGetFenvTUnitTests/GetFenvWit..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua",
@@ -11394,9 +11394,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "a9b23cd2745e86c221dcc07160e634d814ec55c73ee3240b7771362b11634eb5",
-      "nova_error_sha256": "dafb77208144e8c6faf7a94a666dc86762140e9c6565797f8525ef17376a9595",
+      "nova_error_sha256": "dfaa8a2e798339829c8f1debd45267b383fe133ef37859624c0ab1ed37fe5cf7",
       "lua_error_excerpt": "lua: ...etFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:<line>: Error should mention 'table expected', got: ...etFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:(19,6-99): Error should mention 'table expected', goLuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTab..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequiresTableArgument.lua:(19,6-99): Error should mention 'table expected', got: LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvRequires..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua",
@@ -11405,9 +11405,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "7833049bdd1721cce3c2f8f8e09037452350c67c75e2d4158d5ca6bebedb9336",
-      "nova_error_sha256": "651618d3171fe531ed5402f956ef27a2682dfa81dcd5504f16ba73e91dcc351e",
+      "nova_error_sha256": "469a42de013647e1a0d29fa90b67c4e087f8d62dcf648f0a09dec0c2b2d6ee2d",
       "lua_error_excerpt": "lua: ...GetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:<line>: Error should mention 'invalid level', got: ...GetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:<...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:(19,6-97): Error should mention 'invalid level', goLuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithIn..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWithInvalidLevelThrowsError.lua:(19,6-97): Error should mention 'invalid level', got: LuaFixtures/SetFenvGetFenvTUnitTests/SetFenvWit..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/getfenv_basic_51.lua",
@@ -11460,9 +11460,9 @@
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
       "lua_error_sha256": "fb0e9c5429aca172d085f573195017684df6cd87b8ba294c8f5d11b751b12752",
-      "nova_error_sha256": "a66f03e93c6dbfc70fb1fc9ec465598f111784417358901a616441c6aeb7b990",
+      "nova_error_sha256": "50443cb698787135fbd9d451f004edeefce12795b90f5a101aabbd02285ad5b2",
       "lua_error_excerpt": "lua: ...aFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:<line>: Error should say 'number expected', got: ...aFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:<li...",
-      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(15,6-99): Error should say 'number expected', goLuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(13,42-56)..."
+      "nova_error_excerpt": "LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(15,6-99): Error should say 'number expected', got: LuaFixtures/SetFenvGetFenvTUnitTests/setfenv_errors_51.lua:(13,42-..."
     },
     {
       "file": "SetFenvGetFenvTUnitTests/setfenv_level_51.lua",
@@ -11514,9 +11514,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "3e2e1e07fd93652c36e704247d800cab404a27d8e4f58832b4bbaf314deea27b",
+      "lua_error_sha256": "e92d3837b9072b560241695bd161a0857dc5489365a54f5c422953d33d89f299",
       "nova_error_sha256": "5ce1300056e6d82e59f2b45c03f0eb904c2896901f289bca20fe7690543b0399",
-      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | LuaFixtures/SimpleTUnitTests/SimpleDelega...",
+      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | \tLuaFixtures/SimpleTUnitTests/SimpleDeleg...",
       "nova_error_excerpt": "LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop1.lua:(6,6-8): attempt to call a nil value [compatibility: Lua 5.5]"
     },
     {
@@ -11525,9 +11525,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "41c1e96726595af1bba95a920a27714d99f7440bbef5b872f4f9bdc075a369c3",
+      "lua_error_sha256": "b0de224bda6ee7a844fafebce38de5fe2e5d3fdb18ac70b429f1ab5567a07f84",
       "nova_error_sha256": "1921fb8b9a576c08a3ab2cf0e9666ea7dac0a9247bfed8ee0a5135849c773ba7",
-      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | LuaFixtures/SimpleTUnitTests/SimpleDelega...",
+      "lua_error_excerpt": "lua: LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:<line>: attempt to call a nil value (global 'action') | stack traceback: | \tLuaFixtures/SimpleTUnitTests/SimpleDeleg...",
       "nova_error_excerpt": "LuaFixtures/SimpleTUnitTests/SimpleDelegateInterop2.lua:(6,6-8): attempt to call a nil value [compatibility: Lua 5.5]"
     },
     {
@@ -12339,7 +12339,7 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "a1baf4ef9acaf5e81557820fc4def3b3e1bc2cc20c149495635180c21d929179",
+      "lua_error_sha256": "f02d707ba639d952eb2306b98867139133a080062a960b3e49bfcbdc451287e0",
       "nova_error_sha256": "d132c4f144f009951fc1e8307cfce36cad99a090ce183ce8b4c6023d9b1463f6",
       "lua_error_excerpt": "lua: LuaFixtures/Utf8ModuleTUnitTests/Utf8CharRejectsNaN.lua:<line>: bad argument #1 to 'char' (number has no integer representation) | stack traceback: | \t[C]: in field 'char' ...",
       "nova_error_excerpt": "LuaFixtures/Utf8ModuleTUnitTests/Utf8CharRejectsNaN.lua:(7,0-21): bad argument #1 to 'utf8.char' (number has no integer representation) [compatibility: Lua 5.5]"
@@ -12680,9 +12680,9 @@
       "classification": "unclassified",
       "lua_rc_category": "nonzero",
       "nova_rc_category": "nonzero",
-      "lua_error_sha256": "b759dd9966155cb03b83298b8f198b41f43b9b19e73816aa7b3e7d2ccd326fe4",
+      "lua_error_sha256": "cb2d58a7111fa1ab712e4b02ec1c32d2edbc466931aae0026dc2c5cf24d3a22f",
       "nova_error_sha256": "55d9fd312a0dd619105d034a5ed8a316fcbbbeef1c5d21e185ace84296c199ad",
-      "lua_error_excerpt": "lua: LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:<line>: attempt to call a nil value (global 'EscapeString') | stack traceback: | LuaFixtures/matches/PunctMatchesSpec...",
+      "lua_error_excerpt": "lua: LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:<line>: attempt to call a nil value (global 'EscapeString') | stack traceback: | \tLuaFixtures/matches/PunctMatchesSpe...",
       "nova_error_excerpt": "LuaFixtures/matches/PunctMatchesSpecificCharacters.lua:(6,0-59): attempt to call a nil value [compatibility: Lua 5.5]"
     }
   ]

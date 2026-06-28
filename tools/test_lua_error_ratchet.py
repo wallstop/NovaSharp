@@ -127,6 +127,26 @@ class TestCheckBothErrorRatchet(unittest.TestCase):
             expected,
         )
 
+    def test_windows_lua_exe_prefix_before_short_fixture_path_normalizes(self) -> None:
+        self.assertEqual(
+            normalize_error_text(
+                "D:\\a\\NovaSharp\\NovaSharp\\.lua-cache\\Windows\\lua-5.4\\bin\\"
+                "lua5.4.exe: .../LuaFixtures/GotoTUnitTests/"
+                "GotoUndefinedLabelThrows.lua:8: no visible label 'there' for <goto> "
+                "at line 7\n"
+            ),
+            "lua: LuaFixtures/GotoTUnitTests/GotoUndefinedLabelThrows.lua:<line>: "
+            "no visible label 'there' for <goto> at line 7",
+        )
+
+    def test_fixture_path_normalization_does_not_rewrite_words(self) -> None:
+        normalized = normalize_error_text(
+            "Error should mention LuaFixtures, got: NotLuaFixtures/file.lua:12: nope"
+        )
+
+        self.assertIn("NotLuaFixtures/file.lua:<line>: nope", normalized)
+        self.assertNotIn("got: LuaFixtures/file.lua", normalized)
+
     def test_cannot_open_absolute_workspace_path_normalizes(self) -> None:
         baseline = [
             make_entry(
@@ -311,8 +331,70 @@ class TestCheckBothErrorRatchet(unittest.TestCase):
             "\tno file '/usr/local/lib/lua/5.3/loadall.so'\n"
         )
 
-        self.assertIn("no file '<search>/all.so'", normalized)
-        self.assertIn("no file '<search>/loadall.so'", normalized)
+        self.assertIn("no file '<search>/all.<native>'", normalized)
+        self.assertIn("no file '<search>/loadall.<native>'", normalized)
+
+    def test_require_native_library_extensions_are_platform_noise(self) -> None:
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.4",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/usr/lib/lua/5.4/missing/module.so'\n"
+                    "\tno file '/usr/lib/lua/5.4/loadall.so'\n"
+                ),
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.4",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file 'C:/lua/missing/module.dll'\n"
+                    "\tno file 'C:/lua/loadall.dll'\n"
+                ),
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertTrue(result.passed)
+
+    def test_require_duplicate_native_extensions_are_host_noise(self) -> None:
+        baseline = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.4",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file '/usr/lib/lua/5.4/missing/module.so'\n"
+                    "\tno file '/usr/lib/lua/5.4/loadall.so'\n"
+                ),
+            )
+        ]
+        current = [
+            make_entry(
+                "LoadModuleTUnitTests/RequireErrorListsSearchedPaths.lua",
+                lua_version="5.4",
+                lua_error=(
+                    "lua: fixture.lua:1: module 'missing.module' not found:\n"
+                    "\tno field package.preload['missing.module']\n"
+                    "\tno file 'C:/lua/missing/module.so'\n"
+                    "\tno file 'C:/lua/missing/module.dll'\n"
+                    "\tno file 'C:/lua/loadall.so'\n"
+                    "\tno file 'C:/lua/loadall.dll'\n"
+                ),
+            )
+        ]
+
+        result = check_both_error_ratchet(baseline, current)
+
+        self.assertTrue(result.passed)
 
     def test_require_short_module_name_keeps_lua_and_init_suffixes_distinct(self) -> None:
         normalized = normalize_error_text(
@@ -366,8 +448,8 @@ class TestCheckBothErrorRatchet(unittest.TestCase):
 
         self.assertIn("no file '<search>/foo/loadall.lua'", normalized)
         self.assertIn("no file '<search>/foo/loadall/init.lua'", normalized)
-        self.assertIn("no file '<search>/foo/loadall.so'", normalized)
-        self.assertIn("no file '<search>/loadall.so'", normalized)
+        self.assertIn("no file '<search>/foo/loadall.<native>'", normalized)
+        self.assertIn("no file '<search>/loadall.<native>'", normalized)
 
     def test_require_custom_template_suffixes_stay_distinct(self) -> None:
         normalized = normalize_error_text(
