@@ -155,6 +155,109 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedObjectCallOverloadsPreserveNilAndArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+
+            DynValue oneArgResult = script.Call(capture, (object)null);
+            await Assert.That(oneArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(oneArgResult.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(oneArgResult.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert
+                .That(oneArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+
+            DynValue threeArgResult = script.Call(capture, (object)null, "value", 42);
+            await Assert.That(threeArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(threeArgResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(threeArgResult.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert
+                .That(threeArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(threeArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(threeArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ObjectArrayCallStillUsesParamsExpansion(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+            object[] args = new object[] { 1, 2, 3 };
+
+            DynValue result = script.Call(capture, args);
+
+            await AssertTupleNumbers(result, 3d, 1d, 2d, 3d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CastObjectArrayCallPassesSingleTableArgument(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(value) return type(value), #value, value[1], value[2] end"
+            );
+            object[] args = new object[] { 1, 2 };
+
+            DynValue result = script.Call(capture, (object)args);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].String).IsEqualTo("table").ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(2d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedObjectCallOverloadsValidateFunctionBeforeArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                script.Call((DynValue)null, new UnregisteredHostObject())
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("function").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task FixedDynValueCallOverloadsPreserveTupleExpansion(
             LuaCompatibilityVersion version
         )
@@ -662,6 +765,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     .ConfigureAwait(false);
             }
         }
+
+        private sealed class UnregisteredHostObject { }
 
         private sealed class StubScriptLoader : ScriptLoaderBase
         {

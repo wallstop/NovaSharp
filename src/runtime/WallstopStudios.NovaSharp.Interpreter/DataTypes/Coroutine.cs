@@ -370,6 +370,73 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Resumes the coroutine with one CLR object argument.
+        /// Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.
+        /// </summary>
+        /// <param name="arg">The argument.</param>
+        /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
+        public DynValue Resume(object arg)
+        {
+            if (Type != CoroutineType.Coroutine)
+            {
+                throw new InvalidOperationException(
+                    "Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead"
+                );
+            }
+
+            return Resume(DynValue.FromObject(OwnerScript, arg));
+        }
+
+        /// <summary>
+        /// Resumes the coroutine with two CLR object arguments.
+        /// Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.
+        /// </summary>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
+        public DynValue Resume(object arg1, object arg2)
+        {
+            if (Type != CoroutineType.Coroutine)
+            {
+                throw new InvalidOperationException(
+                    "Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead"
+                );
+            }
+
+            return Resume(
+                DynValue.FromObject(OwnerScript, arg1),
+                DynValue.FromObject(OwnerScript, arg2)
+            );
+        }
+
+        /// <summary>
+        /// Resumes the coroutine with three CLR object arguments.
+        /// Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.
+        /// </summary>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
+        public DynValue Resume(object arg1, object arg2, object arg3)
+        {
+            if (Type != CoroutineType.Coroutine)
+            {
+                throw new InvalidOperationException(
+                    "Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead"
+                );
+            }
+
+            return Resume(
+                DynValue.FromObject(OwnerScript, arg1),
+                DynValue.FromObject(OwnerScript, arg2),
+                DynValue.FromObject(OwnerScript, arg3)
+            );
+        }
+
+        /// <summary>
         /// Resumes the coroutine
         /// </summary>
         /// <param name="context">The ScriptExecutionContext.</param>

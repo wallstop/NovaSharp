@@ -161,6 +161,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _first = DynValue.Nil;
         private DynValue _second = DynValue.Nil;
         private DynValue _third = DynValue.Nil;
+        private object _firstObject = 1d;
+        private object _secondObject = 2d;
+        private object _thirdObject = 3d;
 
         [GlobalSetup]
         /// <summary>
@@ -178,6 +181,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _first = DynValue.NewNumber(1d);
             _second = DynValue.NewNumber(2d);
             _third = DynValue.NewNumber(3d);
+            _firstObject = 1d;
+            _secondObject = 2d;
+            _thirdObject = 3d;
             _runningCoroutine = _script.CreateCoroutine(_coroutineFunction).Coroutine;
             _runningCoroutine.Resume(_first, _second, _third);
         }
@@ -209,6 +215,23 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_threeArgFunction, new DynValue[] { _first, _second, _third });
 
         /// <summary>
+        /// Calls a Lua closure with three pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 3 objects")]
+        public DynValue CallThreeObjects() =>
+            _script.Call(_threeArgFunction, _firstObject, _secondObject, _thirdObject);
+
+        /// <summary>
+        /// Calls a Lua closure through the object params-array overload for comparison.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 3 objects")]
+        public DynValue CallThreeObjectsParamsArray() =>
+            _script.Call(
+                _threeArgFunction,
+                new object[] { _firstObject, _secondObject, _thirdObject }
+            );
+
+        /// <summary>
         /// Resumes a suspended Lua coroutine with three pre-created DynValue arguments.
         /// </summary>
         [Benchmark(Description = "Coroutine Suspended Resume: 3 DynValues")]
@@ -216,10 +239,24 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _runningCoroutine.Resume(_first, _second, _third);
 
         /// <summary>
+        /// Resumes a suspended Lua coroutine with three pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: 3 objects")]
+        public DynValue ResumeCoroutineThreeObjects() =>
+            _runningCoroutine.Resume(_firstObject, _secondObject, _thirdObject);
+
+        /// <summary>
         /// Resumes a suspended Lua coroutine through the params-array overload for comparison.
         /// </summary>
         [Benchmark(Description = "Coroutine Suspended Resume: params 3 DynValues")]
         public DynValue ResumeCoroutineThreeDynValuesParamsArray() =>
             _runningCoroutine.Resume(new DynValue[] { _first, _second, _third });
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine through the object params-array overload for comparison.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: params 3 objects")]
+        public DynValue ResumeCoroutineThreeObjectsParamsArray() =>
+            _runningCoroutine.Resume(new object[] { _firstObject, _secondObject, _thirdObject });
     }
 }

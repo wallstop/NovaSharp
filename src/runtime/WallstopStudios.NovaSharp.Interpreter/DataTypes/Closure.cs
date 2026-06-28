@@ -164,6 +164,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Calls this function with one CLR object argument.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object arg)
+        {
+            return OwnerScript.Call(this, arg);
+        }
+
+        /// <summary>
+        /// Calls this function with two CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object arg1, object arg2)
+        {
+            return OwnerScript.Call(this, arg1, arg2);
+        }
+
+        /// <summary>
+        /// Calls this function with three CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object arg1, object arg2, object arg3)
+        {
+            return OwnerScript.Call(this, arg1, arg2, arg3);
+        }
+
+        /// <summary>
         /// Calls this function with the specified args
         /// </summary>
         /// <param name="args">The arguments to pass to the function.</param>

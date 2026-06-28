@@ -258,6 +258,81 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await AssertTupleNumbers(emptyTailResult, 1d, 1d).ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task InitialResumeObjectOverloadsPreserveNilAndArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+
+            DynValue oneArgCoroutine = script.CreateCoroutine(capture);
+            DynValue oneArgResult = oneArgCoroutine.Coroutine.Resume((object)null);
+            await Assert.That(oneArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(oneArgResult.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(oneArgResult.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert
+                .That(oneArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+
+            DynValue threeArgCoroutine = script.CreateCoroutine(capture);
+            DynValue threeArgResult = threeArgCoroutine.Coroutine.Resume((object)null, "value", 42);
+            await Assert.That(threeArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(threeArgResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(threeArgResult.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert
+                .That(threeArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(threeArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(threeArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task InitialResumeObjectArrayPreservesSpreadAndSingleObjectForms(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), type((...)), ... end"
+            );
+            object[] args = new object[] { 1, 2 };
+
+            DynValue spreadCoroutine = script.CreateCoroutine(capture);
+            DynValue spread = spreadCoroutine.Coroutine.Resume(args);
+            await Assert.That(spread.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(spread.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(spread.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(spread.Tuple[1].String).IsEqualTo("number").ConfigureAwait(false);
+            await Assert.That(spread.Tuple[2].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(spread.Tuple[3].Number).IsEqualTo(2d).ConfigureAwait(false);
+
+            DynValue castCoroutine = script.CreateCoroutine(capture);
+            DynValue cast = castCoroutine.Coroutine.Resume((object)args);
+            await Assert.That(cast.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(cast.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(cast.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(cast.Tuple[1].String).IsEqualTo("table").ConfigureAwait(false);
+            await Assert.That(cast.Tuple[2].Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+        }
+
         /// <summary>
         /// Tests that coroutine.status() on the main coroutine returns 'normal' when called from a child.
         /// Note: This test requires Lua 5.2+ because coroutine.running() returns nil from main in Lua 5.1.

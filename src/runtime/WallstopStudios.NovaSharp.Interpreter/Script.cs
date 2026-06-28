@@ -1047,6 +1047,71 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Calls the specified function with one CLR object argument.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue function, object arg)
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            return Call(function, DynValue.FromObject(this, arg));
+        }
+
+        /// <summary>
+        /// Calls the specified function with two CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue function, object arg1, object arg2)
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            return Call(function, DynValue.FromObject(this, arg1), DynValue.FromObject(this, arg2));
+        }
+
+        /// <summary>
+        /// Calls the specified function with three CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue function, object arg1, object arg2, object arg3)
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            return Call(
+                function,
+                DynValue.FromObject(this, arg1),
+                DynValue.FromObject(this, arg2),
+                DynValue.FromObject(this, arg3)
+            );
+        }
+
+        /// <summary>
         /// Calls the specified function.
         /// </summary>
         /// <param name="function">The Lua/NovaSharp function to be called</param>
@@ -1055,6 +1120,54 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Call(object function)
         {
             return Call(DynValue.FromObject(this, function));
+        }
+
+        /// <summary>
+        /// Calls the specified function with one CLR object argument.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called </param>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object function, object arg)
+        {
+            return Call(DynValue.FromObject(this, function), DynValue.FromObject(this, arg));
+        }
+
+        /// <summary>
+        /// Calls the specified function with two CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called </param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object function, object arg1, object arg2)
+        {
+            return Call(
+                DynValue.FromObject(this, function),
+                DynValue.FromObject(this, arg1),
+                DynValue.FromObject(this, arg2)
+            );
+        }
+
+        /// <summary>
+        /// Calls the specified function with three CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called </param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object function, object arg1, object arg2, object arg3)
+        {
+            return Call(
+                DynValue.FromObject(this, function),
+                DynValue.FromObject(this, arg1),
+                DynValue.FromObject(this, arg2),
+                DynValue.FromObject(this, arg3)
+            );
         }
 
         /// <summary>

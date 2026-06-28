@@ -357,6 +357,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithObjectArgumentsOnClrCallbackRejectsBeforeConversion(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
+            DynValue coroutine = script.CreateCoroutine(callback);
+
+            InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
+                coroutine.Coroutine.Resume(new UnregisteredHostObject())
+            );
+            await Assert.That(exception.Message).Contains("Only non-CLR coroutines");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ResumeWithDynValueArgumentsThrowsWhenNull(LuaCompatibilityVersion version)
         {
             Script script = new(version);
@@ -660,5 +680,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 $"Expected exception of type {typeof(TException).Name}."
             );
         }
+
+        private sealed class UnregisteredHostObject { }
     }
 }

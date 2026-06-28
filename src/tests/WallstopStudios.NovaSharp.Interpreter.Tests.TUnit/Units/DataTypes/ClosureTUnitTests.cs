@@ -182,6 +182,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task NullCallBindsToExistingParamsArrayOverload(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue function = script.DoString("return function(...) return select('#', ...) end");
+            Closure closure = function.Function;
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                closure.Call(null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ObjectArrayCallPreservesSpreadAndSingleObjectForms(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), type((...)), ... end"
+            );
+            Closure closure = capture.Function;
+            object[] args = new object[] { 1, 2 };
+
+            DynValue spread = closure.Call(args);
+            await Assert.That(spread.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(spread.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(spread.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(spread.Tuple[1].String).IsEqualTo("number").ConfigureAwait(false);
+            await Assert.That(spread.Tuple[2].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(spread.Tuple[3].Number).IsEqualTo(2d).ConfigureAwait(false);
+
+            DynValue cast = closure.Call((object)args);
+            await Assert.That(cast.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(cast.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(cast.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(cast.Tuple[1].String).IsEqualTo("table").ConfigureAwait(false);
+            await Assert.That(cast.Tuple[2].Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task UpValuesTypeIsNoneWhenNoUpValuesAreCaptured()
         {
             Script script = new();
