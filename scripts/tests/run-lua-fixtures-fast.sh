@@ -83,8 +83,9 @@ mkdir -p "$OUTPUT_DIR"
 # Create file list with version filtering
 echo "Scanning fixtures for Lua $LUA_VERSION compatibility..."
 file_list="${OUTPUT_DIR}/filelist.txt"
+reference_file_list="${OUTPUT_DIR}/filelist-reference.bin"
 filter_summary="$(
-    python3 - "$ROOT_DIR" "$FIXTURES_DIR" "$LUA_VERSION" "$LIMIT" "$file_list" <<'PY'
+    python3 - "$ROOT_DIR" "$FIXTURES_DIR" "$LUA_VERSION" "$LIMIT" "$file_list" "$reference_file_list" <<'PY'
 import sys
 from pathlib import Path
 
@@ -93,6 +94,7 @@ fixtures_dir = Path(sys.argv[2])
 lua_version = sys.argv[3]
 limit = int(sys.argv[4])
 file_list = Path(sys.argv[5])
+reference_file_list = Path(sys.argv[6])
 
 sys.path.insert(0, str(root / "tools"))
 from lua_version_utils import is_version_compatible, parse_lua_versions
@@ -101,7 +103,7 @@ compatible = 0
 skipped_version = 0
 skipped_novasharp = 0
 
-with file_list.open("w", encoding="utf-8") as output:
+with file_list.open("w", encoding="utf-8", newline="\n") as output, reference_file_list.open("wb") as reference_output:
     for lua_file in sorted(fixtures_dir.rglob("*.lua")):
         if limit > 0 and compatible >= limit:
             break
@@ -139,7 +141,10 @@ with file_list.open("w", encoding="utf-8") as output:
             skipped_version += 1
             continue
 
-        output.write(str(lua_file) + "\n")
+        relative_path = lua_file.relative_to(fixtures_dir).as_posix()
+        output.write(lua_file.as_posix() + "\n")
+        reference_output.write(lua_file.as_posix().encode("utf-8") + b"\0")
+        reference_output.write(relative_path.encode("utf-8") + b"\0")
         compatible += 1
 
 print(f"{compatible}\t{skipped_version}\t{skipped_novasharp}")
@@ -193,13 +198,15 @@ export -f run_command_with_timeout
 # Function to run a single Lua file
 run_single_lua() {
     local lua_file="$1"
-    local lua_cmd="$2"
-    local lua_version="$3"
-    local output_dir="$4"
-    local fixtures_dir="$5"
+    local rel_path="$2"
+    local lua_cmd="$3"
+    local lua_version="$4"
+    local output_dir="$5"
     local timeout_mode="$6"
+
+    lua_file="${lua_file%$'\r'}"
+    rel_path="${rel_path%$'\r'}"
     
-    local rel_path="${lua_file#$fixtures_dir/}"
     local output_base="${output_dir}/${rel_path%.lua}"
     mkdir -p "$(dirname "$output_base")"
     
@@ -234,7 +241,7 @@ if [[ "$SKIP_LUA" != "true" ]]; then
     
     # Use xargs for parallel execution (more portable than GNU parallel)
     lua_results="${OUTPUT_DIR}/lua_results.txt"
-    xargs -P "$JOBS" -I {} bash -c 'run_single_lua "$1" "$2" "$3" "$4" "$5" "$6"' _ {} "$LUA_CMD" "$LUA_VERSION" "$OUTPUT_DIR" "$FIXTURES_DIR" "$TIMEOUT_MODE" < "$file_list" > "$lua_results"
+    xargs -0 -n 2 -P "$JOBS" bash -c 'run_single_lua "$5" "$6" "$1" "$2" "$3" "$4"' _ "$LUA_CMD" "$LUA_VERSION" "$OUTPUT_DIR" "$TIMEOUT_MODE" < "$reference_file_list" > "$lua_results"
     
     lua_pass=$(awk '$0 == "pass" { count++ } END { print count + 0 }' "$lua_results")
     lua_fail=$(awk '$0 == "fail" { count++ } END { print count + 0 }' "$lua_results")
