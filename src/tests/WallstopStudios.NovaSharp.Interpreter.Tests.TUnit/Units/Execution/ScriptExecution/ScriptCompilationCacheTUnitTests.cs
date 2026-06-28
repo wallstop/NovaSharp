@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.ScriptExecution
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
@@ -261,6 +262,109 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             }
 
             await Assert.That(script.CompilationCacheCount).IsEqualTo(5).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadStringWithZeroMaxEntriesDoesNotCache(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+                ScriptCacheMaxEntries = 0,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "return 42";
+
+            DynValue result1 = script.LoadString(code);
+            DynValue result2 = script.LoadString(code);
+
+            await Assert.That(script.Call(result1).Number).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(script.Call(result2).Number).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(script.SourceCodeCount).IsEqualTo(3).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheWithZeroMaxEntriesDoesNotStore()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 0);
+
+            cache.Store(
+                "return 1",
+                LuaCompatibilityVersion.Lua54,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet("return 1", LuaCompatibilityVersion.Lua54, out _))
+                .IsFalse()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ScriptWithNegativeCacheMaxEntriesThrows()
+        {
+            ScriptOptions options = new()
+            {
+                EnableScriptCaching = true,
+                ScriptCacheMaxEntries = -1,
+            };
+
+            static void CreateScript(ScriptOptions options)
+            {
+                Script script = new(CoreModulePresets.Complete, options);
+                GC.KeepAlive(script);
+            }
+
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                CreateScript(options)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("options").ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("ScriptCacheMaxEntries")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ScriptWithNegativeCacheMaxEntriesAndCachingDisabledDoesNotThrow()
+        {
+            ScriptOptions options = new()
+            {
+                EnableScriptCaching = false,
+                ScriptCacheMaxEntries = -1,
+            };
+
+            Script script = new(CoreModulePresets.Complete, options);
+
+            script.LoadString("return 42");
+
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheWithNegativeMaxEntriesThrows()
+        {
+            static void CreateCache()
+            {
+                ScriptCompilationCache cache = new(maxEntries: -1);
+                GC.KeepAlive(cache);
+            }
+
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(
+                CreateCache
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("maxEntries").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

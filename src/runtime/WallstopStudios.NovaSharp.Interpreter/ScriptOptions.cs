@@ -189,6 +189,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Gets or sets the maximum number of compiled scripts to cache per Script instance.
         /// Only used when <see cref="EnableScriptCaching"/> is <c>true</c>.
+        /// Set to 0 to keep caching enabled but store no compiled script entries.
         /// Defaults to 64.
         /// </summary>
         public int ScriptCacheMaxEntries { get; set; } = 64;

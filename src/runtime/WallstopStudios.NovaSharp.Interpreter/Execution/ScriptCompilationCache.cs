@@ -39,6 +39,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// <param name="maxEntries">Maximum number of cached entries before eviction (default: 64).</param>
         internal ScriptCompilationCache(int maxEntries = DefaultMaxEntries)
         {
+            if (maxEntries < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(maxEntries),
+                    maxEntries,
+                    "Maximum cache entries cannot be negative."
+                );
+            }
+
             _maxEntries = maxEntries;
             _cache = new Dictionary<SourceCacheKey, LinkedListNode<LruEntry>>(
                 Math.Min(maxEntries, 16)
@@ -71,6 +80,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal bool TryGet(string code, LuaCompatibilityVersion version, out CachedChunk result)
         {
+            if (_maxEntries == 0)
+            {
+                result = default;
+                return false;
+            }
+
             SourceCacheKey key = SourceCacheKey.Create(code, version);
 
             lock (_lock)
@@ -106,6 +121,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             int sourceId
         )
         {
+            if (_maxEntries == 0)
+            {
+                return;
+            }
+
             SourceCacheKey key = SourceCacheKey.Create(code, version);
             CachedChunk chunk = new(entryPointAddress, sourceId);
 

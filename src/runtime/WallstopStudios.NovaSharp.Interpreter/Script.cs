@@ -284,6 +284,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
             // Initialize compilation cache if enabled
             if (Options.EnableScriptCaching)
             {
+                if (Options.ScriptCacheMaxEntries < 0)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(options),
+                        Options.ScriptCacheMaxEntries,
+                        "ScriptOptions.ScriptCacheMaxEntries cannot be negative."
+                    );
+                }
+
                 _compilationCache = new Execution.ScriptCompilationCache(
                     Options.ScriptCacheMaxEntries
                 );
