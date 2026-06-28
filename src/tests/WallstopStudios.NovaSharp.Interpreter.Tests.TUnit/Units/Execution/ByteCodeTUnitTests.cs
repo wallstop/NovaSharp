@@ -45,6 +45,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        public async Task EnterSourceGuardDoesNotAllocateAfterCapacityWarmup()
+        {
+            ByteCode byteCode = new(new Script());
+            SourceRef sourceRef = new(0, 1, 2, 3, 4, false);
+
+            using (byteCode.EnterSource(sourceRef)) { }
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 1024; i++)
+            {
+                using (byteCode.EnterSource(sourceRef)) { }
+            }
+            long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            await Assert.That(allocated).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]

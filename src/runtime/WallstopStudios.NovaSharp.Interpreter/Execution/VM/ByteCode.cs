@@ -55,12 +55,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         /// <param name="sref">Source being compiled.</param>
         /// <returns>A disposable guard.</returns>
-        public IDisposable EnterSource(SourceRef sref)
+        public SourceCodeStackGuard EnterSource(SourceRef sref)
         {
             return new SourceCodeStackGuard(sref, this);
         }
 
-        private class SourceCodeStackGuard : IDisposable
+        /// <summary>
+        /// Restores the previous source reference when a compile-time source scope exits.
+        /// </summary>
+        public readonly struct SourceCodeStackGuard : IDisposable
         {
             private readonly ByteCode _bc;
 
