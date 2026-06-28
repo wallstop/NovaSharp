@@ -71,6 +71,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <exception cref="ScriptRuntimeException">Thrown when resuming invalid states.</exception>
         public DynValue ResumeCoroutine(DynValue[] args)
         {
+            return ResumeCoroutine(new ClrCallArguments(args));
+        }
+
+        /// <summary>
+        /// Resumes execution with one argument, avoiding public params-array allocation.
+        /// </summary>
+        public DynValue ResumeCoroutine(DynValue arg)
+        {
+            return ResumeCoroutine(new ClrCallArguments(arg));
+        }
+
+        /// <summary>
+        /// Resumes execution with two arguments, avoiding public params-array allocation.
+        /// </summary>
+        public DynValue ResumeCoroutine(DynValue arg1, DynValue arg2)
+        {
+            return ResumeCoroutine(new ClrCallArguments(arg1, arg2));
+        }
+
+        /// <summary>
+        /// Resumes execution with three arguments, avoiding public params-array allocation.
+        /// </summary>
+        public DynValue ResumeCoroutine(DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3));
+        }
+
+        private DynValue ResumeCoroutine(ClrCallArguments args)
+        {
             EnterProcessor();
 
             try
@@ -96,12 +125,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else if (_state == CoroutineState.Suspended)
                 {
-                    _valueStack.Push(DynValue.NewTuple(args));
+                    _valueStack.Push(args.ToTuple());
                     entrypoint = _savedInstructionPtr;
                 }
                 else if (_state == CoroutineState.ForceSuspended)
                 {
-                    if (args != null && args.Length > 0)
+                    if (args.Count > 0)
                     {
                         throw new ArgumentException(
                             "When resuming a force-suspended coroutine, args must be empty."
@@ -194,7 +223,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     while (_executionStack.Count > 0)
                     {
                         CallStackItem frame = PopToBasePointer();
-                        CloseAllPendingBlocks(frame, DynValue.Nil);
+                        try
+                        {
+                            CloseAllPendingBlocks(frame, DynValue.Nil);
+                        }
+                        finally
+                        {
+                            CallStackItemPool.Return(frame);
+                        }
                     }
 
                     _valueStack.Clear();

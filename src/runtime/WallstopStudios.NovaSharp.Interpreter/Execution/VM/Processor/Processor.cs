@@ -30,6 +30,110 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private readonly DebugContext _debug;
         private DynValue _lastCloseError = DynValue.Nil;
 
+        private readonly struct ClrCallArguments
+        {
+            private readonly DynValue[] _array;
+            private readonly DynValue _arg0;
+            private readonly DynValue _arg1;
+            private readonly DynValue _arg2;
+            private readonly int _count;
+
+            internal ClrCallArguments(DynValue[] args)
+            {
+                _array = args;
+                _arg0 = null;
+                _arg1 = null;
+                _arg2 = null;
+                _count = args != null ? args.Length : 0;
+            }
+
+            internal ClrCallArguments(DynValue arg)
+            {
+                _array = null;
+                _arg0 = arg;
+                _arg1 = null;
+                _arg2 = null;
+                _count = 1;
+            }
+
+            internal ClrCallArguments(DynValue arg1, DynValue arg2)
+            {
+                _array = null;
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = null;
+                _count = 2;
+            }
+
+            internal ClrCallArguments(DynValue arg1, DynValue arg2, DynValue arg3)
+            {
+                _array = null;
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _count = 3;
+            }
+
+            internal int Count
+            {
+                get { return _count; }
+            }
+
+            internal DynValue this[int index]
+            {
+                get
+                {
+                    if (_array != null)
+                    {
+                        return _array[index];
+                    }
+
+                    switch (index)
+                    {
+                        case 0:
+                            return _arg0;
+                        case 1:
+                            return _arg1;
+                        case 2:
+                            return _arg2;
+                        default:
+                            throw new ArgumentOutOfRangeException(nameof(index));
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Creates the coroutine resume tuple, reusing array-backed caller arguments when available.
+            /// </summary>
+            internal DynValue ToTuple()
+            {
+                if (_array != null)
+                {
+                    return DynValue.NewTuple(_array);
+                }
+
+                switch (_count)
+                {
+                    case 0:
+                        return DynValue.NewNil();
+                    case 1:
+                        return DynValue.NewTuple(this[0]);
+                    case 2:
+                        return DynValue.NewTuple(this[0], this[1]);
+                    case 3:
+                        return DynValue.NewTuple(this[0], this[1], this[2]);
+                    default:
+                        DynValue[] values = new DynValue[_count];
+                        for (int i = 0; i < _count; i++)
+                        {
+                            values[i] = this[i];
+                        }
+
+                        return DynValue.NewTuple(values);
+                }
+            }
+        }
+
         /// <summary>
         /// Gets a value indicating whether the currently executing CLR callback can yield back into Lua.
         /// </summary>
@@ -99,6 +203,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <returns>The return tuple.</returns>
         public DynValue Call(DynValue function, DynValue[] args)
         {
+            return Call(function, new ClrCallArguments(args));
+        }
+
+        /// <summary>
+        /// Invokes the specified function with one argument.
+        /// </summary>
+        public DynValue Call(DynValue function, DynValue arg)
+        {
+            return Call(function, new ClrCallArguments(arg));
+        }
+
+        /// <summary>
+        /// Invokes the specified function with two arguments.
+        /// </summary>
+        public DynValue Call(DynValue function, DynValue arg1, DynValue arg2)
+        {
+            return Call(function, new ClrCallArguments(arg1, arg2));
+        }
+
+        /// <summary>
+        /// Invokes the specified function with three arguments.
+        /// </summary>
+        public DynValue Call(DynValue function, DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            return Call(function, new ClrCallArguments(arg1, arg2, arg3));
+        }
+
+        private DynValue Call(DynValue function, ClrCallArguments args)
+        {
             List<Processor> coroutinesStack =
                 _parent != null ? _parent._coroutinesStack : _coroutinesStack;
 
@@ -154,7 +287,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private int PushClrToScriptStackFrame(
             CallStackItemFlags Flags,
             DynValue function,
-            DynValue[] args
+            ClrCallArguments args
         )
         {
             if (function == null)
@@ -166,28 +299,63 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _valueStack.Push(function); // func val
             }
 
-            args = InternalAdjustTuple(args);
+            int argCount = PushAdjustedArguments(args);
+            _valueStack.Push(DynValue.FromNumber(argCount)); // func args count
 
-            for (int i = 0; i < args.Length; i++)
-            {
-                _valueStack.Push(args[i]);
-            }
-
-            _valueStack.Push(DynValue.FromNumber(args.Length)); // func args count
-
-            _executionStack.Push(
-                new CallStackItem()
-                {
-                    BasePointer = _valueStack.Count,
-                    DebugEntryPoint = function.Function.EntryPointByteCodeLocation,
-                    ReturnAddress = -1,
-                    ClosureScope = function.Function.ClosureContext,
-                    CallingSourceRef = SourceRef.GetClrLocation(),
-                    Flags = Flags,
-                }
-            );
+            CallStackItem frame = CallStackItemPool.Rent();
+            frame.BasePointer = _valueStack.Count;
+            frame.DebugEntryPoint = function.Function.EntryPointByteCodeLocation;
+            frame.ReturnAddress = -1;
+            frame.ClosureScope = function.Function.ClosureContext;
+            frame.CallingSourceRef = SourceRef.GetClrLocation();
+            frame.Flags = Flags;
+            _executionStack.Push(frame);
 
             return function.Function.EntryPointByteCodeLocation;
+        }
+
+        private int PushAdjustedArguments(ClrCallArguments args)
+        {
+            int count = args.Count;
+            if (count == 0)
+            {
+                return 0;
+            }
+
+            for (int i = 0; i < count - 1; i++)
+            {
+                _valueStack.Push(args[i].ToScalar());
+            }
+
+            return PushAdjustedTrailingValue(args[count - 1], count - 1);
+        }
+
+        private int PushAdjustedTrailingValue(DynValue value, int pushedCount)
+        {
+            if (value.Type != DataType.Tuple)
+            {
+                _valueStack.Push(value.ToScalar());
+                return pushedCount + 1;
+            }
+
+            return PushAdjustedTrailingTuple(value.Tuple, pushedCount);
+        }
+
+        private int PushAdjustedTrailingTuple(DynValue[] tuple, int pushedCount)
+        {
+            int tupleLength = tuple.Length;
+            if (tupleLength == 0)
+            {
+                return pushedCount;
+            }
+
+            for (int i = 0; i < tupleLength - 1; i++)
+            {
+                _valueStack.Push(tuple[i].ToScalar());
+                pushedCount++;
+            }
+
+            return PushAdjustedTrailingValue(tuple[tupleLength - 1], pushedCount);
         }
 
         private int _owningThreadId = -1;
@@ -305,7 +473,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             while (_executionStack.Count > 0)
             {
-                _executionStack.Pop();
+                CallStackItemPool.Return(_executionStack.Pop());
             }
         }
     }

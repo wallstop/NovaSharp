@@ -448,47 +448,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 while (_executionStack.Count > 0)
                 {
                     CallStackItem csi = PopToBasePointer();
+                    bool returnedToPool = false;
 
-                    CloseAllPendingBlocks(csi, closeError);
-
-                    if (csi.ErrorHandler != null)
+                    try
                     {
-                        instructionPtr = csi.ReturnAddress;
+                        CloseAllPendingBlocks(csi, closeError);
 
-                        if (csi.ClrFunction == null)
+                        if (csi.ErrorHandler != null)
                         {
-                            int argscnt = (int)(_valueStack.Pop().Number);
-                            _valueStack.RemoveLast(argscnt + 1);
-                        }
+                            instructionPtr = csi.ReturnAddress;
 
-                        // Use pooled array for error handler invocation
-                        using (
-                            PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
-                                1,
-                                out DynValue[] cbargs
+                            if (csi.ClrFunction == null)
+                            {
+                                int argscnt = (int)(_valueStack.Pop().Number);
+                                _valueStack.RemoveLast(argscnt + 1);
+                            }
+
+                            CallbackFunction errorHandler = csi.ErrorHandler;
+                            SourceRef sourceRef = GetCurrentSourceRef(instructionPtr);
+                            CallStackItemPool.Return(csi);
+                            returnedToPool = true;
+
+                            // Use pooled array for error handler invocation
+                            using (
+                                PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                                    1,
+                                    out DynValue[] cbargs
+                                )
                             )
-                        )
-                        {
-                            cbargs[0] = DynValue.NewString(exception.DecoratedMessage);
+                            {
+                                cbargs[0] = DynValue.NewString(exception.DecoratedMessage);
 
-                            DynValue handled = csi.ErrorHandler.Invoke(
-                                new ScriptExecutionContext(
-                                    this,
-                                    csi.ErrorHandler,
-                                    GetCurrentSourceRef(instructionPtr)
-                                ),
-                                cbargs
-                            );
+                                DynValue handled = errorHandler.Invoke(
+                                    new ScriptExecutionContext(this, errorHandler, sourceRef),
+                                    cbargs
+                                );
 
-                            _valueStack.Push(handled);
+                                _valueStack.Push(handled);
+                            }
+
+                            goto repeat_execution;
                         }
 
-                        goto repeat_execution;
+                        if ((csi.Flags & CallStackItemFlags.EntryPoint) != 0)
+                        {
+                            exception.Rethrow();
+                            throw;
+                        }
                     }
-                    else if ((csi.Flags & CallStackItemFlags.EntryPoint) != 0)
+                    finally
                     {
-                        exception.Rethrow();
-                        throw;
+                        if (!returnedToPool)
+                        {
+                            CallStackItemPool.Return(csi);
+                        }
                     }
                 }
 
@@ -1178,10 +1191,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem xs = _executionStack.Pop();
             if (vstackguard != xs.BasePointer)
             {
+                CallStackItemPool.Return(xs);
                 throw new InternalErrorException("StackGuard violation");
             }
 
-            return xs.ReturnAddress;
+            int returnAddress = xs.ReturnAddress;
+            CallStackItemPool.Return(xs);
+            return returnAddress;
         }
 
         private IList<DynValue> CreateArgsListForFunctionCall(int numargs, int offsFromTop)
@@ -1389,19 +1405,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 // but we need the current instruction here
                 SourceRef sref = GetCurrentSourceRef(instructionPtr - 1);
 
-                _executionStack.Push(
-                    new CallStackItem()
-                    {
-                        ClrFunction = fn.Callback,
-                        ReturnAddress = instructionPtr,
-                        CallingSourceRef = sref,
-                        BasePointer = -1,
-                        ErrorHandler = handler,
-                        Continuation = Continuation,
-                        ErrorHandlerBeforeUnwind = unwindHandler,
-                        Flags = Flags,
-                    }
-                );
+                CallStackItem frame = CallStackItemPool.Rent();
+                frame.ClrFunction = fn.Callback;
+                frame.ReturnAddress = instructionPtr;
+                frame.CallingSourceRef = sref;
+                frame.BasePointer = -1;
+                frame.ErrorHandler = handler;
+                frame.Continuation = Continuation;
+                frame.ErrorHandlerBeforeUnwind = unwindHandler;
+                frame.Flags = Flags;
+                _executionStack.Push(frame);
 
                 DynValue ret = fn.Callback.Invoke(
                     new ScriptExecutionContext(this, fn.Callback, sref),
@@ -1411,27 +1424,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _valueStack.RemoveLast(argsCount + 1);
                 _valueStack.Push(ret);
 
-                _executionStack.Pop();
+                CallStackItemPool.Return(_executionStack.Pop());
 
                 return InternalCheckForTailRequests(null, instructionPtr);
             }
             else if (fn.Type == DataType.Function)
             {
                 _valueStack.Push(DynValue.FromNumber(argsCount));
-                _executionStack.Push(
-                    new CallStackItem()
-                    {
-                        BasePointer = _valueStack.Count,
-                        ReturnAddress = instructionPtr,
-                        DebugEntryPoint = fn.Function.EntryPointByteCodeLocation,
-                        CallingSourceRef = GetCurrentSourceRef(instructionPtr - 1), // See right above in GetCurrentSourceRef(instructionPtr - 1)
-                        ClosureScope = fn.Function.ClosureContext,
-                        ErrorHandler = handler,
-                        Continuation = Continuation,
-                        ErrorHandlerBeforeUnwind = unwindHandler,
-                        Flags = Flags,
-                    }
-                );
+                CallStackItem frame = CallStackItemPool.Rent();
+                frame.BasePointer = _valueStack.Count;
+                frame.ReturnAddress = instructionPtr;
+                frame.DebugEntryPoint = fn.Function.EntryPointByteCodeLocation;
+                frame.CallingSourceRef = GetCurrentSourceRef(instructionPtr - 1); // See right above in GetCurrentSourceRef(instructionPtr - 1)
+                frame.ClosureScope = fn.Function.ClosureContext;
+                frame.ErrorHandler = handler;
+                frame.Continuation = Continuation;
+                frame.ErrorHandlerBeforeUnwind = unwindHandler;
+                frame.Flags = Flags;
+                _executionStack.Push(frame);
                 return fn.Function.EntryPointByteCodeLocation;
             }
 
@@ -1480,17 +1490,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             // perform a fake RET
             CallStackItem csi = PopToBasePointer();
-            int retpoint = csi.ReturnAddress;
-            int argscnt = (int)(_valueStack.Pop().Number);
-            _valueStack.RemoveLast(argscnt + 1);
-
-            // Re-push all cur args and func ptr
-            for (int i = argsCount; i >= 0; i--)
+            try
             {
-                _valueStack.Push(args[i]);
-            }
+                int retpoint = csi.ReturnAddress;
+                int argscnt = (int)(_valueStack.Pop().Number);
+                _valueStack.RemoveLast(argscnt + 1);
 
-            return retpoint;
+                // Re-push all cur args and func ptr
+                for (int i = argsCount; i >= 0; i--)
+                {
+                    _valueStack.Push(args[i]);
+                }
+
+                return retpoint;
+            }
+            finally
+            {
+                CallStackItemPool.Return(csi);
+            }
         }
 
         private int ExecRet(Instruction i)
@@ -1518,21 +1535,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem popped = PopToBasePointer();
             System.Diagnostics.Debug.Assert(object.ReferenceEquals(csi, popped));
 
-            int argscnt = (int)(_valueStack.Pop().Number);
-            _valueStack.RemoveLast(argscnt + 1);
+            CallbackFunction continuation = null;
 
-            _valueStack.Push(returnValue);
-
-            if (i.NumVal == 1)
+            try
             {
-                retpoint = InternalCheckForTailRequests(i, retpoint);
+                int argscnt = (int)(_valueStack.Pop().Number);
+                _valueStack.RemoveLast(argscnt + 1);
+
+                _valueStack.Push(returnValue);
+
+                if (i.NumVal == 1)
+                {
+                    retpoint = InternalCheckForTailRequests(i, retpoint);
+                }
+
+                continuation = csi.Continuation;
+            }
+            finally
+            {
+                CallStackItemPool.Return(csi);
             }
 
-            if (csi.Continuation != null)
+            if (continuation != null)
             {
                 _valueStack.Push(
-                    csi.Continuation.Invoke(
-                        new ScriptExecutionContext(this, csi.Continuation, i.SourceCodeRef),
+                    continuation.Invoke(
+                        new ScriptExecutionContext(this, continuation, i.SourceCodeRef),
                         new DynValue[1] { _valueStack.Pop() }
                     )
                 );

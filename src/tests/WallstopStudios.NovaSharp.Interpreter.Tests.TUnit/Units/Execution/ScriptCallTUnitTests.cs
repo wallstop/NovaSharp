@@ -155,6 +155,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedDynValueCallOverloadsPreserveTupleExpansion(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+
+            DynValue oneArgResult = script.Call(
+                capture,
+                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2))
+            );
+            await AssertTupleNumbers(oneArgResult, 2d, 1d, 2d).ConfigureAwait(false);
+
+            DynValue twoArgResult = script.Call(
+                capture,
+                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)),
+                DynValue.NewNumber(3)
+            );
+            await AssertTupleNumbers(twoArgResult, 2d, 1d, 3d).ConfigureAwait(false);
+
+            DynValue nestedTail = DynValue.NewTuple(
+                DynValue.NewNumber(3),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.NewNumber(5))
+            );
+            DynValue threeArgResult = script.Call(
+                capture,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                nestedTail
+            );
+            await AssertTupleNumbers(threeArgResult, 5d, 1d, 2d, 3d, 4d, 5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CallObjectOverloadInvokesClosureAndConvertsArguments(
             LuaCompatibilityVersion version
         )
@@ -606,6 +647,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .That(exception.Message)
                 .Contains("different scripts")
                 .ConfigureAwait(false);
+        }
+
+        private static async Task AssertTupleNumbers(DynValue value, params double[] expected)
+        {
+            await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(value.Tuple.Length).IsEqualTo(expected.Length).ConfigureAwait(false);
+
+            for (int i = 0; i < expected.Length; i++)
+            {
+                await Assert
+                    .That(value.Tuple[i].Number)
+                    .IsEqualTo(expected[i])
+                    .ConfigureAwait(false);
+            }
         }
 
         private sealed class StubScriptLoader : ScriptLoaderBase

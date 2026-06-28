@@ -140,4 +140,86 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         public void Reset() => _store = 0;
     }
+
+    /// <summary>
+    /// Benchmarks host-to-Lua calls through fixed DynValue public API overloads.
+    /// </summary>
+    [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
+    public class HostCallBenchmarks
+    {
+        private Script _script;
+        private DynValue _oneArgFunction = DynValue.Nil;
+        private DynValue _twoArgFunction = DynValue.Nil;
+        private DynValue _threeArgFunction = DynValue.Nil;
+        private DynValue _coroutineFunction = DynValue.Nil;
+        private Coroutine _runningCoroutine;
+        private DynValue _first = DynValue.Nil;
+        private DynValue _second = DynValue.Nil;
+        private DynValue _third = DynValue.Nil;
+
+        [GlobalSetup]
+        /// <summary>
+        /// Compiles tiny identity functions and prepares stable argument values.
+        /// </summary>
+        public void Setup()
+        {
+            _script = new Script(CoreModulePresets.Complete);
+            _oneArgFunction = _script.DoString("return function(a) return a end");
+            _twoArgFunction = _script.DoString("return function(a, b) return b end");
+            _threeArgFunction = _script.DoString("return function(a, b, c) return c end");
+            _coroutineFunction = _script.DoString(
+                "return function(a, b, c) while true do a, b, c = coroutine.yield(c) end end"
+            );
+            _first = DynValue.NewNumber(1d);
+            _second = DynValue.NewNumber(2d);
+            _third = DynValue.NewNumber(3d);
+            _runningCoroutine = _script.CreateCoroutine(_coroutineFunction).Coroutine;
+            _runningCoroutine.Resume(_first, _second, _third);
+        }
+
+        /// <summary>
+        /// Calls a Lua closure with one pre-created DynValue argument.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 1 DynValue")]
+        public DynValue CallOneDynValue() => _script.Call(_oneArgFunction, _first);
+
+        /// <summary>
+        /// Calls a Lua closure with two pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 2 DynValues")]
+        public DynValue CallTwoDynValues() => _script.Call(_twoArgFunction, _first, _second);
+
+        /// <summary>
+        /// Calls a Lua closure with three pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 3 DynValues")]
+        public DynValue CallThreeDynValues() =>
+            _script.Call(_threeArgFunction, _first, _second, _third);
+
+        /// <summary>
+        /// Calls a Lua closure through the params-array overload for comparison with fixed overloads.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 3 DynValues")]
+        public DynValue CallThreeDynValuesParamsArray() =>
+            _script.Call(_threeArgFunction, new DynValue[] { _first, _second, _third });
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine with three pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: 3 DynValues")]
+        public DynValue ResumeCoroutineThreeDynValues() =>
+            _runningCoroutine.Resume(_first, _second, _third);
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine through the params-array overload for comparison.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: params 3 DynValues")]
+        public DynValue ResumeCoroutineThreeDynValuesParamsArray() =>
+            _runningCoroutine.Resume(new DynValue[] { _first, _second, _third });
+    }
 }

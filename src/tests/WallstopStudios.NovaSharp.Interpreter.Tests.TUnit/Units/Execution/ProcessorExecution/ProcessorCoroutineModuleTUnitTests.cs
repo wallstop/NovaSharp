@@ -210,6 +210,54 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(result.String).IsEqualTo("running");
         }
 
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task InitialResumeFixedOverloadsPreserveTupleExpansion(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+
+            DynValue oneArgCoroutine = script.CreateCoroutine(capture);
+            DynValue oneArgResult = oneArgCoroutine.Coroutine.Resume(
+                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2))
+            );
+            await AssertTupleNumbers(oneArgResult, 2d, 1d, 2d).ConfigureAwait(false);
+
+            DynValue twoArgCoroutine = script.CreateCoroutine(capture);
+            DynValue twoArgResult = twoArgCoroutine.Coroutine.Resume(
+                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)),
+                DynValue.NewNumber(3)
+            );
+            await AssertTupleNumbers(twoArgResult, 2d, 1d, 3d).ConfigureAwait(false);
+
+            DynValue nestedTail = DynValue.NewTuple(
+                DynValue.NewNumber(3),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.NewNumber(5))
+            );
+            DynValue threeArgCoroutine = script.CreateCoroutine(capture);
+            DynValue threeArgResult = threeArgCoroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                nestedTail
+            );
+            await AssertTupleNumbers(threeArgResult, 5d, 1d, 2d, 3d, 4d, 5d).ConfigureAwait(false);
+
+            DynValue emptyTailCoroutine = script.CreateCoroutine(capture);
+            DynValue emptyTailResult = emptyTailCoroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.EmptyTuple
+            );
+            await AssertTupleNumbers(emptyTailResult, 1d, 1d).ConfigureAwait(false);
+        }
+
         /// <summary>
         /// Tests that coroutine.status() on the main coroutine returns 'normal' when called from a child.
         /// Note: This test requires Lua 5.2+ because coroutine.running() returns nil from main in Lua 5.1.
@@ -692,6 +740,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 .That(result.Coroutine)
                 .IsEqualTo(created.Coroutine)
                 .Because("coroutine.running() should return the same coroutine as create");
+        }
+
+        private static async Task AssertTupleNumbers(DynValue value, params double[] expected)
+        {
+            await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(value.Tuple.Length).IsEqualTo(expected.Length).ConfigureAwait(false);
+
+            for (int i = 0; i < expected.Length; i++)
+            {
+                await Assert
+                    .That(value.Tuple[i].Number)
+                    .IsEqualTo(expected[i])
+                    .ConfigureAwait(false);
+            }
         }
     }
 }

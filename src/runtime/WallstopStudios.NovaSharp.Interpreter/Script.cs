@@ -868,7 +868,23 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, DynValue arg)
         {
-            return Call(function, new DynValue[] { arg });
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, new DynValue[] { arg });
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg),
+                static state => state._mainProcessor.Call(state.function, state.arg)
+            );
         }
 
         /// <summary>
@@ -883,7 +899,24 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, DynValue arg1, DynValue arg2)
         {
-            return Call(function, new DynValue[] { arg1, arg2 });
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, new DynValue[] { arg1, arg2 });
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2),
+                static state => state._mainProcessor.Call(state.function, state.arg1, state.arg2)
+            );
         }
 
         /// <summary>
@@ -899,7 +932,26 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(DynValue function, DynValue arg1, DynValue arg2, DynValue arg3)
         {
-            return Call(function, new DynValue[] { arg1, arg2, arg3 });
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, new DynValue[] { arg1, arg2, arg3 });
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3),
+                static state =>
+                    state._mainProcessor.Call(state.function, state.arg1, state.arg2, state.arg3)
+            );
         }
 
         /// <summary>
