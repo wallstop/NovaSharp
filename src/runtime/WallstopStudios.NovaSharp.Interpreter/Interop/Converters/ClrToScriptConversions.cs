@@ -35,7 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             if (obj is bool b)
             {
-                return DynValue.NewBoolean(b);
+                return DynValue.FromBoolean(b);
             }
 
             if (obj is string || obj is StringBuilder || obj is char)
@@ -48,9 +48,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 // Preserve integer/float subtype distinction for Lua 5.3+ compliance
                 if (NumericConversions.IsIntegerType(t))
                 {
-                    return DynValue.NewInteger(NumericConversions.TypeToLong(t, obj));
+                    return DynValue.FromInteger(NumericConversions.TypeToLong(t, obj));
                 }
-                return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
+                return DynValue.FromNumber(NumericConversions.TypeToDouble(t, obj));
             }
 
             if (obj is Table table)
@@ -92,7 +92,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             if (obj is bool b)
             {
-                return DynValue.NewBoolean(b);
+                return DynValue.FromBoolean(b);
             }
 
             if (obj is string || obj is StringBuilder || obj is char)
@@ -102,7 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             if (obj is Closure closure)
             {
-                return DynValue.NewClosure(closure);
+                return DynValue.FromClosure(closure);
             }
 
             if (NumericConversions.NumericTypes.Contains(t))
@@ -110,9 +110,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 // Preserve integer/float subtype distinction for Lua 5.3+ compliance
                 if (NumericConversions.IsIntegerType(t))
                 {
-                    return DynValue.NewInteger(NumericConversions.TypeToLong(t, obj));
+                    return DynValue.FromInteger(NumericConversions.TypeToLong(t, obj));
                 }
-                return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
+                return DynValue.FromNumber(NumericConversions.TypeToDouble(t, obj));
             }
 
             if (obj is Table table)

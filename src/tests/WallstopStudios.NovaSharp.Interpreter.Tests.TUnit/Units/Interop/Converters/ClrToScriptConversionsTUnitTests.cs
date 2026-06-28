@@ -59,6 +59,53 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         }
 
         [global::TUnit.Core.Test]
+        public async Task TryObjectToTrivialDynValueUsesCachedScalars()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
+            Script script = new();
+
+            DynValue trueResult = ClrToScriptConversions.TryObjectToTrivialDynValue(script, true);
+            await Assert.That(trueResult).IsSameReferenceAs(DynValue.True).ConfigureAwait(false);
+
+            DynValue falseResult = ClrToScriptConversions.TryObjectToTrivialDynValue(script, false);
+            await Assert.That(falseResult).IsSameReferenceAs(DynValue.False).ConfigureAwait(false);
+
+            DynValue integerResult = ClrToScriptConversions.TryObjectToTrivialDynValue(script, 42);
+            await Assert
+                .That(integerResult)
+                .IsSameReferenceAs(DynValue.FromInteger(42))
+                .ConfigureAwait(false);
+            await Assert.That(integerResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue negativeIntegerResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                -1
+            );
+            await Assert
+                .That(negativeIntegerResult)
+                .IsSameReferenceAs(DynValue.FromInteger(-1))
+                .ConfigureAwait(false);
+            await Assert.That(negativeIntegerResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue wholeDoubleResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                1d
+            );
+            await Assert
+                .That(wholeDoubleResult)
+                .IsSameReferenceAs(DynValue.FromNumber(1d))
+                .ConfigureAwait(false);
+            await Assert.That(wholeDoubleResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue fractionalDoubleResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                3.5d
+            );
+            await Assert.That(fractionalDoubleResult.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(fractionalDoubleResult.Number).IsEqualTo(3.5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task TryObjectToSimpleDynValueUsesCustomConverters()
         {
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
@@ -78,6 +125,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         }
 
         [global::TUnit.Core.Test]
+        public async Task TryObjectToSimpleDynValueUsesCachedScalars()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
+            Script script = new();
+
+            DynValue trueResult = ClrToScriptConversions.TryObjectToSimpleDynValue(script, true);
+            await Assert.That(trueResult).IsSameReferenceAs(DynValue.True).ConfigureAwait(false);
+
+            DynValue integerResult = ClrToScriptConversions.TryObjectToSimpleDynValue(script, 42);
+            await Assert
+                .That(integerResult)
+                .IsSameReferenceAs(DynValue.FromInteger(42))
+                .ConfigureAwait(false);
+            await Assert.That(integerResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue wholeDoubleResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                1d
+            );
+            await Assert
+                .That(wholeDoubleResult)
+                .IsSameReferenceAs(DynValue.FromNumber(1d))
+                .ConfigureAwait(false);
+            await Assert.That(wholeDoubleResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue fractionalDoubleResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                3.5d
+            );
+            await Assert.That(fractionalDoubleResult.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(fractionalDoubleResult.Number).IsEqualTo(3.5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task TryObjectToSimpleDynValueHandlesClosuresCallbacksAndDelegates(
             LuaCompatibilityVersion version
@@ -94,6 +175,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             await Assert
                 .That(closureResult.Type)
                 .IsEqualTo(DataType.Function)
+                .ConfigureAwait(false);
+            await Assert
+                .That(closureResult.Function)
+                .IsSameReferenceAs(closureValue.Function)
+                .ConfigureAwait(false);
+
+            DynValue repeatedClosureResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                closureValue.Function
+            );
+            await Assert
+                .That(repeatedClosureResult)
+                .IsSameReferenceAs(closureResult)
                 .ConfigureAwait(false);
 
             CallbackFunction callback = new((_, _) => DynValue.NewNumber(7));

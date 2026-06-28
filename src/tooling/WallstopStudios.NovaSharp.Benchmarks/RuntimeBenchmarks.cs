@@ -157,6 +157,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _twoArgFunction = DynValue.Nil;
         private DynValue _threeArgFunction = DynValue.Nil;
         private DynValue _coroutineFunction = DynValue.Nil;
+        private Closure _threeArgClosure;
         private Coroutine _runningCoroutine;
         private DynValue _first = DynValue.Nil;
         private DynValue _second = DynValue.Nil;
@@ -175,6 +176,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _oneArgFunction = _script.DoString("return function(a) return a end");
             _twoArgFunction = _script.DoString("return function(a, b) return b end");
             _threeArgFunction = _script.DoString("return function(a, b, c) return c end");
+            _threeArgClosure = _threeArgFunction.Function;
             _coroutineFunction = _script.DoString(
                 "return function(a, b, c) while true do a, b, c = coroutine.yield(c) end end"
             );
@@ -220,6 +222,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Host Call: 3 objects")]
         public DynValue CallThreeObjects() =>
             _script.Call(_threeArgFunction, _firstObject, _secondObject, _thirdObject);
+
+        /// <summary>
+        /// Calls a Lua closure through the closure convenience API with three pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: 3 objects")]
+        public DynValue ClosureCallThreeObjects() =>
+            _threeArgClosure.Call(_firstObject, _secondObject, _thirdObject);
+
+        /// <summary>
+        /// Calls a Lua closure through the object-function overload with three pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: closure object + 3 objects")]
+        public DynValue CallClosureObjectThreeObjects() =>
+            _script.Call(_threeArgClosure, _firstObject, _secondObject, _thirdObject);
 
         /// <summary>
         /// Calls a Lua closure through the object params-array overload for comparison.
