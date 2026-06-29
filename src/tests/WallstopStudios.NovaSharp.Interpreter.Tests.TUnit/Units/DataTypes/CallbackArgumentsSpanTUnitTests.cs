@@ -219,6 +219,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return new TryGetSpanMetadata(success, span.Length);
         }
 
+        private static DataType GetArgumentViewTypeAtZero(DynValue[] backing)
+        {
+            CallbackArgumentsView args = new((IList<DynValue>)backing, false);
+            return args[0].Type;
+        }
+
+        private static DynValue CreateArrayValueRequiringNormalization(string valueKind)
+        {
+            switch (valueKind)
+            {
+                case "null":
+                    return null;
+                case "void":
+                    return DynValue.Void;
+                case "tuple":
+                    return DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(11));
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(valueKind));
+            }
+        }
+
         private static CopyToResult ExecuteCopyTo(
             CallbackArguments args,
             int bufferSize,
@@ -363,18 +384,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
-        public async Task TryGetSpanReturnsFalseWhenArrayContainsNull()
+        [Arguments("null", DataType.Nil)]
+        [Arguments("void", DataType.Nil)]
+        [Arguments("tuple", DataType.Number)]
+        public async Task TryGetSpanReturnsFalseWhenArrayValueRequiresNormalization(
+            string valueKind,
+            DataType indexerType
+        )
         {
-            DynValue[] backing = new[] { DynValue.NewNumber(1), null };
+            DynValue[] backing = new[]
+            {
+                CreateArrayValueRequiringNormalization(valueKind),
+                DynValue.NewNumber(2),
+            };
             CallbackArguments args = new(backing, false);
 
             TryGetSpanMetadata legacy = ExecuteTryGetSpanMetadata(args);
-            TryGetSpanMetadata view = ExecuteViewTryGetSpanMetadata(backing);
+            TryGetSpanMetadata viewMetadata = ExecuteViewTryGetSpanMetadata(backing);
 
+            await Assert.That(args[0].Type).IsEqualTo(indexerType).ConfigureAwait(false);
+            await Assert
+                .That(GetArgumentViewTypeAtZero(backing))
+                .IsEqualTo(indexerType)
+                .ConfigureAwait(false);
             await Assert.That(legacy.Success).IsFalse().ConfigureAwait(false);
             await Assert.That(legacy.Length).IsEqualTo(0).ConfigureAwait(false);
-            await Assert.That(view.Success).IsFalse().ConfigureAwait(false);
-            await Assert.That(view.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(viewMetadata.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(viewMetadata.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsTrueWhenTrailingArrayVoidIsTrimmed()
+        {
+            DynValue[] backing = new[] { DynValue.NewNumber(1), DynValue.Void };
+            CallbackArguments args = new(backing, false);
+
+            TryGetSpanResult legacy = ExecuteTryGetSpan(args);
+            TryGetSpanResult view = ExecuteViewTryGetSpan(backing);
+
+            await Assert.That(args.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(legacy.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(legacy.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(legacy.Numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(view.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(view.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(view.Numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
         }
 
         [Test]

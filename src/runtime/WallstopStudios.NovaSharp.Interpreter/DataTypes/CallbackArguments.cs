@@ -499,7 +499,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 }
 
                 span = _fixedArgs.AsSpan(_count);
-                if (ContainsFixedArgumentNeedingNormalization(span))
+                if (ContainsArgumentNeedingNormalization(span))
                 {
                     span = default;
                     return false;
@@ -512,7 +512,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             if (_args is DynValue[] array)
             {
                 span = new ReadOnlySpan<DynValue>(array, 0, _count);
-                if (ContainsNull(span))
+                if (ContainsArgumentNeedingNormalization(span))
                 {
                     span = default;
                     return false;
@@ -533,20 +533,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return false;
         }
 
-        private static bool ContainsNull(ReadOnlySpan<DynValue> span)
-        {
-            for (int i = 0; i < span.Length; i++)
-            {
-                if (span[i] == null)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool ContainsFixedArgumentNeedingNormalization(ReadOnlySpan<DynValue> span)
+        private static bool ContainsArgumentNeedingNormalization(ReadOnlySpan<DynValue> span)
         {
             for (int i = 0; i < span.Length; i++)
             {

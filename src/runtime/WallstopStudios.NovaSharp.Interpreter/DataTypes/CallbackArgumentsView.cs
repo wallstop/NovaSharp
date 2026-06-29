@@ -373,7 +373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             span = _span.Slice(_offset, _count);
-            if (ContainsNull(span))
+            if (ContainsArgumentNeedingNormalization(span))
             {
                 span = default;
                 return false;
@@ -382,11 +382,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return true;
         }
 
-        private static bool ContainsNull(ReadOnlySpan<DynValue> span)
+        private static bool ContainsArgumentNeedingNormalization(ReadOnlySpan<DynValue> span)
         {
             for (int i = 0; i < span.Length; i++)
             {
-                if (span[i] == null)
+                DynValue value = span[i];
+                if (value == null || value.Type == DataType.Tuple || value.Type == DataType.Void)
                 {
                     return true;
                 }
