@@ -49,6 +49,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         private readonly List<SymbolRef> _closure = new();
         private bool _hasVarArgs;
         private Instruction _closureInstruction;
+        private bool _closureSymbolListDirty;
 
         private readonly bool _usesGlobalEnv;
         private readonly SymbolRef _env;
@@ -261,7 +262,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 
             if (_closureInstruction != null)
             {
-                _closureInstruction.SymbolList = _closure.ToArray();
+                _closureSymbolListDirty = true;
             }
 
             return SymbolRef.UpValue(symbol.NameValue, _closure.Count - 1);
@@ -359,7 +360,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                 _closureInstruction.NumVal += 2 + ops;
             }
 
-            return CompileBody(bc, friendlyName);
+            int entryPoint = CompileBody(bc, friendlyName);
+            FlushClosureSymbolList();
+
+            return entryPoint;
+        }
+
+        private void FlushClosureSymbolList()
+        {
+            if (!_closureSymbolListDirty || _closureInstruction == null)
+            {
+                return;
+            }
+
+            _closureInstruction.SymbolList = _closure.ToArray();
+            _closureSymbolListDirty = false;
         }
 
         /// <summary>

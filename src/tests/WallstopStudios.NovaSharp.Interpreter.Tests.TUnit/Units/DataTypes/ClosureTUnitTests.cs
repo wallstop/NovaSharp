@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Text;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -139,6 +140,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .That(closure.CapturedUpValuesType)
                 .IsEqualTo(Closure.UpValuesType.Closure)
                 .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ClosureWithManyCapturedSymbolsPreservesUpValueMetadata(
+            LuaCompatibilityVersion version
+        )
+        {
+            const int capturedCount = 24;
+            Script script = new(version);
+            StringBuilder builder = new();
+            int expectedSum = 0;
+
+            for (int i = 1; i <= capturedCount; i++)
+            {
+                builder.Append("local captured_");
+                builder.Append(i.ToString(CultureInfo.InvariantCulture));
+                builder.Append(" = ");
+                builder.AppendLine(i.ToString(CultureInfo.InvariantCulture));
+                expectedSum += i;
+            }
+
+            builder.Append("return function() return ");
+            for (int i = 1; i <= capturedCount; i++)
+            {
+                if (i > 1)
+                {
+                    builder.Append(" + ");
+                }
+
+                builder.Append("captured_");
+                builder.Append(i.ToString(CultureInfo.InvariantCulture));
+            }
+            builder.AppendLine(" end");
+
+            DynValue function = script.DoString(builder.ToString());
+            Closure closure = function.Function;
+            DynValue result = script.Call(function);
+
+            int expectedUpValueCount =
+                version == LuaCompatibilityVersion.Lua51 ? capturedCount + 1 : capturedCount;
+
+            await Assert.That(result.Number).IsEqualTo(expectedSum).ConfigureAwait(false);
+            await Assert
+                .That(closure.UpValuesCount)
+                .IsEqualTo(expectedUpValueCount)
+                .ConfigureAwait(false);
+
+            for (int i = 1; i <= capturedCount; i++)
+            {
+                int upValueIndex = version == LuaCompatibilityVersion.Lua51 ? i : i - 1;
+                string expectedName = "captured_" + i.ToString(CultureInfo.InvariantCulture);
+
+                await Assert
+                    .That(closure.GetUpValueName(upValueIndex))
+                    .IsEqualTo(expectedName)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(closure.GetUpValue(upValueIndex).Number)
+                    .IsEqualTo(i)
+                    .ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
