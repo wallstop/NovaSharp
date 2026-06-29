@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System.Globalization;
     using System.Threading;
     using Debugging;
+    using Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
@@ -333,6 +334,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
+        /// Invokes a compiled chunk entry point with a fresh closure context.
+        /// </summary>
+        /// <param name="entryPointAddress">Instruction pointer for the chunk entry point.</param>
+        /// <param name="closureScope">Closure context containing the chunk's environment upvalue.</param>
+        /// <returns>The return tuple.</returns>
+        internal DynValue CallChunk(int entryPointAddress, ClosureContext closureScope)
+        {
+            if (closureScope == null)
+            {
+                throw new ArgumentNullException(nameof(closureScope));
+            }
+
+            List<Processor> coroutinesStack =
+                _parent != null ? _parent._coroutinesStack : _coroutinesStack;
+
+            if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
+            {
+                return coroutinesStack[^1].CallChunk(entryPointAddress, closureScope);
+            }
+
+            EnterProcessor();
+
+            try
+            {
+                IDisposable stopwatch = _script.PerformanceStats.StartStopwatch(
+                    Diagnostics.PerformanceCounter.Execution
+                );
+
+                _canYield = false;
+
+                try
+                {
+                    PushChunkEntryPointStackFrame(entryPointAddress, closureScope);
+                    return ProcessingLoop(entryPointAddress);
+                }
+                finally
+                {
+                    _canYield = true;
+
+                    if (stopwatch != null)
+                    {
+                        stopwatch.Dispose();
+                    }
+                }
+            }
+            finally
+            {
+                LeaveProcessor();
+            }
+        }
+
+        /// <summary>
         /// Invokes the specified function with caller-owned contiguous arguments.
         /// </summary>
         /// <param name="function">Function to invoke.</param>
@@ -473,11 +526,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             frame.DebugEntryPoint = function.Function.EntryPointByteCodeLocation;
             frame.ReturnAddress = -1;
             frame.ClosureScope = function.Function.ClosureContext;
+            frame.Function = function;
             frame.CallingSourceRef = SourceRef.GetClrLocation();
             frame.Flags = Flags;
             _executionStack.Push(frame);
 
             return function.Function.EntryPointByteCodeLocation;
+        }
+
+        private void PushChunkEntryPointStackFrame(
+            int entryPointAddress,
+            ClosureContext closureScope
+        )
+        {
+            // RET cleanup expects the CLR entry layout: function slot followed by argument count.
+            // Stack-level debug/getfenv paths read the frame metadata and closure scope instead.
+            _valueStack.Push(DynValue.Void);
+            _valueStack.Push(DynValue.FromNumber(0));
+
+            CallStackItem frame = CallStackItemPool.Rent();
+            frame.BasePointer = _valueStack.Count;
+            frame.DebugEntryPoint = entryPointAddress;
+            frame.ReturnAddress = -1;
+            frame.ClosureScope = closureScope;
+            frame.CallingSourceRef = SourceRef.GetClrLocation();
+            frame.Flags = CallStackItemFlagsPresets.CallEntryPoint;
+            _executionStack.Push(frame);
         }
 
         private int PushAdjustedArguments(ClrCallArguments args)

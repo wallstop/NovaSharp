@@ -138,6 +138,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Closure"/> class with an existing closure context.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <param name="idx">The bytecode entry point index.</param>
+        /// <param name="closureContext">The closure context to reuse.</param>
+        internal Closure(Script script, int idx, ClosureContext closureContext)
+        {
+            OwnerScript = script;
+            EntryPointByteCodeLocation = idx;
+            ClosureContext = closureContext ?? EmptyClosure;
+            TrackAllocation(script, ClosureContext.Count);
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Closure"/> class.
         /// </summary>
         /// <param name="script">The script.</param>

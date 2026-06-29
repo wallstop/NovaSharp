@@ -565,6 +565,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Returns a DynValue wrapping the specified CLR callback, reusing the callback's cached wrapper when available.
+        /// </summary>
+        internal static DynValue FromCallback(CallbackFunction function)
+        {
+            if (function == null)
+            {
+                return Nil;
+            }
+
+            DynValue cached = function.CachedDynValue;
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            DynValue newValue = NewCallback(function);
+            function.CachedDynValue = newValue;
+            return newValue;
+        }
+
+        /// <summary>
         /// Creates a new writable value initialized to the specified CLR callback.
         /// </summary>
         public static DynValue NewCallback(

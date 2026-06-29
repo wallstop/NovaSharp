@@ -581,7 +581,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <summary>
         /// Builds the call stack representation consumed by debugger front-ends.
         /// </summary>
-        internal List<WatchItem> GetDebuggerCallStack(SourceRef startingRef)
+        internal List<WatchItem> GetDebuggerCallStack(
+            SourceRef startingRef,
+            bool includeFunctions = false
+        )
         {
             List<WatchItem> wis = new();
 
@@ -603,6 +606,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             RetAddress = c.ReturnAddress,
                             Location = startingRef,
                             Name = c.ClrFunction.Name,
+                            Value = includeFunctions ? DynValue.FromCallback(c.ClrFunction) : null,
                         }
                     );
                 }
@@ -615,6 +619,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             BasePtr = c.BasePointer,
                             RetAddress = c.ReturnAddress,
                             Name = callname,
+                            Value = includeFunctions ? GetFrameFunction(c) : null,
                             Location = startingRef,
                         }
                     );
@@ -635,6 +640,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             return wis;
+        }
+
+        private DynValue GetFrameFunction(CallStackItem frame)
+        {
+            DynValue function = frame.Function;
+            if (function != null)
+            {
+                return function;
+            }
+
+            if (frame.ClrFunction != null || frame.ClosureScope == null)
+            {
+                return null;
+            }
+
+            Closure closure = new(_script, frame.DebugEntryPoint, frame.ClosureScope);
+            function = DynValue.FromClosure(closure);
+            frame.Function = function;
+            return function;
         }
     }
 }

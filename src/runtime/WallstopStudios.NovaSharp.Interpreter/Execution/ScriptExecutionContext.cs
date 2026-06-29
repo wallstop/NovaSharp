@@ -829,14 +829,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// Source reference representing the instruction that invoked the current CLR callback.
         /// </param>
         /// <returns>An immutable snapshot of the active call stack.</returns>
-        internal IReadOnlyList<WatchItem> GetCallStackSnapshot(SourceRef startingLocation)
+        internal IReadOnlyList<WatchItem> GetCallStackSnapshot(
+            SourceRef startingLocation,
+            bool includeFunctions = false
+        )
         {
             if (_processor == null || IsDynamicExecution)
             {
                 return Array.Empty<WatchItem>();
             }
 
-            return _processor.GetDebuggerCallStack(startingLocation ?? CallingLocation);
+            return _processor.GetDebuggerCallStack(
+                startingLocation ?? CallingLocation,
+                includeFunctions
+            );
         }
 
         /// <summary>

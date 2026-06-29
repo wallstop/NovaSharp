@@ -1447,6 +1447,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.DebugEntryPoint = fn.Function.EntryPointByteCodeLocation;
                 frame.CallingSourceRef = GetCurrentSourceRef(instructionPtr - 1); // See right above in GetCurrentSourceRef(instructionPtr - 1)
                 frame.ClosureScope = fn.Function.ClosureContext;
+                frame.Function = fn;
                 frame.ErrorHandler = handler;
                 frame.Continuation = Continuation;
                 frame.ErrorHandlerBeforeUnwind = unwindHandler;

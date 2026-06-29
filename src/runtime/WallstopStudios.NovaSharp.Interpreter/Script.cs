@@ -19,6 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure.IO;
@@ -813,8 +814,66 @@ namespace WallstopStudios.NovaSharp.Interpreter
             string codeFriendlyName = null
         )
         {
+            if (TryExecuteCachedString(code, globalContext, codeFriendlyName, out DynValue result))
+            {
+                return result;
+            }
+
             DynValue func = LoadString(code, globalContext, codeFriendlyName);
             return Call(func);
+        }
+
+        private bool TryExecuteCachedString(
+            string code,
+            Table globalContext,
+            string codeFriendlyName,
+            out DynValue result
+        )
+        {
+            result = null;
+
+            if (_compilationCache == null)
+            {
+                return false;
+            }
+
+            if (code == null)
+            {
+                throw new ArgumentNullException(nameof(code));
+            }
+
+            this.CheckScriptOwnership(globalContext);
+
+            if (code.StartsWith(StringModule.Base64DumpHeader, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            if (
+                !_compilationCache.TryGet(
+                    code,
+                    Options.CompatibilityVersion,
+                    codeFriendlyName,
+                    out Execution.CachedChunk cached
+                )
+            )
+            {
+                return false;
+            }
+
+            Table environment = globalContext ?? _globalTable;
+            ClosureContext closureScope = new(DynValue.NewTable(environment));
+
+            try
+            {
+                result = _mainProcessor.CallChunk(cached._entryPointAddress, closureScope);
+                return true;
+            }
+            catch (InterpreterException ex)
+            {
+                ex.AppendCompatibilityContext(this);
+                throw;
+            }
         }
 
         /// <summary>
@@ -1954,6 +2013,192 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public SourceCode GetSourceCode(int sourceCodeId)
         {
             return _sources[sourceCodeId];
+        }
+
+        /// <summary>
+        /// Resolves the first Lua source reference associated with a compiled function.
+        /// </summary>
+        /// <param name="closure">Closure whose bytecode should be inspected.</param>
+        /// <returns>The best available source reference, or <c>null</c> when none is available.</returns>
+        internal SourceRef GetFunctionSourceRef(Closure closure)
+        {
+            if (closure == null)
+            {
+                return null;
+            }
+
+            if (!TryGetFunctionInstructionRange(closure, out int start, out int end))
+            {
+                return null;
+            }
+
+            for (int i = start; i < end; i++)
+            {
+                SourceRef sourceRef = _byteCode.Code[i].SourceCodeRef;
+                if (sourceRef != null)
+                {
+                    return sourceRef;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Resolves fixed-parameter and vararg metadata for a compiled function.
+        /// </summary>
+        /// <param name="closure">Closure whose bytecode prologue should be inspected.</param>
+        /// <param name="parameterCount">Number of fixed parameters declared by the function.</param>
+        /// <param name="isVarArg">Whether the function declares <c>...</c>.</param>
+        internal void GetFunctionArgumentInfo(
+            Closure closure,
+            out int parameterCount,
+            out bool isVarArg
+        )
+        {
+            parameterCount = 0;
+            isVarArg = false;
+
+            if (
+                closure == null
+                || !TryGetFunctionInstructionRange(closure, out int start, out int end)
+            )
+            {
+                return;
+            }
+
+            int beginFn = FindBeginFn(start, end);
+            if (beginFn < 0)
+            {
+                return;
+            }
+
+            int cursor = beginFn + 1;
+            if (TryReadArgsInstruction(cursor, end, out parameterCount, out isVarArg))
+            {
+                return;
+            }
+
+            if (IsEnvironmentSetup(cursor, end))
+            {
+                cursor += 3;
+                TryReadArgsInstruction(cursor, end, out parameterCount, out isVarArg);
+            }
+        }
+
+        private bool TryGetFunctionInstructionRange(Closure closure, out int start, out int end)
+        {
+            start = closure.EntryPointByteCodeLocation;
+            end = _byteCode.Code.Count;
+
+            if ((uint)start >= (uint)_byteCode.Code.Count)
+            {
+                return false;
+            }
+
+            int metaIndex = FindFunctionMetaIndex(start);
+            if (metaIndex >= 0)
+            {
+                Instruction meta = _byteCode.Code[metaIndex];
+                start = metaIndex;
+
+                if (meta.NumVal > 0)
+                {
+                    end = Math.Min(_byteCode.Code.Count, metaIndex + meta.NumVal + 1);
+                }
+            }
+
+            return true;
+        }
+
+        private int FindFunctionMetaIndex(int entryPoint)
+        {
+            int forward = entryPoint;
+            while (forward < _byteCode.Code.Count && _byteCode.Code[forward].OpCode == OpCode.Nop)
+            {
+                forward++;
+            }
+
+            if (forward < _byteCode.Code.Count && IsFunctionMeta(_byteCode.Code[forward]))
+            {
+                return forward;
+            }
+
+            if (entryPoint > 0 && IsFunctionMeta(_byteCode.Code[entryPoint - 1]))
+            {
+                return entryPoint - 1;
+            }
+
+            return -1;
+        }
+
+        private static bool IsFunctionMeta(Instruction instruction)
+        {
+            return instruction.OpCode == OpCode.Meta
+                && (
+                    instruction.NumVal2 == (int)OpCodeMetadataType.ChunkEntrypoint
+                    || instruction.NumVal2 == (int)OpCodeMetadataType.FunctionEntrypoint
+                );
+        }
+
+        private int FindBeginFn(int start, int end)
+        {
+            int limit = Math.Min(end, start + 4);
+            for (int i = start; i < limit; i++)
+            {
+                if (_byteCode.Code[i].OpCode == OpCode.BeginFn)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private bool IsEnvironmentSetup(int cursor, int end)
+        {
+            return cursor + 2 < end
+                && _byteCode.Code[cursor].OpCode == OpCode.UpValue
+                && _byteCode.Code[cursor].Symbol?.NameValue == WellKnownSymbols.ENV
+                && _byteCode.Code[cursor + 1].OpCode == OpCode.StoreLcl
+                && _byteCode.Code[cursor + 1].Symbol?.NameValue == WellKnownSymbols.ENV
+                && _byteCode.Code[cursor + 2].OpCode == OpCode.Pop;
+        }
+
+        private bool TryReadArgsInstruction(
+            int cursor,
+            int end,
+            out int parameterCount,
+            out bool isVarArg
+        )
+        {
+            parameterCount = 0;
+            isVarArg = false;
+
+            if (cursor >= end || _byteCode.Code[cursor].OpCode != OpCode.Args)
+            {
+                return false;
+            }
+
+            SymbolRef[] symbols = _byteCode.Code[cursor].SymbolList;
+            if (symbols == null)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < symbols.Length; i++)
+            {
+                if (symbols[i].NameValue == WellKnownSymbols.VARARGS)
+                {
+                    isVarArg = true;
+                }
+                else
+                {
+                    parameterCount++;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>

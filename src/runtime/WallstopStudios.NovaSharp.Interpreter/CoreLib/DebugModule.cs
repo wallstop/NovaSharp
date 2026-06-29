@@ -939,8 +939,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             string what
         )
         {
+            bool includeFunctions = ContainsWhatFlag(what, 'f') || ContainsWhatFlag(what, 'u');
             IReadOnlyList<WatchItem> frames = executionContext.GetCallStackSnapshot(
-                executionContext.CallingLocation
+                executionContext.CallingLocation,
+                includeFunctions
             );
 
             if (frames.Count == 0 || level >= frames.Count)
@@ -977,8 +979,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (ContainsWhatFlag(what, 'S'))
             {
+                SourceRef sourceRef =
+                    function.Type == DataType.Function
+                        ? script.GetFunctionSourceRef(function.Function)
+                        : null;
                 info.Set("what", DynValue.NewString(isClr ? "C" : "Lua"));
-                SetSourceFields(script, info, null, isClr);
+                SetSourceFields(script, info, sourceRef, isClr);
             }
 
             if (ContainsWhatFlag(what, 'l'))
@@ -994,11 +1000,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (ContainsWhatFlag(what, 'u'))
             {
-                int upvalues =
-                    function.Type == DataType.Function ? function.Function.UpValuesCount : 0;
-                info.Set("nups", DynValue.FromNumber(upvalues));
-                info.Set("nparams", DynValue.FromNumber(0));
-                info.Set("isvararg", DynValue.False);
+                SetUpvalueFields(script, info, function);
             }
 
             if (ContainsWhatFlag(what, 'L'))
@@ -1019,7 +1021,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (ContainsWhatFlag(what, 'f'))
             {
-                info.Set("func", BuildFunctionPlaceholder(frame));
+                info.Set("func", frame.Value ?? BuildFunctionPlaceholder(frame));
             }
 
             if (ContainsWhatFlag(what, 'S'))
@@ -1050,9 +1052,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (ContainsWhatFlag(what, 'u'))
             {
-                info.Set("nups", DynValue.FromNumber(0));
-                info.Set("nparams", DynValue.FromNumber(0));
-                info.Set("isvararg", DynValue.False);
+                SetUpvalueFields(script, info, frame.Value);
             }
 
             if (ContainsWhatFlag(what, 'L'))
@@ -1073,6 +1073,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             string name = frame.Name ?? LuaKeywords.Function;
             return DynValue.NewString(ZString.Concat("function: ", name));
+        }
+
+        private static void SetUpvalueFields(Script script, Table info, DynValue function)
+        {
+            int upvalues =
+                function?.Type == DataType.Function ? function.Function.UpValuesCount : 0;
+            info.Set("nups", DynValue.FromNumber(upvalues));
+
+            if (
+                LuaVersionDefaults.Resolve(script.CompatibilityVersion)
+                < LuaCompatibilityVersion.Lua52
+            )
+            {
+                return;
+            }
+
+            int parameterCount = 0;
+            bool isVarArg = function?.Type == DataType.ClrFunction;
+
+            if (function?.Type == DataType.Function)
+            {
+                script.GetFunctionArgumentInfo(function.Function, out parameterCount, out isVarArg);
+            }
+
+            info.Set("nparams", DynValue.FromNumber(parameterCount));
+            info.Set("isvararg", DynValue.FromBoolean(isVarArg));
         }
 
         private static void SetSourceFields(

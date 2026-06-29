@@ -105,6 +105,19 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _namedCachedScript.LoadString(_scriptSource, null, _cachedFriendlyName);
 
         /// <summary>
+        /// Executes a chunk already present in the script compilation cache through the easy API.
+        /// </summary>
+        [Benchmark(Description = "DoString Cached")]
+        public DynValue DoStringCached() => _cachedScript.DoString(_scriptSource);
+
+        /// <summary>
+        /// Executes a named chunk already present in the script compilation cache through the easy API.
+        /// </summary>
+        [Benchmark(Description = "DoString Cached Named")]
+        public DynValue DoStringCachedNamed() =>
+            _namedCachedScript.DoString(_scriptSource, null, _cachedFriendlyName);
+
+        /// <summary>
         /// Executes the precompiled chunk, isolating runtime overhead.
         /// </summary>
         [Benchmark(Description = "Execute Precompiled")]

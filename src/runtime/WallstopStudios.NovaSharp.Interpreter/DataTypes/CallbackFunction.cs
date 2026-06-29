@@ -21,6 +21,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public string Name { get; private set; }
 
         /// <summary>
+        /// Gets or sets a cached <see cref="DynValue"/> wrapping this callback.
+        /// </summary>
+        internal DynValue CachedDynValue { get; set; }
+
+        /// <summary>
         /// Gets the call back.
         /// </summary>
         /// <value>

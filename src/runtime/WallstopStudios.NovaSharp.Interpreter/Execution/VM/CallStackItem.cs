@@ -32,6 +32,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         public CallbackFunction ClrFunction { get; set; }
 
         /// <summary>
+        /// Lua function currently being executed, materialized on demand for debug APIs.
+        /// </summary>
+        public DynValue Function { get; set; }
+
+        /// <summary>
         /// Continuation invoked after yielding or tail calls.
         /// </summary>
         public CallbackFunction Continuation { get; set; }
@@ -96,6 +101,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DebugSymbols = null;
             CallingSourceRef = default;
             ClrFunction = null;
+            Function = null;
             Continuation = null;
             ErrorHandler = null;
             ErrorHandlerBeforeUnwind = null;

@@ -15,6 +15,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for Script loading, stream handling, and file operations.
@@ -269,6 +270,122 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DoStringWithSameSourceUsesCompilationCache(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+
+            DynValue result1 = script.DoString("return 128", codeFriendlyName: "cached_do.lua");
+            DynValue result2 = script.DoString("return 128", codeFriendlyName: "cached_do.lua");
+
+            await Assert.That(result1.Number).IsEqualTo(128d).ConfigureAwait(false);
+            await Assert.That(result2.Number).IsEqualTo(128d).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("cached_do.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DoStringCacheHitUsesProvidedGlobalTable(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            Table firstGlobals = new(script);
+            Table secondGlobals = new(script);
+            firstGlobals.Set("marker", DynValue.FromNumber(41));
+            secondGlobals.Set("marker", DynValue.FromNumber(42));
+
+            DynValue result1 = script.DoString(
+                "return marker",
+                firstGlobals,
+                codeFriendlyName: "globals.lua"
+            );
+            DynValue result2 = script.DoString(
+                "return marker",
+                secondGlobals,
+                codeFriendlyName: "globals.lua"
+            );
+
+            await Assert.That(result1.Number).IsEqualTo(41d).ConfigureAwait(false);
+            await Assert.That(result2.Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DoStringCacheHitPreservesDebugInfoShape(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = """
+                local info = debug.getinfo(1, "fS")
+                local funcInfo = debug.getinfo(info.func, "S")
+                return type(info.func) .. ":" .. info.what .. ":" .. funcInfo.what .. ":" .. info.short_src .. ":" .. funcInfo.short_src
+                """;
+
+            DynValue result1 = script.DoString(code, codeFriendlyName: "debug-info.lua");
+            DynValue result2 = script.DoString(code, codeFriendlyName: "debug-info.lua");
+
+            await Assert
+                .That(result1.String)
+                .IsEqualTo("function:Lua:Lua:debug-info.lua:debug-info.lua")
+                .ConfigureAwait(false);
+            await Assert.That(result1.String).IsEqualTo(result2.String).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
+        public async Task DoStringCacheHitUsesFreshLua51SetfenvEnvironment(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            script.Globals.Set("marker", DynValue.FromNumber(5));
+            string code = string.Join(
+                "\n",
+                "local before = getfenv(1).marker",
+                "setfenv(1, { marker = 99, setfenv = setfenv })",
+                "return before * 100 + getfenv(1).marker"
+            );
+
+            DynValue result1 = script.DoString(code, codeFriendlyName: "setfenv-cache.lua");
+            DynValue result2 = script.DoString(code, codeFriendlyName: "setfenv-cache.lua");
+
+            await Assert.That(result1.Number).IsEqualTo(599d).ConfigureAwait(false);
+            await Assert.That(result2.Number).IsEqualTo(599d).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
@@ -292,6 +409,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .That(exception.DecoratedMessage)
                 .Contains("runtime_named.lua")
                 .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CachedNamedDoStringRuntimeErrorUsesFriendlyName(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            const string code = "local f = nil; return f()";
+
+            Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(code, codeFriendlyName: "runtime_do_named.lua")
+            );
+            ScriptRuntimeException cachedException = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(code, codeFriendlyName: "runtime_do_named.lua")
+            );
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+
+            DynValue recoveryResult = script.DoString("return 1", codeFriendlyName: "recovery.lua");
+
+            await Assert
+                .That(cachedException.DecoratedMessage)
+                .Contains("runtime_do_named.lua")
+                .ConfigureAwait(false);
+            await Assert.That(recoveryResult.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(2).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
