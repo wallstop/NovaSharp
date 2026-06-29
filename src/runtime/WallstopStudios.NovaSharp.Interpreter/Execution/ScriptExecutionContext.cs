@@ -121,22 +121,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     _ => throw new InvalidOperationException("Invalid fixed argument count."),
                 };
             }
-
-            /// <summary>
-            /// Materializes the stored fixed arguments for fallback paths that require an array.
-            /// </summary>
-            internal DynValue[] ToArray()
-            {
-                return _count switch
-                {
-                    1 => new[] { _arg0 },
-                    2 => new[] { _arg0, _arg1 },
-                    3 => new[] { _arg0, _arg1, _arg2 },
-                    4 => new[] { _arg0, _arg1, _arg2, _arg3 },
-                    5 => new[] { _arg0, _arg1, _arg2, _arg3, _arg4 },
-                    _ => throw new InvalidOperationException("Invalid fixed argument count."),
-                };
-            }
         }
 
         internal ScriptExecutionContext(
@@ -351,7 +335,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 return CompleteDirectClrCall(func.Callback.InvokeLegacyFixed(this));
             }
 
-            return Call(func, Array.Empty<DynValue>());
+            return CallNonFunction(func);
         }
 
         /// <summary>
@@ -368,8 +352,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(func));
             }
 
-            FixedCallArguments callArgs = new(arg);
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg);
@@ -377,10 +359,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (func.Type == DataType.ClrFunction)
             {
+                FixedCallArguments callArgs = new(arg);
                 return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
             }
 
-            return Call(func, callArgs.ToArray());
+            return CallNonFunction(func, arg);
         }
 
         /// <summary>
@@ -398,8 +381,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(func));
             }
 
-            FixedCallArguments callArgs = new(arg1, arg2);
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2);
@@ -407,10 +388,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (func.Type == DataType.ClrFunction)
             {
+                FixedCallArguments callArgs = new(arg1, arg2);
                 return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
             }
 
-            return Call(func, callArgs.ToArray());
+            return CallNonFunction(func, arg1, arg2);
         }
 
         /// <summary>
@@ -429,8 +411,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(func));
             }
 
-            FixedCallArguments callArgs = new(arg1, arg2, arg3);
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3);
@@ -438,10 +418,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (func.Type == DataType.ClrFunction)
             {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3);
                 return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
             }
 
-            return Call(func, callArgs.ToArray());
+            return CallNonFunction(func, arg1, arg2, arg3);
         }
 
         /// <summary>
@@ -467,8 +448,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(func));
             }
 
-            FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4);
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3, arg4);
@@ -476,10 +455,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (func.Type == DataType.ClrFunction)
             {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4);
                 return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
             }
 
-            return Call(func, callArgs.ToArray());
+            return CallNonFunction(func, arg1, arg2, arg3, arg4);
         }
 
         /// <summary>
@@ -507,8 +487,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(func));
             }
 
-            FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4, arg5);
-
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3, arg4, arg5);
@@ -516,10 +494,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             if (func.Type == DataType.ClrFunction)
             {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4, arg5);
                 return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
             }
 
-            return Call(func, callArgs.ToArray());
+            return CallNonFunction(func, arg1, arg2, arg3, arg4, arg5);
         }
 
         /// <summary>
@@ -696,6 +675,101 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             }
 
             return metaargs;
+        }
+
+        private DynValue CallNonFunction(DynValue func)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(func, Array.Empty<DynValue>());
+            }
+
+            return Call(metafunction, func);
+        }
+
+        private DynValue CallNonFunction(DynValue func, DynValue arg)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(func, new DynValue[] { arg });
+            }
+
+            return Call(metafunction, func, arg);
+        }
+
+        private DynValue CallNonFunction(DynValue func, DynValue arg1, DynValue arg2)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(func, new DynValue[] { arg1, arg2 });
+            }
+
+            return Call(metafunction, func, arg1, arg2);
+        }
+
+        private DynValue CallNonFunction(DynValue func, DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(func, new DynValue[] { arg1, arg2, arg3 });
+            }
+
+            return Call(metafunction, func, arg1, arg2, arg3);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(func, new DynValue[] { arg1, arg2, arg3, arg4 });
+            }
+
+            return Call(metafunction, func, arg1, arg2, arg3, arg4);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(func, new DynValue[] { arg1, arg2, arg3, arg4, arg5 });
+            }
+
+            return Call(metafunction, func, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        private static bool IsDirectCallTarget(DynValue func)
+        {
+            return func.Type == DataType.Function || func.Type == DataType.ClrFunction;
+        }
+
+        private DynValue GetCallableMetamethodOrThrow(DynValue func)
+        {
+            DynValue metafunction = GetMetamethod(func, Metamethods.Call);
+            if (metafunction != null && !metafunction.IsNil() && CanCallMetamethod(metafunction))
+            {
+                return metafunction;
+            }
+
+            throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
         }
 
         private bool CanCallMetamethod(DynValue metafunction)

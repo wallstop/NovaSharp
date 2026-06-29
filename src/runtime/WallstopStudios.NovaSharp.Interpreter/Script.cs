@@ -1029,6 +1029,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             this.CheckScriptOwnership(function);
 
+            if (function.Type == DataType.Function)
+            {
+                return ExecuteSpanCallWithCompatibilityGuard(
+                    function,
+                    ReadOnlySpan<DynValue>.Empty
+                );
+            }
+
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
                 return function.Callback.InvokeArgumentViewFixed(
@@ -1043,7 +1051,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 );
             }
 
-            return Call(function, Array.Empty<DynValue>());
+            return CallNonFunction(function);
         }
 
         /// <summary>
@@ -1083,14 +1091,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-
-                if (metafunction != null && CanCallMetamethod(metafunction))
-                {
-                    return Call(metafunction, function, arg);
-                }
-
-                return Call(function, new DynValue[] { arg });
+                return CallNonFunction(function, arg);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1140,14 +1141,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-
-                if (metafunction != null && CanCallMetamethod(metafunction))
-                {
-                    return Call(metafunction, function, arg1, arg2);
-                }
-
-                return Call(function, new DynValue[] { arg1, arg2 });
+                return CallNonFunction(function, arg1, arg2);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1201,14 +1195,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-
-                if (metafunction != null && CanCallMetamethod(metafunction))
-                {
-                    return Call(metafunction, function, arg1, arg2, arg3);
-                }
-
-                return Call(function, new DynValue[] { arg1, arg2, arg3 });
+                return CallNonFunction(function, arg1, arg2, arg3);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1273,14 +1260,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-
-                if (metafunction != null && CanCallMetamethod(metafunction))
-                {
-                    return Call(metafunction, new DynValue[] { function, arg1, arg2, arg3, arg4 });
-                }
-
-                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4 });
+                return CallNonFunction(function, arg1, arg2, arg3, arg4);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1356,14 +1336,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type != DataType.Function)
             {
-                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
-
-                if (metafunction != null && CanCallMetamethod(metafunction))
-                {
-                    return Call(metafunction, function, arg1, arg2, arg3, arg4, arg5);
-                }
-
-                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4, arg5 });
+                return CallNonFunction(function, arg1, arg2, arg3, arg4, arg5);
             }
 
             return ExecuteWithCompatibilityGuard(
@@ -1543,6 +1516,106 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 ex.AppendCompatibilityContext(this);
                 throw;
             }
+        }
+
+        private DynValue CallNonFunction(DynValue function)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(function, Array.Empty<DynValue>());
+            }
+
+            return Call(metafunction, function);
+        }
+
+        private DynValue CallNonFunction(DynValue function, DynValue arg)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(function, new DynValue[] { arg });
+            }
+
+            return Call(metafunction, function, arg);
+        }
+
+        private DynValue CallNonFunction(DynValue function, DynValue arg1, DynValue arg2)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(function, new DynValue[] { arg1, arg2 });
+            }
+
+            return Call(metafunction, function, arg1, arg2);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(function, new DynValue[] { arg1, arg2, arg3 });
+            }
+
+            return Call(metafunction, function, arg1, arg2, arg3);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4 });
+            }
+
+            return Call(metafunction, function, arg1, arg2, arg3, arg4);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4, arg5 });
+            }
+
+            return Call(metafunction, function, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        private static bool IsDirectCallTarget(DynValue function)
+        {
+            return function.Type == DataType.Function || function.Type == DataType.ClrFunction;
+        }
+
+        private DynValue GetCallableMetamethodOrThrow(DynValue function)
+        {
+            DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
+            if (metafunction != null && !metafunction.IsNil() && CanCallMetamethod(metafunction))
+            {
+                return metafunction;
+            }
+
+            throw new ArgumentException("function is not a function and has no __call metamethod.");
         }
 
         private static DynValue[] CreateCallMetamethodArguments(

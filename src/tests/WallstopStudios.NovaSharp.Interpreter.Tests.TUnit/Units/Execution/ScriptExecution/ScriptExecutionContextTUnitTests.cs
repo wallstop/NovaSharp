@@ -257,6 +257,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CallInvokesZeroArgumentLuaFunction(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue function = script.DoString("return function() return 42 end");
+
+            DynValue result = context.Call(function);
+
+            await Assert.That(result.Number).IsEqualTo(42d);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task FixedCallOverloadsInvokeLuaFunctions(LuaCompatibilityVersion version)
         {
             Script script = CreateScript(version);
@@ -627,6 +640,95 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             await Assert.That(extraBytesPerCall).IsLessThan(16L);
             await Assert.That(spanProbeExtraBytesPerCall).IsLessThan(16L);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FixedCallOverloadsAvoidCallMetamethodArgumentArrayAllocation()
+        {
+            const int iterations = 1_024;
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Table callable = new(script);
+            Table meta = new(script);
+            DynValue callableValue = DynValue.NewTable(callable);
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewNumber(2);
+            DynValue third = DynValue.NewNumber(3);
+            DynValue fourth = DynValue.NewNumber(4);
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    if (
+                        args.Count != 5
+                        || !ReferenceEquals(args[0].Table, callable)
+                        || args[1].Number != 1d
+                        || args[2].Number != 2d
+                        || args[3].Number != 3d
+                        || args[4].Number != 4d
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Context metamethod allocation probe received unexpected arguments."
+                        );
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
+            meta.Set("__call", callback);
+            callable.MetaTable = meta;
+
+            MeasureFixedFiveArgumentContextCallAllocations(
+                context,
+                callback,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                iterations: 8
+            );
+            MeasureFixedFourArgumentContextCallMetamethodAllocations(
+                context,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                iterations: 8
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long directAllocated = MeasureFixedFiveArgumentContextCallAllocations(
+                context,
+                callback,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                iterations
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long metamethodAllocated = MeasureFixedFourArgumentContextCallMetamethodAllocations(
+                context,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                iterations
+            );
+            long extraBytesPerCall = (metamethodAllocated - directAllocated) / iterations;
+
+            await Assert.That(extraBytesPerCall).IsLessThan(16L);
         }
 
         [global::TUnit.Core.Test]
@@ -1293,6 +1395,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 {
                     throw new InvalidOperationException(
                         "Fixed-argument context call allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedFourArgumentContextCallMetamethodAllocations(
+            ScriptExecutionContext context,
+            DynValue callable,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            DynValue fourth,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = context.Call(callable, first, second, third, fourth);
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Context metamethod allocation probe returned an unexpected value."
                     );
                 }
             }

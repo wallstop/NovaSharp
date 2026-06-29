@@ -71,6 +71,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DynValueCallInvokesZeroArgumentLuaFunction(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString("return function() return 42 end");
+
+            DynValue result = script.Call(function);
+
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
@@ -1057,6 +1071,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task FixedDynValueCallThrowsLoopInCallWhenCallMetamethodChainExceedsLimit(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            Table root = new(script);
+            Table current = root;
+
+            for (int i = 0; i < 15; i++)
+            {
+                Table next = new(script);
+                Table meta = new(script);
+                meta.Set("__call", DynValue.NewTable(next));
+                current.MetaTable = meta;
+                current = next;
+            }
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.Call(DynValue.NewTable(root))
+            );
+
+            await Assert.That(exception.Message).Contains("loop").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task FixedDynValueCallToLegacyClrFunctionAvoidsArgumentArrayAllocation()
         {
             const int iterations = 1024;
@@ -1169,6 +1209,94 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        public async Task FixedDynValueCallToCallbackViewMetamethodAvoidsArgumentArrayAllocation()
+        {
+            const int iterations = 1024;
+            Script script = new(CoreModulePresets.Complete);
+            Table callable = new(script);
+            Table meta = new(script);
+            DynValue callableValue = DynValue.NewTable(callable);
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewNumber(2);
+            DynValue third = DynValue.NewNumber(3);
+            DynValue fourth = DynValue.NewNumber(4);
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    if (
+                        args.Count != 5
+                        || !ReferenceEquals(args[0].Table, callable)
+                        || args[1].Number != 1d
+                        || args[2].Number != 2d
+                        || args[3].Number != 3d
+                        || args[4].Number != 4d
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Metamethod allocation probe received unexpected arguments."
+                        );
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
+            meta.Set("__call", callback);
+            callable.MetaTable = meta;
+
+            MeasureDirectFiveArgumentCallbackViewAllocations(
+                script,
+                callback,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                iterations: 8
+            );
+            MeasureFixedFourArgumentCallbackViewMetamethodAllocations(
+                script,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                iterations: 8
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long directAllocated = MeasureDirectFiveArgumentCallbackViewAllocations(
+                script,
+                callback,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                iterations
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long metamethodAllocated = MeasureFixedFourArgumentCallbackViewMetamethodAllocations(
+                script,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                iterations
+            );
+            long extraBytesPerCall = (metamethodAllocated - directAllocated) / iterations;
+
+            await Assert.That(extraBytesPerCall).IsLessThan(16).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
@@ -1207,15 +1335,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task FourDynValueCallToCallbackViewMetamethodKeepsArrayBackedSpan(
+        public async Task FourDynValueCallToCallbackViewMetamethodPreservesArguments(
             LuaCompatibilityVersion version
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
             Table callable = new(script);
             Table meta = new(script);
-            bool spanAvailable = false;
-            int spanLength = -1;
             bool sawSelf = false;
             double sum = 0d;
 
@@ -1224,8 +1350,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 DynValue.NewCallbackView(
                     (_, args) =>
                     {
-                        spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
-                        spanLength = span.Length;
                         sawSelf = args.Count == 5 && ReferenceEquals(args[0].Table, callable);
                         for (int i = 1; i < args.Count; i++)
                         {
@@ -1247,8 +1371,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
 
             await Assert.That(result.Number).IsEqualTo(5d).ConfigureAwait(false);
-            await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
-            await Assert.That(spanLength).IsEqualTo(5).ConfigureAwait(false);
             await Assert.That(sawSelf).IsTrue().ConfigureAwait(false);
             await Assert.That(sum).IsEqualTo(10d).ConfigureAwait(false);
         }
@@ -2496,6 +2618,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             for (int i = 0; i < iterations; i++)
             {
                 script.Call(callback, first, second, third);
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureDirectFiveArgumentCallbackViewAllocations(
+            Script script,
+            DynValue callback,
+            DynValue self,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            DynValue fourth,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = script.Call(callback, self, first, second, third, fourth);
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Direct callback-view allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedFourArgumentCallbackViewMetamethodAllocations(
+            Script script,
+            DynValue callable,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            DynValue fourth,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = script.Call(callable, first, second, third, fourth);
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Metamethod allocation probe returned an unexpected value."
+                    );
+                }
             }
 
             return GC.GetAllocatedBytesForCurrentThread() - before;
