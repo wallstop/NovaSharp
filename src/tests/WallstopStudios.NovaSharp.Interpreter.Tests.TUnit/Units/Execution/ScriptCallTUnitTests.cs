@@ -668,6 +668,67 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task DynValueCallOverloadsPreserveNullArgumentsAsNil(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+
+            DynValue fixedResult = script.Call(capture, (DynValue)null, DynValue.NewString("tail"));
+            await Assert.That(fixedResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(fixedResult.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(fixedResult.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(fixedResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert.That(fixedResult.Tuple[2].String).IsEqualTo("tail").ConfigureAwait(false);
+
+            DynValue arrayResult = script.Call(
+                capture,
+                new DynValue[] { null, DynValue.NewString("middle"), null }
+            );
+            await Assert.That(arrayResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(arrayResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(arrayResult.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert
+                .That(arrayResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(arrayResult.Tuple[2].String)
+                .IsEqualTo("middle")
+                .ConfigureAwait(false);
+            await Assert
+                .That(arrayResult.Tuple[3].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+
+            DynValue tupleResult = script.Call(
+                capture,
+                DynValue.NewString("head"),
+                DynValue.NewTuple(null, DynValue.NewString("tail"))
+            );
+            await Assert.That(tupleResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tupleResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(tupleResult.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(tupleResult.Tuple[1].String).IsEqualTo("head").ConfigureAwait(false);
+            await Assert
+                .That(tupleResult.Tuple[2].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert.That(tupleResult.Tuple[3].String).IsEqualTo("tail").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ObjectArrayCallStillUsesParamsExpansion(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);

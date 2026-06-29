@@ -369,6 +369,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedResumeDynValueArrayPreservesNullsAsNil(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                @"
+                return function()
+                    local a, b, c = coroutine.yield('pause')
+                    return select('#', a, b, c), a == nil, b, c == nil
+                end
+                "
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            DynValue yielded = coroutine.Coroutine.Resume();
+            await Assert.That(yielded.String).IsEqualTo("pause").ConfigureAwait(false);
+
+            DynValue resumed = coroutine.Coroutine.Resume(
+                new DynValue[] { null, DynValue.NewString("middle"), null }
+            );
+
+            await Assert.That(resumed.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(resumed.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(resumed.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(resumed.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(resumed.Tuple[2].String).IsEqualTo("middle").ConfigureAwait(false);
+            await Assert.That(resumed.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task InitialResumeObjectArrayPreservesSpreadAndSingleObjectForms(
             LuaCompatibilityVersion version
         )

@@ -98,24 +98,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 get
                 {
+                    DynValue value;
                     if (_array != null)
                     {
-                        return _array[index];
+                        value = _array[index];
+                    }
+                    else
+                    {
+                        value = index switch
+                        {
+                            0 => _arg0,
+                            1 => _arg1,
+                            2 => _arg2,
+                            3 => _arg3,
+                            _ => throw new ArgumentOutOfRangeException(nameof(index)),
+                        };
                     }
 
-                    switch (index)
-                    {
-                        case 0:
-                            return _arg0;
-                        case 1:
-                            return _arg1;
-                        case 2:
-                            return _arg2;
-                        case 3:
-                            return _arg3;
-                        default:
-                            throw new ArgumentOutOfRangeException(nameof(index));
-                    }
+                    return value ?? DynValue.Nil;
                 }
             }
 
@@ -126,7 +126,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 if (_array != null)
                 {
-                    return DynValue.NewTuple(_array);
+                    if (!ContainsNull(_array))
+                    {
+                        return DynValue.NewTuple(_array);
+                    }
+
+                    DynValue[] values = new DynValue[_count];
+                    for (int i = 0; i < _count; i++)
+                    {
+                        values[i] = _array[i] ?? DynValue.Nil;
+                    }
+
+                    return DynValue.NewTuple(values);
                 }
 
                 switch (_count)
@@ -150,6 +161,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                         return DynValue.NewTuple(values);
                 }
+            }
+
+            private static bool ContainsNull(DynValue[] values)
+            {
+                for (int i = 0; i < values.Length; i++)
+                {
+                    if (values[i] == null)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
             }
         }
 
@@ -384,11 +408,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             for (int i = 0; i < tupleLength - 1; i++)
             {
-                _valueStack.Push(tuple[i].ToScalar());
+                _valueStack.Push((tuple[i] ?? DynValue.Nil).ToScalar());
                 pushedCount++;
             }
 
-            return PushAdjustedTrailingValue(tuple[tupleLength - 1], pushedCount);
+            return PushAdjustedTrailingValue(tuple[tupleLength - 1] ?? DynValue.Nil, pushedCount);
         }
 
         private int _owningThreadId = -1;
