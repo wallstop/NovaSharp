@@ -420,7 +420,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
-        public async Task FastStackDynamicTryGetSpanAlwaysReturnsFalse()
+        public async Task FastStackDynamicTryGetSpanReturnsFalseBecauseListBackingIsUnsupported()
         {
             FastStackDynamic<DynValue> stack = new(startingCapacity: 2);
             stack.Push(DynValue.NewNumber(1));

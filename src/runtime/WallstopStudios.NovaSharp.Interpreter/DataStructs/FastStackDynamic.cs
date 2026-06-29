@@ -94,8 +94,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         }
 
         /// <summary>
-        /// Tries to expose a contiguous read-only span over a range currently stored in the stack.
+        /// Validates a requested range but does not expose a span for this list-backed stack.
         /// </summary>
+        /// <remarks>
+        /// The dynamic stack is backed by <see cref="List{T}"/> for profiling-oriented builds.
+        /// Netstandard2.1 does not expose the list backing array without allocation, so this method
+        /// intentionally returns <see langword="false"/> after range validation.
+        /// </remarks>
         public bool TryGetSpan(int from, int length, out System.ReadOnlySpan<T> span)
         {
             span = default;
