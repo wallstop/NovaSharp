@@ -8,7 +8,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
     /// <summary>
     /// Caches compiled Lua scripts to avoid redundant lexing, parsing, and bytecode emission
-    /// for scripts that have already been loaded with the same source text and source name.
+    /// for scripts that have already been loaded with the same source text, Lua compatibility
+    /// version, and source name.
     /// Uses LRU (Least Recently Used) eviction policy.
     /// </summary>
     /// <remarks>

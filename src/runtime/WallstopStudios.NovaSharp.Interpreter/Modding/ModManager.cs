@@ -490,7 +490,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <see cref="ModContainer"/> instances avoid a params-array allocation on this path.
         /// </summary>
         /// <param name="functionName">The name of the function to call.</param>
-        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
         public IDictionary<string, DynValue> BroadcastCall(string functionName)
         {
             return BroadcastCallFixed(functionName, default);
@@ -501,7 +501,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// </summary>
         /// <param name="functionName">The name of the function to call.</param>
         /// <param name="arg">The argument to pass to the function.</param>
-        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
         public IDictionary<string, DynValue> BroadcastCall(string functionName, object arg)
         {
             return BroadcastCallFixed(functionName, new FixedBroadcastArguments(arg));
@@ -513,7 +513,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="functionName">The name of the function to call.</param>
         /// <param name="arg1">The first argument to pass to the function.</param>
         /// <param name="arg2">The second argument to pass to the function.</param>
-        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
         public IDictionary<string, DynValue> BroadcastCall(
             string functionName,
             object arg1,
@@ -530,7 +530,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg1">The first argument to pass to the function.</param>
         /// <param name="arg2">The second argument to pass to the function.</param>
         /// <param name="arg3">The third argument to pass to the function.</param>
-        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
         public IDictionary<string, DynValue> BroadcastCall(
             string functionName,
             object arg1,
@@ -549,7 +549,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="arg2">The second argument to pass to the function.</param>
         /// <param name="arg3">The third argument to pass to the function.</param>
         /// <param name="arg4">The fourth argument to pass to the function.</param>
-        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
         public IDictionary<string, DynValue> BroadcastCall(
             string functionName,
             object arg1,
@@ -614,7 +614,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// </summary>
         /// <param name="functionName">The name of the function to call.</param>
         /// <param name="args">Arguments to pass to the function.</param>
-        /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>
+        /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
         [SuppressMessage(
             "Design",
             "CA1031:Do not catch general exception types",
