@@ -1115,6 +1115,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private object _secondObject = 2d;
         private object _thirdObject = 3d;
         private object _fourthObject = 4d;
+        private object _fifthObject = 5d;
 
         /// <summary>
         /// Loads a mod and manager with small Lua functions used by the call benchmarks.
@@ -1126,11 +1127,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _secondObject = 2d;
             _thirdObject = 3d;
             _fourthObject = 4d;
+            _fifthObject = 5d;
 
             _mod = new ModContainer("bench").AddEntryPoint(
                 """
                 function second(a, b) return b end
                 function fourth(a, b, c, d) return d end
+                function fifth(a, b, c, d, e) return e end
                 """
             );
             _mod.Load();
@@ -1141,6 +1144,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                     """
                     function second(a, b) return b end
                     function fourth(a, b, c, d) return d end
+                    function fifth(a, b, c, d, e) return e end
                     """
                 )
             );
@@ -1179,6 +1183,37 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             );
 
         /// <summary>
+        /// Calls a mod function through the fixed five-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod CallFunction: 5 fixed objects")]
+        public DynValue CallFunctionFiveFixedObjects() =>
+            _mod.CallFunction(
+                "fifth",
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject
+            );
+
+        /// <summary>
+        /// Calls a mod function through the params-array overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Mod CallFunction: params 5 objects")]
+        public DynValue CallFunctionFiveParamsArray() =>
+            _mod.CallFunction(
+                "fifth",
+                new object[]
+                {
+                    _firstObject,
+                    _secondObject,
+                    _thirdObject,
+                    _fourthObject,
+                    _fifthObject,
+                }
+            );
+
+        /// <summary>
         /// Broadcasts a mod function through the fixed two-argument overload.
         /// </summary>
         [Benchmark(Description = "Mod BroadcastCall: 2 fixed objects")]
@@ -1213,6 +1248,37 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _manager.BroadcastCall(
                 "fourth",
                 new object[] { _firstObject, _secondObject, _thirdObject, _fourthObject }
+            );
+
+        /// <summary>
+        /// Broadcasts a mod function through the fixed five-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod BroadcastCall: 5 fixed objects")]
+        public IDictionary<string, DynValue> BroadcastCallFiveFixedObjects() =>
+            _manager.BroadcastCall(
+                "fifth",
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject
+            );
+
+        /// <summary>
+        /// Broadcasts a mod function through the params-array overload with caller allocation.
+        /// </summary>
+        [Benchmark(Description = "Mod BroadcastCall: params 5 objects")]
+        public IDictionary<string, DynValue> BroadcastCallFiveParamsArray() =>
+            _manager.BroadcastCall(
+                "fifth",
+                new object[]
+                {
+                    _firstObject,
+                    _secondObject,
+                    _thirdObject,
+                    _fourthObject,
+                    _fifthObject,
+                }
             );
     }
 }

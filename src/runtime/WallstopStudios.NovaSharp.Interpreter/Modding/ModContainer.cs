@@ -509,6 +509,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             return script.Call(function, arg1, arg2, arg3, arg4);
         }
 
+        /// <summary>
+        /// Invokes a global function defined in this mod with five CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(
+            string functionName,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5
+        )
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg1, arg2, arg3, arg4, arg5);
+        }
+
         /// <inheritdoc/>
         public DynValue CallFunction(string functionName, params object[] args)
         {

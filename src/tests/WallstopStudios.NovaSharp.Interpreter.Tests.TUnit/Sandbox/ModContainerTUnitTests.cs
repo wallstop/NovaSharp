@@ -545,6 +545,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 function add2(a, b) return a + b end
                 function add3(a, b, c) return a + b + c end
                 function add4(a, b, c, d) return a + b + c + d end
+                function add5(a, b, c, d, e) return a + b + c + d + e end
                 """
             );
 
@@ -555,12 +556,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             DynValue two = mod.CallFunction("add2", 3, 4);
             DynValue three = mod.CallFunction("add3", 1, 2, 3);
             DynValue four = mod.CallFunction("add4", 1, 2, 3, 4);
+            DynValue five = mod.CallFunction("add5", 1, 2, 3, 4, 5);
 
             await Assert.That(zero.Number).IsEqualTo(0).ConfigureAwait(false);
             await Assert.That(one.Number).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(two.Number).IsEqualTo(7).ConfigureAwait(false);
             await Assert.That(three.Number).IsEqualTo(6).ConfigureAwait(false);
             await Assert.That(four.Number).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(five.Number).IsEqualTo(15).ConfigureAwait(false);
         }
 
         [Test]
@@ -1131,22 +1134,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             ModManager manager = new ModManager();
 
             ModContainer mod1 = new ModContainer("mod1").AddEntryPoint(
-                "function add4(a, b, c, d) return a + b + c + d end"
+                "function add5(a, b, c, d, e) return a + b + c + d + e end"
             );
 
             ModContainer mod2 = new ModContainer("mod2").AddEntryPoint(
-                "function add4(a, b, c, d) return (a + b + c + d) * 2 end"
+                "function add5(a, b, c, d, e) return (a + b + c + d + e) * 2 end"
             );
 
             manager.Register(mod1);
             manager.Register(mod2);
             manager.LoadAll();
 
-            IDictionary<string, DynValue> results = manager.BroadcastCall("add4", 1, 2, 3, 4);
+            IDictionary<string, DynValue> results = manager.BroadcastCall("add5", 1, 2, 3, 4, 5);
 
             await Assert.That(results.Count).IsEqualTo(2).ConfigureAwait(false);
-            await Assert.That(results["mod1"].Number).IsEqualTo(10).ConfigureAwait(false);
-            await Assert.That(results["mod2"].Number).IsEqualTo(20).ConfigureAwait(false);
+            await Assert.That(results["mod1"].Number).IsEqualTo(15).ConfigureAwait(false);
+            await Assert.That(results["mod2"].Number).IsEqualTo(30).ConfigureAwait(false);
         }
 
         [Test]
@@ -1201,12 +1204,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             manager.Register(mod);
 
-            IDictionary<string, DynValue> results = manager.BroadcastCall("target", 1, 2, 3);
+            IDictionary<string, DynValue> results = manager.BroadcastCall("target", 1, 2, 3, 4, 5);
 
             await Assert.That(results.Count).IsEqualTo(1).ConfigureAwait(false);
-            await Assert.That(results["custom"].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(results["custom"].Number).IsEqualTo(5).ConfigureAwait(false);
             await Assert.That(mod.LastFunctionName).IsEqualTo("target").ConfigureAwait(false);
-            await Assert.That(mod.LastArgumentCount).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(mod.LastArgumentCount).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(mod.LastFifthArgument).IsEqualTo(5).ConfigureAwait(false);
         }
 
         [Test]
@@ -1380,6 +1384,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             public int LastArgumentCount { get; private set; }
 
+            public object LastFifthArgument { get; private set; }
+
             public ModOperationResult Load()
             {
                 return ModOperationResult.Succeeded(ModLoadState.Loaded);
@@ -1404,6 +1410,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             {
                 LastFunctionName = functionName;
                 LastArgumentCount = args == null ? -1 : args.Length;
+                LastFifthArgument = args == null || args.Length < 5 ? null : args[4];
                 return DynValue.NewNumber(LastArgumentCount);
             }
 

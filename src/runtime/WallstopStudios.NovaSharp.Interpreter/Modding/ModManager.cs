@@ -93,6 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             private readonly object _arg2;
             private readonly object _arg3;
             private readonly object _arg4;
+            private readonly object _arg5;
 
             public FixedBroadcastArguments(object arg1)
             {
@@ -101,6 +102,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 _arg2 = null;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
             }
 
             public FixedBroadcastArguments(object arg1, object arg2)
@@ -110,6 +112,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 _arg2 = arg2;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
             }
 
             public FixedBroadcastArguments(object arg1, object arg2, object arg3)
@@ -119,6 +122,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 _arg2 = arg2;
                 _arg3 = arg3;
                 _arg4 = null;
+                _arg5 = null;
             }
 
             public FixedBroadcastArguments(object arg1, object arg2, object arg3, object arg4)
@@ -128,6 +132,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 _arg2 = arg2;
                 _arg3 = arg3;
                 _arg4 = arg4;
+                _arg5 = null;
+            }
+
+            public FixedBroadcastArguments(
+                object arg1,
+                object arg2,
+                object arg3,
+                object arg4,
+                object arg5
+            )
+            {
+                _count = 5;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = arg4;
+                _arg5 = arg5;
             }
 
             /// <summary>
@@ -146,7 +167,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                         1 => modContainer.CallFunction(functionName, _arg1),
                         2 => modContainer.CallFunction(functionName, _arg1, _arg2),
                         3 => modContainer.CallFunction(functionName, _arg1, _arg2, _arg3),
-                        _ => modContainer.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4),
+                        4 => modContainer.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4),
+                        _ => modContainer.CallFunction(
+                            functionName,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4,
+                            _arg5
+                        ),
                     };
                 }
 
@@ -156,7 +185,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                     1 => mod.CallFunction(functionName, _arg1),
                     2 => mod.CallFunction(functionName, _arg1, _arg2),
                     3 => mod.CallFunction(functionName, _arg1, _arg2, _arg3),
-                    _ => mod.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4),
+                    4 => mod.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4),
+                    _ => mod.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4, _arg5),
                 };
             }
         }
@@ -561,6 +591,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             return BroadcastCallFixed(
                 functionName,
                 new FixedBroadcastArguments(arg1, arg2, arg3, arg4)
+            );
+        }
+
+        /// <summary>
+        /// Calls a function on all loaded mods that have it defined with five CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
+        public IDictionary<string, DynValue> BroadcastCall(
+            string functionName,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5
+        )
+        {
+            return BroadcastCallFixed(
+                functionName,
+                new FixedBroadcastArguments(arg1, arg2, arg3, arg4, arg5)
             );
         }
 
