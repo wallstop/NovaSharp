@@ -410,6 +410,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
+        public async Task ResumeWithDynValueArrayOnClrCallbackRejectsBeforeOwnership()
+        {
+            Script script = new();
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
+            DynValue coroutine = script.CreateCoroutine(callback);
+            Script foreignScript = new();
+            DynValue foreignResource = DynValue.NewTable(foreignScript);
+
+            InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
+                coroutine.Coroutine.Resume(new[] { foreignResource })
+            );
+
+            await Assert.That(exception.Message).Contains("Only non-CLR coroutines");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        [global::TUnit.Core.Arguments(5)]
+        public async Task FixedDynValueResumeOnClrCallbackRejectsBeforeOwnership(int argumentCount)
+        {
+            Script script = new();
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
+            DynValue coroutine = script.CreateCoroutine(callback);
+            Script foreignScript = new();
+            DynValue foreignResource = DynValue.NewTable(foreignScript);
+
+            InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
+                ResumeFixedDynValueArguments(coroutine.Coroutine, foreignResource, argumentCount)
+            );
+
+            await Assert.That(exception.Message).Contains("Only non-CLR coroutines");
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
@@ -707,6 +744,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             throw new InvalidOperationException(
                 $"Expected exception of type {typeof(TException).Name}."
             );
+        }
+
+        private static DynValue ResumeFixedDynValueArguments(
+            Coroutine coroutine,
+            DynValue foreignResource,
+            int argumentCount
+        )
+        {
+            return argumentCount switch
+            {
+                1 => coroutine.Resume(foreignResource),
+                2 => coroutine.Resume(DynValue.Nil, foreignResource),
+                3 => coroutine.Resume(DynValue.Nil, DynValue.Nil, foreignResource),
+                4 => coroutine.Resume(DynValue.Nil, DynValue.Nil, DynValue.Nil, foreignResource),
+                5 => coroutine.Resume(
+                    DynValue.Nil,
+                    DynValue.Nil,
+                    DynValue.Nil,
+                    DynValue.Nil,
+                    foreignResource
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(argumentCount)),
+            };
         }
 
         private sealed class UnregisteredHostObject { }
