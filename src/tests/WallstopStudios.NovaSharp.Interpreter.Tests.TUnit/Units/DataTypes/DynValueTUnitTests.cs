@@ -39,6 +39,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(2, false, 1)]
+        [global::TUnit.Core.Arguments(3, false, 1)]
+        [global::TUnit.Core.Arguments(4, false, 2)]
+        [global::TUnit.Core.Arguments(5, true, 2)]
+        public async Task NewTupleTreatsMultiValueNullInputsAsNil(
+            int arity,
+            bool useParamsArray,
+            int expectedNilCount
+        )
+        {
+            DynValue one = DynValue.NewNumber(1);
+            DynValue two = DynValue.NewNumber(2);
+            DynValue tuple = (arity, useParamsArray) switch
+            {
+                (2, false) => DynValue.NewTuple(null, one),
+                (3, false) => DynValue.NewTuple(one, null, two),
+                (4, false) => DynValue.NewTuple(null, one, null, two),
+                (5, true) => DynValue.NewTuple(
+                    new DynValue[] { one, null, two, null, DynValue.NewBoolean(true) }
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(arity), arity, null),
+            };
+
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple.Length).IsEqualTo(arity).ConfigureAwait(false);
+
+            int nilCount = 0;
+            foreach (DynValue value in tuple.Tuple)
+            {
+                await Assert.That(value).IsNotNull().ConfigureAwait(false);
+                if (value.Type == DataType.Nil)
+                {
+                    ++nilCount;
+                }
+            }
+
+            await Assert.That(nilCount).IsEqualTo(expectedNilCount).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task NewTupleNestedFlattensTuplesOneLevelDeep()
         {
             DynValue tupleA = DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewString("b"));

@@ -803,7 +803,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(DynValue value1, DynValue value2)
         {
-            return new DynValue() { _object = new[] { value1, value2 }, _type = DataType.Tuple };
+            return new DynValue()
+            {
+                _object = new[] { value1 ?? Nil, value2 ?? Nil },
+                _type = DataType.Tuple,
+            };
         }
 
         /// <summary>
@@ -814,7 +818,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             return new DynValue()
             {
-                _object = new[] { value1, value2, value3 },
+                _object = new[] { value1 ?? Nil, value2 ?? Nil, value3 ?? Nil },
                 _type = DataType.Tuple,
             };
         }
@@ -832,7 +836,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             return new DynValue()
             {
-                _object = new[] { value1, value2, value3, value4 },
+                _object = new[] { value1 ?? Nil, value2 ?? Nil, value3 ?? Nil, value4 ?? Nil },
                 _type = DataType.Tuple,
             };
         }
@@ -857,7 +861,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return values[0] ?? Nil;
             }
 
-            return new DynValue() { _object = values, _type = DataType.Tuple };
+            return new DynValue()
+            {
+                _object = NormalizeTupleValues(values),
+                _type = DataType.Tuple,
+            };
+        }
+
+        private static DynValue[] NormalizeTupleValues(DynValue[] values)
+        {
+            for (int i = 0; i < values.Length; ++i)
+            {
+                if (values[i] != null)
+                {
+                    continue;
+                }
+
+                DynValue[] normalized = new DynValue[values.Length];
+                Array.Copy(values, normalized, values.Length);
+                normalized[i] = Nil;
+
+                for (int j = i + 1; j < normalized.Length; ++j)
+                {
+                    normalized[j] ??= Nil;
+                }
+
+                return normalized;
+            }
+
+            return values;
         }
 
         /// <summary>
