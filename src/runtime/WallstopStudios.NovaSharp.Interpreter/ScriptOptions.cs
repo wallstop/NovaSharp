@@ -170,8 +170,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <summary>
         /// Gets or sets a value indicating whether script compilation caching is enabled.
         /// When enabled, scripts loaded with <see cref="Script.LoadString"/> that have identical
-        /// source text and friendly names will reuse previously compiled bytecode, dramatically
-        /// reducing compilation time and memory allocation for repeated script loads.
+        /// source text, friendly/source names, and compatibility versions will reuse previously
+        /// compiled bytecode, dramatically reducing compilation time and memory allocation for
+        /// repeated script loads.
         /// Defaults to <c>true</c>.
         /// </summary>
         /// <remarks>

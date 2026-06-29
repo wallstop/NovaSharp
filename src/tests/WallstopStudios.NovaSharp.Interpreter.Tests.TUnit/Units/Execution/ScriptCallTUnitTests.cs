@@ -1378,6 +1378,50 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedDynValueCallOverloadsTrimTrailingVoidForScriptFunctions(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+
+            DynValue oneVoid = script.Call(capture, DynValue.Void);
+            DynValue twoVoid = script.Call(capture, DynValue.NewNumber(1), DynValue.Void);
+            DynValue threeVoid = script.Call(
+                capture,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.Void
+            );
+            DynValue fourVoid = script.Call(
+                capture,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.Void
+            );
+            DynValue trailingTupleVoid = script.Call(
+                capture,
+                DynValue.NewNumber(1),
+                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.Void)
+            );
+
+            await Assert.That(oneVoid.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+            await Assert.That(oneVoid.Number).IsEqualTo(0d).ConfigureAwait(false);
+            await AssertTupleNumbers(twoVoid, 1d, 1d).ConfigureAwait(false);
+            await AssertTupleNumbers(threeVoid, 2d, 1d, 2d).ConfigureAwait(false);
+            await AssertTupleNumbers(fourVoid, 3d, 1d, 2d, 3d).ConfigureAwait(false);
+            await AssertTupleNumbers(trailingTupleVoid, 2d, 1d, 2d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CallObjectOverloadInvokesClosureAndConvertsArguments(
             LuaCompatibilityVersion version
         )

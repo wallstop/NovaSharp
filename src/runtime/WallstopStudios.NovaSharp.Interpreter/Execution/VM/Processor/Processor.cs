@@ -389,6 +389,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private int PushAdjustedTrailingValue(DynValue value, int pushedCount)
         {
+            if (value.Type == DataType.Void)
+            {
+                return pushedCount;
+            }
+
             if (value.Type != DataType.Tuple)
             {
                 _valueStack.Push(value.ToScalar());
