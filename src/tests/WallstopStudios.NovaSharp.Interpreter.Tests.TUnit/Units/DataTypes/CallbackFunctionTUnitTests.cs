@@ -178,6 +178,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(-1, 1, "offset")]
+        [global::TUnit.Core.Arguments(3, 0, "offset")]
+        [global::TUnit.Core.Arguments(0, -1, "count")]
+        [global::TUnit.Core.Arguments(1, 2, "count")]
+        public async Task InvokeArgumentViewStackRejectsInvalidRanges(
+            int offset,
+            int count,
+            string paramName
+        )
+        {
+            Script script = new();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            CallbackFunction function = CallbackFunction.FromArgumentView(
+                (_, _) => throw new InvalidOperationException("Callback should not run.")
+            );
+            List<DynValue> args = new() { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                function.InvokeArgumentViewStack(context, args, offset, count)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo(paramName).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task CallLegacyCallbackTreatsNullFixedArgumentsAsNil()
         {
             Script script = new();

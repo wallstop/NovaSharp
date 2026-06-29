@@ -226,6 +226,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(args));
             }
 
+            if (offset < 0 || offset > args.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            }
+
+            if (count < 0 || count > args.Count - offset)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
             isMethodCall = NormalizeMethodCall(
                 executionContext,
                 count,
