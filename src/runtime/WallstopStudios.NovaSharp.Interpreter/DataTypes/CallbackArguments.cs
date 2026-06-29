@@ -13,7 +13,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     public class CallbackArguments
     {
         private readonly IList<DynValue> _args;
+        private readonly DynValue _arg0;
+        private readonly DynValue _arg1;
+        private readonly DynValue _arg2;
+        private readonly DynValue _arg3;
         private readonly int _count;
+        private readonly int _fixedCount;
         private bool _lastIsTuple;
 
         /// <summary>
@@ -24,30 +29,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public CallbackArguments(IList<DynValue> args, bool isMethodCall)
         {
             _args = args;
+            _arg0 = null;
+            _arg1 = null;
+            _arg2 = null;
+            _arg3 = null;
+            _fixedCount = 0;
 
             if (_args.Count > 0)
             {
                 DynValue last = _args[^1] ?? DynValue.Nil;
 
-                if (last.Type == DataType.Tuple)
-                {
-                    _count = last.Tuple.Length - 1 + _args.Count;
-                    _lastIsTuple = true;
-                }
-                else if (last.Type == DataType.Void)
-                {
-                    _count = _args.Count - 1;
-                }
-                else
-                {
-                    _count = _args.Count;
-                }
+                _count = CalculateExpandedCount(_args.Count, last, out _lastIsTuple);
             }
             else
             {
                 _count = 0;
             }
 
+            IsMethodCall = isMethodCall;
+        }
+
+        internal CallbackArguments(bool isMethodCall)
+        {
+            _args = null;
+            _arg0 = null;
+            _arg1 = null;
+            _arg2 = null;
+            _arg3 = null;
+            _fixedCount = 0;
+            _count = 0;
+            _lastIsTuple = false;
+            IsMethodCall = isMethodCall;
+        }
+
+        internal CallbackArguments(DynValue arg, bool isMethodCall)
+        {
+            _args = null;
+            _arg0 = arg;
+            _arg1 = null;
+            _arg2 = null;
+            _arg3 = null;
+            _fixedCount = 1;
+            _count = CalculateExpandedCount(_fixedCount, _arg0 ?? DynValue.Nil, out _lastIsTuple);
+            IsMethodCall = isMethodCall;
+        }
+
+        internal CallbackArguments(DynValue arg1, DynValue arg2, bool isMethodCall)
+        {
+            _args = null;
+            _arg0 = arg1;
+            _arg1 = arg2;
+            _arg2 = null;
+            _arg3 = null;
+            _fixedCount = 2;
+            _count = CalculateExpandedCount(_fixedCount, _arg1 ?? DynValue.Nil, out _lastIsTuple);
+            IsMethodCall = isMethodCall;
+        }
+
+        internal CallbackArguments(DynValue arg1, DynValue arg2, DynValue arg3, bool isMethodCall)
+        {
+            _args = null;
+            _arg0 = arg1;
+            _arg1 = arg2;
+            _arg2 = arg3;
+            _arg3 = null;
+            _fixedCount = 3;
+            _count = CalculateExpandedCount(_fixedCount, _arg2 ?? DynValue.Nil, out _lastIsTuple);
+            IsMethodCall = isMethodCall;
+        }
+
+        internal CallbackArguments(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            bool isMethodCall
+        )
+        {
+            _args = null;
+            _arg0 = arg1;
+            _arg1 = arg2;
+            _arg2 = arg3;
+            _arg3 = arg4;
+            _fixedCount = 4;
+            _count = CalculateExpandedCount(_fixedCount, _arg3 ?? DynValue.Nil, out _lastIsTuple);
             IsMethodCall = isMethodCall;
         }
 
@@ -82,18 +147,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             DynValue v;
 
-            if (index >= _count)
+            if (index < 0 || index >= _count)
             {
                 return null;
             }
 
-            if (!_lastIsTuple || index < _args.Count - 1)
+            if (_args == null)
             {
-                v = _args[index] ?? DynValue.Nil;
+                if (!_lastIsTuple || index < _fixedCount - 1)
+                {
+                    v = GetFixedArgument(index);
+                }
+                else
+                {
+                    v =
+                        GetFixedArgument(_fixedCount - 1).Tuple[index - (_fixedCount - 1)]
+                        ?? DynValue.Nil;
+                }
             }
             else
             {
-                v = _args[^1].Tuple[index - (_args.Count - 1)] ?? DynValue.Nil;
+                if (!_lastIsTuple || index < _args.Count - 1)
+                {
+                    v = _args[index] ?? DynValue.Nil;
+                }
+                else
+                {
+                    v = _args[^1].Tuple[index - (_args.Count - 1)] ?? DynValue.Nil;
+                }
             }
 
             if (v.Type == DataType.Tuple)
@@ -114,6 +195,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             return v;
+        }
+
+        private static int CalculateExpandedCount(
+            int storedCount,
+            DynValue last,
+            out bool lastIsTuple
+        )
+        {
+            lastIsTuple = false;
+
+            if (last.Type == DataType.Tuple)
+            {
+                lastIsTuple = true;
+                return last.Tuple.Length - 1 + storedCount;
+            }
+
+            if (last.Type == DataType.Void)
+            {
+                return storedCount - 1;
+            }
+
+            return storedCount;
+        }
+
+        private DynValue GetFixedArgument(int index)
+        {
+            DynValue value = index switch
+            {
+                0 => _arg0,
+                1 => _arg1,
+                2 => _arg2,
+                3 => _arg3,
+                _ => null,
+            };
+
+            return value ?? DynValue.Nil;
         }
 
         /// <summary>
@@ -265,8 +382,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             if (IsMethodCall)
             {
-                Slice<DynValue> slice = new(_args, 1, _args.Count - 1, false);
-                return new CallbackArguments(slice, false);
+                if (_args != null)
+                {
+                    Slice<DynValue> slice = new(_args, 1, _args.Count - 1, false);
+                    return new CallbackArguments(slice, false);
+                }
+
+                switch (_fixedCount)
+                {
+                    case 0:
+                    case 1:
+                        return new CallbackArguments(false);
+                    case 2:
+                        return new CallbackArguments(_arg1, false);
+                    case 3:
+                        return new CallbackArguments(_arg1, _arg2, false);
+                    case 4:
+                        return new CallbackArguments(_arg1, _arg2, _arg3, false);
+                    default:
+                        throw new InvalidOperationException("Invalid fixed argument count.");
+                }
             }
             else
             {
@@ -288,6 +423,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             // Cannot return span if last argument is a tuple (would need to expand it)
             if (_lastIsTuple)
+            {
+                span = default;
+                return false;
+            }
+
+            if (_args == null)
             {
                 span = default;
                 return false;

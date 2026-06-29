@@ -266,6 +266,82 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
         }
 
+        /// <summary>
+        /// Invokes a legacy callback with no fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 0, null, isMethodCall);
+            return ClrCallback(executionContext, new CallbackArguments(isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with one fixed argument.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 1, arg, isMethodCall);
+            return ClrCallback(executionContext, new CallbackArguments(arg, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with two fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 2, arg1, isMethodCall);
+            return ClrCallback(executionContext, new CallbackArguments(arg1, arg2, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with three fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 3, arg1, isMethodCall);
+            return ClrCallback(
+                executionContext,
+                new CallbackArguments(arg1, arg2, arg3, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with four fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 4, arg1, isMethodCall);
+            return ClrCallback(
+                executionContext,
+                new CallbackArguments(arg1, arg2, arg3, arg4, isMethodCall)
+            );
+        }
+
         private DynValue InvokeArgumentViewCallback(
             ScriptExecutionContext executionContext,
             CallbackArguments args

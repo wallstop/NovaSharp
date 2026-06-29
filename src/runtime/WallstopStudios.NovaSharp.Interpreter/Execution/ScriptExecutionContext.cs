@@ -17,6 +17,96 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         private readonly Processor _processor;
         private readonly CallbackFunction _callback;
 
+        private readonly struct FixedCallArguments
+        {
+            private readonly DynValue _arg0;
+            private readonly DynValue _arg1;
+            private readonly DynValue _arg2;
+            private readonly DynValue _arg3;
+            private readonly int _count;
+
+            internal FixedCallArguments(DynValue arg)
+            {
+                _arg0 = arg;
+                _arg1 = null;
+                _arg2 = null;
+                _arg3 = null;
+                _count = 1;
+            }
+
+            internal FixedCallArguments(DynValue arg1, DynValue arg2)
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = null;
+                _arg3 = null;
+                _count = 2;
+            }
+
+            internal FixedCallArguments(DynValue arg1, DynValue arg2, DynValue arg3)
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = null;
+                _count = 3;
+            }
+
+            internal FixedCallArguments(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _count = 4;
+            }
+
+            /// <summary>
+            /// Invokes the specified callback with the stored fixed arguments.
+            /// </summary>
+            internal DynValue InvokeCallback(
+                ScriptExecutionContext context,
+                CallbackFunction callback
+            )
+            {
+                if (callback.HasArgumentViewCallback)
+                {
+                    return _count switch
+                    {
+                        1 => callback.InvokeArgumentViewFixed(context, _arg0),
+                        2 => callback.InvokeArgumentViewFixed(context, _arg0, _arg1),
+                        3 => callback.InvokeArgumentViewFixed(context, _arg0, _arg1, _arg2),
+                        4 => callback.InvokeArgumentViewFixed(context, _arg0, _arg1, _arg2, _arg3),
+                        _ => throw new InvalidOperationException("Invalid fixed argument count."),
+                    };
+                }
+
+                return _count switch
+                {
+                    1 => callback.InvokeLegacyFixed(context, _arg0),
+                    2 => callback.InvokeLegacyFixed(context, _arg0, _arg1),
+                    3 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2),
+                    4 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2, _arg3),
+                    _ => throw new InvalidOperationException("Invalid fixed argument count."),
+                };
+            }
+
+            /// <summary>
+            /// Materializes the stored fixed arguments for fallback paths that require an array.
+            /// </summary>
+            internal DynValue[] ToArray()
+            {
+                return _count switch
+                {
+                    1 => new[] { _arg0 },
+                    2 => new[] { _arg0, _arg1 },
+                    3 => new[] { _arg0, _arg1, _arg2 },
+                    4 => new[] { _arg0, _arg1, _arg2, _arg3 },
+                    _ => throw new InvalidOperationException("Invalid fixed argument count."),
+                };
+            }
+        }
+
         internal ScriptExecutionContext(
             Processor p,
             CallbackFunction callBackFunction,
@@ -224,6 +314,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 return CompleteDirectClrCall(func.Callback.InvokeArgumentViewFixed(this));
             }
 
+            if (func.Type == DataType.ClrFunction)
+            {
+                return CompleteDirectClrCall(func.Callback.InvokeLegacyFixed(this));
+            }
+
             return Call(func, Array.Empty<DynValue>());
         }
 
@@ -241,17 +336,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(func));
             }
 
+            FixedCallArguments callArgs = new(arg);
+
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg);
             }
 
-            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            if (func.Type == DataType.ClrFunction)
             {
-                return CompleteDirectClrCall(func.Callback.InvokeArgumentViewFixed(this, arg));
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
             }
 
-            return Call(func, new DynValue[] { arg });
+            return Call(func, callArgs.ToArray());
         }
 
         /// <summary>
@@ -269,19 +366,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(func));
             }
 
+            FixedCallArguments callArgs = new(arg1, arg2);
+
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2);
             }
 
-            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            if (func.Type == DataType.ClrFunction)
             {
-                return CompleteDirectClrCall(
-                    func.Callback.InvokeArgumentViewFixed(this, arg1, arg2)
-                );
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
             }
 
-            return Call(func, new DynValue[] { arg1, arg2 });
+            return Call(func, callArgs.ToArray());
         }
 
         /// <summary>
@@ -300,19 +397,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(func));
             }
 
+            FixedCallArguments callArgs = new(arg1, arg2, arg3);
+
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3);
             }
 
-            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            if (func.Type == DataType.ClrFunction)
             {
-                return CompleteDirectClrCall(
-                    func.Callback.InvokeArgumentViewFixed(this, arg1, arg2, arg3)
-                );
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
             }
 
-            return Call(func, new DynValue[] { arg1, arg2, arg3 });
+            return Call(func, callArgs.ToArray());
         }
 
         /// <summary>
@@ -338,19 +435,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 throw new ArgumentNullException(nameof(func));
             }
 
+            FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4);
+
             if (func.Type == DataType.Function)
             {
                 return Script.Call(func, arg1, arg2, arg3, arg4);
             }
 
-            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            if (func.Type == DataType.ClrFunction)
             {
-                return CompleteDirectClrCall(
-                    func.Callback.InvokeArgumentViewFixed(this, arg1, arg2, arg3, arg4)
-                );
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
             }
 
-            return Call(func, new DynValue[] { arg1, arg2, arg3, arg4 });
+            return Call(func, callArgs.ToArray());
         }
 
         /// <summary>
@@ -365,6 +462,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             if (func == null)
             {
                 throw new ArgumentNullException(nameof(func));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
             }
 
             if (func.Type == DataType.Function)
@@ -416,12 +518,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
                     }
 
+                    DynValue previousFunc = func;
                     func = v;
 
                     if (func.Type == DataType.Function || func.Type == DataType.ClrFunction)
                     {
-                        return Call(func, args);
+                        DynValue[] metaargs = new DynValue[args.Length + 1];
+                        metaargs[0] = previousFunc;
+                        Array.Copy(args, 0, metaargs, 1, args.Length);
+                        return Call(func, metaargs);
                     }
+
+                    DynValue[] nextArgs = new DynValue[args.Length + 1];
+                    nextArgs[0] = previousFunc;
+                    Array.Copy(args, 0, nextArgs, 1, args.Length);
+                    args = nextArgs;
 
                     maxloops--;
                 }

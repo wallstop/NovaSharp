@@ -311,7 +311,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
-        public async Task FixedCallOverloadsPreserveLegacyCallbackArgumentsSpan(
+        public async Task FixedCallOverloadsPreserveLegacyCallbackArgumentsWithoutArraySpan(
             LuaCompatibilityVersion version
         )
         {
@@ -320,9 +320,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 (_, args) =>
                 {
                     bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    DynValue[] copied = new DynValue[args.Count];
+                    int copiedCount = args.CopyTo(copied);
                     return DynValue.NewTuple(
                         DynValue.NewBoolean(success),
-                        DynValue.NewNumber(span.Length)
+                        DynValue.NewNumber(span.Length),
+                        DynValue.NewNumber(copiedCount),
+                        copied[0],
+                        copied[1],
+                        copied[2]
                     );
                 }
             );
@@ -339,8 +345,278 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             DynValue result = script.DoString("return callInner()");
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].Boolean).IsTrue();
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(3d);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse();
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(0d);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(3d);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(10d);
+            await Assert.That(result.Tuple[4].Number).IsEqualTo(20d);
+            await Assert.That(result.Tuple[5].Number).IsEqualTo(30d);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FixedCallOverloadsAvoidLegacyCallbackArgumentArrayAllocation()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue noArgCallback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    if (args.Count != 0)
+                    {
+                        throw new InvalidOperationException(
+                            "No-argument allocation probe received arguments."
+                        );
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
+            DynValue threeArgCallback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    if (
+                        args.Count != 3
+                        || args[0].Number != 1d
+                        || args[1].Number != 2d
+                        || args[2].Number != 3d
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Fixed-argument allocation probe received unexpected arguments."
+                        );
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
+            DynValue spanProbeCallback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    bool hasSpan = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    if (hasSpan || span.Length != 0)
+                    {
+                        throw new InvalidOperationException(
+                            "Fixed-argument allocation probe unexpectedly exposed a span."
+                        );
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewNumber(2);
+            DynValue third = DynValue.NewNumber(3);
+
+            MeasureNoArgumentContextCallAllocations(context, noArgCallback, iterations: 8);
+            MeasureFixedThreeArgumentContextCallAllocations(
+                context,
+                threeArgCallback,
+                first,
+                second,
+                third,
+                iterations: 8
+            );
+            MeasureFixedThreeArgumentContextCallAllocations(
+                context,
+                spanProbeCallback,
+                first,
+                second,
+                third,
+                iterations: 8
+            );
+
+            int iterations = 1_024;
+            long noArgumentAllocated = MeasureNoArgumentContextCallAllocations(
+                context,
+                noArgCallback,
+                iterations
+            );
+            long fixedArgumentAllocated = MeasureFixedThreeArgumentContextCallAllocations(
+                context,
+                threeArgCallback,
+                first,
+                second,
+                third,
+                iterations
+            );
+            long spanProbeAllocated = MeasureFixedThreeArgumentContextCallAllocations(
+                context,
+                spanProbeCallback,
+                first,
+                second,
+                third,
+                iterations
+            );
+            long extraBytesPerCall = (fixedArgumentAllocated - noArgumentAllocated) / iterations;
+            long spanProbeExtraBytesPerCall =
+                (spanProbeAllocated - noArgumentAllocated) / iterations;
+
+            await Assert.That(extraBytesPerCall).IsLessThan(16L);
+            await Assert.That(spanProbeExtraBytesPerCall).IsLessThan(16L);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FixedCallOverloadsPreserveLegacyCallbackExpansionSemantics()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue inspect = DynValue.NewCallback(
+                (_, args) =>
+                    DynValue.NewTuple(DynValue.NewNumber(args.Count), args[0], args[1], args[2])
+            );
+            DynValue countVoid = DynValue.NewCallback((_, args) => DynValue.NewNumber(args.Count));
+
+            DynValue expanded = context.Call(
+                inspect,
+                null,
+                DynValue.NewTuple(DynValue.NewNumber(2), null)
+            );
+            DynValue voidTrimmed = context.Call(countVoid, DynValue.NewNumber(1), DynValue.Void);
+
+            await Assert.That(expanded.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(expanded.Tuple.Length).IsEqualTo(4);
+            await Assert.That(expanded.Tuple[0].Number).IsEqualTo(3d);
+            await Assert.That(expanded.Tuple[1].Type).IsEqualTo(DataType.Nil);
+            await Assert.That(expanded.Tuple[2].Number).IsEqualTo(2d);
+            await Assert.That(expanded.Tuple[3].Type).IsEqualTo(DataType.Nil);
+            await Assert.That(voidTrimmed.Number).IsEqualTo(1d);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        public async Task FixedCallOverloadsPreserveLegacyCallbackArity(int arity)
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue inspect = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    double sum = 0d;
+                    for (int i = 0; i < args.Count; i++)
+                    {
+                        sum += args[i].Number;
+                    }
+
+                    return DynValue.NewTuple(
+                        DynValue.NewNumber(args.Count),
+                        DynValue.NewNumber(sum)
+                    );
+                }
+            );
+
+            DynValue result = arity switch
+            {
+                1 => context.Call(inspect, DynValue.NewNumber(1)),
+                2 => context.Call(inspect, DynValue.NewNumber(1), DynValue.NewNumber(2)),
+                3 => context.Call(
+                    inspect,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3)
+                ),
+                4 => context.Call(
+                    inspect,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(4)
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo((double)arity);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(arity * (arity + 1) / 2d);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        public async Task FixedCallOverloadsPreserveLegacyCallbackSpecialArguments(int arity)
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue inspect = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    double nilCount = 0d;
+                    double sum = 0d;
+
+                    for (int i = 0; i < args.Count; i++)
+                    {
+                        DynValue arg = args[i];
+                        if (arg.Type == DataType.Nil)
+                        {
+                            nilCount++;
+                        }
+                        else
+                        {
+                            sum += arg.Number;
+                        }
+                    }
+
+                    return DynValue.NewTuple(
+                        DynValue.NewNumber(args.Count),
+                        DynValue.NewNumber(nilCount),
+                        DynValue.NewNumber(sum)
+                    );
+                }
+            );
+
+            DynValue result = arity switch
+            {
+                1 => context.Call(inspect, (DynValue)null),
+                2 => context.Call(inspect, DynValue.NewNumber(1), DynValue.Void),
+                3 => context.Call(
+                    inspect,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewTuple(DynValue.NewNumber(3), null)
+                ),
+                4 => context.Call(
+                    inspect,
+                    null,
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewTuple(DynValue.NewNumber(4), null)
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+
+            double expectedCount = arity switch
+            {
+                1 => 1d,
+                2 => 1d,
+                3 => 4d,
+                4 => 5d,
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+            double expectedNilCount = arity switch
+            {
+                1 => 1d,
+                2 => 0d,
+                3 => 1d,
+                4 => 2d,
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+            double expectedSum = arity switch
+            {
+                1 => 0d,
+                2 => 1d,
+                3 => 6d,
+                4 => 9d,
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(expectedCount);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(expectedNilCount);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(expectedSum);
         }
 
         [global::TUnit.Core.Test]
@@ -372,11 +648,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
             Table target = new(script);
             Table meta = new(script);
-            meta.Set("__call", DynValue.NewCallback((_, _) => DynValue.NewString("called")));
+            meta.Set(
+                "__call",
+                DynValue.NewCallback(
+                    (_, args) =>
+                        DynValue.NewTuple(
+                            DynValue.NewBoolean(args.Count == 2),
+                            DynValue.NewBoolean(ReferenceEquals(args[0].Table, target)),
+                            args[1]
+                        )
+                )
+            );
             target.MetaTable = meta;
 
             DynValue result = context.Call(DynValue.NewTable(target), DynValue.NewNumber(1));
-            await Assert.That(result.String).IsEqualTo("called");
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].Boolean).IsTrue();
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(1d);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallFollowsChainedCallMetamethodsWithSelfArguments()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Table target = new(script);
+            Table proxy = new(script);
+            Table targetMeta = new(script);
+            Table proxyMeta = new(script);
+            targetMeta.Set("__call", DynValue.NewTable(proxy));
+            proxyMeta.Set(
+                "__call",
+                DynValue.NewCallback(
+                    (_, args) =>
+                        DynValue.NewTuple(
+                            DynValue.NewBoolean(args.Count == 3),
+                            DynValue.NewBoolean(ReferenceEquals(args[0].Table, proxy)),
+                            DynValue.NewBoolean(ReferenceEquals(args[1].Table, target)),
+                            args[2]
+                        )
+                )
+            );
+            target.MetaTable = targetMeta;
+            proxy.MetaTable = proxyMeta;
+
+            DynValue result = context.Call(DynValue.NewTable(target), DynValue.NewNumber(9));
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].Boolean).IsTrue();
+            await Assert.That(result.Tuple[2].Boolean).IsTrue();
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(9d);
         }
 
         [global::TUnit.Core.Test]
@@ -614,6 +937,53 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         private static Script CreateScript(LuaCompatibilityVersion version)
         {
             return new Script(version, CoreModulePresets.Complete);
+        }
+
+        private static long MeasureNoArgumentContextCallAllocations(
+            ScriptExecutionContext context,
+            DynValue callback,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = context.Call(callback);
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "No-argument context call allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedThreeArgumentContextCallAllocations(
+            ScriptExecutionContext context,
+            DynValue callback,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = context.Call(callback, first, second, third);
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Fixed-argument context call allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
         }
 
         private static DynValue LastTailCall;
