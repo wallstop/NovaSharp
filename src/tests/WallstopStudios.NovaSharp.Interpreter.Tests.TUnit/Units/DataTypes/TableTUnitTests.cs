@@ -249,6 +249,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("missing", "did not point to anything", false)]
+        [global::TUnit.Core.Arguments("leaf", "did not point to a table", true)]
+        public async Task NestedPathErrorsIncludeOffendingKey(
+            string key,
+            string expectedMessage,
+            bool seedNonTable
+        )
+        {
+            Table table = new(new Script());
+            if (seedNonTable)
+            {
+                table.Set(key, DynValue.NewNumber(5));
+            }
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.RawGet(key, "child")
+            );
+
+            await Assert.That(exception.Message).Contains(expectedMessage).ConfigureAwait(false);
+            await Assert.That(exception.Message).Contains(key).ConfigureAwait(false);
+            await Assert.That(exception.Message).DoesNotContain("{0}").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]

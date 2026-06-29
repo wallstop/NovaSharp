@@ -97,6 +97,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 }
             );
 
+            List<DynValue> nilSelf = new() { null };
+            function.Invoke(context, nilSelf, isMethodCall: true);
+            await Assert.That(captured).IsNotNull().ConfigureAwait(false);
+            await Assert.That(captured!.IsMethodCall).IsFalse().ConfigureAwait(false);
+
             List<DynValue> nonUserData = new() { DynValue.NewString("self") };
             function.Invoke(context, nonUserData, isMethodCall: true);
             await Assert.That(captured).IsNotNull().ConfigureAwait(false);
@@ -131,6 +136,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 }
             );
 
+            List<DynValue> nilSelf = new() { null };
+            function.Invoke(context, nilSelf, isMethodCall: true);
+            await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
+
             List<DynValue> nonUserData = new() { DynValue.NewString("self") };
             function.Invoke(context, nonUserData, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
@@ -144,6 +153,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             function.Invoke(context, userDataArgs, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallArgumentViewTreatsNullFixedArgumentsAsNil()
+        {
+            Script script = new();
+
+            DataType? capturedType = null;
+            bool? capturedIsMethodCall = null;
+            CallbackFunction function = CallbackFunction.FromArgumentView(
+                (_, args) =>
+                {
+                    capturedType = args[0].Type;
+                    capturedIsMethodCall = args.IsMethodCall;
+                    return DynValue.Nil;
+                }
+            );
+
+            script.Call(DynValue.NewCallback(function), (DynValue)null);
+
+            await Assert.That(capturedType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallLegacyCallbackTreatsNullFixedArgumentsAsNil()
+        {
+            Script script = new();
+
+            DataType? capturedType = null;
+            CallbackFunction function = new(
+                (_, args) =>
+                {
+                    capturedType = args[0].Type;
+                    return DynValue.Nil;
+                }
+            );
+
+            script.Call(DynValue.NewCallback(function), (DynValue)null);
+
+            await Assert.That(capturedType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

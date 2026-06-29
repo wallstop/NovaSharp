@@ -65,6 +65,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             }
         }
 
+        private readonly struct NullStoredArgumentResult
+        {
+            public int Count { get; }
+            public DataType RawType { get; }
+            public DataType IndexerType { get; }
+            public DataType CopyType { get; }
+
+            public NullStoredArgumentResult(
+                int count,
+                DataType rawType,
+                DataType indexerType,
+                DataType copyType
+            )
+            {
+                Count = count;
+                RawType = rawType;
+                IndexerType = indexerType;
+                CopyType = copyType;
+            }
+        }
+
+        private readonly struct TryGetSpanMetadata
+        {
+            public bool Success { get; }
+            public int Length { get; }
+
+            public TryGetSpanMetadata(bool success, int length)
+            {
+                Success = success;
+                Length = length;
+            }
+        }
+
         private static TryGetSpanResult ExecuteTryGetSpan(CallbackArguments args)
         {
             bool result = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
@@ -123,6 +156,67 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 args[0].Number,
                 args[1].Number
             );
+        }
+
+        private static NullStoredArgumentResult ExecuteNullStoredArgumentView()
+        {
+            CallbackArgumentsView args = new(DynValue.NewNumber(1), null, isMethodCall: false);
+            DynValue raw = args.RawGet(1, translateVoids: false);
+            DynValue value = args[1];
+            DynValue[] buffer = new DynValue[args.Count];
+            args.CopyTo(buffer);
+
+            return new NullStoredArgumentResult(args.Count, raw.Type, value.Type, buffer[1].Type);
+        }
+
+        private static NullStoredArgumentResult ExecuteNullTupleExpansion(bool useArgumentView)
+        {
+            DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(10), null);
+            DynValue[] backing = new[] { DynValue.NewNumber(1), tuple };
+
+            if (useArgumentView)
+            {
+                CallbackArgumentsView args = new((IList<DynValue>)backing, false);
+                DynValue raw = args.RawGet(2, translateVoids: false);
+                DynValue value = args[2];
+                DynValue[] buffer = new DynValue[args.Count];
+                args.CopyTo(buffer);
+
+                return new NullStoredArgumentResult(
+                    args.Count,
+                    raw.Type,
+                    value.Type,
+                    buffer[2].Type
+                );
+            }
+            else
+            {
+                CallbackArguments args = new(backing, false);
+                DynValue raw = args.RawGet(2, translateVoids: false);
+                DynValue value = args[2];
+                DynValue[] buffer = new DynValue[args.Count];
+                args.CopyTo(buffer);
+
+                return new NullStoredArgumentResult(
+                    args.Count,
+                    raw.Type,
+                    value.Type,
+                    buffer[2].Type
+                );
+            }
+        }
+
+        private static TryGetSpanMetadata ExecuteTryGetSpanMetadata(CallbackArguments args)
+        {
+            bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            return new TryGetSpanMetadata(success, span.Length);
+        }
+
+        private static TryGetSpanMetadata ExecuteViewTryGetSpanMetadata(DynValue[] backing)
+        {
+            CallbackArgumentsView args = new((IList<DynValue>)backing, false);
+            bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            return new TryGetSpanMetadata(success, span.Length);
         }
 
         private static CopyToResult ExecuteCopyTo(
@@ -242,6 +336,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .ConfigureAwait(false);
             await Assert.That(result.First).IsEqualTo(10d).ConfigureAwait(false);
             await Assert.That(result.Second).IsEqualTo(20d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArgumentViewTreatsNullStoredArgumentsAsNil()
+        {
+            NullStoredArgumentResult result = ExecuteNullStoredArgumentView();
+
+            await Assert.That(result.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.RawType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(result.IndexerType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(result.CopyType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments(false)]
+        [Arguments(true)]
+        public async Task CallbackArgumentsTreatTupleExpandedNullsAsNil(bool useArgumentView)
+        {
+            NullStoredArgumentResult result = ExecuteNullTupleExpansion(useArgumentView);
+
+            await Assert.That(result.Count).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.RawType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(result.IndexerType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(result.CopyType).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsFalseWhenArrayContainsNull()
+        {
+            DynValue[] backing = new[] { DynValue.NewNumber(1), null };
+            CallbackArguments args = new(backing, false);
+
+            TryGetSpanMetadata legacy = ExecuteTryGetSpanMetadata(args);
+            TryGetSpanMetadata view = ExecuteViewTryGetSpanMetadata(backing);
+
+            await Assert.That(legacy.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(legacy.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(view.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(view.Length).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [Test]

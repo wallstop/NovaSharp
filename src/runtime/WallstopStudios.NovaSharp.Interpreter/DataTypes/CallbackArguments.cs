@@ -27,7 +27,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (_args.Count > 0)
             {
-                DynValue last = _args[^1];
+                DynValue last = _args[^1] ?? DynValue.Nil;
 
                 if (last.Type == DataType.Tuple)
                 {
@@ -89,18 +89,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (!_lastIsTuple || index < _args.Count - 1)
             {
-                v = _args[index];
+                v = _args[index] ?? DynValue.Nil;
             }
             else
             {
-                v = _args[^1].Tuple[index - (_args.Count - 1)];
+                v = _args[^1].Tuple[index - (_args.Count - 1)] ?? DynValue.Nil;
             }
 
             if (v.Type == DataType.Tuple)
             {
                 if (v.Tuple.Length > 0)
                 {
-                    v = v.Tuple[0];
+                    v = v.Tuple[0] ?? DynValue.Nil;
                 }
                 else
                 {
@@ -278,11 +278,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Tries to get a read-only span of the arguments when the backing storage is contiguous.
         /// </summary>
         /// <param name="span">When successful, contains the arguments as a span.</param>
-        /// <returns><c>true</c> if the span could be obtained; <c>false</c> if the backing is not contiguous or contains tuple expansion.</returns>
+        /// <returns><c>true</c> if the span could be obtained; <c>false</c> if the backing is not contiguous, contains tuple expansion, or requires null-to-nil normalization.</returns>
         /// <remarks>
         /// This method only succeeds when the arguments are stored in a contiguous array or list
-        /// and there is no tuple expansion at the end. Use this in hot paths where avoiding
-        /// allocation is critical.
+        /// and there is no tuple expansion or null normalization required. Use this in hot paths
+        /// where avoiding allocation is critical.
         /// </remarks>
         public bool TryGetSpan(out ReadOnlySpan<DynValue> span)
         {
@@ -297,6 +297,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             if (_args is DynValue[] array)
             {
                 span = new ReadOnlySpan<DynValue>(array, 0, _count);
+                if (ContainsNull(span))
+                {
+                    span = default;
+                    return false;
+                }
+
                 return true;
             }
 
@@ -309,6 +315,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             span = default;
+            return false;
+        }
+
+        private static bool ContainsNull(ReadOnlySpan<DynValue> span)
+        {
+            for (int i = 0; i < span.Length; i++)
+            {
+                if (span[i] == null)
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 

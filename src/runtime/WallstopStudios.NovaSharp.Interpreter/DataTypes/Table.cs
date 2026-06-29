@@ -191,12 +191,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (value == null)
             {
-                throw new ScriptRuntimeException("Key '{0}' did not point to anything");
+                throw new ScriptRuntimeException("Key '{0}' did not point to anything", key);
             }
 
             if (value.Type != DataType.Table)
             {
-                throw new ScriptRuntimeException("Key '{0}' did not point to a table");
+                throw new ScriptRuntimeException("Key '{0}' did not point to a table", key);
             }
 
             return value.Table;

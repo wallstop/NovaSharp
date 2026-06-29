@@ -289,12 +289,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
             else
             {
-                value = GetStoredArgument(_storedCount - 1).Tuple[index - (visibleStoredCount - 1)];
+                value =
+                    GetStoredArgument(_storedCount - 1).Tuple[index - (visibleStoredCount - 1)]
+                    ?? DynValue.Nil;
             }
 
             if (value.Type == DataType.Tuple)
             {
-                value = value.Tuple.Length > 0 ? value.Tuple[0] : DynValue.Nil;
+                value = value.Tuple.Length > 0 ? value.Tuple[0] ?? DynValue.Nil : DynValue.Nil;
             }
 
             if (translateVoids && value.Type == DataType.Void)
@@ -371,7 +373,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             span = _span.Slice(_offset, _count);
+            if (ContainsNull(span))
+            {
+                span = default;
+                return false;
+            }
+
             return true;
+        }
+
+        private static bool ContainsNull(ReadOnlySpan<DynValue> span)
+        {
+            for (int i = 0; i < span.Length; i++)
+            {
+                if (span[i] == null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -409,24 +430,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private DynValue GetStoredArgument(int index)
         {
-            switch (_source)
+            DynValue value = _source switch
             {
-                case SourceFixed:
-                    return index switch
-                    {
-                        0 => _arg0,
-                        1 => _arg1,
-                        2 => _arg2,
-                        3 => _arg3,
-                        _ => throw new ArgumentOutOfRangeException(nameof(index)),
-                    };
-                case SourceSpan:
-                    return _span[index];
-                case SourceList:
-                    return _list[index];
-                default:
-                    throw new InvalidOperationException("Unsupported callback argument source.");
-            }
+                SourceFixed => index switch
+                {
+                    0 => _arg0,
+                    1 => _arg1,
+                    2 => _arg2,
+                    3 => _arg3,
+                    _ => throw new ArgumentOutOfRangeException(nameof(index)),
+                },
+                SourceSpan => _span[index],
+                SourceList => _list[index],
+                _ => throw new InvalidOperationException("Unsupported callback argument source."),
+            };
+
+            return value ?? DynValue.Nil;
         }
     }
 }

@@ -303,7 +303,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (colon == ColonOperatorBehaviour.TreatAsDotOnUserData)
             {
-                return count > 0 && firstArgument.Type == DataType.UserData;
+                return count > 0 && firstArgument?.Type == DataType.UserData;
             }
 
             return isMethodCall;
