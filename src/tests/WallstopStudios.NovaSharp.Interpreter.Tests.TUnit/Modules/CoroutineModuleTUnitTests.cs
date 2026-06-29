@@ -1,20 +1,52 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
+    using System.Collections.Generic;
+    using System.Reflection;
+    using System.Reflection.Emit;
     using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class CoroutineModuleTUnitTests
     {
+        private static readonly OpCode[] SingleByteOpCodes = new OpCode[256];
+        private static readonly OpCode[] MultiByteOpCodes = new OpCode[256];
+
+        static CoroutineModuleTUnitTests()
+        {
+            FieldInfo[] fields = typeof(OpCodes).GetFields(
+                BindingFlags.Public | BindingFlags.Static
+            );
+            for (int i = 0; i < fields.Length; i++)
+            {
+                if (fields[i].GetValue(null) is not OpCode opCode)
+                {
+                    continue;
+                }
+
+                ushort value = unchecked((ushort)opCode.Value);
+                if (value < 0x100)
+                {
+                    SingleByteOpCodes[value] = opCode;
+                }
+                else if ((value & 0xff00) == 0xfe00)
+                {
+                    MultiByteOpCodes[value & 0xff] = opCode;
+                }
+            }
+        }
+
         // =====================================================
         // coroutine.running() Tests (Version-specific behavior)
         // Lua 5.1: returns only the coroutine
@@ -480,6 +512,99 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
+        public async Task ResumeAndWrapDispatchThroughFixedArityCoroutinePaths()
+        {
+            MethodInfo getArray = RequireMethod(
+                typeof(CallbackArguments),
+                nameof(CallbackArguments.GetArray),
+                typeof(int)
+            );
+            MethodInfo moduleResume = RequireMethod(
+                typeof(CoroutineModule),
+                nameof(CoroutineModule.Resume),
+                typeof(ScriptExecutionContext),
+                typeof(CallbackArguments)
+            );
+            MethodInfo helper = RequireMethod(
+                typeof(CoroutineModule),
+                "ResumeCoroutineWithArguments",
+                BindingFlags.NonPublic | BindingFlags.Static,
+                typeof(Coroutine),
+                typeof(CallbackArguments),
+                typeof(int)
+            );
+            MethodInfo resumeOne = RequireMethod(
+                typeof(Coroutine),
+                nameof(Coroutine.Resume),
+                typeof(DynValue)
+            );
+            MethodInfo resumeTwo = RequireMethod(
+                typeof(Coroutine),
+                nameof(Coroutine.Resume),
+                typeof(DynValue),
+                typeof(DynValue)
+            );
+            MethodInfo resumeThree = RequireMethod(
+                typeof(Coroutine),
+                nameof(Coroutine.Resume),
+                typeof(DynValue),
+                typeof(DynValue),
+                typeof(DynValue)
+            );
+            MethodInfo resumeFour = RequireMethod(
+                typeof(Coroutine),
+                nameof(Coroutine.Resume),
+                typeof(DynValue),
+                typeof(DynValue),
+                typeof(DynValue),
+                typeof(DynValue)
+            );
+
+            await Assert
+                .That(CountMethodCalls(moduleResume, getArray))
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(moduleResume, helper))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(CountMethodCalls(helper, getArray))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(helper, resumeOne))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(helper, resumeTwo))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(helper, resumeThree))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(helper, resumeFour))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+
+            List<MethodInfo> nestedMethods = GetCoroutineModuleNestedMethods();
+            int nestedGetArrayCalls = 0;
+            int nestedHelperCalls = 0;
+            for (int i = 0; i < nestedMethods.Count; i++)
+            {
+                MethodInfo method = nestedMethods[i];
+                nestedGetArrayCalls += CountMethodCalls(method, getArray);
+                nestedHelperCalls += CountMethodCalls(method, helper);
+            }
+
+            await Assert.That(nestedGetArrayCalls).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(nestedHelperCalls).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task ResumeFlattensTrailingTupleResults(LuaCompatibilityVersion version)
         {
@@ -545,6 +670,139 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             await Assert.That(result.String).IsEqualTo("alpha-beta-gamma").ConfigureAwait(false);
+        }
+
+        private static List<MethodInfo> GetCoroutineModuleNestedMethods()
+        {
+            Type[] nestedTypes = typeof(CoroutineModule).GetNestedTypes(BindingFlags.NonPublic);
+            List<MethodInfo> methods = new(nestedTypes.Length);
+            const BindingFlags flags =
+                BindingFlags.Public
+                | BindingFlags.NonPublic
+                | BindingFlags.Instance
+                | BindingFlags.Static
+                | BindingFlags.DeclaredOnly;
+
+            for (int i = 0; i < nestedTypes.Length; i++)
+            {
+                MethodInfo[] declaredMethods = nestedTypes[i].GetMethods(flags);
+                for (int j = 0; j < declaredMethods.Length; j++)
+                {
+                    methods.Add(declaredMethods[j]);
+                }
+            }
+
+            return methods;
+        }
+
+        private static MethodInfo RequireMethod(
+            Type type,
+            string name,
+            params Type[] parameterTypes
+        )
+        {
+            const BindingFlags flags =
+                BindingFlags.Public
+                | BindingFlags.NonPublic
+                | BindingFlags.Instance
+                | BindingFlags.Static;
+            return RequireMethod(type, name, flags, parameterTypes);
+        }
+
+        private static MethodInfo RequireMethod(
+            Type type,
+            string name,
+            BindingFlags bindingFlags,
+            params Type[] parameterTypes
+        )
+        {
+            MethodInfo method = type.GetMethod(name, bindingFlags, null, parameterTypes, null);
+            if (method == null)
+            {
+                throw new MissingMethodException(type.FullName, name);
+            }
+
+            return method;
+        }
+
+        private static int CountMethodCalls(MethodInfo method, MethodInfo target)
+        {
+            MethodBody body = method.GetMethodBody();
+            byte[] il = body?.GetILAsByteArray() ?? Array.Empty<byte>();
+            Module module = method.Module;
+            Type[] typeArguments = method.DeclaringType?.GetGenericArguments() ?? Type.EmptyTypes;
+            Type[] methodArguments = method.GetGenericArguments();
+            int count = 0;
+
+            for (int offset = 0; offset < il.Length; )
+            {
+                OpCode opCode = ReadOpCode(il, ref offset);
+                if (opCode.OperandType == OperandType.InlineMethod)
+                {
+                    int token = BitConverter.ToInt32(il, offset);
+                    offset += sizeof(int);
+                    MethodBase resolved = module.ResolveMethod(
+                        token,
+                        typeArguments,
+                        methodArguments
+                    );
+                    if (
+                        resolved.Module == target.Module
+                        && resolved.MetadataToken == target.MetadataToken
+                    )
+                    {
+                        count++;
+                    }
+                    continue;
+                }
+
+                offset += GetOperandSize(opCode.OperandType, il, offset);
+            }
+
+            return count;
+        }
+
+        private static OpCode ReadOpCode(byte[] il, ref int offset)
+        {
+            byte value = il[offset++];
+            if (value == 0xfe)
+            {
+                return MultiByteOpCodes[il[offset++]];
+            }
+
+            return SingleByteOpCodes[value];
+        }
+
+        private static int GetOperandSize(OperandType operandType, byte[] il, int offset)
+        {
+            switch (operandType)
+            {
+                case OperandType.InlineNone:
+                    return 0;
+                case OperandType.ShortInlineBrTarget:
+                case OperandType.ShortInlineI:
+                case OperandType.ShortInlineVar:
+                    return 1;
+                case OperandType.InlineVar:
+                    return 2;
+                case OperandType.InlineBrTarget:
+                case OperandType.InlineField:
+                case OperandType.InlineI:
+                case OperandType.InlineSig:
+                case OperandType.InlineString:
+                case OperandType.InlineTok:
+                case OperandType.InlineType:
+                case OperandType.ShortInlineR:
+                    return 4;
+                case OperandType.InlineI8:
+                case OperandType.InlineR:
+                    return 8;
+                case OperandType.InlineSwitch:
+                    int targetCount = BitConverter.ToInt32(il, offset);
+                    return sizeof(int) + (targetCount * sizeof(int));
+                default:
+                    throw new NotSupportedException($"Unsupported IL operand type: {operandType}");
+            }
         }
 
         // =====================================================

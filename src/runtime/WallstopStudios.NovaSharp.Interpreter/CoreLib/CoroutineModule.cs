@@ -63,7 +63,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             DynValue handle = Create(executionContext, args);
             return DynValue.NewCallback(
-                (ctx, callArgs) => handle.Coroutine.Resume(callArgs.GetArray())
+                (ctx, callArgs) => ResumeCoroutineWithArguments(handle.Coroutine, callArgs, 0)
             );
         }
 
@@ -89,7 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             try
             {
-                DynValue ret = handle.Coroutine.Resume(args.GetArray(1));
+                DynValue ret = ResumeCoroutineWithArguments(handle.Coroutine, args, 1);
 
                 using (ListPool<DynValue>.Get(out List<DynValue> retval))
                 {
@@ -122,6 +122,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             catch (ScriptRuntimeException ex)
             {
                 return DynValue.NewTuple(DynValue.False, DynValue.NewString(ex.Message));
+            }
+        }
+
+        private static DynValue ResumeCoroutineWithArguments(
+            Coroutine coroutine,
+            CallbackArguments args,
+            int skip
+        )
+        {
+            int count = args.Count - skip;
+            if (count <= 0)
+            {
+                return coroutine.Resume();
+            }
+
+            switch (count)
+            {
+                case 1:
+                    return coroutine.Resume(args[skip]);
+                case 2:
+                    return coroutine.Resume(args[skip], args[skip + 1]);
+                case 3:
+                    return coroutine.Resume(args[skip], args[skip + 1], args[skip + 2]);
+                case 4:
+                    return coroutine.Resume(
+                        args[skip],
+                        args[skip + 1],
+                        args[skip + 2],
+                        args[skip + 3]
+                    );
+                default:
+                    return coroutine.Resume(args.GetArray(skip));
             }
         }
 
