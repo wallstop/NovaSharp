@@ -1458,7 +1458,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             // fallback to __call metamethod
             DynValue m = GetMetamethod(fn, Metamethods.Call);
 
-            if (m != null && m.IsNotNil())
+            if (m != null && m.IsNotNil() && CanCallMetamethod(m))
             {
                 // Use pooled array for __call metamethod invocation
                 using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
@@ -1482,6 +1482,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, debugText);
+        }
+
+        private bool CanCallMetamethod(DynValue metamethod)
+        {
+            return LuaVersionDefaults.Resolve(_script.Options.CompatibilityVersion)
+                    >= LuaCompatibilityVersion.Lua54
+                || metamethod.Type == DataType.Function
+                || metamethod.Type == DataType.ClrFunction;
         }
 
         private int PerformTco(int instructionPtr, int argsCount)

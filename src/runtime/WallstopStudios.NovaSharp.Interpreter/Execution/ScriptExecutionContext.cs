@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using System;
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
@@ -513,7 +514,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 {
                     DynValue v = GetMetamethod(func, Metamethods.Call);
 
-                    if (v == null || v.IsNil())
+                    if (v == null || v.IsNil() || !CanCallMetamethod(v))
                     {
                         throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
                     }
@@ -539,6 +540,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
                 throw ScriptRuntimeException.LoopInCall();
             }
+        }
+
+        private bool CanCallMetamethod(DynValue metafunction)
+        {
+            return LuaVersionDefaults.Resolve(Script.Options.CompatibilityVersion)
+                    >= LuaCompatibilityVersion.Lua54
+                || metafunction.Type == DataType.Function
+                || metafunction.Type == DataType.ClrFunction;
         }
 
         private DynValue CompleteDirectClrCall(DynValue ret)

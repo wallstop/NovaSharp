@@ -311,7 +311,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
-        public async Task FixedCallOverloadsPreserveLegacyCallbackArgumentsWithoutArraySpan(
+        public async Task FixedCallOverloadsPreserveLegacyCallbackArgumentsWithFixedStorageSpan(
             LuaCompatibilityVersion version
         )
         {
@@ -345,8 +345,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             DynValue result = script.DoString("return callInner()");
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
-            await Assert.That(result.Tuple[0].Boolean).IsFalse();
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(0d);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(3d);
             await Assert.That(result.Tuple[2].Number).IsEqualTo(3d);
             await Assert.That(result.Tuple[3].Number).IsEqualTo(10d);
             await Assert.That(result.Tuple[4].Number).IsEqualTo(20d);
@@ -393,10 +393,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 (_, args) =>
                 {
                     bool hasSpan = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
-                    if (hasSpan || span.Length != 0)
+                    if (!hasSpan || span.Length != 3)
                     {
                         throw new InvalidOperationException(
-                            "Fixed-argument allocation probe unexpectedly exposed a span."
+                            "Fixed-argument allocation probe did not expose the expected span."
                         );
                     }
 
@@ -669,7 +669,71 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallFollowsChainedCallMetamethodsWithSelfArguments()
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task CallRejectsChainedCallMetamethodsBeforeLua54(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Table target = new(script);
+            Table proxy = new(script);
+            Table targetMeta = new(script);
+            Table proxyMeta = new(script);
+            targetMeta.Set("__call", DynValue.NewTable(proxy));
+            proxyMeta.Set(
+                "__call",
+                DynValue.NewCallback((_, _) => DynValue.NewString("unexpected"))
+            );
+            target.MetaTable = targetMeta;
+            proxy.MetaTable = proxyMeta;
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                context.Call(DynValue.NewTable(target), DynValue.NewNumber(9))
+            );
+
+            await Assert.That(exception.Message).Contains("attempt to call");
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CallFollowsChainedCallMetamethodsWithSelfArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Table target = new(script);
+            Table proxy = new(script);
+            Table targetMeta = new(script);
+            Table proxyMeta = new(script);
+            targetMeta.Set("__call", DynValue.NewTable(proxy));
+            proxyMeta.Set(
+                "__call",
+                DynValue.NewCallback(
+                    (_, args) =>
+                        DynValue.NewTuple(
+                            DynValue.NewBoolean(args.Count == 3),
+                            DynValue.NewBoolean(ReferenceEquals(args[0].Table, proxy)),
+                            DynValue.NewBoolean(ReferenceEquals(args[1].Table, target)),
+                            args[2]
+                        )
+                )
+            );
+            target.MetaTable = targetMeta;
+            proxy.MetaTable = proxyMeta;
+
+            DynValue result = context.Call(DynValue.NewTable(target), DynValue.NewNumber(9));
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue();
+            await Assert.That(result.Tuple[1].Boolean).IsTrue();
+            await Assert.That(result.Tuple[2].Boolean).IsTrue();
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(9d);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DefaultCallFollowsChainedCallMetamethodsWithSelfArguments()
         {
             Script script = new(default(CoreModules));
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
@@ -857,9 +921,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallThrowsLoopInCallWhenCallMetamethodChainExceedsLimit()
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task CallThrowsLoopInCallWhenCallMetamethodChainExceedsLimit(
+            LuaCompatibilityVersion version
+        )
         {
-            Script script = new(default(CoreModules));
+            Script script = CreateScript(version);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
 
             // Create a chain of tables where each __call metamethod returns another table

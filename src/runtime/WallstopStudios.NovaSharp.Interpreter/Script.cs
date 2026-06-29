@@ -977,6 +977,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 );
             }
 
+            if (function.Type == DataType.ClrFunction)
+            {
+                return function.Callback.InvokeLegacyFixed(
+                    CreateDynamicExecutionContext(function.Callback)
+                );
+            }
+
             return Call(function, Array.Empty<DynValue>());
         }
 
@@ -1009,14 +1016,17 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction)
             {
-                return Call(function, new DynValue[] { arg });
+                return function.Callback.InvokeLegacyFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg
+                );
             }
 
             if (function.Type != DataType.Function)
             {
                 DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
 
-                if (metafunction != null)
+                if (metafunction != null && CanCallMetamethod(metafunction))
                 {
                     return Call(metafunction, function, arg);
                 }
@@ -1062,14 +1072,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction)
             {
-                return Call(function, new DynValue[] { arg1, arg2 });
+                return function.Callback.InvokeLegacyFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2
+                );
             }
 
             if (function.Type != DataType.Function)
             {
                 DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
 
-                if (metafunction != null)
+                if (metafunction != null && CanCallMetamethod(metafunction))
                 {
                     return Call(metafunction, function, arg1, arg2);
                 }
@@ -1118,14 +1132,19 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction)
             {
-                return Call(function, new DynValue[] { arg1, arg2, arg3 });
+                return function.Callback.InvokeLegacyFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2,
+                    arg3
+                );
             }
 
             if (function.Type != DataType.Function)
             {
                 DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
 
-                if (metafunction != null)
+                if (metafunction != null && CanCallMetamethod(metafunction))
                 {
                     return Call(metafunction, function, arg1, arg2, arg3);
                 }
@@ -1184,14 +1203,20 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction)
             {
-                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4 });
+                return function.Callback.InvokeLegacyFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4
+                );
             }
 
             if (function.Type != DataType.Function)
             {
                 DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
 
-                if (metafunction != null)
+                if (metafunction != null && CanCallMetamethod(metafunction))
                 {
                     return Call(metafunction, function, arg1, arg2, arg3, arg4);
                 }
@@ -1236,30 +1261,41 @@ namespace WallstopStudios.NovaSharp.Interpreter
             this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(args);
 
-            if (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
+            int maxloops = 10;
+
+            while (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
             {
+                if (maxloops <= 0)
+                {
+                    throw ScriptRuntimeException.LoopInCall();
+                }
+
                 DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
 
-                if (metafunction != null)
-                {
-                    DynValue[] metaargs = new DynValue[args.Length + 1];
-                    metaargs[0] = function;
-                    for (int i = 0; i < args.Length; i++)
-                    {
-                        metaargs[i + 1] = args[i];
-                    }
-
-                    function = metafunction;
-                    args = metaargs;
-                }
-                else
+                if (
+                    metafunction == null
+                    || metafunction.IsNil()
+                    || !CanCallMetamethod(metafunction)
+                )
                 {
                     throw new ArgumentException(
                         "function is not a function and has no __call metamethod."
                     );
                 }
+
+                DynValue[] metaargs = new DynValue[args.Length + 1];
+                metaargs[0] = function;
+                for (int i = 0; i < args.Length; i++)
+                {
+                    metaargs[i + 1] = args[i];
+                }
+
+                function = metafunction;
+                args = metaargs;
+                maxloops--;
             }
-            else if (function.Type == DataType.ClrFunction)
+
+            if (function.Type == DataType.ClrFunction)
             {
                 return function.Callback.Invoke(
                     CreateDynamicExecutionContext(function.Callback),
@@ -1271,6 +1307,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 (_mainProcessor, function, args),
                 static state => state._mainProcessor.Call(state.function, state.args)
             );
+        }
+
+        private bool CanCallMetamethod(DynValue metafunction)
+        {
+            return LuaVersionDefaults.Resolve(Options.CompatibilityVersion)
+                    >= LuaCompatibilityVersion.Lua54
+                || metafunction.Type == DataType.Function
+                || metafunction.Type == DataType.ClrFunction;
         }
 
         /// <summary>

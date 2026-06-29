@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.InteropServices;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -12,11 +13,77 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// </summary>
     public class CallbackArguments
     {
+        [StructLayout(LayoutKind.Sequential)]
+        private struct FixedArgumentStorage
+        {
+            internal DynValue _arg0;
+            internal DynValue _arg1;
+            internal DynValue _arg2;
+            internal DynValue _arg3;
+
+            internal FixedArgumentStorage(DynValue arg0)
+            {
+                _arg0 = arg0;
+                _arg1 = null;
+                _arg2 = null;
+                _arg3 = null;
+            }
+
+            internal FixedArgumentStorage(DynValue arg0, DynValue arg1)
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = null;
+                _arg3 = null;
+            }
+
+            internal FixedArgumentStorage(DynValue arg0, DynValue arg1, DynValue arg2)
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = null;
+            }
+
+            internal FixedArgumentStorage(
+                DynValue arg0,
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3
+            )
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+            }
+
+            /// <summary>
+            /// Gets the raw fixed argument stored at the specified index.
+            /// </summary>
+            internal readonly DynValue Get(int index)
+            {
+                return index switch
+                {
+                    0 => _arg0,
+                    1 => _arg1,
+                    2 => _arg2,
+                    3 => _arg3,
+                    _ => null,
+                };
+            }
+
+            /// <summary>
+            /// Exposes the leading fixed arguments as a contiguous read-only span.
+            /// </summary>
+            internal ReadOnlySpan<DynValue> AsSpan(int count)
+            {
+                return MemoryMarshal.CreateReadOnlySpan(ref _arg0, count);
+            }
+        }
+
         private readonly IList<DynValue> _args;
-        private readonly DynValue _arg0;
-        private readonly DynValue _arg1;
-        private readonly DynValue _arg2;
-        private readonly DynValue _arg3;
+        private FixedArgumentStorage _fixedArgs;
         private readonly int _count;
         private readonly int _fixedCount;
         private bool _lastIsTuple;
@@ -29,10 +96,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public CallbackArguments(IList<DynValue> args, bool isMethodCall)
         {
             _args = args;
-            _arg0 = null;
-            _arg1 = null;
-            _arg2 = null;
-            _arg3 = null;
+            _fixedArgs = default;
             _fixedCount = 0;
 
             if (_args.Count > 0)
@@ -52,10 +116,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         internal CallbackArguments(bool isMethodCall)
         {
             _args = null;
-            _arg0 = null;
-            _arg1 = null;
-            _arg2 = null;
-            _arg3 = null;
+            _fixedArgs = default;
             _fixedCount = 0;
             _count = 0;
             _lastIsTuple = false;
@@ -65,36 +126,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         internal CallbackArguments(DynValue arg, bool isMethodCall)
         {
             _args = null;
-            _arg0 = arg;
-            _arg1 = null;
-            _arg2 = null;
-            _arg3 = null;
+            _fixedArgs = new FixedArgumentStorage(arg);
             _fixedCount = 1;
-            _count = CalculateExpandedCount(_fixedCount, _arg0 ?? DynValue.Nil, out _lastIsTuple);
+            _count = CalculateExpandedCount(
+                _fixedCount,
+                _fixedArgs._arg0 ?? DynValue.Nil,
+                out _lastIsTuple
+            );
             IsMethodCall = isMethodCall;
         }
 
         internal CallbackArguments(DynValue arg1, DynValue arg2, bool isMethodCall)
         {
             _args = null;
-            _arg0 = arg1;
-            _arg1 = arg2;
-            _arg2 = null;
-            _arg3 = null;
+            _fixedArgs = new FixedArgumentStorage(arg1, arg2);
             _fixedCount = 2;
-            _count = CalculateExpandedCount(_fixedCount, _arg1 ?? DynValue.Nil, out _lastIsTuple);
+            _count = CalculateExpandedCount(
+                _fixedCount,
+                _fixedArgs._arg1 ?? DynValue.Nil,
+                out _lastIsTuple
+            );
             IsMethodCall = isMethodCall;
         }
 
         internal CallbackArguments(DynValue arg1, DynValue arg2, DynValue arg3, bool isMethodCall)
         {
             _args = null;
-            _arg0 = arg1;
-            _arg1 = arg2;
-            _arg2 = arg3;
-            _arg3 = null;
+            _fixedArgs = new FixedArgumentStorage(arg1, arg2, arg3);
             _fixedCount = 3;
-            _count = CalculateExpandedCount(_fixedCount, _arg2 ?? DynValue.Nil, out _lastIsTuple);
+            _count = CalculateExpandedCount(
+                _fixedCount,
+                _fixedArgs._arg2 ?? DynValue.Nil,
+                out _lastIsTuple
+            );
             IsMethodCall = isMethodCall;
         }
 
@@ -107,12 +171,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             _args = null;
-            _arg0 = arg1;
-            _arg1 = arg2;
-            _arg2 = arg3;
-            _arg3 = arg4;
+            _fixedArgs = new FixedArgumentStorage(arg1, arg2, arg3, arg4);
             _fixedCount = 4;
-            _count = CalculateExpandedCount(_fixedCount, _arg3 ?? DynValue.Nil, out _lastIsTuple);
+            _count = CalculateExpandedCount(
+                _fixedCount,
+                _fixedArgs._arg3 ?? DynValue.Nil,
+                out _lastIsTuple
+            );
             IsMethodCall = isMethodCall;
         }
 
@@ -221,15 +286,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private DynValue GetFixedArgument(int index)
         {
-            DynValue value = index switch
-            {
-                0 => _arg0,
-                1 => _arg1,
-                2 => _arg2,
-                3 => _arg3,
-                _ => null,
-            };
-
+            DynValue value = _fixedArgs.Get(index);
             return value ?? DynValue.Nil;
         }
 
@@ -394,11 +451,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     case 1:
                         return new CallbackArguments(false);
                     case 2:
-                        return new CallbackArguments(_arg1, false);
+                        return new CallbackArguments(_fixedArgs._arg1, false);
                     case 3:
-                        return new CallbackArguments(_arg1, _arg2, false);
+                        return new CallbackArguments(_fixedArgs._arg1, _fixedArgs._arg2, false);
                     case 4:
-                        return new CallbackArguments(_arg1, _arg2, _arg3, false);
+                        return new CallbackArguments(
+                            _fixedArgs._arg1,
+                            _fixedArgs._arg2,
+                            _fixedArgs._arg3,
+                            false
+                        );
                     default:
                         throw new InvalidOperationException("Invalid fixed argument count.");
                 }
@@ -415,9 +477,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="span">When successful, contains the arguments as a span.</param>
         /// <returns><c>true</c> if the span could be obtained; <c>false</c> if the backing is not contiguous, contains tuple expansion, or requires null-to-nil normalization.</returns>
         /// <remarks>
-        /// This method only succeeds when the arguments are stored in a contiguous array or list
-        /// and there is no tuple expansion or null normalization required. Use this in hot paths
-        /// where avoiding allocation is critical.
+        /// This method only succeeds when the arguments are stored in contiguous array-backed or
+        /// fixed-field storage and there is no tuple expansion or null normalization required.
+        /// Use this in hot paths where avoiding allocation is critical.
         /// </remarks>
         public bool TryGetSpan(out ReadOnlySpan<DynValue> span)
         {
@@ -430,8 +492,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (_args == null)
             {
-                span = default;
-                return false;
+                if (_count == 0)
+                {
+                    span = ReadOnlySpan<DynValue>.Empty;
+                    return true;
+                }
+
+                span = _fixedArgs.AsSpan(_count);
+                if (ContainsFixedArgumentNeedingNormalization(span))
+                {
+                    span = default;
+                    return false;
+                }
+
+                return true;
             }
 
             // Try to get span from different backing types
@@ -464,6 +538,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             for (int i = 0; i < span.Length; i++)
             {
                 if (span[i] == null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ContainsFixedArgumentNeedingNormalization(ReadOnlySpan<DynValue> span)
+        {
+            for (int i = 0; i < span.Length; i++)
+            {
+                DynValue value = span[i];
+                if (value == null || value.Type == DataType.Tuple || value.Type == DataType.Void)
                 {
                     return true;
                 }

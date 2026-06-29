@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ScriptCallTUnitTests
     {
@@ -504,37 +505,548 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0)]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        public async Task FixedDynValueCallToLegacyClrFunctionExposesFixedStorageSpan(int arity)
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue callback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    DynValue[] copied = new DynValue[args.Count];
+                    int copiedCount = args.CopyTo(copied);
+                    double sum = 0d;
+                    for (int i = 0; i < copiedCount; i++)
+                    {
+                        sum += copied[i].Number;
+                    }
+
+                    return DynValue.NewTuple(
+                        DynValue.NewNumber(args.Count),
+                        DynValue.NewBoolean(success),
+                        DynValue.NewNumber(span.Length),
+                        DynValue.NewNumber(copiedCount),
+                        DynValue.NewNumber(sum)
+                    );
+                }
+            );
+
+            DynValue result = CallLegacyCallbackWithSequentialArguments(script, callback, arity);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[3].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[4].Number)
+                .IsEqualTo(arity * (arity + 1) / 2d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        public async Task FixedDynValueCallToLegacyClrFunctionPreservesArity(int arity)
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue inspect = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    double sum = 0d;
+                    for (int i = 0; i < args.Count; i++)
+                    {
+                        sum += args[i].Number;
+                    }
+
+                    return DynValue.NewTuple(
+                        DynValue.NewNumber(args.Count),
+                        DynValue.NewNumber(sum)
+                    );
+                }
+            );
+
+            DynValue result = CallLegacyCallbackWithSequentialArguments(script, inspect, arity);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(arity * (arity + 1) / 2d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        public async Task FixedDynValueCallToLegacyClrFunctionPreservesSpecialArguments(int arity)
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue inspect = DynValue.NewCallback((_, args) => SummarizeArguments(args));
+
+            DynValue result = arity switch
+            {
+                1 => script.Call(inspect, (DynValue)null),
+                2 => script.Call(inspect, DynValue.NewNumber(1), DynValue.Void),
+                3 => script.Call(
+                    inspect,
+                    DynValue.NewNumber(1),
+                    DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
+                    DynValue.NewTuple(DynValue.NewNumber(3), null)
+                ),
+                4 => script.Call(
+                    inspect,
+                    null,
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewTuple(DynValue.NewNumber(4), null)
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+
+            double expectedCount = arity switch
+            {
+                1 => 1d,
+                2 => 1d,
+                3 => 4d,
+                4 => 5d,
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+            double expectedNilCount = arity switch
+            {
+                1 => 1d,
+                2 => 0d,
+                3 => 1d,
+                4 => 2d,
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+            double expectedSum = arity switch
+            {
+                1 => 0d,
+                2 => 1d,
+                3 => 6d,
+                4 => 9d,
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo(expectedCount)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo(expectedNilCount)
+                .ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(expectedSum).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FixedDynValueCallToLegacyClrFunctionDoesNotExposeSpanWhenArgumentsNeedNormalization()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue inspect = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    return DynValue.NewTuple(
+                        DynValue.NewBoolean(spanAvailable),
+                        DynValue.NewNumber(span.Length),
+                        DynValue.NewNumber(args.Count),
+                        args[0]
+                    );
+                }
+            );
+
+            DynValue nonFinalTuple = script.Call(
+                inspect,
+                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(10)),
+                DynValue.NewNumber(2)
+            );
+            DynValue nonFinalVoid = script.Call(inspect, DynValue.Void, DynValue.NewNumber(2));
+            DynValue nonFinalNull = script.Call(inspect, null, DynValue.NewNumber(2));
+
+            await Assert.That(nonFinalTuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(nonFinalTuple.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(nonFinalTuple.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(nonFinalTuple.Tuple[3].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(nonFinalVoid.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(nonFinalVoid.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(nonFinalVoid.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(nonFinalVoid.Tuple[3].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert.That(nonFinalNull.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(nonFinalNull.Tuple[1].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(nonFinalNull.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(nonFinalNull.Tuple[3].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FixedDynValueCallToLegacyClrFunctionPreservesTrailingExpansionEdges()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue inspect = DynValue.NewCallback((_, args) => SummarizeArguments(args));
+
+            DynValue oneVoid = script.Call(inspect, DynValue.Void);
+            DynValue oneTuple = script.Call(
+                inspect,
+                DynValue.NewTuple(DynValue.NewNumber(2), null)
+            );
+            DynValue twoTuple = script.Call(
+                inspect,
+                DynValue.NewNumber(1),
+                DynValue.NewTuple(DynValue.NewNumber(2), null)
+            );
+            DynValue threeVoid = script.Call(
+                inspect,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.Void
+            );
+            DynValue fourVoid = script.Call(
+                inspect,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.Void
+            );
+            DynValue oneEmptyTuple = script.Call(inspect, DynValue.EmptyTuple);
+            DynValue twoEmptyTuple = script.Call(
+                inspect,
+                DynValue.NewNumber(1),
+                DynValue.EmptyTuple
+            );
+
+            await AssertArgumentSummary(oneVoid, count: 0d, nilCount: 0d, sum: 0d)
+                .ConfigureAwait(false);
+            await AssertArgumentSummary(oneTuple, count: 2d, nilCount: 1d, sum: 2d)
+                .ConfigureAwait(false);
+            await AssertArgumentSummary(twoTuple, count: 3d, nilCount: 1d, sum: 3d)
+                .ConfigureAwait(false);
+            await AssertArgumentSummary(threeVoid, count: 2d, nilCount: 0d, sum: 3d)
+                .ConfigureAwait(false);
+            await AssertArgumentSummary(fourVoid, count: 3d, nilCount: 0d, sum: 6d)
+                .ConfigureAwait(false);
+            await AssertArgumentSummary(oneEmptyTuple, count: 0d, nilCount: 0d, sum: 0d)
+                .ConfigureAwait(false);
+            await AssertArgumentSummary(twoEmptyTuple, count: 1d, nilCount: 0d, sum: 1d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task FixedDynValueCallToLegacyClrFunctionPreservesTryGetSpan(
+        public async Task FixedDynValueCallToLegacyClrFunctionMetamethodIncludesSelf(
             LuaCompatibilityVersion version
         )
         {
             Script script = new(version, CoreModulePresets.Complete);
-            DynValue callback = DynValue.NewCallback(
-                (_, args) =>
-                {
-                    bool success = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
-                    return DynValue.NewTuple(
-                        DynValue.NewBoolean(success),
-                        DynValue.NewNumber(span.Length)
-                    );
-                }
-            );
+            Table callable = new(script);
+            Table meta = new(script);
 
-            DynValue result = script.Call(
-                callback,
-                DynValue.NewNumber(10),
-                DynValue.NewNumber(20),
-                DynValue.NewNumber(30)
+            meta.Set(
+                "__call",
+                DynValue.NewCallback(
+                    (_, args) =>
+                        DynValue.NewTuple(
+                            DynValue.NewBoolean(args.Count == 2),
+                            DynValue.NewBoolean(args.IsMethodCall),
+                            DynValue.NewBoolean(ReferenceEquals(args[0].Table, callable)),
+                            args[1]
+                        )
+                )
             );
+            callable.MetaTable = meta;
+
+            DynValue result = script.Call(DynValue.NewTable(callable), DynValue.NewNumber(42));
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
             await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.Tuple[1].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task FixedDynValueCallRejectsChainedCallMetamethodsBeforeLua54(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            Table target = new(script);
+            Table proxy = new(script);
+            Table targetMeta = new(script);
+            Table proxyMeta = new(script);
+
+            targetMeta.Set("__call", DynValue.NewTable(proxy));
+            proxyMeta.Set(
+                "__call",
+                DynValue.NewCallback((_, _) => DynValue.NewString("unexpected"))
+            );
+            target.MetaTable = targetMeta;
+            proxy.MetaTable = proxyMeta;
+
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                script.Call(DynValue.NewTable(target))
+            );
+
+            await Assert.That(exception.Message).Contains("__call").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 4)]
+        public async Task FixedDynValueCallRejectsChainedCallMetamethodsBeforeLua54WithArguments(
+            LuaCompatibilityVersion version,
+            int arity
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue target = CreateTableValuedCallChain(
+                script,
+                (_, _, _) => DynValue.NewString("unexpected")
+            );
+
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                CallLegacyCallbackWithSequentialArguments(script, target, arity)
+            );
+
+            await Assert.That(exception.Message).Contains("__call").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task FixedDynValueCallFollowsChainedCallMetamethodsWithSelfArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            Table target = new(script);
+            Table proxy = new(script);
+            Table targetMeta = new(script);
+            Table proxyMeta = new(script);
+
+            targetMeta.Set("__call", DynValue.NewTable(proxy));
+            proxyMeta.Set(
+                "__call",
+                DynValue.NewCallback(
+                    (_, args) =>
+                        DynValue.NewTuple(
+                            DynValue.NewBoolean(args.Count == 2),
+                            DynValue.NewBoolean(ReferenceEquals(args[0].Table, proxy)),
+                            DynValue.NewBoolean(ReferenceEquals(args[1].Table, target)),
+                            DynValue.NewBoolean(args.IsMethodCall)
+                        )
+                )
+            );
+            target.MetaTable = targetMeta;
+            proxy.MetaTable = proxyMeta;
+
+            DynValue result = script.Call(DynValue.NewTable(target));
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 2)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 3)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 4)]
+        public async Task FixedDynValueCallFollowsChainedCallMetamethodsWithArguments(
+            LuaCompatibilityVersion version,
+            int arity
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue target = CreateTableValuedCallChain(
+                script,
+                (targetTable, proxyTable, args) =>
+                    SummarizeChainedCallArguments(targetTable, proxyTable, args)
+            );
+
+            DynValue result = CallLegacyCallbackWithSequentialArguments(script, target, arity);
+
+            await AssertChainedCallSummary(result, arity).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        public async Task DefaultFixedDynValueCallFollowsChainedCallMetamethodsWithArguments(
+            int arity
+        )
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue target = CreateTableValuedCallChain(
+                script,
+                (targetTable, proxyTable, args) =>
+                    SummarizeChainedCallArguments(targetTable, proxyTable, args)
+            );
+
+            DynValue result = CallLegacyCallbackWithSequentialArguments(script, target, arity);
+
+            await AssertChainedCallSummary(result, arity).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FixedDynValueCallToLegacyClrFunctionAvoidsArgumentArrayAllocation()
+        {
+            const int iterations = 1024;
+            Script script = new(CoreModulePresets.Complete);
+            DynValue first = DynValue.NewNumber(10);
+            DynValue second = DynValue.NewNumber(20);
+            DynValue third = DynValue.NewNumber(30);
+            DynValue noArgCallback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    if (args.Count != 0)
+                    {
+                        throw new InvalidOperationException("Unexpected no-arg callback arity.");
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
+            DynValue fixedCallback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    if (args.Count != 3)
+                    {
+                        throw new InvalidOperationException("Unexpected fixed callback arity.");
+                    }
+
+                    return args[2];
+                }
+            );
+            DynValue spanProbeCallback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    if (!spanAvailable || span.Length != 3)
+                    {
+                        throw new InvalidOperationException("Unexpected span probe state.");
+                    }
+
+                    if (args.Count != 3)
+                    {
+                        throw new InvalidOperationException(
+                            "Unexpected span-probe callback arity."
+                        );
+                    }
+
+                    return args[2];
+                }
+            );
+
+            MeasureNoArgumentLegacyCallbackAllocations(script, noArgCallback, iterations: 8);
+            MeasureFixedThreeArgumentLegacyCallbackAllocations(
+                script,
+                fixedCallback,
+                first,
+                second,
+                third,
+                iterations: 8
+            );
+            MeasureFixedThreeArgumentLegacyCallbackAllocations(
+                script,
+                spanProbeCallback,
+                first,
+                second,
+                third,
+                iterations: 8
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long noArgumentAllocated = MeasureNoArgumentLegacyCallbackAllocations(
+                script,
+                noArgCallback,
+                iterations
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long fixedArgumentAllocated = MeasureFixedThreeArgumentLegacyCallbackAllocations(
+                script,
+                fixedCallback,
+                first,
+                second,
+                third,
+                iterations
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long spanProbeAllocated = MeasureFixedThreeArgumentLegacyCallbackAllocations(
+                script,
+                spanProbeCallback,
+                first,
+                second,
+                third,
+                iterations
+            );
+
+            long extraBytesPerCall = (fixedArgumentAllocated - noArgumentAllocated) / iterations;
+            long spanProbeExtraBytesPerCall =
+                (spanProbeAllocated - noArgumentAllocated) / iterations;
+
+            await Assert.That(extraBytesPerCall).IsLessThan(16).ConfigureAwait(false);
+            await Assert.That(spanProbeExtraBytesPerCall).IsLessThan(16).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1363,6 +1875,165 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     .IsEqualTo(expected[i])
                     .ConfigureAwait(false);
             }
+        }
+
+        private static DynValue SummarizeArguments(CallbackArguments args)
+        {
+            double nilCount = 0d;
+            double sum = 0d;
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                DynValue arg = args[i];
+                if (arg.Type == DataType.Nil)
+                {
+                    nilCount++;
+                }
+                else
+                {
+                    sum += arg.Number;
+                }
+            }
+
+            return DynValue.NewTuple(
+                DynValue.NewNumber(args.Count),
+                DynValue.NewNumber(nilCount),
+                DynValue.NewNumber(sum)
+            );
+        }
+
+        private static async Task AssertArgumentSummary(
+            DynValue value,
+            double count,
+            double nilCount,
+            double sum
+        )
+        {
+            await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(value.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(value.Tuple[0].Number).IsEqualTo(count).ConfigureAwait(false);
+            await Assert.That(value.Tuple[1].Number).IsEqualTo(nilCount).ConfigureAwait(false);
+            await Assert.That(value.Tuple[2].Number).IsEqualTo(sum).ConfigureAwait(false);
+        }
+
+        private static DynValue CreateTableValuedCallChain(
+            Script script,
+            Func<Table, Table, CallbackArguments, DynValue> callback
+        )
+        {
+            Table target = new(script);
+            Table proxy = new(script);
+            Table targetMeta = new(script);
+            Table proxyMeta = new(script);
+
+            targetMeta.Set("__call", DynValue.NewTable(proxy));
+            proxyMeta.Set(
+                "__call",
+                DynValue.NewCallback((_, args) => callback(target, proxy, args))
+            );
+            target.MetaTable = targetMeta;
+            proxy.MetaTable = proxyMeta;
+
+            return DynValue.NewTable(target);
+        }
+
+        private static DynValue SummarizeChainedCallArguments(
+            Table target,
+            Table proxy,
+            CallbackArguments args
+        )
+        {
+            double userArgumentSum = 0d;
+            for (int i = 2; i < args.Count; i++)
+            {
+                userArgumentSum += args[i].Number;
+            }
+
+            return DynValue.NewTuple(
+                DynValue.NewNumber(args.Count),
+                DynValue.NewBoolean(args.Count >= 2 && ReferenceEquals(args[0].Table, proxy)),
+                DynValue.NewBoolean(args.Count >= 2 && ReferenceEquals(args[1].Table, target)),
+                DynValue.NewBoolean(args.IsMethodCall),
+                DynValue.NewNumber(userArgumentSum)
+            );
+        }
+
+        private static async Task AssertChainedCallSummary(DynValue value, int userArity)
+        {
+            await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(value.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
+            await Assert
+                .That(value.Tuple[0].Number)
+                .IsEqualTo(userArity + 2d)
+                .ConfigureAwait(false);
+            await Assert.That(value.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(value.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(value.Tuple[3].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(value.Tuple[4].Number)
+                .IsEqualTo(userArity * (userArity + 1) / 2d)
+                .ConfigureAwait(false);
+        }
+
+        private static DynValue CallLegacyCallbackWithSequentialArguments(
+            Script script,
+            DynValue callback,
+            int arity
+        )
+        {
+            return arity switch
+            {
+                0 => script.Call(callback),
+                1 => script.Call(callback, DynValue.NewNumber(1)),
+                2 => script.Call(callback, DynValue.NewNumber(1), DynValue.NewNumber(2)),
+                3 => script.Call(
+                    callback,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3)
+                ),
+                4 => script.Call(
+                    callback,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(4)
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+        }
+
+        private static long MeasureNoArgumentLegacyCallbackAllocations(
+            Script script,
+            DynValue callback,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                script.Call(callback);
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedThreeArgumentLegacyCallbackAllocations(
+            Script script,
+            DynValue callback,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                script.Call(callback, first, second, third);
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
         }
 
         private sealed class UnregisteredHostObject { }
