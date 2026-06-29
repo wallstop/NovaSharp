@@ -162,7 +162,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         _state = CoroutineState.Suspended;
                         _lastCloseError = DynValue.Nil;
-                        return DynValue.NewTuple(retVal.YieldRequest.BorrowReturnValuesBuffer());
+                        return retVal.YieldRequest.ToTuple();
                     }
                 }
                 else

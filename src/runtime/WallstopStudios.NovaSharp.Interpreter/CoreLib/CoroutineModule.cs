@@ -202,7 +202,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             );
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
-            return DynValue.NewYieldReq(args.GetArray());
+            return YieldWithArguments(args);
+        }
+
+        private static DynValue YieldWithArguments(CallbackArguments args)
+        {
+            switch (args.Count)
+            {
+                case 0:
+                    return DynValue.NewYieldReq();
+                case 1:
+                    return DynValue.NewYieldReq(args[0]);
+                case 2:
+                    return DynValue.NewYieldReq(args[0], args[1]);
+                case 3:
+                    return DynValue.NewYieldReq(args[0], args[1], args[2]);
+                case 4:
+                    return DynValue.NewYieldReq(args[0], args[1], args[2], args[3]);
+                default:
+                    return DynValue.NewYieldReq(args.GetArray());
+            }
         }
 
         /// <summary>

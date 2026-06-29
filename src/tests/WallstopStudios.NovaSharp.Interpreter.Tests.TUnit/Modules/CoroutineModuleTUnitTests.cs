@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
     using System.Collections.Generic;
     using System.Reflection;
     using System.Reflection.Emit;
+    using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
@@ -605,6 +606,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
+        public async Task ProcessorYieldReturnUsesLazyYieldRequestTuplePath()
+        {
+            Type processorType =
+                typeof(WallstopStudios.NovaSharp.Interpreter.Execution.VM.Processor);
+            Type clrCallArguments = processorType.GetNestedType(
+                "ClrCallArguments",
+                BindingFlags.NonPublic
+            );
+            if (clrCallArguments == null)
+            {
+                throw new MissingMemberException(processorType.FullName, "ClrCallArguments");
+            }
+
+            MethodInfo processorResume = RequireMethod(
+                processorType,
+                "ResumeCoroutine",
+                BindingFlags.NonPublic | BindingFlags.Instance,
+                clrCallArguments
+            );
+            MethodInfo toTuple = RequireMethod(
+                typeof(YieldRequest),
+                "ToTuple",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            );
+            MethodInfo borrowBuffer = RequireMethod(
+                typeof(YieldRequest),
+                "BorrowReturnValuesBuffer",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            );
+
+            await Assert
+                .That(CountMethodCalls(processorResume, toTuple))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(processorResume, borrowBuffer))
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task ResumeFlattensTrailingTupleResults(LuaCompatibilityVersion version)
         {
@@ -644,6 +686,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .IsEqualTo("inner-value")
                 .ConfigureAwait(false);
             await Assert.That(result.Tuple[3].Number).IsEqualTo(99d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ResumePreservesTupleExpandedYieldArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                function buildYieldValues()
+                    return 'expanded-a', 'expanded-b'
+                end
+
+                function yieldExpanded()
+                    coroutine.yield('head', buildYieldValues())
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("yieldExpanded"));
+
+            DynValue result = script.Call(resumeFunc, coroutineValue);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("head").ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("expanded-a").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].String).IsEqualTo("expanded-b").ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1579,6 +1653,89 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // =====================================================
 
         [global::TUnit.Core.Test]
+        public async Task YieldOneArgumentAvoidsPerCallArgumentArrayAllocation()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            CallbackArguments noArgArguments = new(Array.Empty<DynValue>(), isMethodCall: false);
+            DynValue[] oneArgStorage = { DynValue.NewNumber(7) };
+            CallbackArguments oneArgArguments = new(oneArgStorage, isMethodCall: false);
+
+            MeasureYieldAllocations(context, noArgArguments, iterations: 8);
+            MeasureYieldAllocations(context, oneArgArguments, iterations: 8);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            const int iterations = 1024;
+            long noArgAllocated = MeasureYieldAllocations(context, noArgArguments, iterations);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long oneArgAllocated = MeasureYieldAllocations(context, oneArgArguments, iterations);
+
+            long extraBytesPerYield = (oneArgAllocated - noArgAllocated) / iterations;
+
+            await Assert.That(extraBytesPerYield).IsLessThan(16).ConfigureAwait(false);
+
+            DynValue result = CoroutineModule.Yield(context, oneArgArguments);
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            await Assert.That(values.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(values.Span[0].Number).IsEqualTo(7d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task YieldRequestToTuplePreservesZeroYieldWritableNil()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments arguments = new(Array.Empty<DynValue>(), isMethodCall: false);
+
+            DynValue directResult = CoroutineModule.Yield(context, arguments);
+            DynValue directTuple = directResult.YieldRequest.ToTuple();
+
+            await Assert.That(directTuple.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(directTuple.ReadOnly).IsFalse().ConfigureAwait(false);
+
+            DynValue materializedResult = CoroutineModule.Yield(context, arguments);
+            ReadOnlyMemory<DynValue> values = materializedResult.YieldRequest.ReturnValues;
+            DynValue materializedTuple = materializedResult.YieldRequest.ToTuple();
+
+            await Assert.That(values.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(materializedTuple.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(materializedTuple.ReadOnly).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task YieldRequestToTupleReusesFixedArityReturnValuesBuffer()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments arguments = new(
+                new[] { DynValue.NewString("alpha"), DynValue.NewNumber(2) },
+                isMethodCall: false
+            );
+
+            DynValue result = CoroutineModule.Yield(context, arguments);
+            DynValue tuple = result.YieldRequest.ToTuple();
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+
+            bool hasArray = MemoryMarshal.TryGetArray(values, out ArraySegment<DynValue> segment);
+
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(values.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(hasArray).IsTrue().ConfigureAwait(false);
+            await Assert.That(segment.Offset).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(segment.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(segment.Array).IsSameReferenceAs(tuple.Tuple).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task YieldReturnsYieldRequestWithArguments(LuaCompatibilityVersion version)
         {
@@ -1598,6 +1755,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(values.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(values.Span[0].Number).IsEqualTo(7d).ConfigureAwait(false);
             await Assert.That(values.Span[1].String).IsEqualTo("value").ConfigureAwait(false);
+        }
+
+        private static long MeasureYieldAllocations(
+            ScriptExecutionContext context,
+            CallbackArguments arguments,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = CoroutineModule.Yield(context, arguments);
+                if (result.Type != DataType.YieldRequest || result.YieldRequest.Forced)
+                {
+                    throw new ScriptRuntimeException("coroutine.yield allocation probe failed");
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
         }
 
         // =====================================================
