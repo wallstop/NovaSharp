@@ -143,7 +143,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 switch (_count)
                 {
                     case 0:
-                        return DynValue.NewNil();
+                        return DynValue.EmptyTuple;
                     case 1:
                         return DynValue.NewTuple(this[0]);
                     case 2:

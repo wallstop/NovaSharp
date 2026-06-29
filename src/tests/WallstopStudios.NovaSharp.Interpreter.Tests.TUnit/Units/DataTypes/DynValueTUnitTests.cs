@@ -23,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue single = DynValue.NewNumber(42);
             DynValue wrappedSingle = DynValue.NewTuple(single);
 
-            await Assert.That(empty.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(empty).IsSameReferenceAs(DynValue.EmptyTuple).ConfigureAwait(false);
 
             await Assert.That(wrappedSingle).IsSameReferenceAs(single).ConfigureAwait(false);
         }

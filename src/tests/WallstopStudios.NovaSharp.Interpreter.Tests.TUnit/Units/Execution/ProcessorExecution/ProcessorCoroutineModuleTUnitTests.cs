@@ -307,6 +307,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedResumeWithNoArgumentsPreservesZeroArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function() return select('#', coroutine.yield('ready')) end"
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            DynValue first = coroutine.Coroutine.Resume();
+            await Assert.That(first.String).IsEqualTo("ready").ConfigureAwait(false);
+
+            DynValue resumed = coroutine.Coroutine.Resume();
+
+            await Assert.That(resumed.Number).IsEqualTo(0d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task InitialResumeObjectOverloadsPreserveNilAndArity(
             LuaCompatibilityVersion version
         )

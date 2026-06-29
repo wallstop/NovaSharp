@@ -849,7 +849,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (values.Length == 0)
             {
-                return NewNil();
+                return EmptyTuple;
             }
 
             if (values.Length == 1)

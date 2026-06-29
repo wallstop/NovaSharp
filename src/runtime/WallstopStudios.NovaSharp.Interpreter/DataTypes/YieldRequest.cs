@@ -120,13 +120,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             if (_returnValues != null)
             {
+                if (_returnValues.Length == 0)
+                {
+                    return DynValue.EmptyTuple;
+                }
+
                 return DynValue.NewTuple(_returnValues);
             }
 
             switch (_count)
             {
                 case 0:
-                    return DynValue.NewTuple(GetReturnValuesBuffer());
+                    return DynValue.EmptyTuple;
                 case 1:
                     return _arg0;
                 case 2:

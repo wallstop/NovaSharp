@@ -513,6 +513,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ResumeZeroValueYieldReturnsOnlyStatus(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+
+            DynValue result = script.DoString(
+                @"
+                local co = coroutine.create(function()
+                    coroutine.yield()
+                end)
+
+                return select('#', coroutine.resume(co))
+            "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task WrapZeroValueYieldReturnsNoValues(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+
+            DynValue result = script.DoString(
+                @"
+                local wrapped = coroutine.wrap(function()
+                    coroutine.yield()
+                    return 'done'
+                end)
+
+                local yieldCount = select('#', wrapped())
+                local finalCount = select('#', wrapped())
+                return yieldCount, finalCount
+            "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task ResumeAndWrapDispatchThroughFixedArityCoroutinePaths()
         {
             MethodInfo getArray = RequireMethod(
@@ -1774,7 +1817,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
-        public async Task YieldRequestToTuplePreservesZeroYieldWritableNil()
+        public async Task YieldRequestToTuplePreservesZeroYieldEmptyTuple()
         {
             Script script = new(CoreModulePresets.Complete);
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
@@ -1783,16 +1826,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue directResult = CoroutineModule.Yield(context, arguments);
             DynValue directTuple = directResult.YieldRequest.ToTuple();
 
-            await Assert.That(directTuple.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
-            await Assert.That(directTuple.ReadOnly).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(directTuple)
+                .IsSameReferenceAs(DynValue.EmptyTuple)
+                .ConfigureAwait(false);
 
             DynValue materializedResult = CoroutineModule.Yield(context, arguments);
             ReadOnlyMemory<DynValue> values = materializedResult.YieldRequest.ReturnValues;
             DynValue materializedTuple = materializedResult.YieldRequest.ToTuple();
 
             await Assert.That(values.Length).IsEqualTo(0).ConfigureAwait(false);
-            await Assert.That(materializedTuple.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
-            await Assert.That(materializedTuple.ReadOnly).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(materializedTuple)
+                .IsSameReferenceAs(DynValue.EmptyTuple)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
