@@ -195,8 +195,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             Processor processor = script.GetMainProcessorForTests();
             processor.ClearCallStackForTests();
 
-            ClosureContext closure = new();
-            closure.Add(DynValue.NewNil());
+            ClosureContext closure = new(
+                new[] { SymbolRef.UpValue("uv", 0) },
+                new[] { DynValue.NewNil() }
+            );
             CallStackItem frame = new()
             {
                 LocalScope = Array.Empty<DynValue>(),

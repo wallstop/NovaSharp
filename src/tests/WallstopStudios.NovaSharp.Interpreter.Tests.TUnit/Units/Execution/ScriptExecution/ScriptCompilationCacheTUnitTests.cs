@@ -74,13 +74,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task CachedLoadStringAvoidsTemporaryClosureScaffoldingAllocations()
+        [global::TUnit.Core.Arguments(false)]
+        [global::TUnit.Core.Arguments(true)]
+        public async Task CachedLoadStringAvoidsTemporaryClosureScaffoldingAllocations(
+            bool useFriendlyName
+        )
         {
             ScriptOptions options = new() { EnableScriptCaching = true };
             Script script = new(CoreModulePresets.Complete, options);
             const string code = "return value";
+            string codeFriendlyName = useFriendlyName ? "cached_chunk" : null;
 
-            script.LoadString(code);
+            script.LoadString(code, null, codeFriendlyName);
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -90,13 +95,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < iterations; i++)
             {
-                script.LoadString(code);
+                script.LoadString(code, null, codeFriendlyName);
             }
 
             long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
             long allocatedPerLoad = allocated / iterations;
 
-            await Assert.That(allocatedPerLoad).IsLessThan(340).ConfigureAwait(false);
+            await Assert
+                .That(allocatedPerLoad)
+                .IsLessThan(256)
+                .Because(
+                    $"cached {(useFriendlyName ? "named" : "unnamed")} LoadString allocated {allocatedPerLoad} bytes/load across {iterations} iterations ({allocated} total bytes)"
+                )
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

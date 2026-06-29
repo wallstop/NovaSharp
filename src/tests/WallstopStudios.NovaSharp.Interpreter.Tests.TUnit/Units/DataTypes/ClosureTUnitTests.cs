@@ -144,6 +144,67 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task ContextExposesCapturedUpValuesThroughReadOnlyList(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue function = script.DoString(
+                @"
+                local x = 7
+                return function()
+                    return x
+                end
+                "
+            );
+
+            Closure closure = function.Function;
+            IReadOnlyList<DynValue> context = closure.Context;
+            int xIndex = -1;
+
+            for (int i = 0; i < closure.UpValuesCount; i++)
+            {
+                if (closure.GetUpValueName(i) == "x")
+                {
+                    xIndex = i;
+                    break;
+                }
+            }
+
+            await Assert.That(xIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
+            await Assert.That(context.Count).IsEqualTo(closure.UpValuesCount).ConfigureAwait(false);
+            await Assert.That(context[xIndex].Number).IsEqualTo(7d).ConfigureAwait(false);
+
+            closure.SetUpValue(xIndex, DynValue.NewNumber(11d));
+
+            await Assert.That(context[xIndex].Number).IsEqualTo(11d).ConfigureAwait(false);
+
+            IEnumerator<DynValue> enumerator = context.GetEnumerator();
+            Assert.Throws<InvalidOperationException>(() => _ = enumerator.Current);
+
+            int enumeratedCount = 0;
+            bool observedUpdatedSlot = false;
+            while (enumerator.MoveNext())
+            {
+                if (enumeratedCount == xIndex)
+                {
+                    await Assert
+                        .That(enumerator.Current.Number)
+                        .IsEqualTo(11d)
+                        .ConfigureAwait(false);
+                    observedUpdatedSlot = true;
+                }
+
+                enumeratedCount++;
+            }
+
+            await Assert.That(enumeratedCount).IsEqualTo(context.Count).ConfigureAwait(false);
+            await Assert.That(observedUpdatedSlot).IsTrue().ConfigureAwait(false);
+            Assert.Throws<InvalidOperationException>(() => _ = enumerator.Current);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task ClosureWithManyCapturedSymbolsPreservesUpValueMetadata(
             LuaCompatibilityVersion version
         )
