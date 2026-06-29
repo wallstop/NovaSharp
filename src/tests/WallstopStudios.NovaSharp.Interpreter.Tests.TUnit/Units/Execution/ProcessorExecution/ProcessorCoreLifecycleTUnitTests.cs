@@ -61,6 +61,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task NestedEntryKeepsThreadOwnershipUntilOutermostLeave(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            script.Options.CheckThreadAccess = true;
+            DynValue chunk = script.LoadString("return 42");
+            Processor processor = script.GetMainProcessorForTests();
+
+            processor.EnterProcessorForTests();
+            processor.EnterProcessorForTests();
+            processor.LeaveProcessorForTests();
+            using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
+            {
+                processor.LeaveProcessorForTests();
+                script.Options.CheckThreadAccess = false;
+            });
+
+            InvalidOperationException observed = null;
+            Thread worker = new(() =>
+            {
+                try
+                {
+                    script.Call(chunk);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    observed = ex;
+                }
+            })
+            {
+                IsBackground = true,
+            };
+
+            worker.Start();
+            worker.Join();
+
+            await Assert.That(observed).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(observed.Message)
+                .Contains("Cannot enter the same NovaSharp processor")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task EnterAndLeaveProcessorUpdateParentCoroutineStack()
         {
             Script script = new();

@@ -400,21 +400,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private void LeaveProcessor()
         {
             _executionNesting -= 1;
-            _owningThreadId = -1;
+            bool outermostLeave = _executionNesting == 0;
 
-            if (_parent != null)
+            try
             {
-                _parent._coroutinesStack.RemoveAt(_parent._coroutinesStack.Count - 1);
+                if (_parent != null)
+                {
+                    _parent._coroutinesStack.RemoveAt(_parent._coroutinesStack.Count - 1);
+                }
+
+                if (
+                    outermostLeave
+                    && _debug != null
+                    && _debug.DebuggerEnabled
+                    && _debug.DebuggerAttached != null
+                )
+                {
+                    _debug.DebuggerAttached.SignalExecutionEnded();
+                }
             }
-
-            if (
-                _executionNesting == 0
-                && _debug != null
-                && _debug.DebuggerEnabled
-                && _debug.DebuggerAttached != null
-            )
+            finally
             {
-                _debug.DebuggerAttached.SignalExecutionEnded();
+                if (outermostLeave)
+                {
+                    Volatile.Write(ref _owningThreadId, -1);
+                }
             }
         }
 

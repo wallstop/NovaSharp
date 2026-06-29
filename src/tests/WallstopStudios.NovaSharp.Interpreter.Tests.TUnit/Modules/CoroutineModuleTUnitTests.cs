@@ -1445,11 +1445,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 TaskCreationOptions.RunContinuationsAsynchronously
             );
 
+            int successCount = 0;
+            int failureCount = 0;
+            int callbackEnterCount = 0;
+            int completedAttempts = 0;
+            InvalidOperationException caughtException = null;
+            int readyCount = 0;
+            string[] outcomes = new string[ConcurrentThreads];
+
             Script script = new Script(version, CoreModulePresets.Complete);
 
             script.Globals["waitForSignal"] = DynValue.NewCallback(
                 (_, _) =>
                 {
+                    Interlocked.Increment(ref callbackEnterCount);
                     callbackEntered.TrySetResult(true);
                     allowCompletion.Task.GetAwaiter().GetResult();
                     return DynValue.Nil;
@@ -1468,28 +1477,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("pause"));
 
-            int successCount = 0;
-            int failureCount = 0;
-            InvalidOperationException caughtException = null;
-            int readyCount = 0;
-
             Task[] tasks = new Task[ConcurrentThreads];
             for (int i = 0; i < ConcurrentThreads; i++)
             {
+                int taskIndex = i;
                 tasks[i] = Task.Run(async () =>
                 {
+                    int threadId = Environment.CurrentManagedThreadId;
                     Interlocked.Increment(ref readyCount);
                     await startSignal.Task.ConfigureAwait(false);
 
                     try
                     {
-                        script.Call(resumeFunc, coroutineValue);
+                        DynValue result = script.Call(resumeFunc, coroutineValue);
                         Interlocked.Increment(ref successCount);
+                        outcomes[taskIndex] = $"success thread={threadId} type={result.Type}";
+                        Interlocked.Increment(ref completedAttempts);
                     }
                     catch (InvalidOperationException ex)
                     {
                         Interlocked.Increment(ref failureCount);
                         Interlocked.CompareExchange(ref caughtException, ex, null);
+                        outcomes[taskIndex] =
+                            $"invalid-operation thread={threadId} message={ex.Message}";
+                        Interlocked.Increment(ref completedAttempts);
+                    }
+                    catch (Exception ex)
+                    {
+                        outcomes[taskIndex] =
+                            $"unexpected {ex.GetType().Name} thread={threadId} message={ex.Message}";
+                        Interlocked.Increment(ref completedAttempts);
+                        throw;
                     }
                 });
             }
@@ -1505,8 +1523,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Release all threads simultaneously
             startSignal.TrySetResult(true);
 
-            // Wait for the callback to be invoked with timeout
-            await callbackEntered.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+            try
+            {
+                // Wait for one resume to enter the coroutine and block in the callback.
+                await callbackEntered.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+
+                // Keep that winning resume blocked until the other ready tasks have attempted entry.
+                while (Volatile.Read(ref completedAttempts) < ConcurrentThreads - 1)
+                {
+                    cts.Token.ThrowIfCancellationRequested();
+                    await Task.Delay(1, cts.Token).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                allowCompletion.TrySetResult(true);
+                try
+                {
+                    await Task.WhenAll(tasks)
+                        .WaitAsync(TimeSpan.FromSeconds(2))
+                        .ConfigureAwait(false);
+                }
+                catch (TimeoutException) { }
+
+                throw new TimeoutException(
+                    BuildConcurrentResumeDiagnostics(
+                        ConcurrentThreads,
+                        successCount,
+                        failureCount,
+                        callbackEnterCount,
+                        completedAttempts,
+                        outcomes
+                    ),
+                    ex
+                );
+            }
 
             // Allow completion
             allowCompletion.TrySetResult(true);
@@ -1514,17 +1565,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Wait for all tasks to complete
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
+            string diagnostics = BuildConcurrentResumeDiagnostics(
+                ConcurrentThreads,
+                successCount,
+                failureCount,
+                callbackEnterCount,
+                completedAttempts,
+                outcomes
+            );
+
             // Exactly one thread should have succeeded
-            await Assert
-                .That(successCount)
-                .IsEqualTo(1)
-                .Because(
-                    $"Expected exactly one thread to succeed, but {successCount} succeeded and {failureCount} failed"
-                )
-                .ConfigureAwait(false);
+            await Assert.That(successCount).IsEqualTo(1).Because(diagnostics).ConfigureAwait(false);
 
             // All other threads should have failed with InvalidOperationException
-            await Assert.That(failureCount).IsEqualTo(ConcurrentThreads - 1).ConfigureAwait(false);
+            await Assert
+                .That(failureCount)
+                .IsEqualTo(ConcurrentThreads - 1)
+                .Because(diagnostics)
+                .ConfigureAwait(false);
 
             // Verify the exception message
             await Assert.That(caughtException).IsNotNull().ConfigureAwait(false);
@@ -1532,6 +1590,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .That(caughtException.Message)
                 .Contains("Cannot enter the same NovaSharp processor")
                 .ConfigureAwait(false);
+        }
+
+        private static string BuildConcurrentResumeDiagnostics(
+            int concurrentThreads,
+            int successCount,
+            int failureCount,
+            int callbackEnterCount,
+            int completedAttempts,
+            string[] outcomes
+        )
+        {
+            string[] outcomeDescriptions = new string[outcomes.Length];
+            for (int i = 0; i < outcomes.Length; i++)
+            {
+                outcomeDescriptions[i] = outcomes[i] ?? "pending";
+            }
+
+            return string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "Expected exactly one thread to succeed. Threads={0}; successes={1}; failures={2}; callbackEntries={3}; completedAttempts={4}; outcomes=[{5}]",
+                concurrentThreads,
+                successCount,
+                failureCount,
+                callbackEnterCount,
+                completedAttempts,
+                string.Join("; ", outcomeDescriptions)
+            );
         }
 
         /// <summary>
