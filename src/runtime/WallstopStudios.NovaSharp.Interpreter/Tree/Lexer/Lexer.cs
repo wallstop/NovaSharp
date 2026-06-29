@@ -374,8 +374,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
                     {
                         if (char.IsLetter(c) || c == '_')
                         {
-                            string name = ReadNameToken();
-                            return CreateNameToken(name, fromLine, fromCol);
+                            int nameStart = _cursor;
+                            int nameLength = ReadNameTokenLength();
+                            return CreateNameToken(nameStart, nameLength, fromLine, fromCol);
                         }
                         else if (LexerUtils.CharIsDigit(c))
                         {
@@ -726,18 +727,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             }
         }
 
-        private Token CreateNameToken(string name, int fromLine, int fromCol)
+        private Token CreateNameToken(int nameStart, int nameLength, int fromLine, int fromCol)
         {
-            TokenType? reservedType = Token.GetReservedTokenType(name);
+            if (
+                Token.TryGetReservedTokenType(
+                    _code,
+                    nameStart,
+                    nameLength,
+                    out TokenType reservedType,
+                    out string reservedText
+                )
+            )
+            {
+                return CreateToken(reservedType, fromLine, fromCol, reservedText);
+            }
 
-            if (reservedType.HasValue)
-            {
-                return CreateToken(reservedType.Value, fromLine, fromCol, name);
-            }
-            else
-            {
-                return CreateToken(TokenType.Name, fromLine, fromCol, name);
-            }
+            string name = _code.Substring(nameStart, nameLength);
+            return CreateToken(TokenType.Name, fromLine, fromCol, name);
         }
 
         private Token CreateToken(
@@ -763,15 +769,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             return t;
         }
 
-        private string ReadNameToken()
+        private int ReadNameTokenLength()
         {
-            using Utf16ValueStringBuilder name = ZStringBuilder.CreateNested();
-
-            for (char c = CursorChar(); CursorNotEof(); c = CursorCharNext())
+            int start = _cursor;
+            while (CursorNotEof())
             {
+                char c = CursorChar();
                 if (char.IsLetterOrDigit(c) || c == '_')
                 {
-                    name.Append(c);
+                    CursorNext();
                 }
                 else
                 {
@@ -779,7 +785,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
                 }
             }
 
-            return name.ToString();
+            return _cursor - start;
         }
     }
 }
