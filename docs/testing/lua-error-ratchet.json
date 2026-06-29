@@ -1026,6 +1026,17 @@
       "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/PairsMetamethodControlsIteration_1.lua:(6,0-35): bad argument #1 to 'concat' (table expected, got nil) [compatibility: Lua 5.1]"
     },
     {
+      "file": "MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua",
+      "lua_version": "5.1",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "d0f777fb1fcec4ed38457747297c7685b95ba7b1aeb01fa63640d2564ac74c51",
+      "nova_error_sha256": "fda60a501c031fa8abf58abafe4d5fff5fc1a63168cfbe7276e105de4bdb22a6",
+      "lua_error_excerpt": "lua: ...TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:<line>: attempt to call local 'target' (a table value) | stack traceback: | \t...TableValuedCallMetamethodDoesNotChai...",
+      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:(17,0-15): attempt to call a table value [compatibility: Lua 5.1]"
+    },
+    {
       "file": "MyObject/MetatableExtensibleObjectSample.lua",
       "lua_version": "5.1",
       "classification": "unclassified",
@@ -3026,6 +3037,17 @@
       "nova_error_sha256": "617fdd06586235b5ac9e34f2243a07a2d9d32302593a18c708f6972b2052de23",
       "lua_error_excerpt": "lua: ...tatableTUnitTests/PairsMetamethodControlsIteration_1.lua:<line>: bad argument #1 to 'concat' (table expected, got nil) | stack traceback: | \t[C]: in function 'concat' | ...",
       "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/PairsMetamethodControlsIteration_1.lua:(6,0-35): bad argument #1 to 'concat' (table expected, got nil) [compatibility: Lua 5.2]"
+    },
+    {
+      "file": "MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua",
+      "lua_version": "5.2",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "d2bd3af38fd2227ff4650c43219f67b843b3f0755836a2ffec99bcfc27f33cf4",
+      "nova_error_sha256": "76715259016fc5799255211b7ecb27d198481ef61c445fdc490f56cc16ec9f5b",
+      "lua_error_excerpt": "lua: ...sts/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:<line>: attempt to call local 'target' (a table value) | stack traceback: | \t...sts/TableValuedCallMetamethodDoe...",
+      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:(17,0-15): attempt to call a table value [compatibility: Lua 5.2]"
     },
     {
       "file": "MyObject/MetatableExtensibleObjectSample.lua",
@@ -5171,6 +5193,17 @@
       "nova_error_sha256": "242cb7332041930c07869961862e4e59167a7997b15cfabc923f786f89f4e7df",
       "lua_error_excerpt": "lua: ...tatableTUnitTests/PairsMetamethodControlsIteration_1.lua:<line>: bad argument #1 to 'concat' (table expected, got nil) | stack traceback: | \t[C]: in function 'table.conc...",
       "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/PairsMetamethodControlsIteration_1.lua:(6,0-35): bad argument #1 to 'concat' (table expected, got nil) [compatibility: Lua 5.3]"
+    },
+    {
+      "file": "MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua",
+      "lua_version": "5.3",
+      "classification": "unclassified",
+      "lua_rc_category": "nonzero",
+      "nova_rc_category": "nonzero",
+      "lua_error_sha256": "de69decb07cf30aac89d36e76ee2effa91b2db8185fc026fa85499aea1809169",
+      "nova_error_sha256": "8ac3035095e1d25971b97576d45c8ead1e840f8f27f2eb3f68a882a4ff2ef2c9",
+      "lua_error_excerpt": "lua: ...sts/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:<line>: attempt to call a table value (local 'target') | stack traceback: | \t...sts/TableValuedCallMetamethodDoe...",
+      "nova_error_excerpt": "LuaFixtures/MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua:(17,0-15): attempt to call a table value [compatibility: Lua 5.3]"
     },
     {
       "file": "MyObject/MetatableExtensibleObjectSample.lua",
