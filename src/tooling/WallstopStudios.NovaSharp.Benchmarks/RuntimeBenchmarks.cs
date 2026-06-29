@@ -499,6 +499,89 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     }
 
     /// <summary>
+    /// Benchmarks Lua continuation paths used by protected calls and metamethod post-processing.
+    /// </summary>
+    [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
+    public class ContinuationBenchmarks
+    {
+        private Script _script;
+        private DynValue _pcallNoReturnFunction = DynValue.Nil;
+        private DynValue _pcallOneReturnFunction = DynValue.Nil;
+        private DynValue _tostringMetamethodFunction = DynValue.Nil;
+
+        /// <summary>
+        /// Prepares small Lua functions that exercise continuation callbacks.
+        /// </summary>
+        [GlobalSetup]
+        public void Setup()
+        {
+            _script = new Script(CoreModulePresets.Complete);
+            _pcallNoReturnFunction = _script.DoString(
+                """
+                local function inner()
+                end
+
+                return function()
+                    local ok = pcall(inner)
+                    return ok
+                end
+                """
+            );
+            _pcallOneReturnFunction = _script.DoString(
+                """
+                local function inner()
+                    return 42
+                end
+
+                return function()
+                    local ok, value = pcall(inner)
+                    if ok then
+                        return value
+                    end
+                    return 0
+                end
+                """
+            );
+            _tostringMetamethodFunction = _script.DoString(
+                """
+                local target = setmetatable({}, {
+                    __tostring = function()
+                        return 'value'
+                    end
+                })
+
+                return function()
+                    return tostring(target)
+                end
+                """
+            );
+        }
+
+        /// <summary>
+        /// Executes a successful protected call whose callee returns no values.
+        /// </summary>
+        [Benchmark(Description = "Continuation: pcall no return")]
+        public DynValue PcallNoReturn() => _script.Call(_pcallNoReturnFunction);
+
+        /// <summary>
+        /// Executes a successful protected call whose callee returns one value.
+        /// </summary>
+        [Benchmark(Description = "Continuation: pcall one return")]
+        public DynValue PcallOneReturn() => _script.Call(_pcallOneReturnFunction);
+
+        /// <summary>
+        /// Executes <c>tostring</c> through a table <c>__tostring</c> metamethod.
+        /// </summary>
+        [Benchmark(Description = "Continuation: tostring metamethod")]
+        public DynValue TostringMetamethod() => _script.Call(_tostringMetamethodFunction);
+    }
+
+    /// <summary>
     /// Benchmarks Lua bytecode calling CLR callbacks.
     /// </summary>
     [MemoryDiagnoser]

@@ -1576,12 +1576,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (continuation != null)
             {
-                _valueStack.Push(
-                    continuation.Invoke(
-                        new ScriptExecutionContext(this, continuation, i.SourceCodeRef),
-                        new DynValue[1] { _valueStack.Pop() }
-                    )
-                );
+                ScriptExecutionContext executionContext = new(this, continuation, i.SourceCodeRef);
+                DynValue continuationArgument = _valueStack.Pop();
+                // Argument-view continuations stay array-backed so TryGetSpan preserves
+                // the public behavior of CallbackFunction.Invoke.
+                DynValue continuationReturn = continuation.HasArgumentViewCallback
+                    ? continuation.Invoke(executionContext, new DynValue[] { continuationArgument })
+                    : continuation.InvokeLegacyFixed(executionContext, continuationArgument);
+
+                _valueStack.Push(continuationReturn);
             }
 
             return retpoint;

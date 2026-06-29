@@ -32,6 +32,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task PcallContinuationPreservesReturnArity(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue tuple = script.DoString(
+                @"
+                local noneOk, noneValue = pcall(function() end)
+                local oneOk, oneValue, oneExtra = pcall(function() return 42 end)
+                local manyOk, first, second, third = pcall(function() return 1, 2, 3 end)
+                return
+                    noneOk,
+                    noneValue == nil,
+                    oneOk,
+                    oneValue,
+                    oneExtra == nil,
+                    manyOk,
+                    first,
+                    second,
+                    third
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[5].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[6].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[7].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[8].Number).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task PcallCapturesScriptErrors(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
