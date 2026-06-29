@@ -134,6 +134,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FiveDynValueCallInvokesLuaFunction(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString(
+                "return function(a, b, c, d, e) return a + b + c + d + e end"
+            );
+
+            DynValue result = script.Call(
+                function,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(4),
+                DynValue.NewNumber(5)
+            );
+
+            await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CallExecutesClrFunction(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
@@ -182,6 +207,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FiveDynValueCallExecutesClrFunction(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue callback = DynValue.NewCallback(
+                (_, args) =>
+                    DynValue.NewNumber(
+                        args.Count
+                            + args[0].Number
+                            + args[1].Number
+                            + args[2].Number
+                            + args[3].Number
+                            + args[4].Number
+                    )
+            );
+
+            DynValue result = script.Call(
+                callback,
+                DynValue.NewNumber(10),
+                DynValue.NewNumber(20),
+                DynValue.NewNumber(30),
+                DynValue.NewNumber(40),
+                DynValue.NewNumber(50)
+            );
+
+            await Assert.That(result.Number).IsEqualTo(155d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task FourDynValueCallExecutesCallbackView(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
@@ -205,6 +263,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
 
             await Assert.That(result.Number).IsEqualTo(104d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FiveDynValueCallExecutesCallbackView(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            bool spanAvailable = true;
+            int spanLength = -1;
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanLength = span.Length;
+                    return DynValue.NewNumber(
+                        args.Count
+                            + args[0].Number
+                            + args[1].Number
+                            + args[2].Number
+                            + args[3].Number
+                            + args[4].Number
+                    );
+                }
+            );
+
+            DynValue result = script.Call(
+                callback,
+                DynValue.NewNumber(10),
+                DynValue.NewNumber(20),
+                DynValue.NewNumber(30),
+                DynValue.NewNumber(40),
+                DynValue.NewNumber(50)
+            );
+
+            await Assert.That(result.Number).IsEqualTo(155d).ConfigureAwait(false);
+            await Assert.That(spanAvailable).IsFalse().ConfigureAwait(false);
+            await Assert.That(spanLength).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -510,6 +609,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(2)]
         [global::TUnit.Core.Arguments(3)]
         [global::TUnit.Core.Arguments(4)]
+        [global::TUnit.Core.Arguments(5)]
         public async Task FixedDynValueCallToLegacyClrFunctionExposesFixedStorageSpan(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
@@ -562,6 +662,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(2)]
         [global::TUnit.Core.Arguments(3)]
         [global::TUnit.Core.Arguments(4)]
+        [global::TUnit.Core.Arguments(5)]
         public async Task FixedDynValueCallToLegacyClrFunctionPreservesArity(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
@@ -599,6 +700,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(2)]
         [global::TUnit.Core.Arguments(3)]
         [global::TUnit.Core.Arguments(4)]
+        [global::TUnit.Core.Arguments(5)]
         public async Task FixedDynValueCallToLegacyClrFunctionPreservesSpecialArguments(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
@@ -621,6 +723,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     DynValue.NewNumber(3),
                     DynValue.NewTuple(DynValue.NewNumber(4), null)
                 ),
+                5 => script.Call(
+                    inspect,
+                    DynValue.NewNumber(1),
+                    null,
+                    DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
+                    DynValue.NewNumber(3),
+                    DynValue.NewTuple(DynValue.NewNumber(4), null)
+                ),
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
 
@@ -630,6 +740,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 2 => 1d,
                 3 => 4d,
                 4 => 5d,
+                5 => 6d,
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
             double expectedNilCount = arity switch
@@ -638,6 +749,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 2 => 0d,
                 3 => 1d,
                 4 => 2d,
+                5 => 2d,
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
             double expectedSum = arity switch
@@ -646,6 +758,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 2 => 1d,
                 3 => 6d,
                 4 => 9d,
+                5 => 10d,
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
 
@@ -827,14 +940,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 2)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 3)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 5)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 1)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 2)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 3)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 5)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 1)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 2)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 3)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 5)]
         public async Task FixedDynValueCallRejectsChainedCallMetamethodsBeforeLua54WithArguments(
             LuaCompatibilityVersion version,
             int arity
@@ -895,10 +1011,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 2)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 3)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 5)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 1)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 2)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 3)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 4)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 5)]
         public async Task FixedDynValueCallFollowsChainedCallMetamethodsWithArguments(
             LuaCompatibilityVersion version,
             int arity
@@ -921,6 +1039,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(2)]
         [global::TUnit.Core.Arguments(3)]
         [global::TUnit.Core.Arguments(4)]
+        [global::TUnit.Core.Arguments(5)]
         public async Task DefaultFixedDynValueCallFollowsChainedCallMetamethodsWithArguments(
             int arity
         )
@@ -1080,6 +1199,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(sawSelf).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FourDynValueCallToCallbackViewMetamethodKeepsArrayBackedSpan(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            Table callable = new(script);
+            Table meta = new(script);
+            bool spanAvailable = false;
+            int spanLength = -1;
+            bool sawSelf = false;
+            double sum = 0d;
+
+            meta.Set(
+                "__call",
+                DynValue.NewCallbackView(
+                    (_, args) =>
+                    {
+                        spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                        spanLength = span.Length;
+                        sawSelf = args.Count == 5 && ReferenceEquals(args[0].Table, callable);
+                        for (int i = 1; i < args.Count; i++)
+                        {
+                            sum += args[i].Number;
+                        }
+
+                        return DynValue.NewNumber(args.Count);
+                    }
+                )
+            );
+            callable.MetaTable = meta;
+
+            DynValue result = script.Call(
+                DynValue.NewTable(callable),
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(4)
+            );
+
+            await Assert.That(result.Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
+            await Assert.That(spanLength).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(sawSelf).IsTrue().ConfigureAwait(false);
+            await Assert.That(sum).IsEqualTo(10d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -2273,6 +2444,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     DynValue.NewNumber(2),
                     DynValue.NewNumber(3),
                     DynValue.NewNumber(4)
+                ),
+                5 => script.Call(
+                    callback,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(4),
+                    DynValue.NewNumber(5)
                 ),
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };

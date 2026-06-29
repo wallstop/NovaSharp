@@ -264,6 +264,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await AssertTupleNumbers(fourArgResult, 6d, 1d, 2d, 3d, 4d, 5d, 6d)
                 .ConfigureAwait(false);
 
+            DynValue fiveArgTail = DynValue.NewTuple(
+                DynValue.NewNumber(5),
+                DynValue.NewTuple(DynValue.NewNumber(6), DynValue.NewNumber(7))
+            );
+            DynValue fiveArgCoroutine = script.CreateCoroutine(capture);
+            DynValue fiveArgResult = fiveArgCoroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(4),
+                fiveArgTail
+            );
+            await AssertTupleNumbers(fiveArgResult, 7d, 1d, 2d, 3d, 4d, 5d, 6d, 7d)
+                .ConfigureAwait(false);
+
             DynValue emptyTailCoroutine = script.CreateCoroutine(capture);
             DynValue emptyTailResult = emptyTailCoroutine.Coroutine.Resume(
                 DynValue.NewNumber(1),
@@ -299,6 +314,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             );
 
             await AssertTupleNumbers(resumed, 4d, 1d, 2d, 3d, 4d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedResumeFixedFiveDynValuesPreservesArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function() local a, b, c, d, e = coroutine.yield('ready') return select('#', a, b, c, d, e), a, b, c, d, e end"
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            DynValue first = coroutine.Coroutine.Resume();
+            await Assert.That(first.String).IsEqualTo("ready").ConfigureAwait(false);
+
+            DynValue resumed = coroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(4),
+                DynValue.NewNumber(5)
+            );
+
+            await AssertTupleNumbers(resumed, 5d, 1d, 2d, 3d, 4d, 5d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -385,6 +430,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 .ConfigureAwait(false);
             await Assert.That(fourArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(fourArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+
+            DynValue fiveArgCoroutine = script.CreateCoroutine(capture);
+            DynValue fiveArgResult = fiveArgCoroutine.Coroutine.Resume(
+                (object)null,
+                "value",
+                42,
+                true,
+                "tail"
+            );
+            await Assert.That(fiveArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(fiveArgResult.Tuple.Length).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(fiveArgResult.Tuple[0].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert
+                .That(fiveArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(fiveArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(fiveArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(fiveArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(fiveArgResult.Tuple[5].String)
+                .IsEqualTo("tail")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

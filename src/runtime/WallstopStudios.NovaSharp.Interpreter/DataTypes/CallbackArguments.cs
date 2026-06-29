@@ -20,6 +20,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             internal DynValue _arg1;
             internal DynValue _arg2;
             internal DynValue _arg3;
+            internal DynValue _arg4;
 
             internal FixedArgumentStorage(DynValue arg0)
             {
@@ -27,6 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _arg1 = null;
                 _arg2 = null;
                 _arg3 = null;
+                _arg4 = null;
             }
 
             internal FixedArgumentStorage(DynValue arg0, DynValue arg1)
@@ -35,6 +37,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _arg1 = arg1;
                 _arg2 = null;
                 _arg3 = null;
+                _arg4 = null;
             }
 
             internal FixedArgumentStorage(DynValue arg0, DynValue arg1, DynValue arg2)
@@ -43,6 +46,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _arg1 = arg1;
                 _arg2 = arg2;
                 _arg3 = null;
+                _arg4 = null;
             }
 
             internal FixedArgumentStorage(
@@ -56,6 +60,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _arg1 = arg1;
                 _arg2 = arg2;
                 _arg3 = arg3;
+                _arg4 = null;
+            }
+
+            internal FixedArgumentStorage(
+                DynValue arg0,
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4
+            )
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = arg4;
             }
 
             /// <summary>
@@ -69,6 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     1 => _arg1,
                     2 => _arg2,
                     3 => _arg3,
+                    4 => _arg4,
                     _ => null,
                 };
             }
@@ -176,6 +197,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _count = CalculateExpandedCount(
                 _fixedCount,
                 _fixedArgs._arg3 ?? DynValue.Nil,
+                out _lastIsTuple
+            );
+            IsMethodCall = isMethodCall;
+        }
+
+        internal CallbackArguments(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            bool isMethodCall
+        )
+        {
+            _args = null;
+            _fixedArgs = new FixedArgumentStorage(arg1, arg2, arg3, arg4, arg5);
+            _fixedCount = 5;
+            _count = CalculateExpandedCount(
+                _fixedCount,
+                _fixedArgs._arg4 ?? DynValue.Nil,
                 out _lastIsTuple
             );
             IsMethodCall = isMethodCall;
@@ -459,6 +500,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                             _fixedArgs._arg1,
                             _fixedArgs._arg2,
                             _fixedArgs._arg3,
+                            false
+                        );
+                    case 5:
+                        return new CallbackArguments(
+                            _fixedArgs._arg1,
+                            _fixedArgs._arg2,
+                            _fixedArgs._arg3,
+                            _fixedArgs._arg4,
                             false
                         );
                     default:

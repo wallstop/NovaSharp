@@ -842,6 +842,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Creates a new tuple initialized to five values.
+        /// This is an optimized overload that avoids params array allocation.
+        /// </summary>
+        public static DynValue NewTuple(
+            DynValue value1,
+            DynValue value2,
+            DynValue value3,
+            DynValue value4,
+            DynValue value5
+        )
+        {
+            return new DynValue()
+            {
+                _object = new[]
+                {
+                    value1 ?? Nil,
+                    value2 ?? Nil,
+                    value3 ?? Nil,
+                    value4 ?? Nil,
+                    value5 ?? Nil,
+                },
+                _type = DataType.Tuple,
+            };
+        }
+
+        /// <summary>
         /// Creates a new tuple initialized to the specified values.
         /// </summary>
         public static DynValue NewTuple(params DynValue[] values)

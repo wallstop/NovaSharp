@@ -24,6 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             private readonly DynValue _arg1;
             private readonly DynValue _arg2;
             private readonly DynValue _arg3;
+            private readonly DynValue _arg4;
             private readonly int _count;
 
             internal FixedCallArguments(DynValue arg)
@@ -32,6 +33,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg1 = null;
                 _arg2 = null;
                 _arg3 = null;
+                _arg4 = null;
                 _count = 1;
             }
 
@@ -41,6 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg1 = arg2;
                 _arg2 = null;
                 _arg3 = null;
+                _arg4 = null;
                 _count = 2;
             }
 
@@ -50,6 +53,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg1 = arg2;
                 _arg2 = arg3;
                 _arg3 = null;
+                _arg4 = null;
                 _count = 3;
             }
 
@@ -59,7 +63,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg1 = arg2;
                 _arg2 = arg3;
                 _arg3 = arg4;
+                _arg4 = null;
                 _count = 4;
+            }
+
+            internal FixedCallArguments(
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5
+            )
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _arg4 = arg5;
+                _count = 5;
             }
 
             /// <summary>
@@ -78,6 +99,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         2 => callback.InvokeArgumentViewFixed(context, _arg0, _arg1),
                         3 => callback.InvokeArgumentViewFixed(context, _arg0, _arg1, _arg2),
                         4 => callback.InvokeArgumentViewFixed(context, _arg0, _arg1, _arg2, _arg3),
+                        5 => callback.InvokeArgumentViewFixed(
+                            context,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4
+                        ),
                         _ => throw new InvalidOperationException("Invalid fixed argument count."),
                     };
                 }
@@ -88,6 +117,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     2 => callback.InvokeLegacyFixed(context, _arg0, _arg1),
                     3 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2),
                     4 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2, _arg3),
+                    5 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2, _arg3, _arg4),
                     _ => throw new InvalidOperationException("Invalid fixed argument count."),
                 };
             }
@@ -103,6 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     2 => new[] { _arg0, _arg1 },
                     3 => new[] { _arg0, _arg1, _arg2 },
                     4 => new[] { _arg0, _arg1, _arg2, _arg3 },
+                    5 => new[] { _arg0, _arg1, _arg2, _arg3, _arg4 },
                     _ => throw new InvalidOperationException("Invalid fixed argument count."),
                 };
             }
@@ -452,6 +483,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
+        /// Calls the specified function with five arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <param name="arg4">The fourth argument.</param>
+        /// <param name="arg5">The fifth argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4, arg5);
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3, arg4, arg5);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return Call(func, callArgs.ToArray());
+        }
+
+        /// <summary>
         /// Calls the specified function with caller-owned contiguous arguments, supporting most cases. The called function must not yield.
         /// </summary>
         /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
@@ -487,6 +558,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         return Call(func, args[0], args[1], args[2]);
                     case 4:
                         return Call(func, args[0], args[1], args[2], args[3]);
+                    case 5:
+                        return Call(func, args[0], args[1], args[2], args[3], args[4]);
                 }
 
                 return Script.Call(func, args);

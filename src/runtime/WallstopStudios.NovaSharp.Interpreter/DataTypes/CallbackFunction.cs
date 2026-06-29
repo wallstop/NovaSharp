@@ -206,6 +206,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Invokes an argument-view callback with five fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 5, arg1, isMethodCall);
+            return _argumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, isMethodCall)
+            );
+        }
+
+        /// <summary>
         /// Invokes an argument-view callback with a subrange of stack-backed arguments.
         /// </summary>
         internal DynValue InvokeArgumentViewStack(
@@ -379,6 +399,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Invokes a legacy callback with five fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 5, arg1, isMethodCall);
+            return ClrCallback(
+                executionContext,
+                new CallbackArguments(arg1, arg2, arg3, arg4, arg5, isMethodCall)
+            );
+        }
+
+        /// <summary>
         /// Invokes a legacy callback with caller-owned contiguous arguments, materializing only when
         /// the legacy callback contract requires more than fixed storage can carry.
         /// </summary>
@@ -411,6 +451,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                         args[1],
                         args[2],
                         args[3],
+                        isMethodCall
+                    );
+                case 5:
+                    return InvokeLegacyFixed(
+                        executionContext,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
                         isMethodCall
                     );
                 default:

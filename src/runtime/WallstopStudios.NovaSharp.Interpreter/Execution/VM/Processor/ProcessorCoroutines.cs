@@ -106,6 +106,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3, arg4));
         }
 
+        /// <summary>
+        /// Resumes execution with five arguments, avoiding public params-array allocation.
+        /// </summary>
+        public DynValue ResumeCoroutine(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            return ResumeCoroutine(new ClrCallArguments(arg1, arg2, arg3, arg4, arg5));
+        }
+
         private DynValue ResumeCoroutine(ClrCallArguments args)
         {
             EnterProcessor();

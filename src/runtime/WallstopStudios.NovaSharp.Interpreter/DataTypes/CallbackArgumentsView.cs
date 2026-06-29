@@ -21,6 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private readonly DynValue _arg1;
         private readonly DynValue _arg2;
         private readonly DynValue _arg3;
+        private readonly DynValue _arg4;
         private readonly int _source;
         private readonly int _offset;
         private readonly int _storedCount;
@@ -29,13 +30,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private readonly bool _isMethodCall;
 
         internal CallbackArgumentsView(bool isMethodCall)
-            : this(default, null, null, null, null, null, null, SourceFixed, 0, 0, isMethodCall) { }
+            : this(
+                default,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                SourceFixed,
+                0,
+                0,
+                isMethodCall
+            ) { }
 
         internal CallbackArgumentsView(DynValue arg, bool isMethodCall)
-            : this(default, null, null, arg, null, null, null, SourceFixed, 0, 1, isMethodCall) { }
+            : this(
+                default,
+                null,
+                null,
+                arg,
+                null,
+                null,
+                null,
+                null,
+                SourceFixed,
+                0,
+                1,
+                isMethodCall
+            ) { }
 
         internal CallbackArgumentsView(DynValue arg1, DynValue arg2, bool isMethodCall)
-            : this(default, null, null, arg1, arg2, null, null, SourceFixed, 0, 2, isMethodCall) { }
+            : this(
+                default,
+                null,
+                null,
+                arg1,
+                arg2,
+                null,
+                null,
+                null,
+                SourceFixed,
+                0,
+                2,
+                isMethodCall
+            ) { }
 
         internal CallbackArgumentsView(
             DynValue arg1,
@@ -43,7 +83,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue arg3,
             bool isMethodCall
         )
-            : this(default, null, null, arg1, arg2, arg3, null, SourceFixed, 0, 3, isMethodCall) { }
+            : this(
+                default,
+                null,
+                null,
+                arg1,
+                arg2,
+                arg3,
+                null,
+                null,
+                SourceFixed,
+                0,
+                3,
+                isMethodCall
+            ) { }
 
         internal CallbackArgumentsView(
             DynValue arg1,
@@ -52,7 +105,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue arg4,
             bool isMethodCall
         )
-            : this(default, null, null, arg1, arg2, arg3, arg4, SourceFixed, 0, 4, isMethodCall) { }
+            : this(
+                default,
+                null,
+                null,
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                null,
+                SourceFixed,
+                0,
+                4,
+                isMethodCall
+            ) { }
+
+        internal CallbackArgumentsView(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            bool isMethodCall
+        )
+            : this(
+                default,
+                null,
+                null,
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5,
+                SourceFixed,
+                0,
+                5,
+                isMethodCall
+            ) { }
 
         /// <summary>
         /// Initializes a new argument view from contiguous backing storage.
@@ -60,6 +149,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public CallbackArgumentsView(ReadOnlySpan<DynValue> args, bool isMethodCall)
             : this(
                 args,
+                null,
                 null,
                 null,
                 null,
@@ -79,6 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             : this(
                 args is DynValue[] array ? new ReadOnlySpan<DynValue>(array) : default,
                 args ?? throw new ArgumentNullException(nameof(args)),
+                null,
                 null,
                 null,
                 null,
@@ -129,6 +220,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _arg1 = null;
             _arg2 = null;
             _arg3 = null;
+            _arg4 = null;
             _source = hasSpan ? SourceSpan : SourceList;
             _offset = hasSpan ? 0 : offset;
             _storedCount = hasSpan ? count : offset + count;
@@ -173,6 +265,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 null,
                 null,
                 null,
+                null,
                 SourceCallbackArguments,
                 0,
                 args.Count,
@@ -187,6 +280,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue arg1,
             DynValue arg2,
             DynValue arg3,
+            DynValue arg4,
             int source,
             int offset,
             int storedCount,
@@ -200,6 +294,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _arg1 = arg1;
             _arg2 = arg2;
             _arg3 = arg3;
+            _arg4 = arg4;
             _source = source;
             _offset = offset;
             _storedCount = storedCount;
@@ -349,6 +444,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _arg1,
                 _arg2,
                 _arg3,
+                _arg4,
                 _source,
                 Math.Min(_offset + 1, _storedCount),
                 _storedCount,
@@ -439,6 +535,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     1 => _arg1,
                     2 => _arg2,
                     3 => _arg3,
+                    4 => _arg4,
                     _ => throw new ArgumentOutOfRangeException(nameof(index)),
                 },
                 SourceSpan => _span[index],
