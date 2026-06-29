@@ -486,7 +486,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         }
 
         /// <summary>
-        /// Calls a function on all loaded mods that have it defined without allocating a params array.
+        /// Calls a function on all loaded mods that have it defined. Built-in
+        /// <see cref="ModContainer"/> instances avoid a params-array allocation on this path.
         /// </summary>
         /// <param name="functionName">The name of the function to call.</param>
         /// <returns>A dictionary mapping mod IDs to their return values (or exceptions).</returns>

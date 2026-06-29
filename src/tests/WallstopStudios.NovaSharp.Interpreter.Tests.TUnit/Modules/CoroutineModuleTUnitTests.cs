@@ -1868,6 +1868,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
+        public async Task YieldRequestNormalizesNullArrayReturnValuesToNil()
+        {
+            DynValue[] originalValues =
+            {
+                DynValue.NewString("head"),
+                null,
+                DynValue.NewString("tail"),
+            };
+            DynValue result = DynValue.NewYieldReq(originalValues);
+
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            DynValue tuple = result.YieldRequest.ToTuple();
+
+            await Assert.That(originalValues[1]).IsNull().ConfigureAwait(false);
+            await Assert.That(values.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(values.Span[0].String).IsEqualTo("head").ConfigureAwait(false);
+            await Assert.That(values.Span[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(values.Span[2].String).IsEqualTo("tail").ConfigureAwait(false);
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task YieldRequestNormalizesSingleFixedNullReturnValueToNil()
+        {
+            DynValue result = DynValue.NewYieldReq((DynValue)null);
+
+            DynValue tuple = result.YieldRequest.ToTuple();
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(values.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(values.Span[0].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task YieldRequestNormalizesFixedNullReturnValuesToNil()
+        {
+            DynValue result = DynValue.NewYieldReq(
+                DynValue.NewString("head"),
+                null,
+                DynValue.NewString("tail")
+            );
+
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            DynValue tuple = result.YieldRequest.ToTuple();
+
+            await Assert.That(values.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(values.Span[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task YieldReturnsYieldRequestWithArguments(LuaCompatibilityVersion version)
         {
