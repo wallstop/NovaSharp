@@ -159,16 +159,21 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _twoArgFunction = DynValue.Nil;
         private DynValue _threeArgFunction = DynValue.Nil;
         private DynValue _fourArgFunction = DynValue.Nil;
+        private DynValue _fiveArgFunction = DynValue.Nil;
         private DynValue _coroutineFunction = DynValue.Nil;
         private DynValue _fourArgCoroutineFunction = DynValue.Nil;
         private Closure _threeArgClosure;
         private Closure _fourArgClosure;
+        private Closure _fiveArgClosure;
         private Coroutine _runningCoroutine;
         private Coroutine _fourArgRunningCoroutine;
         private DynValue _first = DynValue.Nil;
         private DynValue _second = DynValue.Nil;
         private DynValue _third = DynValue.Nil;
         private DynValue _fourth = DynValue.Nil;
+        private DynValue _fifth = DynValue.Nil;
+        private DynValue[] _fiveDynValueArgs = Array.Empty<DynValue>();
+        private DynValue[] _fiveDynValueArgsWithPadding = Array.Empty<DynValue>();
         private object _firstObject = 1d;
         private object _secondObject = 2d;
         private object _thirdObject = 3d;
@@ -185,8 +190,10 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _twoArgFunction = _script.DoString("return function(a, b) return b end");
             _threeArgFunction = _script.DoString("return function(a, b, c) return c end");
             _fourArgFunction = _script.DoString("return function(a, b, c, d) return d end");
+            _fiveArgFunction = _script.DoString("return function(a, b, c, d, e) return e end");
             _threeArgClosure = _threeArgFunction.Function;
             _fourArgClosure = _fourArgFunction.Function;
+            _fiveArgClosure = _fiveArgFunction.Function;
             _coroutineFunction = _script.DoString(
                 "return function(a, b, c) while true do a, b, c = coroutine.yield(c) end end"
             );
@@ -197,6 +204,18 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _second = DynValue.NewNumber(2d);
             _third = DynValue.NewNumber(3d);
             _fourth = DynValue.NewNumber(4d);
+            _fifth = DynValue.NewNumber(5d);
+            _fiveDynValueArgs = new[] { _first, _second, _third, _fourth, _fifth };
+            _fiveDynValueArgsWithPadding = new[]
+            {
+                DynValue.Nil,
+                _first,
+                _second,
+                _third,
+                _fourth,
+                _fifth,
+                DynValue.Nil,
+            };
             _firstObject = 1d;
             _secondObject = 2d;
             _thirdObject = 3d;
@@ -248,6 +267,30 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_fourArgFunction, new DynValue[] { _first, _second, _third, _fourth });
 
         /// <summary>
+        /// Calls a Lua closure through the params-array overload with five DynValues.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 5 DynValues")]
+        public DynValue CallFiveDynValuesParamsArray() =>
+            _script.Call(
+                _fiveArgFunction,
+                new DynValue[] { _first, _second, _third, _fourth, _fifth }
+            );
+
+        /// <summary>
+        /// Calls a Lua closure with five pre-created DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "Host Call: span 5 DynValues")]
+        public DynValue CallFiveDynValuesSpan() =>
+            _script.Call(_fiveArgFunction, _fiveDynValueArgs.AsSpan());
+
+        /// <summary>
+        /// Calls a Lua closure with a slice of caller-owned contiguous DynValue storage.
+        /// </summary>
+        [Benchmark(Description = "Host Call: span slice 5 DynValues")]
+        public DynValue CallFiveDynValuesSpanSlice() =>
+            _script.Call(_fiveArgFunction, _fiveDynValueArgsWithPadding.AsSpan(1, 5));
+
+        /// <summary>
         /// Calls a Lua closure through the closure convenience API with three pre-created DynValue arguments.
         /// </summary>
         [Benchmark(Description = "Closure Call: 3 DynValues")]
@@ -274,6 +317,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Closure Call: params 4 DynValues")]
         public DynValue ClosureCallFourDynValuesParamsArray() =>
             _fourArgClosure.Call(new DynValue[] { _first, _second, _third, _fourth });
+
+        /// <summary>
+        /// Calls a Lua closure through the closure params-array overload with five DynValues.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: params 5 DynValues")]
+        public DynValue ClosureCallFiveDynValuesParamsArray() =>
+            _fiveArgClosure.Call(new DynValue[] { _first, _second, _third, _fourth, _fifth });
+
+        /// <summary>
+        /// Calls a Lua closure through the closure span overload with five DynValues.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: span 5 DynValues")]
+        public DynValue ClosureCallFiveDynValuesSpan() =>
+            _fiveArgClosure.Call(_fiveDynValueArgs.AsSpan());
 
         /// <summary>
         /// Calls a Lua closure with three pre-created CLR object arguments.
@@ -425,6 +482,10 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _second = DynValue.Nil;
         private DynValue _third = DynValue.Nil;
         private DynValue _fourth = DynValue.Nil;
+        private DynValue _fifth = DynValue.Nil;
+        private DynValue[] _threeDynValueArgs = Array.Empty<DynValue>();
+        private DynValue[] _fourDynValueArgs = Array.Empty<DynValue>();
+        private DynValue[] _fiveDynValueArgs = Array.Empty<DynValue>();
 
         /// <summary>
         /// Prepares stable callback and argument values for CLR callback call benchmarks.
@@ -439,6 +500,10 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _second = DynValue.NewNumber(2d);
             _third = DynValue.NewNumber(3d);
             _fourth = DynValue.NewNumber(4d);
+            _fifth = DynValue.NewNumber(5d);
+            _threeDynValueArgs = new[] { _first, _second, _third };
+            _fourDynValueArgs = new[] { _first, _second, _third, _fourth };
+            _fiveDynValueArgs = new[] { _first, _second, _third, _fourth, _fifth };
         }
 
         /// <summary>
@@ -470,6 +535,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_viewCallback, new DynValue[] { _first, _second, _third });
 
         /// <summary>
+        /// Calls a legacy CLR callback with three DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback Legacy Call: span 3 DynValues")]
+        public DynValue CallLegacyThreeDynValuesSpan() =>
+            _script.Call(_legacyCallback, _threeDynValueArgs.AsSpan());
+
+        /// <summary>
+        /// Calls an argument-view CLR callback with three DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View Call: span 3 DynValues")]
+        public DynValue CallViewThreeDynValuesSpan() =>
+            _script.Call(_viewCallback, _threeDynValueArgs.AsSpan());
+
+        /// <summary>
         /// Calls a legacy CLR callback with four fixed DynValue arguments.
         /// </summary>
         [Benchmark(Description = "CLR Callback Legacy Call: 4 fixed DynValues")]
@@ -496,6 +575,54 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "CLR Callback View Call: params 4 DynValues")]
         public DynValue CallViewFourDynValuesParamsArray() =>
             _script.Call(_viewCallback, new DynValue[] { _first, _second, _third, _fourth });
+
+        /// <summary>
+        /// Calls a legacy CLR callback with four DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback Legacy Call: span 4 DynValues")]
+        public DynValue CallLegacyFourDynValuesSpan() =>
+            _script.Call(_legacyCallback, _fourDynValueArgs.AsSpan());
+
+        /// <summary>
+        /// Calls an argument-view CLR callback with four DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View Call: span 4 DynValues")]
+        public DynValue CallViewFourDynValuesSpan() =>
+            _script.Call(_viewCallback, _fourDynValueArgs.AsSpan());
+
+        /// <summary>
+        /// Calls a legacy CLR callback through the params-array overload with five DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback Legacy Call: params 5 DynValues")]
+        public DynValue CallLegacyFiveDynValuesParamsArray() =>
+            _script.Call(
+                _legacyCallback,
+                new DynValue[] { _first, _second, _third, _fourth, _fifth }
+            );
+
+        /// <summary>
+        /// Calls an argument-view CLR callback through the params-array overload with five DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View Call: params 5 DynValues")]
+        public DynValue CallViewFiveDynValuesParamsArray() =>
+            _script.Call(
+                _viewCallback,
+                new DynValue[] { _first, _second, _third, _fourth, _fifth }
+            );
+
+        /// <summary>
+        /// Calls a legacy CLR callback with five DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback Legacy Call: span 5 DynValues")]
+        public DynValue CallLegacyFiveDynValuesSpan() =>
+            _script.Call(_legacyCallback, _fiveDynValueArgs.AsSpan());
+
+        /// <summary>
+        /// Calls an argument-view CLR callback with five DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View Call: span 5 DynValues")]
+        public DynValue CallViewFiveDynValuesSpan() =>
+            _script.Call(_viewCallback, _fiveDynValueArgs.AsSpan());
     }
 
     /// <summary>
@@ -652,14 +779,19 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private Script _script;
         private DynValue _threeArgFunction = DynValue.Nil;
         private DynValue _fourArgFunction = DynValue.Nil;
+        private DynValue _fiveArgFunction = DynValue.Nil;
         private DynValue _contextFixedThreeCallback = DynValue.Nil;
         private DynValue _contextParamsThreeCallback = DynValue.Nil;
         private DynValue _contextFixedFourCallback = DynValue.Nil;
         private DynValue _contextParamsFourCallback = DynValue.Nil;
+        private DynValue _contextParamsFiveCallback = DynValue.Nil;
+        private DynValue _contextSpanFiveCallback = DynValue.Nil;
         private DynValue _first = DynValue.Nil;
         private DynValue _second = DynValue.Nil;
         private DynValue _third = DynValue.Nil;
         private DynValue _fourth = DynValue.Nil;
+        private DynValue _fifth = DynValue.Nil;
+        private DynValue[] _fiveDynValueArgs = Array.Empty<DynValue>();
 
         /// <summary>
         /// Prepares callback-to-Lua call benchmarks.
@@ -670,10 +802,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script = new Script(CoreModulePresets.Complete);
             _threeArgFunction = _script.DoString("return function(a, b, c) return c end");
             _fourArgFunction = _script.DoString("return function(a, b, c, d) return d end");
+            _fiveArgFunction = _script.DoString("return function(a, b, c, d, e) return e end");
             _first = DynValue.NewNumber(1d);
             _second = DynValue.NewNumber(2d);
             _third = DynValue.NewNumber(3d);
             _fourth = DynValue.NewNumber(4d);
+            _fifth = DynValue.NewNumber(5d);
+            _fiveDynValueArgs = new[] { _first, _second, _third, _fourth, _fifth };
             _contextFixedThreeCallback = DynValue.NewCallbackView(
                 (context, _) => context.Call(_threeArgFunction, _first, _second, _third)
             );
@@ -690,6 +825,16 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                         _fourArgFunction,
                         new DynValue[] { _first, _second, _third, _fourth }
                     )
+            );
+            _contextParamsFiveCallback = DynValue.NewCallbackView(
+                (context, _) =>
+                    context.Call(
+                        _fiveArgFunction,
+                        new DynValue[] { _first, _second, _third, _fourth, _fifth }
+                    )
+            );
+            _contextSpanFiveCallback = DynValue.NewCallbackView(
+                (context, _) => context.Call(_fiveArgFunction, _fiveDynValueArgs.AsSpan())
             );
         }
 
@@ -718,6 +863,19 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Context Call: params 4 DynValues")]
         public DynValue CallContextFourDynValuesParamsArray() =>
             _script.Call(_contextParamsFourCallback);
+
+        /// <summary>
+        /// Calls back into Lua from a CLR callback through the params-array context overload.
+        /// </summary>
+        [Benchmark(Description = "Context Call: params 5 DynValues")]
+        public DynValue CallContextFiveDynValuesParamsArray() =>
+            _script.Call(_contextParamsFiveCallback);
+
+        /// <summary>
+        /// Calls back into Lua from a CLR callback through the span context overload.
+        /// </summary>
+        [Benchmark(Description = "Context Call: span 5 DynValues")]
+        public DynValue CallContextFiveDynValuesSpan() => _script.Call(_contextSpanFiveCallback);
     }
 
     /// <summary>

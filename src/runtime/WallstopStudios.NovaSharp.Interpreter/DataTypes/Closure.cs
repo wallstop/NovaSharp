@@ -282,6 +282,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Calls this function with caller-owned contiguous DynValue arguments.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(ReadOnlySpan<DynValue> args)
+        {
+            return OwnerScript.Call(DynValue.FromClosure(this), args);
+        }
+
+        /// <summary>
         /// Calls this function with the specified args
         /// </summary>
         /// <param name="args">The arguments to pass to the function.</param>

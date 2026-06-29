@@ -1238,6 +1238,81 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Calls the specified function with caller-owned contiguous arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called.</param>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue function, ReadOnlySpan<DynValue> args)
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(args);
+
+            int maxloops = 10;
+
+            while (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
+            {
+                if (maxloops <= 0)
+                {
+                    throw ScriptRuntimeException.LoopInCall();
+                }
+
+                DynValue metafunction = _mainProcessor.GetMetamethod(function, Metamethods.Call);
+
+                if (
+                    metafunction == null
+                    || metafunction.IsNil()
+                    || !CanCallMetamethod(metafunction)
+                )
+                {
+                    throw new ArgumentException(
+                        "function is not a function and has no __call metamethod."
+                    );
+                }
+
+                DynValue[] metaargs = CreateCallMetamethodArguments(function, args);
+                function = metafunction;
+                args = metaargs;
+                maxloops--;
+            }
+
+            if (function.Type == DataType.ClrFunction)
+            {
+                ScriptExecutionContext context = CreateDynamicExecutionContext(function.Callback);
+                if (function.Callback.HasArgumentViewCallback)
+                {
+                    return function.Callback.InvokeArgumentViewSpan(context, args);
+                }
+
+                return function.Callback.InvokeLegacySpan(context, args);
+            }
+
+            switch (args.Length)
+            {
+                case 0:
+                    return Call(function);
+                case 1:
+                    return Call(function, args[0]);
+                case 2:
+                    return Call(function, args[0], args[1]);
+                case 3:
+                    return Call(function, args[0], args[1], args[2]);
+                case 4:
+                    return Call(function, args[0], args[1], args[2], args[3]);
+            }
+
+            return ExecuteSpanCallWithCompatibilityGuard(function, args);
+        }
+
+        /// <summary>
         /// Calls the specified function.
         /// </summary>
         /// <param name="function">The Lua/NovaSharp function to be called</param>
@@ -1307,6 +1382,37 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 (_mainProcessor, function, args),
                 static state => state._mainProcessor.Call(state.function, state.args)
             );
+        }
+
+        private DynValue ExecuteSpanCallWithCompatibilityGuard(
+            DynValue function,
+            ReadOnlySpan<DynValue> args
+        )
+        {
+            try
+            {
+                return _mainProcessor.Call(function, args);
+            }
+            catch (InterpreterException ex)
+            {
+                ex.AppendCompatibilityContext(this);
+                throw;
+            }
+        }
+
+        private static DynValue[] CreateCallMetamethodArguments(
+            DynValue function,
+            ReadOnlySpan<DynValue> args
+        )
+        {
+            DynValue[] metaargs = new DynValue[args.Length + 1];
+            metaargs[0] = function;
+            for (int i = 0; i < args.Length; i++)
+            {
+                metaargs[i + 1] = args[i];
+            }
+
+            return metaargs;
         }
 
         private bool CanCallMetamethod(DynValue metafunction)

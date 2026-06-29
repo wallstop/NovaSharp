@@ -261,6 +261,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0)]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        [global::TUnit.Core.Arguments(5)]
+        public async Task ReadOnlySpanCallInvokesUnderlyingFunction(int arity)
+        {
+            Script script = new();
+            DynValue function = script.DoString(
+                @"
+                return function(...)
+                    local sum = 0
+                    for i = 1, select('#', ...) do
+                        sum = sum + select(i, ...)
+                    end
+                    return sum
+                end
+                "
+            );
+            Closure closure = function.Function;
+            DynValue[] args = new DynValue[arity];
+            for (int i = 0; i < args.Length; i++)
+            {
+                args[i] = DynValue.NewNumber(i + 1d);
+            }
+
+            DynValue result = closure.Call(args.AsSpan());
+
+            await Assert
+                .That(result.Number)
+                .IsEqualTo(arity * (arity + 1) / 2d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task NullCallBindsToExistingParamsArrayOverload(
             LuaCompatibilityVersion version

@@ -452,6 +452,74 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
+        /// Calls the specified function with caller-owned contiguous arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="args">The arguments.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func, ReadOnlySpan<DynValue> args)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                DynValue ret = func.Callback.HasArgumentViewCallback
+                    ? func.Callback.InvokeArgumentViewSpan(this, args)
+                    : func.Callback.InvokeLegacySpan(this, args);
+                return CompleteDirectClrCall(ret);
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                switch (args.Length)
+                {
+                    case 0:
+                        return Call(func);
+                    case 1:
+                        return Call(func, args[0]);
+                    case 2:
+                        return Call(func, args[0], args[1]);
+                    case 3:
+                        return Call(func, args[0], args[1], args[2]);
+                    case 4:
+                        return Call(func, args[0], args[1], args[2], args[3]);
+                }
+
+                return Script.Call(func, args);
+            }
+
+            int maxloops = 10;
+
+            while (maxloops > 0)
+            {
+                DynValue v = GetMetamethod(func, Metamethods.Call);
+
+                if (v == null || v.IsNil() || !CanCallMetamethod(v))
+                {
+                    throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
+                }
+
+                DynValue previousFunc = func;
+                func = v;
+
+                DynValue[] nextArgs = CreateCallMetamethodArguments(previousFunc, args);
+                if (func.Type == DataType.Function || func.Type == DataType.ClrFunction)
+                {
+                    return Call(func, nextArgs.AsSpan());
+                }
+
+                args = nextArgs;
+                maxloops--;
+            }
+
+            throw ScriptRuntimeException.LoopInCall();
+        }
+
+        /// <summary>
         /// Calls the specified function, supporting most cases. The called function must not yield.
         /// </summary>
         /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
@@ -540,6 +608,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
                 throw ScriptRuntimeException.LoopInCall();
             }
+        }
+
+        private static DynValue[] CreateCallMetamethodArguments(
+            DynValue function,
+            ReadOnlySpan<DynValue> args
+        )
+        {
+            DynValue[] metaargs = new DynValue[args.Length + 1];
+            metaargs[0] = function;
+            for (int i = 0; i < args.Length; i++)
+            {
+                metaargs[i + 1] = args[i];
+            }
+
+            return metaargs;
         }
 
         private bool CanCallMetamethod(DynValue metafunction)

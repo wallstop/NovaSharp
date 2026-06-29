@@ -249,6 +249,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Invokes an argument-view callback with caller-owned contiguous arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewSpan(
+            ScriptExecutionContext executionContext,
+            ReadOnlySpan<DynValue> args,
+            bool isMethodCall = false
+        )
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                executionContext,
+                args.Length,
+                args.Length > 0 ? args[0] : null,
+                isMethodCall
+            );
+            return _argumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(args, isMethodCall)
+            );
+        }
+
+        /// <summary>
         /// Invokes a legacy callback that receives materialized <see cref="CallbackArguments"/>.
         /// </summary>
         internal DynValue InvokeLegacy(
@@ -350,6 +376,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 executionContext,
                 new CallbackArguments(arg1, arg2, arg3, arg4, isMethodCall)
             );
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with caller-owned contiguous arguments, materializing only when
+        /// the legacy callback contract requires more than fixed storage can carry.
+        /// </summary>
+        internal DynValue InvokeLegacySpan(
+            ScriptExecutionContext executionContext,
+            ReadOnlySpan<DynValue> args,
+            bool isMethodCall = false
+        )
+        {
+            switch (args.Length)
+            {
+                case 0:
+                    return InvokeLegacyFixed(executionContext, isMethodCall);
+                case 1:
+                    return InvokeLegacyFixed(executionContext, args[0], isMethodCall);
+                case 2:
+                    return InvokeLegacyFixed(executionContext, args[0], args[1], isMethodCall);
+                case 3:
+                    return InvokeLegacyFixed(
+                        executionContext,
+                        args[0],
+                        args[1],
+                        args[2],
+                        isMethodCall
+                    );
+                case 4:
+                    return InvokeLegacyFixed(
+                        executionContext,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        isMethodCall
+                    );
+                default:
+                    DynValue[] copiedArgs = new DynValue[args.Length];
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        copiedArgs[i] = args[i];
+                    }
+
+                    return InvokeLegacy(executionContext, copiedArgs, isMethodCall);
+            }
         }
 
         private DynValue InvokeArgumentViewCallback(

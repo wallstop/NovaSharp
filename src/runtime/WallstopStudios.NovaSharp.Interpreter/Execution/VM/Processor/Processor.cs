@@ -30,63 +30,87 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private readonly DebugContext _debug;
         private DynValue _lastCloseError = DynValue.Nil;
 
-        private readonly struct ClrCallArguments
+        private readonly ref struct ClrCallArguments
         {
             private readonly DynValue[] _array;
+            private readonly ReadOnlySpan<DynValue> _span;
             private readonly DynValue _arg0;
             private readonly DynValue _arg1;
             private readonly DynValue _arg2;
             private readonly DynValue _arg3;
             private readonly int _count;
+            private readonly bool _hasSpan;
 
             internal ClrCallArguments(DynValue[] args)
             {
                 _array = args;
+                _span = default;
                 _arg0 = null;
                 _arg1 = null;
                 _arg2 = null;
                 _arg3 = null;
                 _count = args != null ? args.Length : 0;
+                _hasSpan = false;
+            }
+
+            internal ClrCallArguments(ReadOnlySpan<DynValue> args)
+            {
+                _array = null;
+                _span = args;
+                _arg0 = null;
+                _arg1 = null;
+                _arg2 = null;
+                _arg3 = null;
+                _count = args.Length;
+                _hasSpan = true;
             }
 
             internal ClrCallArguments(DynValue arg)
             {
                 _array = null;
+                _span = default;
                 _arg0 = arg;
                 _arg1 = null;
                 _arg2 = null;
                 _arg3 = null;
                 _count = 1;
+                _hasSpan = false;
             }
 
             internal ClrCallArguments(DynValue arg1, DynValue arg2)
             {
                 _array = null;
+                _span = default;
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = null;
                 _arg3 = null;
                 _count = 2;
+                _hasSpan = false;
             }
 
             internal ClrCallArguments(DynValue arg1, DynValue arg2, DynValue arg3)
             {
                 _array = null;
+                _span = default;
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = arg3;
                 _arg3 = null;
                 _count = 3;
+                _hasSpan = false;
             }
 
             internal ClrCallArguments(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
             {
                 _array = null;
+                _span = default;
                 _arg0 = arg1;
                 _arg1 = arg2;
                 _arg2 = arg3;
                 _arg3 = arg4;
                 _count = 4;
+                _hasSpan = false;
             }
 
             internal int Count
@@ -99,7 +123,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 get
                 {
                     DynValue value;
-                    if (_array != null)
+                    if (_hasSpan)
+                    {
+                        value = _span[index];
+                    }
+                    else if (_array != null)
                     {
                         value = _array[index];
                     }
@@ -140,6 +168,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     return DynValue.NewTuple(values);
                 }
 
+                if (_hasSpan)
+                {
+                    return CreateTupleFromSpan(_span);
+                }
+
                 switch (_count)
                 {
                     case 0:
@@ -161,6 +194,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                         return DynValue.NewTuple(values);
                 }
+            }
+
+            private static DynValue CreateTupleFromSpan(ReadOnlySpan<DynValue> values)
+            {
+                if (values.Length == 0)
+                {
+                    return DynValue.EmptyTuple;
+                }
+
+                if (values.Length == 1)
+                {
+                    return DynValue.NewTuple(values[0] ?? DynValue.Nil);
+                }
+
+                DynValue[] copiedValues = new DynValue[values.Length];
+                for (int i = 0; i < values.Length; i++)
+                {
+                    copiedValues[i] = values[i] ?? DynValue.Nil;
+                }
+
+                return DynValue.NewTuple(copiedValues);
             }
 
             private static bool ContainsNull(DynValue[] values)
@@ -245,6 +299,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="args">Arguments to pass.</param>
         /// <returns>The return tuple.</returns>
         public DynValue Call(DynValue function, DynValue[] args)
+        {
+            return Call(function, new ClrCallArguments(args));
+        }
+
+        /// <summary>
+        /// Invokes the specified function with caller-owned contiguous arguments.
+        /// </summary>
+        /// <param name="function">Function to invoke.</param>
+        /// <param name="args">Arguments to pass.</param>
+        /// <returns>The return tuple.</returns>
+        public DynValue Call(DynValue function, ReadOnlySpan<DynValue> args)
         {
             return Call(function, new ClrCallArguments(args));
         }

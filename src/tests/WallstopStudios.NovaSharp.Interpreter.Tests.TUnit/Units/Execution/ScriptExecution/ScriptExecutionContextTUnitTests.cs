@@ -354,6 +354,165 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CallWithReadOnlySpanDynValuesPreservesCallbackAdjustmentSemantics(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue inspect = DynValue.NewCallback((_, args) => SummarizeArguments(args));
+            DynValue[] values =
+            {
+                DynValue.NewNumber(1),
+                null,
+                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
+                DynValue.NewNumber(3),
+                DynValue.NewTuple(DynValue.NewNumber(4), null),
+            };
+
+            DynValue result = context.Call(inspect, values.AsSpan());
+
+            await AssertArgumentSummary(result, count: 6d, nilCount: 2d, sum: 10d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0)]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        [global::TUnit.Core.Arguments(5)]
+        public async Task CallWithReadOnlySpanDynValuesExposesSpanToCallbackView(int arity)
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    double sum = 0d;
+                    for (int i = 0; i < span.Length; i++)
+                    {
+                        sum += span[i].Number;
+                    }
+
+                    return DynValue.NewTuple(
+                        DynValue.NewBoolean(spanAvailable),
+                        DynValue.NewNumber(span.Length),
+                        DynValue.NewNumber(args.Count),
+                        DynValue.NewNumber(sum)
+                    );
+                }
+            );
+            DynValue[] values = CreateSequentialArguments(arity);
+
+            DynValue result = context.Call(callback, values.AsSpan());
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[3].Number)
+                .IsEqualTo(arity * (arity + 1) / 2d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CallWithReadOnlySpanDynValuesUsesCallMetamethod(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Table target = new(script);
+            Table meta = new(script);
+            DynValue[] values = CreateSequentialArguments(5);
+            meta.Set(
+                "__call",
+                DynValue.NewCallback(
+                    (_, args) =>
+                    {
+                        double sum = 0d;
+                        for (int i = 1; i < args.Count; i++)
+                        {
+                            sum += args[i].Number;
+                        }
+
+                        return DynValue.NewTuple(
+                            DynValue.NewNumber(args.Count),
+                            DynValue.NewBoolean(ReferenceEquals(args[0].Table, target)),
+                            DynValue.NewNumber(sum)
+                        );
+                    }
+                )
+            );
+            target.MetaTable = meta;
+
+            DynValue result = context.Call(DynValue.NewTable(target), values.AsSpan());
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(6d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(15d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallWithReadOnlySpanDynValuesRejectsYieldRequest()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue func = DynValue.NewCallbackView(
+                (_, _) => DynValue.NewYieldReq(Array.Empty<DynValue>())
+            );
+            DynValue[] values = CreateSequentialArguments(5);
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                context.Call(func, values.AsSpan())
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("yield across a CLR-call boundary")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallWithReadOnlySpanDynValuesRejectsTailCallWithContinuation()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue func = DynValue.NewCallbackView(
+                (_, _) =>
+                    DynValue.NewTailCallReq(
+                        new TailCallData
+                        {
+                            Function = DynValue.NewCallback((_, _) => DynValue.NewNumber(1)),
+                            Continuation = new CallbackFunction((_, _) => DynValue.Nil),
+                        }
+                    )
+            );
+            DynValue[] values = CreateSequentialArguments(5);
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                context.Call(func, values.AsSpan())
+            );
+            await Assert
+                .That(exception.Message)
+                .Contains("cannot be called directly")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task FixedCallOverloadsAvoidLegacyCallbackArgumentArrayAllocation()
         {
             Script script = new(default(CoreModules));
@@ -1004,6 +1163,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         private static Script CreateScript(LuaCompatibilityVersion version)
         {
             return new Script(version, CoreModulePresets.Complete);
+        }
+
+        private static DynValue SummarizeArguments(CallbackArguments args)
+        {
+            double nilCount = 0d;
+            double sum = 0d;
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                DynValue arg = args[i];
+                if (arg.Type == DataType.Nil)
+                {
+                    nilCount++;
+                }
+                else
+                {
+                    sum += arg.Number;
+                }
+            }
+
+            return DynValue.NewTuple(
+                DynValue.NewNumber(args.Count),
+                DynValue.NewNumber(nilCount),
+                DynValue.NewNumber(sum)
+            );
+        }
+
+        private static async Task AssertArgumentSummary(
+            DynValue value,
+            double count,
+            double nilCount,
+            double sum
+        )
+        {
+            await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(value.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(value.Tuple[0].Number).IsEqualTo(count).ConfigureAwait(false);
+            await Assert.That(value.Tuple[1].Number).IsEqualTo(nilCount).ConfigureAwait(false);
+            await Assert.That(value.Tuple[2].Number).IsEqualTo(sum).ConfigureAwait(false);
+        }
+
+        private static DynValue[] CreateSequentialArguments(int arity)
+        {
+            DynValue[] args = new DynValue[arity];
+            for (int i = 0; i < args.Length; i++)
+            {
+                args[i] = DynValue.NewNumber(i + 1d);
+            }
+
+            return args;
         }
 
         private static long MeasureNoArgumentContextCallAllocations(
