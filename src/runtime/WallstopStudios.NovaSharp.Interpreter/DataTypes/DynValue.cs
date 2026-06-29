@@ -794,7 +794,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(DynValue value)
         {
-            return value;
+            return value ?? Nil;
         }
 
         /// <summary>
@@ -854,7 +854,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (values.Length == 1)
             {
-                return values[0];
+                return values[0] ?? Nil;
             }
 
             return new DynValue() { _object = values, _type = DataType.Tuple };

@@ -29,6 +29,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        public async Task NewTupleTreatsSingleNullInputAsNil()
+        {
+            DynValue singleOverload = DynValue.NewTuple((DynValue)null);
+            DynValue paramsOverload = DynValue.NewTuple(new DynValue[] { null });
+
+            await Assert.That(singleOverload.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(paramsOverload.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task NewTupleNestedFlattensTuplesOneLevelDeep()
         {
             DynValue tupleA = DynValue.NewTuple(DynValue.NewString("a"), DynValue.NewString("b"));

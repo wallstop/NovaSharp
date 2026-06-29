@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Platforms
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Platforms;
+    using WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.TestInfrastructure;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
 
     public sealed class StandardPlatformAccessorTUnitTests
@@ -158,8 +159,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Platforms
         public async Task DefaultPrintDoesNotThrow()
         {
             StandardPlatformAccessor accessor = new();
-            accessor.DefaultPrint("hello");
-            await Task.CompletedTask.ConfigureAwait(false);
+            const string marker = "novasharp-standard-default-print";
+            string output = string.Empty;
+
+            await ConsoleTestUtilities
+                .WithConsoleCaptureAsync(
+                    consoleScope =>
+                    {
+                        accessor.DefaultPrint(marker);
+                        output = consoleScope.Writer.ToString();
+                        return Task.CompletedTask;
+                    },
+                    captureError: false
+                )
+                .ConfigureAwait(false);
+
+            await Assert.That(output).Contains(marker).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
