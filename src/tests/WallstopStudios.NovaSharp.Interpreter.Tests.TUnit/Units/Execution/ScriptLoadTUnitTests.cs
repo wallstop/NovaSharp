@@ -332,6 +332,130 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileStringExecutesRepeatedlyWithoutGrowingSources(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+
+            CompiledScript compiled = script.CompileString(
+                "counter = (counter or 0) + 1; return counter",
+                codeFriendlyName: "compiled_counter.lua"
+            );
+
+            DynValue first = compiled.Execute();
+            DynValue second = compiled.Execute();
+
+            await Assert.That(compiled.IsValid).IsTrue().ConfigureAwait(false);
+            await Assert.That(compiled.Script).IsSameReferenceAs(script).ConfigureAwait(false);
+            await Assert
+                .That(compiled.Function.Type)
+                .IsEqualTo(DataType.Function)
+                .ConfigureAwait(false);
+            await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileFunctionExecuteSupportsFixedAndSpanArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                "function(a, b, c) return a + b + c end",
+                funcFriendlyName: "compiled_add"
+            );
+
+            DynValue fixedResult = compiled.Execute(
+                DynValue.FromNumber(1),
+                DynValue.FromNumber(2),
+                DynValue.FromNumber(3)
+            );
+            DynValue spanResult = compiled.Execute(
+                new[] { DynValue.FromNumber(4), DynValue.FromNumber(5), DynValue.FromNumber(6) }
+            );
+
+            await Assert.That(fixedResult.Number).IsEqualTo(6d).ConfigureAwait(false);
+            await Assert.That(spanResult.Number).IsEqualTo(15d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileStringRuntimeErrorUsesFriendlyName(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileString(
+                "local f = nil; return f()",
+                codeFriendlyName: "compiled_error.lua"
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                compiled.Execute()
+            );
+
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("compiled_error.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileStringExecutionDoesNotSignalDebuggerAgain(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            RecordingDebugger debugger = new();
+            script.AttachDebugger(debugger);
+
+            CompiledScript compiled = script.CompileString(
+                "return 42",
+                codeFriendlyName: "compiled_debug.lua"
+            );
+            int sourceNotifications = debugger.SourceCodeSetCount;
+            int byteCodeNotifications = debugger.ByteCodeSetCount;
+
+            compiled.Execute();
+            compiled.Execute();
+
+            await Assert
+                .That(debugger.SourceCodeSetCount)
+                .IsEqualTo(sourceNotifications)
+                .ConfigureAwait(false);
+            await Assert
+                .That(debugger.ByteCodeSetCount)
+                .IsEqualTo(byteCodeNotifications)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DefaultCompiledScriptReportsInvalidHandle()
+        {
+            CompiledScript compiled = default;
+
+            await Assert.That(compiled.IsValid).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(Assert.Throws<InvalidOperationException>(() => compiled.Execute()).Message)
+                .Contains("Script compile method")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task DoStringCacheHitPreservesDebugInfoShape(LuaCompatibilityVersion version)
         {
             ScriptOptions options = new()

@@ -611,6 +611,22 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return MakeClosure(address, globalTable ?? _globalTable);
         }
 
+        /// <summary>
+        /// Compiles a string containing a Lua/NovaSharp function and returns an executable handle.
+        /// </summary>
+        /// <param name="code">The code.</param>
+        /// <param name="globalTable">The global table to bind to this function.</param>
+        /// <param name="funcFriendlyName">Name of the function used to report errors, etc.</param>
+        /// <returns>A compiled handle that can be executed repeatedly without source text.</returns>
+        public CompiledScript CompileFunction(
+            string code,
+            Table globalTable = null,
+            string funcFriendlyName = null
+        )
+        {
+            return new CompiledScript(this, LoadFunction(code, globalTable, funcFriendlyName));
+        }
+
         private void SignalByteCodeChange()
         {
             if (_debugger != null)
@@ -652,6 +668,22 @@ namespace WallstopStudios.NovaSharp.Interpreter
         {
             LoadStringGuardState state = new(this, code, globalTable, codeFriendlyName);
             return ExecuteWithCompatibilityGuard(state, LoadStringGuardAction);
+        }
+
+        /// <summary>
+        /// Compiles a string containing a Lua/NovaSharp script and returns an executable handle.
+        /// </summary>
+        /// <param name="code">The code.</param>
+        /// <param name="globalTable">The global table to bind to this chunk.</param>
+        /// <param name="codeFriendlyName">Name of the code - used to report errors, etc. Also used by debuggers to locate the original source file.</param>
+        /// <returns>A compiled handle that can be executed repeatedly without source text.</returns>
+        public CompiledScript CompileString(
+            string code,
+            Table globalTable = null,
+            string codeFriendlyName = null
+        )
+        {
+            return new CompiledScript(this, LoadString(code, globalTable, codeFriendlyName));
         }
 
         private DynValue LoadStringCore(

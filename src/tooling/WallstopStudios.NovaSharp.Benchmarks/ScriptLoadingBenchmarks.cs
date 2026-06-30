@@ -24,6 +24,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private Script _cachedScript;
         private Script _namedCachedScript;
         private DynValue _precompiledFunction = DynValue.Nil;
+        private CompiledScript _compiledHandle;
         private ScriptComplexity _currentComplexity;
 
         /// <summary>
@@ -57,11 +58,12 @@ namespace WallstopStudios.NovaSharp.Benchmarks
 
             _scriptSource = LuaScriptCorpus.GetCompilationScript(complexity);
             _precompiledScript = new Script(CoreModulePresets.Complete);
-            _precompiledFunction = _precompiledScript.LoadString(
+            _compiledHandle = _precompiledScript.CompileString(
                 _scriptSource,
                 null,
                 $"precompiled_{complexity}"
             );
+            _precompiledFunction = _compiledHandle.Function;
 
             _cachedScript = new Script(CoreModulePresets.Complete);
             _cachedScript.LoadString(_scriptSource);
@@ -122,5 +124,11 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Execute Precompiled")]
         public DynValue ExecutePrecompiled() => _precompiledScript.Call(_precompiledFunction);
+
+        /// <summary>
+        /// Executes the explicit compile-once handle, isolating handle forwarding overhead.
+        /// </summary>
+        [Benchmark(Description = "Execute Compiled Handle")]
+        public DynValue ExecuteCompiledHandle() => _compiledHandle.Execute();
     }
 }
