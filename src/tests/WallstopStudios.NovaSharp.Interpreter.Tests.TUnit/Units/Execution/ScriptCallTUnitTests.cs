@@ -648,6 +648,105 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LuaCallToLegacyClrFunctionPreservesFixedArgumentOrder(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            bool spanAvailable = false;
+            int spanLength = -1;
+            double first = -1d;
+            double seventh = -1d;
+
+            script.Globals["callback"] = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanLength = span.Length;
+                    first = args[0].Number;
+                    seventh = args[6].Number;
+                    return DynValue.NewNumber(args.Count + first + seventh);
+                }
+            );
+
+            DynValue result = script.DoString("return callback(1, 2, 3, 4, 5, 6, 7)");
+
+            await Assert.That(result.Number).IsEqualTo(15d).ConfigureAwait(false);
+            await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
+            await Assert.That(spanLength).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(first).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(seventh).IsEqualTo(7d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LuaCallToLegacyClrFunctionPreservesTrailingTupleExpansion(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Globals["callback"] = DynValue.NewCallback(
+                (_, args) => SummarizeArguments(args)
+            );
+
+            DynValue tupleResult = script.DoString(
+                @"
+                local function values()
+                    return 20, 30
+                end
+
+                return callback(10, values())
+            "
+            );
+
+            await AssertArgumentSummary(tupleResult, count: 3d, nilCount: 0d, sum: 60d)
+                .ConfigureAwait(false);
+
+            DynValue noReturnResult = script.DoString(
+                @"
+                local function values()
+                end
+
+                return callback(10, values())
+            "
+            );
+
+            await AssertArgumentSummary(noReturnResult, count: 1d, nilCount: 0d, sum: 10d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LuaCallToLegacyClrFunctionPreservesClrTupleEdgeExpansion(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Globals["callback"] = DynValue.NewCallback(
+                (_, args) => SummarizeArguments(args)
+            );
+            script.Globals["voidTuple"] = DynValue.NewCallback(
+                (_, _) => DynValue.NewTuple(DynValue.NewNumber(20), DynValue.Void)
+            );
+            script.Globals["nestedTuple"] = DynValue.NewCallback(
+                (_, _) =>
+                    DynValue.NewTuple(
+                        DynValue.NewNumber(20),
+                        DynValue.NewTuple(DynValue.NewNumber(30), DynValue.NewNumber(40))
+                    )
+            );
+
+            DynValue voidResult = script.DoString("return callback(10, voidTuple())");
+            await AssertArgumentSummary(voidResult, count: 2d, nilCount: 0d, sum: 30d)
+                .ConfigureAwait(false);
+
+            DynValue nestedResult = script.DoString("return callback(10, nestedTuple())");
+            await AssertArgumentSummary(nestedResult, count: 4d, nilCount: 0d, sum: 100d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(0)]
         [global::TUnit.Core.Arguments(1)]
         [global::TUnit.Core.Arguments(2)]

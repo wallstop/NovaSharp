@@ -590,6 +590,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             );
 
         /// <summary>
+        /// Resumes a suspended Lua coroutine with five CLR object arguments from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: object span 5 objects")]
+        public DynValue ResumeCoroutineFiveObjectArgumentsSpan() =>
+            _fiveArgRunningCoroutine.ResumeObjectArguments(_fiveObjectArgs.AsSpan());
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine with five CLR object arguments from a caller-owned slice.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: object span slice 5 objects")]
+        public DynValue ResumeCoroutineFiveObjectArgumentsSpanSlice() =>
+            _fiveArgRunningCoroutine.ResumeObjectArguments(_fiveObjectArgsWithPadding.AsSpan(1, 5));
+
+        /// <summary>
         /// Resumes a suspended Lua coroutine through the params-array overload for comparison.
         /// </summary>
         [Benchmark(Description = "Coroutine Suspended Resume: params 3 DynValues")]
@@ -617,6 +631,22 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public DynValue ResumeCoroutineFourObjectsParamsArray() =>
             _fourArgRunningCoroutine.Resume(
                 new object[] { _firstObject, _secondObject, _thirdObject, _fourthObject }
+            );
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine through the object params-array overload with five objects.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: params 5 objects")]
+        public DynValue ResumeCoroutineFiveObjectsParamsArray() =>
+            _fiveArgRunningCoroutine.Resume(
+                new object[]
+                {
+                    _firstObject,
+                    _secondObject,
+                    _thirdObject,
+                    _fourthObject,
+                    _fifthObject,
+                }
             );
     }
 
@@ -962,6 +992,8 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _viewThree = DynValue.Nil;
         private DynValue _legacyFour = DynValue.Nil;
         private DynValue _viewFour = DynValue.Nil;
+        private DynValue _legacyFive = DynValue.Nil;
+        private DynValue _viewFive = DynValue.Nil;
         private DynValue _legacySpanProbeFour = DynValue.Nil;
 
         /// <summary>
@@ -983,6 +1015,8 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _viewThree = _script.DoString("return function() return view(1, 2, 3) end");
             _legacyFour = _script.DoString("return function() return legacy(1, 2, 3, 4) end");
             _viewFour = _script.DoString("return function() return view(1, 2, 3, 4) end");
+            _legacyFive = _script.DoString("return function() return legacy(1, 2, 3, 4, 5) end");
+            _viewFive = _script.DoString("return function() return view(1, 2, 3, 4, 5) end");
             _legacySpanProbeFour = _script.DoString(
                 "return function() return legacySpanProbe(1, 2, 3, 4) end"
             );
@@ -1011,6 +1045,18 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Lua to CLR Callback View: 4 args")]
         public DynValue CallViewFourArgs() => _script.Call(_viewFour);
+
+        /// <summary>
+        /// Runs Lua bytecode that calls a legacy CLR callback with five arguments.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback Legacy: 5 args")]
+        public DynValue CallLegacyFiveArgs() => _script.Call(_legacyFive);
+
+        /// <summary>
+        /// Runs Lua bytecode that calls an argument-view CLR callback with five arguments.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback View: 5 args")]
+        public DynValue CallViewFiveArgs() => _script.Call(_viewFive);
 
         /// <summary>
         /// Runs Lua bytecode that calls a legacy CLR callback and consumes the VM-backed argument span.

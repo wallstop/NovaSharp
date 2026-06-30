@@ -1426,9 +1426,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else
                 {
-                    // Legacy CallbackArguments keeps the previous adapter behavior.
-                    IList<DynValue> args = CreateArgsListForFunctionCall(argsCount, 0);
-                    ret = callback.InvokeLegacy(context, args, isMethodCall: thisCall);
+                    ret = InvokeLegacyCallbackFromStack(
+                        callback,
+                        context,
+                        argsCount,
+                        isMethodCall: thisCall
+                    );
                 }
 
                 _valueStack.RemoveLast(argsCount + 1);
@@ -1483,6 +1486,88 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, debugText);
+        }
+
+        private DynValue InvokeLegacyCallbackFromStack(
+            CallbackFunction callback,
+            ScriptExecutionContext context,
+            int argsCount,
+            bool isMethodCall
+        )
+        {
+            if (argsCount > 0 && _valueStack.Peek(0).Type == DataType.Tuple)
+            {
+                IList<DynValue> tupleExpandedArgs = CreateArgsListForFunctionCall(argsCount, 0);
+                return callback.InvokeLegacy(context, tupleExpandedArgs, isMethodCall);
+            }
+
+            switch (argsCount)
+            {
+                case 0:
+                    return callback.InvokeLegacyFixed(context, isMethodCall);
+                case 1:
+                    return callback.InvokeLegacyFixed(context, _valueStack.Peek(0), isMethodCall);
+                case 2:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 3:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 4:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(3),
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 5:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(4),
+                        _valueStack.Peek(3),
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 6:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(5),
+                        _valueStack.Peek(4),
+                        _valueStack.Peek(3),
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 7:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(6),
+                        _valueStack.Peek(5),
+                        _valueStack.Peek(4),
+                        _valueStack.Peek(3),
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                default:
+                    IList<DynValue> args = CreateArgsListForFunctionCall(argsCount, 0);
+                    return callback.InvokeLegacy(context, args, isMethodCall);
+            }
         }
 
         private bool CanCallMetamethod(DynValue metamethod)

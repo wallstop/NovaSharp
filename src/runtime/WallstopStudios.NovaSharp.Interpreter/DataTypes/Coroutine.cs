@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
     using System;
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -454,6 +455,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(args));
             }
 
+            return ResumeObjectArguments(args.AsSpan());
+        }
+
+        /// <summary>
+        /// Resumes the coroutine with caller-owned CLR object argument storage.
+        /// Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.
+        /// </summary>
+        /// <param name="args">The arguments.</param>
+        /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
+        public DynValue ResumeObjectArguments(object[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return ResumeObjectArguments(args.AsSpan());
+        }
+
+        /// <summary>
+        /// Resumes the coroutine with caller-owned contiguous CLR object arguments.
+        /// Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.
+        /// </summary>
+        /// <param name="args">The arguments.</param>
+        /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.</exception>
+        public DynValue ResumeObjectArguments(ReadOnlySpan<object> args)
+        {
             if (Type != CoroutineType.Coroutine)
             {
                 throw new InvalidOperationException(
@@ -461,14 +491,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 );
             }
 
-            DynValue[] dargs = new DynValue[args.Length];
+            return ResumeConvertedObjectArguments(OwnerScript, args);
+        }
 
-            for (int i = 0; i < dargs.Length; i++)
+        private DynValue ResumeConvertedObjectArguments(Script script, ReadOnlySpan<object> args)
+        {
+            switch (args.Length)
             {
-                dargs[i] = DynValue.FromObject(OwnerScript, args[i]);
+                case 0:
+                    return Resume();
+                case 1:
+                    return Resume(DynValue.FromObject(script, args[0]));
+                case 2:
+                    return Resume(
+                        DynValue.FromObject(script, args[0]),
+                        DynValue.FromObject(script, args[1])
+                    );
+                case 3:
+                    return Resume(
+                        DynValue.FromObject(script, args[0]),
+                        DynValue.FromObject(script, args[1]),
+                        DynValue.FromObject(script, args[2])
+                    );
+                case 4:
+                    return Resume(
+                        DynValue.FromObject(script, args[0]),
+                        DynValue.FromObject(script, args[1]),
+                        DynValue.FromObject(script, args[2]),
+                        DynValue.FromObject(script, args[3])
+                    );
+                case 5:
+                    return Resume(
+                        DynValue.FromObject(script, args[0]),
+                        DynValue.FromObject(script, args[1]),
+                        DynValue.FromObject(script, args[2]),
+                        DynValue.FromObject(script, args[3]),
+                        DynValue.FromObject(script, args[4])
+                    );
             }
 
-            return Resume(dargs);
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                args.Length,
+                out DynValue[] convertedArgs
+            );
+            for (int i = 0; i < args.Length; i++)
+            {
+                convertedArgs[i] = DynValue.FromObject(script, args[i]);
+            }
+
+            return Resume(convertedArgs.AsSpan(0, args.Length));
         }
 
         /// <summary>
@@ -612,14 +683,63 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(args));
             }
 
-            DynValue[] dargs = new DynValue[args.Length];
+            return ResumeObjectArguments(context, args.AsSpan());
+        }
 
-            for (int i = 0; i < dargs.Length; i++)
+        /// <summary>
+        /// Resumes the coroutine with caller-owned CLR object argument storage.
+        /// </summary>
+        /// <param name="context">The ScriptExecutionContext.</param>
+        /// <param name="args">The arguments.</param>
+        /// <returns></returns>
+        public DynValue ResumeObjectArguments(ScriptExecutionContext context, object[] args)
+        {
+            if (context == null)
             {
-                dargs[i] = DynValue.FromObject(context.Script, args[i]);
+                throw new ArgumentNullException(nameof(context));
             }
 
-            return Resume(context, dargs);
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return ResumeObjectArguments(context, args.AsSpan());
+        }
+
+        /// <summary>
+        /// Resumes the coroutine with caller-owned contiguous CLR object arguments.
+        /// </summary>
+        /// <param name="context">The ScriptExecutionContext.</param>
+        /// <param name="args">The arguments.</param>
+        /// <returns></returns>
+        public DynValue ResumeObjectArguments(
+            ScriptExecutionContext context,
+            ReadOnlySpan<object> args
+        )
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            this.CheckScriptOwnership(context);
+
+            if (Type == CoroutineType.Coroutine)
+            {
+                return ResumeConvertedObjectArguments(context.Script, args);
+            }
+
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                args.Length,
+                out DynValue[] convertedArgs
+            );
+            for (int i = 0; i < args.Length; i++)
+            {
+                convertedArgs[i] = DynValue.FromObject(context.Script, args[i]);
+            }
+
+            return Resume(context, convertedArgs.AsSpan(0, args.Length));
         }
 
         /// <summary>

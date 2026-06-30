@@ -763,6 +763,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeObjectArgumentsWithContextFromDifferentScriptThrows(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script owningScript = new(version, CoreModulePresets.Complete);
+            DynValue function = owningScript.DoString("return function(value) return value end");
+            DynValue coroutine = owningScript.CreateCoroutine(function);
+
+            Script foreignScript = new(version, CoreModulePresets.Complete);
+            ScriptExecutionContext foreignContext = TestHelpers.CreateExecutionContext(
+                foreignScript
+            );
+            object[] args = { 1d };
+
+            ScriptRuntimeException arrayException = ExpectException<ScriptRuntimeException>(() =>
+                coroutine.Coroutine.ResumeObjectArguments(foreignContext, args)
+            );
+            ScriptRuntimeException spanException = ExpectException<ScriptRuntimeException>(() =>
+                coroutine.Coroutine.ResumeObjectArguments(foreignContext, args.AsSpan())
+            );
+
+            await Assert.That(arrayException.Message).Contains("different scripts");
+            await Assert.That(spanException.Message).Contains("different scripts");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ResumeWithArgumentsFromDifferentScriptThrows(
             LuaCompatibilityVersion version
         )

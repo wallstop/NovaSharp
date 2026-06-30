@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ProcessorCoroutineModuleTUnitTests
     {
@@ -526,6 +527,79 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             await Assert.That(cast.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(cast.Tuple[1].String).IsEqualTo("table").ConfigureAwait(false);
             await Assert.That(cast.Tuple[2].Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task InitialResumeObjectArgumentsSupportsCallerOwnedSpanSlice(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+            object[] args = { "prefix", null, "value", 42, true, "tail", "suffix" };
+
+            DynValue coroutine = script.CreateCoroutine(capture);
+            DynValue result = coroutine.Coroutine.ResumeObjectArguments(args.AsSpan(1, 5));
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("tail").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task SuspendedResumeObjectArgumentsSupportsPooledSpanSlice(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                @"
+                return function()
+                    local a, b, c, d, e, f = coroutine.yield('ready')
+                    return select('#', a, b, c, d, e, f), a, b, c, d, e, f
+                end
+                "
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+            object[] args = { "prefix", 1, 2, 3, 4, 5, 6, "suffix" };
+
+            DynValue yielded = coroutine.Coroutine.Resume();
+            DynValue result = coroutine.Coroutine.ResumeObjectArguments(args.AsSpan(1, 6));
+
+            await Assert.That(yielded.String).IsEqualTo("ready").ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(6d).ConfigureAwait(false);
+            for (int i = 1; i < result.Tuple.Length; i++)
+            {
+                await Assert
+                    .That(result.Tuple[i].Number)
+                    .IsEqualTo((double)i)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InitialResumeObjectArgumentsWithNullArrayThrows()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue capture = script.DoString("return function(...) return ... end");
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                coroutine.Coroutine.ResumeObjectArguments((object[])null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
         }
 
         /// <summary>
