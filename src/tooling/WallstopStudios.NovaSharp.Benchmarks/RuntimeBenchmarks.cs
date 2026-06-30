@@ -183,6 +183,8 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private object _thirdObject = 3d;
         private object _fourthObject = 4d;
         private object _fifthObject = 5d;
+        private object[] _fiveObjectArgs = Array.Empty<object>();
+        private object[] _fiveObjectArgsWithPadding = Array.Empty<object>();
 
         [GlobalSetup]
         /// <summary>
@@ -237,6 +239,24 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _thirdObject = 3d;
             _fourthObject = 4d;
             _fifthObject = 5d;
+            _fiveObjectArgs = new[]
+            {
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+            };
+            _fiveObjectArgsWithPadding = new[]
+            {
+                0d,
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+                0d,
+            };
             _runningCoroutine = _script.CreateCoroutine(_coroutineFunction).Coroutine;
             _runningCoroutine.Resume(_first, _second, _third);
             _fourArgRunningCoroutine = _script.CreateCoroutine(_fourArgCoroutineFunction).Coroutine;
@@ -487,6 +507,27 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 _fourArgFunction,
                 new object[] { _firstObject, _secondObject, _thirdObject, _fourthObject }
             );
+
+        /// <summary>
+        /// Calls a Lua closure through the object params-array overload with caller-owned object storage.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 5 objects")]
+        public DynValue CallFiveObjectsParamsArray() =>
+            _script.Call(_fiveArgFunction, _fiveObjectArgs);
+
+        /// <summary>
+        /// Calls a Lua closure with caller-owned contiguous CLR object storage.
+        /// </summary>
+        [Benchmark(Description = "Host Call: object span 5 objects")]
+        public DynValue CallFiveObjectArgumentsSpan() =>
+            _script.CallObjectArguments(_fiveArgFunction, _fiveObjectArgs.AsSpan());
+
+        /// <summary>
+        /// Calls a Lua closure with a slice of caller-owned contiguous CLR object storage.
+        /// </summary>
+        [Benchmark(Description = "Host Call: object span slice 5 objects")]
+        public DynValue CallFiveObjectArgumentsSpanSlice() =>
+            _script.CallObjectArguments(_fiveArgFunction, _fiveObjectArgsWithPadding.AsSpan(1, 5));
 
         /// <summary>
         /// Resumes a suspended Lua coroutine with three pre-created DynValue arguments.

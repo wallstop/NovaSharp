@@ -263,6 +263,41 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Executes the compiled chunk with caller-owned CLR object argument storage.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// The array is treated as the argument list. To pass an <see cref="object"/> array as
+        /// one Lua argument, use the fixed <see cref="Execute(object)"/> overload and cast the
+        /// array to <see cref="object"/>.
+        /// </remarks>
+        public DynValue ExecuteObjectArguments(object[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return ExecuteObjectArguments(args.AsSpan());
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with caller-owned contiguous CLR object arguments.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// The span is treated as the argument list. To pass an <see cref="object"/> array as
+        /// one Lua argument, use the fixed <see cref="Execute(object)"/> overload and cast the
+        /// array to <see cref="object"/>.
+        /// </remarks>
+        public DynValue ExecuteObjectArguments(ReadOnlySpan<object> args)
+        {
+            return GetScript().ExecuteCompiledFunction(GetFunction(), args);
+        }
+
+        /// <summary>
         /// Executes the compiled chunk with caller-owned contiguous arguments.
         /// </summary>
         /// <param name="args">The arguments to pass to the chunk.</param>

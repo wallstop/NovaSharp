@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ScriptCallTUnitTests
     {
@@ -174,6 +175,112 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             DynValue result = script.Call(callback, 21);
             await Assert.That(result.Number).IsEqualTo(42d);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CallObjectArgumentsSupportsCallerOwnedSpanAndObjectFunction(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString("function capture(...) return select('#', ...), ... end");
+            DynValue function = script.Globals.Get("capture");
+            object closure = function.Function;
+            object[] args = { "padding", 1d, 2d, 3d, 4d, 5d, 6d, "padding" };
+
+            DynValue dynValueFunctionResult = script.CallObjectArguments(
+                function,
+                args.AsSpan(1, 6)
+            );
+            DynValue objectFunctionResult = script.CallObjectArguments(closure, args.AsSpan(1, 6));
+
+            await Assert
+                .That(dynValueFunctionResult.Tuple[0].Number)
+                .IsEqualTo(6d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(dynValueFunctionResult.Tuple[6].Number)
+                .IsEqualTo(6d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectFunctionResult.Tuple[0].Number)
+                .IsEqualTo(6d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectFunctionResult.Tuple[6].Number)
+                .IsEqualTo(6d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CallObjectParamsArrayPreservesSpreadAndSingleArrayForms(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString("function capture(...) return select('#', ...), ... end");
+            DynValue function = script.Globals.Get("capture");
+            object closure = function.Function;
+            object[] args = { "left", "right", 3d, 4d, 5d, 6d };
+
+            DynValue dynValueFunctionSpread = script.Call(function, args);
+            DynValue objectFunctionSpread = script.Call(closure, args);
+            DynValue singleArrayArgument = script.Call(function, (object)args);
+
+            await Assert
+                .That(dynValueFunctionSpread.Tuple[0].Number)
+                .IsEqualTo(6d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(dynValueFunctionSpread.Tuple[1].String)
+                .IsEqualTo("left")
+                .ConfigureAwait(false);
+            await Assert
+                .That(dynValueFunctionSpread.Tuple[6].Number)
+                .IsEqualTo(6d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectFunctionSpread.Tuple[0].Number)
+                .IsEqualTo(6d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectFunctionSpread.Tuple[2].String)
+                .IsEqualTo("right")
+                .ConfigureAwait(false);
+            await Assert
+                .That(singleArrayArgument.Tuple[0].Number)
+                .IsEqualTo(1d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(singleArrayArgument.Tuple[1].Type)
+                .IsEqualTo(DataType.Table)
+                .ConfigureAwait(false);
+            await Assert
+                .That(singleArrayArgument.Tuple[1].Table.Get(1).String)
+                .IsEqualTo("left")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CallObjectArgumentsWithNullArrayThrows()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            script.DoString("function noop() end");
+            DynValue function = script.Globals.Get("noop");
+
+            ArgumentNullException dynValueFunctionException =
+                ExpectException<ArgumentNullException>(() =>
+                    script.CallObjectArguments(function, (object[])null)
+                );
+            ArgumentNullException objectFunctionException = ExpectException<ArgumentNullException>(
+                () =>
+                    script.CallObjectArguments((object)function.Function, (object[])null)
+            );
+
+            await Assert.That(dynValueFunctionException.ParamName).IsEqualTo("args");
+            await Assert.That(objectFunctionException.ParamName).IsEqualTo("args");
         }
 
         [global::TUnit.Core.Test]

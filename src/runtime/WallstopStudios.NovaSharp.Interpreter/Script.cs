@@ -1042,6 +1042,68 @@ namespace WallstopStudios.NovaSharp.Interpreter
             };
         }
 
+        /// <summary>
+        /// Executes a resolved callable handle with caller-owned contiguous CLR object arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(DynValue function, ReadOnlySpan<object> args)
+        {
+            this.CheckScriptOwnership(function);
+
+            if (function.Type != DataType.Function)
+            {
+                return CallObjectArguments(function, args);
+            }
+
+            switch (args.Length)
+            {
+                case 0:
+                    return ExecuteCompiledFunction(function);
+                case 1:
+                    return ExecuteCompiledFunction(function, DynValue.FromObject(this, args[0]));
+                case 2:
+                    return ExecuteCompiledFunction(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1])
+                    );
+                case 3:
+                    return ExecuteCompiledFunction(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2])
+                    );
+                case 4:
+                    return ExecuteCompiledFunction(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2]),
+                        DynValue.FromObject(this, args[3])
+                    );
+                case 5:
+                    return ExecuteCompiledFunction(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2]),
+                        DynValue.FromObject(this, args[3]),
+                        DynValue.FromObject(this, args[4])
+                    );
+            }
+
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                args.Length,
+                out DynValue[] convertedArgs
+            );
+            for (int i = 0; i < args.Length; i++)
+            {
+                convertedArgs[i] = DynValue.FromObject(this, args[i]);
+            }
+
+            return ExecuteCompiledFunction(function, convertedArgs.AsSpan(0, args.Length));
+        }
+
         private DynValue LoadStringCore(
             string code,
             Table globalTable = null,
@@ -2528,14 +2590,92 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 throw new ArgumentNullException(nameof(args));
             }
 
-            DynValue[] dargs = new DynValue[args.Length];
+            return CallObjectArguments(function, args.AsSpan());
+        }
 
-            for (int i = 0; i < dargs.Length; i++)
+        /// <summary>
+        /// Calls the specified function with caller-owned CLR object argument storage.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called.</param>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public DynValue CallObjectArguments(DynValue function, object[] args)
+        {
+            if (args == null)
             {
-                dargs[i] = DynValue.FromObject(this, args[i]);
+                throw new ArgumentNullException(nameof(args));
             }
 
-            return Call(function, dargs);
+            return CallObjectArguments(function, args.AsSpan());
+        }
+
+        /// <summary>
+        /// Calls the specified function with caller-owned contiguous CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called.</param>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public DynValue CallObjectArguments(DynValue function, ReadOnlySpan<object> args)
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            switch (args.Length)
+            {
+                case 0:
+                    return Call(function);
+                case 1:
+                    return Call(function, DynValue.FromObject(this, args[0]));
+                case 2:
+                    return Call(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1])
+                    );
+                case 3:
+                    return Call(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2])
+                    );
+                case 4:
+                    return Call(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2]),
+                        DynValue.FromObject(this, args[3])
+                    );
+                case 5:
+                    return Call(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2]),
+                        DynValue.FromObject(this, args[3]),
+                        DynValue.FromObject(this, args[4])
+                    );
+            }
+
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                args.Length,
+                out DynValue[] convertedArgs
+            );
+            for (int i = 0; i < args.Length; i++)
+            {
+                convertedArgs[i] = DynValue.FromObject(this, args[i]);
+            }
+
+            return Call(function, convertedArgs.AsSpan(0, args.Length));
         }
 
         /// <summary>
@@ -2787,7 +2927,45 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(object function, params object[] args)
         {
-            return Call(DynValue.FromObject(this, function), args);
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return CallObjectArguments(DynValue.FromObject(this, function), args.AsSpan());
+        }
+
+        /// <summary>
+        /// Calls the specified function object with caller-owned CLR object argument storage.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called.</param>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public DynValue CallObjectArguments(object function, object[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return CallObjectArguments(DynValue.FromObject(this, function), args.AsSpan());
+        }
+
+        /// <summary>
+        /// Calls the specified function object with caller-owned contiguous CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called.</param>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public DynValue CallObjectArguments(object function, ReadOnlySpan<object> args)
+        {
+            return CallObjectArguments(DynValue.FromObject(this, function), args);
         }
 
         /// <summary>

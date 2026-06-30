@@ -423,6 +423,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileFunctionExecuteObjectArgumentsSupportsCallerOwnedSpan(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                "function(...) return select('#', ...), ... end",
+                funcFriendlyName: "compiled_object_span_capture"
+            );
+            object[] args = { "padding", null, "value", 42, true, 5d, "tail", "padding" };
+
+            DynValue result = compiled.ExecuteObjectArguments(args.AsSpan(1, 6));
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(6d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[6].String).IsEqualTo("tail").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileFunctionExecuteApiShapeSupportsExplicitNullAndArrayForms(
             LuaCompatibilityVersion version
         )
@@ -433,11 +459,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 funcFriendlyName: "compiled_api_shape"
             );
             DynValue[] args = new[] { DynValue.FromNumber(1), DynValue.FromNumber(2) };
+            object[] objectArray = { "left", "right" };
 
             DynValue dynValueNilResult = compiled.Execute(DynValue.Nil);
             DynValue objectNullResult = compiled.Execute((object)null);
             DynValue arrayResult = compiled.Execute(args);
             DynValue spanResult = ExecuteCompiledScriptWithSpanArguments(compiled, args);
+            DynValue objectArrayAsSingleResult = compiled.Execute((object)objectArray);
+            DynValue objectArrayAsArgumentListResult = compiled.ExecuteObjectArguments(objectArray);
 
             await Assert
                 .That(dynValueNilResult.Tuple[0].Number)
@@ -458,6 +487,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(spanResult.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
             await Assert.That(spanResult.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(spanResult.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(objectArrayAsSingleResult.Tuple[0].Number)
+                .IsEqualTo(1d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectArrayAsSingleResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Table)
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectArrayAsSingleResult.Tuple[1].Table.Get(1).String)
+                .IsEqualTo("left")
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectArrayAsSingleResult.Tuple[1].Table.Get(2).String)
+                .IsEqualTo("right")
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectArrayAsArgumentListResult.Tuple[0].Number)
+                .IsEqualTo(2d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectArrayAsArgumentListResult.Tuple[1].String)
+                .IsEqualTo("left")
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectArrayAsArgumentListResult.Tuple[2].String)
+                .IsEqualTo("right")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -483,6 +540,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        public async Task CompileFunctionExecuteObjectArgumentsRejectsNullArray()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                "function(...) return select('#', ...) end",
+                funcFriendlyName: "compiled_null_object_args"
+            );
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                compiled.ExecuteObjectArguments((object[])null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task CompileFunctionExecuteObjectArgumentRejectsForeignTable(
             LuaCompatibilityVersion version
@@ -500,9 +573,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 compiled.Execute(foreignTable)
             );
+            ScriptRuntimeException spanException = Assert.Throws<ScriptRuntimeException>(() =>
+                compiled.ExecuteObjectArguments(new[] { foreignTable })
+            );
 
             await Assert
                 .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+            await Assert
+                .That(spanException.Message)
                 .Contains("different scripts")
                 .ConfigureAwait(false);
         }
