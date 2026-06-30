@@ -33,6 +33,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         private readonly LinkedList<LruEntry> _lruList;
         private readonly int _maxEntries;
         private readonly object _lock = new();
+        private bool _hasLastHit;
+        private string _lastHitCode;
+        private LuaCompatibilityVersion _lastHitVersion;
+        private string _lastHitSourceName;
+        private CachedChunk _lastHitChunk;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptCompilationCache"/> class.
@@ -93,16 +98,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 return false;
             }
 
-            SourceCacheKey key = SourceCacheKey.Create(code, version, sourceName);
-
             lock (_lock)
             {
+                if (IsLastHit(code, version, sourceName))
+                {
+                    result = _lastHitChunk;
+                    return true;
+                }
+
+                SourceCacheKey key = SourceCacheKey.Create(code, version, sourceName);
+
                 if (_cache.TryGetValue(key, out LinkedListNode<LruEntry> node))
                 {
                     // Move to front (most recently used)
                     _lruList.Remove(node);
                     _lruList.AddFirst(node);
                     result = node.Value._chunk;
+                    RememberLastHit(code, version, sourceName, result);
                     return true;
                 }
             }
@@ -147,6 +159,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     existingNode.Value = new LruEntry(existingNode.Value._key, chunk);
                     _lruList.Remove(existingNode);
                     _lruList.AddFirst(existingNode);
+                    RememberLastHit(code, version, sourceName, chunk);
                     return;
                 }
 
@@ -162,6 +175,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 LruEntry entry = new(key, chunk);
                 LinkedListNode<LruEntry> newNode = _lruList.AddFirst(entry);
                 _cache[key] = newNode;
+                RememberLastHit(code, version, sourceName, chunk);
             }
         }
 
@@ -174,7 +188,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             {
                 _cache.Clear();
                 _lruList.Clear();
+                ClearLastHit();
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsLastHit(string code, LuaCompatibilityVersion version, string sourceName)
+        {
+            // The last-hit slot is only an exact-reference shortcut. Dictionary lookup remains
+            // authoritative for value-equal strings, and every store/clear must refresh it.
+            return _hasLastHit
+                && _lastHitVersion == version
+                && ReferenceEquals(_lastHitCode, code)
+                && ReferenceEquals(_lastHitSourceName, sourceName);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RememberLastHit(
+            string code,
+            LuaCompatibilityVersion version,
+            string sourceName,
+            CachedChunk chunk
+        )
+        {
+            _lastHitCode = code;
+            _lastHitVersion = version;
+            _lastHitSourceName = sourceName;
+            _lastHitChunk = chunk;
+            _hasLastHit = true;
+        }
+
+        private void ClearLastHit()
+        {
+            _hasLastHit = false;
+            _lastHitCode = null;
+            _lastHitVersion = default;
+            _lastHitSourceName = null;
+            _lastHitChunk = default;
         }
 
         /// <summary>

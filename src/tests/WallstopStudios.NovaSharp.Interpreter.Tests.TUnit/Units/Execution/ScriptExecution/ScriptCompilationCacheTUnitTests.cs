@@ -824,5 +824,311 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 .IsTrue()
                 .ConfigureAwait(false);
         }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheClearInvalidatesMostRecentLookup()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 2);
+            const string code = "return 1";
+
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                "cached.lua",
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        code,
+                        LuaCompatibilityVersion.Lua54,
+                        "cached.lua",
+                        out CachedChunk cached
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(cached._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
+
+            cache.Clear();
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua54, "cached.lua", out _))
+                .IsFalse()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheEvictionInvalidatesMostRecentLookupWhenEntryIsEvicted()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 1);
+            const string firstCode = "return 1";
+            const string secondCode = "return 2";
+
+            cache.Store(
+                firstCode,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        firstCode,
+                        LuaCompatibilityVersion.Lua54,
+                        null,
+                        out CachedChunk first
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(first._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
+
+            cache.Store(
+                secondCode,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                entryPointAddress: 22,
+                sourceId: 202
+            );
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet(firstCode, LuaCompatibilityVersion.Lua54, null, out _))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(
+                    cache.TryGet(
+                        secondCode,
+                        LuaCompatibilityVersion.Lua54,
+                        null,
+                        out CachedChunk second
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(second._entryPointAddress).IsEqualTo(22).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheMostRecentLookupDoesNotCrossVersionOrFriendlyName()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 2);
+            const string code = "return 1";
+            const string sourceName = "first.lua";
+
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        code,
+                        LuaCompatibilityVersion.Lua54,
+                        sourceName,
+                        out CachedChunk cached
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(cached._sourceId).IsEqualTo(101).ConfigureAwait(false);
+
+            await Assert
+                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua53, sourceName, out _))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(cache.TryGet(code, LuaCompatibilityVersion.Lua54, "second.lua", out _))
+                .IsFalse()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheFallsBackToValueEqualityForEqualButDistinctStrings()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 2);
+            string storedCode = new("return 1".ToCharArray());
+            string lookupCode = new("return 1".ToCharArray());
+            string storedSourceName = new("same.lua".ToCharArray());
+            string lookupSourceName = new("same.lua".ToCharArray());
+
+            cache.Store(
+                storedCode,
+                LuaCompatibilityVersion.Lua54,
+                storedSourceName,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+
+            await Assert
+                .That(ReferenceEquals(storedCode, lookupCode))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(ReferenceEquals(storedSourceName, lookupSourceName))
+                .IsFalse()
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        lookupCode,
+                        LuaCompatibilityVersion.Lua54,
+                        lookupSourceName,
+                        out CachedChunk cached
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(cached._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(cached._sourceId).IsEqualTo(101).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheStoreUpdatesMostRecentLookupForExistingKey()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 2);
+            const string code = "return 1";
+
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+
+            await Assert
+                .That(
+                    cache.TryGet(code, LuaCompatibilityVersion.Lua54, null, out CachedChunk first)
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(first._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
+
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                entryPointAddress: 22,
+                sourceId: 202
+            );
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(
+                    cache.TryGet(code, LuaCompatibilityVersion.Lua54, null, out CachedChunk updated)
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(updated._entryPointAddress).IsEqualTo(22).ConfigureAwait(false);
+            await Assert.That(updated._sourceId).IsEqualTo(202).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheStoreUpdatesExistingKeyWithEqualButDistinctStrings()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 2);
+            string firstCode = new("return 1".ToCharArray());
+            string secondCode = new("return 1".ToCharArray());
+            string firstSourceName = new("same.lua".ToCharArray());
+            string secondSourceName = new("same.lua".ToCharArray());
+
+            cache.Store(
+                firstCode,
+                LuaCompatibilityVersion.Lua54,
+                firstSourceName,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+            cache.Store(
+                secondCode,
+                LuaCompatibilityVersion.Lua54,
+                secondSourceName,
+                entryPointAddress: 22,
+                sourceId: 202
+            );
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(ReferenceEquals(firstCode, secondCode))
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(ReferenceEquals(firstSourceName, secondSourceName))
+                .IsFalse()
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        firstCode,
+                        LuaCompatibilityVersion.Lua54,
+                        firstSourceName,
+                        out CachedChunk firstLookup
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(firstLookup._entryPointAddress).IsEqualTo(22).ConfigureAwait(false);
+            await Assert.That(firstLookup._sourceId).IsEqualTo(202).ConfigureAwait(false);
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        secondCode,
+                        LuaCompatibilityVersion.Lua54,
+                        secondSourceName,
+                        out CachedChunk secondLookup
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(secondLookup._entryPointAddress).IsEqualTo(22).ConfigureAwait(false);
+            await Assert.That(secondLookup._sourceId).IsEqualTo(202).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task DoStringAfterClearRecompilesInsteadOfUsingMostRecentLookup()
+        {
+            ScriptOptions options = new() { EnableScriptCaching = true };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "counter = (counter or 0) + 1; return counter";
+            const string sourceName = "clear_public_cached.lua";
+
+            int initialSourceCount = script.SourceCodeCount;
+            DynValue first = script.DoString(code, codeFriendlyName: sourceName);
+
+            await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+
+            script.ClearCompilationCache();
+
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(0).ConfigureAwait(false);
+
+            DynValue second = script.DoString(code, codeFriendlyName: sourceName);
+
+            await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 2)
+                .ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
     }
 }
