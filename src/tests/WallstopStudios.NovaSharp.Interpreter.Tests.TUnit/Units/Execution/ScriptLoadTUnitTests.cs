@@ -384,12 +384,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 DynValue.FromNumber(2),
                 DynValue.FromNumber(3)
             );
-            DynValue spanResult = compiled.Execute(
+            DynValue arrayResult = compiled.Execute(
                 new[] { DynValue.FromNumber(4), DynValue.FromNumber(5), DynValue.FromNumber(6) }
+            );
+            DynValue spanResult = ExecuteCompiledScriptWithSpanArguments(
+                compiled,
+                new[] { DynValue.FromNumber(7), DynValue.FromNumber(8), DynValue.FromNumber(9) }
             );
 
             await Assert.That(fixedResult.Number).IsEqualTo(6d).ConfigureAwait(false);
-            await Assert.That(spanResult.Number).IsEqualTo(15d).ConfigureAwait(false);
+            await Assert.That(arrayResult.Number).IsEqualTo(15d).ConfigureAwait(false);
+            await Assert.That(spanResult.Number).IsEqualTo(24d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -523,6 +528,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .That(Assert.Throws<InvalidOperationException>(() => compiled.Execute()).Message)
                 .Contains("Script compile method")
                 .ConfigureAwait(false);
+        }
+
+        private static DynValue ExecuteCompiledScriptWithSpanArguments(
+            CompiledScript compiled,
+            DynValue[] args
+        )
+        {
+            return compiled.Execute(args.AsSpan());
         }
 
         [global::TUnit.Core.Test]

@@ -216,6 +216,21 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Executes the compiled chunk with caller-owned array arguments.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(DynValue[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return Execute(args.AsSpan());
+        }
+
+        /// <summary>
         /// Executes the compiled chunk with caller-owned contiguous arguments.
         /// </summary>
         /// <param name="args">The arguments to pass to the chunk.</param>
