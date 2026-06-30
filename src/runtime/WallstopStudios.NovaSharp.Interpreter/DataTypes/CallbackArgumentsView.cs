@@ -166,20 +166,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Initializes a new argument view from list backing storage.
         /// </summary>
         public CallbackArgumentsView(IList<DynValue> args, bool isMethodCall)
-            : this(
-                args is DynValue[] array ? new ReadOnlySpan<DynValue>(array) : default,
-                args ?? throw new ArgumentNullException(nameof(args)),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                args is DynValue[] ? SourceSpan : SourceList,
-                0,
-                args.Count,
-                isMethodCall
-            ) { }
+            : this(args, 0, GetCountOrThrow(args), isMethodCall) { }
 
         /// <summary>
         /// Initializes a new argument view from a subrange of list backing storage.
@@ -209,6 +196,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 hasSpan = true;
             }
             else if (args is FastStack<DynValue> stack && stack.TryGetSpan(offset, count, out span))
+            {
+                hasSpan = true;
+            }
+            else if (args is Slice<DynValue> slice && slice.TryGetSpan(offset, count, out span))
             {
                 hasSpan = true;
             }
@@ -251,6 +242,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     _lastIsTuple = false;
                 }
             }
+        }
+
+        private static int GetCountOrThrow(IList<DynValue> args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return args.Count;
         }
 
         /// <summary>

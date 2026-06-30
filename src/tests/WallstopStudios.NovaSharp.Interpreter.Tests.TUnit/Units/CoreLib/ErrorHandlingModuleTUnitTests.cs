@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -63,6 +64,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(tuple.Tuple[6].Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(tuple.Tuple[7].Number).IsEqualTo(2d).ConfigureAwait(false);
             await Assert.That(tuple.Tuple[8].Number).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PcallTailRequestsReuseInternalCallbacks(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue function = script.DoString("return function() return 1 end");
+            CallbackArguments args = new(new[] { function }, false);
+
+            DynValue first = ErrorHandlingModule.Pcall(context, args);
+            DynValue second = ErrorHandlingModule.Pcall(context, args);
+            second.TailCallData.Continuation.AdditionalData = "dirty";
+            second.TailCallData.ErrorHandler.AdditionalData = "dirty";
+            DynValue third = ErrorHandlingModule.Pcall(context, args);
+
+            await Assert.That(first.Type).IsEqualTo(DataType.TailCallRequest).ConfigureAwait(false);
+            await Assert
+                .That(second.Type)
+                .IsEqualTo(DataType.TailCallRequest)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(second.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler)
+                .IsSameReferenceAs(second.TailCallData.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(third.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler)
+                .IsSameReferenceAs(third.TailCallData.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation.Name)
+                .IsEqualTo("pcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler.Name)
+                .IsEqualTo("pcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(third.TailCallData.Continuation.AdditionalData)
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(third.TailCallData.ErrorHandler.AdditionalData)
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -442,6 +497,61 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).Contains("decorated:").ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).Contains("failure").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task XpcallTailRequestsReuseInternalCallbacks(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue handler = script.DoString("return function(err) return err end");
+            CallbackArguments args = new(new[] { function, handler }, false);
+
+            DynValue first = ErrorHandlingModule.Xpcall(context, args);
+            DynValue second = ErrorHandlingModule.Xpcall(context, args);
+            second.TailCallData.Continuation.AdditionalData = "dirty";
+            second.TailCallData.ErrorHandler.AdditionalData = "dirty";
+            DynValue third = ErrorHandlingModule.Xpcall(context, args);
+
+            await Assert.That(first.Type).IsEqualTo(DataType.TailCallRequest).ConfigureAwait(false);
+            await Assert
+                .That(second.Type)
+                .IsEqualTo(DataType.TailCallRequest)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(second.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler)
+                .IsSameReferenceAs(second.TailCallData.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(third.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler)
+                .IsSameReferenceAs(third.TailCallData.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation.Name)
+                .IsEqualTo("xpcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler.Name)
+                .IsEqualTo("xpcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(third.TailCallData.Continuation.AdditionalData)
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(third.TailCallData.ErrorHandler.AdditionalData)
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

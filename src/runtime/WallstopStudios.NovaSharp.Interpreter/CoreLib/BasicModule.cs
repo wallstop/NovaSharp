@@ -24,6 +24,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public static class BasicModule
     {
+        private static readonly CallbackFunction ToStringContinuationCallback = new(
+            ToStringContinuation,
+            Metamethods.ToStringMeta
+        );
+
         /// <summary>
         /// Implements Lua's <c>type</c> function (§6.1), returning the textual Lua type name for the first argument.
         /// </summary>
@@ -233,10 +238,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return DynValue.NewString(v.ToPrintString(version));
             }
 
-            tail.TailCallData.Continuation = new CallbackFunction(
-                ToStringContinuation,
-                Metamethods.ToStringMeta
-            );
+            ToStringContinuationCallback.AdditionalData = null;
+            tail.TailCallData.Continuation = ToStringContinuationCallback;
 
             return tail;
         }

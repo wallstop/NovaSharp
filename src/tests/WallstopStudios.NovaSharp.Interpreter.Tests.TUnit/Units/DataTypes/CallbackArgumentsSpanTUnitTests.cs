@@ -187,6 +187,69 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return ExecuteTryGetSpan(args);
         }
 
+        private static TryGetSpanResult ExecuteViewSliceTryGetSpan(
+            IList<DynValue> backing,
+            int offset,
+            int count,
+            bool reversed = false
+        )
+        {
+            Slice<DynValue> slice = new(backing, offset, count, reversed);
+            CallbackArgumentsView args = new(slice, false);
+            bool result = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            double[] numbers = new double[span.Length];
+            for (int i = 0; i < span.Length; i++)
+            {
+                numbers[i] = span[i].Number;
+            }
+
+            return new TryGetSpanResult(result, span.Length, numbers);
+        }
+
+        private static TryGetSpanResult ExecuteViewSliceSubrangeTryGetSpan(
+            IList<DynValue> backing,
+            int sliceOffset,
+            int sliceCount,
+            int viewOffset,
+            int viewCount
+        )
+        {
+            Slice<DynValue> slice = new(backing, sliceOffset, sliceCount, false);
+            CallbackArgumentsView args = new(
+                slice,
+                offset: viewOffset,
+                count: viewCount,
+                isMethodCall: false
+            );
+            bool result = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            double[] numbers = new double[span.Length];
+            for (int i = 0; i < span.Length; i++)
+            {
+                numbers[i] = span[i].Number;
+            }
+
+            return new TryGetSpanResult(result, span.Length, numbers);
+        }
+
+        private static TryGetSpanResult ExecuteViewSliceSkipMethodCallTryGetSpan(
+            IList<DynValue> backing,
+            int offset,
+            int count
+        )
+        {
+            Slice<DynValue> slice = new(backing, offset, count, false);
+            CallbackArgumentsView args = new(slice, isMethodCall: true);
+            CallbackArgumentsView skipped = args.SkipMethodCall();
+            bool result = skipped.TryGetSpan(out ReadOnlySpan<DynValue> span);
+            double[] numbers = new double[span.Length];
+            for (int i = 0; i < span.Length; i++)
+            {
+                numbers[i] = span[i].Number;
+            }
+
+            return new TryGetSpanResult(result, span.Length, numbers);
+        }
+
         private static TryGetSpanResult ExecuteSkippedFastStackSliceTryGetSpan(
             FastStack<DynValue> stack
         )
@@ -536,6 +599,70 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
+        public async Task ArgumentViewTryGetSpanReturnsTrueForFastStackSlice()
+        {
+            FastStack<DynValue> stack = new(4);
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+            stack.Push(DynValue.NewNumber(3));
+            stack.Push(DynValue.NewNumber(4));
+
+            TryGetSpanResult result = ExecuteViewSliceTryGetSpan(stack, offset: 1, count: 3);
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[2]).IsEqualTo(4d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArgumentViewTryGetSpanComposesFastStackSliceSubrange()
+        {
+            FastStack<DynValue> stack = new(5);
+            stack.Push(DynValue.NewNumber(99));
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+            stack.Push(DynValue.NewNumber(3));
+            stack.Push(DynValue.NewNumber(100));
+
+            TryGetSpanResult result = ExecuteViewSliceSubrangeTryGetSpan(
+                stack,
+                sliceOffset: 1,
+                sliceCount: 3,
+                viewOffset: 1,
+                viewCount: 2
+            );
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArgumentViewSkipMethodCallPreservesFastStackSliceSpan()
+        {
+            FastStack<DynValue> stack = new(5);
+            stack.Push(DynValue.NewNumber(99));
+            stack.Push(DynValue.NewString("self"));
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+            stack.Push(DynValue.NewNumber(100));
+
+            TryGetSpanResult result = ExecuteViewSliceSkipMethodCallTryGetSpan(
+                stack,
+                offset: 1,
+                count: 3
+            );
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(2d).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task TryGetSpanReturnsTrueForArraySlice()
         {
             DynValue[] backing =
@@ -557,6 +684,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
+        public async Task ArgumentViewTryGetSpanReturnsTrueForArraySlice()
+        {
+            DynValue[] backing =
+            {
+                DynValue.NewNumber(99),
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(100),
+            };
+
+            TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 1, count: 3);
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[2]).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task TryGetSpanReturnsTrueWhenTrailingArraySliceVoidIsTrimmed()
         {
             DynValue[] backing =
@@ -568,6 +716,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             };
 
             TryGetSpanResult result = ExecuteArraySliceTryGetSpan(backing, offset: 1, count: 2);
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArgumentViewTryGetSpanReturnsTrueWhenTrailingArraySliceVoidIsTrimmed()
+        {
+            DynValue[] backing =
+            {
+                DynValue.NewNumber(99),
+                DynValue.NewNumber(1),
+                DynValue.Void,
+                DynValue.NewNumber(100),
+            };
+
+            TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 1, count: 2);
 
             await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
             await Assert.That(result.Length).IsEqualTo(1).ConfigureAwait(false);
@@ -596,6 +762,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
+        public async Task ArgumentViewTryGetSpanReturnsFalseForReversedArraySlice()
+        {
+            DynValue[] backing =
+            {
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+            };
+
+            TryGetSpanResult result = ExecuteViewSliceTryGetSpan(
+                backing,
+                offset: 0,
+                count: 3,
+                reversed: true
+            );
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
         [Arguments("null")]
         [Arguments("void")]
         [Arguments("tuple")]
@@ -611,6 +798,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             };
 
             TryGetSpanResult result = ExecuteArraySliceTryGetSpan(backing, offset: 1, count: 2);
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments("null")]
+        [Arguments("void")]
+        [Arguments("tuple")]
+        public async Task ArgumentViewTryGetSpanReturnsFalseWhenArraySliceValueRequiresNormalization(
+            string valueKind
+        )
+        {
+            DynValue[] backing =
+            {
+                DynValue.NewNumber(99),
+                CreateArrayValueRequiringNormalization(valueKind),
+                DynValue.NewNumber(2),
+            };
+
+            TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 1, count: 2);
 
             await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
             await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
@@ -696,6 +904,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
+        public async Task ArgumentViewTryGetSpanReturnsFalseForListSlice()
+        {
+            List<DynValue> backing = new() { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+
+            TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 0, count: 2);
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task TryGetSpanReturnsFalseForFastStackDynamicSlice()
         {
             FastStackDynamic<DynValue> backing = new(startingCapacity: 2);
@@ -703,6 +922,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             backing.Push(DynValue.NewNumber(2));
 
             TryGetSpanResult result = ExecuteFastStackDynamicSliceTryGetSpan(backing);
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArgumentViewTryGetSpanReturnsFalseForFastStackDynamicSlice()
+        {
+            FastStackDynamic<DynValue> backing = new(startingCapacity: 2);
+            backing.Push(DynValue.NewNumber(1));
+            backing.Push(DynValue.NewNumber(2));
+
+            TryGetSpanResult result = ExecuteViewSliceTryGetSpan(backing, offset: 0, count: 2);
 
             await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
             await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
