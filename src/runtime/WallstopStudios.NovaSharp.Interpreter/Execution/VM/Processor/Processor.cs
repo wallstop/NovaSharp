@@ -228,14 +228,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             private static DynValue CreateTupleFromSpan(ReadOnlySpan<DynValue> values)
             {
-                if (values.Length == 0)
+                switch (values.Length)
                 {
-                    return DynValue.EmptyTuple;
-                }
-
-                if (values.Length == 1)
-                {
-                    return DynValue.NewTuple(values[0] ?? DynValue.Nil);
+                    case 0:
+                        return DynValue.EmptyTuple;
+                    case 1:
+                        return DynValue.NewTuple(values[0]);
+                    case 2:
+                        return DynValue.NewTuple(values[0], values[1]);
+                    case 3:
+                        return DynValue.NewTuple(values[0], values[1], values[2]);
+                    case 4:
+                        return DynValue.NewTuple(values[0], values[1], values[2], values[3]);
+                    case 5:
+                        return DynValue.NewTuple(
+                            values[0],
+                            values[1],
+                            values[2],
+                            values[3],
+                            values[4]
+                        );
                 }
 
                 DynValue[] copiedValues = new DynValue[values.Length];

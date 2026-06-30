@@ -198,6 +198,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Resumes the coroutine with caller-owned contiguous arguments.
+        /// Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.
+        /// </summary>
+        /// <param name="args">The arguments.</param>
+        /// <returns></returns>
+        /// <exception cref="System.InvalidOperationException">Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead</exception>
+        public DynValue Resume(ReadOnlySpan<DynValue> args)
+        {
+            if (Type != CoroutineType.Coroutine)
+            {
+                throw new InvalidOperationException(
+                    "Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead"
+                );
+            }
+
+            this.CheckScriptOwnership(args);
+            return _processor.ResumeCoroutine(args);
+        }
+
+        /// <summary>
         /// Resumes the coroutine with one argument.
         /// Only non-CLR coroutines can be resumed with this overload of the Resume method. Use the overload accepting a ScriptExecutionContext instead.
         /// </summary>
@@ -351,6 +371,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             else if (Type == CoroutineType.ClrCallback)
             {
                 DynValue ret = _clrCallback.Invoke(context, args);
+                MarkClrCallbackAsDead();
+                return ret;
+            }
+            else
+            {
+                throw ScriptRuntimeException.CannotResumeNotSuspended(CoroutineState.Dead);
+            }
+        }
+
+        /// <summary>
+        /// Resumes the coroutine with caller-owned contiguous arguments.
+        /// </summary>
+        /// <param name="context">The ScriptExecutionContext.</param>
+        /// <param name="args">The arguments.</param>
+        /// <returns></returns>
+        public DynValue Resume(ScriptExecutionContext context, ReadOnlySpan<DynValue> args)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            this.CheckScriptOwnership(context);
+            this.CheckScriptOwnership(args);
+
+            if (Type == CoroutineType.Coroutine)
+            {
+                return _processor.ResumeCoroutine(args);
+            }
+            else if (Type == CoroutineType.ClrCallback)
+            {
+                DynValue ret = _clrCallback.HasArgumentViewCallback
+                    ? _clrCallback.InvokeArgumentViewSpan(context, args)
+                    : _clrCallback.InvokeLegacySpan(context, args);
                 MarkClrCallbackAsDead();
                 return ret;
             }

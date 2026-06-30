@@ -75,6 +75,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         /// <summary>
+        /// Resumes execution with caller-owned contiguous arguments.
+        /// </summary>
+        public DynValue ResumeCoroutine(ReadOnlySpan<DynValue> args)
+        {
+            return ResumeCoroutine(new ClrCallArguments(args));
+        }
+
+        /// <summary>
         /// Resumes execution with one argument, avoiding public params-array allocation.
         /// </summary>
         public DynValue ResumeCoroutine(DynValue arg)

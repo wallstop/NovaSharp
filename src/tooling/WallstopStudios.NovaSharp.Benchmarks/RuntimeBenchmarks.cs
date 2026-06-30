@@ -486,6 +486,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _fiveArgRunningCoroutine.Resume(_first, _second, _third, _fourth, _fifth);
 
         /// <summary>
+        /// Resumes a suspended Lua coroutine with five pre-created DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: span 5 DynValues")]
+        public DynValue ResumeCoroutineFiveDynValuesSpan() =>
+            _fiveArgRunningCoroutine.Resume(_fiveDynValueArgs.AsSpan());
+
+        /// <summary>
         /// Resumes a suspended Lua coroutine with three pre-created CLR object arguments.
         /// </summary>
         [Benchmark(Description = "Coroutine Suspended Resume: 3 objects")]

@@ -337,6 +337,189 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithDynValueSpanUsesSliceAndNormalizesNull(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue function = script.DoString(
+                "return function(a, b, c) if a ~= nil then return -1 end return b + c end"
+            );
+            DynValue coroutine = script.CreateCoroutine(function);
+            DynValue[] args =
+            {
+                DynValue.NewNumber(-1),
+                null,
+                DynValue.NewNumber(40),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(-1),
+            };
+
+            DynValue result = ResumeSpan(coroutine.Coroutine, args, start: 1, length: 3);
+
+            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedCoroutineReceivesDynValueSpanResumeArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue function = script.DoString(
+                @"
+                return function()
+                    local a, b, c = coroutine.yield('ready')
+                    if a ~= nil then
+                        return -1
+                    end
+                    return b + c
+                end"
+            );
+            DynValue coroutine = script.CreateCoroutine(function);
+            DynValue yielded = coroutine.Coroutine.Resume();
+            DynValue[] args =
+            {
+                DynValue.NewNumber(-1),
+                null,
+                DynValue.NewNumber(40),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(-1),
+            };
+
+            DynValue result = ResumeSpan(coroutine.Coroutine, args, start: 1, length: 3);
+
+            await Assert.That(yielded.String).IsEqualTo("ready");
+            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithDynValueSpanRejectsForeignArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script owningScript = new(version);
+            DynValue function = owningScript.DoString("return function(value) return value end");
+            DynValue coroutine = owningScript.CreateCoroutine(function);
+            Script foreignScript = new(version);
+            DynValue foreignResource = DynValue.NewTable(foreignScript);
+            DynValue[] args = { DynValue.Nil, foreignResource };
+
+            ScriptRuntimeException exception = ExpectException<ScriptRuntimeException>(() =>
+                ResumeSpan(coroutine.Coroutine, args, start: 1, length: 1)
+            );
+
+            await Assert.That(exception.Message).Contains("different scripts");
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ResumeWithDynValueSpanOnClrCallbackRejectsBeforeOwnership()
+        {
+            Script script = new();
+            DynValue callback = DynValue.NewCallback((_, _) => DynValue.Nil);
+            DynValue coroutine = script.CreateCoroutine(callback);
+            Script foreignScript = new();
+            DynValue foreignResource = DynValue.NewTable(foreignScript);
+            DynValue[] args = { foreignResource };
+
+            InvalidOperationException exception = ExpectException<InvalidOperationException>(() =>
+                ResumeSpan(coroutine.Coroutine, args, start: 0, length: 1)
+            );
+
+            await Assert.That(exception.Message).Contains("Only non-CLR coroutines");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithContextDynValueSpanInvokesArgumentViewCallback(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            bool sawExpectedSpan = false;
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    bool hasSpan = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    sawExpectedSpan =
+                        hasSpan
+                        && span.Length == 2
+                        && span[0].Number == 20d
+                        && span[1].Number == 22d;
+                    return DynValue.NewBoolean(sawExpectedSpan);
+                }
+            );
+            DynValue coroutine = script.CreateCoroutine(callback);
+            coroutine.Coroutine.OwnerScript = script;
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            DynValue[] args =
+            {
+                DynValue.NewNumber(-1),
+                DynValue.NewNumber(20),
+                DynValue.NewNumber(22),
+                DynValue.NewNumber(-1),
+            };
+
+            DynValue result = ResumeSpan(coroutine.Coroutine, context, args, start: 1, length: 2);
+
+            await Assert.That(result.Boolean).IsTrue();
+            await Assert.That(sawExpectedSpan).IsTrue();
+            await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ResumeWithContextDynValueSpanInvokesLegacyCallback(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue callback = DynValue.NewCallback(
+                (_, args) => DynValue.NewNumber(args[0].Number + args[1].Number)
+            );
+            DynValue coroutine = script.CreateCoroutine(callback);
+            coroutine.Coroutine.OwnerScript = script;
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            DynValue[] args =
+            {
+                DynValue.NewNumber(-1),
+                DynValue.NewNumber(30),
+                DynValue.NewNumber(12),
+                DynValue.NewNumber(-1),
+            };
+
+            DynValue result = ResumeSpan(coroutine.Coroutine, context, args, start: 1, length: 2);
+
+            await Assert.That(result.Number).IsEqualTo(42d);
+            await Assert.That(coroutine.Coroutine.State).IsEqualTo(CoroutineState.Dead);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task ResumeWithObjectArgumentsOnClrCallbackThrows(
             LuaCompatibilityVersion version
         )
@@ -767,6 +950,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 ),
                 _ => throw new ArgumentOutOfRangeException(nameof(argumentCount)),
             };
+        }
+
+        private static DynValue ResumeSpan(
+            Coroutine coroutine,
+            DynValue[] args,
+            int start,
+            int length
+        )
+        {
+            return coroutine.Resume(args.AsSpan(start, length));
+        }
+
+        private static DynValue ResumeSpan(
+            Coroutine coroutine,
+            ScriptExecutionContext context,
+            DynValue[] args,
+            int start,
+            int length
+        )
+        {
+            return coroutine.Resume(context, args.AsSpan(start, length));
         }
 
         private sealed class UnregisteredHostObject { }
