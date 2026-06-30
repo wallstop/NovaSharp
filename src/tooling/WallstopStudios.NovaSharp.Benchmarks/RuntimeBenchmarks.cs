@@ -897,6 +897,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _viewThree = DynValue.Nil;
         private DynValue _legacyFour = DynValue.Nil;
         private DynValue _viewFour = DynValue.Nil;
+        private DynValue _legacySpanProbeFour = DynValue.Nil;
 
         /// <summary>
         /// Prepares Lua closures that call CLR callbacks from bytecode.
@@ -907,10 +908,19 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script = new Script(CoreModulePresets.Complete);
             _script.Globals["legacy"] = DynValue.NewCallback((_, args) => args[args.Count - 1]);
             _script.Globals["view"] = DynValue.NewCallbackView((_, args) => args[args.Count - 1]);
+            _script.Globals["legacySpanProbe"] = DynValue.NewCallback(
+                (_, args) =>
+                    args.TryGetSpan(out ReadOnlySpan<DynValue> span)
+                        ? span[span.Length - 1]
+                        : args[args.Count - 1]
+            );
             _legacyThree = _script.DoString("return function() return legacy(1, 2, 3) end");
             _viewThree = _script.DoString("return function() return view(1, 2, 3) end");
             _legacyFour = _script.DoString("return function() return legacy(1, 2, 3, 4) end");
             _viewFour = _script.DoString("return function() return view(1, 2, 3, 4) end");
+            _legacySpanProbeFour = _script.DoString(
+                "return function() return legacySpanProbe(1, 2, 3, 4) end"
+            );
         }
 
         /// <summary>
@@ -936,6 +946,12 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Lua to CLR Callback View: 4 args")]
         public DynValue CallViewFourArgs() => _script.Call(_viewFour);
+
+        /// <summary>
+        /// Runs Lua bytecode that calls a legacy CLR callback and consumes the VM-backed argument span.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback Legacy TryGetSpan: 4 args")]
+        public DynValue CallLegacySpanProbeFourArgs() => _script.Call(_legacySpanProbeFour);
     }
 
     /// <summary>

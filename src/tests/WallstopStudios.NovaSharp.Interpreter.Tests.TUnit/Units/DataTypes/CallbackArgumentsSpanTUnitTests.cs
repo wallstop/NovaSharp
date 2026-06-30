@@ -147,6 +147,76 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             return new TryGetSpanResult(result, span.Length);
         }
 
+        private static TryGetSpanResult ExecuteFastStackSliceTryGetSpan(
+            FastStack<DynValue> stack,
+            int offset,
+            int count,
+            bool reversed = false
+        )
+        {
+            Slice<DynValue> slice = new(stack, offset, count, reversed);
+            CallbackArguments args = new(slice, false);
+            return ExecuteTryGetSpan(args);
+        }
+
+        private static TryGetSpanResult ExecuteArraySliceTryGetSpan(
+            DynValue[] backing,
+            int offset,
+            int count,
+            bool reversed = false
+        )
+        {
+            Slice<DynValue> slice = new(backing, offset, count, reversed);
+            CallbackArguments args = new(slice, false);
+            return ExecuteTryGetSpan(args);
+        }
+
+        private static TryGetSpanResult ExecuteListSliceTryGetSpan(List<DynValue> backing)
+        {
+            Slice<DynValue> slice = new(backing, 0, backing.Count, false);
+            CallbackArguments args = new(slice, false);
+            return ExecuteTryGetSpan(args);
+        }
+
+        private static TryGetSpanResult ExecuteFastStackDynamicSliceTryGetSpan(
+            FastStackDynamic<DynValue> backing
+        )
+        {
+            Slice<DynValue> slice = new(backing, 0, backing.Count, false);
+            CallbackArguments args = new(slice, false);
+            return ExecuteTryGetSpan(args);
+        }
+
+        private static TryGetSpanResult ExecuteSkippedFastStackSliceTryGetSpan(
+            FastStack<DynValue> stack
+        )
+        {
+            Slice<DynValue> slice = new(stack, 0, stack.Count, false);
+            CallbackArguments args = new(slice, true);
+            return ExecuteTryGetSpan(args.SkipMethodCall());
+        }
+
+        private static TryGetSpanResult ExecuteLuaLegacyTryGetSpan(
+            LuaCompatibilityVersion version,
+            string chunk
+        )
+        {
+            Script script = new(version);
+            TryGetSpanResult captured = default;
+
+            script.Globals["capture"] =
+                (Func<CallbackArguments, DynValue>)(
+                    args =>
+                    {
+                        captured = ExecuteTryGetSpan(args);
+                        return DynValue.Nil;
+                    }
+                );
+
+            script.DoString(chunk);
+            return captured;
+        }
+
         private static SubrangeResult ExecuteViewSubrange(FastStackDynamic<DynValue> backing)
         {
             CallbackArgumentsView args = new(backing, offset: 1, count: 2, isMethodCall: false);
@@ -448,6 +518,197 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [Test]
+        public async Task TryGetSpanReturnsTrueForFastStackSlice()
+        {
+            FastStack<DynValue> stack = new(4);
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+            stack.Push(DynValue.NewNumber(3));
+            stack.Push(DynValue.NewNumber(4));
+
+            TryGetSpanResult result = ExecuteFastStackSliceTryGetSpan(stack, offset: 1, count: 3);
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[2]).IsEqualTo(4d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsTrueForArraySlice()
+        {
+            DynValue[] backing =
+            {
+                DynValue.NewNumber(99),
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(100),
+            };
+
+            TryGetSpanResult result = ExecuteArraySliceTryGetSpan(backing, offset: 1, count: 3);
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[2]).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsTrueWhenTrailingArraySliceVoidIsTrimmed()
+        {
+            DynValue[] backing =
+            {
+                DynValue.NewNumber(99),
+                DynValue.NewNumber(1),
+                DynValue.Void,
+                DynValue.NewNumber(100),
+            };
+
+            TryGetSpanResult result = ExecuteArraySliceTryGetSpan(backing, offset: 1, count: 2);
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsFalseForReversedArraySlice()
+        {
+            DynValue[] backing =
+            {
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+            };
+
+            TryGetSpanResult result = ExecuteArraySliceTryGetSpan(
+                backing,
+                offset: 0,
+                count: 3,
+                reversed: true
+            );
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments("null")]
+        [Arguments("void")]
+        [Arguments("tuple")]
+        public async Task TryGetSpanReturnsFalseWhenArraySliceValueRequiresNormalization(
+            string valueKind
+        )
+        {
+            DynValue[] backing =
+            {
+                DynValue.NewNumber(99),
+                CreateArrayValueRequiringNormalization(valueKind),
+                DynValue.NewNumber(2),
+            };
+
+            TryGetSpanResult result = ExecuteArraySliceTryGetSpan(backing, offset: 1, count: 2);
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsTrueForSkippedFastStackSliceMethodCall()
+        {
+            FastStack<DynValue> stack = new(4);
+            stack.Push(DynValue.NewString("self"));
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+            stack.Push(DynValue.NewNumber(3));
+
+            TryGetSpanResult result = ExecuteSkippedFastStackSliceTryGetSpan(stack);
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[2]).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsFalseForReversedFastStackSlice()
+        {
+            FastStack<DynValue> stack = new(3);
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewNumber(2));
+            stack.Push(DynValue.NewNumber(3));
+
+            TryGetSpanResult result = ExecuteFastStackSliceTryGetSpan(
+                stack,
+                offset: 0,
+                count: 3,
+                reversed: true
+            );
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        [Arguments("null")]
+        [Arguments("void")]
+        [Arguments("tuple")]
+        public async Task TryGetSpanReturnsFalseWhenFastStackSliceValueRequiresNormalization(
+            string valueKind
+        )
+        {
+            FastStack<DynValue> stack = new(2);
+            stack.Push(CreateArrayValueRequiringNormalization(valueKind));
+            stack.Push(DynValue.NewNumber(2));
+
+            TryGetSpanResult result = ExecuteFastStackSliceTryGetSpan(stack, offset: 0, count: 2);
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsFalseWhenFastStackSliceTupleExpansionNeeded()
+        {
+            FastStack<DynValue> stack = new(2);
+            stack.Push(DynValue.NewNumber(1));
+            stack.Push(DynValue.NewTuple(DynValue.NewNumber(10), DynValue.NewNumber(20)));
+
+            TryGetSpanResult result = ExecuteFastStackSliceTryGetSpan(stack, offset: 0, count: 2);
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsFalseForListSlice()
+        {
+            List<DynValue> backing = new() { DynValue.NewNumber(1), DynValue.NewNumber(2) };
+
+            TryGetSpanResult result = ExecuteListSliceTryGetSpan(backing);
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task TryGetSpanReturnsFalseForFastStackDynamicSlice()
+        {
+            FastStackDynamic<DynValue> backing = new(startingCapacity: 2);
+            backing.Push(DynValue.NewNumber(1));
+            backing.Push(DynValue.NewNumber(2));
+
+            TryGetSpanResult result = ExecuteFastStackDynamicSliceTryGetSpan(backing);
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task FastStackTryGetSpanRejectsInvalidRanges()
         {
             FastStack<DynValue> stack = new(2);
@@ -709,6 +970,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(capturedNumbers[0]).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(capturedNumbers[1]).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(capturedNumbers[2]).IsEqualTo(3).ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
+        public async Task LegacyCallbackArgumentsTryGetSpanSucceedsForVmStackSlice(
+            LuaCompatibilityVersion version
+        )
+        {
+            TryGetSpanResult result = ExecuteLuaLegacyTryGetSpan(version, "capture(1, 2, 3)");
+
+            await Assert.That(result.Success).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(result.Numbers[0]).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[1]).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Numbers[2]).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
+        public async Task LegacyCallbackArgumentsTryGetSpanFallsBackWhenTupleExpansionIsNeeded(
+            LuaCompatibilityVersion version
+        )
+        {
+            TryGetSpanResult result = ExecuteLuaLegacyTryGetSpan(
+                version,
+                "local function values() return 2, 3 end capture(1, values())"
+            );
+
+            await Assert.That(result.Success).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.Length).IsEqualTo(0).ConfigureAwait(false);
         }
 
         [Test]

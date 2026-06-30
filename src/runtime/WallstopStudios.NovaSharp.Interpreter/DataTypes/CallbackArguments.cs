@@ -570,10 +570,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return true;
             }
 
-            if (_args is List<DynValue> list)
+            if (_args is Slice<DynValue> slice && slice.TryGetSpan(0, _count, out span))
             {
-                // List<T> doesn't directly expose its array, but we can use CollectionsMarshal in .NET 5+
-                // For now, fall back to false for lists
+                if (ContainsArgumentNeedingNormalization(span))
+                {
+                    span = default;
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (_args is List<DynValue>)
+            {
                 span = default;
                 return false;
             }
