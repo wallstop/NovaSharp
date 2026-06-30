@@ -125,6 +125,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         }
 
         [global::TUnit.Core.Test]
+        public async Task TryObjectToSimpleDynValuePrefersPrimitiveCustomConverters()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                    registry.SetClrToScriptCustomConversion<int>(
+                        (_, value) => DynValue.NewString("custom:" + value)
+                    )
+            );
+            Script script = new();
+
+            DynValue result = ClrToScriptConversions.TryObjectToSimpleDynValue(script, 42);
+
+            await Assert.That(result.String).IsEqualTo("custom:42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task TryObjectToSimpleDynValueUsesCachedScalars()
         {
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
@@ -198,6 +214,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             await Assert
                 .That(callbackResult.Type)
                 .IsEqualTo(DataType.ClrFunction)
+                .ConfigureAwait(false);
+
+            DynValue repeatedCallbackResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                callback
+            );
+            await Assert
+                .That(repeatedCallbackResult)
+                .IsSameReferenceAs(callbackResult)
                 .ConfigureAwait(false);
 
             int? callbackViewCount = null;
@@ -317,8 +342,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             CallbackFunction function = new((_, _) => DynValue.NewNumber(7));
 
             DynValue result = ClrToScriptConversions.ObjectToDynValue(script, function);
+            DynValue repeatedResult = ClrToScriptConversions.ObjectToDynValue(script, function);
 
             await Assert.That(result.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
+            await Assert.That(repeatedResult).IsSameReferenceAs(result).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

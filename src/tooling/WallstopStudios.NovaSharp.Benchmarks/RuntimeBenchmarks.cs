@@ -556,6 +556,74 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     }
 
     /// <summary>
+    /// Benchmarks CLR object to <see cref="DynValue"/> conversion for common host API inputs.
+    /// </summary>
+    [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
+    public class ObjectConversionBenchmarks
+    {
+        private Script _script;
+        private object _intObject = 42;
+        private object _doubleObject = 3.5d;
+        private object _boolObject = true;
+        private object _stringObject = "payload";
+        private object _closureObject;
+        private object _callbackObject;
+
+        /// <summary>
+        /// Prepares stable boxed inputs for conversion.
+        /// </summary>
+        [GlobalSetup]
+        public void Setup()
+        {
+            _script = new Script(CoreModulePresets.Complete);
+            DynValue closure = _script.DoString("return function(value) return value end");
+            _closureObject = closure.Function;
+            _callbackObject = new CallbackFunction((_, _) => DynValue.Nil);
+        }
+
+        /// <summary>
+        /// Converts a boxed integer to a Lua integer value.
+        /// </summary>
+        [Benchmark(Description = "Object Conversion: int")]
+        public DynValue FromInt() => DynValue.FromObject(_script, _intObject);
+
+        /// <summary>
+        /// Converts a boxed double to a Lua number value.
+        /// </summary>
+        [Benchmark(Description = "Object Conversion: double")]
+        public DynValue FromDouble() => DynValue.FromObject(_script, _doubleObject);
+
+        /// <summary>
+        /// Converts a boxed Boolean to a cached Lua Boolean value.
+        /// </summary>
+        [Benchmark(Description = "Object Conversion: bool")]
+        public DynValue FromBool() => DynValue.FromObject(_script, _boolObject);
+
+        /// <summary>
+        /// Converts a CLR string to a Lua string value.
+        /// </summary>
+        [Benchmark(Description = "Object Conversion: string")]
+        public DynValue FromString() => DynValue.FromObject(_script, _stringObject);
+
+        /// <summary>
+        /// Converts a closure object through the cached wrapper path.
+        /// </summary>
+        [Benchmark(Description = "Object Conversion: closure")]
+        public DynValue FromClosure() => DynValue.FromObject(_script, _closureObject);
+
+        /// <summary>
+        /// Converts a callback function object through the cached wrapper path.
+        /// </summary>
+        [Benchmark(Description = "Object Conversion: callback")]
+        public DynValue FromCallback() => DynValue.FromObject(_script, _callbackObject);
+    }
+
+    /// <summary>
     /// Benchmarks host calls into CLR callbacks through legacy and argument-view APIs.
     /// </summary>
     [MemoryDiagnoser]
