@@ -1153,6 +1153,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
+        public async Task ModManagerBroadcastCallUsesAlreadyResolvedBuiltInFunction()
+        {
+            ModManager fixedManager = new ModManager();
+            CountingModContainer fixedMod = CreateCountingModContainer("fixed");
+            fixedManager.Register(fixedMod);
+            fixedManager.LoadAll();
+
+            IDictionary<string, DynValue> fixedResults = fixedManager.BroadcastCall(
+                "add",
+                1,
+                2,
+                3,
+                4,
+                5
+            );
+
+            ModManager paramsManager = new ModManager();
+            CountingModContainer paramsMod = CreateCountingModContainer("params");
+            paramsManager.Register(paramsMod);
+            paramsManager.LoadAll();
+
+            IDictionary<string, DynValue> paramsResults = paramsManager.BroadcastCall(
+                "add",
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+            );
+
+            await Assert.That(fixedResults["fixed"].Number).IsEqualTo(15).ConfigureAwait(false);
+            await Assert.That(paramsResults["params"].Number).IsEqualTo(21).ConfigureAwait(false);
+            await Assert.That(fixedMod.GetGlobalCallCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(fixedMod.CallFunctionCallCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(paramsMod.GetGlobalCallCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(paramsMod.CallFunctionCallCount).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task ModManagerObjectArrayBroadcastPreservesSpreadAndSingleArgumentForms()
         {
             ModManager manager = new ModManager();
@@ -1310,6 +1350,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
 
             await Assert.That(str).Contains("my-mod").ConfigureAwait(false);
             await Assert.That(str).Contains("Unloaded").ConfigureAwait(false);
+        }
+
+        private static CountingModContainer CreateCountingModContainer(string modId)
+        {
+            CountingModContainer mod = new CountingModContainer(modId);
+            mod.AddEntryPoint(
+                "function add(...) local sum = 0 for i = 1, select('#', ...) do sum = sum + select(i, ...) end return sum end"
+            );
+            return mod;
+        }
+
+        private sealed class CountingModContainer : ModContainer, IModContainer
+        {
+            public CountingModContainer(string modId)
+                : base(modId) { }
+
+            public int GetGlobalCallCount { get; private set; }
+
+            public int CallFunctionCallCount { get; private set; }
+
+            DynValue IModContainer.GetGlobal(string name)
+            {
+                GetGlobalCallCount++;
+                return base.GetGlobal(name);
+            }
+
+            DynValue IModContainer.CallFunction(string functionName, params object[] args)
+            {
+                CallFunctionCallCount++;
+                return base.CallFunction(functionName, args);
+            }
         }
 
         private sealed class CustomModContainer : IModContainer

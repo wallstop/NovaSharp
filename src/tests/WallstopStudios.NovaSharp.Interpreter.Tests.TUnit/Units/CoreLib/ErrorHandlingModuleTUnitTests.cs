@@ -1,5 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 {
+    using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
@@ -117,6 +119,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert
                 .That(third.TailCallData.ErrorHandler.AdditionalData)
                 .IsNull()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task PcallAndXpcallTailRequestsUseThreadLocalInternalCallbacks()
+        {
+            (CallbackFunction Continuation, CallbackFunction ErrorHandler) mainPcall =
+                CreatePcallCallbacksOnCurrentThread();
+            (CallbackFunction Continuation, CallbackFunction ErrorHandler) workerPcall =
+                RunOnNewThread(CreatePcallCallbacksOnCurrentThread);
+            (CallbackFunction Continuation, CallbackFunction ErrorHandler) mainXpcall =
+                CreateXpcallCallbacksOnCurrentThread();
+            (CallbackFunction Continuation, CallbackFunction ErrorHandler) workerXpcall =
+                RunOnNewThread(CreateXpcallCallbacksOnCurrentThread);
+
+            await Assert
+                .That(mainPcall.Continuation)
+                .IsNotSameReferenceAs(workerPcall.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(mainPcall.ErrorHandler)
+                .IsNotSameReferenceAs(workerPcall.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(mainXpcall.Continuation)
+                .IsNotSameReferenceAs(workerXpcall.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(mainXpcall.ErrorHandler)
+                .IsNotSameReferenceAs(workerXpcall.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(workerPcall.Continuation.Name)
+                .IsEqualTo("pcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(workerPcall.ErrorHandler.Name)
+                .IsEqualTo("pcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(workerXpcall.Continuation.Name)
+                .IsEqualTo("xpcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(workerXpcall.ErrorHandler.Name)
+                .IsEqualTo("xpcall")
                 .ConfigureAwait(false);
         }
 
@@ -956,6 +1004,83 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             Script script = new(CoreModulePresets.Complete, options);
             script.Options.DebugPrint = _ => { };
             return script;
+        }
+
+        private static (
+            CallbackFunction Continuation,
+            CallbackFunction ErrorHandler
+        ) CreatePcallCallbacksOnCurrentThread()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua54);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue function = script.DoString("return function() return 1 end");
+            CallbackArguments args = new(new[] { function }, false);
+            DynValue request = ErrorHandlingModule.Pcall(context, args);
+
+            if (request.Type != DataType.TailCallRequest)
+            {
+                throw new InvalidOperationException("pcall did not return a tail call request.");
+            }
+
+            return (request.TailCallData.Continuation, request.TailCallData.ErrorHandler);
+        }
+
+        private static (
+            CallbackFunction Continuation,
+            CallbackFunction ErrorHandler
+        ) CreateXpcallCallbacksOnCurrentThread()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua54);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue handler = script.DoString("return function(err) return err end");
+            CallbackArguments args = new(new[] { function, handler }, false);
+            DynValue request = ErrorHandlingModule.Xpcall(context, args);
+
+            if (request.Type != DataType.TailCallRequest)
+            {
+                throw new InvalidOperationException("xpcall did not return a tail call request.");
+            }
+
+            return (request.TailCallData.Continuation, request.TailCallData.ErrorHandler);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1031:Do not catch general exception types",
+            Justification = "Worker thread exceptions must be marshaled back to the test thread."
+        )]
+        private static T RunOnNewThread<T>(Func<T> action)
+        {
+            T result = default;
+            Exception error = null;
+            Thread thread = new(() =>
+            {
+                try
+                {
+                    result = action();
+                }
+                catch (Exception ex)
+                {
+                    error = ex;
+                }
+            })
+            {
+                IsBackground = true,
+            };
+
+            thread.Start();
+            if (!thread.Join(TimeSpan.FromSeconds(10)))
+            {
+                throw new TimeoutException("Worker thread did not finish.");
+            }
+
+            if (error != null)
+            {
+                throw new InvalidOperationException("Worker thread failed.", error);
+            }
+
+            return result;
         }
     }
 }

@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
+    using System;
     using System.Collections.Generic;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -14,19 +15,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public static class ErrorHandlingModule
     {
-        private static readonly CallbackFunction PcallContinuationCallback = new(
-            PcallContinuation,
-            "pcall"
-        );
-        private static readonly CallbackFunction PcallOnErrorCallback = new(PcallOnError, "pcall");
-        private static readonly CallbackFunction XpcallContinuationCallback = new(
-            PcallContinuation,
-            "xpcall"
-        );
-        private static readonly CallbackFunction XpcallOnErrorCallback = new(
-            PcallOnError,
-            "xpcall"
-        );
+        [ThreadStatic]
+        private static CallbackFunction PcallContinuationCallback;
+
+        [ThreadStatic]
+        private static CallbackFunction PcallOnErrorCallback;
+
+        [ThreadStatic]
+        private static CallbackFunction XpcallContinuationCallback;
+
+        [ThreadStatic]
+        private static CallbackFunction XpcallOnErrorCallback;
 
         /// <summary>
         /// Implements Lua's <c>pcall</c>, wrapping a function invocation in protected mode.
@@ -60,13 +59,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             CallbackFunction errorCallback;
             if (funcName == "xpcall")
             {
-                continuationCallback = PrepareCachedCallback(XpcallContinuationCallback);
-                errorCallback = PrepareCachedCallback(XpcallOnErrorCallback);
+                continuationCallback = GetXpcallContinuationCallback();
+                errorCallback = GetXpcallOnErrorCallback();
             }
             else
             {
-                continuationCallback = PrepareCachedCallback(PcallContinuationCallback);
-                errorCallback = PrepareCachedCallback(PcallOnErrorCallback);
+                continuationCallback = GetPcallContinuationCallback();
+                errorCallback = GetPcallOnErrorCallback();
             }
 
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
@@ -153,6 +152,54 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     }
                 );
             }
+        }
+
+        private static CallbackFunction GetPcallContinuationCallback()
+        {
+            CallbackFunction callback = PcallContinuationCallback;
+            if (callback == null)
+            {
+                callback = new CallbackFunction(PcallContinuation, "pcall");
+                PcallContinuationCallback = callback;
+            }
+
+            return PrepareCachedCallback(callback);
+        }
+
+        private static CallbackFunction GetPcallOnErrorCallback()
+        {
+            CallbackFunction callback = PcallOnErrorCallback;
+            if (callback == null)
+            {
+                callback = new CallbackFunction(PcallOnError, "pcall");
+                PcallOnErrorCallback = callback;
+            }
+
+            return PrepareCachedCallback(callback);
+        }
+
+        private static CallbackFunction GetXpcallContinuationCallback()
+        {
+            CallbackFunction callback = XpcallContinuationCallback;
+            if (callback == null)
+            {
+                callback = new CallbackFunction(PcallContinuation, "xpcall");
+                XpcallContinuationCallback = callback;
+            }
+
+            return PrepareCachedCallback(callback);
+        }
+
+        private static CallbackFunction GetXpcallOnErrorCallback()
+        {
+            CallbackFunction callback = XpcallOnErrorCallback;
+            if (callback == null)
+            {
+                callback = new CallbackFunction(PcallOnError, "xpcall");
+                XpcallOnErrorCallback = callback;
+            }
+
+            return PrepareCachedCallback(callback);
         }
 
         private static CallbackFunction PrepareCachedCallback(CallbackFunction callback)

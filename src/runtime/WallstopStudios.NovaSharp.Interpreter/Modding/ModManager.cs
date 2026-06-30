@@ -86,6 +86,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             }
         }
 
+        private static Script RequireLoadedScript(ModContainer modContainer)
+        {
+            ModLoadState state = modContainer.State;
+            Script script = modContainer.Script;
+            if (state != ModLoadState.Loaded || script == null)
+            {
+                throw new InvalidOperationException(
+                    ZString.Concat(
+                        "Mod '",
+                        modContainer.ModId,
+                        "' is not loaded (state: ",
+                        state,
+                        ")."
+                    )
+                );
+            }
+
+            return script;
+        }
+
         private readonly struct FixedBroadcastArguments
         {
             private readonly int _count;
@@ -156,15 +176,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             /// </summary>
             /// <param name="mod">The mod container to invoke.</param>
             /// <param name="functionName">The function name to call.</param>
-            /// <param name="resolvedFunction">The already-resolved function for built-in containers.</param>
             /// <returns>The function result.</returns>
-            public DynValue Call(IModContainer mod, string functionName, DynValue resolvedFunction)
+            public DynValue Call(IModContainer mod, string functionName)
             {
-                if (mod is ModContainer modContainer)
-                {
-                    return CallResolved(modContainer, resolvedFunction);
-                }
-
                 return _count switch
                 {
                     0 => mod.CallFunction(functionName),
@@ -176,22 +190,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 };
             }
 
-            private DynValue CallResolved(ModContainer modContainer, DynValue function)
+            /// <summary>
+            /// Dispatches the stored fixed arguments to an already-resolved built-in mod function.
+            /// </summary>
+            /// <param name="modContainer">The built-in mod container to invoke.</param>
+            /// <param name="function">The already-resolved function to call.</param>
+            /// <returns>The function result.</returns>
+            public DynValue CallResolved(ModContainer modContainer, DynValue function)
             {
-                ModLoadState state = modContainer.State;
-                Script script = modContainer.Script;
-                if (state != ModLoadState.Loaded || script == null)
-                {
-                    throw new InvalidOperationException(
-                        ZString.Concat(
-                            "Mod '",
-                            modContainer.ModId,
-                            "' is not loaded (state: ",
-                            state,
-                            ")."
-                        )
-                    );
-                }
+                Script script = RequireLoadedScript(modContainer);
 
                 return _count switch
                 {
@@ -666,7 +673,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
 
                 try
                 {
-                    results[modId] = args.Call(mod, functionName, func);
+                    results[modId] = mod is ModContainer modContainer
+                        ? args.CallResolved(modContainer, func)
+                        : args.Call(mod, functionName);
                 }
                 catch (Exception ex)
                 {
@@ -722,7 +731,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
 
                 try
                 {
-                    results[modId] = mod.CallFunction(functionName, args);
+                    results[modId] = mod is ModContainer modContainer
+                        ? RequireLoadedScript(modContainer).Call(func, args)
+                        : mod.CallFunction(functionName, args);
                 }
                 catch (Exception ex)
                 {
