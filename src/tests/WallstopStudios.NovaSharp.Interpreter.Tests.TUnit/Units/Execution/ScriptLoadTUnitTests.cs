@@ -332,6 +332,99 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task DoFileWithSameFilenameUsesCompilationCache(
+            LuaCompatibilityVersion version
+        )
+        {
+            CountingStringScriptLoader loader = new("counter = (counter or 0) + 1; return counter");
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+                ScriptLoader = loader,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+
+            DynValue result1 = script.DoFile("cached_do_file.lua");
+            DynValue result2 = script.DoFile("cached_do_file.lua");
+
+            await Assert.That(result1.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(result2.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("cached_do_file.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DoFileCacheHitUsesProvidedGlobalTable(LuaCompatibilityVersion version)
+        {
+            CountingStringScriptLoader loader = new("return marker");
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+                ScriptLoader = loader,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            Table firstGlobals = new(script);
+            Table secondGlobals = new(script);
+            firstGlobals.Set("marker", DynValue.FromNumber(41));
+            secondGlobals.Set("marker", DynValue.FromNumber(42));
+
+            DynValue result1 = script.DoFile("globals_file.lua", firstGlobals);
+            DynValue result2 = script.DoFile("globals_file.lua", secondGlobals);
+
+            await Assert.That(result1.Number).IsEqualTo(41d).ConfigureAwait(false);
+            await Assert.That(result2.Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DoFileCachedRuntimeErrorUsesFriendlyName(LuaCompatibilityVersion version)
+        {
+            CountingStringScriptLoader loader = new("local missing = nil; return missing()");
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+                ScriptLoader = loader,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+
+            _ = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoFile("physical_name.lua", codeFriendlyName: "friendly_do_file.lua")
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoFile("physical_name.lua", codeFriendlyName: "friendly_do_file.lua")
+            );
+
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("friendly_do_file.lua")
+                .ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileStringExecutesRepeatedlyWithoutGrowingSources(
             LuaCompatibilityVersion version
         )

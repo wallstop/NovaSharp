@@ -28,6 +28,10 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private Script _precompiledFileScript;
         private Script _cachedScript;
         private Script _namedCachedScript;
+        private Script _cachedFileScript;
+        private Script _namedCachedFileScript;
+        private string _cachedFileName = string.Empty;
+        private string _cachedFileFriendlyName = string.Empty;
         private DynValue _precompiledFunction = DynValue.Nil;
         private CompiledScript _compiledHandle;
         private CompiledScript _compiledStreamHandle;
@@ -96,6 +100,31 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _cachedFriendlyName = $"cached_{complexity}";
             _namedCachedScript = new Script(CoreModulePresets.Complete);
             _namedCachedScript.LoadString(_scriptSource, null, _cachedFriendlyName);
+
+            _cachedFileName = $"cached_file_{complexity}.lua";
+            _cachedFileScript = new Script(
+                CoreModulePresets.Complete,
+                new ScriptOptions
+                {
+                    EnableScriptCaching = true,
+                    ScriptLoader = new StaticStringScriptLoader(_scriptSource),
+                }
+            );
+            _cachedFileScript.LoadFile(_cachedFileName);
+
+            _cachedFileFriendlyName = $"cached_file_friendly_{complexity}.lua";
+            _namedCachedFileScript = new Script(
+                CoreModulePresets.Complete,
+                new ScriptOptions
+                {
+                    EnableScriptCaching = true,
+                    ScriptLoader = new StaticStringScriptLoader(_scriptSource),
+                }
+            );
+            _namedCachedFileScript.LoadFile(
+                _cachedFileName,
+                friendlyFilename: _cachedFileFriendlyName
+            );
         }
 
         /// <summary>
@@ -169,6 +198,22 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "DoString Cached Named")]
         public DynValue DoStringCachedNamed() =>
             _namedCachedScript.DoString(_scriptSource, null, _cachedFriendlyName);
+
+        /// <summary>
+        /// Executes a file-backed chunk already present in the script compilation cache through the easy API.
+        /// </summary>
+        [Benchmark(Description = "DoFile Cached")]
+        public DynValue DoFileCached() => _cachedFileScript.DoFile(_cachedFileName);
+
+        /// <summary>
+        /// Executes a named file-backed chunk already present in the script compilation cache through the easy API.
+        /// </summary>
+        [Benchmark(Description = "DoFile Cached Named")]
+        public DynValue DoFileCachedNamed() =>
+            _namedCachedFileScript.DoFile(
+                _cachedFileName,
+                codeFriendlyName: _cachedFileFriendlyName
+            );
 
         /// <summary>
         /// Executes the precompiled chunk, isolating runtime overhead.

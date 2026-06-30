@@ -62,7 +62,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
         > LegacyResolveFileNameMethods = new();
         private static readonly Func<LoadStringGuardState, DynValue> LoadStringGuardAction =
             static state =>
-                state.Script.LoadStringCore(state.Code, state.GlobalTable, state.CodeFriendlyName);
+                state.Script.LoadStringCore(
+                    state.Code,
+                    state.GlobalTable,
+                    state.CodeFriendlyName,
+                    state.SkipCompilationCacheLookup
+                );
         private static readonly Func<LoadStreamGuardState, DynValue> LoadStreamGuardAction =
             static state =>
                 state.Script.LoadStreamCore(
@@ -83,17 +88,20 @@ namespace WallstopStudios.NovaSharp.Interpreter
             /// <param name="code">Lua source text to load.</param>
             /// <param name="globalTable">Optional environment table for the loaded closure.</param>
             /// <param name="codeFriendlyName">Optional debugger-facing chunk name.</param>
+            /// <param name="skipCompilationCacheLookup">Whether to skip the compilation cache lookup before compiling.</param>
             public LoadStringGuardState(
                 Script script,
                 string code,
                 Table globalTable,
-                string codeFriendlyName
+                string codeFriendlyName,
+                bool skipCompilationCacheLookup
             )
             {
                 Script = script;
                 Code = code;
                 GlobalTable = globalTable;
                 CodeFriendlyName = codeFriendlyName;
+                SkipCompilationCacheLookup = skipCompilationCacheLookup;
             }
 
             /// <summary>
@@ -115,6 +123,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
             /// Gets the optional debugger-facing chunk name.
             /// </summary>
             public string CodeFriendlyName { get; }
+
+            /// <summary>
+            /// Gets whether to skip the compilation cache lookup before compiling.
+            /// </summary>
+            public bool SkipCompilationCacheLookup { get; }
         }
 
         /// <summary>
@@ -740,7 +753,29 @@ namespace WallstopStudios.NovaSharp.Interpreter
             string codeFriendlyName = null
         )
         {
-            LoadStringGuardState state = new(this, code, globalTable, codeFriendlyName);
+            LoadStringGuardState state = new(
+                this,
+                code,
+                globalTable,
+                codeFriendlyName,
+                skipCompilationCacheLookup: false
+            );
+            return ExecuteWithCompatibilityGuard(state, LoadStringGuardAction);
+        }
+
+        private DynValue LoadStringSkippingCompilationCacheLookup(
+            string code,
+            Table globalTable = null,
+            string codeFriendlyName = null
+        )
+        {
+            LoadStringGuardState state = new(
+                this,
+                code,
+                globalTable,
+                codeFriendlyName,
+                skipCompilationCacheLookup: true
+            );
             return ExecuteWithCompatibilityGuard(state, LoadStringGuardAction);
         }
 
@@ -1215,7 +1250,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private DynValue LoadStringCore(
             string code,
             Table globalTable = null,
-            string codeFriendlyName = null
+            string codeFriendlyName = null,
+            bool skipCompilationCacheLookup = false
         )
         {
             if (code == null)
@@ -1238,7 +1274,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
             // Try to use cached compilation if available. Named chunks must match by name
             // because emitted bytecode stores SourceRef instances for diagnostics.
             if (
-                _compilationCache != null
+                !skipCompilationCacheLookup
+                && _compilationCache != null
                 && _compilationCache.TryGet(
                     code,
                     compatibilityVersion,
@@ -1442,6 +1479,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
             string friendlyFilename = null
         )
         {
+            object code = LoadFileContent(filename, globalContext, out string resolvedFilename);
+            string chunkName = friendlyFilename ?? resolvedFilename;
+
+            return LoadFileContent(code, globalContext, chunkName);
+        }
+
+        private object LoadFileContent(
+            string filename,
+            Table globalContext,
+            out string resolvedFilename
+        )
+        {
             if (filename == null)
             {
                 throw new ArgumentNullException(nameof(filename));
@@ -1450,25 +1499,31 @@ namespace WallstopStudios.NovaSharp.Interpreter
             this.CheckScriptOwnership(globalContext);
 
             Table globals = globalContext ?? _globalTable;
+            resolvedFilename = ResolveFileNameWithLegacyFallback(
+                Options.ScriptLoader,
+                filename,
+                globals
+            );
 
-            filename = ResolveFileNameWithLegacyFallback(Options.ScriptLoader, filename, globals);
+            return Options.ScriptLoader.LoadFile(resolvedFilename, globals);
+        }
 
-            object code = Options.ScriptLoader.LoadFile(filename, globals);
-
+        private DynValue LoadFileContent(object code, Table globalContext, string chunkName)
+        {
             if (code is string s)
             {
-                return LoadString(s, globalContext, friendlyFilename ?? filename);
+                return LoadString(s, globalContext, chunkName);
             }
             else if (code is byte[] bytes)
             {
                 using MemoryStream ms = new(bytes);
-                return LoadStream(ms, globalContext, friendlyFilename ?? filename);
+                return LoadStream(ms, globalContext, chunkName);
             }
             else if (code is Stream stream)
             {
                 try
                 {
-                    return LoadStream(stream, globalContext, friendlyFilename ?? filename);
+                    return LoadStream(stream, globalContext, chunkName);
                 }
                 finally
                 {
@@ -1620,7 +1675,25 @@ namespace WallstopStudios.NovaSharp.Interpreter
             string codeFriendlyName = null
         )
         {
-            DynValue func = LoadFile(filename, globalContext, codeFriendlyName);
+            object code = LoadFileContent(filename, globalContext, out string resolvedFilename);
+            string chunkName = codeFriendlyName ?? resolvedFilename;
+
+            if (code is string source)
+            {
+                if (TryExecuteCachedString(source, globalContext, chunkName, out DynValue result))
+                {
+                    return result;
+                }
+
+                DynValue stringFunc = LoadStringSkippingCompilationCacheLookup(
+                    source,
+                    globalContext,
+                    chunkName
+                );
+                return Call(stringFunc);
+            }
+
+            DynValue func = LoadFileContent(code, globalContext, chunkName);
             return Call(func);
         }
 
