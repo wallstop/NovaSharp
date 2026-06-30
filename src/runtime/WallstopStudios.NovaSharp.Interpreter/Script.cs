@@ -773,18 +773,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </exception>
         public CompiledScript BindFunction(DynValue function)
         {
-            if (function == null)
-            {
-                throw new ArgumentNullException(nameof(function));
-            }
-
-            this.CheckScriptOwnership(function);
-
-            if (!IsDirectCallTarget(function))
-            {
-                _ = GetCallableMetamethodOrThrow(function);
-            }
-
             return new CompiledScript(this, function);
         }
 
@@ -811,13 +799,128 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Validates that a compiled handle target belongs to this script and can be called.
+        /// </summary>
+        /// <param name="function">The function or callable value to validate.</param>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown when <paramref name="function"/> is null.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="function"/> is not directly callable and has no callable
+        /// <c>__call</c> metamethod.
+        /// </exception>
+        internal void ValidateCompiledScriptTarget(DynValue function)
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+
+            if (!IsDirectCallTarget(function))
+            {
+                _ = GetCallableMetamethodOrThrow(function);
+            }
+        }
+
+        /// <summary>
         /// Executes a resolved callable handle without re-running the public call dispatcher when
         /// the handle is a Lua function.
         /// </summary>
         internal DynValue ExecuteCompiledFunction(DynValue function)
         {
             this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(function);
+        }
 
+        /// <summary>
+        /// Executes a resolved callable handle with one argument.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(DynValue function, DynValue arg)
+        {
+            this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(function, arg);
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with two arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(DynValue function, DynValue arg1, DynValue arg2)
+        {
+            this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(function, arg1, arg2);
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with three arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3
+        )
+        {
+            this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(function, arg1, arg2, arg3);
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with four arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4
+        )
+        {
+            this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(function, arg1, arg2, arg3, arg4);
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with five arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(function, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with caller-owned contiguous arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(DynValue function, ReadOnlySpan<DynValue> args)
+        {
+            this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(function, args);
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with caller-owned contiguous CLR object arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(DynValue function, ReadOnlySpan<object> args)
+        {
+            this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(function, args);
+        }
+
+        /// <summary>
+        /// Executes a handle-created callable after the handle creation path has already validated
+        /// the stored function's ownership and callability.
+        /// </summary>
+        internal DynValue ExecuteTrustedCompiledFunction(DynValue function)
+        {
             if (function.Type != DataType.Function)
             {
                 return Call(function);
@@ -827,11 +930,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Executes a resolved callable handle with one argument.
+        /// Executes a trusted handle-created callable with one caller-provided argument.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(DynValue function, DynValue arg)
+        internal DynValue ExecuteTrustedCompiledFunction(DynValue function, DynValue arg)
         {
-            this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg);
 
             if (function.Type != DataType.Function)
@@ -846,11 +948,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Executes a resolved callable handle with two arguments.
+        /// Executes a trusted handle-created callable with two caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(DynValue function, DynValue arg1, DynValue arg2)
+        internal DynValue ExecuteTrustedCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2
+        )
         {
-            this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
 
@@ -866,16 +971,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Executes a resolved callable handle with three arguments.
+        /// Executes a trusted handle-created callable with three caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(
+        internal DynValue ExecuteTrustedCompiledFunction(
             DynValue function,
             DynValue arg1,
             DynValue arg2,
             DynValue arg3
         )
         {
-            this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
             this.CheckScriptOwnership(arg3);
@@ -893,9 +997,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Executes a resolved callable handle with four arguments.
+        /// Executes a trusted handle-created callable with four caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(
+        internal DynValue ExecuteTrustedCompiledFunction(
             DynValue function,
             DynValue arg1,
             DynValue arg2,
@@ -903,7 +1007,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue arg4
         )
         {
-            this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
             this.CheckScriptOwnership(arg3);
@@ -928,9 +1031,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Executes a resolved callable handle with five arguments.
+        /// Executes a trusted handle-created callable with five caller-provided arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(
+        internal DynValue ExecuteTrustedCompiledFunction(
             DynValue function,
             DynValue arg1,
             DynValue arg2,
@@ -939,7 +1042,6 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue arg5
         )
         {
-            this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(arg1);
             this.CheckScriptOwnership(arg2);
             this.CheckScriptOwnership(arg3);
@@ -966,11 +1068,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Executes a resolved callable handle with caller-owned contiguous arguments.
+        /// Executes a trusted handle-created callable with caller-owned contiguous arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(DynValue function, ReadOnlySpan<DynValue> args)
+        internal DynValue ExecuteTrustedCompiledFunction(
+            DynValue function,
+            ReadOnlySpan<DynValue> args
+        )
         {
-            this.CheckScriptOwnership(function);
             this.CheckScriptOwnership(args);
 
             if (function.Type != DataType.Function)
@@ -980,7 +1084,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             return args.Length switch
             {
-                0 => ExecuteCompiledFunction(function),
+                0 => ExecuteTrustedCompiledFunction(function),
                 1 => ExecuteWithCompatibilityGuard(
                     (_mainProcessor, function, arg: args[0]),
                     static state => state._mainProcessor.Call(state.function, state.arg)
@@ -1043,12 +1147,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Executes a resolved callable handle with caller-owned contiguous CLR object arguments.
+        /// Executes a trusted handle-created callable with caller-owned contiguous CLR object arguments.
         /// </summary>
-        internal DynValue ExecuteCompiledFunction(DynValue function, ReadOnlySpan<object> args)
+        internal DynValue ExecuteTrustedCompiledFunction(
+            DynValue function,
+            ReadOnlySpan<object> args
+        )
         {
-            this.CheckScriptOwnership(function);
-
             if (function.Type != DataType.Function)
             {
                 return CallObjectArguments(function, args);
@@ -1057,24 +1162,27 @@ namespace WallstopStudios.NovaSharp.Interpreter
             switch (args.Length)
             {
                 case 0:
-                    return ExecuteCompiledFunction(function);
+                    return ExecuteTrustedCompiledFunction(function);
                 case 1:
-                    return ExecuteCompiledFunction(function, DynValue.FromObject(this, args[0]));
+                    return ExecuteTrustedCompiledFunction(
+                        function,
+                        DynValue.FromObject(this, args[0])
+                    );
                 case 2:
-                    return ExecuteCompiledFunction(
+                    return ExecuteTrustedCompiledFunction(
                         function,
                         DynValue.FromObject(this, args[0]),
                         DynValue.FromObject(this, args[1])
                     );
                 case 3:
-                    return ExecuteCompiledFunction(
+                    return ExecuteTrustedCompiledFunction(
                         function,
                         DynValue.FromObject(this, args[0]),
                         DynValue.FromObject(this, args[1]),
                         DynValue.FromObject(this, args[2])
                     );
                 case 4:
-                    return ExecuteCompiledFunction(
+                    return ExecuteTrustedCompiledFunction(
                         function,
                         DynValue.FromObject(this, args[0]),
                         DynValue.FromObject(this, args[1]),
@@ -1082,7 +1190,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         DynValue.FromObject(this, args[3])
                     );
                 case 5:
-                    return ExecuteCompiledFunction(
+                    return ExecuteTrustedCompiledFunction(
                         function,
                         DynValue.FromObject(this, args[0]),
                         DynValue.FromObject(this, args[1]),
@@ -1101,7 +1209,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 convertedArgs[i] = DynValue.FromObject(this, args[i]);
             }
 
-            return ExecuteCompiledFunction(function, convertedArgs.AsSpan(0, args.Length));
+            return ExecuteTrustedCompiledFunction(function, convertedArgs.AsSpan(0, args.Length));
         }
 
         private DynValue LoadStringCore(

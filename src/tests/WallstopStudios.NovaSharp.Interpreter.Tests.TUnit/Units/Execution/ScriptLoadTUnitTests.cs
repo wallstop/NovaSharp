@@ -804,6 +804,86 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [LuaTestMatrix(1, 2, 3, 4, 5)]
+        public async Task CompileFunctionExecuteRejectsForeignDynValueAtEachFixedArity(
+            LuaCompatibilityVersion version,
+            int arity
+        )
+        {
+            Script scriptA = new(version, CoreModulePresets.Complete);
+            DynValue foreignTable = scriptA.DoString("return {}");
+
+            Script scriptB = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = scriptB.CompileFunction(
+                "function(...) return select('#', ...) end",
+                funcFriendlyName: "compiled_foreign_dynvalue_matrix"
+            );
+
+            for (int foreignIndex = 0; foreignIndex < arity; foreignIndex++)
+            {
+                DynValue[] args = CreateDynValueArguments(arity);
+                args[foreignIndex] = foreignTable;
+
+                ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                    ExecuteCompiledScriptWithFixedArguments(compiled, args)
+                );
+
+                await Assert
+                    .That(exception.Message)
+                    .Contains("different scripts")
+                    .Because(
+                        $"fixed DynValue arity {arity} should reject foreign argument index {foreignIndex}"
+                    )
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaTestMatrix(1, 2, 3, 4, 5)]
+        public async Task CompileFunctionExecuteRejectsForeignObjectAtEachFixedArity(
+            LuaCompatibilityVersion version,
+            int arity
+        )
+        {
+            Script scriptA = new(version, CoreModulePresets.Complete);
+            object foreignTable = scriptA.DoString("return {}");
+
+            Script scriptB = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = scriptB.CompileFunction(
+                "function(...) return select('#', ...) end",
+                funcFriendlyName: "compiled_foreign_object_matrix"
+            );
+
+            for (int foreignIndex = 0; foreignIndex < arity; foreignIndex++)
+            {
+                object[] args = CreateObjectArguments(arity);
+                args[foreignIndex] = foreignTable;
+
+                ScriptRuntimeException fixedException = Assert.Throws<ScriptRuntimeException>(() =>
+                    ExecuteCompiledScriptWithFixedObjectArguments(compiled, args)
+                );
+                ScriptRuntimeException spanException = Assert.Throws<ScriptRuntimeException>(() =>
+                    compiled.ExecuteObjectArguments(args)
+                );
+
+                await Assert
+                    .That(fixedException.Message)
+                    .Contains("different scripts")
+                    .Because(
+                        $"fixed object arity {arity} should reject foreign argument index {foreignIndex}"
+                    )
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(spanException.Message)
+                    .Contains("different scripts")
+                    .Because(
+                        $"object span arity {arity} should reject foreign argument index {foreignIndex}"
+                    )
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task BindGlobalFunctionExecutesInitiallyResolvedGlobal(
             LuaCompatibilityVersion version
@@ -844,6 +924,77 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task BindFunctionReresolvesCallableMetamethodAfterBinding(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue values = script.DoString(
+                """
+                local target = {}
+                local meta = { __call = function(_, value) return value + 1 end }
+                setmetatable(target, meta)
+                return target, meta
+                """
+            );
+            DynValue callable = values.Tuple[0];
+            Table meta = values.Tuple[1].Table;
+            CompiledScript boundCallable = script.BindFunction(callable);
+
+            DynValue first = boundCallable.Execute(DynValue.FromNumber(10));
+
+            meta.Set(
+                "__call",
+                DynValue.NewCallback((_, args) => DynValue.FromNumber(args[1].Number + 20d))
+            );
+            DynValue second = boundCallable.Execute(DynValue.FromNumber(10));
+
+            meta.Set("__call", DynValue.Nil);
+            ArgumentException removedException = Assert.Throws<ArgumentException>(() =>
+                boundCallable.Execute(DynValue.FromNumber(10))
+            );
+
+            await Assert.That(first.Number).IsEqualTo(11d).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(30d).ConfigureAwait(false);
+            await Assert
+                .That(removedException.Message)
+                .Contains("__call metamethod")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task BindFunctionRejectsChainedCallMetamethodsBeforeLua54(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue callable = CreateTableValuedCallTarget(script);
+
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                script.BindFunction(callable)
+            );
+
+            await Assert.That(exception.Message).Contains("__call").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task BindFunctionFollowsChainedCallMetamethodsFromLua54(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue callable = CreateTableValuedCallTarget(script);
+            CompiledScript boundCallable = script.BindFunction(callable);
+
+            DynValue result = boundCallable.Execute(DynValue.FromNumber(7));
+
+            await Assert.That(result.Number).IsEqualTo(12d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task BindGlobalFunctionRejectsNonCallableGlobal(
             LuaCompatibilityVersion version
         )
@@ -877,6 +1028,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert
                 .That(exception.Message)
                 .Contains("different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompiledScriptConstructorRejectsForeignFunction(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script scriptA = new(version, CoreModulePresets.Complete);
+            DynValue foreignFunction = scriptA.DoString("return function() return 1 end");
+
+            Script scriptB = new(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                ConstructCompiledScript(scriptB, foreignFunction)
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompiledScriptConstructorRejectsNonCallableValue(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                ConstructCompiledScript(script, DynValue.FromNumber(1))
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("__call metamethod")
                 .ConfigureAwait(false);
         }
 
@@ -1003,6 +1193,87 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             return compiled.Execute(args.AsSpan());
+        }
+
+        private static void ConstructCompiledScript(Script script, DynValue function)
+        {
+            CompiledScript compiled = new(script, function);
+            _ = compiled.IsValid;
+        }
+
+        private static DynValue ExecuteCompiledScriptWithFixedArguments(
+            CompiledScript compiled,
+            DynValue[] args
+        )
+        {
+            return args.Length switch
+            {
+                1 => compiled.Execute(args[0]),
+                2 => compiled.Execute(args[0], args[1]),
+                3 => compiled.Execute(args[0], args[1], args[2]),
+                4 => compiled.Execute(args[0], args[1], args[2], args[3]),
+                5 => compiled.Execute(args[0], args[1], args[2], args[3], args[4]),
+                _ => throw new ArgumentOutOfRangeException(nameof(args)),
+            };
+        }
+
+        private static DynValue ExecuteCompiledScriptWithFixedObjectArguments(
+            CompiledScript compiled,
+            object[] args
+        )
+        {
+            return args.Length switch
+            {
+                1 => compiled.Execute(args[0]),
+                2 => compiled.Execute(args[0], args[1]),
+                3 => compiled.Execute(args[0], args[1], args[2]),
+                4 => compiled.Execute(args[0], args[1], args[2], args[3]),
+                5 => compiled.Execute(args[0], args[1], args[2], args[3], args[4]),
+                _ => throw new ArgumentOutOfRangeException(nameof(args)),
+            };
+        }
+
+        private static DynValue[] CreateDynValueArguments(int count)
+        {
+            DynValue[] args = new DynValue[count];
+            for (int i = 0; i < args.Length; i++)
+            {
+                args[i] = DynValue.FromNumber(i + 1);
+            }
+
+            return args;
+        }
+
+        private static object[] CreateObjectArguments(int count)
+        {
+            object[] args = new object[count];
+            for (int i = 0; i < args.Length; i++)
+            {
+                args[i] = i + 1d;
+            }
+
+            return args;
+        }
+
+        private static DynValue CreateTableValuedCallTarget(Script script)
+        {
+            return script.DoString(
+                """
+                local target = {}
+                local proxy = {}
+                setmetatable(target, { __call = proxy })
+                setmetatable(proxy, {
+                    __call = function(proxySelf, targetSelf, value)
+                        if proxySelf ~= proxy or targetSelf ~= target then
+                            return -1
+                        end
+
+                        return value + 5
+                    end
+                })
+                return target
+                """
+            );
         }
 
         [global::TUnit.Core.Test]

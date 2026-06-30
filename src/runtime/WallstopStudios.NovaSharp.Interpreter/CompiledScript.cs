@@ -31,6 +31,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 throw new ArgumentNullException(nameof(function));
             }
 
+            script.ValidateCompiledScriptTarget(function);
+
             _script = script;
             _function = function;
         }
@@ -63,7 +65,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute()
         {
-            return GetScript().ExecuteCompiledFunction(GetFunction());
+            return GetScript().ExecuteTrustedCompiledFunction(_function);
         }
 
         /// <summary>
@@ -73,7 +75,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(DynValue arg)
         {
-            return GetScript().ExecuteCompiledFunction(GetFunction(), arg);
+            return GetScript().ExecuteTrustedCompiledFunction(_function, arg);
         }
 
         /// <summary>
@@ -84,7 +86,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(DynValue arg1, DynValue arg2)
         {
-            return GetScript().ExecuteCompiledFunction(GetFunction(), arg1, arg2);
+            return GetScript().ExecuteTrustedCompiledFunction(_function, arg1, arg2);
         }
 
         /// <summary>
@@ -96,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(DynValue arg1, DynValue arg2, DynValue arg3)
         {
-            return GetScript().ExecuteCompiledFunction(GetFunction(), arg1, arg2, arg3);
+            return GetScript().ExecuteTrustedCompiledFunction(_function, arg1, arg2, arg3);
         }
 
         /// <summary>
@@ -109,7 +111,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
         {
-            return GetScript().ExecuteCompiledFunction(GetFunction(), arg1, arg2, arg3, arg4);
+            return GetScript().ExecuteTrustedCompiledFunction(_function, arg1, arg2, arg3, arg4);
         }
 
         /// <summary>
@@ -129,7 +131,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue arg5
         )
         {
-            return GetScript().ExecuteCompiledFunction(GetFunction(), arg1, arg2, arg3, arg4, arg5);
+            return GetScript()
+                .ExecuteTrustedCompiledFunction(_function, arg1, arg2, arg3, arg4, arg5);
         }
 
         /// <summary>
@@ -144,8 +147,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg)
         {
             Script script = GetScript();
-            DynValue function = GetFunction();
-            return script.ExecuteCompiledFunction(function, DynValue.FromObject(script, arg));
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                DynValue.FromObject(script, arg)
+            );
         }
 
         /// <summary>
@@ -161,9 +166,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg1, object arg2)
         {
             Script script = GetScript();
-            DynValue function = GetFunction();
-            return script.ExecuteCompiledFunction(
-                function,
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
                 DynValue.FromObject(script, arg1),
                 DynValue.FromObject(script, arg2)
             );
@@ -183,9 +187,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg1, object arg2, object arg3)
         {
             Script script = GetScript();
-            DynValue function = GetFunction();
-            return script.ExecuteCompiledFunction(
-                function,
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
                 DynValue.FromObject(script, arg1),
                 DynValue.FromObject(script, arg2),
                 DynValue.FromObject(script, arg3)
@@ -207,9 +210,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg1, object arg2, object arg3, object arg4)
         {
             Script script = GetScript();
-            DynValue function = GetFunction();
-            return script.ExecuteCompiledFunction(
-                function,
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
                 DynValue.FromObject(script, arg1),
                 DynValue.FromObject(script, arg2),
                 DynValue.FromObject(script, arg3),
@@ -233,9 +235,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
             Script script = GetScript();
-            DynValue function = GetFunction();
-            return script.ExecuteCompiledFunction(
-                function,
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
                 DynValue.FromObject(script, arg1),
                 DynValue.FromObject(script, arg2),
                 DynValue.FromObject(script, arg3),
@@ -295,7 +296,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </remarks>
         public DynValue ExecuteObjectArguments(ReadOnlySpan<object> args)
         {
-            return GetScript().ExecuteCompiledFunction(GetFunction(), args);
+            return GetScript().ExecuteTrustedCompiledFunction(_function, args);
         }
 
         /// <summary>
@@ -305,7 +306,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(ReadOnlySpan<DynValue> args)
         {
-            return GetScript().ExecuteCompiledFunction(GetFunction(), args);
+            return GetScript().ExecuteTrustedCompiledFunction(_function, args);
         }
 
         /// <inheritdoc />
