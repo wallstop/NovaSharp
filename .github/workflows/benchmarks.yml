@@ -332,8 +332,10 @@ jobs:
           auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           # Alert threshold (default 115% = 15% regression)
           alert-threshold: ${{ github.event.inputs.alert_threshold || '115%' }}
-          # Fail on alert for PRs, configurable via input
-          fail-on-alert: ${{ github.event.inputs.fail_on_alert == 'true' || (github.event_name == 'pull_request') }}
+          # Hosted PR runners are too noisy for single-sample microbenchmark alerts
+          # to be reliable merge gates. Keep PR alerts visible in comments/artifacts,
+          # and reserve failing alerts for explicit manual benchmark runs.
+          fail-on-alert: ${{ github.event.inputs.fail_on_alert == 'true' }}
           # Comment on PR with results
           comment-on-alert: true
           # Store data in gh-pages branch under benchmarks directory

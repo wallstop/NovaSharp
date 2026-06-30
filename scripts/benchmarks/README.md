@@ -15,7 +15,7 @@ The `.github/workflows/benchmarks.yml` workflow runs benchmarks automatically:
 The workflow uses `benchmark-action/github-action-benchmark` to track performance over time:
 
 - **Alert threshold**: 115% by default (15% regression triggers alert)
-- **Fail on alert**: Enabled for PRs, configurable for manual runs
+- **Fail on alert**: Enabled for manual benchmark gates; PR alerts are advisory because hosted-runner microbenchmarks are noisy
 - **PR comments**: Automatic comments when regressions are detected
 - **Historical tracking**: Results stored in `gh-pages` branch under `/benchmarks`
 
