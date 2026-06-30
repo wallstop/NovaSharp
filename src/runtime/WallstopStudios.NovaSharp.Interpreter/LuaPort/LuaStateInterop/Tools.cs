@@ -566,7 +566,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 else
                 {
                     o = parameters[paramIx];
+                }
 
+                if (o != null)
+                {
                     if (shortLongIndicator == 'h')
                     {
                         if (o is int i)
