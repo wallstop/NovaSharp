@@ -254,6 +254,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             return index;
         }
 
+        public static void StringFormat(CharPtr buffer, CharPtr str, object arg)
+        {
+            EnsurePointer(buffer, nameof(buffer));
+            EnsurePointer(str, nameof(str));
+            string temp = Tools.StringFormat(str.ToString(), arg);
+            StringCopy(buffer, temp);
+        }
+
         public static void StringFormat(CharPtr buffer, CharPtr str, params object[] argv)
         {
             EnsurePointer(buffer, nameof(buffer));
