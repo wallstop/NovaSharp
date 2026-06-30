@@ -15,6 +15,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Tests.TestUtilities;
@@ -32,18 +33,71 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             MethodInfo[] methods = typeof(FunctionDefinitionExpression).GetMethods(
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
             );
+            bool foundStructEmitterCompileOverload = false;
 
             for (int i = 0; i < methods.Length; i++)
             {
-                ParameterInfo[] parameters = methods[i].GetParameters();
-                for (int j = 0; j < parameters.Length; j++)
+                MethodInfo method = methods[i];
+                if (method.Name != nameof(FunctionDefinitionExpression.Compile))
                 {
-                    await Assert
-                        .That(parameters[j].ParameterType)
-                        .IsNotEqualTo(typeof(Func<int>))
-                        .ConfigureAwait(false);
+                    continue;
+                }
+
+                ParameterInfo[] parameters = methods[i].GetParameters();
+                if (!IsFunctionDeclarationCompileOverload(parameters))
+                {
+                    continue;
+                }
+
+                await Assert
+                    .That(parameters[1].ParameterType)
+                    .IsNotEqualTo(typeof(Func<int>))
+                    .ConfigureAwait(false);
+
+                foundStructEmitterCompileOverload |= IsStructEmitterCompileOverload(
+                    method,
+                    parameters
+                );
+            }
+
+            await Assert.That(foundStructEmitterCompileOverload).IsTrue().ConfigureAwait(false);
+        }
+
+        private static bool IsFunctionDeclarationCompileOverload(ParameterInfo[] parameters)
+        {
+            return parameters.Length == 3
+                && parameters[0].ParameterType == typeof(ByteCode)
+                && parameters[2].ParameterType == typeof(string);
+        }
+
+        private static bool IsStructEmitterCompileOverload(
+            MethodInfo method,
+            ParameterInfo[] parameters
+        )
+        {
+            if (
+                !method.IsGenericMethodDefinition || !parameters[1].ParameterType.IsGenericParameter
+            )
+            {
+                return false;
+            }
+
+            Type[] genericArguments = method.GetGenericArguments();
+            if (genericArguments.Length != 1)
+            {
+                return false;
+            }
+
+            Type[] constraints = genericArguments[0].GetGenericParameterConstraints();
+            for (int i = 0; i < constraints.Length; i++)
+            {
+                if (constraints[i] == typeof(IFunctionDeclarationPostEmitter))
+                {
+                    return true;
                 }
             }
+
+            return false;
         }
 
         [global::TUnit.Core.Test]
