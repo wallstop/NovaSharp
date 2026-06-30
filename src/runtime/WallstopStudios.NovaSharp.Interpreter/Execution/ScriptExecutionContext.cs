@@ -84,6 +84,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             }
 
             /// <summary>
+            /// Gets the number of fixed arguments currently stored.
+            /// </summary>
+            internal int Count
+            {
+                get { return _count; }
+            }
+
+            /// <summary>
+            /// Gets a fixed argument by zero-based index.
+            /// </summary>
+            internal DynValue this[int index]
+            {
+                get
+                {
+                    return index switch
+                    {
+                        0 => _arg0,
+                        1 => _arg1,
+                        2 => _arg2,
+                        3 => _arg3,
+                        4 => _arg4,
+                        _ => throw new ArgumentOutOfRangeException(nameof(index)),
+                    };
+                }
+            }
+
+            /// <summary>
+            /// Prepends a callable self value when the fixed argument buffer has capacity.
+            /// </summary>
+            internal bool TryPrepend(DynValue value, out FixedCallArguments args)
+            {
+                switch (_count)
+                {
+                    case 1:
+                        args = new FixedCallArguments(value, _arg0);
+                        return true;
+                    case 2:
+                        args = new FixedCallArguments(value, _arg0, _arg1);
+                        return true;
+                    case 3:
+                        args = new FixedCallArguments(value, _arg0, _arg1, _arg2);
+                        return true;
+                    case 4:
+                        args = new FixedCallArguments(value, _arg0, _arg1, _arg2, _arg3);
+                        return true;
+                    default:
+                        args = default;
+                        return false;
+                }
+            }
+
+            /// <summary>
             /// Invokes the specified callback with the stored fixed arguments.
             /// </summary>
             internal DynValue InvokeCallback(
@@ -733,6 +785,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedCallArguments args = new(func);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(func, Array.Empty<DynValue>());
             }
 
@@ -744,6 +802,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedCallArguments args = new(func, arg);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(func, new DynValue[] { arg });
             }
 
@@ -755,6 +819,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedCallArguments args = new(func, arg1, arg2);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(func, new DynValue[] { arg1, arg2 });
             }
 
@@ -766,6 +836,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedCallArguments args = new(func, arg1, arg2, arg3);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(func, new DynValue[] { arg1, arg2, arg3 });
             }
 
@@ -783,6 +859,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedCallArguments args = new(func, arg1, arg2, arg3, arg4);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(func, new DynValue[] { arg1, arg2, arg3, arg4 });
             }
 
@@ -805,6 +887,50 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             }
 
             return Call(metafunction, func, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        private bool TryCallChainedNonFunction(
+            DynValue func,
+            FixedCallArguments args,
+            out DynValue result
+        )
+        {
+            int maxloops = 9;
+
+            while (func.Type != DataType.Function && func.Type != DataType.ClrFunction)
+            {
+                if (maxloops <= 0)
+                {
+                    throw ScriptRuntimeException.LoopInCall();
+                }
+
+                DynValue metafunction = GetCallableMetamethodOrThrow(func);
+                if (!args.TryPrepend(func, out FixedCallArguments nextArgs))
+                {
+                    result = null;
+                    return false;
+                }
+
+                args = nextArgs;
+                func = metafunction;
+                maxloops--;
+            }
+
+            result = CallFixed(func, args);
+            return true;
+        }
+
+        private DynValue CallFixed(DynValue func, FixedCallArguments args)
+        {
+            return args.Count switch
+            {
+                1 => Call(func, args[0]),
+                2 => Call(func, args[0], args[1]),
+                3 => Call(func, args[0], args[1], args[2]),
+                4 => Call(func, args[0], args[1], args[2], args[3]),
+                5 => Call(func, args[0], args[1], args[2], args[3], args[4]),
+                _ => Call(func),
+            };
         }
 
         private static bool IsDirectCallTarget(DynValue func)

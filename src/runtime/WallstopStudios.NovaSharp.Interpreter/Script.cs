@@ -163,6 +163,125 @@ namespace WallstopStudios.NovaSharp.Interpreter
             public string CodeFriendlyName { get; }
         }
 
+        private readonly struct FixedChainedCallArguments
+        {
+            private readonly DynValue _arg0;
+            private readonly DynValue _arg1;
+            private readonly DynValue _arg2;
+            private readonly DynValue _arg3;
+            private readonly DynValue _arg4;
+
+            internal FixedChainedCallArguments(DynValue arg0)
+            {
+                _arg0 = arg0;
+                _arg1 = null;
+                _arg2 = null;
+                _arg3 = null;
+                _arg4 = null;
+                Count = 1;
+            }
+
+            internal FixedChainedCallArguments(DynValue arg0, DynValue arg1)
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = null;
+                _arg3 = null;
+                _arg4 = null;
+                Count = 2;
+            }
+
+            internal FixedChainedCallArguments(DynValue arg0, DynValue arg1, DynValue arg2)
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = null;
+                _arg4 = null;
+                Count = 3;
+            }
+
+            internal FixedChainedCallArguments(
+                DynValue arg0,
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3
+            )
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = null;
+                Count = 4;
+            }
+
+            internal FixedChainedCallArguments(
+                DynValue arg0,
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4
+            )
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = arg4;
+                Count = 5;
+            }
+
+            /// <summary>
+            /// Gets the number of fixed arguments currently stored.
+            /// </summary>
+            internal int Count { get; }
+
+            /// <summary>
+            /// Gets a fixed argument by zero-based index.
+            /// </summary>
+            internal DynValue this[int index]
+            {
+                get
+                {
+                    return index switch
+                    {
+                        0 => _arg0,
+                        1 => _arg1,
+                        2 => _arg2,
+                        3 => _arg3,
+                        4 => _arg4,
+                        _ => throw new ArgumentOutOfRangeException(nameof(index)),
+                    };
+                }
+            }
+
+            /// <summary>
+            /// Prepends a callable self value when the fixed argument buffer has capacity.
+            /// </summary>
+            internal bool TryPrepend(DynValue value, out FixedChainedCallArguments args)
+            {
+                switch (Count)
+                {
+                    case 1:
+                        args = new FixedChainedCallArguments(value, _arg0);
+                        return true;
+                    case 2:
+                        args = new FixedChainedCallArguments(value, _arg0, _arg1);
+                        return true;
+                    case 3:
+                        args = new FixedChainedCallArguments(value, _arg0, _arg1, _arg2);
+                        return true;
+                    case 4:
+                        args = new FixedChainedCallArguments(value, _arg0, _arg1, _arg2, _arg3);
+                        return true;
+                    default:
+                        args = default;
+                        return false;
+                }
+            }
+        }
+
         /// <summary>
         /// Initializes the <see cref="Script"/> class.
         /// </summary>
@@ -1589,6 +1708,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedChainedCallArguments args = new(function);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(function, Array.Empty<DynValue>());
             }
 
@@ -1600,6 +1725,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedChainedCallArguments args = new(function, arg);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(function, new DynValue[] { arg });
             }
 
@@ -1611,6 +1742,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedChainedCallArguments args = new(function, arg1, arg2);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(function, new DynValue[] { arg1, arg2 });
             }
 
@@ -1627,6 +1764,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedChainedCallArguments args = new(function, arg1, arg2, arg3);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(function, new DynValue[] { arg1, arg2, arg3 });
             }
 
@@ -1644,6 +1787,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedChainedCallArguments args = new(function, arg1, arg2, arg3, arg4);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(function, new DynValue[] { arg1, arg2, arg3, arg4 });
             }
 
@@ -1666,6 +1815,50 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             return Call(metafunction, function, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        private bool TryCallChainedNonFunction(
+            DynValue function,
+            FixedChainedCallArguments args,
+            out DynValue result
+        )
+        {
+            int maxloops = 9;
+
+            while (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
+            {
+                if (maxloops <= 0)
+                {
+                    throw ScriptRuntimeException.LoopInCall();
+                }
+
+                DynValue metafunction = GetCallableMetamethodOrThrow(function);
+                if (!args.TryPrepend(function, out FixedChainedCallArguments nextArgs))
+                {
+                    result = null;
+                    return false;
+                }
+
+                args = nextArgs;
+                function = metafunction;
+                maxloops--;
+            }
+
+            result = CallFixed(function, args);
+            return true;
+        }
+
+        private DynValue CallFixed(DynValue function, FixedChainedCallArguments args)
+        {
+            return args.Count switch
+            {
+                1 => Call(function, args[0]),
+                2 => Call(function, args[0], args[1]),
+                3 => Call(function, args[0], args[1], args[2]),
+                4 => Call(function, args[0], args[1], args[2], args[3]),
+                5 => Call(function, args[0], args[1], args[2], args[3], args[4]),
+                _ => Call(function),
+            };
         }
 
         private static bool IsDirectCallTarget(DynValue function)

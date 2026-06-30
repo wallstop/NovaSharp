@@ -1297,6 +1297,97 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        public async Task FixedDynValueCallToChainedCallbackViewMetamethodAvoidsArgumentArrayAllocation()
+        {
+            const int iterations = 1024;
+            Script script = new(CoreModulePresets.Complete);
+            Table target = new(script);
+            Table proxy = new(script);
+            Table targetMeta = new(script);
+            Table proxyMeta = new(script);
+            DynValue targetValue = DynValue.NewTable(target);
+            DynValue proxyValue = DynValue.NewTable(proxy);
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewNumber(2);
+            DynValue third = DynValue.NewNumber(3);
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    if (
+                        args.Count != 5
+                        || !ReferenceEquals(args[0].Table, proxy)
+                        || !ReferenceEquals(args[1].Table, target)
+                        || args[2].Number != 1d
+                        || args[3].Number != 2d
+                        || args[4].Number != 3d
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Chained metamethod allocation probe received unexpected arguments."
+                        );
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
+            targetMeta.Set("__call", proxyValue);
+            proxyMeta.Set("__call", callback);
+            target.MetaTable = targetMeta;
+            proxy.MetaTable = proxyMeta;
+
+            MeasureDirectFiveArgumentCallbackViewAllocations(
+                script,
+                callback,
+                proxyValue,
+                targetValue,
+                first,
+                second,
+                third,
+                iterations: 8
+            );
+            MeasureFixedThreeArgumentCallbackViewChainedMetamethodAllocations(
+                script,
+                targetValue,
+                first,
+                second,
+                third,
+                iterations: 8
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long directAllocated = MeasureDirectFiveArgumentCallbackViewAllocations(
+                script,
+                callback,
+                proxyValue,
+                targetValue,
+                first,
+                second,
+                third,
+                iterations
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long metamethodAllocated =
+                MeasureFixedThreeArgumentCallbackViewChainedMetamethodAllocations(
+                    script,
+                    targetValue,
+                    first,
+                    second,
+                    third,
+                    iterations
+                );
+            long extraBytesPerCall = (metamethodAllocated - directAllocated) / iterations;
+
+            await Assert.That(extraBytesPerCall).IsLessThan(16).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task SpanAndArrayDynValueCallToCallbackViewMetamethodAvoidArgumentArrayAllocation()
         {
             const int iterations = 1024;
@@ -2806,6 +2897,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 {
                     throw new InvalidOperationException(
                         "Metamethod allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedThreeArgumentCallbackViewChainedMetamethodAllocations(
+            Script script,
+            DynValue callable,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = script.Call(callable, first, second, third);
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Chained metamethod allocation probe returned an unexpected value."
                     );
                 }
             }
