@@ -369,6 +369,183 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileStreamExecutesRepeatedlyWithoutGrowingSources(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+            byte[] code = System.Text.Encoding.UTF8.GetBytes(
+                "counter = (counter or 0) + 1; return counter"
+            );
+            using MemoryStream stream = new(code);
+
+            CompiledScript compiled = script.CompileStream(
+                stream,
+                codeFriendlyName: "compiled_stream.lua"
+            );
+
+            DynValue first = compiled.Execute();
+            DynValue second = compiled.Execute();
+
+            await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("compiled_stream.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileFileExecutesRepeatedlyWithoutReloadingFile(
+            LuaCompatibilityVersion version
+        )
+        {
+            CountingStringScriptLoader loader = new("counter = (counter or 0) + 1; return counter");
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+                ScriptLoader = loader,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+
+            CompiledScript compiled = script.CompileFile("compiled_file.lua");
+
+            DynValue first = compiled.Execute();
+            DynValue second = compiled.Execute();
+
+            await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("compiled_file.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileFileUsesProvidedGlobalContext(LuaCompatibilityVersion version)
+        {
+            CountingStringScriptLoader loader = new("return marker");
+            ScriptOptions options = new() { CompatibilityVersion = version, ScriptLoader = loader };
+            Script script = new(CoreModulePresets.Complete, options);
+            Table globals = new(script);
+            globals.Set("marker", DynValue.FromNumber(73));
+
+            CompiledScript compiled = script.CompileFile("compiled_globals.lua", globals);
+            DynValue result = compiled.Execute();
+
+            await Assert.That(result.Number).IsEqualTo(73d).ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileFileRuntimeErrorUsesFriendlyName(LuaCompatibilityVersion version)
+        {
+            CountingStringScriptLoader loader = new("local missing = nil; return missing()");
+            ScriptOptions options = new() { CompatibilityVersion = version, ScriptLoader = loader };
+            Script script = new(CoreModulePresets.Complete, options);
+
+            CompiledScript compiled = script.CompileFile(
+                "physical_name.lua",
+                friendlyFilename: "friendly_name.lua"
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                compiled.Execute()
+            );
+
+            await Assert
+                .That(exception.DecoratedMessage)
+                .Contains("friendly_name.lua")
+                .ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileStreamDoesNotDisposeCallerOwnedStream(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            byte[] code = System.Text.Encoding.UTF8.GetBytes("return 91");
+            using TrackingMemoryStream stream = new(code);
+
+            CompiledScript compiled = script.CompileStream(
+                stream,
+                codeFriendlyName: "caller_stream.lua"
+            );
+            DynValue result = compiled.Execute();
+
+            await Assert.That(result.Number).IsEqualTo(91d).ConfigureAwait(false);
+            await Assert.That(stream.IsDisposed).IsFalse().ConfigureAwait(false);
+            await Assert.That(stream.CanRead).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileStreamExecutesAfterCallerDisposesSourceStream(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            byte[] code = System.Text.Encoding.UTF8.GetBytes("return 93");
+            CompiledScript compiled;
+            TrackingMemoryStream stream;
+
+            using (stream = new TrackingMemoryStream(code))
+            {
+                compiled = script.CompileStream(
+                    stream,
+                    codeFriendlyName: "disposed_caller_stream.lua"
+                );
+            }
+
+            DynValue result = compiled.Execute();
+
+            await Assert.That(stream.IsDisposed).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Number).IsEqualTo(93d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileFileDisposesLoaderReturnedStream(LuaCompatibilityVersion version)
+        {
+            TrackingStreamScriptLoader loader = new("return 92");
+            ScriptOptions options = new() { CompatibilityVersion = version, ScriptLoader = loader };
+            Script script = new(CoreModulePresets.Complete, options);
+
+            CompiledScript compiled = script.CompileFile("stream_loader.lua");
+            DynValue result = compiled.Execute();
+
+            await Assert.That(result.Number).IsEqualTo(92d).ConfigureAwait(false);
+            await Assert.That(loader.LoadCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(loader.LastStream.IsDisposed).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileFunctionExecuteSupportsFixedAndSpanArguments(
             LuaCompatibilityVersion version
         )
@@ -1462,6 +1639,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             public override bool ScriptFileExists(string name) => true;
         }
 
+        private sealed class TrackingStreamScriptLoader : ScriptLoaderBase
+        {
+            private readonly string _code;
+
+            public TrackingStreamScriptLoader(string code)
+            {
+                _code = code;
+            }
+
+            public int LoadCount { get; private set; }
+
+            public TrackingMemoryStream LastStream { get; private set; }
+
+            public override object LoadFile(string file, Table globalContext)
+            {
+                LoadCount++;
+                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(_code);
+                LastStream = new TrackingMemoryStream(bytes);
+                return LastStream;
+            }
+
+            public override bool ScriptFileExists(string name) => true;
+        }
+
         private sealed class CountingStringScriptLoader : ScriptLoaderBase
         {
             private readonly string _code;
@@ -1499,6 +1700,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         private sealed class ReadOnlyMemoryStream : MemoryStream
         {
             public override bool CanWrite => false;
+        }
+
+        private sealed class TrackingMemoryStream : MemoryStream
+        {
+            public TrackingMemoryStream(byte[] buffer)
+                : base(buffer) { }
+
+            public bool IsDisposed { get; private set; }
+
+            protected override void Dispose(bool disposing)
+            {
+                IsDisposed = true;
+                base.Dispose(disposing);
+            }
         }
 
         private sealed class RecordingDebugger : IDebugger

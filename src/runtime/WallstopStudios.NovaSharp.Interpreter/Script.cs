@@ -1193,6 +1193,23 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return ExecuteWithCompatibilityGuard(state, LoadStreamGuardAction);
         }
 
+        /// <summary>
+        /// Compiles a Lua/NovaSharp script from a System.IO.Stream and returns an executable handle.
+        /// NOTE: This will *NOT* close the stream!
+        /// </summary>
+        /// <param name="stream">The stream containing code.</param>
+        /// <param name="globalTable">The global table to bind to this chunk.</param>
+        /// <param name="codeFriendlyName">Name of the code - used to report errors, etc.</param>
+        /// <returns>A compiled handle that can be executed repeatedly without retaining the stream.</returns>
+        public CompiledScript CompileStream(
+            Stream stream,
+            Table globalTable = null,
+            string codeFriendlyName = null
+        )
+        {
+            return new CompiledScript(this, LoadStream(stream, globalTable, codeFriendlyName));
+        }
+
         private DynValue LoadStreamCore(
             Stream stream,
             Table globalTable = null,
@@ -1366,6 +1383,22 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     );
                 }
             }
+        }
+
+        /// <summary>
+        /// Compiles a Lua/NovaSharp script from a file and returns an executable handle.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="globalContext">The global table to bind to this chunk.</param>
+        /// <param name="friendlyFilename">The filename to be used in error messages.</param>
+        /// <returns>A compiled handle that can be executed repeatedly without reloading the file.</returns>
+        public CompiledScript CompileFile(
+            string filename,
+            Table globalContext = null,
+            string friendlyFilename = null
+        )
+        {
+            return new CompiledScript(this, LoadFile(filename, globalContext, friendlyFilename));
         }
 
         /// <summary>

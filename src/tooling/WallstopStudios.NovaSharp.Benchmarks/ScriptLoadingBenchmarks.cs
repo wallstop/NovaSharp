@@ -2,9 +2,11 @@ namespace WallstopStudios.NovaSharp.Benchmarks
 {
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.IO;
     using BenchmarkDotNet.Attributes;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
 
     /// <summary>
@@ -19,12 +21,17 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     public class ScriptLoadingBenchmarks
     {
         private string _scriptSource = string.Empty;
+        private byte[] _scriptSourceBytes = Array.Empty<byte>();
         private string _cachedFriendlyName = string.Empty;
         private Script _precompiledScript;
+        private Script _precompiledStreamScript;
+        private Script _precompiledFileScript;
         private Script _cachedScript;
         private Script _namedCachedScript;
         private DynValue _precompiledFunction = DynValue.Nil;
         private CompiledScript _compiledHandle;
+        private CompiledScript _compiledStreamHandle;
+        private CompiledScript _compiledFileHandle;
         private ScriptComplexity _currentComplexity;
 
         /// <summary>
@@ -57,6 +64,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _currentComplexity = complexity;
 
             _scriptSource = LuaScriptCorpus.GetCompilationScript(complexity);
+            _scriptSourceBytes = System.Text.Encoding.UTF8.GetBytes(_scriptSource);
             _precompiledScript = new Script(CoreModulePresets.Complete);
             _compiledHandle = _precompiledScript.CompileString(
                 _scriptSource,
@@ -64,6 +72,23 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 $"precompiled_{complexity}"
             );
             _precompiledFunction = _compiledHandle.Function;
+
+            _precompiledStreamScript = new Script(CoreModulePresets.Complete);
+            using (MemoryStream stream = new(_scriptSourceBytes))
+            {
+                _compiledStreamHandle = _precompiledStreamScript.CompileStream(
+                    stream,
+                    codeFriendlyName: $"precompiled_stream_{complexity}"
+                );
+            }
+
+            _precompiledFileScript = new Script(
+                CoreModulePresets.Complete,
+                new ScriptOptions { ScriptLoader = new StaticStringScriptLoader(_scriptSource) }
+            );
+            _compiledFileHandle = _precompiledFileScript.CompileFile(
+                $"precompiled_file_{complexity}.lua"
+            );
 
             _cachedScript = new Script(CoreModulePresets.Complete);
             _cachedScript.LoadString(_scriptSource);
@@ -91,6 +116,32 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         {
             Script script = new(CoreModulePresets.Complete);
             return script.LoadString(_scriptSource, null, $"compile_{_currentComplexity}");
+        }
+
+        /// <summary>
+        /// Measures stream compilation without executing the resulting chunk.
+        /// </summary>
+        [Benchmark(Description = "Compile Stream Only")]
+        public DynValue CompileStreamOnly()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            using MemoryStream stream = new(_scriptSourceBytes);
+            return script
+                .CompileStream(stream, codeFriendlyName: $"compile_stream_{_currentComplexity}")
+                .Function;
+        }
+
+        /// <summary>
+        /// Measures file-loader compilation without executing the resulting chunk.
+        /// </summary>
+        [Benchmark(Description = "Compile File Only")]
+        public DynValue CompileFileOnly()
+        {
+            Script script = new(
+                CoreModulePresets.Complete,
+                new ScriptOptions { ScriptLoader = new StaticStringScriptLoader(_scriptSource) }
+            );
+            return script.CompileFile($"compile_file_{_currentComplexity}.lua").Function;
         }
 
         /// <summary>
@@ -130,6 +181,40 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Execute Compiled Handle")]
         public DynValue ExecuteCompiledHandle() => _compiledHandle.Execute();
+
+        /// <summary>
+        /// Executes a stream-compiled handle, isolating handle forwarding overhead.
+        /// </summary>
+        [Benchmark(Description = "Execute Compiled Stream Handle")]
+        public DynValue ExecuteCompiledStreamHandle() => _compiledStreamHandle.Execute();
+
+        /// <summary>
+        /// Executes a file-compiled handle, isolating handle forwarding overhead.
+        /// </summary>
+        [Benchmark(Description = "Execute Compiled File Handle")]
+        public DynValue ExecuteCompiledFileHandle() => _compiledFileHandle.Execute();
+
+        private sealed class StaticStringScriptLoader : ScriptLoaderBase
+        {
+            private readonly string _source;
+
+            public StaticStringScriptLoader(string source)
+            {
+                _source = source;
+            }
+
+            /// <inheritdoc />
+            public override object LoadFile(string file, Table globalContext)
+            {
+                return _source;
+            }
+
+            /// <inheritdoc />
+            public override bool ScriptFileExists(string name)
+            {
+                return true;
+            }
+        }
     }
 
     /// <summary>
