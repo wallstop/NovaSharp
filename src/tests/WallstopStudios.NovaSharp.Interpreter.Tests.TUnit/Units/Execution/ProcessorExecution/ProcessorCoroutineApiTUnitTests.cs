@@ -767,11 +767,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             LuaCompatibilityVersion version
         )
         {
-            Script owningScript = new(version, CoreModulePresets.Complete);
+            Script owningScript = new(version);
             DynValue function = owningScript.DoString("return function(value) return value end");
             DynValue coroutine = owningScript.CreateCoroutine(function);
 
-            Script foreignScript = new(version, CoreModulePresets.Complete);
+            Script foreignScript = new(version);
             ScriptExecutionContext foreignContext = TestHelpers.CreateExecutionContext(
                 foreignScript
             );
