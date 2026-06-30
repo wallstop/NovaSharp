@@ -1373,6 +1373,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             this.CheckScriptOwnership(args);
 
             int maxloops = 10;
+            bool isFirstCallMetamethodResolution = true;
 
             while (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
             {
@@ -1394,9 +1395,23 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     );
                 }
 
+                if (
+                    isFirstCallMetamethodResolution
+                    && TryCallDirectMetamethod(
+                        metafunction,
+                        function,
+                        args,
+                        out DynValue directResult
+                    )
+                )
+                {
+                    return directResult;
+                }
+
                 DynValue[] metaargs = CreateCallMetamethodArguments(function, args);
                 function = metafunction;
                 args = metaargs;
+                isFirstCallMetamethodResolution = false;
                 maxloops--;
             }
 
@@ -1455,6 +1470,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             this.CheckScriptOwnership(args);
 
             int maxloops = 10;
+            bool isFirstCallMetamethodResolution = true;
 
             while (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
             {
@@ -1476,6 +1492,19 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     );
                 }
 
+                if (
+                    isFirstCallMetamethodResolution
+                    && TryCallDirectMetamethod(
+                        metafunction,
+                        function,
+                        args,
+                        out DynValue directResult
+                    )
+                )
+                {
+                    return directResult;
+                }
+
                 DynValue[] metaargs = new DynValue[args.Length + 1];
                 metaargs[0] = function;
                 for (int i = 0; i < args.Length; i++)
@@ -1485,6 +1514,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
                 function = metafunction;
                 args = metaargs;
+                isFirstCallMetamethodResolution = false;
                 maxloops--;
             }
 
@@ -1515,6 +1545,42 @@ namespace WallstopStudios.NovaSharp.Interpreter
             {
                 ex.AppendCompatibilityContext(this);
                 throw;
+            }
+        }
+
+        private bool TryCallDirectMetamethod(
+            DynValue metafunction,
+            DynValue self,
+            ReadOnlySpan<DynValue> args,
+            out DynValue result
+        )
+        {
+            if (!IsDirectCallTarget(metafunction))
+            {
+                result = null;
+                return false;
+            }
+
+            switch (args.Length)
+            {
+                case 0:
+                    result = Call(metafunction, self);
+                    return true;
+                case 1:
+                    result = Call(metafunction, self, args[0]);
+                    return true;
+                case 2:
+                    result = Call(metafunction, self, args[0], args[1]);
+                    return true;
+                case 3:
+                    result = Call(metafunction, self, args[0], args[1], args[2]);
+                    return true;
+                case 4:
+                    result = Call(metafunction, self, args[0], args[1], args[2], args[3]);
+                    return true;
+                default:
+                    result = null;
+                    return false;
             }
         }
 

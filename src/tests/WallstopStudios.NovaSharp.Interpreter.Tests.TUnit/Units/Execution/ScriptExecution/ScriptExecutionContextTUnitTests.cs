@@ -732,6 +732,147 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        public async Task SpanAndArrayCallOverloadsAvoidCallMetamethodArgumentArrayAllocation()
+        {
+            const int iterations = 1_024;
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Table callable = new(script);
+            Table meta = new(script);
+            DynValue callableValue = DynValue.NewTable(callable);
+            DynValue[] args =
+            {
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(4),
+            };
+            DynValue callback = DynValue.NewCallbackView(
+                (_, callbackArgs) =>
+                {
+                    if (
+                        callbackArgs.Count != 5
+                        || !ReferenceEquals(callbackArgs[0].Table, callable)
+                        || callbackArgs[1].Number != 1d
+                        || callbackArgs[2].Number != 2d
+                        || callbackArgs[3].Number != 3d
+                        || callbackArgs[4].Number != 4d
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Context span/array metamethod allocation probe received unexpected arguments."
+                        );
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
+            meta.Set("__call", callback);
+            callable.MetaTable = meta;
+
+            MeasureFixedFiveArgumentContextCallAllocations(
+                context,
+                callback,
+                callableValue,
+                args[0],
+                args[1],
+                args[2],
+                args[3],
+                iterations: 8
+            );
+            MeasureSpanContextCallMetamethodAllocations(
+                context,
+                callableValue,
+                args,
+                iterations: 8
+            );
+            MeasureArrayContextCallMetamethodAllocations(
+                context,
+                callableValue,
+                args,
+                iterations: 8
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long directAllocated = MeasureFixedFiveArgumentContextCallAllocations(
+                context,
+                callback,
+                callableValue,
+                args[0],
+                args[1],
+                args[2],
+                args[3],
+                iterations
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long spanAllocated = MeasureSpanContextCallMetamethodAllocations(
+                context,
+                callableValue,
+                args,
+                iterations
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long arrayAllocated = MeasureArrayContextCallMetamethodAllocations(
+                context,
+                callableValue,
+                args,
+                iterations
+            );
+            long spanExtraBytesPerCall = (spanAllocated - directAllocated) / iterations;
+            long arrayExtraBytesPerCall = (arrayAllocated - directAllocated) / iterations;
+
+            await Assert.That(spanExtraBytesPerCall).IsLessThan(16L);
+            await Assert.That(arrayExtraBytesPerCall).IsLessThan(16L);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task SpanAndArrayCallOverloadsPreserveCallMetamethodSpecialArgumentAdjustment()
+        {
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Table callable = new(script);
+            Table meta = new(script);
+            DynValue callableValue = DynValue.NewTable(callable);
+            DynValue inspect = DynValue.NewCallback((_, args) => SummarizeArguments(args));
+            meta.Set("__call", inspect);
+            callable.MetaTable = meta;
+            DynValue[] spanArgs =
+            {
+                null,
+                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
+                DynValue.NewNumber(3),
+                DynValue.NewTuple(DynValue.NewNumber(4), null),
+            };
+            DynValue[] arrayArgs =
+            {
+                DynValue.NewNumber(1),
+                null,
+                DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
+                DynValue.NewNumber(3),
+                DynValue.Void,
+            };
+
+            DynValue spanResult = context.Call(callableValue, spanArgs.AsSpan());
+            DynValue arrayResult = context.Call(callableValue, arrayArgs);
+
+            await AssertArgumentSummary(spanResult, count: 6d, nilCount: 2d, sum: 9d)
+                .ConfigureAwait(false);
+            await AssertArgumentSummary(arrayResult, count: 5d, nilCount: 1d, sum: 6d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task FixedCallOverloadsPreserveLegacyCallbackExpansionSemantics()
         {
             Script script = new(default(CoreModules));
@@ -1421,6 +1562,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 {
                     throw new InvalidOperationException(
                         "Context metamethod allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureSpanContextCallMetamethodAllocations(
+            ScriptExecutionContext context,
+            DynValue callable,
+            DynValue[] args,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = context.Call(callable, args.AsSpan());
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Context span metamethod allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureArrayContextCallMetamethodAllocations(
+            ScriptExecutionContext context,
+            DynValue callable,
+            DynValue[] args,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = context.Call(callable, args);
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Context array metamethod allocation probe returned an unexpected value."
                     );
                 }
             }

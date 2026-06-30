@@ -44,7 +44,7 @@ Found 74 undocumented public/internal type declarations.
   - line 313: missing XML docs for `EnterIsolationScope()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
   - line 400: missing XML docs for `BeginDefaultOptionsScope()`
-  - line 2650: missing XML docs for `Dispose()`
+  - line 2716: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`

@@ -545,6 +545,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             }
 
             int maxloops = 10;
+            bool isFirstCallMetamethodResolution = true;
 
             while (maxloops > 0)
             {
@@ -556,8 +557,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 }
 
                 DynValue previousFunc = func;
-                func = v;
+                if (
+                    isFirstCallMetamethodResolution
+                    && TryCallDirectMetamethod(v, previousFunc, args, out DynValue directResult)
+                )
+                {
+                    return directResult;
+                }
 
+                func = v;
                 DynValue[] nextArgs = CreateCallMetamethodArguments(previousFunc, args);
                 if (func.Type == DataType.Function || func.Type == DataType.ClrFunction)
                 {
@@ -565,6 +573,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 }
 
                 args = nextArgs;
+                isFirstCallMetamethodResolution = false;
                 maxloops--;
             }
 
@@ -629,6 +638,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             else
             {
                 int maxloops = 10;
+                bool isFirstCallMetamethodResolution = true;
 
                 while (maxloops > 0)
                 {
@@ -640,21 +650,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     }
 
                     DynValue previousFunc = func;
+                    if (
+                        isFirstCallMetamethodResolution
+                        && TryCallDirectMetamethod(v, previousFunc, args, out DynValue directResult)
+                    )
+                    {
+                        return directResult;
+                    }
+
                     func = v;
 
                     if (func.Type == DataType.Function || func.Type == DataType.ClrFunction)
                     {
-                        DynValue[] metaargs = new DynValue[args.Length + 1];
-                        metaargs[0] = previousFunc;
-                        Array.Copy(args, 0, metaargs, 1, args.Length);
+                        DynValue[] metaargs = CreateCallMetamethodArguments(previousFunc, args);
                         return Call(func, metaargs);
                     }
 
-                    DynValue[] nextArgs = new DynValue[args.Length + 1];
-                    nextArgs[0] = previousFunc;
-                    Array.Copy(args, 0, nextArgs, 1, args.Length);
+                    DynValue[] nextArgs = CreateCallMetamethodArguments(previousFunc, args);
                     args = nextArgs;
 
+                    isFirstCallMetamethodResolution = false;
                     maxloops--;
                 }
 
@@ -675,6 +690,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             }
 
             return metaargs;
+        }
+
+        private bool TryCallDirectMetamethod(
+            DynValue metafunction,
+            DynValue self,
+            ReadOnlySpan<DynValue> args,
+            out DynValue result
+        )
+        {
+            if (!IsDirectCallTarget(metafunction))
+            {
+                result = null;
+                return false;
+            }
+
+            switch (args.Length)
+            {
+                case 0:
+                    result = Call(metafunction, self);
+                    return true;
+                case 1:
+                    result = Call(metafunction, self, args[0]);
+                    return true;
+                case 2:
+                    result = Call(metafunction, self, args[0], args[1]);
+                    return true;
+                case 3:
+                    result = Call(metafunction, self, args[0], args[1], args[2]);
+                    return true;
+                case 4:
+                    result = Call(metafunction, self, args[0], args[1], args[2], args[3]);
+                    return true;
+                default:
+                    result = null;
+                    return false;
+            }
         }
 
         private DynValue CallNonFunction(DynValue func)
