@@ -567,7 +567,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ModContainerFixedCallTreatsNullAsSingleNilArgument()
+        public async Task ModContainerCallFunctionDistinguishesSingleNullFromNullParamsArray()
         {
             ModContainer mod = new ModContainer("test").AddEntryPoint(
                 "function inspect(a) if a == nil then return 'nil' else return type(a) end end"
@@ -576,11 +576,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             mod.Load();
             object[] nullArgs = null;
 
-            DynValue result = mod.CallFunction("inspect", null);
-            DynValue explicitNullArray = mod.CallFunction("inspect", nullArgs);
+            DynValue result = mod.CallFunction("inspect", (object)null);
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                mod.CallFunction("inspect", nullArgs)
+            );
 
             await Assert.That(result.String).IsEqualTo("nil").ConfigureAwait(false);
-            await Assert.That(explicitNullArray.String).IsEqualTo("nil").ConfigureAwait(false);
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
         }
 
         [Test]
@@ -1212,7 +1214,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
-        public async Task ModManagerBroadcastTreatsNullAsSingleNilArgument()
+        public async Task ModManagerBroadcastDistinguishesSingleNullFromNullParamsArray()
         {
             ModManager manager = new ModManager();
             ModContainer mod = new ModContainer("mod1").AddEntryPoint(
@@ -1223,17 +1225,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
             manager.LoadAll();
             object[] nullArgs = null;
 
-            IDictionary<string, DynValue> results = manager.BroadcastCall("inspect", null);
-            IDictionary<string, DynValue> explicitNullArray = manager.BroadcastCall(
-                "inspect",
-                nullArgs
+            IDictionary<string, DynValue> results = manager.BroadcastCall("inspect", (object)null);
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                manager.BroadcastCall("inspect", nullArgs)
             );
 
             await Assert.That(results["mod1"].String).IsEqualTo("nil").ConfigureAwait(false);
-            await Assert
-                .That(explicitNullArray["mod1"].String)
-                .IsEqualTo("nil")
-                .ConfigureAwait(false);
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
         }
 
         [Test]

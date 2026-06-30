@@ -540,7 +540,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
 
             if (args == null)
             {
-                return script.Call(function, (object)null);
+                throw new ArgumentNullException(nameof(args));
             }
 
             return script.Call(function, args);

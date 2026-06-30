@@ -693,6 +693,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="functionName">The name of the function to call.</param>
         /// <param name="args">Arguments to pass to the function.</param>
         /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="args"/> is null.</exception>
         [SuppressMessage(
             "Design",
             "CA1031:Do not catch general exception types",
@@ -707,7 +708,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
 
             if (args == null)
             {
-                return BroadcastCallFixed(functionName, new FixedBroadcastArguments(null));
+                throw new ArgumentNullException(nameof(args));
             }
 
             IReadOnlyList<string> modIds = GetLoadOrder();
