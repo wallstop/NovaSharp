@@ -156,27 +156,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             /// </summary>
             /// <param name="mod">The mod container to invoke.</param>
             /// <param name="functionName">The function name to call.</param>
+            /// <param name="resolvedFunction">The already-resolved function for built-in containers.</param>
             /// <returns>The function result.</returns>
-            public DynValue Call(IModContainer mod, string functionName)
+            public DynValue Call(IModContainer mod, string functionName, DynValue resolvedFunction)
             {
                 if (mod is ModContainer modContainer)
                 {
-                    return _count switch
-                    {
-                        0 => modContainer.CallFunction(functionName),
-                        1 => modContainer.CallFunction(functionName, _arg1),
-                        2 => modContainer.CallFunction(functionName, _arg1, _arg2),
-                        3 => modContainer.CallFunction(functionName, _arg1, _arg2, _arg3),
-                        4 => modContainer.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4),
-                        _ => modContainer.CallFunction(
-                            functionName,
-                            _arg1,
-                            _arg2,
-                            _arg3,
-                            _arg4,
-                            _arg5
-                        ),
-                    };
+                    return CallResolved(modContainer, resolvedFunction);
                 }
 
                 return _count switch
@@ -187,6 +173,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                     3 => mod.CallFunction(functionName, _arg1, _arg2, _arg3),
                     4 => mod.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4),
                     _ => mod.CallFunction(functionName, _arg1, _arg2, _arg3, _arg4, _arg5),
+                };
+            }
+
+            private DynValue CallResolved(ModContainer modContainer, DynValue function)
+            {
+                ModLoadState state = modContainer.State;
+                Script script = modContainer.Script;
+                if (state != ModLoadState.Loaded || script == null)
+                {
+                    throw new InvalidOperationException(
+                        ZString.Concat(
+                            "Mod '",
+                            modContainer.ModId,
+                            "' is not loaded (state: ",
+                            state,
+                            ")."
+                        )
+                    );
+                }
+
+                return _count switch
+                {
+                    0 => script.Call(function),
+                    1 => script.Call(function, _arg1),
+                    2 => script.Call(function, _arg1, _arg2),
+                    3 => script.Call(function, _arg1, _arg2, _arg3),
+                    4 => script.Call(function, _arg1, _arg2, _arg3, _arg4),
+                    _ => script.Call(function, _arg1, _arg2, _arg3, _arg4, _arg5),
                 };
             }
         }
@@ -652,7 +666,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
 
                 try
                 {
-                    results[modId] = args.Call(mod, functionName);
+                    results[modId] = args.Call(mod, functionName, func);
                 }
                 catch (Exception ex)
                 {
