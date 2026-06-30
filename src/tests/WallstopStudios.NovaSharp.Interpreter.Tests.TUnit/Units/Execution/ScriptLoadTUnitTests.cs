@@ -462,6 +462,54 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileStringExecutePreservesDebugFrameFunctionIdentity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileString(
+                """
+                local info = debug.getinfo(1, "fS")
+                local funcInfo = debug.getinfo(info.func, "S")
+                local identity = info.func == expected and "same" or "different"
+                return identity .. ":" .. type(info.func) .. ":" .. info.what .. ":" .. funcInfo.short_src
+                """,
+                codeFriendlyName: "compiled_debug.lua"
+            );
+            script.Globals.Set("expected", compiled.Function);
+
+            DynValue result = compiled.Execute();
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("same:function:Lua:compiled_debug.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
+        public async Task CompileStringExecuteSupportsLua51SetfenvFrame(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Globals.Set("marker", DynValue.FromNumber(5));
+            CompiledScript compiled = script.CompileString(
+                """
+                local before = getfenv(1).marker
+                setfenv(1, { marker = 99, getfenv = getfenv, setfenv = setfenv })
+                return before * 100 + getfenv(1).marker
+                """,
+                codeFriendlyName: "compiled_setfenv.lua"
+            );
+
+            DynValue result = compiled.Execute();
+
+            await Assert.That(result.Number).IsEqualTo(599d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileStreamExecutesRepeatedlyWithoutGrowingSources(
             LuaCompatibilityVersion version
         )
@@ -719,6 +767,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileFunctionExecuteEmptySpanArgumentsUseZeroArgPath(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                """
+                function(...)
+                    local info = debug.getinfo(1, "f")
+                    local identity = info.func == expected and "same" or "different"
+                    return select("#", ...), identity
+                end
+                """,
+                funcFriendlyName: "compiled_empty_span"
+            );
+            script.Globals.Set("expected", compiled.Function);
+
+            DynValue spanResult = ExecuteCompiledScriptWithSpanArguments(
+                compiled,
+                Array.Empty<DynValue>()
+            );
+            DynValue objectSpanResult = ExecuteCompiledScriptWithObjectSpanArguments(
+                compiled,
+                Array.Empty<object>()
+            );
+
+            await Assert.That(spanResult.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(spanResult.Tuple[1].String).IsEqualTo("same").ConfigureAwait(false);
+            await Assert.That(objectSpanResult.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert
+                .That(objectSpanResult.Tuple[1].String)
+                .IsEqualTo("same")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileFunctionExecuteApiShapeSupportsExplicitNullAndArrayForms(
             LuaCompatibilityVersion version
         )
@@ -806,6 +891,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert
                 .That(executeResult.Number)
                 .IsEqualTo(callResult.Number)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileFunctionExecutePreservesDebugFrameFunctionIdentity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                """
+                function()
+                    local info = debug.getinfo(1, "fS")
+                    local funcInfo = debug.getinfo(info.func, "S")
+                    local identity = info.func == expected and "same" or "different"
+                    return identity .. ":" .. type(info.func) .. ":" .. info.what .. ":" .. funcInfo.short_src
+                end
+                """,
+                funcFriendlyName: "compiled_func_debug.lua"
+            );
+            script.Globals.Set("expected", compiled.Function);
+
+            DynValue result = compiled.Execute();
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("same:function:Lua:libfunc_compiled_func_debug.lua")
                 .ConfigureAwait(false);
         }
 
@@ -1286,6 +1399,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             return compiled.Execute(args.AsSpan());
+        }
+
+        private static DynValue ExecuteCompiledScriptWithObjectSpanArguments(
+            CompiledScript compiled,
+            object[] args
+        )
+        {
+            return compiled.ExecuteObjectArguments(args.AsSpan());
         }
 
         private static void ConstructCompiledScript(Script script, DynValue function)

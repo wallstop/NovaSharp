@@ -439,6 +439,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <returns>The return tuple.</returns>
         internal DynValue CallChunk(int entryPointAddress, ClosureContext closureScope)
         {
+            return CallChunk(entryPointAddress, closureScope, function: null);
+        }
+
+        /// <summary>
+        /// Invokes a Lua function with no arguments, running the VM until the call completes or throws.
+        /// </summary>
+        /// <param name="function">Function to invoke.</param>
+        /// <returns>The return tuple.</returns>
+        internal DynValue CallFunctionWithoutArguments(DynValue function)
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            Closure closure = function.Function;
+            return CallChunk(closure.EntryPointByteCodeLocation, closure.ClosureContext, function);
+        }
+
+        private DynValue CallChunk(
+            int entryPointAddress,
+            ClosureContext closureScope,
+            DynValue function
+        )
+        {
             if (closureScope == null)
             {
                 throw new ArgumentNullException(nameof(closureScope));
@@ -449,7 +474,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (coroutinesStack.Count > 0 && coroutinesStack[^1] != this)
             {
-                return coroutinesStack[^1].CallChunk(entryPointAddress, closureScope);
+                return coroutinesStack[^1].CallChunk(entryPointAddress, closureScope, function);
             }
 
             EnterProcessor();
@@ -464,7 +489,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 try
                 {
-                    PushChunkEntryPointStackFrame(entryPointAddress, closureScope);
+                    PushChunkEntryPointStackFrame(entryPointAddress, closureScope, function);
                     return ProcessingLoop(entryPointAddress);
                 }
                 finally
@@ -667,7 +692,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private void PushChunkEntryPointStackFrame(
             int entryPointAddress,
-            ClosureContext closureScope
+            ClosureContext closureScope,
+            DynValue function
         )
         {
             // RET cleanup expects the CLR entry layout: function slot followed by argument count.
@@ -680,6 +706,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             frame.DebugEntryPoint = entryPointAddress;
             frame.ReturnAddress = -1;
             frame.ClosureScope = closureScope;
+            frame.Function = function;
             frame.CallingSourceRef = SourceRef.GetClrLocation();
             frame.Flags = CallStackItemFlagsPresets.CallEntryPoint;
             _executionStack.Push(frame);

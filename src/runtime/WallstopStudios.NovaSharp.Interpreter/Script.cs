@@ -961,7 +961,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return Call(function);
             }
 
-            return ExecuteSpanCallWithCompatibilityGuard(function, ReadOnlySpan<DynValue>.Empty);
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function),
+                static state => state._mainProcessor.CallFunctionWithoutArguments(state.function)
+            );
         }
 
         /// <summary>
