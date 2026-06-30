@@ -686,6 +686,288 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return new CompiledScript(this, LoadString(code, globalTable, codeFriendlyName));
         }
 
+        /// <summary>
+        /// Creates an executable handle for a function or callable value that has already been
+        /// resolved for this script.
+        /// </summary>
+        /// <param name="function">The function or callable value to bind.</param>
+        /// <returns>An executable handle that can be called repeatedly without resolving the value again.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="function"/> is null.</exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="function"/> is not directly callable and has no callable
+        /// <c>__call</c> metamethod.
+        /// </exception>
+        public CompiledScript BindFunction(DynValue function)
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+
+            if (!IsDirectCallTarget(function))
+            {
+                _ = GetCallableMetamethodOrThrow(function);
+            }
+
+            return new CompiledScript(this, function);
+        }
+
+        /// <summary>
+        /// Resolves a global function once and returns an executable handle for repeated calls.
+        /// </summary>
+        /// <param name="name">The global function name.</param>
+        /// <returns>An executable handle for the current global value.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="name"/> is null or empty, or when the global value is not
+        /// callable.
+        /// </exception>
+        public CompiledScript BindGlobalFunction(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentException(
+                    "Global function name cannot be null or empty.",
+                    nameof(name)
+                );
+            }
+
+            return BindFunction(Globals.Get(name));
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle without re-running the public call dispatcher when
+        /// the handle is a Lua function.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(DynValue function)
+        {
+            this.CheckScriptOwnership(function);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function);
+            }
+
+            return ExecuteSpanCallWithCompatibilityGuard(function, ReadOnlySpan<DynValue>.Empty);
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with one argument.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(DynValue function, DynValue arg)
+        {
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, arg);
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg),
+                static state => state._mainProcessor.Call(state.function, state.arg)
+            );
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with two arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(DynValue function, DynValue arg1, DynValue arg2)
+        {
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, arg1, arg2);
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2),
+                static state => state._mainProcessor.Call(state.function, state.arg1, state.arg2)
+            );
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with three arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3
+        )
+        {
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, arg1, arg2, arg3);
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3),
+                static state =>
+                    state._mainProcessor.Call(state.function, state.arg1, state.arg2, state.arg3)
+            );
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with four arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4
+        )
+        {
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+            this.CheckScriptOwnership(arg4);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, arg1, arg2, arg3, arg4);
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4
+                    )
+            );
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with five arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+            this.CheckScriptOwnership(arg4);
+            this.CheckScriptOwnership(arg5);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, arg1, arg2, arg3, arg4, arg5);
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4, arg5),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4,
+                        state.arg5
+                    )
+            );
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with caller-owned contiguous arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(DynValue function, ReadOnlySpan<DynValue> args)
+        {
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(args);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, args);
+            }
+
+            return args.Length switch
+            {
+                0 => ExecuteCompiledFunction(function),
+                1 => ExecuteWithCompatibilityGuard(
+                    (_mainProcessor, function, arg: args[0]),
+                    static state => state._mainProcessor.Call(state.function, state.arg)
+                ),
+                2 => ExecuteWithCompatibilityGuard(
+                    (_mainProcessor, function, arg1: args[0], arg2: args[1]),
+                    static state =>
+                        state._mainProcessor.Call(state.function, state.arg1, state.arg2)
+                ),
+                3 => ExecuteWithCompatibilityGuard(
+                    (_mainProcessor, function, arg1: args[0], arg2: args[1], arg3: args[2]),
+                    static state =>
+                        state._mainProcessor.Call(
+                            state.function,
+                            state.arg1,
+                            state.arg2,
+                            state.arg3
+                        )
+                ),
+                4 => ExecuteWithCompatibilityGuard(
+                    (
+                        _mainProcessor,
+                        function,
+                        arg1: args[0],
+                        arg2: args[1],
+                        arg3: args[2],
+                        arg4: args[3]
+                    ),
+                    static state =>
+                        state._mainProcessor.Call(
+                            state.function,
+                            state.arg1,
+                            state.arg2,
+                            state.arg3,
+                            state.arg4
+                        )
+                ),
+                5 => ExecuteWithCompatibilityGuard(
+                    (
+                        _mainProcessor,
+                        function,
+                        arg1: args[0],
+                        arg2: args[1],
+                        arg3: args[2],
+                        arg4: args[3],
+                        arg5: args[4]
+                    ),
+                    static state =>
+                        state._mainProcessor.Call(
+                            state.function,
+                            state.arg1,
+                            state.arg2,
+                            state.arg3,
+                            state.arg4,
+                            state.arg5
+                        )
+                ),
+                _ => ExecuteSpanCallWithCompatibilityGuard(function, args),
+            };
+        }
+
         private DynValue LoadStringCore(
             string code,
             Table globalTable = null,

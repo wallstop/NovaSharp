@@ -423,6 +423,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileFunctionExecuteApiShapeSupportsExplicitNullAndArrayForms(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                "function(...) return select('#', ...), ... end",
+                funcFriendlyName: "compiled_api_shape"
+            );
+            DynValue[] args = new[] { DynValue.FromNumber(1), DynValue.FromNumber(2) };
+
+            DynValue dynValueNilResult = compiled.Execute(DynValue.Nil);
+            DynValue objectNullResult = compiled.Execute((object)null);
+            DynValue arrayResult = compiled.Execute(args);
+            DynValue spanResult = ExecuteCompiledScriptWithSpanArguments(compiled, args);
+
+            await Assert
+                .That(dynValueNilResult.Tuple[0].Number)
+                .IsEqualTo(1d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(dynValueNilResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert.That(objectNullResult.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert
+                .That(objectNullResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert.That(arrayResult.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(arrayResult.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(arrayResult.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(spanResult.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(spanResult.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(spanResult.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileFunctionExecuteObjectArgumentsMatchScriptCall(
             LuaCompatibilityVersion version
         )
@@ -470,6 +509,138 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileFunctionExecuteRejectsForeignDynValueArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script scriptA = new(version, CoreModulePresets.Complete);
+            DynValue foreignTable = scriptA.DoString("return {}");
+
+            Script scriptB = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = scriptB.CompileFunction(
+                "function(value) return value end",
+                funcFriendlyName: "compiled_foreign_dynvalue_arg"
+            );
+
+            ScriptRuntimeException fixedException = Assert.Throws<ScriptRuntimeException>(() =>
+                compiled.Execute(foreignTable)
+            );
+            ScriptRuntimeException arrayException = Assert.Throws<ScriptRuntimeException>(() =>
+                compiled.Execute(new[] { foreignTable })
+            );
+            ScriptRuntimeException spanException = Assert.Throws<ScriptRuntimeException>(() =>
+                ExecuteCompiledScriptWithSpanArguments(compiled, new[] { foreignTable })
+            );
+
+            await Assert
+                .That(fixedException.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+            await Assert
+                .That(arrayException.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+            await Assert
+                .That(spanException.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task BindGlobalFunctionExecutesInitiallyResolvedGlobal(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString("function update(value) return value + 1 end");
+            CompiledScript boundUpdate = script.BindGlobalFunction("update");
+
+            script.DoString("function update(value) return value + 100 end");
+
+            DynValue boundResult = boundUpdate.Execute(DynValue.FromNumber(10));
+            DynValue currentGlobalResult = script.Call(
+                script.Globals.Get("update"),
+                DynValue.FromNumber(10)
+            );
+
+            await Assert.That(boundUpdate.IsValid).IsTrue().ConfigureAwait(false);
+            await Assert.That(boundUpdate.Script).IsSameReferenceAs(script).ConfigureAwait(false);
+            await Assert.That(boundResult.Number).IsEqualTo(11d).ConfigureAwait(false);
+            await Assert.That(currentGlobalResult.Number).IsEqualTo(110d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task BindFunctionSupportsCallableMetamethods(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue callable = script.DoString(
+                "local target = setmetatable({}, { __call = function(_, value) return value * 2 end }); return target"
+            );
+
+            CompiledScript boundCallable = script.BindFunction(callable);
+            DynValue result = boundCallable.Execute(DynValue.FromNumber(21));
+
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task BindGlobalFunctionRejectsNonCallableGlobal(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Globals.Set("notCallable", DynValue.FromNumber(42));
+
+            ArgumentException exception = Assert.Throws<ArgumentException>(() =>
+                script.BindGlobalFunction("notCallable")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("function is not a function")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task BindFunctionRejectsForeignFunction(LuaCompatibilityVersion version)
+        {
+            Script scriptA = new(version, CoreModulePresets.Complete);
+            DynValue foreignFunction = scriptA.DoString("return function() return 1 end");
+
+            Script scriptB = new(version, CoreModulePresets.Complete);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                scriptB.BindFunction(foreignFunction)
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BindGlobalFunctionRejectsNullOrEmptyName()
+        {
+            Script script = new(CoreModulePresets.Complete);
+
+            ArgumentException nullException = Assert.Throws<ArgumentException>(() =>
+                script.BindGlobalFunction(null)
+            );
+            ArgumentException emptyException = Assert.Throws<ArgumentException>(() =>
+                script.BindGlobalFunction(string.Empty)
+            );
+
+            await Assert.That(nullException.ParamName).IsEqualTo("name").ConfigureAwait(false);
+            await Assert.That(emptyException.ParamName).IsEqualTo("name").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileStringRuntimeErrorUsesFriendlyName(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
@@ -485,6 +656,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert
                 .That(exception.DecoratedMessage)
                 .Contains("compiled_error.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileFunctionRuntimeErrorUsesFriendlyNameOnFastArgumentPaths(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                "function(value) local missing = nil; return missing(value) end",
+                funcFriendlyName: "compiled_fast_arg_error"
+            );
+
+            ScriptRuntimeException fixedException = Assert.Throws<ScriptRuntimeException>(() =>
+                compiled.Execute(DynValue.FromNumber(1))
+            );
+            ScriptRuntimeException arrayException = Assert.Throws<ScriptRuntimeException>(() =>
+                compiled.Execute(new[] { DynValue.FromNumber(2) })
+            );
+            ScriptRuntimeException spanException = Assert.Throws<ScriptRuntimeException>(() =>
+                ExecuteCompiledScriptWithSpanArguments(
+                    compiled,
+                    new[] { DynValue.FromNumber(3), DynValue.FromNumber(4) }
+                )
+            );
+
+            await Assert
+                .That(fixedException.DecoratedMessage)
+                .Contains("compiled_fast_arg_error")
+                .ConfigureAwait(false);
+            await Assert
+                .That(arrayException.DecoratedMessage)
+                .Contains("compiled_fast_arg_error")
+                .ConfigureAwait(false);
+            await Assert
+                .That(spanException.DecoratedMessage)
+                .Contains("compiled_fast_arg_error")
                 .ConfigureAwait(false);
         }
 
@@ -526,7 +736,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(compiled.IsValid).IsFalse().ConfigureAwait(false);
             await Assert
                 .That(Assert.Throws<InvalidOperationException>(() => compiled.Execute()).Message)
-                .Contains("Script compile method")
+                .Contains("Script compile or function binding method")
                 .ConfigureAwait(false);
         }
 

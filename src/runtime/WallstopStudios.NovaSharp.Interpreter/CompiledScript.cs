@@ -5,12 +5,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
     using DataTypes;
 
     /// <summary>
-    /// Represents a Lua/NovaSharp chunk that has already been compiled for a specific
-    /// <see cref="Script"/> instance.
+    /// Represents a Lua/NovaSharp chunk or callable value that has already been resolved for a
+    /// specific <see cref="Script"/> instance.
     /// </summary>
     /// <remarks>
-    /// Use <see cref="Script.CompileString"/> or <see cref="Script.CompileFunction"/> when a
-    /// caller needs to execute the same chunk repeatedly without keeping source text on the hot path.
+    /// Use <see cref="Script.CompileString"/>, <see cref="Script.CompileFunction"/>, or
+    /// <see cref="Script.BindGlobalFunction"/> when a caller needs to execute the same callable
+    /// repeatedly without keeping source text or global lookup on the hot path.
     /// </remarks>
     public readonly struct CompiledScript : IEquatable<CompiledScript>
     {
@@ -34,7 +35,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Gets the script instance that owns this compiled chunk.
+        /// Gets the script instance that owns this callable handle.
         /// </summary>
         /// <exception cref="InvalidOperationException">
         /// Thrown when this value is the default, uninitialized <see cref="CompiledScript"/>.
@@ -42,7 +43,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public Script Script => GetScript();
 
         /// <summary>
-        /// Gets the underlying compiled function value.
+        /// Gets the underlying callable value.
         /// </summary>
         /// <exception cref="InvalidOperationException">
         /// Thrown when this value is the default, uninitialized <see cref="CompiledScript"/>.
@@ -51,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Gets a value indicating whether this handle was created by a <see cref="Script"/>
-        /// compile method.
+        /// compile or function binding method.
         /// </summary>
         public bool IsValid => _script != null && _function != null;
 
@@ -61,7 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute()
         {
-            return GetScript().Call(GetFunction());
+            return GetScript().ExecuteCompiledFunction(GetFunction());
         }
 
         /// <summary>
@@ -71,7 +72,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(DynValue arg)
         {
-            return GetScript().Call(GetFunction(), arg);
+            return GetScript().ExecuteCompiledFunction(GetFunction(), arg);
         }
 
         /// <summary>
@@ -82,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(DynValue arg1, DynValue arg2)
         {
-            return GetScript().Call(GetFunction(), arg1, arg2);
+            return GetScript().ExecuteCompiledFunction(GetFunction(), arg1, arg2);
         }
 
         /// <summary>
@@ -94,7 +95,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(DynValue arg1, DynValue arg2, DynValue arg3)
         {
-            return GetScript().Call(GetFunction(), arg1, arg2, arg3);
+            return GetScript().ExecuteCompiledFunction(GetFunction(), arg1, arg2, arg3);
         }
 
         /// <summary>
@@ -107,7 +108,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
         {
-            return GetScript().Call(GetFunction(), arg1, arg2, arg3, arg4);
+            return GetScript().ExecuteCompiledFunction(GetFunction(), arg1, arg2, arg3, arg4);
         }
 
         /// <summary>
@@ -127,7 +128,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue arg5
         )
         {
-            return GetScript().Call(GetFunction(), arg1, arg2, arg3, arg4, arg5);
+            return GetScript().ExecuteCompiledFunction(GetFunction(), arg1, arg2, arg3, arg4, arg5);
         }
 
         /// <summary>
@@ -142,7 +143,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg)
         {
             Script script = GetScript();
-            return script.Call(GetFunction(), arg);
+            DynValue function = GetFunction();
+            return script.ExecuteCompiledFunction(function, DynValue.FromObject(script, arg));
         }
 
         /// <summary>
@@ -158,7 +160,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg1, object arg2)
         {
             Script script = GetScript();
-            return script.Call(GetFunction(), arg1, arg2);
+            DynValue function = GetFunction();
+            return script.ExecuteCompiledFunction(
+                function,
+                DynValue.FromObject(script, arg1),
+                DynValue.FromObject(script, arg2)
+            );
         }
 
         /// <summary>
@@ -175,7 +182,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg1, object arg2, object arg3)
         {
             Script script = GetScript();
-            return script.Call(GetFunction(), arg1, arg2, arg3);
+            DynValue function = GetFunction();
+            return script.ExecuteCompiledFunction(
+                function,
+                DynValue.FromObject(script, arg1),
+                DynValue.FromObject(script, arg2),
+                DynValue.FromObject(script, arg3)
+            );
         }
 
         /// <summary>
@@ -193,7 +206,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg1, object arg2, object arg3, object arg4)
         {
             Script script = GetScript();
-            return script.Call(GetFunction(), arg1, arg2, arg3, arg4);
+            DynValue function = GetFunction();
+            return script.ExecuteCompiledFunction(
+                function,
+                DynValue.FromObject(script, arg1),
+                DynValue.FromObject(script, arg2),
+                DynValue.FromObject(script, arg3),
+                DynValue.FromObject(script, arg4)
+            );
         }
 
         /// <summary>
@@ -212,7 +232,15 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public DynValue Execute(object arg1, object arg2, object arg3, object arg4, object arg5)
         {
             Script script = GetScript();
-            return script.Call(GetFunction(), arg1, arg2, arg3, arg4, arg5);
+            DynValue function = GetFunction();
+            return script.ExecuteCompiledFunction(
+                function,
+                DynValue.FromObject(script, arg1),
+                DynValue.FromObject(script, arg2),
+                DynValue.FromObject(script, arg3),
+                DynValue.FromObject(script, arg4),
+                DynValue.FromObject(script, arg5)
+            );
         }
 
         /// <summary>
@@ -220,6 +248,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// </summary>
         /// <param name="args">The arguments to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// The array is treated as the argument list. Use <see cref="DynValue.Nil"/> for a Lua nil
+        /// argument, or cast <c>null</c> to <see cref="object"/> when using the CLR object overload.
+        /// </remarks>
         public DynValue Execute(DynValue[] args)
         {
             if (args == null)
@@ -237,7 +269,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(ReadOnlySpan<DynValue> args)
         {
-            return GetScript().Call(GetFunction(), args);
+            return GetScript().ExecuteCompiledFunction(GetFunction(), args);
         }
 
         /// <inheritdoc />
@@ -289,7 +321,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (_script == null)
             {
                 throw new InvalidOperationException(
-                    "CompiledScript was not created by a Script compile method."
+                    "CompiledScript was not created by a Script compile or function binding method."
                 );
             }
 
@@ -301,7 +333,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (_function == null)
             {
                 throw new InvalidOperationException(
-                    "CompiledScript was not created by a Script compile method."
+                    "CompiledScript was not created by a Script compile or function binding method."
                 );
             }
 

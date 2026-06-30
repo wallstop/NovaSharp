@@ -131,4 +131,58 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Execute Compiled Handle")]
         public DynValue ExecuteCompiledHandle() => _compiledHandle.Execute();
     }
+
+    /// <summary>
+    /// Benchmarks repeated global function invocation patterns.
+    /// </summary>
+    [MemoryDiagnoser]
+    [SuppressMessage(
+        "Usage",
+        "CA1515:Consider making public types internal",
+        Justification = "BenchmarkDotNet requires public, non-sealed benchmark classes."
+    )]
+    public class BoundFunctionBenchmarks
+    {
+        private Script _script;
+        private DynValue _function = DynValue.Nil;
+        private DynValue _arg1 = DynValue.Nil;
+        private DynValue _arg2 = DynValue.Nil;
+        private DynValue _arg3 = DynValue.Nil;
+        private CompiledScript _boundGlobalHandle;
+
+        /// <summary>
+        /// Prepares a global Lua function and cached argument values.
+        /// </summary>
+        [GlobalSetup]
+        public void Setup()
+        {
+            _script = new Script(CoreModulePresets.Complete);
+            _script.DoString("function update(a, b, c) return a + b + c end");
+            _function = _script.Globals.Get("update");
+            _boundGlobalHandle = _script.BindGlobalFunction("update");
+            _arg1 = DynValue.FromNumber(1);
+            _arg2 = DynValue.FromNumber(2);
+            _arg3 = DynValue.FromNumber(3);
+        }
+
+        /// <summary>
+        /// Resolves a global function on every call before invoking it.
+        /// </summary>
+        [Benchmark(Description = "Call Global Lookup")]
+        public DynValue CallGlobalLookup() =>
+            _script.Call(_script.Globals.Get("update"), _arg1, _arg2, _arg3);
+
+        /// <summary>
+        /// Calls a manually cached global function value.
+        /// </summary>
+        [Benchmark(Description = "Call Cached Global")]
+        public DynValue CallCachedGlobal() => _script.Call(_function, _arg1, _arg2, _arg3);
+
+        /// <summary>
+        /// Executes a global function handle resolved once through the public binding API.
+        /// </summary>
+        [Benchmark(Description = "Execute Bound Global Handle")]
+        public DynValue ExecuteBoundGlobalHandle() =>
+            _boundGlobalHandle.Execute(_arg1, _arg2, _arg3);
+    }
 }
