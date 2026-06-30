@@ -529,6 +529,127 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         }
 
         /// <summary>
+        /// Maps syntax tokens with one canonical source spelling to their shared text.
+        /// </summary>
+        /// <param name="tokenType">The token type to map.</param>
+        /// <param name="text">The fixed source spelling, when one exists.</param>
+        /// <returns>true when the token type has exactly one fixed source spelling.</returns>
+        internal static bool TryGetFixedSyntaxText(TokenType tokenType, out string text)
+        {
+            switch (tokenType)
+            {
+                case TokenType.Eof:
+                    text = "<eof>";
+                    return true;
+                case TokenType.Pipe:
+                    text = "|";
+                    return true;
+                case TokenType.OpEqual:
+                    text = "==";
+                    return true;
+                case TokenType.OpAssignment:
+                    text = "=";
+                    return true;
+                case TokenType.OpLessThan:
+                    text = "<";
+                    return true;
+                case TokenType.OpLessThanEqual:
+                    text = "<=";
+                    return true;
+                case TokenType.OpGreaterThanEqual:
+                    text = ">=";
+                    return true;
+                case TokenType.OpGreaterThan:
+                    text = ">";
+                    return true;
+                case TokenType.OpConcat:
+                    text = "..";
+                    return true;
+                case TokenType.VarArgs:
+                    text = "...";
+                    return true;
+                case TokenType.Dot:
+                    text = ".";
+                    return true;
+                case TokenType.Colon:
+                    text = ":";
+                    return true;
+                case TokenType.DoubleColon:
+                    text = "::";
+                    return true;
+                case TokenType.Comma:
+                    text = ",";
+                    return true;
+                case TokenType.BrkCloseCurly:
+                    text = "}";
+                    return true;
+                case TokenType.BrkOpenCurly:
+                    text = "{";
+                    return true;
+                case TokenType.BrkCloseRound:
+                    text = ")";
+                    return true;
+                case TokenType.BrkOpenRound:
+                    text = "(";
+                    return true;
+                case TokenType.BrkCloseSquare:
+                    text = "]";
+                    return true;
+                case TokenType.BrkOpenSquare:
+                    text = "[";
+                    return true;
+                case TokenType.OpLen:
+                    text = "#";
+                    return true;
+                case TokenType.OpPwr:
+                    text = "^";
+                    return true;
+                case TokenType.OpMod:
+                    text = "%";
+                    return true;
+                case TokenType.OpDiv:
+                    text = "/";
+                    return true;
+                case TokenType.OpMul:
+                    text = "*";
+                    return true;
+                case TokenType.OpMinusOrSub:
+                    text = "-";
+                    return true;
+                case TokenType.OpAdd:
+                    text = "+";
+                    return true;
+                case TokenType.SemiColon:
+                    text = ";";
+                    return true;
+                case TokenType.BrkOpenCurlyShared:
+                    text = "${";
+                    return true;
+                case TokenType.OpDollar:
+                    text = "$";
+                    return true;
+                case TokenType.OpBitNotOrXor:
+                    text = "~";
+                    return true;
+                case TokenType.OpBitAnd:
+                    text = "&";
+                    return true;
+                case TokenType.OpShiftLeft:
+                    text = "<<";
+                    return true;
+                case TokenType.OpShiftRight:
+                    text = ">>";
+                    return true;
+                case TokenType.OpFloorDiv:
+                    text = "//";
+                    return true;
+                default:
+                    text = null;
+                    return false;
+            }
+        }
+
+        /// <summary>
         /// Parses the numeric literal carried by this token.
         /// </summary>
         /// <returns>The literal value as a <see cref="double" />.</returns>

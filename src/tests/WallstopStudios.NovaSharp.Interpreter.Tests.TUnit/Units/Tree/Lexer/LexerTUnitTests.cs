@@ -37,6 +37,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
             (LuaKeywords.While, TokenType.While),
         };
 
+        private static readonly (
+            string Source,
+            TokenType Type,
+            string Text
+        )[] FixedSyntaxTokenCases = new[]
+        {
+            ("", TokenType.Eof, "<eof>"),
+            ("|", TokenType.Pipe, "|"),
+            (";", TokenType.SemiColon, ";"),
+            ("=", TokenType.OpAssignment, "="),
+            ("==", TokenType.OpEqual, "=="),
+            ("<", TokenType.OpLessThan, "<"),
+            ("<=", TokenType.OpLessThanEqual, "<="),
+            ("<<", TokenType.OpShiftLeft, "<<"),
+            (">", TokenType.OpGreaterThan, ">"),
+            (">=", TokenType.OpGreaterThanEqual, ">="),
+            (">>", TokenType.OpShiftRight, ">>"),
+            ("~", TokenType.OpBitNotOrXor, "~"),
+            ("~=", TokenType.OpNotEqual, "~="),
+            ("!=", TokenType.OpNotEqual, "!="),
+            (".", TokenType.Dot, "."),
+            ("..", TokenType.OpConcat, ".."),
+            ("...", TokenType.VarArgs, "..."),
+            ("+", TokenType.OpAdd, "+"),
+            ("-", TokenType.OpMinusOrSub, "-"),
+            ("*", TokenType.OpMul, "*"),
+            ("/", TokenType.OpDiv, "/"),
+            ("//", TokenType.OpFloorDiv, "//"),
+            ("%", TokenType.OpMod, "%"),
+            ("^", TokenType.OpPwr, "^"),
+            ("&", TokenType.OpBitAnd, "&"),
+            ("$", TokenType.OpDollar, "$"),
+            ("${", TokenType.BrkOpenCurlyShared, "${"),
+            ("#", TokenType.OpLen, "#"),
+            ("[", TokenType.BrkOpenSquare, "["),
+            ("]", TokenType.BrkCloseSquare, "]"),
+            ("(", TokenType.BrkOpenRound, "("),
+            (")", TokenType.BrkCloseRound, ")"),
+            ("{", TokenType.BrkOpenCurly, "{"),
+            ("}", TokenType.BrkCloseCurly, "}"),
+            (",", TokenType.Comma, ","),
+            (":", TokenType.Colon, ":"),
+            ("::", TokenType.DoubleColon, "::"),
+        };
+
         [global::TUnit.Core.Test]
         public async Task KeywordTokensUseCanonicalText()
         {
@@ -49,6 +94,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Lexer
 
                 await Assert.That(token.type).IsEqualTo(expectedType).ConfigureAwait(false);
                 await Assert.That(token.text).IsSameReferenceAs(keyword).ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task FixedSyntaxTokensUseCanonicalText()
+        {
+            for (int i = 0; i < FixedSyntaxTokenCases.Length; i++)
+            {
+                (string source, TokenType expectedType, string expectedText) =
+                    FixedSyntaxTokenCases[i];
+                Lexer lexer = new(sourceId: 0, source, autoSkipComments: true);
+
+                Token token = lexer.Current;
+
+                await Assert.That(token.type).IsEqualTo(expectedType).ConfigureAwait(false);
+                await Assert.That(token.text).IsEqualTo(expectedText).ConfigureAwait(false);
+                await Assert.That(token.text).IsSameReferenceAs(expectedText).ConfigureAwait(false);
             }
         }
 

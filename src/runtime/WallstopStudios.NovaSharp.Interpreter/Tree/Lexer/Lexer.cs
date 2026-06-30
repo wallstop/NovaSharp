@@ -571,9 +571,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
 
         private Token CreateSingleCharToken(TokenType tokenType, int fromLine, int fromCol)
         {
-            char c = CursorChar();
             CursorCharNext();
-            return CreateToken(tokenType, fromLine, fromCol, c.ToString());
+            return CreateFixedSyntaxToken(tokenType, fromLine, fromCol);
         }
 
         private Token ReadHashBang(int fromLine, int fromCol)
@@ -712,19 +711,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             int fromCol
         )
         {
-            string op = CursorChar().ToString();
-
             CursorCharNext();
 
             if (CursorChar() == expectedSecondChar)
             {
                 CursorCharNext();
-                return CreateToken(doubleCharToken, fromLine, fromCol, op + expectedSecondChar);
+                return CreateFixedSyntaxToken(doubleCharToken, fromLine, fromCol);
             }
             else
             {
-                return CreateToken(singleCharToken, fromLine, fromCol, op);
+                return CreateFixedSyntaxToken(singleCharToken, fromLine, fromCol);
             }
+        }
+
+        private Token CreateFixedSyntaxToken(TokenType tokenType, int fromLine, int fromCol)
+        {
+            if (Token.TryGetFixedSyntaxText(tokenType, out string text))
+            {
+                return CreateToken(tokenType, fromLine, fromCol, text);
+            }
+
+            throw new InternalErrorException(
+                "Token type '{0}' does not have fixed syntax text.",
+                tokenType
+            );
         }
 
         private Token CreateNameToken(int nameStart, int nameLength, int fromLine, int fromCol)
