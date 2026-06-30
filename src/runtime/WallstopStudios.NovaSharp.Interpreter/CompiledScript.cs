@@ -131,6 +131,91 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Executes the compiled chunk with one CLR object argument.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// argument values.
+        /// </remarks>
+        public DynValue Execute(object arg)
+        {
+            Script script = GetScript();
+            return script.Call(GetFunction(), arg);
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with two CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// argument values.
+        /// </remarks>
+        public DynValue Execute(object arg1, object arg2)
+        {
+            Script script = GetScript();
+            return script.Call(GetFunction(), arg1, arg2);
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with three CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// argument values.
+        /// </remarks>
+        public DynValue Execute(object arg1, object arg2, object arg3)
+        {
+            Script script = GetScript();
+            return script.Call(GetFunction(), arg1, arg2, arg3);
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with four CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// argument values.
+        /// </remarks>
+        public DynValue Execute(object arg1, object arg2, object arg3, object arg4)
+        {
+            Script script = GetScript();
+            return script.Call(GetFunction(), arg1, arg2, arg3, arg4);
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with five CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// argument values.
+        /// </remarks>
+        public DynValue Execute(object arg1, object arg2, object arg3, object arg4, object arg5)
+        {
+            Script script = GetScript();
+            return script.Call(GetFunction(), arg1, arg2, arg3, arg4, arg5);
+        }
+
+        /// <summary>
         /// Executes the compiled chunk with caller-owned contiguous arguments.
         /// </summary>
         /// <param name="args">The arguments to pass to the chunk.</param>

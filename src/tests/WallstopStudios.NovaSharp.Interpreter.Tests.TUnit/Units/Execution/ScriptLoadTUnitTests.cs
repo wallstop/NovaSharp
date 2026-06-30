@@ -394,6 +394,77 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileFunctionExecuteSupportsFixedObjectArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                "function(...) return select('#', ...), ... end",
+                funcFriendlyName: "compiled_capture"
+            );
+
+            DynValue result = compiled.Execute((object)null, "value", 42, true, 5d);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].Number).IsEqualTo(5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileFunctionExecuteObjectArgumentsMatchScriptCall(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                "function(a, b, c) return a + b + c end",
+                funcFriendlyName: "compiled_object_add"
+            );
+
+            DynValue executeResult = compiled.Execute(1d, 2d, 3d);
+            DynValue callResult = script.Call(compiled.Function, 1d, 2d, 3d);
+
+            await Assert.That(executeResult.Number).IsEqualTo(6d).ConfigureAwait(false);
+            await Assert
+                .That(executeResult.Number)
+                .IsEqualTo(callResult.Number)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompileFunctionExecuteObjectArgumentRejectsForeignTable(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script scriptA = new(version, CoreModulePresets.Complete);
+            object foreignTable = scriptA.DoString("return {}");
+
+            Script scriptB = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = scriptB.CompileFunction(
+                "function(value) return value end",
+                funcFriendlyName: "compiled_foreign_arg"
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                compiled.Execute(foreignTable)
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileStringRuntimeErrorUsesFriendlyName(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
