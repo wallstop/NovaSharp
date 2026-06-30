@@ -170,6 +170,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
             private readonly DynValue _arg2;
             private readonly DynValue _arg3;
             private readonly DynValue _arg4;
+            private readonly DynValue _arg5;
+            private readonly DynValue _arg6;
 
             internal FixedChainedCallArguments(DynValue arg0)
             {
@@ -178,6 +180,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg2 = null;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 Count = 1;
             }
 
@@ -188,6 +192,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg2 = null;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 Count = 2;
             }
 
@@ -198,6 +204,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg2 = arg2;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 Count = 3;
             }
 
@@ -213,6 +221,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg2 = arg2;
                 _arg3 = arg3;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 Count = 4;
             }
 
@@ -229,7 +239,48 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 _arg2 = arg2;
                 _arg3 = arg3;
                 _arg4 = arg4;
+                _arg5 = null;
+                _arg6 = null;
                 Count = 5;
+            }
+
+            internal FixedChainedCallArguments(
+                DynValue arg0,
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5
+            )
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = arg4;
+                _arg5 = arg5;
+                _arg6 = null;
+                Count = 6;
+            }
+
+            internal FixedChainedCallArguments(
+                DynValue arg0,
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5,
+                DynValue arg6
+            )
+            {
+                _arg0 = arg0;
+                _arg1 = arg1;
+                _arg2 = arg2;
+                _arg3 = arg3;
+                _arg4 = arg4;
+                _arg5 = arg5;
+                _arg6 = arg6;
+                Count = 7;
             }
 
             /// <summary>
@@ -251,6 +302,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         2 => _arg2,
                         3 => _arg3,
                         4 => _arg4,
+                        5 => _arg5,
+                        6 => _arg6,
                         _ => throw new ArgumentOutOfRangeException(nameof(index)),
                     };
                 }
@@ -274,6 +327,27 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         return true;
                     case 4:
                         args = new FixedChainedCallArguments(value, _arg0, _arg1, _arg2, _arg3);
+                        return true;
+                    case 5:
+                        args = new FixedChainedCallArguments(
+                            value,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4
+                        );
+                        return true;
+                    case 6:
+                        args = new FixedChainedCallArguments(
+                            value,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4,
+                            _arg5
+                        );
                         return true;
                     default:
                         args = default;
@@ -2011,10 +2085,204 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 case 4:
                     result = Call(metafunction, self, args[0], args[1], args[2], args[3]);
                     return true;
+                case 5:
+                    result = CallDirectTarget(
+                        metafunction,
+                        self,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4]
+                    );
+                    return true;
                 default:
                     result = null;
                     return false;
             }
+        }
+
+        private DynValue CallDirectTarget(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            if (function.Type == DataType.ClrFunction)
+            {
+                ScriptExecutionContext context = CreateDynamicExecutionContext(function.Callback);
+                if (function.Callback.HasArgumentViewCallback)
+                {
+                    return function.Callback.InvokeArgumentViewFixed(
+                        context,
+                        arg1,
+                        arg2,
+                        arg3,
+                        arg4,
+                        arg5,
+                        arg6
+                    );
+                }
+
+                return function.Callback.InvokeLegacyFixed(
+                    context,
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6
+                );
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4, arg5, arg6),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4,
+                        state.arg5,
+                        state.arg6
+                    )
+            );
+        }
+
+        private DynValue CallDirectTarget(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            if (function.Type == DataType.ClrFunction)
+            {
+                ScriptExecutionContext context = CreateDynamicExecutionContext(function.Callback);
+                if (function.Callback.HasArgumentViewCallback)
+                {
+                    return function.Callback.InvokeArgumentViewFixed(
+                        context,
+                        arg1,
+                        arg2,
+                        arg3,
+                        arg4,
+                        arg5,
+                        arg6,
+                        arg7
+                    );
+                }
+
+                return function.Callback.InvokeLegacyFixed(
+                    context,
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    arg7
+                );
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4,
+                        state.arg5,
+                        state.arg6,
+                        state.arg7
+                    )
+            );
+        }
+
+        /// <summary>
+        /// Calls a Lua function with six fixed arguments after the caller has already resolved the call target.
+        /// </summary>
+        internal DynValue CallDirectLuaFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+            this.CheckScriptOwnership(arg4);
+            this.CheckScriptOwnership(arg5);
+            this.CheckScriptOwnership(arg6);
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4, arg5, arg6),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4,
+                        state.arg5,
+                        state.arg6
+                    )
+            );
+        }
+
+        /// <summary>
+        /// Calls a Lua function with seven fixed arguments after the caller has already resolved the call target.
+        /// </summary>
+        internal DynValue CallDirectLuaFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+            this.CheckScriptOwnership(arg4);
+            this.CheckScriptOwnership(arg5);
+            this.CheckScriptOwnership(arg6);
+            this.CheckScriptOwnership(arg7);
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4,
+                        state.arg5,
+                        state.arg6,
+                        state.arg7
+                    )
+            );
         }
 
         private DynValue CallNonFunction(DynValue function)
@@ -2125,10 +2393,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
             DynValue metafunction = GetCallableMetamethodOrThrow(function);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedChainedCallArguments args = new(function, arg1, arg2, arg3, arg4, arg5);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(function, new DynValue[] { arg1, arg2, arg3, arg4, arg5 });
             }
 
-            return Call(metafunction, function, arg1, arg2, arg3, arg4, arg5);
+            return CallDirectTarget(metafunction, function, arg1, arg2, arg3, arg4, arg5);
         }
 
         private bool TryCallChainedNonFunction(
@@ -2171,6 +2445,25 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 3 => Call(function, args[0], args[1], args[2]),
                 4 => Call(function, args[0], args[1], args[2], args[3]),
                 5 => Call(function, args[0], args[1], args[2], args[3], args[4]),
+                6 => CallDirectTarget(
+                    function,
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[4],
+                    args[5]
+                ),
+                7 => CallDirectTarget(
+                    function,
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[4],
+                    args[5],
+                    args[6]
+                ),
                 _ => Call(function),
             };
         }

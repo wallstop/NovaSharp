@@ -10,6 +10,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
     /// </summary>
     public class SourceRef
     {
+        private static readonly SourceRef ClrLocation = new(0, 0, 0, 0, 0, false)
+        {
+            IsClrLocation = true,
+            CannotBreakpoint = true,
+        };
+
+        private bool _breakpoint;
+
         /// <summary>
         /// Gets a value indicating whether this location is inside CLR .
         /// </summary>
@@ -48,7 +56,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
         /// <summary>
         /// Gets or sets a value indicating whether this instance is a breakpoint.
         /// </summary>
-        public bool Breakpoint { get; set; }
+        public bool Breakpoint
+        {
+            get { return _breakpoint; }
+            set
+            {
+                if (IsClrLocation)
+                {
+                    _breakpoint = false;
+                    return;
+                }
+
+                _breakpoint = value;
+            }
+        }
 
         /// <summary>
         /// Gets a value indicating whether this instance cannot be set as a breakpoint
@@ -62,7 +83,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
         /// <returns>A <see cref="SourceRef" /> flagged as a CLR location.</returns>
         internal static SourceRef GetClrLocation()
         {
-            return new SourceRef(0, 0, 0, 0, 0, false) { IsClrLocation = true };
+            return ClrLocation;
         }
 
         public SourceRef(SourceRef src, bool isStepStop)

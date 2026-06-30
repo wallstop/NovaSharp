@@ -160,6 +160,8 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _threeArgFunction = DynValue.Nil;
         private DynValue _fourArgFunction = DynValue.Nil;
         private DynValue _fiveArgFunction = DynValue.Nil;
+        private DynValue _callableLuaTable = DynValue.Nil;
+        private DynValue _callableCallbackViewTable = DynValue.Nil;
         private DynValue _coroutineFunction = DynValue.Nil;
         private DynValue _fourArgCoroutineFunction = DynValue.Nil;
         private DynValue _fiveArgCoroutineFunction = DynValue.Nil;
@@ -197,6 +199,14 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _threeArgClosure = _threeArgFunction.Function;
             _fourArgClosure = _fourArgFunction.Function;
             _fiveArgClosure = _fiveArgFunction.Function;
+            _callableLuaTable = _script.DoString(
+                "return setmetatable({}, { __call = function(_, a, b, c, d, e) return e end })"
+            );
+            Table callableCallbackTable = new(_script);
+            Table callableCallbackMeta = new(_script);
+            callableCallbackMeta.Set("__call", DynValue.NewCallbackView((_, args) => args[5]));
+            callableCallbackTable.MetaTable = callableCallbackMeta;
+            _callableCallbackViewTable = DynValue.NewTable(callableCallbackTable);
             _coroutineFunction = _script.DoString(
                 "return function(a, b, c) while true do a, b, c = coroutine.yield(c) end end"
             );
@@ -267,6 +277,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Host Call: 5 DynValues")]
         public DynValue CallFiveDynValues() =>
             _script.Call(_fiveArgFunction, _first, _second, _third, _fourth, _fifth);
+
+        /// <summary>
+        /// Calls a Lua callable table with five pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: callable table 5 DynValues (Lua __call)")]
+        public DynValue CallCallableLuaTableFiveDynValues() =>
+            _script.Call(_callableLuaTable, _first, _second, _third, _fourth, _fifth);
+
+        /// <summary>
+        /// Calls a CLR callback-view callable table with five pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: callable table 5 DynValues (CLR __call)")]
+        public DynValue CallCallableCallbackViewTableFiveDynValues() =>
+            _script.Call(_callableCallbackViewTable, _first, _second, _third, _fourth, _fifth);
 
         /// <summary>
         /// Calls a Lua closure through the params-array overload for comparison with fixed overloads.

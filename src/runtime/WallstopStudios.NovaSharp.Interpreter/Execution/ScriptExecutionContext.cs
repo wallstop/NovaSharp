@@ -25,6 +25,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             private readonly DynValue _arg2;
             private readonly DynValue _arg3;
             private readonly DynValue _arg4;
+            private readonly DynValue _arg5;
+            private readonly DynValue _arg6;
             private readonly int _count;
 
             internal FixedCallArguments(DynValue arg)
@@ -34,6 +36,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg2 = null;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 1;
             }
 
@@ -44,6 +48,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg2 = null;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 2;
             }
 
@@ -54,6 +60,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg2 = arg3;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 3;
             }
 
@@ -64,6 +72,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg2 = arg3;
                 _arg3 = arg4;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 4;
             }
 
@@ -80,7 +90,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 _arg2 = arg3;
                 _arg3 = arg4;
                 _arg4 = arg5;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 5;
+            }
+
+            internal FixedCallArguments(
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5,
+                DynValue arg6
+            )
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _arg4 = arg5;
+                _arg5 = arg6;
+                _arg6 = null;
+                _count = 6;
+            }
+
+            internal FixedCallArguments(
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5,
+                DynValue arg6,
+                DynValue arg7
+            )
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _arg4 = arg5;
+                _arg5 = arg6;
+                _arg6 = arg7;
+                _count = 7;
             }
 
             /// <summary>
@@ -105,6 +156,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         2 => _arg2,
                         3 => _arg3,
                         4 => _arg4,
+                        5 => _arg5,
+                        6 => _arg6,
                         _ => throw new ArgumentOutOfRangeException(nameof(index)),
                     };
                 }
@@ -128,6 +181,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         return true;
                     case 4:
                         args = new FixedCallArguments(value, _arg0, _arg1, _arg2, _arg3);
+                        return true;
+                    case 5:
+                        args = new FixedCallArguments(value, _arg0, _arg1, _arg2, _arg3, _arg4);
+                        return true;
+                    case 6:
+                        args = new FixedCallArguments(
+                            value,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4,
+                            _arg5
+                        );
                         return true;
                     default:
                         args = default;
@@ -159,6 +226,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                             _arg3,
                             _arg4
                         ),
+                        6 => callback.InvokeArgumentViewFixed(
+                            context,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4,
+                            _arg5
+                        ),
+                        7 => callback.InvokeArgumentViewFixed(
+                            context,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4,
+                            _arg5,
+                            _arg6
+                        ),
                         _ => throw new InvalidOperationException("Invalid fixed argument count."),
                     };
                 }
@@ -170,6 +256,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     3 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2),
                     4 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2, _arg3),
                     5 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2, _arg3, _arg4),
+                    6 => callback.InvokeLegacyFixed(
+                        context,
+                        _arg0,
+                        _arg1,
+                        _arg2,
+                        _arg3,
+                        _arg4,
+                        _arg5
+                    ),
+                    7 => callback.InvokeLegacyFixed(
+                        context,
+                        _arg0,
+                        _arg1,
+                        _arg2,
+                        _arg3,
+                        _arg4,
+                        _arg5,
+                        _arg6
+                    ),
                     _ => throw new InvalidOperationException("Invalid fixed argument count."),
                 };
             }
@@ -774,10 +879,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 case 4:
                     result = Call(metafunction, self, args[0], args[1], args[2], args[3]);
                     return true;
+                case 5:
+                    result = CallDirectTarget(
+                        metafunction,
+                        self,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4]
+                    );
+                    return true;
                 default:
                     result = null;
                     return false;
             }
+        }
+
+        private DynValue CallDirectTarget(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments args = new(arg1, arg2, arg3, arg4, arg5, arg6);
+                return CompleteDirectClrCall(args.InvokeCallback(this, func.Callback));
+            }
+
+            return Script.CallDirectLuaFunction(func, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        private DynValue CallDirectTarget(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments args = new(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                return CompleteDirectClrCall(args.InvokeCallback(this, func.Callback));
+            }
+
+            return Script.CallDirectLuaFunction(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
 
         private DynValue CallNonFunction(DynValue func)
@@ -883,10 +1038,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             DynValue metafunction = GetCallableMetamethodOrThrow(func);
             if (!IsDirectCallTarget(metafunction))
             {
+                FixedCallArguments args = new(func, arg1, arg2, arg3, arg4, arg5);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
                 return Call(func, new DynValue[] { arg1, arg2, arg3, arg4, arg5 });
             }
 
-            return Call(metafunction, func, arg1, arg2, arg3, arg4, arg5);
+            return CallDirectTarget(metafunction, func, arg1, arg2, arg3, arg4, arg5);
         }
 
         private bool TryCallChainedNonFunction(
@@ -929,6 +1090,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 3 => Call(func, args[0], args[1], args[2]),
                 4 => Call(func, args[0], args[1], args[2], args[3]),
                 5 => Call(func, args[0], args[1], args[2], args[3], args[4]),
+                6 => CallDirectTarget(func, args[0], args[1], args[2], args[3], args[4], args[5]),
+                7 => CallDirectTarget(
+                    func,
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[4],
+                    args[5],
+                    args[6]
+                ),
                 _ => Call(func),
             };
         }

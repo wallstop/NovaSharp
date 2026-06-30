@@ -22,6 +22,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private readonly DynValue _arg2;
         private readonly DynValue _arg3;
         private readonly DynValue _arg4;
+        private readonly DynValue _arg5;
+        private readonly DynValue _arg6;
         private readonly int _source;
         private readonly int _offset;
         private readonly int _storedCount;
@@ -32,6 +34,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         internal CallbackArgumentsView(bool isMethodCall)
             : this(
                 default,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -55,6 +59,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 null,
                 null,
                 null,
+                null,
+                null,
                 SourceFixed,
                 0,
                 1,
@@ -68,6 +74,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 null,
                 arg1,
                 arg2,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -92,6 +100,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 arg3,
                 null,
                 null,
+                null,
+                null,
                 SourceFixed,
                 0,
                 3,
@@ -113,6 +123,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 arg2,
                 arg3,
                 arg4,
+                null,
+                null,
                 null,
                 SourceFixed,
                 0,
@@ -137,9 +149,64 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 arg3,
                 arg4,
                 arg5,
+                null,
+                null,
                 SourceFixed,
                 0,
                 5,
+                isMethodCall
+            ) { }
+
+        internal CallbackArgumentsView(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            bool isMethodCall
+        )
+            : this(
+                default,
+                null,
+                null,
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5,
+                arg6,
+                null,
+                SourceFixed,
+                0,
+                6,
+                isMethodCall
+            ) { }
+
+        internal CallbackArgumentsView(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7,
+            bool isMethodCall
+        )
+            : this(
+                default,
+                null,
+                null,
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5,
+                arg6,
+                arg7,
+                SourceFixed,
+                0,
+                7,
                 isMethodCall
             ) { }
 
@@ -149,6 +216,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public CallbackArgumentsView(ReadOnlySpan<DynValue> args, bool isMethodCall)
             : this(
                 args,
+                null,
+                null,
                 null,
                 null,
                 null,
@@ -212,6 +281,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _arg2 = null;
             _arg3 = null;
             _arg4 = null;
+            _arg5 = null;
+            _arg6 = null;
             _source = hasSpan ? SourceSpan : SourceList;
             _offset = hasSpan ? 0 : offset;
             _storedCount = hasSpan ? count : offset + count;
@@ -267,6 +338,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 null,
                 null,
                 null,
+                null,
+                null,
                 SourceCallbackArguments,
                 0,
                 args.Count,
@@ -282,6 +355,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue arg2,
             DynValue arg3,
             DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
             int source,
             int offset,
             int storedCount,
@@ -296,6 +371,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _arg2 = arg2;
             _arg3 = arg3;
             _arg4 = arg4;
+            _arg5 = arg5;
+            _arg6 = arg6;
             _source = source;
             _offset = offset;
             _storedCount = storedCount;
@@ -446,6 +523,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _arg2,
                 _arg3,
                 _arg4,
+                _arg5,
+                _arg6,
                 _source,
                 Math.Min(_offset + 1, _storedCount),
                 _storedCount,
@@ -537,6 +616,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     2 => _arg2,
                     3 => _arg3,
                     4 => _arg4,
+                    5 => _arg5,
+                    6 => _arg6,
                     _ => throw new ArgumentOutOfRangeException(nameof(index)),
                 },
                 SourceSpan => _span[index],

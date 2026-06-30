@@ -40,6 +40,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             private readonly DynValue _arg2;
             private readonly DynValue _arg3;
             private readonly DynValue _arg4;
+            private readonly DynValue _arg5;
+            private readonly DynValue _arg6;
             private readonly int _count;
             private readonly bool _hasSpan;
 
@@ -52,6 +54,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg2 = null;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = args != null ? args.Length : 0;
                 _hasSpan = false;
             }
@@ -65,6 +69,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg2 = null;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = args.Length;
                 _hasSpan = true;
             }
@@ -78,6 +84,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg2 = null;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 1;
                 _hasSpan = false;
             }
@@ -91,6 +99,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg2 = null;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 2;
                 _hasSpan = false;
             }
@@ -104,6 +114,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg2 = arg3;
                 _arg3 = null;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 3;
                 _hasSpan = false;
             }
@@ -117,6 +129,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg2 = arg3;
                 _arg3 = arg4;
                 _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 4;
                 _hasSpan = false;
             }
@@ -136,7 +150,54 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 _arg2 = arg3;
                 _arg3 = arg4;
                 _arg4 = arg5;
+                _arg5 = null;
+                _arg6 = null;
                 _count = 5;
+                _hasSpan = false;
+            }
+
+            internal ClrCallArguments(
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5,
+                DynValue arg6
+            )
+            {
+                _array = null;
+                _span = default;
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _arg4 = arg5;
+                _arg5 = arg6;
+                _arg6 = null;
+                _count = 6;
+                _hasSpan = false;
+            }
+
+            internal ClrCallArguments(
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5,
+                DynValue arg6,
+                DynValue arg7
+            )
+            {
+                _array = null;
+                _span = default;
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _arg4 = arg5;
+                _arg5 = arg6;
+                _arg6 = arg7;
+                _count = 7;
                 _hasSpan = false;
             }
 
@@ -167,6 +228,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             2 => _arg2,
                             3 => _arg3,
                             4 => _arg4,
+                            5 => _arg5,
+                            6 => _arg6,
                             _ => throw new ArgumentOutOfRangeException(nameof(index)),
                         };
                     }
@@ -215,6 +278,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         return DynValue.NewTuple(this[0], this[1], this[2], this[3]);
                     case 5:
                         return DynValue.NewTuple(this[0], this[1], this[2], this[3], this[4]);
+                    case 6:
+                        DynValue[] fixedValues =
+                        {
+                            this[0],
+                            this[1],
+                            this[2],
+                            this[3],
+                            this[4],
+                            this[5],
+                        };
+                        return DynValue.NewTuple(fixedValues);
+                    case 7:
+                        DynValue[] fixedSevenValues =
+                        {
+                            this[0],
+                            this[1],
+                            this[2],
+                            this[3],
+                            this[4],
+                            this[5],
+                            this[6],
+                        };
+                        return DynValue.NewTuple(fixedSevenValues);
                     default:
                         DynValue[] values = new DynValue[_count];
                         for (int i = 0; i < _count; i++)
@@ -459,6 +545,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         )
         {
             return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4, arg5));
+        }
+
+        /// <summary>
+        /// Invokes the specified function with six arguments.
+        /// </summary>
+        public DynValue Call(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6));
+        }
+
+        /// <summary>
+        /// Invokes the specified function with seven arguments.
+        /// </summary>
+        public DynValue Call(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            return Call(function, new ClrCallArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
         }
 
         private DynValue Call(DynValue function, ClrCallArguments args)

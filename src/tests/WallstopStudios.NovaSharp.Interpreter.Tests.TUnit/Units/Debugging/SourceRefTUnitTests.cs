@@ -92,11 +92,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Debugging
         )
         {
             SourceRef clr = SourceRef.GetClrLocation();
+            SourceRef secondClr = SourceRef.GetClrLocation();
+
             await Assert.That(clr.IsClrLocation).IsTrue().ConfigureAwait(false);
+            await Assert.That(clr.CannotBreakpoint).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(object.ReferenceEquals(clr, secondClr))
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That(clr.FormatLocation(new Script(version)))
                 .IsEqualTo("[clr]")
                 .ConfigureAwait(false);
+
+            clr.Breakpoint = true;
+            await Assert.That(secondClr.Breakpoint).IsFalse().ConfigureAwait(false);
 
             SourceRef original = new(2, 3, 5, 7, 7, false) { Breakpoint = true };
             SourceRef copy = new(original, true);
