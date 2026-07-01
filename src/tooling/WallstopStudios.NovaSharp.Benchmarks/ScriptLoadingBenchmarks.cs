@@ -337,6 +337,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _sixArgFunction = DynValue.Nil;
         private DynValue _sevenArgFunction = DynValue.Nil;
         private DynValue _zeroArgFunction = DynValue.Nil;
+        private DynValue _doubleArgFunction = DynValue.Nil;
         private object[] _nestedFunctionPath = Array.Empty<object>();
         private object[] _paddedNestedFunctionPath = Array.Empty<object>();
         private DynValue _arg1 = DynValue.Nil;
@@ -346,11 +347,15 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _arg5 = DynValue.Nil;
         private DynValue _arg6 = DynValue.Nil;
         private DynValue _arg7 = DynValue.Nil;
+        private DynValue _doubleDynValueArg = DynValue.Nil;
+        private double _doubleArg;
+        private object _boxedDoubleArg;
         private CompiledScript _boundGlobalHandle;
         private CompiledScript _boundNestedGlobalHandle;
         private CompiledScript _boundSixArgHandle;
         private CompiledScript _boundSevenArgHandle;
         private CompiledScript _boundZeroArgHandle;
+        private CompiledScript _boundDoubleArgHandle;
 
         /// <summary>
         /// Prepares a global Lua function and cached argument values.
@@ -364,6 +369,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                     + "function update6(a, b, c, d, e, f) return f end; "
                     + "function update7(a, b, c, d, e, f, g) return g end; "
                     + "function tick() return 42 end; "
+                    + "function updateDouble(dt) return dt + 1 end; "
                     + "api = { system = { update = function(a, b, c) return a + b + c end } }"
             );
             _function = _script.Globals.Get("update");
@@ -371,6 +377,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _sixArgFunction = _script.Globals.Get("update6");
             _sevenArgFunction = _script.Globals.Get("update7");
             _zeroArgFunction = _script.Globals.Get("tick");
+            _doubleArgFunction = _script.Globals.Get("updateDouble");
             _nestedFunctionPath = new object[] { "api", "system", "update" };
             _paddedNestedFunctionPath = new object[]
             {
@@ -385,6 +392,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _boundSixArgHandle = _script.PrepareGlobalFunction("update6");
             _boundSevenArgHandle = _script.PrepareGlobalFunction("update7");
             _boundZeroArgHandle = _script.PrepareGlobalFunction("tick");
+            _boundDoubleArgHandle = _script.PrepareGlobalFunction("updateDouble");
             _arg1 = DynValue.FromNumber(1);
             _arg2 = DynValue.FromNumber(2);
             _arg3 = DynValue.FromNumber(3);
@@ -392,6 +400,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _arg5 = DynValue.FromNumber(5);
             _arg6 = DynValue.FromNumber(6);
             _arg7 = DynValue.FromNumber(7);
+            _doubleArg = 1.25d;
+            _boxedDoubleArg = _doubleArg;
+            _doubleDynValueArg = DynValue.FromNumber(_doubleArg);
         }
 
         /// <summary>
@@ -442,6 +453,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public DynValue CallCachedZeroArgGlobal() => _script.Call(_zeroArgFunction);
 
         /// <summary>
+        /// Calls a manually cached one-argument global function with a cached DynValue.
+        /// </summary>
+        [Benchmark(Description = "Call Cached Double DynValue Global")]
+        public DynValue CallCachedDoubleDynValueGlobal() =>
+            _script.Call(_doubleArgFunction, _doubleDynValueArg);
+
+        /// <summary>
         /// Executes a global function handle resolved once through the public prepare API.
         /// </summary>
         [Benchmark(Description = "Execute Prepared Global Handle")]
@@ -488,6 +506,43 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Execute Prepared Zero-Arg Handle")]
         public DynValue ExecutePreparedZeroArgHandle() => _boundZeroArgHandle.Execute();
+
+        /// <summary>
+        /// Executes a one-argument global function handle with a cached DynValue argument.
+        /// </summary>
+        [Benchmark(Description = "Execute Prepared Double DynValue Handle")]
+        public DynValue ExecutePreparedDoubleDynValueHandle() =>
+            _boundDoubleArgHandle.Execute(_doubleDynValueArg);
+
+        /// <summary>
+        /// Executes a one-argument global function handle through the primitive double overload.
+        /// </summary>
+        [Benchmark(Description = "Execute Prepared Double Primitive Handle")]
+        public DynValue ExecutePreparedDoublePrimitiveHandle() =>
+            _boundDoubleArgHandle.Execute(_doubleArg);
+
+        /// <summary>
+        /// Executes a one-argument global function handle through the forced object convenience path.
+        /// </summary>
+        [Benchmark(Description = "Execute Prepared Double Object Handle")]
+        public DynValue ExecutePreparedDoubleObjectHandle() =>
+            _boundDoubleArgHandle.Execute(_boxedDoubleArg);
+
+        /// <summary>
+        /// Executes a one-argument global function handle through the object convenience path with
+        /// per-call boxing of the primitive input.
+        /// </summary>
+        [Benchmark(Description = "Execute Prepared Double Boxed Object Handle")]
+        public DynValue ExecutePreparedDoubleBoxedObjectHandle() =>
+            _boundDoubleArgHandle.Execute((object)_doubleArg);
+
+        /// <summary>
+        /// Executes a one-argument global function handle through the primitive double overload and
+        /// strict numeric result helper.
+        /// </summary>
+        [Benchmark(Description = "Execute Prepared Double Primitive Handle Number")]
+        public double ExecutePreparedDoublePrimitiveHandleNumber() =>
+            _boundDoubleArgHandle.ExecuteNumber(_doubleArg);
 
         /// <summary>
         /// Resolves a top-level global function through the public prepare API.

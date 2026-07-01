@@ -81,6 +81,61 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Executes the compiled chunk with one CLR double argument without routing through the
+        /// boxed <see cref="object"/> conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(double arg)
+        {
+            return Execute(DynValue.FromNumber(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR float argument without routing through the
+        /// boxed <see cref="object"/> conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(float arg)
+        {
+            return Execute(DynValue.FromNumber(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR integer argument without routing through the
+        /// boxed <see cref="object"/> conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(int arg)
+        {
+            return Execute(DynValue.FromInteger(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR integer argument without routing through the
+        /// boxed <see cref="object"/> conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(long arg)
+        {
+            return Execute(DynValue.FromInteger(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR Boolean argument without routing through the
+        /// boxed <see cref="object"/> conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(bool arg)
+        {
+            return Execute(DynValue.FromBoolean(arg));
+        }
+
+        /// <summary>
         /// Executes the compiled chunk with two arguments.
         /// </summary>
         /// <param name="arg1">The first argument to pass to the chunk.</param>
@@ -604,6 +659,66 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Executes the compiled chunk with one CLR double argument and returns a strict numeric
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(double arg)
+        {
+            return ConvertNumberResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR float argument and returns a strict numeric
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(float arg)
+        {
+            return ConvertNumberResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR integer argument and returns a strict numeric
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(int arg)
+        {
+            return ConvertNumberResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR integer argument and returns a strict numeric
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(long arg)
+        {
+            return ConvertNumberResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR Boolean argument and returns a strict numeric
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(bool arg)
+        {
+            return ConvertNumberResult(Execute(arg));
+        }
+
+        /// <summary>
         /// Executes the compiled chunk with two arguments and returns a strict numeric scalar result.
         /// </summary>
         /// <param name="arg1">The first argument to pass to the chunk.</param>
@@ -730,6 +845,66 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
         public bool ExecuteBoolean(DynValue arg)
+        {
+            return ConvertBooleanResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR double argument and returns a strict Boolean
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(double arg)
+        {
+            return ConvertBooleanResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR float argument and returns a strict Boolean
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(float arg)
+        {
+            return ConvertBooleanResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR integer argument and returns a strict Boolean
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(int arg)
+        {
+            return ConvertBooleanResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR integer argument and returns a strict Boolean
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(long arg)
+        {
+            return ConvertBooleanResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR Boolean argument and returns a strict Boolean
+        /// scalar result without routing the argument through the boxed <see cref="object"/>
+        /// conversion overload.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(bool arg)
         {
             return ConvertBooleanResult(Execute(arg));
         }

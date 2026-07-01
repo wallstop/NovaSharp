@@ -798,6 +798,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileFunctionExecuteSupportsPrimitiveArgumentOverloads(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript identity = script.CompileFunction(
+                "function(a) return a end",
+                funcFriendlyName: "compiled_primitive_identity"
+            );
+            CompiledScript increment = script.CompileFunction(
+                "function(a) return a + 1 end",
+                funcFriendlyName: "compiled_primitive_increment"
+            );
+            CompiledScript positive = script.CompileFunction(
+                "function(a) return a > 0 end",
+                funcFriendlyName: "compiled_primitive_positive"
+            );
+            CompiledScript boolToNumber = script.CompileFunction(
+                "function(a) return a and 1 or 0 end",
+                funcFriendlyName: "compiled_primitive_bool_number"
+            );
+
+            await Assert.That(identity.Execute(1.5d).Number).IsEqualTo(1.5d).ConfigureAwait(false);
+            await Assert.That(identity.Execute(2.5f).Number).IsEqualTo(2.5d).ConfigureAwait(false);
+            await Assert.That(identity.Execute(300).Number).IsEqualTo(300d).ConfigureAwait(false);
+            await Assert.That(identity.Execute(301L).Number).IsEqualTo(301d).ConfigureAwait(false);
+            await Assert.That(identity.Execute(true).Boolean).IsTrue().ConfigureAwait(false);
+
+            await Assert.That(increment.ExecuteNumber(1.5d)).IsEqualTo(2.5d).ConfigureAwait(false);
+            await Assert.That(increment.ExecuteNumber(2.5f)).IsEqualTo(3.5d).ConfigureAwait(false);
+            await Assert.That(increment.ExecuteNumber(300)).IsEqualTo(301d).ConfigureAwait(false);
+            await Assert.That(increment.ExecuteNumber(301L)).IsEqualTo(302d).ConfigureAwait(false);
+            await Assert.That(boolToNumber.ExecuteNumber(true)).IsEqualTo(1d).ConfigureAwait(false);
+
+            await Assert.That(positive.ExecuteBoolean(1.5d)).IsTrue().ConfigureAwait(false);
+            await Assert.That(positive.ExecuteBoolean(2.5f)).IsTrue().ConfigureAwait(false);
+            await Assert.That(positive.ExecuteBoolean(300)).IsTrue().ConfigureAwait(false);
+            await Assert.That(positive.ExecuteBoolean(301L)).IsTrue().ConfigureAwait(false);
+            await Assert.That(identity.ExecuteBoolean(false)).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileFunctionExecuteSupportsFixedObjectArguments(
             LuaCompatibilityVersion version
         )
