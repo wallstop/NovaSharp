@@ -35,11 +35,13 @@ Add caller-owned object-span entry points for mod function calls and broadcasts 
 - [x] Adversarial review completed.
 - [x] Targeted tests run.
 - [x] Build/broader checks run as appropriate.
-- [ ] Commit, push, request Copilot review, and poll PR CI.
+- [x] Commit, push, request Copilot review, and poll PR CI.
 
 ## Status
 
-In progress.
+Code slice complete. This note records remote validation observed for the production
+commit `59d36469`; a documentation-only follow-up push records these results in
+the repo history.
 
 ## Implementation Notes
 
@@ -65,4 +67,13 @@ In progress.
 - `git diff --cached --check` passed.
 - Earlier focused filters after the initial implementation passed before the final cleanup: `BroadcastCallObjectArguments` (9 tests) and `CallFunctionObjectArguments` (3 tests).
 - Lua comparison was not run because this slice adds host API entry points and does not change Lua language behavior.
-- Push, Copilot review request, and PR CI are still pending.
+- Pre-push hook passed before pushing `59d36469`, including CSharpier check, Markdown check, branding check, namespace alignment, tooling consistency, YAML/action lint, and `./scripts/build/quick.sh`.
+
+## Remote Validation
+
+- Pushed production commit `59d36469` to PR `#43`.
+- Requested Copilot review with `gh pr edit 43 --add-reviewer copilot-pull-request-reviewer`.
+- Copilot's latest review response at `2026-07-01T12:44:04Z` said the PR exceeds the 20,000-line review limit, so no new Copilot code comments were produced for this slice.
+- Thread-aware review read found no current unresolved, non-outdated review threads. Existing unresolved Copilot threads are outdated; current non-outdated threads are resolved.
+- PR CI on `59d36469` passed: `benchmark`, `code-coverage`, `dotnet-tests` on Ubuntu/macOS/Windows, `format-check`, `lint`, and all Lua comparison matrix jobs for Lua 5.1 through 5.5 on Ubuntu/macOS/Windows. Expected skipped jobs: `comparison`, `lint-autofix`.
+- The first `gh pr checks --watch` attempt was interrupted by a transient GitHub connection reset after several checks passed; the restarted watcher returned all final check results successfully.
