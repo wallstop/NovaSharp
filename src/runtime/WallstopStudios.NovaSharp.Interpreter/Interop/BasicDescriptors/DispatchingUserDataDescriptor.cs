@@ -653,35 +653,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 throw new ArgumentNullException(nameof(index));
             }
 
-            IList<DynValue> values;
-
-            if (index.Type == DataType.Tuple)
-            {
-                if (value == null)
-                {
-                    values = index.Tuple;
-                }
-                else
-                {
-                    values = new List<DynValue>(index.Tuple);
-                    values.Add(value);
-                }
-            }
-            else
-            {
-                if (value == null)
-                {
-                    values = new DynValue[] { index };
-                }
-                else
-                {
-                    values = new DynValue[] { index, value };
-                }
-            }
-
-            CallbackArguments args = new(values, false);
-            ScriptExecutionContext execCtx = script.CreateDynamicExecutionContext();
-
             DynValue v = mdesc.GetValue(script, obj);
 
             if (v.Type != DataType.ClrFunction)
@@ -693,7 +664,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 );
             }
 
-            return v.Callback.ClrCallback(execCtx, args);
+            CallbackFunction callback = v.Callback;
+
+            if (index.Type != DataType.Tuple)
+            {
+                if (callback.HasArgumentViewNoContextCallback)
+                {
+                    return value == null
+                        ? callback.InvokeArgumentViewFixed(script, index)
+                        : callback.InvokeArgumentViewFixed(script, index, value);
+                }
+
+                ScriptExecutionContext execCtx = script.CreateDynamicExecutionContext();
+                if (callback.HasArgumentViewCallback)
+                {
+                    return value == null
+                        ? callback.InvokeArgumentViewFixed(execCtx, index)
+                        : callback.InvokeArgumentViewFixed(execCtx, index, value);
+                }
+
+                return value == null
+                    ? callback.InvokeLegacyFixed(execCtx, index)
+                    : callback.InvokeLegacyFixed(execCtx, index, value);
+            }
+
+            IList<DynValue> values;
+            if (value == null)
+            {
+                values = index.Tuple;
+            }
+            else
+            {
+                values = new List<DynValue>(index.Tuple);
+                values.Add(value);
+            }
+
+            CallbackArguments args = new(values, false);
+            ScriptExecutionContext tupleExecCtx = script.CreateDynamicExecutionContext();
+            return callback.ClrCallback(tupleExecCtx, args);
         }
 
         /// <summary>

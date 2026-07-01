@@ -493,6 +493,104 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
+        [Arguments(false)]
+        [Arguments(true)]
+        public async Task NonTupleIndexerCallbackViewAvoidsArgumentArrayAllocation(bool isSetter)
+        {
+            const int iterations = 1024;
+            DescriptorHostDescriptor descriptor = CreateDescriptorHostDescriptor();
+            Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
+            DescriptorHost target = new();
+            DynValue index = DynValue.NewNumber(3);
+            DynValue value = isSetter ? DynValue.NewString("payload") : null;
+            DynValue callback = DynValue.NewCallbackView(ReturnLastIndexerArgument);
+            StubMemberDescriptor member = StubMemberDescriptor.CreateCallable(
+                isSetter ? IndexerSetterName : IndexerGetterName,
+                MemberDescriptorAccess.CanExecute,
+                (_, _) => callback
+            );
+
+            DynValue warmup = descriptor.InvokeExecuteIndexer(member, script, target, index, value);
+            await Assert.That(warmup).IsEqualTo(isSetter ? value : index).ConfigureAwait(false);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long allocated = MeasureNonTupleIndexerCallbackViewAllocations(
+                descriptor,
+                member,
+                script,
+                target,
+                index,
+                value,
+                iterations
+            );
+            long allocatedPerCall = allocated / iterations;
+
+            await Assert
+                .That(allocatedPerCall)
+                .IsLessThan(16L)
+                .Because(
+                    $"Non-tuple {(isSetter ? "setter" : "getter")} indexer callback-view dispatch allocated {allocated} bytes across {iterations} iterations ({allocatedPerCall} bytes/call)."
+                )
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(false)]
+        [Arguments(true)]
+        public async Task NonTupleIndexerContextfulCallbacksKeepDynamicContextShape(
+            bool useCallbackView
+        )
+        {
+            DescriptorHostDescriptor descriptor = CreateDescriptorHostDescriptor();
+            Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
+            DescriptorHost target = new();
+            DynValue index = DynValue.NewNumber(4);
+            InvalidOperationException additionalDataException = null;
+            DynValue callback = useCallbackView
+                ? DynValue.NewCallbackView(
+                    (context, args) =>
+                    {
+                        additionalDataException = ExpectException<InvalidOperationException>(() =>
+                            context.AdditionalData = "payload"
+                        );
+                        return DynValue.NewBoolean(
+                            context.AdditionalData == null && args.Count == 1
+                        );
+                    }
+                )
+                : DynValue.NewCallback(
+                    (context, args) =>
+                    {
+                        additionalDataException = ExpectException<InvalidOperationException>(() =>
+                            context.AdditionalData = "payload"
+                        );
+                        return DynValue.NewBoolean(
+                            context.AdditionalData == null && args.Count == 1
+                        );
+                    }
+                );
+            StubMemberDescriptor member = StubMemberDescriptor.CreateCallable(
+                IndexerGetterName,
+                MemberDescriptorAccess.CanExecute,
+                (_, _) => callback
+            );
+
+            DynValue result = descriptor.InvokeExecuteIndexer(
+                member,
+                script,
+                target,
+                index,
+                value: null
+            );
+
+            await Assert.That(result.Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(additionalDataException).IsNotNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task SetIndexFallsBackToNamedMemberWhenDirectIndexing(
             LuaCompatibilityVersion version
@@ -744,6 +842,50 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             );
         }
 
+        private static DynValue ReturnLastIndexerArgument(CallbackArgumentsView args)
+        {
+            return args.Count switch
+            {
+                1 => args[0],
+                2 => args[1],
+                _ => throw new ArgumentOutOfRangeException(nameof(args)),
+            };
+        }
+
+        private static long MeasureNonTupleIndexerCallbackViewAllocations(
+            DescriptorHostDescriptor descriptor,
+            IMemberDescriptor member,
+            Script script,
+            DescriptorHost target,
+            DynValue index,
+            DynValue value,
+            int iterations
+        )
+        {
+            DynValue expected = value == null ? index : value;
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = descriptor.InvokeExecuteIndexer(
+                    member,
+                    script,
+                    target,
+                    index,
+                    value
+                );
+
+                if (result != expected)
+                {
+                    throw new InvalidOperationException(
+                        "Non-tuple userdata indexer allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
         private sealed class MetaFallbackHost
         {
             public MetaFallbackHost(string label)
@@ -918,6 +1060,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         {
             public DescriptorHostDescriptor()
                 : base(typeof(DescriptorHost)) { }
+
+            public DynValue InvokeExecuteIndexer(
+                IMemberDescriptor member,
+                Script script,
+                object obj,
+                DynValue index,
+                DynValue value
+            )
+            {
+                return ExecuteIndexer(member, script, obj, index, value);
+            }
         }
     }
 
