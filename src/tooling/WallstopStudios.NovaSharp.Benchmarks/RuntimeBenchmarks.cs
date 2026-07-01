@@ -160,30 +160,46 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _threeArgFunction = DynValue.Nil;
         private DynValue _fourArgFunction = DynValue.Nil;
         private DynValue _fiveArgFunction = DynValue.Nil;
+        private DynValue _sixArgFunction = DynValue.Nil;
+        private DynValue _sevenArgFunction = DynValue.Nil;
         private DynValue _callableLuaTable = DynValue.Nil;
         private DynValue _callableCallbackViewTable = DynValue.Nil;
         private DynValue _coroutineFunction = DynValue.Nil;
         private DynValue _fourArgCoroutineFunction = DynValue.Nil;
         private DynValue _fiveArgCoroutineFunction = DynValue.Nil;
+        private DynValue _sixArgCoroutineFunction = DynValue.Nil;
+        private DynValue _sevenArgCoroutineFunction = DynValue.Nil;
         private Closure _threeArgClosure;
         private Closure _fourArgClosure;
         private Closure _fiveArgClosure;
+        private Closure _sixArgClosure;
+        private Closure _sevenArgClosure;
         private Coroutine _runningCoroutine;
         private Coroutine _fourArgRunningCoroutine;
         private Coroutine _fiveArgRunningCoroutine;
+        private Coroutine _sixArgRunningCoroutine;
+        private Coroutine _sevenArgRunningCoroutine;
         private DynValue _first = DynValue.Nil;
         private DynValue _second = DynValue.Nil;
         private DynValue _third = DynValue.Nil;
         private DynValue _fourth = DynValue.Nil;
         private DynValue _fifth = DynValue.Nil;
+        private DynValue _sixth = DynValue.Nil;
+        private DynValue _seventh = DynValue.Nil;
         private DynValue[] _fiveDynValueArgs = Array.Empty<DynValue>();
+        private DynValue[] _sixDynValueArgs = Array.Empty<DynValue>();
+        private DynValue[] _sevenDynValueArgs = Array.Empty<DynValue>();
         private DynValue[] _fiveDynValueArgsWithPadding = Array.Empty<DynValue>();
         private object _firstObject = 1d;
         private object _secondObject = 2d;
         private object _thirdObject = 3d;
         private object _fourthObject = 4d;
         private object _fifthObject = 5d;
+        private object _sixthObject = 6d;
+        private object _seventhObject = 7d;
         private object[] _fiveObjectArgs = Array.Empty<object>();
+        private object[] _sixObjectArgs = Array.Empty<object>();
+        private object[] _sevenObjectArgs = Array.Empty<object>();
         private object[] _fiveObjectArgsWithPadding = Array.Empty<object>();
 
         [GlobalSetup]
@@ -198,9 +214,15 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _threeArgFunction = _script.DoString("return function(a, b, c) return c end");
             _fourArgFunction = _script.DoString("return function(a, b, c, d) return d end");
             _fiveArgFunction = _script.DoString("return function(a, b, c, d, e) return e end");
+            _sixArgFunction = _script.DoString("return function(a, b, c, d, e, f) return f end");
+            _sevenArgFunction = _script.DoString(
+                "return function(a, b, c, d, e, f, g) return g end"
+            );
             _threeArgClosure = _threeArgFunction.Function;
             _fourArgClosure = _fourArgFunction.Function;
             _fiveArgClosure = _fiveArgFunction.Function;
+            _sixArgClosure = _sixArgFunction.Function;
+            _sevenArgClosure = _sevenArgFunction.Function;
             _callableLuaTable = _script.DoString(
                 "return setmetatable({}, { __call = function(_, a, b, c, d, e) return e end })"
             );
@@ -218,12 +240,31 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _fiveArgCoroutineFunction = _script.DoString(
                 "return function(a, b, c, d, e) while true do a, b, c, d, e = coroutine.yield(e) end end"
             );
+            _sixArgCoroutineFunction = _script.DoString(
+                "return function(a, b, c, d, e, f) while true do a, b, c, d, e, f = coroutine.yield(f) end end"
+            );
+            _sevenArgCoroutineFunction = _script.DoString(
+                "return function(a, b, c, d, e, f, g) while true do a, b, c, d, e, f, g = coroutine.yield(g) end end"
+            );
             _first = DynValue.NewNumber(1d);
             _second = DynValue.NewNumber(2d);
             _third = DynValue.NewNumber(3d);
             _fourth = DynValue.NewNumber(4d);
             _fifth = DynValue.NewNumber(5d);
+            _sixth = DynValue.NewNumber(6d);
+            _seventh = DynValue.NewNumber(7d);
             _fiveDynValueArgs = new[] { _first, _second, _third, _fourth, _fifth };
+            _sixDynValueArgs = new[] { _first, _second, _third, _fourth, _fifth, _sixth };
+            _sevenDynValueArgs = new[]
+            {
+                _first,
+                _second,
+                _third,
+                _fourth,
+                _fifth,
+                _sixth,
+                _seventh,
+            };
             _fiveDynValueArgsWithPadding = new[]
             {
                 DynValue.Nil,
@@ -239,6 +280,8 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _thirdObject = 3d;
             _fourthObject = 4d;
             _fifthObject = 5d;
+            _sixthObject = 6d;
+            _seventhObject = 7d;
             _fiveObjectArgs = new[]
             {
                 _firstObject,
@@ -246,6 +289,25 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 _thirdObject,
                 _fourthObject,
                 _fifthObject,
+            };
+            _sixObjectArgs = new[]
+            {
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+                _sixthObject,
+            };
+            _sevenObjectArgs = new[]
+            {
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+                _sixthObject,
+                _seventhObject,
             };
             _fiveObjectArgsWithPadding = new[]
             {
@@ -263,6 +325,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _fourArgRunningCoroutine.Resume(_first, _second, _third, _fourth);
             _fiveArgRunningCoroutine = _script.CreateCoroutine(_fiveArgCoroutineFunction).Coroutine;
             _fiveArgRunningCoroutine.Resume(_first, _second, _third, _fourth, _fifth);
+            _sixArgRunningCoroutine = _script.CreateCoroutine(_sixArgCoroutineFunction).Coroutine;
+            _sixArgRunningCoroutine.Resume(_first, _second, _third, _fourth, _fifth, _sixth);
+            _sevenArgRunningCoroutine = _script
+                .CreateCoroutine(_sevenArgCoroutineFunction)
+                .Coroutine;
+            _sevenArgRunningCoroutine.Resume(
+                _first,
+                _second,
+                _third,
+                _fourth,
+                _fifth,
+                _sixth,
+                _seventh
+            );
         }
 
         /// <summary>
@@ -297,6 +373,29 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Host Call: 5 DynValues")]
         public DynValue CallFiveDynValues() =>
             _script.Call(_fiveArgFunction, _first, _second, _third, _fourth, _fifth);
+
+        /// <summary>
+        /// Calls a Lua closure with six pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 6 DynValues")]
+        public DynValue CallSixDynValues() =>
+            _script.Call(_sixArgFunction, _first, _second, _third, _fourth, _fifth, _sixth);
+
+        /// <summary>
+        /// Calls a Lua closure with seven pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 7 DynValues")]
+        public DynValue CallSevenDynValues() =>
+            _script.Call(
+                _sevenArgFunction,
+                _first,
+                _second,
+                _third,
+                _fourth,
+                _fifth,
+                _sixth,
+                _seventh
+            );
 
         /// <summary>
         /// Calls a Lua callable table with five pre-created DynValue arguments.
@@ -337,6 +436,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             );
 
         /// <summary>
+        /// Calls a Lua closure through the params-array overload with six DynValues.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 6 DynValues")]
+        public DynValue CallSixDynValuesParamsArray() =>
+            _script.Call(_sixArgFunction, _sixDynValueArgs);
+
+        /// <summary>
+        /// Calls a Lua closure through the params-array overload with seven DynValues.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 7 DynValues")]
+        public DynValue CallSevenDynValuesParamsArray() =>
+            _script.Call(_sevenArgFunction, _sevenDynValueArgs);
+
+        /// <summary>
         /// Calls a Lua closure with five pre-created DynValues from caller-owned contiguous storage.
         /// </summary>
         [Benchmark(Description = "Host Call: span 5 DynValues")]
@@ -370,6 +483,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Closure Call: 5 DynValues")]
         public DynValue ClosureCallFiveDynValues() =>
             _fiveArgClosure.Call(_first, _second, _third, _fourth, _fifth);
+
+        /// <summary>
+        /// Calls a Lua closure through the closure convenience API with six pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: 6 DynValues")]
+        public DynValue ClosureCallSixDynValues() =>
+            _sixArgClosure.Call(_first, _second, _third, _fourth, _fifth, _sixth);
+
+        /// <summary>
+        /// Calls a Lua closure through the closure convenience API with seven pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: 7 DynValues")]
+        public DynValue ClosureCallSevenDynValues() =>
+            _sevenArgClosure.Call(_first, _second, _third, _fourth, _fifth, _sixth, _seventh);
 
         /// <summary>
         /// Calls a Lua closure through the closure params-array overload for comparison.
@@ -431,6 +558,37 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 _thirdObject,
                 _fourthObject,
                 _fifthObject
+            );
+
+        /// <summary>
+        /// Calls a Lua closure with six pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 6 objects")]
+        public DynValue CallSixObjects() =>
+            _script.Call(
+                _sixArgFunction,
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+                _sixthObject
+            );
+
+        /// <summary>
+        /// Calls a Lua closure with seven pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: 7 objects")]
+        public DynValue CallSevenObjects() =>
+            _script.Call(
+                _sevenArgFunction,
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+                _sixthObject,
+                _seventhObject
             );
 
         /// <summary>
@@ -516,6 +674,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_fiveArgFunction, _fiveObjectArgs);
 
         /// <summary>
+        /// Calls a Lua closure through the object params-array overload with six objects.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 6 objects")]
+        public DynValue CallSixObjectsParamsArray() =>
+            _script.Call(_sixArgFunction, _sixObjectArgs);
+
+        /// <summary>
+        /// Calls a Lua closure through the object params-array overload with seven objects.
+        /// </summary>
+        [Benchmark(Description = "Host Call: params 7 objects")]
+        public DynValue CallSevenObjectsParamsArray() =>
+            _script.Call(_sevenArgFunction, _sevenObjectArgs);
+
+        /// <summary>
         /// Calls a Lua closure with caller-owned contiguous CLR object storage.
         /// </summary>
         [Benchmark(Description = "Host Call: object span 5 objects")]
@@ -549,6 +721,28 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Coroutine Suspended Resume: 5 DynValues")]
         public DynValue ResumeCoroutineFiveDynValues() =>
             _fiveArgRunningCoroutine.Resume(_first, _second, _third, _fourth, _fifth);
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine with six pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: 6 DynValues")]
+        public DynValue ResumeCoroutineSixDynValues() =>
+            _sixArgRunningCoroutine.Resume(_first, _second, _third, _fourth, _fifth, _sixth);
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine with seven pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: 7 DynValues")]
+        public DynValue ResumeCoroutineSevenDynValues() =>
+            _sevenArgRunningCoroutine.Resume(
+                _first,
+                _second,
+                _third,
+                _fourth,
+                _fifth,
+                _sixth,
+                _seventh
+            );
 
         /// <summary>
         /// Resumes a suspended Lua coroutine with five pre-created DynValues from caller-owned contiguous storage.
@@ -587,6 +781,35 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 _thirdObject,
                 _fourthObject,
                 _fifthObject
+            );
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine with six pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: 6 objects")]
+        public DynValue ResumeCoroutineSixObjects() =>
+            _sixArgRunningCoroutine.Resume(
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+                _sixthObject
+            );
+
+        /// <summary>
+        /// Resumes a suspended Lua coroutine with seven pre-created CLR object arguments.
+        /// </summary>
+        [Benchmark(Description = "Coroutine Suspended Resume: 7 objects")]
+        public DynValue ResumeCoroutineSevenObjects() =>
+            _sevenArgRunningCoroutine.Resume(
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+                _sixthObject,
+                _seventhObject
             );
 
         /// <summary>

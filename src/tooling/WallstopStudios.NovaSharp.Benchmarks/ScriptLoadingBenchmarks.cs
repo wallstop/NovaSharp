@@ -275,11 +275,19 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     {
         private Script _script;
         private DynValue _function = DynValue.Nil;
+        private DynValue _sixArgFunction = DynValue.Nil;
+        private DynValue _sevenArgFunction = DynValue.Nil;
         private DynValue _zeroArgFunction = DynValue.Nil;
         private DynValue _arg1 = DynValue.Nil;
         private DynValue _arg2 = DynValue.Nil;
         private DynValue _arg3 = DynValue.Nil;
+        private DynValue _arg4 = DynValue.Nil;
+        private DynValue _arg5 = DynValue.Nil;
+        private DynValue _arg6 = DynValue.Nil;
+        private DynValue _arg7 = DynValue.Nil;
         private CompiledScript _boundGlobalHandle;
+        private CompiledScript _boundSixArgHandle;
+        private CompiledScript _boundSevenArgHandle;
         private CompiledScript _boundZeroArgHandle;
 
         /// <summary>
@@ -290,15 +298,26 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         {
             _script = new Script(CoreModulePresets.Complete);
             _script.DoString(
-                "function update(a, b, c) return a + b + c end; function tick() return 42 end"
+                "function update(a, b, c) return a + b + c end; "
+                    + "function update6(a, b, c, d, e, f) return f end; "
+                    + "function update7(a, b, c, d, e, f, g) return g end; "
+                    + "function tick() return 42 end"
             );
             _function = _script.Globals.Get("update");
+            _sixArgFunction = _script.Globals.Get("update6");
+            _sevenArgFunction = _script.Globals.Get("update7");
             _zeroArgFunction = _script.Globals.Get("tick");
             _boundGlobalHandle = _script.BindGlobalFunction("update");
+            _boundSixArgHandle = _script.BindGlobalFunction("update6");
+            _boundSevenArgHandle = _script.BindGlobalFunction("update7");
             _boundZeroArgHandle = _script.BindGlobalFunction("tick");
             _arg1 = DynValue.FromNumber(1);
             _arg2 = DynValue.FromNumber(2);
             _arg3 = DynValue.FromNumber(3);
+            _arg4 = DynValue.FromNumber(4);
+            _arg5 = DynValue.FromNumber(5);
+            _arg6 = DynValue.FromNumber(6);
+            _arg7 = DynValue.FromNumber(7);
         }
 
         /// <summary>
@@ -315,6 +334,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public DynValue CallCachedGlobal() => _script.Call(_function, _arg1, _arg2, _arg3);
 
         /// <summary>
+        /// Calls a manually cached six-argument global function value.
+        /// </summary>
+        [Benchmark(Description = "Call Cached 6-Arg Global")]
+        public DynValue CallCachedSixArgGlobal() =>
+            _script.Call(_sixArgFunction, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6);
+
+        /// <summary>
+        /// Calls a manually cached seven-argument global function value.
+        /// </summary>
+        [Benchmark(Description = "Call Cached 7-Arg Global")]
+        public DynValue CallCachedSevenArgGlobal() =>
+            _script.Call(_sevenArgFunction, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7);
+
+        /// <summary>
         /// Calls a manually cached zero-argument global function value.
         /// </summary>
         [Benchmark(Description = "Call Cached Zero-Arg Global")]
@@ -326,6 +359,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Execute Bound Global Handle")]
         public DynValue ExecuteBoundGlobalHandle() =>
             _boundGlobalHandle.Execute(_arg1, _arg2, _arg3);
+
+        /// <summary>
+        /// Executes a six-argument global function handle resolved once through the public binding API.
+        /// </summary>
+        [Benchmark(Description = "Execute Bound 6-Arg Handle")]
+        public DynValue ExecuteBoundSixArgHandle() =>
+            _boundSixArgHandle.Execute(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6);
+
+        /// <summary>
+        /// Executes a seven-argument global function handle resolved once through the public binding API.
+        /// </summary>
+        [Benchmark(Description = "Execute Bound 7-Arg Handle")]
+        public DynValue ExecuteBoundSevenArgHandle() =>
+            _boundSevenArgHandle.Execute(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7);
 
         /// <summary>
         /// Executes a zero-argument global function handle resolved once through the public binding API.

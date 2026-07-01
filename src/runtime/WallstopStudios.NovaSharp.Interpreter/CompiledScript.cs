@@ -136,6 +136,63 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Executes the compiled chunk with six arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            return GetScript()
+                .ExecuteTrustedCompiledFunction(_function, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with seven arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <param name="arg7">The seventh argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            return GetScript()
+                .ExecuteTrustedCompiledFunction(
+                    _function,
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    arg7
+                );
+        }
+
+        /// <summary>
         /// Executes the compiled chunk with one CLR object argument.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
@@ -242,6 +299,79 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 DynValue.FromObject(script, arg3),
                 DynValue.FromObject(script, arg4),
                 DynValue.FromObject(script, arg5)
+            );
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with six CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// argument values.
+        /// </remarks>
+        public DynValue Execute(
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5,
+            object arg6
+        )
+        {
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                DynValue.FromObject(script, arg1),
+                DynValue.FromObject(script, arg2),
+                DynValue.FromObject(script, arg3),
+                DynValue.FromObject(script, arg4),
+                DynValue.FromObject(script, arg5),
+                DynValue.FromObject(script, arg6)
+            );
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with seven CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <param name="arg7">The seventh argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        /// <remarks>
+        /// For allocation-sensitive loops, prefer the <see cref="DynValue"/> overloads with cached
+        /// argument values.
+        /// </remarks>
+        public DynValue Execute(
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5,
+            object arg6,
+            object arg7
+        )
+        {
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                DynValue.FromObject(script, arg1),
+                DynValue.FromObject(script, arg2),
+                DynValue.FromObject(script, arg3),
+                DynValue.FromObject(script, arg4),
+                DynValue.FromObject(script, arg5),
+                DynValue.FromObject(script, arg6),
+                DynValue.FromObject(script, arg7)
             );
         }
 

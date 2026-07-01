@@ -32,6 +32,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task ClosureCallSupportsSixAndSevenFixedArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+            Closure closure = function.Function;
+
+            DynValue sixDynValueResult = closure.Call(
+                DynValue.FromNumber(1),
+                DynValue.FromNumber(2),
+                DynValue.FromNumber(3),
+                DynValue.FromNumber(4),
+                DynValue.FromNumber(5),
+                DynValue.FromNumber(6)
+            );
+            DynValue sevenDynValueResult = closure.Call(
+                DynValue.FromNumber(1),
+                DynValue.FromNumber(2),
+                DynValue.FromNumber(3),
+                DynValue.FromNumber(4),
+                DynValue.FromNumber(5),
+                DynValue.FromNumber(6),
+                DynValue.FromNumber(7)
+            );
+            DynValue sixObjectResult = closure.Call((object)null, 2d, 3d, 4d, 5d, 6d);
+            DynValue sevenObjectResult = closure.Call((object)null, 2d, 3d, 4d, 5d, 6d, 7d);
+
+            await AssertClosureCaptureResult(sixDynValueResult, 6, expectedNilAtFirst: false)
+                .ConfigureAwait(false);
+            await AssertClosureCaptureResult(sevenDynValueResult, 7, expectedNilAtFirst: false)
+                .ConfigureAwait(false);
+            await AssertClosureCaptureResult(sixObjectResult, 6, expectedNilAtFirst: true)
+                .ConfigureAwait(false);
+            await AssertClosureCaptureResult(sevenObjectResult, 7, expectedNilAtFirst: true)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task LambdaFunctions(LuaCompatibilityVersion version)
         {
             string code =
@@ -238,6 +280,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new Script(version, CoreModulePresets.HardSandbox);
             await EndToEndDynValueAssert
                 .ExpectAsync(script.DoString(code), "helloXX")
+                .ConfigureAwait(false);
+        }
+
+        private static async Task AssertClosureCaptureResult(
+            DynValue result,
+            int arity,
+            bool expectedNilAtFirst
+        )
+        {
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(arity + 1).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            if (expectedNilAtFirst)
+            {
+                await Assert
+                    .That(result.Tuple[1].Type)
+                    .IsEqualTo(DataType.Nil)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
+            }
+
+            await Assert
+                .That(result.Tuple[arity].Number)
+                .IsEqualTo((double)arity)
                 .ConfigureAwait(false);
         }
     }

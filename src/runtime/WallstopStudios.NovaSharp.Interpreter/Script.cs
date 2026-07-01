@@ -933,6 +933,50 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Executes a resolved callable handle with six arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(function, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        /// <summary>
+        /// Executes a resolved callable handle with seven arguments.
+        /// </summary>
+        internal DynValue ExecuteCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            this.CheckScriptOwnership(function);
+            return ExecuteTrustedCompiledFunction(
+                function,
+                arg1,
+                arg2,
+                arg3,
+                arg4,
+                arg5,
+                arg6,
+                arg7
+            );
+        }
+
+        /// <summary>
         /// Executes a resolved callable handle with caller-owned contiguous arguments.
         /// </summary>
         internal DynValue ExecuteCompiledFunction(DynValue function, ReadOnlySpan<DynValue> args)
@@ -1111,6 +1155,89 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Executes a trusted handle-created callable with six caller-provided arguments.
+        /// </summary>
+        internal DynValue ExecuteTrustedCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+            this.CheckScriptOwnership(arg4);
+            this.CheckScriptOwnership(arg5);
+            this.CheckScriptOwnership(arg6);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, arg1, arg2, arg3, arg4, arg5, arg6);
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4, arg5, arg6),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4,
+                        state.arg5,
+                        state.arg6
+                    )
+            );
+        }
+
+        /// <summary>
+        /// Executes a trusted handle-created callable with seven caller-provided arguments.
+        /// </summary>
+        internal DynValue ExecuteTrustedCompiledFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+            this.CheckScriptOwnership(arg4);
+            this.CheckScriptOwnership(arg5);
+            this.CheckScriptOwnership(arg6);
+            this.CheckScriptOwnership(arg7);
+
+            if (function.Type != DataType.Function)
+            {
+                return Call(function, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4,
+                        state.arg5,
+                        state.arg6,
+                        state.arg7
+                    )
+            );
+        }
+
+        /// <summary>
         /// Executes a trusted handle-created callable with caller-owned contiguous arguments.
         /// </summary>
         internal DynValue ExecuteTrustedCompiledFunction(
@@ -1185,6 +1312,52 @@ namespace WallstopStudios.NovaSharp.Interpreter
                             state.arg5
                         )
                 ),
+                6 => ExecuteWithCompatibilityGuard(
+                    (
+                        _mainProcessor,
+                        function,
+                        arg1: args[0],
+                        arg2: args[1],
+                        arg3: args[2],
+                        arg4: args[3],
+                        arg5: args[4],
+                        arg6: args[5]
+                    ),
+                    static state =>
+                        state._mainProcessor.Call(
+                            state.function,
+                            state.arg1,
+                            state.arg2,
+                            state.arg3,
+                            state.arg4,
+                            state.arg5,
+                            state.arg6
+                        )
+                ),
+                7 => ExecuteWithCompatibilityGuard(
+                    (
+                        _mainProcessor,
+                        function,
+                        arg1: args[0],
+                        arg2: args[1],
+                        arg3: args[2],
+                        arg4: args[3],
+                        arg5: args[4],
+                        arg6: args[5],
+                        arg7: args[6]
+                    ),
+                    static state =>
+                        state._mainProcessor.Call(
+                            state.function,
+                            state.arg1,
+                            state.arg2,
+                            state.arg3,
+                            state.arg4,
+                            state.arg5,
+                            state.arg6,
+                            state.arg7
+                        )
+                ),
                 _ => ExecuteSpanCallWithCompatibilityGuard(function, args),
             };
         }
@@ -1240,6 +1413,27 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         DynValue.FromObject(this, args[2]),
                         DynValue.FromObject(this, args[3]),
                         DynValue.FromObject(this, args[4])
+                    );
+                case 6:
+                    return ExecuteTrustedCompiledFunction(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2]),
+                        DynValue.FromObject(this, args[3]),
+                        DynValue.FromObject(this, args[4]),
+                        DynValue.FromObject(this, args[5])
+                    );
+                case 7:
+                    return ExecuteTrustedCompiledFunction(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2]),
+                        DynValue.FromObject(this, args[3]),
+                        DynValue.FromObject(this, args[4]),
+                        DynValue.FromObject(this, args[5]),
+                        DynValue.FromObject(this, args[6])
                     );
             }
 
@@ -2142,6 +2336,178 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Calls the specified function with six arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+            this.CheckScriptOwnership(arg4);
+            this.CheckScriptOwnership(arg5);
+            this.CheckScriptOwnership(arg6);
+
+            if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
+            {
+                return function.Callback.InvokeArgumentViewFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6
+                );
+            }
+
+            if (function.Type == DataType.ClrFunction)
+            {
+                return function.Callback.InvokeLegacyFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6
+                );
+            }
+
+            if (function.Type != DataType.Function)
+            {
+                return CallNonFunction(function, arg1, arg2, arg3, arg4, arg5, arg6);
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4, arg5, arg6),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4,
+                        state.arg5,
+                        state.arg6
+                    )
+            );
+        }
+
+        /// <summary>
+        /// Calls the specified function with seven arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <param name="arg7">The seventh argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            this.CheckScriptOwnership(function);
+            this.CheckScriptOwnership(arg1);
+            this.CheckScriptOwnership(arg2);
+            this.CheckScriptOwnership(arg3);
+            this.CheckScriptOwnership(arg4);
+            this.CheckScriptOwnership(arg5);
+            this.CheckScriptOwnership(arg6);
+            this.CheckScriptOwnership(arg7);
+
+            if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
+            {
+                return function.Callback.InvokeArgumentViewFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    arg7
+                );
+            }
+
+            if (function.Type == DataType.ClrFunction)
+            {
+                return function.Callback.InvokeLegacyFixed(
+                    CreateDynamicExecutionContext(function.Callback),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    arg7
+                );
+            }
+
+            if (function.Type != DataType.Function)
+            {
+                return CallNonFunction(function, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            }
+
+            return ExecuteWithCompatibilityGuard(
+                (_mainProcessor, function, arg1, arg2, arg3, arg4, arg5, arg6, arg7),
+                static state =>
+                    state._mainProcessor.Call(
+                        state.function,
+                        state.arg1,
+                        state.arg2,
+                        state.arg3,
+                        state.arg4,
+                        state.arg5,
+                        state.arg6,
+                        state.arg7
+                    )
+            );
+        }
+
+        /// <summary>
         /// Calls the specified function with caller-owned contiguous arguments.
         /// </summary>
         /// <param name="function">The Lua/NovaSharp function to be called.</param>
@@ -2228,6 +2594,19 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     return Call(function, args[0], args[1], args[2], args[3]);
                 case 5:
                     return Call(function, args[0], args[1], args[2], args[3], args[4]);
+                case 6:
+                    return Call(function, args[0], args[1], args[2], args[3], args[4], args[5]);
+                case 7:
+                    return Call(
+                        function,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        args[5],
+                        args[6]
+                    );
             }
 
             return ExecuteSpanCallWithCompatibilityGuard(function, args);
@@ -2380,6 +2759,18 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         args[2],
                         args[3],
                         args[4]
+                    );
+                    return true;
+                case 6:
+                    result = CallDirectTarget(
+                        metafunction,
+                        self,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        args[5]
                     );
                     return true;
                 default:
@@ -2691,6 +3082,60 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return CallDirectTarget(metafunction, function, arg1, arg2, arg3, arg4, arg5);
         }
 
+        private DynValue CallNonFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                FixedChainedCallArguments args = new(function, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
+                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4, arg5, arg6 });
+            }
+
+            return CallDirectTarget(metafunction, function, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue function,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(function);
+
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                8,
+                out DynValue[] arguments
+            );
+            arguments[0] = function;
+            arguments[1] = arg1;
+            arguments[2] = arg2;
+            arguments[3] = arg3;
+            arguments[4] = arg4;
+            arguments[5] = arg5;
+            arguments[6] = arg6;
+            arguments[7] = arg7;
+
+            return Call(metafunction, arguments.AsSpan(0, 8));
+        }
+
         private bool TryCallChainedNonFunction(
             DynValue function,
             FixedChainedCallArguments args,
@@ -2888,6 +3333,27 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         DynValue.FromObject(this, args[3]),
                         DynValue.FromObject(this, args[4])
                     );
+                case 6:
+                    return Call(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2]),
+                        DynValue.FromObject(this, args[3]),
+                        DynValue.FromObject(this, args[4]),
+                        DynValue.FromObject(this, args[5])
+                    );
+                case 7:
+                    return Call(
+                        function,
+                        DynValue.FromObject(this, args[0]),
+                        DynValue.FromObject(this, args[1]),
+                        DynValue.FromObject(this, args[2]),
+                        DynValue.FromObject(this, args[3]),
+                        DynValue.FromObject(this, args[4]),
+                        DynValue.FromObject(this, args[5]),
+                        DynValue.FromObject(this, args[6])
+                    );
             }
 
             using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
@@ -3033,6 +3499,89 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Calls the specified function with six CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            DynValue function,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5,
+            object arg6
+        )
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            return Call(
+                function,
+                DynValue.FromObject(this, arg1),
+                DynValue.FromObject(this, arg2),
+                DynValue.FromObject(this, arg3),
+                DynValue.FromObject(this, arg4),
+                DynValue.FromObject(this, arg5),
+                DynValue.FromObject(this, arg6)
+            );
+        }
+
+        /// <summary>
+        /// Calls the specified function with seven CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <param name="arg7">The seventh argument to pass to the function.</param>
+        /// <returns>
+        /// The return value(s) of the function call.
+        /// </returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            DynValue function,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5,
+            object arg6,
+            object arg7
+        )
+        {
+            if (function == null)
+            {
+                throw new ArgumentNullException(nameof(function));
+            }
+
+            return Call(
+                function,
+                DynValue.FromObject(this, arg1),
+                DynValue.FromObject(this, arg2),
+                DynValue.FromObject(this, arg3),
+                DynValue.FromObject(this, arg4),
+                DynValue.FromObject(this, arg5),
+                DynValue.FromObject(this, arg6),
+                DynValue.FromObject(this, arg7)
+            );
+        }
+
+        /// <summary>
         /// Calls the specified function.
         /// </summary>
         /// <param name="function">The Lua/NovaSharp function to be called</param>
@@ -3139,6 +3688,75 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 DynValue.FromObject(this, arg3),
                 DynValue.FromObject(this, arg4),
                 DynValue.FromObject(this, arg5)
+            );
+        }
+
+        /// <summary>
+        /// Calls the specified function with six CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called </param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            object function,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5,
+            object arg6
+        )
+        {
+            return Call(
+                DynValue.FromObject(this, function),
+                DynValue.FromObject(this, arg1),
+                DynValue.FromObject(this, arg2),
+                DynValue.FromObject(this, arg3),
+                DynValue.FromObject(this, arg4),
+                DynValue.FromObject(this, arg5),
+                DynValue.FromObject(this, arg6)
+            );
+        }
+
+        /// <summary>
+        /// Calls the specified function with seven CLR object arguments.
+        /// </summary>
+        /// <param name="function">The Lua/NovaSharp function to be called </param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <param name="arg7">The seventh argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            object function,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5,
+            object arg6,
+            object arg7
+        )
+        {
+            return Call(
+                DynValue.FromObject(this, function),
+                DynValue.FromObject(this, arg1),
+                DynValue.FromObject(this, arg2),
+                DynValue.FromObject(this, arg3),
+                DynValue.FromObject(this, arg4),
+                DynValue.FromObject(this, arg5),
+                DynValue.FromObject(this, arg6),
+                DynValue.FromObject(this, arg7)
             );
         }
 

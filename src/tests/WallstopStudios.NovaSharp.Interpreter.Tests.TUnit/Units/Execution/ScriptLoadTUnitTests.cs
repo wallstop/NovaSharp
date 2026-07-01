@@ -741,6 +741,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompileFunctionExecuteSupportsSixAndSevenFixedArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.CompileFunction(
+                "function(...) return select('#', ...), ... end",
+                funcFriendlyName: "compiled_wide_capture"
+            );
+
+            DynValue sixDynValueResult = compiled.Execute(
+                DynValue.FromNumber(1),
+                DynValue.FromNumber(2),
+                DynValue.FromNumber(3),
+                DynValue.FromNumber(4),
+                DynValue.FromNumber(5),
+                DynValue.FromNumber(6)
+            );
+            DynValue sevenDynValueResult = compiled.Execute(
+                DynValue.FromNumber(1),
+                DynValue.FromNumber(2),
+                DynValue.FromNumber(3),
+                DynValue.FromNumber(4),
+                DynValue.FromNumber(5),
+                DynValue.FromNumber(6),
+                DynValue.FromNumber(7)
+            );
+            DynValue sixObjectResult = compiled.Execute(1d, 2d, 3d, 4d, 5d, 6d);
+            DynValue sevenObjectResult = compiled.Execute(1d, 2d, 3d, 4d, 5d, 6d, 7d);
+
+            await AssertCompiledCaptureResult(sixDynValueResult, 6).ConfigureAwait(false);
+            await AssertCompiledCaptureResult(sevenDynValueResult, 7).ConfigureAwait(false);
+            await AssertCompiledCaptureResult(sixObjectResult, 6).ConfigureAwait(false);
+            await AssertCompiledCaptureResult(sevenObjectResult, 7).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileFunctionExecuteObjectArgumentsSupportsCallerOwnedSpan(
             LuaCompatibilityVersion version
         )
@@ -1010,7 +1048,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        [LuaTestMatrix(1, 2, 3, 4, 5)]
+        [LuaTestMatrix(1, 2, 3, 4, 5, 6, 7)]
         public async Task CompileFunctionExecuteRejectsForeignDynValueAtEachFixedArity(
             LuaCompatibilityVersion version,
             int arity
@@ -1045,7 +1083,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        [LuaTestMatrix(1, 2, 3, 4, 5)]
+        [LuaTestMatrix(1, 2, 3, 4, 5, 6, 7)]
         public async Task CompileFunctionExecuteRejectsForeignObjectAtEachFixedArity(
             LuaCompatibilityVersion version,
             int arity
@@ -1409,6 +1447,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             return compiled.ExecuteObjectArguments(args.AsSpan());
         }
 
+        private static async Task AssertCompiledCaptureResult(DynValue result, int arity)
+        {
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(arity + 1).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            for (int i = 0; i < arity; i++)
+            {
+                await Assert
+                    .That(result.Tuple[i + 1].Number)
+                    .IsEqualTo(i + 1d)
+                    .ConfigureAwait(false);
+            }
+        }
+
         private static void ConstructCompiledScript(Script script, DynValue function)
         {
             CompiledScript compiled = new(script, function);
@@ -1427,6 +1482,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 3 => compiled.Execute(args[0], args[1], args[2]),
                 4 => compiled.Execute(args[0], args[1], args[2], args[3]),
                 5 => compiled.Execute(args[0], args[1], args[2], args[3], args[4]),
+                6 => compiled.Execute(args[0], args[1], args[2], args[3], args[4], args[5]),
+                7 => compiled.Execute(
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[4],
+                    args[5],
+                    args[6]
+                ),
                 _ => throw new ArgumentOutOfRangeException(nameof(args)),
             };
         }
@@ -1443,6 +1508,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 3 => compiled.Execute(args[0], args[1], args[2]),
                 4 => compiled.Execute(args[0], args[1], args[2], args[3]),
                 5 => compiled.Execute(args[0], args[1], args[2], args[3], args[4]),
+                6 => compiled.Execute(args[0], args[1], args[2], args[3], args[4], args[5]),
+                7 => compiled.Execute(
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[4],
+                    args[5],
+                    args[6]
+                ),
                 _ => throw new ArgumentOutOfRangeException(nameof(args)),
             };
         }

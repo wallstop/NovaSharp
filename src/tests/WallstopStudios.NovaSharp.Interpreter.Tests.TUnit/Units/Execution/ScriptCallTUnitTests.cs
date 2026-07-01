@@ -831,6 +831,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(3)]
         [global::TUnit.Core.Arguments(4)]
         [global::TUnit.Core.Arguments(5)]
+        [global::TUnit.Core.Arguments(6)]
+        [global::TUnit.Core.Arguments(7)]
         public async Task FixedDynValueCallToLegacyClrFunctionExposesFixedStorageSpan(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
@@ -884,6 +886,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(3)]
         [global::TUnit.Core.Arguments(4)]
         [global::TUnit.Core.Arguments(5)]
+        [global::TUnit.Core.Arguments(6)]
+        [global::TUnit.Core.Arguments(7)]
         public async Task FixedDynValueCallToLegacyClrFunctionPreservesArity(int arity)
         {
             Script script = new(CoreModulePresets.Complete);
@@ -2404,6 +2408,89 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
             await Assert.That(fourArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
             await Assert.That(fourArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+
+            DynValue sixArgResult = script.Call(capture, (object)null, "value", 42, true, 5d, 6d);
+            await Assert.That(sixArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(sixArgResult.Tuple.Length).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(sixArgResult.Tuple[0].Number).IsEqualTo(6d).ConfigureAwait(false);
+            await Assert
+                .That(sixArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(sixArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(sixArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(sixArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(sixArgResult.Tuple[5].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(sixArgResult.Tuple[6].Number).IsEqualTo(6d).ConfigureAwait(false);
+
+            DynValue sevenArgResult = script.Call(
+                capture,
+                (object)null,
+                "value",
+                42,
+                true,
+                5d,
+                6d,
+                7d
+            );
+            await Assert.That(sevenArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(sevenArgResult.Tuple.Length).IsEqualTo(8).ConfigureAwait(false);
+            await Assert.That(sevenArgResult.Tuple[0].Number).IsEqualTo(7d).ConfigureAwait(false);
+            await Assert
+                .That(sevenArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(sevenArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(sevenArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(sevenArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(sevenArgResult.Tuple[5].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(sevenArgResult.Tuple[6].Number).IsEqualTo(6d).ConfigureAwait(false);
+            await Assert.That(sevenArgResult.Tuple[7].Number).IsEqualTo(7d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 6)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 7)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 6)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 7)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 6)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 7)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 6)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 7)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 6)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 7)]
+        public async Task FixedSixAndSevenDynValueCallOverloadsPreserveArityAndOrder(
+            LuaCompatibilityVersion version,
+            int arity
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+            DynValue[] args = CreateSequentialArguments(arity);
+
+            DynValue result = CallFunctionWithFixedArguments(script, capture, args);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(arity + 1).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            for (int i = 0; i < arity; i++)
+            {
+                await Assert
+                    .That(result.Tuple[i + 1].Number)
+                    .IsEqualTo(i + 1d)
+                    .ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -3333,6 +3420,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                     DynValue.NewNumber(4),
                     DynValue.NewNumber(5)
                 ),
+                6 => script.Call(
+                    callback,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(4),
+                    DynValue.NewNumber(5),
+                    DynValue.NewNumber(6)
+                ),
+                7 => script.Call(
+                    callback,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(4),
+                    DynValue.NewNumber(5),
+                    DynValue.NewNumber(6),
+                    DynValue.NewNumber(7)
+                ),
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
         }
@@ -3346,6 +3452,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             }
 
             return args;
+        }
+
+        private static DynValue CallFunctionWithFixedArguments(
+            Script script,
+            DynValue function,
+            DynValue[] args
+        )
+        {
+            return args.Length switch
+            {
+                6 => script.Call(function, args[0], args[1], args[2], args[3], args[4], args[5]),
+                7 => script.Call(
+                    function,
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[4],
+                    args[5],
+                    args[6]
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(args)),
+            };
         }
 
         private static long MeasureNoArgumentLegacyCallbackAllocations(
