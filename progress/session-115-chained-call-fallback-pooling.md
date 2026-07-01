@@ -34,11 +34,11 @@ Remove the remaining fixed-call `__call` fallback argument arrays for chained no
 - [x] Adversarial review completed.
 - [x] Targeted tests run.
 - [x] Build/broader checks run as appropriate.
-- [ ] Commit, push, request Copilot review, and poll PR CI.
+- [x] Commit, push, request Copilot review, and poll PR CI.
 
 ## Status
 
-Local implementation and validation complete. Pending commit, push, Copilot review request, and PR CI observation.
+Implementation commit `3b97a92a` was pushed, Copilot review was requested, and PR CI passed for that head. This progress-only update records the observed remote validation.
 
 ## Implementation Notes
 
@@ -69,4 +69,9 @@ Local implementation and validation complete. Pending commit, push, Copilot revi
 
 ## Remote Validation
 
-- Pending.
+- Pushed implementation commit `3b97a92a` to PR `#43`.
+- Requested Copilot review with `gh pr edit 43 --add-reviewer copilot-pull-request-reviewer`.
+- Copilot's latest review response at `2026-07-01T13:52:45Z` said the PR exceeds the 20,000-line review limit, so no new Copilot code comments were produced for this slice.
+- Thread-aware review read found no current unresolved, non-outdated review threads. Existing unresolved Copilot threads are outdated; current non-outdated threads are resolved.
+- PR CI on `3b97a92a` passed: `benchmark`, `code-coverage`, `dotnet-tests` on Ubuntu/macOS/Windows, `format-check`, `lint`, and all Lua comparison matrix jobs for Lua 5.1 through 5.5 on Ubuntu/macOS/Windows. Expected skipped jobs: `comparison`, `lint-autofix`.
+- The first `gh pr checks --watch` attempt was interrupted by a transient GitHub connection reset after several checks were pending/passing; the restarted watcher returned all final check results successfully.
