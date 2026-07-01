@@ -260,6 +260,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RegisterModuleTypeScriptFieldsDoNotPolluteUserCompilationCache(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModules.Basic, options);
+            script.LoadString("return 1", codeFriendlyName: "user-cache-entry");
+
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+
+            script.Globals.RegisterModuleType(typeof(ScriptFieldCacheProbeModule));
+            DynValue module = script.Globals.RawGet("script_field_cache_probe");
+            DynValue answer = module.Table.RawGet("answer");
+            DynValue result = script.Call(answer);
+
+            await Assert.That(result.Number).IsEqualTo(77d).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task RegisterModuleTypeInvokesNovaSharpInitEveryRegistration()
         {
             InitProbeModule.Reset();
@@ -294,6 +319,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         private static bool IsNilOrMissing(DynValue value)
         {
             return value == null || value.IsNil();
+        }
+
+        [NovaSharpModule(Namespace = "script_field_cache_probe")]
+        private static class ScriptFieldCacheProbeModule
+        {
+            [NovaSharpModuleMethod(Name = "answer")]
+            public const string Answer = "function() return 77 end";
         }
 
         [NovaSharpModule(Namespace = "argument_view_probe")]

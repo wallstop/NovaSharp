@@ -636,14 +636,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         internal DateTime StartTimeUtc => _startTimeUtc;
 
         /// <summary>
-        /// Gets the approximate number of compiled scripts currently in the cache.
+        /// Gets the approximate number of compiled chunks and standalone function bodies currently
+        /// in the cache.
         /// Returns 0 if caching is disabled via <see cref="ScriptOptions.EnableScriptCaching"/>.
         /// </summary>
         public int CompilationCacheCount => _compilationCache?.ApproximateCount ?? 0;
 
         /// <summary>
-        /// Clears the script compilation cache, forcing subsequent <see cref="LoadString"/> calls
-        /// to perform full compilation. Has no effect if caching is disabled.
+        /// Clears the script compilation cache, forcing subsequent <see cref="LoadString"/> and
+        /// <see cref="LoadFunction"/> calls to perform full compilation. Has no effect if caching
+        /// is disabled.
         /// </summary>
         public void ClearCompilationCache()
         {
@@ -674,7 +676,67 @@ namespace WallstopStudios.NovaSharp.Interpreter
             string funcFriendlyName = null
         )
         {
+            return LoadFunctionCore(
+                code,
+                globalTable,
+                funcFriendlyName,
+                skipCompilationCache: false
+            );
+        }
+
+        /// <summary>
+        /// Loads a Lua/NovaSharp function without participating in the public compilation cache.
+        /// </summary>
+        /// <param name="code">The function source code.</param>
+        /// <param name="globalTable">The global table to bind to this function.</param>
+        /// <param name="funcFriendlyName">Name of the function used for diagnostics.</param>
+        /// <returns>A DynValue containing the loaded function.</returns>
+        internal DynValue LoadFunctionWithoutCompilationCache(
+            string code,
+            Table globalTable = null,
+            string funcFriendlyName = null
+        )
+        {
+            return LoadFunctionCore(
+                code,
+                globalTable,
+                funcFriendlyName,
+                skipCompilationCache: true
+            );
+        }
+
+        private DynValue LoadFunctionCore(
+            string code,
+            Table globalTable,
+            string funcFriendlyName,
+            bool skipCompilationCache
+        )
+        {
+            if (code == null)
+            {
+                throw new ArgumentNullException(nameof(code));
+            }
+
             this.CheckScriptOwnership(globalTable);
+
+            LuaCompatibilityVersion compatibilityVersion = Options.CompatibilityVersion;
+            bool usesGlobalEnvironment = globalTable != null || _globalTable != null;
+
+            if (
+                !skipCompilationCache
+                && _compilationCache != null
+                && _compilationCache.TryGet(
+                    code,
+                    compatibilityVersion,
+                    funcFriendlyName,
+                    Execution.ScriptCompilationUnitKind.Function,
+                    usesGlobalEnvironment,
+                    out Execution.CachedChunk cached
+                )
+            )
+            {
+                return MakeClosure(cached._entryPointAddress, globalTable ?? _globalTable);
+            }
 
             string chunkName = ZString.Concat(
                 "libfunc_",
@@ -685,15 +747,23 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             _sources.Add(source);
 
-            int address = LoaderFast.LoadFunction(
-                this,
-                source,
-                _byteCode,
-                globalTable != null || _globalTable != null
-            );
+            int address = LoaderFast.LoadFunction(this, source, _byteCode, usesGlobalEnvironment);
 
             SignalSourceCodeChange(source);
             SignalByteCodeChange();
+
+            if (!skipCompilationCache && _compilationCache != null)
+            {
+                _compilationCache.Store(
+                    code,
+                    compatibilityVersion,
+                    funcFriendlyName,
+                    Execution.ScriptCompilationUnitKind.Function,
+                    usesGlobalEnvironment,
+                    address,
+                    source.SourceId
+                );
+            }
 
             return MakeClosure(address, globalTable ?? _globalTable);
         }

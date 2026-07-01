@@ -66,6 +66,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LoadFunctionWithNullCodeThrows(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                script.LoadFunction(null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("code").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
@@ -509,7 +522,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .ConfigureAwait(false);
             await Assert
                 .That(script.CompilationCacheCount)
-                .IsEqualTo(sourceKind == PrepareSourceKind.FunctionBody ? 0 : 1)
+                .IsEqualTo(1)
                 .Because($"Prepare source kind {sourceKind} should preserve compile cache behavior")
                 .ConfigureAwait(false);
             await Assert
@@ -2583,6 +2596,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert
                 .That(script.SourceCodeCount)
                 .IsEqualTo(sourceCodeCount)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LoadFunctionCacheHitDoesNotSignalDebuggerAgain(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            RecordingDebugger debugger = new();
+            script.AttachDebugger(debugger);
+
+            script.LoadFunction("function() return 42 end");
+            int sourceNotifications = debugger.SourceCodeSetCount;
+            int byteCodeNotifications = debugger.ByteCodeSetCount;
+            int sourceCodeCount = script.SourceCodeCount;
+
+            script.LoadFunction("function() return 42 end");
+
+            await Assert
+                .That(debugger.SourceCodeSetCount)
+                .IsEqualTo(sourceNotifications)
+                .ConfigureAwait(false);
+            await Assert
+                .That(debugger.ByteCodeSetCount)
+                .IsEqualTo(byteCodeNotifications)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(sourceCodeCount)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LoadFunctionDifferentFriendlyNameSignalsDebugger(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            RecordingDebugger debugger = new();
+            script.AttachDebugger(debugger);
+
+            script.LoadFunction("function() return 42 end", funcFriendlyName: "first");
+            int sourceNotifications = debugger.SourceCodeSetCount;
+            int byteCodeNotifications = debugger.ByteCodeSetCount;
+            int sourceCodeCount = script.SourceCodeCount;
+
+            script.LoadFunction("function() return 42 end", funcFriendlyName: "second");
+
+            await Assert
+                .That(debugger.SourceCodeSetCount)
+                .IsEqualTo(sourceNotifications + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(debugger.ByteCodeSetCount)
+                .IsEqualTo(byteCodeNotifications + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(sourceCodeCount + 1)
                 .ConfigureAwait(false);
         }
 

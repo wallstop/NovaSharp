@@ -9,6 +9,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     /// <summary>
     /// Tests for the script compilation cache feature.
@@ -71,6 +72,233 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             // Cache should have 1 entry
             await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LoadFunctionWithCachingDisabledDoesNotCache(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = false,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "function() return 42 end";
+            int initialSourceCount = script.SourceCodeCount;
+
+            DynValue result1 = script.LoadFunction(code, funcFriendlyName: "cached_func");
+            DynValue result2 = script.LoadFunction(code, funcFriendlyName: "cached_func");
+
+            await Assert.That(script.Call(result1).Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(script.Call(result2).Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 2)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LoadFunctionWithCachingEnabledCachesFunctions(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "function() return 42 end";
+            int initialSourceCount = script.SourceCodeCount;
+
+            DynValue result1 = script.LoadFunction(code, funcFriendlyName: "cached_func");
+            DynValue result2 = script.LoadFunction(code, funcFriendlyName: "cached_func");
+
+            await Assert.That(script.Call(result1).Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(script.Call(result2).Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(result1).IsNotSameReferenceAs(result2).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("libfunc_cached_func")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LoadFunctionWithDifferentFriendlyNamesCreatesDifferentCacheEntries(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "function() return 42 end";
+            int initialSourceCount = script.SourceCodeCount;
+
+            DynValue result1 = script.LoadFunction(code, funcFriendlyName: "first");
+            DynValue result2 = script.LoadFunction(code, funcFriendlyName: "second");
+
+            await Assert.That(script.Call(result1).Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(script.Call(result2).Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 2)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount).Name)
+                .IsEqualTo("libfunc_first")
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetSourceCode(initialSourceCount + 1).Name)
+                .IsEqualTo("libfunc_second")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CachedLoadFunctionWithDifferentGlobalTablesExecutesCorrectly(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "function() return value end";
+            Table globals1 = new(script);
+            globals1["value"] = DynValue.NewNumber(10);
+            Table globals2 = new(script);
+            globals2["value"] = DynValue.NewNumber(20);
+
+            DynValue first = script.LoadFunction(code, globals1, "cached_env");
+            DynValue second = script.LoadFunction(code, globals2, "cached_env");
+
+            await Assert.That(script.Call(first).Number).IsEqualTo(10d).ConfigureAwait(false);
+            await Assert.That(script.Call(second).Number).IsEqualTo(20d).ConfigureAwait(false);
+            await Assert.That(first).IsNotSameReferenceAs(second).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CachedLoadFunctionKeepsNestedClosureUpValuesIndependent(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = """
+                function()
+                    local counter = 0
+                    return function()
+                        counter = counter + 1
+                        return counter
+                    end
+                end
+                """;
+
+            DynValue firstFactory = script.LoadFunction(code, funcFriendlyName: "nested_counter");
+            DynValue secondFactory = script.LoadFunction(code, funcFriendlyName: "nested_counter");
+            DynValue firstCounter = script.Call(firstFactory);
+            DynValue secondCounter = script.Call(secondFactory);
+
+            await Assert
+                .That(firstFactory)
+                .IsNotSameReferenceAs(secondFactory)
+                .ConfigureAwait(false);
+            await Assert.That(firstCounter.Type).IsEqualTo(DataType.Function).ConfigureAwait(false);
+            await Assert
+                .That(secondCounter.Type)
+                .IsEqualTo(DataType.Function)
+                .ConfigureAwait(false);
+            await Assert.That(script.Call(firstCounter).Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(script.Call(firstCounter).Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(script.Call(secondCounter).Number)
+                .IsEqualTo(1d)
+                .ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CachedLoadFunctionSetFenvKeepsIndependentEnvironmentSlots()
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = LuaCompatibilityVersion.Lua51,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "function() return value end";
+
+            DynValue first = script.LoadFunction(code, funcFriendlyName: "cached_setfenv");
+            DynValue second = script.LoadFunction(code, funcFriendlyName: "cached_setfenv");
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
+
+            script.Globals["first"] = first;
+            script.Globals["second"] = second;
+
+            DynValue result = script.DoString(
+                @"
+                local firstEnv = { value = 11 }
+                local secondEnv = { value = 22 }
+                setfenv(first, firstEnv)
+                setfenv(second, secondEnv)
+                return first(), second(), getfenv(first) ~= getfenv(second)
+                "
+            );
+
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(11d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(22d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LoadFunctionWithZeroMaxEntriesDoesNotCache(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                EnableScriptCaching = true,
+                ScriptCacheMaxEntries = 0,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "function() return 42 end";
+            int initialSourceCount = script.SourceCodeCount;
+
+            DynValue result1 = script.LoadFunction(code, funcFriendlyName: "zero_cache_func");
+            DynValue result2 = script.LoadFunction(code, funcFriendlyName: "zero_cache_func");
+
+            await Assert.That(script.Call(result1).Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(script.Call(result2).Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 2)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -612,6 +840,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        public async Task LoadFunctionAfterCompatibilityVersionChangeCreatesSeparateCacheEntry()
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = LuaCompatibilityVersion.Lua51,
+                EnableScriptCaching = true,
+            };
+            Script script = new(CoreModulePresets.Complete, options);
+            const string code = "function() return 42 end";
+
+            script.LoadFunction(code, funcFriendlyName: "versioned_func");
+            script.Options.CompatibilityVersion = LuaCompatibilityVersion.Lua54;
+            script.LoadFunction(code, funcFriendlyName: "versioned_func");
+
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(2).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task SourceCacheKeyDistinguishesSourceTextsWhenHashesCollide()
         {
             const string firstCode = "return 1";
@@ -671,6 +917,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        public async Task SourceCacheKeyDistinguishesCompilationShapesWhenHashesCollide()
+        {
+            const string code = "return 1";
+            const int forcedHashCode = 42;
+
+            SourceCacheKey chunkKey = new(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                unitKind: ScriptCompilationUnitKind.Chunk,
+                usesGlobalEnvironment: false,
+                hashCode: forcedHashCode
+            );
+            SourceCacheKey functionKey = new(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                unitKind: ScriptCompilationUnitKind.Function,
+                usesGlobalEnvironment: true,
+                hashCode: forcedHashCode
+            );
+
+            await Assert.That(chunkKey.GetHashCode()).IsEqualTo(functionKey.GetHashCode());
+            await Assert.That(chunkKey.Equals(functionKey)).IsFalse().ConfigureAwait(false);
+
+            Dictionary<SourceCacheKey, int> entries = new(2)
+            {
+                [chunkKey] = 11,
+                [functionKey] = 22,
+            };
+
+            await Assert.That(entries.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(entries[chunkKey]).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(entries[functionKey]).IsEqualTo(22).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task CacheSeparatesSameSourceAcrossCompatibilityVersions()
         {
             ScriptCompilationCache cache = new(maxEntries: 4);
@@ -710,6 +993,121 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 .ConfigureAwait(false);
             await Assert.That(lua54._entryPointAddress).IsEqualTo(22).ConfigureAwait(false);
             await Assert.That(lua54._sourceId).IsEqualTo(202).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheSeparatesChunksAndFunctionsWithSameSource()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 4);
+            const string code = "return 1";
+
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: null,
+                unitKind: ScriptCompilationUnitKind.Function,
+                usesGlobalEnvironment: true,
+                entryPointAddress: 22,
+                sourceId: 202
+            );
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(2).ConfigureAwait(false);
+
+            await Assert
+                .That(
+                    cache.TryGet(code, LuaCompatibilityVersion.Lua54, null, out CachedChunk chunk)
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(chunk._entryPointAddress).IsEqualTo(11).ConfigureAwait(false);
+            await Assert.That(chunk._sourceId).IsEqualTo(101).ConfigureAwait(false);
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        code,
+                        LuaCompatibilityVersion.Lua54,
+                        null,
+                        ScriptCompilationUnitKind.Function,
+                        usesGlobalEnvironment: true,
+                        out CachedChunk function
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(function._entryPointAddress).IsEqualTo(22).ConfigureAwait(false);
+            await Assert.That(function._sourceId).IsEqualTo(202).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CacheSeparatesFunctionEnvironmentShapes()
+        {
+            ScriptCompilationCache cache = new(maxEntries: 4);
+            const string code = "function() return value end";
+
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: "func",
+                unitKind: ScriptCompilationUnitKind.Function,
+                usesGlobalEnvironment: false,
+                entryPointAddress: 11,
+                sourceId: 101
+            );
+            cache.Store(
+                code,
+                LuaCompatibilityVersion.Lua54,
+                sourceName: "func",
+                unitKind: ScriptCompilationUnitKind.Function,
+                usesGlobalEnvironment: true,
+                entryPointAddress: 22,
+                sourceId: 202
+            );
+
+            await Assert.That(cache.ApproximateCount).IsEqualTo(2).ConfigureAwait(false);
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        code,
+                        LuaCompatibilityVersion.Lua54,
+                        "func",
+                        ScriptCompilationUnitKind.Function,
+                        usesGlobalEnvironment: false,
+                        out CachedChunk localEnvironment
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(localEnvironment._entryPointAddress)
+                .IsEqualTo(11)
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(
+                    cache.TryGet(
+                        code,
+                        LuaCompatibilityVersion.Lua54,
+                        "func",
+                        ScriptCompilationUnitKind.Function,
+                        usesGlobalEnvironment: true,
+                        out CachedChunk globalEnvironment
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(globalEnvironment._entryPointAddress)
+                .IsEqualTo(22)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

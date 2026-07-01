@@ -21,13 +21,17 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     public class ScriptLoadingBenchmarks
     {
         private string _scriptSource = string.Empty;
+        private string _functionSource = string.Empty;
         private byte[] _scriptSourceBytes = Array.Empty<byte>();
         private string _cachedFriendlyName = string.Empty;
+        private string _cachedFunctionFriendlyName = string.Empty;
         private Script _precompiledScript;
         private Script _precompiledStreamScript;
         private Script _precompiledFileScript;
         private Script _cachedScript;
         private Script _namedCachedScript;
+        private Script _cachedFunctionScript;
+        private Script _namedCachedFunctionScript;
         private Script _cachedFileScript;
         private Script _namedCachedFileScript;
         private string _cachedFileName = string.Empty;
@@ -68,6 +72,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _currentComplexity = complexity;
 
             _scriptSource = LuaScriptCorpus.GetCompilationScript(complexity);
+            _functionSource = string.Concat("function()\n", _scriptSource, "\nend");
             _scriptSourceBytes = System.Text.Encoding.UTF8.GetBytes(_scriptSource);
             _precompiledScript = new Script(CoreModulePresets.Complete);
             _compiledHandle = _precompiledScript.PrepareString(
@@ -100,6 +105,16 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _cachedFriendlyName = $"cached_{complexity}";
             _namedCachedScript = new Script(CoreModulePresets.Complete);
             _namedCachedScript.LoadString(_scriptSource, null, _cachedFriendlyName);
+
+            _cachedFunctionScript = new Script(CoreModulePresets.Complete);
+            _cachedFunctionScript.PrepareFunction(_functionSource);
+
+            _cachedFunctionFriendlyName = $"cached_function_{complexity}";
+            _namedCachedFunctionScript = new Script(CoreModulePresets.Complete);
+            _namedCachedFunctionScript.PrepareFunction(
+                _functionSource,
+                funcFriendlyName: _cachedFunctionFriendlyName
+            );
 
             _cachedFileName = $"cached_file_{complexity}.lua";
             _cachedFileScript = new Script(
@@ -174,6 +189,21 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         }
 
         /// <summary>
+        /// Measures standalone function preparation without executing the resulting function.
+        /// </summary>
+        [Benchmark(Description = "Prepare Function Only")]
+        public DynValue PrepareFunctionOnly()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            return script
+                .PrepareFunction(
+                    _functionSource,
+                    funcFriendlyName: $"prepare_function_{_currentComplexity}"
+                )
+                .Function;
+        }
+
+        /// <summary>
         /// Loads a chunk already present in the script compilation cache.
         /// </summary>
         [Benchmark(Description = "Load Cached")]
@@ -185,6 +215,22 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Load Cached Named")]
         public DynValue LoadCachedNamed() =>
             _namedCachedScript.LoadString(_scriptSource, null, _cachedFriendlyName);
+
+        /// <summary>
+        /// Prepares a standalone function already present in the script compilation cache.
+        /// </summary>
+        [Benchmark(Description = "Prepare Function Cached")]
+        public DynValue PrepareFunctionCached() =>
+            _cachedFunctionScript.PrepareFunction(_functionSource).Function;
+
+        /// <summary>
+        /// Prepares a named standalone function already present in the script compilation cache.
+        /// </summary>
+        [Benchmark(Description = "Prepare Function Cached Named")]
+        public DynValue PrepareFunctionCachedNamed() =>
+            _namedCachedFunctionScript
+                .PrepareFunction(_functionSource, funcFriendlyName: _cachedFunctionFriendlyName)
+                .Function;
 
         /// <summary>
         /// Executes a chunk already present in the script compilation cache through the easy API.

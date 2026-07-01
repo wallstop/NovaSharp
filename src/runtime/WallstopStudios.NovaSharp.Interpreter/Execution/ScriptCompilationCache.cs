@@ -7,9 +7,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
 
     /// <summary>
-    /// Caches compiled Lua scripts to avoid redundant lexing, parsing, and bytecode emission
-    /// for scripts that have already been loaded with the same source text, Lua compatibility
-    /// version, and source name.
+    /// Caches compiled Lua chunks and standalone function bodies to avoid redundant lexing,
+    /// parsing, and bytecode emission for source that has already been loaded with the same
+    /// source text, Lua compatibility version, source name, and compilation shape.
     /// Uses LRU (Least Recently Used) eviction policy.
     /// </summary>
     /// <remarks>
@@ -37,6 +37,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         private string _lastHitCode;
         private LuaCompatibilityVersion _lastHitVersion;
         private string _lastHitSourceName;
+        private ScriptCompilationUnitKind _lastHitUnitKind;
+        private bool _lastHitUsesGlobalEnvironment;
         private CachedChunk _lastHitChunk;
 
         /// <summary>
@@ -92,6 +94,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             out CachedChunk result
         )
         {
+            return TryGet(
+                code,
+                version,
+                sourceName,
+                ScriptCompilationUnitKind.Chunk,
+                usesGlobalEnvironment: false,
+                out result
+            );
+        }
+
+        /// <summary>
+        /// Attempts to retrieve a cached compilation result for the specified compilation shape.
+        /// </summary>
+        /// <param name="code">The Lua source code text.</param>
+        /// <param name="version">The Lua compatibility version used to compile the source.</param>
+        /// <param name="sourceName">The explicit source name used for diagnostics, or <c>null</c> for anonymous chunks.</param>
+        /// <param name="unitKind">The kind of compilation product stored in the cache.</param>
+        /// <param name="usesGlobalEnvironment">Whether a standalone function body was compiled with an explicit global environment slot.</param>
+        /// <param name="result">When this method returns true, contains the cached chunk information.</param>
+        /// <returns><c>true</c> if a cached entry was found; otherwise, <c>false</c>.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal bool TryGet(
+            string code,
+            LuaCompatibilityVersion version,
+            string sourceName,
+            ScriptCompilationUnitKind unitKind,
+            bool usesGlobalEnvironment,
+            out CachedChunk result
+        )
+        {
             if (_maxEntries == 0)
             {
                 result = default;
@@ -100,13 +132,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 
             lock (_lock)
             {
-                if (IsLastHit(code, version, sourceName))
+                if (IsLastHit(code, version, sourceName, unitKind, usesGlobalEnvironment))
                 {
                     result = _lastHitChunk;
                     return true;
                 }
 
-                SourceCacheKey key = SourceCacheKey.Create(code, version, sourceName);
+                SourceCacheKey key = SourceCacheKey.Create(
+                    code,
+                    version,
+                    sourceName,
+                    unitKind,
+                    usesGlobalEnvironment
+                );
 
                 if (_cache.TryGetValue(key, out LinkedListNode<LruEntry> node))
                 {
@@ -114,7 +152,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     _lruList.Remove(node);
                     _lruList.AddFirst(node);
                     result = node.Value._chunk;
-                    RememberLastHit(code, version, sourceName, result);
+                    RememberLastHit(
+                        code,
+                        version,
+                        sourceName,
+                        unitKind,
+                        usesGlobalEnvironment,
+                        result
+                    );
                     return true;
                 }
             }
@@ -142,12 +187,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             int sourceId
         )
         {
+            Store(
+                code,
+                version,
+                sourceName,
+                ScriptCompilationUnitKind.Chunk,
+                usesGlobalEnvironment: false,
+                entryPointAddress,
+                sourceId
+            );
+        }
+
+        /// <summary>
+        /// Stores a compiled product in the cache for future reuse.
+        /// </summary>
+        /// <param name="code">The Lua source code text that was compiled.</param>
+        /// <param name="version">The Lua compatibility version used to compile the source.</param>
+        /// <param name="sourceName">The explicit source name used for diagnostics, or <c>null</c> for anonymous chunks.</param>
+        /// <param name="unitKind">The kind of compilation product stored in the cache.</param>
+        /// <param name="usesGlobalEnvironment">Whether a standalone function body was compiled with an explicit global environment slot.</param>
+        /// <param name="entryPointAddress">The bytecode instruction pointer for the compiled entry point.</param>
+        /// <param name="sourceId">The source ID assigned to this chunk in the script's source list.</param>
+        /// <remarks>
+        /// If the cache has reached its maximum capacity, the least recently used entry is evicted.
+        /// </remarks>
+        internal void Store(
+            string code,
+            LuaCompatibilityVersion version,
+            string sourceName,
+            ScriptCompilationUnitKind unitKind,
+            bool usesGlobalEnvironment,
+            int entryPointAddress,
+            int sourceId
+        )
+        {
             if (_maxEntries == 0)
             {
                 return;
             }
 
-            SourceCacheKey key = SourceCacheKey.Create(code, version, sourceName);
+            SourceCacheKey key = SourceCacheKey.Create(
+                code,
+                version,
+                sourceName,
+                unitKind,
+                usesGlobalEnvironment
+            );
             CachedChunk chunk = new(entryPointAddress, sourceId);
 
             lock (_lock)
@@ -159,7 +244,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                     existingNode.Value = new LruEntry(existingNode.Value._key, chunk);
                     _lruList.Remove(existingNode);
                     _lruList.AddFirst(existingNode);
-                    RememberLastHit(code, version, sourceName, chunk);
+                    RememberLastHit(
+                        code,
+                        version,
+                        sourceName,
+                        unitKind,
+                        usesGlobalEnvironment,
+                        chunk
+                    );
                     return;
                 }
 
@@ -175,7 +267,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                 LruEntry entry = new(key, chunk);
                 LinkedListNode<LruEntry> newNode = _lruList.AddFirst(entry);
                 _cache[key] = newNode;
-                RememberLastHit(code, version, sourceName, chunk);
+                RememberLastHit(code, version, sourceName, unitKind, usesGlobalEnvironment, chunk);
             }
         }
 
@@ -193,12 +285,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsLastHit(string code, LuaCompatibilityVersion version, string sourceName)
+        private bool IsLastHit(
+            string code,
+            LuaCompatibilityVersion version,
+            string sourceName,
+            ScriptCompilationUnitKind unitKind,
+            bool usesGlobalEnvironment
+        )
         {
             // The last-hit slot is only an exact-reference shortcut. Dictionary lookup remains
             // authoritative for value-equal strings, and every store/clear must refresh it.
             return _hasLastHit
                 && _lastHitVersion == version
+                && _lastHitUnitKind == unitKind
+                && _lastHitUsesGlobalEnvironment == usesGlobalEnvironment
                 && ReferenceEquals(_lastHitCode, code)
                 && ReferenceEquals(_lastHitSourceName, sourceName);
         }
@@ -208,12 +308,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             string code,
             LuaCompatibilityVersion version,
             string sourceName,
+            ScriptCompilationUnitKind unitKind,
+            bool usesGlobalEnvironment,
             CachedChunk chunk
         )
         {
             _lastHitCode = code;
             _lastHitVersion = version;
             _lastHitSourceName = sourceName;
+            _lastHitUnitKind = unitKind;
+            _lastHitUsesGlobalEnvironment = usesGlobalEnvironment;
             _lastHitChunk = chunk;
             _hasLastHit = true;
         }
@@ -224,6 +328,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             _lastHitCode = null;
             _lastHitVersion = default;
             _lastHitSourceName = null;
+            _lastHitUnitKind = default;
+            _lastHitUsesGlobalEnvironment = false;
             _lastHitChunk = default;
         }
 
@@ -244,6 +350,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
     }
 
     /// <summary>
+    /// Identifies the bytecode shape stored in the script compilation cache.
+    /// </summary>
+    internal enum ScriptCompilationUnitKind : byte
+    {
+        /// <summary>
+        /// A full Lua chunk compiled by <see cref="Tree.FastInterface.LoaderFast.LoadChunk" />.
+        /// </summary>
+        Chunk = 0,
+
+        /// <summary>
+        /// A standalone Lua function body compiled by
+        /// <see cref="Tree.FastInterface.LoaderFast.LoadFunction" />.
+        /// </summary>
+        Function = 1,
+    }
+
+    /// <summary>
     /// Cache key for compiled source text and source name in a specific Lua compatibility mode.
     /// </summary>
     internal readonly struct SourceCacheKey : IEquatable<SourceCacheKey>
@@ -251,6 +374,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         private readonly string _code;
         private readonly LuaCompatibilityVersion _version;
         private readonly string _sourceName;
+        private readonly ScriptCompilationUnitKind _unitKind;
+        private readonly bool _usesGlobalEnvironment;
         private readonly int _hashCode;
 
         /// <summary>
@@ -266,10 +391,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             string sourceName,
             int hashCode
         )
+            : this(
+                code,
+                version,
+                sourceName,
+                ScriptCompilationUnitKind.Chunk,
+                usesGlobalEnvironment: false,
+                hashCode
+            ) { }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SourceCacheKey"/> struct.
+        /// </summary>
+        /// <param name="code">The Lua source code text.</param>
+        /// <param name="version">The Lua compatibility version used for compilation.</param>
+        /// <param name="sourceName">The explicit source name used for diagnostics, or <c>null</c> for anonymous chunks.</param>
+        /// <param name="unitKind">The kind of compilation product stored in the cache.</param>
+        /// <param name="usesGlobalEnvironment">Whether a standalone function body was compiled with an explicit global environment slot.</param>
+        /// <param name="hashCode">The precomputed hash code.</param>
+        internal SourceCacheKey(
+            string code,
+            LuaCompatibilityVersion version,
+            string sourceName,
+            ScriptCompilationUnitKind unitKind,
+            bool usesGlobalEnvironment,
+            int hashCode
+        )
         {
             _code = code;
             _version = version;
             _sourceName = sourceName;
+            _unitKind = unitKind;
+            _usesGlobalEnvironment = usesGlobalEnvironment;
             _hashCode = hashCode;
         }
 
@@ -286,11 +439,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             string sourceName
         )
         {
+            return Create(
+                code,
+                version,
+                sourceName,
+                ScriptCompilationUnitKind.Chunk,
+                usesGlobalEnvironment: false
+            );
+        }
+
+        /// <summary>
+        /// Creates a cache key for the specified source text, compatibility version, source name,
+        /// and compilation shape.
+        /// </summary>
+        /// <param name="code">The Lua source code text.</param>
+        /// <param name="version">The Lua compatibility version used for compilation.</param>
+        /// <param name="sourceName">The explicit source name used for diagnostics, or <c>null</c> for anonymous chunks.</param>
+        /// <param name="unitKind">The kind of compilation product stored in the cache.</param>
+        /// <param name="usesGlobalEnvironment">Whether a standalone function body was compiled with an explicit global environment slot.</param>
+        /// <returns>A cache key with a precomputed hash code.</returns>
+        internal static SourceCacheKey Create(
+            string code,
+            LuaCompatibilityVersion version,
+            string sourceName,
+            ScriptCompilationUnitKind unitKind,
+            bool usesGlobalEnvironment
+        )
+        {
             return new SourceCacheKey(
                 code,
                 version,
                 sourceName,
-                HashCodeHelper.HashCode(code, version, sourceName)
+                unitKind,
+                usesGlobalEnvironment,
+                HashCodeHelper.HashCode(code, version, sourceName, unitKind, usesGlobalEnvironment)
             );
         }
 
@@ -303,6 +485,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         {
             return _hashCode == other._hashCode
                 && _version == other._version
+                && _unitKind == other._unitKind
+                && _usesGlobalEnvironment == other._usesGlobalEnvironment
                 && string.Equals(_code, other._code, StringComparison.Ordinal)
                 && string.Equals(_sourceName, other._sourceName, StringComparison.Ordinal);
         }

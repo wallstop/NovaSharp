@@ -806,7 +806,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
 
             string val = fi.GetValue(o) as string;
 
-            DynValue fn = table.OwnerScript.LoadFunction(val, table, scriptField.PrimaryName);
+            DynValue fn = table.OwnerScript.LoadFunctionWithoutCompilationCache(
+                val,
+                table,
+                scriptField.PrimaryName
+            );
 
             string[] names = scriptField.Names;
             for (int i = 0; i < names.Length; i++)
