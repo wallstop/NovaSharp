@@ -12,4 +12,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         ScriptExecutionContext executionContext,
         CallbackArgumentsView args
     );
+
+    /// <summary>
+    /// Represents an opt-in CLR callback that receives a stack-only argument view without requiring
+    /// a <see cref="ScriptExecutionContext"/>.
+    /// </summary>
+    /// <param name="args">The callback arguments.</param>
+    /// <returns>The Lua value returned by the callback.</returns>
+    public delegate DynValue ScriptFunctionCallbackViewNoContext(CallbackArgumentsView args);
 }

@@ -84,6 +84,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             /// <param name="names">Precomputed Lua aliases for callback methods.</param>
             /// <param name="legacyCallback">Cached legacy callback delegate, when applicable.</param>
             /// <param name="argumentViewCallback">Cached argument-view callback delegate, when applicable.</param>
+            /// <param name="argumentViewNoContextCallback">Cached contextless argument-view callback delegate, when applicable.</param>
             /// <param name="init">Cached module init delegate, when applicable.</param>
             public ModuleMethodRegistration(
                 ModuleRegistrationActionKind kind,
@@ -92,6 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 string[] names,
                 Func<ScriptExecutionContext, CallbackArguments, DynValue> legacyCallback,
                 ScriptFunctionCallbackView argumentViewCallback,
+                ScriptFunctionCallbackViewNoContext argumentViewNoContextCallback,
                 Action<Table, Table> init
             )
             {
@@ -101,6 +103,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 Names = names;
                 LegacyCallback = legacyCallback;
                 ArgumentViewCallback = argumentViewCallback;
+                ArgumentViewNoContextCallback = argumentViewNoContextCallback;
                 Init = init;
             }
 
@@ -133,6 +136,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             /// Gets the cached argument-view callback delegate, when applicable.
             /// </summary>
             public ScriptFunctionCallbackView ArgumentViewCallback { get; }
+
+            /// <summary>
+            /// Gets the cached contextless argument-view callback delegate, when applicable.
+            /// </summary>
+            public ScriptFunctionCallbackViewNoContext ArgumentViewNoContextCallback { get; }
 
             /// <summary>
             /// Gets the cached module init delegate, when applicable.
@@ -440,7 +448,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                     continue;
                 }
 
-                if (action.ArgumentViewCallback == null && action.LegacyCallback == null)
+                if (
+                    action.ArgumentViewCallback == null
+                    && action.ArgumentViewNoContextCallback == null
+                    && action.LegacyCallback == null
+                )
                 {
                     throw new ArgumentException(
                         ZString.Concat(
@@ -452,6 +464,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 }
 
                 string[] names = action.Names;
+                if (action.ArgumentViewNoContextCallback != null)
+                {
+                    for (int nameIndex = 0; nameIndex < names.Length; nameIndex++)
+                    {
+                        string name = names[nameIndex];
+                        table.Set(
+                            name,
+                            DynValue.NewCallbackView(action.ArgumentViewNoContextCallback, name)
+                        );
+                    }
+                    continue;
+                }
+
                 if (action.ArgumentViewCallback != null)
                 {
                     for (int nameIndex = 0; nameIndex < names.Length; nameIndex++)
@@ -530,6 +555,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                         methodAttributes[0];
                     LuaCompatibilityAttribute compatibility =
                         mi.GetCustomAttribute<LuaCompatibilityAttribute>();
+                    bool hasArgumentViewNoContextSignature =
+                        CallbackFunction.CheckArgumentViewNoContextCallbackSignature(mi, true);
                     bool hasArgumentViewSignature =
                         CallbackFunction.CheckArgumentViewCallbackSignature(mi, true);
                     bool hasLegacySignature = CallbackFunction.CheckLegacyCallbackSignature(
@@ -537,9 +564,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                         true
                     );
                     ScriptFunctionCallbackView viewFunc = null;
+                    ScriptFunctionCallbackViewNoContext viewNoContextFunc = null;
                     Func<ScriptExecutionContext, CallbackArguments, DynValue> func = null;
 
-                    if (hasArgumentViewSignature)
+                    if (hasArgumentViewNoContextSignature)
+                    {
+                        viewNoContextFunc = CreateArgumentViewNoContextCallback(mi);
+                    }
+                    else if (hasArgumentViewSignature)
                     {
                         viewFunc = CreateArgumentViewCallback(mi);
                     }
@@ -556,6 +588,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                             GetModuleNameVariants(attr.Name, mi.Name),
                             func,
                             viewFunc,
+                            viewNoContextFunc,
                             null
                         )
                     );
@@ -570,6 +603,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                             mi,
                             null,
                             Array.Empty<string>(),
+                            null,
                             null,
                             null,
                             CreateModuleInit(mi)
@@ -663,6 +697,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
 #endif
 
             return (ScriptFunctionCallbackView)viewDeleg;
+        }
+
+        private static ScriptFunctionCallbackViewNoContext CreateArgumentViewNoContextCallback(
+            MethodInfo mi
+        )
+        {
+#if NETFX_CORE
+            Delegate viewDeleg = mi.CreateDelegate(typeof(ScriptFunctionCallbackViewNoContext));
+#else
+            Delegate viewDeleg = Delegate.CreateDelegate(
+                typeof(ScriptFunctionCallbackViewNoContext),
+                mi
+            );
+#endif
+
+            return (ScriptFunctionCallbackViewNoContext)viewDeleg;
         }
 
         private static Func<

@@ -616,6 +616,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Creates a new writable value initialized to a CLR callback that receives a stack-only
+        /// argument view and does not require a script execution context.
+        /// </summary>
+        public static DynValue NewCallbackView(
+            ScriptFunctionCallbackViewNoContext callBack,
+            string name = null
+        )
+        {
+            return new DynValue()
+            {
+                _object = CallbackFunction.FromArgumentView(callBack, name),
+                _type = DataType.ClrFunction,
+            };
+        }
+
+        /// <summary>
         /// Creates a new writable value initialized to the specified CLR callback.
         /// See also CallbackFunction.FromDelegate and CallbackFunction.FromMethodInfo factory methods.
         /// </summary>

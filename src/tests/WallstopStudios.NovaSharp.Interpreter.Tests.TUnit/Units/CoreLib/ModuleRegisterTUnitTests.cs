@@ -117,6 +117,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task RegisterModuleTypeAcceptsNoContextArgumentViewCallbacks(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModules.Basic);
+            Table globals = script.Globals;
+
+            globals.RegisterModuleType(typeof(ArgumentViewNoContextModule));
+
+            DynValue result = script.DoString(
+                "return argument_view_no_context_probe.count(1, 2, 3, 4)"
+            );
+
+            await Assert.That(result.Number).IsEqualTo(4d);
+        }
+
+        [global::TUnit.Core.Test]
         [Arguments(LuaCompatibilityVersion.Lua51, "getfenv ~= nil", true)]
         [Arguments(LuaCompatibilityVersion.Lua52, "getfenv ~= nil", false)]
         [Arguments(LuaCompatibilityVersion.Lua52, "bit32 ~= nil", true)]
@@ -283,6 +301,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
         {
             [NovaSharpModuleMethod(Name = "count")]
             public static DynValue Count(ScriptExecutionContext context, CallbackArgumentsView args)
+            {
+                return DynValue.NewNumber(args.Count);
+            }
+        }
+
+        [NovaSharpModule(Namespace = "argument_view_no_context_probe")]
+        private static class ArgumentViewNoContextModule
+        {
+            [NovaSharpModuleMethod(Name = "count")]
+            public static DynValue Count(CallbackArgumentsView args)
             {
                 return DynValue.NewNumber(args.Count);
             }

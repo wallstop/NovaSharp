@@ -14,6 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     {
         private static InteropAccessMode DefaultAccessModeValue = InteropAccessMode.LazyOptimized;
         private readonly ScriptFunctionCallbackView _argumentViewCallback;
+        private readonly ScriptFunctionCallbackViewNoContext _argumentViewNoContextCallback;
 
         /// <summary>
         /// Gets the name of the function
@@ -68,6 +69,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             Name = name;
         }
 
+        private CallbackFunction(ScriptFunctionCallbackViewNoContext callBack, string name)
+        {
+            if (callBack == null)
+            {
+                throw new ArgumentNullException(nameof(callBack));
+            }
+
+            _argumentViewNoContextCallback = callBack;
+            ClrCallback = InvokeArgumentViewCallback;
+            Name = name;
+        }
+
         /// <summary>
         /// Creates a callback function that receives a stack-only argument view.
         /// </summary>
@@ -82,9 +95,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return new CallbackFunction(callBack, name);
         }
 
+        /// <summary>
+        /// Creates a callback function that receives a stack-only argument view without requiring
+        /// a script execution context.
+        /// </summary>
+        /// <param name="callBack">The callback function to be called.</param>
+        /// <param name="name">The callback name, used in stacktraces, debugger, etc..</param>
+        /// <returns>The callback function.</returns>
+        public static CallbackFunction FromArgumentView(
+            ScriptFunctionCallbackViewNoContext callBack,
+            string name = null
+        )
+        {
+            return new CallbackFunction(callBack, name);
+        }
+
         internal bool HasArgumentViewCallback
         {
-            get { return _argumentViewCallback != null; }
+            get { return _argumentViewCallback != null || _argumentViewNoContextCallback != null; }
+        }
+
+        internal bool HasArgumentViewNoContextCallback
+        {
+            get { return _argumentViewNoContextCallback != null; }
         }
 
         /// <summary>
@@ -117,15 +150,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 isMethodCall
             );
 
-            if (_argumentViewCallback != null)
+            if (HasArgumentViewCallback)
             {
-                return _argumentViewCallback(
+                return InvokeArgumentViewCallback(
                     executionContext,
                     new CallbackArgumentsView(args, isMethodCall)
                 );
             }
 
             return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes the callback function, creating a dynamic context only when the callback
+        /// contract requires one.
+        /// </summary>
+        internal DynValue Invoke(Script script, IList<DynValue> args, bool isMethodCall = false)
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return Invoke(script.CreateDynamicExecutionContext(this), args, isMethodCall);
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                script,
+                args.Count,
+                args.Count > 0 ? args[0] : null,
+                isMethodCall
+            );
+
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(args, isMethodCall));
         }
 
         /// <summary>
@@ -137,7 +196,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 0, null, isMethodCall);
-            return _argumentViewCallback(executionContext, new CallbackArgumentsView(isMethodCall));
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with no arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(Script script, bool isMethodCall = false)
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 0, null, isMethodCall);
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(isMethodCall));
         }
 
         /// <summary>
@@ -150,10 +229,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 1, arg, isMethodCall);
-            return _argumentViewCallback(
+            return InvokeArgumentViewCallback(
                 executionContext,
                 new CallbackArgumentsView(arg, isMethodCall)
             );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with one fixed argument.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 1, arg, isMethodCall);
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(arg, isMethodCall));
         }
 
         /// <summary>
@@ -167,8 +268,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 2, arg1, isMethodCall);
-            return _argumentViewCallback(
+            return InvokeArgumentViewCallback(
                 executionContext,
+                new CallbackArgumentsView(arg1, arg2, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with two fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 2, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
                 new CallbackArgumentsView(arg1, arg2, isMethodCall)
             );
         }
@@ -185,8 +312,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 3, arg1, isMethodCall);
-            return _argumentViewCallback(
+            return InvokeArgumentViewCallback(
                 executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with three fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 3, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
                 new CallbackArgumentsView(arg1, arg2, arg3, isMethodCall)
             );
         }
@@ -204,8 +359,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 4, arg1, isMethodCall);
-            return _argumentViewCallback(
+            return InvokeArgumentViewCallback(
                 executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with four fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 4, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
                 new CallbackArgumentsView(arg1, arg2, arg3, arg4, isMethodCall)
             );
         }
@@ -224,8 +409,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 5, arg1, isMethodCall);
-            return _argumentViewCallback(
+            return InvokeArgumentViewCallback(
                 executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with five fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 5, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
                 new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, isMethodCall)
             );
         }
@@ -245,8 +462,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 6, arg1, isMethodCall);
-            return _argumentViewCallback(
+            return InvokeArgumentViewCallback(
                 executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with six fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 6, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
                 new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, isMethodCall)
             );
         }
@@ -267,8 +518,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             isMethodCall = NormalizeMethodCall(executionContext, 7, arg1, isMethodCall);
-            return _argumentViewCallback(
+            return InvokeArgumentViewCallback(
                 executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, arg7, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with seven fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    arg7,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 7, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
                 new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, arg7, isMethodCall)
             );
         }
@@ -310,8 +597,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 count > 0 ? args[offset] : null,
                 isMethodCall
             );
-            return _argumentViewCallback(
+            return InvokeArgumentViewCallback(
                 executionContext,
+                new CallbackArgumentsView(args, offset, count, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with a subrange of stack-backed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewStack(
+            Script script,
+            IList<DynValue> args,
+            int offset,
+            int count,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewStack(
+                    script.CreateDynamicExecutionContext(this),
+                    args,
+                    offset,
+                    count,
+                    isMethodCall
+                );
+            }
+
+            ValidateStackRange(args, offset, count);
+
+            isMethodCall = NormalizeMethodCall(
+                script,
+                count,
+                count > 0 ? args[offset] : null,
+                isMethodCall
+            );
+            return _argumentViewNoContextCallback(
                 new CallbackArgumentsView(args, offset, count, isMethodCall)
             );
         }
@@ -336,10 +658,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 args.Length > 0 ? args[0] : null,
                 isMethodCall
             );
-            return _argumentViewCallback(
+            return InvokeArgumentViewCallback(
                 executionContext,
                 new CallbackArgumentsView(args, isMethodCall)
             );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with caller-owned contiguous arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewSpan(
+            Script script,
+            ReadOnlySpan<DynValue> args,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewSpan(
+                    script.CreateDynamicExecutionContext(this),
+                    args,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                script,
+                args.Length,
+                args.Length > 0 ? args[0] : null,
+                isMethodCall
+            );
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(args, isMethodCall));
         }
 
         /// <summary>
@@ -593,7 +942,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             CallbackArguments args
         )
         {
-            return _argumentViewCallback(executionContext, new CallbackArgumentsView(args));
+            return InvokeArgumentViewCallback(executionContext, new CallbackArgumentsView(args));
+        }
+
+        private DynValue InvokeArgumentViewCallback(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
+            if (_argumentViewCallback != null)
+            {
+                return _argumentViewCallback(executionContext, args);
+            }
+
+            return _argumentViewNoContextCallback(args);
         }
 
         private static bool NormalizeMethodCall(
@@ -618,6 +980,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 .Options
                 .ColonOperatorClrCallbackBehaviour;
 
+            return NormalizeMethodCall(colon, count, firstArgument, isMethodCall);
+        }
+
+        private static bool NormalizeMethodCall(
+            Script script,
+            int count,
+            DynValue firstArgument,
+            bool isMethodCall
+        )
+        {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            ColonOperatorBehaviour colon = script.Options.ColonOperatorClrCallbackBehaviour;
+
+            return NormalizeMethodCall(colon, count, firstArgument, isMethodCall);
+        }
+
+        private static bool NormalizeMethodCall(
+            ColonOperatorBehaviour colon,
+            int count,
+            DynValue firstArgument,
+            bool isMethodCall
+        )
+        {
+            if (!isMethodCall)
+            {
+                return false;
+            }
+
             if (colon == ColonOperatorBehaviour.TreatAsColon)
             {
                 return false;
@@ -629,6 +1023,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             return isMethodCall;
+        }
+
+        private static void ValidateStackRange(IList<DynValue> args, int offset, int count)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (offset < 0 || offset > args.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            }
+
+            if (count < 0 || count > args.Count - offset)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
         }
 
         /// <summary>
@@ -744,7 +1156,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             return CheckLegacyCallbackSignature(mi, requirePublicVisibility)
-                || CheckArgumentViewCallbackSignature(mi, requirePublicVisibility);
+                || CheckArgumentViewCallbackSignature(mi, requirePublicVisibility)
+                || CheckArgumentViewNoContextCallbackSignature(mi, requirePublicVisibility);
         }
 
         /// <summary>
@@ -775,6 +1188,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 requirePublicVisibility,
                 typeof(CallbackArgumentsView)
             );
+        }
+
+        /// <summary>
+        /// Checks whether a method has the contextless argument-view callback signature.
+        /// </summary>
+        internal static bool CheckArgumentViewNoContextCallbackSignature(
+            System.Reflection.MethodInfo mi,
+            bool requirePublicVisibility
+        )
+        {
+            if (mi == null)
+            {
+                throw new ArgumentNullException(nameof(mi));
+            }
+
+            System.Reflection.ParameterInfo[] pi = mi.GetParameters();
+
+            return pi.Length == 1
+                && pi[0].ParameterType == typeof(CallbackArgumentsView)
+                && mi.ReturnType == typeof(DynValue)
+                && (requirePublicVisibility || mi.IsPublic);
         }
 
         private static bool CheckCallbackSignatureCore(

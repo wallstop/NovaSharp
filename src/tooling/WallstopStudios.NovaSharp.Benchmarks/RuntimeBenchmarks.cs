@@ -164,6 +164,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _sevenArgFunction = DynValue.Nil;
         private DynValue _callableLuaTable = DynValue.Nil;
         private DynValue _callableCallbackViewTable = DynValue.Nil;
+        private DynValue _callableNoContextCallbackViewTable = DynValue.Nil;
         private DynValue _coroutineFunction = DynValue.Nil;
         private DynValue _fourArgCoroutineFunction = DynValue.Nil;
         private DynValue _fiveArgCoroutineFunction = DynValue.Nil;
@@ -231,6 +232,14 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             callableCallbackMeta.Set("__call", DynValue.NewCallbackView((_, args) => args[5]));
             callableCallbackTable.MetaTable = callableCallbackMeta;
             _callableCallbackViewTable = DynValue.NewTable(callableCallbackTable);
+            Table callableNoContextCallbackTable = new(_script);
+            Table callableNoContextCallbackMeta = new(_script);
+            callableNoContextCallbackMeta.Set(
+                "__call",
+                DynValue.NewCallbackView((CallbackArgumentsView args) => args[5])
+            );
+            callableNoContextCallbackTable.MetaTable = callableNoContextCallbackMeta;
+            _callableNoContextCallbackViewTable = DynValue.NewTable(callableNoContextCallbackTable);
             _coroutineFunction = _script.DoString(
                 "return function(a, b, c) while true do a, b, c = coroutine.yield(c) end end"
             );
@@ -410,6 +419,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Host Call: callable table 5 DynValues (CLR __call)")]
         public DynValue CallCallableCallbackViewTableFiveDynValues() =>
             _script.Call(_callableCallbackViewTable, _first, _second, _third, _fourth, _fifth);
+
+        /// <summary>
+        /// Calls a contextless CLR callback-view callable table with five pre-created DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "Host Call: callable table 5 DynValues (CLR __call no context)")]
+        public DynValue CallCallableNoContextCallbackViewTableFiveDynValues() =>
+            _script.Call(
+                _callableNoContextCallbackViewTable,
+                _first,
+                _second,
+                _third,
+                _fourth,
+                _fifth
+            );
 
         /// <summary>
         /// Calls a Lua closure through the params-array overload for comparison with fixed overloads.
@@ -955,6 +978,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private Script _script;
         private DynValue _legacyCallback = DynValue.Nil;
         private DynValue _viewCallback = DynValue.Nil;
+        private DynValue _viewNoContextCallback = DynValue.Nil;
         private DynValue _first = DynValue.Nil;
         private DynValue _second = DynValue.Nil;
         private DynValue _third = DynValue.Nil;
@@ -973,6 +997,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script = new Script(CoreModulePresets.Complete);
             _legacyCallback = DynValue.NewCallback((_, args) => args[args.Count - 1]);
             _viewCallback = DynValue.NewCallbackView((_, args) => args[args.Count - 1]);
+            _viewNoContextCallback = DynValue.NewCallbackView(
+                (CallbackArgumentsView args) => args[args.Count - 1]
+            );
             _first = DynValue.NewNumber(1d);
             _second = DynValue.NewNumber(2d);
             _third = DynValue.NewNumber(3d);
@@ -998,6 +1025,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_viewCallback, _first, _second, _third);
 
         /// <summary>
+        /// Calls a contextless argument-view CLR callback with three fixed DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View NoContext Call: 3 fixed DynValues")]
+        public DynValue CallViewNoContextThreeDynValues() =>
+            _script.Call(_viewNoContextCallback, _first, _second, _third);
+
+        /// <summary>
         /// Calls a legacy CLR callback through the params-array overload with three DynValue arguments.
         /// </summary>
         [Benchmark(Description = "CLR Callback Legacy Call: params 3 DynValues")]
@@ -1010,6 +1044,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "CLR Callback View Call: params 3 DynValues")]
         public DynValue CallViewThreeDynValuesParamsArray() =>
             _script.Call(_viewCallback, new DynValue[] { _first, _second, _third });
+
+        /// <summary>
+        /// Calls a contextless argument-view CLR callback through the params-array overload with three DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View NoContext Call: params 3 DynValues")]
+        public DynValue CallViewNoContextThreeDynValuesParamsArray() =>
+            _script.Call(_viewNoContextCallback, new DynValue[] { _first, _second, _third });
 
         /// <summary>
         /// Calls a legacy CLR callback with three DynValues from caller-owned contiguous storage.
@@ -1026,6 +1067,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_viewCallback, _threeDynValueArgs.AsSpan());
 
         /// <summary>
+        /// Calls a contextless argument-view CLR callback with three DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View NoContext Call: span 3 DynValues")]
+        public DynValue CallViewNoContextThreeDynValuesSpan() =>
+            _script.Call(_viewNoContextCallback, _threeDynValueArgs.AsSpan());
+
+        /// <summary>
         /// Calls a legacy CLR callback with four fixed DynValue arguments.
         /// </summary>
         [Benchmark(Description = "CLR Callback Legacy Call: 4 fixed DynValues")]
@@ -1038,6 +1086,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "CLR Callback View Call: 4 fixed DynValues")]
         public DynValue CallViewFourDynValues() =>
             _script.Call(_viewCallback, _first, _second, _third, _fourth);
+
+        /// <summary>
+        /// Calls a contextless argument-view CLR callback with four fixed DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View NoContext Call: 4 fixed DynValues")]
+        public DynValue CallViewNoContextFourDynValues() =>
+            _script.Call(_viewNoContextCallback, _first, _second, _third, _fourth);
 
         /// <summary>
         /// Calls a legacy CLR callback through the params-array overload with four DynValue arguments.
@@ -1054,6 +1109,16 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_viewCallback, new DynValue[] { _first, _second, _third, _fourth });
 
         /// <summary>
+        /// Calls a contextless argument-view CLR callback through the params-array overload with four DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View NoContext Call: params 4 DynValues")]
+        public DynValue CallViewNoContextFourDynValuesParamsArray() =>
+            _script.Call(
+                _viewNoContextCallback,
+                new DynValue[] { _first, _second, _third, _fourth }
+            );
+
+        /// <summary>
         /// Calls a legacy CLR callback with four DynValues from caller-owned contiguous storage.
         /// </summary>
         [Benchmark(Description = "CLR Callback Legacy Call: span 4 DynValues")]
@@ -1068,6 +1133,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_viewCallback, _fourDynValueArgs.AsSpan());
 
         /// <summary>
+        /// Calls a contextless argument-view CLR callback with four DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View NoContext Call: span 4 DynValues")]
+        public DynValue CallViewNoContextFourDynValuesSpan() =>
+            _script.Call(_viewNoContextCallback, _fourDynValueArgs.AsSpan());
+
+        /// <summary>
         /// Calls a legacy CLR callback with five fixed DynValue arguments.
         /// </summary>
         [Benchmark(Description = "CLR Callback Legacy Call: 5 fixed DynValues")]
@@ -1080,6 +1152,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "CLR Callback View Call: 5 fixed DynValues")]
         public DynValue CallViewFiveDynValues() =>
             _script.Call(_viewCallback, _first, _second, _third, _fourth, _fifth);
+
+        /// <summary>
+        /// Calls a contextless argument-view CLR callback with five fixed DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View NoContext Call: 5 fixed DynValues")]
+        public DynValue CallViewNoContextFiveDynValues() =>
+            _script.Call(_viewNoContextCallback, _first, _second, _third, _fourth, _fifth);
 
         /// <summary>
         /// Calls a legacy CLR callback through the params-array overload with five DynValue arguments.
@@ -1102,6 +1181,16 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             );
 
         /// <summary>
+        /// Calls a contextless argument-view CLR callback through the params-array overload with five DynValue arguments.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View NoContext Call: params 5 DynValues")]
+        public DynValue CallViewNoContextFiveDynValuesParamsArray() =>
+            _script.Call(
+                _viewNoContextCallback,
+                new DynValue[] { _first, _second, _third, _fourth, _fifth }
+            );
+
+        /// <summary>
         /// Calls a legacy CLR callback with five DynValues from caller-owned contiguous storage.
         /// </summary>
         [Benchmark(Description = "CLR Callback Legacy Call: span 5 DynValues")]
@@ -1114,6 +1203,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "CLR Callback View Call: span 5 DynValues")]
         public DynValue CallViewFiveDynValuesSpan() =>
             _script.Call(_viewCallback, _fiveDynValueArgs.AsSpan());
+
+        /// <summary>
+        /// Calls a contextless argument-view CLR callback with five DynValues from caller-owned contiguous storage.
+        /// </summary>
+        [Benchmark(Description = "CLR Callback View NoContext Call: span 5 DynValues")]
+        public DynValue CallViewNoContextFiveDynValuesSpan() =>
+            _script.Call(_viewNoContextCallback, _fiveDynValueArgs.AsSpan());
     }
 
     /// <summary>
@@ -1213,10 +1309,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private Script _script;
         private DynValue _legacyThree = DynValue.Nil;
         private DynValue _viewThree = DynValue.Nil;
+        private DynValue _viewNoContextThree = DynValue.Nil;
         private DynValue _legacyFour = DynValue.Nil;
         private DynValue _viewFour = DynValue.Nil;
+        private DynValue _viewNoContextFour = DynValue.Nil;
         private DynValue _legacyFive = DynValue.Nil;
         private DynValue _viewFive = DynValue.Nil;
+        private DynValue _viewNoContextFive = DynValue.Nil;
         private DynValue _legacySpanProbeFour = DynValue.Nil;
 
         /// <summary>
@@ -1228,6 +1327,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script = new Script(CoreModulePresets.Complete);
             _script.Globals["legacy"] = DynValue.NewCallback((_, args) => args[args.Count - 1]);
             _script.Globals["view"] = DynValue.NewCallbackView((_, args) => args[args.Count - 1]);
+            _script.Globals["viewNoContext"] = DynValue.NewCallbackView(
+                (CallbackArgumentsView args) => args[args.Count - 1]
+            );
             _script.Globals["legacySpanProbe"] = DynValue.NewCallback(
                 (_, args) =>
                     args.TryGetSpan(out ReadOnlySpan<DynValue> span)
@@ -1236,10 +1338,19 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             );
             _legacyThree = _script.DoString("return function() return legacy(1, 2, 3) end");
             _viewThree = _script.DoString("return function() return view(1, 2, 3) end");
+            _viewNoContextThree = _script.DoString(
+                "return function() return viewNoContext(1, 2, 3) end"
+            );
             _legacyFour = _script.DoString("return function() return legacy(1, 2, 3, 4) end");
             _viewFour = _script.DoString("return function() return view(1, 2, 3, 4) end");
+            _viewNoContextFour = _script.DoString(
+                "return function() return viewNoContext(1, 2, 3, 4) end"
+            );
             _legacyFive = _script.DoString("return function() return legacy(1, 2, 3, 4, 5) end");
             _viewFive = _script.DoString("return function() return view(1, 2, 3, 4, 5) end");
+            _viewNoContextFive = _script.DoString(
+                "return function() return viewNoContext(1, 2, 3, 4, 5) end"
+            );
             _legacySpanProbeFour = _script.DoString(
                 "return function() return legacySpanProbe(1, 2, 3, 4) end"
             );
@@ -1258,6 +1369,12 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public DynValue CallViewThreeArgs() => _script.Call(_viewThree);
 
         /// <summary>
+        /// Runs Lua bytecode that calls a contextless argument-view CLR callback with three arguments.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback View NoContext: 3 args")]
+        public DynValue CallViewNoContextThreeArgs() => _script.Call(_viewNoContextThree);
+
+        /// <summary>
         /// Runs Lua bytecode that calls a legacy CLR callback with four arguments.
         /// </summary>
         [Benchmark(Description = "Lua to CLR Callback Legacy: 4 args")]
@@ -1270,6 +1387,12 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public DynValue CallViewFourArgs() => _script.Call(_viewFour);
 
         /// <summary>
+        /// Runs Lua bytecode that calls a contextless argument-view CLR callback with four arguments.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback View NoContext: 4 args")]
+        public DynValue CallViewNoContextFourArgs() => _script.Call(_viewNoContextFour);
+
+        /// <summary>
         /// Runs Lua bytecode that calls a legacy CLR callback with five arguments.
         /// </summary>
         [Benchmark(Description = "Lua to CLR Callback Legacy: 5 args")]
@@ -1280,6 +1403,12 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Lua to CLR Callback View: 5 args")]
         public DynValue CallViewFiveArgs() => _script.Call(_viewFive);
+
+        /// <summary>
+        /// Runs Lua bytecode that calls a contextless argument-view CLR callback with five arguments.
+        /// </summary>
+        [Benchmark(Description = "Lua to CLR Callback View NoContext: 5 args")]
+        public DynValue CallViewNoContextFiveArgs() => _script.Call(_viewNoContextFive);
 
         /// <summary>
         /// Runs Lua bytecode that calls a legacy CLR callback and consumes the VM-backed argument span.

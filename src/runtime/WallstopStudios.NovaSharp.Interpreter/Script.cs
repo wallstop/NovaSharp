@@ -2021,9 +2021,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
-                return function.Callback.InvokeArgumentViewFixed(
-                    CreateDynamicExecutionContext(function.Callback)
-                );
+                return function.Callback.InvokeArgumentViewFixed(this);
             }
 
             if (function.Type == DataType.ClrFunction)
@@ -2057,10 +2055,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
-                return function.Callback.InvokeArgumentViewFixed(
-                    CreateDynamicExecutionContext(function.Callback),
-                    arg
-                );
+                return function.Callback.InvokeArgumentViewFixed(this, arg);
             }
 
             if (function.Type == DataType.ClrFunction)
@@ -2105,11 +2100,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
-                return function.Callback.InvokeArgumentViewFixed(
-                    CreateDynamicExecutionContext(function.Callback),
-                    arg1,
-                    arg2
-                );
+                return function.Callback.InvokeArgumentViewFixed(this, arg1, arg2);
             }
 
             if (function.Type == DataType.ClrFunction)
@@ -2157,12 +2148,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
-                return function.Callback.InvokeArgumentViewFixed(
-                    CreateDynamicExecutionContext(function.Callback),
-                    arg1,
-                    arg2,
-                    arg3
-                );
+                return function.Callback.InvokeArgumentViewFixed(this, arg1, arg2, arg3);
             }
 
             if (function.Type == DataType.ClrFunction)
@@ -2220,13 +2206,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
-                return function.Callback.InvokeArgumentViewFixed(
-                    CreateDynamicExecutionContext(function.Callback),
-                    arg1,
-                    arg2,
-                    arg3,
-                    arg4
-                );
+                return function.Callback.InvokeArgumentViewFixed(this, arg1, arg2, arg3, arg4);
             }
 
             if (function.Type == DataType.ClrFunction)
@@ -2295,7 +2275,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
                 return function.Callback.InvokeArgumentViewFixed(
-                    CreateDynamicExecutionContext(function.Callback),
+                    this,
                     arg1,
                     arg2,
                     arg3,
@@ -2375,7 +2355,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
                 return function.Callback.InvokeArgumentViewFixed(
-                    CreateDynamicExecutionContext(function.Callback),
+                    this,
                     arg1,
                     arg2,
                     arg3,
@@ -2461,7 +2441,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
             {
                 return function.Callback.InvokeArgumentViewFixed(
-                    CreateDynamicExecutionContext(function.Callback),
+                    this,
                     arg1,
                     arg2,
                     arg3,
@@ -2571,12 +2551,12 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction)
             {
-                ScriptExecutionContext context = CreateDynamicExecutionContext(function.Callback);
                 if (function.Callback.HasArgumentViewCallback)
                 {
-                    return function.Callback.InvokeArgumentViewSpan(context, args);
+                    return function.Callback.InvokeArgumentViewSpan(this, args);
                 }
 
+                ScriptExecutionContext context = CreateDynamicExecutionContext(function.Callback);
                 return function.Callback.InvokeLegacySpan(context, args);
             }
 
@@ -2687,10 +2667,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.ClrFunction)
             {
-                return function.Callback.Invoke(
-                    CreateDynamicExecutionContext(function.Callback),
-                    args
-                );
+                return function.Callback.Invoke(this, args);
             }
 
             if (args.Length == 0)
@@ -2791,11 +2768,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         {
             if (function.Type == DataType.ClrFunction)
             {
-                ScriptExecutionContext context = CreateDynamicExecutionContext(function.Callback);
                 if (function.Callback.HasArgumentViewCallback)
                 {
                     return function.Callback.InvokeArgumentViewFixed(
-                        context,
+                        this,
                         arg1,
                         arg2,
                         arg3,
@@ -2805,6 +2781,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     );
                 }
 
+                ScriptExecutionContext context = CreateDynamicExecutionContext(function.Callback);
                 return function.Callback.InvokeLegacyFixed(
                     context,
                     arg1,
@@ -2844,11 +2821,10 @@ namespace WallstopStudios.NovaSharp.Interpreter
         {
             if (function.Type == DataType.ClrFunction)
             {
-                ScriptExecutionContext context = CreateDynamicExecutionContext(function.Callback);
                 if (function.Callback.HasArgumentViewCallback)
                 {
                     return function.Callback.InvokeArgumentViewFixed(
-                        context,
+                        this,
                         arg1,
                         arg2,
                         arg3,
@@ -2859,6 +2835,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     );
                 }
 
+                ScriptExecutionContext context = CreateDynamicExecutionContext(function.Callback);
                 return function.Callback.InvokeLegacyFixed(
                     context,
                     arg1,

@@ -33,7 +33,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             List<DynValue> arguments = new() { DynValue.NewNumber(1) };
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
-                function.Invoke(null, arguments)
+                function.Invoke((ScriptExecutionContext)null, arguments)
             );
 
             await Assert
@@ -152,6 +152,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             List<DynValue> userDataArgs = new() { userData };
 
             function.Invoke(context, userDataArgs, isMethodCall: true);
+            await Assert.That(capturedIsMethodCall).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InvokeNoContextArgumentViewTreatsMethodCallsOnlyForUserDataUnderDotBehaviour()
+        {
+            Script script = new();
+            script.Options.ColonOperatorClrCallbackBehaviour =
+                ColonOperatorBehaviour.TreatAsDotOnUserData;
+
+            bool? capturedIsMethodCall = null;
+            CallbackFunction function = CallbackFunction.FromArgumentView(
+                (CallbackArgumentsView args) =>
+                {
+                    capturedIsMethodCall = args.IsMethodCall;
+                    return DynValue.Nil;
+                }
+            );
+
+            List<DynValue> nilSelf = new() { null };
+            function.Invoke(script, nilSelf, isMethodCall: true);
+            await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
+
+            List<DynValue> nonUserData = new() { DynValue.NewString("self") };
+            function.Invoke(script, nonUserData, isMethodCall: true);
+            await Assert.That(capturedIsMethodCall).IsFalse().ConfigureAwait(false);
+
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<SampleUserData>(ensureUnregistered: true);
+            registrationScope.RegisterType<SampleUserData>();
+
+            DynValue userData = UserData.Create(new SampleUserData());
+            List<DynValue> userDataArgs = new() { userData };
+
+            function.Invoke(script, userDataArgs, isMethodCall: true);
             await Assert.That(capturedIsMethodCall).IsTrue().ConfigureAwait(false);
         }
 
@@ -318,6 +353,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             MethodInfo internalMethod = SampleUserData.GetInternalCallbackMethod();
             MethodInfo badMethod = SampleUserData.GetBadSignatureMethod();
             MethodInfo argumentViewMethod = SampleUserData.GetArgumentViewCallbackMethod();
+            MethodInfo argumentViewNoContextMethod =
+                SampleUserData.GetArgumentViewNoContextCallbackMethod();
 
             await Assert
                 .That(CallbackFunction.CheckCallbackSignature(publicMethod, true))
@@ -351,6 +388,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .That(CallbackFunction.CheckLegacyCallbackSignature(argumentViewMethod, true))
                 .IsFalse()
                 .ConfigureAwait(false);
+            await Assert
+                .That(CallbackFunction.CheckCallbackSignature(argumentViewNoContextMethod, true))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(
+                    CallbackFunction.CheckArgumentViewNoContextCallbackSignature(
+                        argumentViewNoContextMethod,
+                        true
+                    )
+                )
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(
+                    CallbackFunction.CheckArgumentViewCallbackSignature(
+                        argumentViewNoContextMethod,
+                        true
+                    )
+                )
+                .IsFalse()
+                .ConfigureAwait(false);
+            await Assert
+                .That(
+                    CallbackFunction.CheckLegacyCallbackSignature(argumentViewNoContextMethod, true)
+                )
+                .IsFalse()
+                .ConfigureAwait(false);
         }
 
         private sealed class SampleUserData
@@ -361,6 +426,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             private static readonly MethodInfo ArgumentViewCallbackMethodInfo = (
                 (ScriptFunctionCallbackView)ValidArgumentViewCallback
+            ).Method;
+
+            private static readonly MethodInfo ArgumentViewNoContextCallbackMethodInfo = (
+                (ScriptFunctionCallbackViewNoContext)ValidArgumentViewNoContextCallback
             ).Method;
 
             private static readonly MethodInfo PrivateCallbackMethodInfo = (
@@ -392,6 +461,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 return DynValue.NewNumber(args[0].Number + 1);
             }
 
+            public static DynValue ValidArgumentViewNoContextCallback(CallbackArgumentsView args)
+            {
+                return DynValue.NewNumber(args[0].Number + 1);
+            }
+
             internal static DynValue PrivateCallback(
                 ScriptExecutionContext context,
                 CallbackArguments args
@@ -413,6 +487,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             public static MethodInfo GetArgumentViewCallbackMethod()
             {
                 return ArgumentViewCallbackMethodInfo;
+            }
+
+            public static MethodInfo GetArgumentViewNoContextCallbackMethod()
+            {
+                return ArgumentViewNoContextCallbackMethodInfo;
             }
 
             public static MethodInfo GetInternalCallbackMethod()

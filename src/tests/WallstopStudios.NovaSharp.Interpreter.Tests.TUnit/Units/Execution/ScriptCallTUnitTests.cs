@@ -429,6 +429,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0)]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        [global::TUnit.Core.Arguments(5)]
+        [global::TUnit.Core.Arguments(6)]
+        [global::TUnit.Core.Arguments(7)]
+        public async Task FixedDynValueCallExecutesNoContextCallbackView(int arity)
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue callback = DynValue.NewCallbackView(
+                (CallbackArgumentsView args) => SummarizeArguments(args)
+            );
+
+            DynValue result = CallLegacyCallbackWithSequentialArguments(script, callback, arity);
+
+            await AssertArgumentSummary(
+                    result,
+                    count: arity,
+                    nilCount: 0d,
+                    sum: arity * (arity + 1) / 2d
+                )
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
@@ -493,6 +520,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             script.Globals["callback"] = DynValue.NewCallbackView(
                 (_, args) =>
+                {
+                    spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    spanLength = span.Length;
+                    if (spanAvailable)
+                    {
+                        first = span[0].Number;
+                        third = span[2].Number;
+                    }
+
+                    return DynValue.NewNumber(args.Count);
+                }
+            );
+
+            DynValue result = script.DoString("return callback(10, 20, 30)");
+
+            await Assert.That(result.Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(spanAvailable).IsTrue().ConfigureAwait(false);
+            await Assert.That(spanLength).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(first).IsEqualTo(10d).ConfigureAwait(false);
+            await Assert.That(third).IsEqualTo(30d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LuaCallToNoContextCallbackViewExposesContiguousSpan(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            bool spanAvailable = false;
+            int spanLength = -1;
+            double first = -1d;
+            double third = -1d;
+
+            script.Globals["callback"] = DynValue.NewCallbackView(
+                (CallbackArgumentsView args) =>
                 {
                     spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
                     spanLength = span.Length;
@@ -1420,6 +1483,71 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        public async Task FixedDynValueCallToNoContextCallbackViewAvoidsContextAllocation()
+        {
+            const int iterations = 1024;
+            Script script = new(CoreModulePresets.Complete);
+            DynValue first = DynValue.NewNumber(10);
+            DynValue second = DynValue.NewNumber(20);
+            DynValue third = DynValue.NewNumber(30);
+            DynValue contextCallback = DynValue.NewCallbackView((_, args) => args[2]);
+            DynValue noContextCallback = DynValue.NewCallbackView(
+                (CallbackArgumentsView args) => args[2]
+            );
+
+            MeasureFixedThreeArgumentCallbackViewAllocations(
+                script,
+                contextCallback,
+                first,
+                second,
+                third,
+                iterations: 8
+            );
+            MeasureFixedThreeArgumentCallbackViewAllocations(
+                script,
+                noContextCallback,
+                first,
+                second,
+                third,
+                iterations: 8
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long contextAllocated = MeasureFixedThreeArgumentCallbackViewAllocations(
+                script,
+                contextCallback,
+                first,
+                second,
+                third,
+                iterations
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long noContextAllocated = MeasureFixedThreeArgumentCallbackViewAllocations(
+                script,
+                noContextCallback,
+                first,
+                second,
+                third,
+                iterations
+            );
+
+            await Assert
+                .That(noContextAllocated)
+                .IsLessThan(contextAllocated)
+                .Because(
+                    $"Contextful callback-view calls allocated {contextAllocated} bytes; no-context callback-view calls allocated {noContextAllocated} bytes."
+                )
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task FixedDynValueCallToCallbackViewMetamethodAvoidsArgumentArrayAllocation()
         {
             const int iterations = 1024;
@@ -2157,6 +2285,54 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(CoreModulePresets.Complete);
             DynValue callback = DynValue.NewCallbackView(
                 (_, args) =>
+                {
+                    bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
+                    double sum = 0d;
+                    for (int i = 0; i < span.Length; i++)
+                    {
+                        sum += span[i].Number;
+                    }
+
+                    return DynValue.NewTuple(
+                        DynValue.NewBoolean(spanAvailable),
+                        DynValue.NewNumber(span.Length),
+                        DynValue.NewNumber(args.Count),
+                        DynValue.NewNumber(sum)
+                    );
+                }
+            );
+            DynValue[] values = CreateSequentialArguments(arity);
+
+            DynValue result = script.Call(callback, values.AsSpan());
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[2].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[3].Number)
+                .IsEqualTo(arity * (arity + 1) / 2d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(0)]
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(2)]
+        [global::TUnit.Core.Arguments(3)]
+        [global::TUnit.Core.Arguments(4)]
+        [global::TUnit.Core.Arguments(5)]
+        public async Task CallWithReadOnlySpanDynValuesExposesSpanToNoContextCallbackView(int arity)
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue callback = DynValue.NewCallbackView(
+                (CallbackArgumentsView args) =>
                 {
                     bool spanAvailable = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
                     double sum = 0d;
@@ -3265,6 +3441,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             );
         }
 
+        private static DynValue SummarizeArguments(CallbackArgumentsView args)
+        {
+            double nilCount = 0d;
+            double sum = 0d;
+
+            for (int i = 0; i < args.Count; i++)
+            {
+                DynValue arg = args[i];
+                if (arg.Type == DataType.Nil)
+                {
+                    nilCount++;
+                }
+                else
+                {
+                    sum += arg.Number;
+                }
+            }
+
+            return DynValue.NewTuple(
+                DynValue.NewNumber(args.Count),
+                DynValue.NewNumber(nilCount),
+                DynValue.NewNumber(sum)
+            );
+        }
+
         private static DynValue SummarizeArgumentsSkippingFirst(CallbackArguments args)
         {
             double nilCount = 0d;
@@ -3505,6 +3706,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             for (int i = 0; i < iterations; i++)
             {
                 script.Call(callback, first, second, third);
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedThreeArgumentCallbackViewAllocations(
+            Script script,
+            DynValue callback,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = script.Call(callback, first, second, third);
+                if (!ReferenceEquals(result, third))
+                {
+                    throw new InvalidOperationException(
+                        "Callback-view context allocation probe returned an unexpected value."
+                    );
+                }
             }
 
             return GC.GetAllocatedBytesForCurrentThread() - before;

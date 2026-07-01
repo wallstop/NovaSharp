@@ -99,13 +99,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 return DynValue.NewCallbackView(argumentViewCallback);
             }
 
+            if (obj is ScriptFunctionCallbackViewNoContext argumentViewNoContextCallback)
+            {
+                return DynValue.NewCallbackView(argumentViewNoContextCallback);
+            }
+
             if (obj is Delegate @delegate)
             {
 #if NETFX_CORE
-                MethodInfo mi = d.GetMethodInfo();
+                MethodInfo mi = @delegate.GetMethodInfo();
 #else
                 MethodInfo mi = @delegate.Method;
 #endif
+
+                if (CallbackFunction.CheckArgumentViewNoContextCallbackSignature(mi, false))
+                {
+                    return DynValue.NewCallbackView(
+                        CreateDelegate<ScriptFunctionCallbackViewNoContext>(@delegate, mi)
+                    );
+                }
 
                 if (CallbackFunction.CheckArgumentViewCallbackSignature(mi, false))
                 {

@@ -1412,12 +1412,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 frame.Flags = Flags;
                 _executionStack.Push(frame);
 
-                ScriptExecutionContext context = new(this, callback, sref);
                 DynValue ret;
-                if (callback.HasArgumentViewCallback)
+                if (callback.HasArgumentViewNoContextCallback)
                 {
                     ret = callback.InvokeArgumentViewStack(
-                        context,
+                        _script,
                         _valueStack,
                         _valueStack.Count - argsCount,
                         argsCount,
@@ -1426,12 +1425,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else
                 {
-                    ret = InvokeLegacyCallbackFromStack(
-                        callback,
-                        context,
-                        argsCount,
-                        isMethodCall: thisCall
-                    );
+                    ScriptExecutionContext context = new(this, callback, sref);
+                    if (callback.HasArgumentViewCallback)
+                    {
+                        ret = callback.InvokeArgumentViewStack(
+                            context,
+                            _valueStack,
+                            _valueStack.Count - argsCount,
+                            argsCount,
+                            isMethodCall: thisCall
+                        );
+                    }
+                    else
+                    {
+                        ret = InvokeLegacyCallbackFromStack(
+                            callback,
+                            context,
+                            argsCount,
+                            isMethodCall: thisCall
+                        );
+                    }
                 }
 
                 _valueStack.RemoveLast(argsCount + 1);
