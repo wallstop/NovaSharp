@@ -34,11 +34,11 @@ Make prepared handles easier to use after execution by adding scalar result help
 - [x] Adversarial review completed.
 - [x] Targeted tests run.
 - [x] Build/broader checks run as appropriate.
-- [ ] Commit, push, request Copilot review, and poll PR CI.
+- [x] Commit, push, request Copilot review, and poll PR CI.
 
 ## Status
 
-In progress.
+Completed for the implementation slice at commit `813227c1`.
 
 ## Validation
 
@@ -49,9 +49,14 @@ In progress.
 - After adversarial review cleanup, `dotnet build src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj -c Release --no-restore`: passed with 0 warnings and 0 errors.
 - `./scripts/test/quick.sh`: passed, 14,398 tests.
 - `bash ./scripts/dev/pre-commit.sh`: completed successfully; it reported existing documentation and skill metadata warnings.
+- Commit `813227c1` (`Add compiled script result helpers`) was pushed to PR `#43`.
+- The pre-push hook completed successfully, including CSharpier, Markdown formatting, branding, namespace alignment, tooling setup, YAML/GitHub Actions lint, and the Release interpreter build.
+- PR CI passed on `813227c1451b469f54409d95aadd13f314fd5b6d`, including benchmark, code coverage, format check, lint, dotnet tests on Ubuntu/macOS/Windows, and Lua comparison on Ubuntu/macOS/Windows for Lua 5.1 through 5.5; expected conditional jobs remained skipped.
 
 ## Review Notes
 
 - The adversarial review found no blocking correctness, scalar/tuple, strict conversion, Unity/IL2CPP, analyzer, or benchmark runtime issues.
 - It noted that the new helper surface is large and effectively permanent; the implementation keeps object-argument typed helpers out of scope to limit overload growth and avoid encouraging boxed hot-loop arguments.
 - It recommended renaming benchmark method identifiers so BenchmarkDotNet full names match the new `Prepare*` public API terminology.
+- Copilot review was requested after the push. It could not review the PR because the diff exceeds Copilot's 20,000-line limit.
+- Review-thread scan after the push found `0` active unresolved current threads and `29` unresolved outdated threads.
