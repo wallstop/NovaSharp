@@ -62,6 +62,14 @@ class ExternalDeltaRow:
 
 
 @dataclass(frozen=True)
+class RuntimeMatrixRow:
+    key: ComparisonKey
+    parameter_display: str
+    nova: Metrics
+    comparisons: tuple[tuple[str, Metrics], ...]
+
+
+@dataclass(frozen=True)
 class SelfDeltaRow:
     key: BenchmarkKey
     parameter_display: str
@@ -132,6 +140,7 @@ def main(argv: list[str]) -> int:
 
     comparison = load_comparison_metrics(comparison_root)
     external_rows = build_external_delta_rows(comparison)
+    runtime_matrix_rows = build_runtime_matrix_rows(comparison)
     comparison_groups_without_nova = sorted(
         key for key, runtimes in comparison.items() if NOVA_RUNTIME not in runtimes
     )
@@ -145,6 +154,7 @@ def main(argv: list[str]) -> int:
     output.write_text(
         render_markdown(
             external_rows,
+            runtime_matrix_rows,
             self_rows,
             current_root,
             comparison_root,
@@ -342,6 +352,38 @@ def build_external_delta_rows(
     return rows
 
 
+def build_runtime_matrix_rows(
+    comparison: dict[ComparisonKey, dict[str, MetricRecord]]
+) -> list[RuntimeMatrixRow]:
+    rows: list[RuntimeMatrixRow] = []
+    for key in sorted(comparison, key=comparison_matrix_sort_key):
+        runtimes = comparison[key]
+        nova = runtimes.get(NOVA_RUNTIME)
+        if nova is None:
+            continue
+
+        comparisons = tuple(
+            (runtime, runtimes[runtime].metrics)
+            for runtime in sorted(runtimes, key=runtime_sort_key)
+            if runtime != NOVA_RUNTIME
+        )
+        rows.append(RuntimeMatrixRow(key, nova.parameter_display, nova.metrics, comparisons))
+
+    return rows
+
+
+def comparison_matrix_sort_key(key: ComparisonKey) -> tuple[str, str, str]:
+    return (key.parameters, key.operation, key.summary)
+
+
+def runtime_sort_key(runtime: str) -> tuple[int, str]:
+    try:
+        index = RUNTIME_PREFIXES.index(runtime)
+    except ValueError:
+        index = len(RUNTIME_PREFIXES)
+    return (index, runtime)
+
+
 def build_self_delta_rows(
     current: dict[BenchmarkKey, MetricRecord],
     baseline: dict[BenchmarkKey, MetricRecord],
@@ -408,6 +450,7 @@ def metric_fraction_deltas(current: Metrics, baseline: Metrics) -> tuple[float, 
 
 def render_markdown(
     external_rows: list[ExternalDeltaRow],
+    runtime_matrix_rows: list[RuntimeMatrixRow],
     self_rows: list[SelfDeltaRow],
     current_root: Path,
     comparison_root: Path,
@@ -434,7 +477,8 @@ def render_markdown(
         f"- Same-run comparison artifacts: `{repo_relative(comparison_root)}`",
         f"- Checked-in self baseline artifacts: `{repo_relative(self_baseline_root)}`",
         f"- Same-run comparison groups: {comparison_group_count}",
-        f"- Same-run external delta rows: {len(external_rows)}",
+        f"- Same-run scenario/operation rows with NovaSharp: {len(runtime_matrix_rows)}",
+        f"- Same-run external runtime cells: {len(external_rows)}",
         f"- Self baseline matches: {len(self_rows)} of {current_count} current rows and {self_baseline_count} baseline rows",
         "",
     ]
@@ -445,7 +489,7 @@ def render_markdown(
         comparison_groups_without_nova,
     )
 
-    render_external_section(lines, external_rows)
+    render_external_section(lines, runtime_matrix_rows)
     render_self_section(
         lines,
         self_rows,
@@ -457,10 +501,10 @@ def render_markdown(
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_external_section(lines: list[str], rows: list[ExternalDeltaRow]) -> None:
+def render_external_section(lines: list[str], rows: list[RuntimeMatrixRow]) -> None:
     lines.extend(
         [
-            "### Same-Run Runtime Comparisons",
+            "### Same-Run Runtime Matrix",
             "",
         ]
     )
@@ -475,38 +519,185 @@ def render_external_section(lines: list[str], rows: list[ExternalDeltaRow]) -> N
         )
         return
 
+    runtimes = external_runtimes_for_matrix(rows)
     lines.extend(
         [
-            "| Summary | Operation | Parameters | Runtime | Nova Mean | Runtime Mean | Mean Delta | Nova P95 | Runtime P95 | P95 Delta | Nova GC0/1/2 | Runtime GC0/1/2 | GC Delta | Nova Alloc | Runtime Alloc | Alloc Delta |",
-            "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            "Each row is one scenario/operation from the same BenchmarkDotNet comparison run. "
+            "NovaSharp values are raw results; external columns show raw results plus the NovaSharp delta against that runtime.",
+            "",
+        ]
+    )
+    render_runtime_time_matrix(lines, rows, runtimes)
+    render_runtime_memory_matrix(lines, rows, runtimes)
+
+
+def render_runtime_time_matrix(
+    lines: list[str],
+    rows: list[RuntimeMatrixRow],
+    runtimes: list[str],
+) -> None:
+    headers = ["Scenario", "Operation", f"{NOVA_RUNTIME} Mean / P95"]
+    alignments = ["---", "---", "---:"]
+    for runtime in runtimes:
+        headers.extend(
+            [
+                f"{runtime} Mean / P95",
+                f"{NOVA_RUNTIME} Delta vs {runtime}",
+            ]
+        )
+        alignments.extend(["---:", "---:"])
+
+    lines.extend(["#### Time", "", render_markdown_row(headers), render_markdown_row(alignments)])
+    for row in rows:
+        comparison_by_runtime = dict(row.comparisons)
+        cells = [
+            scenario_display(row),
+            row.key.operation,
+            format_time_pair(row.nova),
+        ]
+        for runtime in runtimes:
+            comparison = comparison_by_runtime.get(runtime)
+            if comparison is None:
+                cells.extend(["-", "-"])
+                continue
+
+            cells.extend(
+                [
+                    format_time_pair(comparison),
+                    format_time_pair_delta(row.nova, comparison),
+                ]
+            )
+
+        lines.append(render_markdown_row(cells))
+    lines.append("")
+
+
+def render_runtime_memory_matrix(
+    lines: list[str],
+    rows: list[RuntimeMatrixRow],
+    runtimes: list[str],
+) -> None:
+    headers = ["Scenario", "Operation", f"{NOVA_RUNTIME} Alloc / GC0/1/2"]
+    alignments = ["---", "---", "---:"]
+    for runtime in runtimes:
+        headers.extend(
+            [
+                f"{runtime} Alloc / GC0/1/2",
+                f"{NOVA_RUNTIME} Delta vs {runtime}",
+            ]
+        )
+        alignments.extend(["---:", "---:"])
+
+    lines.extend(
+        [
+            "#### Memory and GC",
+            "",
+            "GC columns are collections per 1,000 operations.",
+            "",
+            render_markdown_row(headers),
+            render_markdown_row(alignments),
+        ]
+    )
+    for row in rows:
+        comparison_by_runtime = dict(row.comparisons)
+        cells = [
+            scenario_display(row),
+            row.key.operation,
+            format_memory_gc_pair(row.nova),
+        ]
+        for runtime in runtimes:
+            comparison = comparison_by_runtime.get(runtime)
+            if comparison is None:
+                cells.extend(["-", "-"])
+                continue
+
+            cells.extend(
+                [
+                    format_memory_gc_pair(comparison),
+                    format_memory_gc_delta(row.nova, comparison),
+                ]
+            )
+
+        lines.append(render_markdown_row(cells))
+    lines.append("")
+
+
+def external_runtimes_for_matrix(rows: list[RuntimeMatrixRow]) -> list[str]:
+    runtimes = {runtime for row in rows for runtime, _ in row.comparisons}
+    return sorted(runtimes, key=runtime_sort_key)
+
+
+def scenario_display(row: RuntimeMatrixRow) -> str:
+    display = row.parameter_display or parameter_display_from_signature(row.key.parameters)
+    parameters = split_parameter_display(display)
+    scenario = next((value for name, value in parameters if name == "Scenario"), "")
+    if not scenario:
+        return display or "-"
+
+    remaining = [(name, value) for name, value in parameters if name != "Scenario"]
+    if not remaining:
+        return scenario
+
+    return f"{scenario} ({', '.join(f'{name}={value}' for name, value in remaining)})"
+
+
+def parameter_display_from_signature(signature: str) -> str:
+    normalized = normalize_cell(signature)
+    if not normalized:
+        return ""
+
+    parts = []
+    for part in normalized.split("|"):
+        if ":" not in part:
+            continue
+        parts.append(part.replace(":", "=", 1))
+    return ", ".join(parts)
+
+
+def split_parameter_display(value: str) -> list[tuple[str, str]]:
+    parameters: list[tuple[str, str]] = []
+    for raw_part in normalize_cell(value).split(","):
+        if "=" not in raw_part:
+            continue
+        name, raw_value = raw_part.split("=", 1)
+        parameter_name = normalize_cell(name)
+        parameter_value = normalize_cell(raw_value)
+        if parameter_name and parameter_value:
+            parameters.append((parameter_name, parameter_value))
+    return parameters
+
+
+def render_markdown_row(cells: list[str]) -> str:
+    return "| " + " | ".join(escape_markdown_cell(cell) for cell in cells) + " |"
+
+
+def escape_markdown_cell(value: object) -> str:
+    return str(value).replace("\n", " ").replace("|", "\\|")
+
+
+def format_time_pair(metrics: Metrics) -> str:
+    return f"{format_time(metrics.mean_ns)} / {format_time(metrics.p95_ns)}"
+
+
+def format_time_pair_delta(current: Metrics, baseline: Metrics) -> str:
+    return " / ".join(
+        [
+            format_metric_delta(current.mean_ns, baseline.mean_ns, format_time_delta),
+            format_metric_delta(current.p95_ns, baseline.p95_ns, format_time_delta),
         ]
     )
 
-    for row in rows:
-        lines.append(
-            " | ".join(
-                [
-                    f"| {row.key.summary}",
-                    row.key.operation,
-                    row.parameter_display or "-",
-                    row.runtime,
-                    format_time(row.nova.mean_ns),
-                    format_time(row.comparison.mean_ns),
-                    format_metric_delta(row.nova.mean_ns, row.comparison.mean_ns, format_time_delta),
-                    format_time(row.nova.p95_ns),
-                    format_time(row.comparison.p95_ns),
-                    format_metric_delta(row.nova.p95_ns, row.comparison.p95_ns, format_time_delta),
-                    format_gc_triplet(row.nova),
-                    format_gc_triplet(row.comparison),
-                    format_gc_delta_triplet(row.nova, row.comparison),
-                    format_bytes(row.nova.allocated_bytes),
-                    format_bytes(row.comparison.allocated_bytes),
-                    f"{format_bytes_delta(row.nova.allocated_bytes - row.comparison.allocated_bytes)} ({format_percent(fraction_delta(row.nova.allocated_bytes, row.comparison.allocated_bytes))}) |",
-                ]
-            )
-        )
 
-    lines.append("")
+def format_memory_gc_pair(metrics: Metrics) -> str:
+    return f"{format_bytes(metrics.allocated_bytes)} / {format_gc_triplet(metrics)}"
+
+
+def format_memory_gc_delta(current: Metrics, baseline: Metrics) -> str:
+    allocation_delta = (
+        f"{format_bytes_delta(current.allocated_bytes - baseline.allocated_bytes)} "
+        f"({format_percent(percentage_delta(current.allocated_bytes, baseline.allocated_bytes))})"
+    )
+    return f"{allocation_delta} / {format_gc_delta_triplet(current, baseline)}"
 
 
 def render_self_section(
@@ -579,7 +770,7 @@ def render_self_section(
                     format_gc_delta_triplet(row.current, row.baseline),
                     format_bytes(row.current.allocated_bytes),
                     format_bytes(row.baseline.allocated_bytes),
-                    f"{format_bytes_delta(row.current.allocated_bytes - row.baseline.allocated_bytes)} ({format_percent(fraction_delta(row.current.allocated_bytes, row.baseline.allocated_bytes))}) |",
+                    f"{format_bytes_delta(row.current.allocated_bytes - row.baseline.allocated_bytes)} ({format_percent(percentage_delta(row.current.allocated_bytes, row.baseline.allocated_bytes))}) |",
                 ]
             )
         )

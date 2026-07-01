@@ -17,7 +17,7 @@ The workflow uses `benchmark-action/github-action-benchmark` to track performanc
 - **Alert threshold**: 115% by default (15% regression triggers alert)
 - **Fail on alert**: Enabled for manual benchmark gates; PR alerts are advisory because hosted-runner microbenchmarks are noisy
 - **PR comments**: Automatic comments when regressions are detected
-- **External runtime deltas**: `scripts/benchmarks/render-benchmark-deltas.py` renders a sticky PR comment and `artifacts/benchmark-deltas.md`; positive deltas mean NovaSharp is slower, collects more GC, or allocates more than the same-run comparison runtime row. These rows are report-only and do not set `regressed=true`.
+- **External runtime deltas**: `scripts/benchmarks/render-benchmark-deltas.py` renders a sticky PR comment and `artifacts/benchmark-deltas.md`; each scenario/operation is shown as a matrix row with NovaSharp raw results first, then same-run external runtime results and NovaSharp-vs-runtime deltas. Positive deltas mean NovaSharp is slower, collects more GC, or allocates more than the same-run comparison runtime row. These cells are report-only and do not set `regressed=true`.
 - **Self deltas**: the same renderer can compare current NovaSharp results to checked-in BenchmarkDotNet JSON artifacts under `docs/performance-history/current-baseline` once that baseline exists. Self deltas drive the `regressed=true` signal.
 - **Historical tracking**: Results stored in `gh-pages` branch under `/benchmarks`
 
@@ -79,13 +79,13 @@ python3 scripts/benchmarks/render-benchmark-deltas.py \
   --output artifacts/benchmark-deltas.md
 ```
 
-The script writes `changed=true|false`, `regressed=true|false`, external/self row counts, and the output path to stdout so GitHub Actions and local tooling can consume it consistently.
+The script writes `changed=true|false`, `regressed=true|false`, external/self row counts, and the output path to stdout so GitHub Actions and local tooling can consume it consistently. The generated markdown groups same-run comparison output by scenario and operation so NovaSharp, MoonSharp, NLua, and future implementers are readable side-by-side.
 
 ## Output
 
 - BenchmarkDotNet artifacts land under `BenchmarkDotNet.Artifacts/` (git-ignored).
 - `docs/Performance.md` is updated automatically by the benchmark harnesses; review the diff before committing.
 - `artifacts/benchmarkdotnet/comparison/` contains same-run comparison artifacts for MoonSharp, NLua, and future external runtimes.
-- `artifacts/benchmark-deltas.md` compares current NovaSharp artifacts to same-run external runtime rows and, when present, checked-in self baseline artifacts.
+- `artifacts/benchmark-deltas.md` compares current NovaSharp artifacts to same-run external runtime matrix cells and, when present, checked-in self baseline artifacts.
 - The scripts print paths to the BenchmarkDotNet artifact folders so you can attach them to PRs when results change.
 - CI workflow uploads artifacts as `benchmark-results` for inspection.

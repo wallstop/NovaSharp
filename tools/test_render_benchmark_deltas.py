@@ -189,10 +189,22 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertIn("external_rows=2", result.stdout)
         output = self.output.read_text(encoding="utf-8")
         self.assertIn("Benchmark Comparison Deltas", output)
-        self.assertIn("MoonSharp", output)
-        self.assertIn("NLua", output)
-        self.assertIn("-10 ns (-10.00%)", output)
-        self.assertIn("1 / 0 / 0", output)
+        self.assertIn("Same-Run Runtime Matrix", output)
+        self.assertIn("#### Time", output)
+        self.assertIn("#### Memory and GC", output)
+        self.assertIn("NovaSharp Mean / P95", output)
+        self.assertIn("MoonSharp Mean / P95", output)
+        self.assertIn("NovaSharp Delta vs MoonSharp", output)
+        self.assertIn("NLua Mean / P95", output)
+        self.assertIn("NovaSharp Delta vs NLua", output)
+        self.assertIn(
+            "| NumericLoops | Execute | 90 ns / 110 ns | 100 ns / 120 ns | -10 ns (-10.00%) / -10 ns (-8.33%) | 150 ns / 180 ns | -60 ns (-40.00%) / -70 ns (-38.89%) |",
+            output,
+        )
+        self.assertIn(
+            "| NumericLoops | Execute | 80 B / 1 / 0 / 0 | 100 B / 2 / 0 / 0 | -20 B (-20.00%) / -1 / 0 / 0 | 140 B / 3 / 0 / 0 | -60 B (-42.86%) / -2 / 0 / 0 |",
+            output,
+        )
 
     def test_external_runtime_deltas_are_report_only_for_regressed_signal(self) -> None:
         self.write_report(
