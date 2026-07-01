@@ -55,4 +55,22 @@
 - Passed after raw-results report update: `python3 tools/test_render_benchmark_deltas.py`.
 - Passed after raw-results report update: `git diff --check`.
 - Passed after raw-results report update: `./scripts/dev/pre-commit.sh`.
-- Pending: push the raw-results report improvement and observe PR CI.
+- Passed on push of `1661d4f0`: pre-push formatting, markdown formatting, branding, namespace alignment, tooling setup, workflow lint, and runtime build.
+- Passed on PR #43 head `1661d4f0`: `format-check`, `lint`, `dotnet-tests` on Ubuntu/macOS/Windows, `code-coverage`, all Lua comparison jobs for Lua 5.1 through 5.5 on Ubuntu/macOS/Windows, `lua-comparison-report`, `benchmark`, and benchmark `comparison`.
+- Skipped as expected on PR #43 head `1661d4f0`: `lint-autofix`.
+
+## Final Checkpoint
+
+- Latest pushed head: `1661d4f0 Show NovaSharp raw benchmark results`.
+- Commit stack for this slice:
+  - `28903098 Add compiled primitive argument overloads`
+  - `5cdee730 Preserve primitive execute conversions`
+  - `7164dbda Isolate primitive execute converter tests`
+  - `1661d4f0 Show NovaSharp raw benchmark results`
+- Related CI/reporting commits already on the branch:
+  - `6b4c374d Add same-run benchmark comparison deltas`
+  - `192eca1f Keep external benchmark deltas report-only`
+  - `fe37b0e5 Render benchmark deltas as runtime matrix`
+- Benchmark PR comment was updated by CI and includes the dedicated `NovaSharp Raw Results` section, followed by the time and memory/GC runtime matrices.
+- Lua comparison PR comment reports no unexpected deltas and no regression signal.
+- No Copilot review was triggered for this final slice.
