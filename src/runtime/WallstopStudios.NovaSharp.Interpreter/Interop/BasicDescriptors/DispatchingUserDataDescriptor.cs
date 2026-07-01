@@ -653,6 +653,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
                 throw new ArgumentNullException(nameof(index));
             }
 
+            if (mdesc is OverloadedMethodMemberDescriptor overloads)
+            {
+                return ExecuteOverloadedIndexer(overloads, script, obj, index, value);
+            }
+
             DynValue v = mdesc.GetValue(script, obj);
 
             if (v.Type != DataType.ClrFunction)
@@ -702,6 +707,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors
             CallbackArguments args = new(values, false);
             ScriptExecutionContext tupleExecCtx = script.CreateDynamicExecutionContext();
             return callback.ClrCallback(tupleExecCtx, args);
+        }
+
+        private static DynValue ExecuteOverloadedIndexer(
+            OverloadedMethodMemberDescriptor overloads,
+            Script script,
+            object obj,
+            DynValue index,
+            DynValue value
+        )
+        {
+            CallbackArguments args;
+            if (index.Type != DataType.Tuple)
+            {
+                args =
+                    value == null
+                        ? new CallbackArguments(index, false)
+                        : new CallbackArguments(index, value, false);
+            }
+            else
+            {
+                IList<DynValue> values;
+                if (value == null)
+                {
+                    values = index.Tuple;
+                }
+                else
+                {
+                    values = new List<DynValue>(index.Tuple);
+                    values.Add(value);
+                }
+
+                args = new CallbackArguments(values, false);
+            }
+
+            ScriptExecutionContext execCtx = script.CreateDynamicExecutionContext();
+            return overloads.Execute(script, obj, execCtx, args);
         }
 
         /// <summary>

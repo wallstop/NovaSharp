@@ -591,6 +591,82 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
+        [Arguments(false)]
+        [Arguments(true)]
+        public async Task ExecuteIndexerUsesDirectOverloadWrapperPath(bool isSetter)
+        {
+            DescriptorHostDescriptor descriptor = CreateDescriptorHostDescriptor();
+            Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
+            DescriptorHost target = new();
+            DynValue index = DynValue.NewNumber(5);
+            DynValue value = isSetter ? DynValue.NewString("payload") : null;
+            StubIndexerOverloadMemberDescriptor overload = new(
+                isSetter ? IndexerSetterName : IndexerGetterName
+            );
+            GetValueCountingOverloadedMethodMemberDescriptor member = new(
+                isSetter ? IndexerSetterName : IndexerGetterName,
+                overload
+            );
+
+            DynValue result = descriptor.InvokeExecuteIndexer(member, script, target, index, value);
+
+            await Assert.That(result).IsEqualTo(isSetter ? value : index).ConfigureAwait(false);
+            await Assert.That(overload.ExecuteCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(member.GetValueCount).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [Arguments(false)]
+        [Arguments(true)]
+        public async Task RegisteredOverloadedIndexerAvoidsCallbackWrapperAllocation(bool isSetter)
+        {
+            const int iterations = 1024;
+            const long maxAllocatedBytesPerCall = 256L;
+            DescriptorHostDescriptor descriptor = CreateDescriptorHostDescriptor();
+            Script script = new(CoreModules.Basic | CoreModules.GlobalConsts);
+            DescriptorHost target = new();
+            DynValue index = DynValue.NewNumber(6);
+            DynValue value = isSetter ? DynValue.NewString("payload") : null;
+            StubIndexerOverloadMemberDescriptor overload = new(
+                isSetter ? IndexerSetterName : IndexerGetterName
+            );
+            descriptor.AddMember(isSetter ? IndexerSetterName : IndexerGetterName, overload);
+
+            DynValue warmup = InvokeRegisteredOverloadedIndexer(
+                descriptor,
+                script,
+                target,
+                index,
+                value,
+                isSetter
+            );
+            await Assert.That(warmup).IsEqualTo(isSetter ? value : index).ConfigureAwait(false);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long allocated = MeasureRegisteredOverloadedIndexerAllocations(
+                descriptor,
+                script,
+                target,
+                index,
+                value,
+                isSetter,
+                iterations
+            );
+            long allocatedPerCall = allocated / iterations;
+
+            await Assert
+                .That(allocatedPerCall)
+                .IsLessThan(maxAllocatedBytesPerCall)
+                .Because(
+                    $"Registered overloaded {(isSetter ? "setter" : "getter")} indexer dispatch allocated {allocated} bytes across {iterations} iterations ({allocatedPerCall} bytes/call)."
+                )
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task SetIndexFallsBackToNamedMemberWhenDirectIndexing(
             LuaCompatibilityVersion version
@@ -886,6 +962,72 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             return GC.GetAllocatedBytesForCurrentThread() - before;
         }
 
+        private static long MeasureRegisteredOverloadedIndexerAllocations(
+            DescriptorHostDescriptor descriptor,
+            Script script,
+            DescriptorHost target,
+            DynValue index,
+            DynValue value,
+            bool isSetter,
+            int iterations
+        )
+        {
+            DynValue expected = isSetter ? value : index;
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = InvokeRegisteredOverloadedIndexer(
+                    descriptor,
+                    script,
+                    target,
+                    index,
+                    value,
+                    isSetter
+                );
+
+                if (result != expected)
+                {
+                    throw new InvalidOperationException(
+                        "Registered overloaded userdata indexer allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static DynValue InvokeRegisteredOverloadedIndexer(
+            DescriptorHostDescriptor descriptor,
+            Script script,
+            DescriptorHost target,
+            DynValue index,
+            DynValue value,
+            bool isSetter
+        )
+        {
+            if (isSetter)
+            {
+                bool handled = descriptor.SetIndex(
+                    script,
+                    target,
+                    index,
+                    value,
+                    isDirectIndexing: false
+                );
+                if (!handled)
+                {
+                    throw new InvalidOperationException(
+                        "Registered overloaded userdata indexer setter was not handled."
+                    );
+                }
+
+                return value;
+            }
+
+            return descriptor.Index(script, target, index, isDirectIndexing: false);
+        }
+
         private sealed class MetaFallbackHost
         {
             public MetaFallbackHost(string label)
@@ -1002,6 +1144,88 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             public void SetValue(Script script, object obj, DynValue value)
             {
                 throw new NotSupportedException();
+            }
+        }
+
+        private sealed class StubIndexerOverloadMemberDescriptor : IOverloadableMemberDescriptor
+        {
+            public StubIndexerOverloadMemberDescriptor(string name)
+            {
+                Name = name;
+                MemberAccess = MemberDescriptorAccess.CanExecute;
+                SortDiscriminant = name;
+            }
+
+            public int ExecuteCount { get; private set; }
+
+            public int GetValueCount { get; private set; }
+
+            public bool IsStatic { get; }
+
+            public string Name { get; }
+
+            public MemberDescriptorAccess MemberAccess { get; }
+
+            public Type ExtensionMethodType
+            {
+                get { return null; }
+            }
+
+            public IReadOnlyList<ParameterDescriptor> Parameters { get; } =
+                Array.Empty<ParameterDescriptor>();
+
+            public Type VarArgsArrayType
+            {
+                get { return null; }
+            }
+
+            public Type VarArgsElementType
+            {
+                get { return null; }
+            }
+
+            public string SortDiscriminant { get; }
+
+            public DynValue Execute(
+                Script script,
+                object obj,
+                ScriptExecutionContext context,
+                CallbackArguments args
+            )
+            {
+                this.CheckAccess(MemberDescriptorAccess.CanExecute, obj);
+                ExecuteCount += 1;
+                return args[args.Count - 1];
+            }
+
+            public DynValue GetValue(Script script, object obj)
+            {
+                GetValueCount += 1;
+                return DynValue.NewCallback((_, args) => args[args.Count - 1]);
+            }
+
+            public void SetValue(Script script, object obj, DynValue value)
+            {
+                throw new NotSupportedException();
+            }
+        }
+
+        private sealed class GetValueCountingOverloadedMethodMemberDescriptor
+            : OverloadedMethodMemberDescriptor,
+                IMemberDescriptor
+        {
+            public GetValueCountingOverloadedMethodMemberDescriptor(
+                string name,
+                IOverloadableMemberDescriptor descriptor
+            )
+                : base(name, typeof(DescriptorHost), descriptor) { }
+
+            public int GetValueCount { get; private set; }
+
+            public new DynValue GetValue(Script script, object obj)
+            {
+                GetValueCount += 1;
+                return base.GetValue(script, obj);
             }
         }
 

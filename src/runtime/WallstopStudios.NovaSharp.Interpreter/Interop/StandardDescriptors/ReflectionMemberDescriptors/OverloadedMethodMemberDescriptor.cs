@@ -300,6 +300,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
             throw new ScriptRuntimeException("function call doesn't match any overload");
         }
 
+        /// <summary>
+        /// Invokes the overload set directly without first materializing a CLR callback wrapper.
+        /// </summary>
+        internal DynValue Execute(
+            Script script,
+            object obj,
+            ScriptExecutionContext context,
+            CallbackArguments args
+        )
+        {
+            this.CheckAccess(MemberDescriptorAccess.CanExecute, obj);
+            return PerformOverloadedCall(script, obj, context, args);
+        }
+
         private void Cache(
             bool hasObject,
             CallbackArguments args,
