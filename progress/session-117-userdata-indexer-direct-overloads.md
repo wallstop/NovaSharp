@@ -52,4 +52,9 @@ The alternative `ArrayMemberDescriptor` fixed-index slice is still relevant, but
   - `./scripts/build/quick.sh` passed.
   - `./scripts/test/quick.sh` passed.
   - `./scripts/dev/pre-commit.sh` completed successfully, with existing documentation and skill metadata warnings.
-- Push, Copilot review, and PR CI polling are still pending.
+- Remote validation for implementation commit `a037f8cc`:
+  - Pushed to `dev/wallstop/api-perf`.
+  - Copilot review was requested and responded at `2026-07-01T15:28:30Z`; it could not review because the PR exceeds the 20,000-line limit, so there was no actionable Copilot feedback.
+  - PR CI passed for required checks: benchmark, format-check, lint, dotnet tests on Ubuntu/macOS/Windows, code coverage, and Lua comparison for Lua 5.1-5.5 on Ubuntu/macOS/Windows.
+  - Expected optional jobs were skipped: benchmark `comparison` and tests `lint-autofix`.
+- This progress-only update is being pushed as a follow-up so the repository history records the remote result without changing production behavior.
