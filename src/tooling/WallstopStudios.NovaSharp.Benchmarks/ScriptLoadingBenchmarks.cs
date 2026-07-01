@@ -70,7 +70,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _scriptSource = LuaScriptCorpus.GetCompilationScript(complexity);
             _scriptSourceBytes = System.Text.Encoding.UTF8.GetBytes(_scriptSource);
             _precompiledScript = new Script(CoreModulePresets.Complete);
-            _compiledHandle = _precompiledScript.CompileString(
+            _compiledHandle = _precompiledScript.PrepareString(
                 _scriptSource,
                 null,
                 $"precompiled_{complexity}"
@@ -80,7 +80,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _precompiledStreamScript = new Script(CoreModulePresets.Complete);
             using (MemoryStream stream = new(_scriptSourceBytes))
             {
-                _compiledStreamHandle = _precompiledStreamScript.CompileStream(
+                _compiledStreamHandle = _precompiledStreamScript.PrepareStream(
                     stream,
                     codeFriendlyName: $"precompiled_stream_{complexity}"
                 );
@@ -90,7 +90,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 CoreModulePresets.Complete,
                 new ScriptOptions { ScriptLoader = new StaticStringScriptLoader(_scriptSource) }
             );
-            _compiledFileHandle = _precompiledFileScript.CompileFile(
+            _compiledFileHandle = _precompiledFileScript.PrepareFile(
                 $"precompiled_file_{complexity}.lua"
             );
 
@@ -222,22 +222,34 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public DynValue ExecutePrecompiled() => _precompiledScript.Call(_precompiledFunction);
 
         /// <summary>
-        /// Executes the explicit compile-once handle, isolating handle forwarding overhead.
+        /// Executes the explicit prepare-once handle, isolating handle forwarding overhead.
         /// </summary>
-        [Benchmark(Description = "Execute Compiled Handle")]
-        public DynValue ExecuteCompiledHandle() => _compiledHandle.Execute();
+        [Benchmark(Description = "Execute Prepared String Handle")]
+        public DynValue ExecutePreparedStringHandle() => _compiledHandle.Execute();
 
         /// <summary>
-        /// Executes a stream-compiled handle, isolating handle forwarding overhead.
+        /// Executes a prepared handle and converts the first scalar result through ExecuteAs.
         /// </summary>
-        [Benchmark(Description = "Execute Compiled Stream Handle")]
-        public DynValue ExecuteCompiledStreamHandle() => _compiledStreamHandle.Execute();
+        [Benchmark(Description = "Execute Prepared String Handle As Double")]
+        public double ExecutePreparedStringHandleAsDouble() => _compiledHandle.ExecuteAs<double>();
 
         /// <summary>
-        /// Executes a file-compiled handle, isolating handle forwarding overhead.
+        /// Executes a prepared handle and reads the first scalar result through the strict number helper.
         /// </summary>
-        [Benchmark(Description = "Execute Compiled File Handle")]
-        public DynValue ExecuteCompiledFileHandle() => _compiledFileHandle.Execute();
+        [Benchmark(Description = "Execute Prepared String Handle Number")]
+        public double ExecutePreparedStringHandleNumber() => _compiledHandle.ExecuteNumber();
+
+        /// <summary>
+        /// Executes a stream-prepared handle, isolating handle forwarding overhead.
+        /// </summary>
+        [Benchmark(Description = "Execute Prepared Stream Handle")]
+        public DynValue ExecutePreparedStreamHandle() => _compiledStreamHandle.Execute();
+
+        /// <summary>
+        /// Executes a file-prepared handle, isolating handle forwarding overhead.
+        /// </summary>
+        [Benchmark(Description = "Execute Prepared File Handle")]
+        public DynValue ExecutePreparedFileHandle() => _compiledFileHandle.Execute();
 
         private sealed class StaticStringScriptLoader : ScriptLoaderBase
         {
@@ -322,11 +334,11 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 "update",
                 "ignored",
             };
-            _boundGlobalHandle = _script.BindGlobalFunction("update");
-            _boundNestedGlobalHandle = _script.BindGlobalFunction("api", "system", "update");
-            _boundSixArgHandle = _script.BindGlobalFunction("update6");
-            _boundSevenArgHandle = _script.BindGlobalFunction("update7");
-            _boundZeroArgHandle = _script.BindGlobalFunction("tick");
+            _boundGlobalHandle = _script.PrepareGlobalFunction("update");
+            _boundNestedGlobalHandle = _script.PrepareGlobalFunction("api", "system", "update");
+            _boundSixArgHandle = _script.PrepareGlobalFunction("update6");
+            _boundSevenArgHandle = _script.PrepareGlobalFunction("update7");
+            _boundZeroArgHandle = _script.PrepareGlobalFunction("tick");
             _arg1 = DynValue.FromNumber(1);
             _arg2 = DynValue.FromNumber(2);
             _arg3 = DynValue.FromNumber(3);
@@ -384,71 +396,85 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public DynValue CallCachedZeroArgGlobal() => _script.Call(_zeroArgFunction);
 
         /// <summary>
-        /// Executes a global function handle resolved once through the public binding API.
+        /// Executes a global function handle resolved once through the public prepare API.
         /// </summary>
-        [Benchmark(Description = "Execute Bound Global Handle")]
-        public DynValue ExecuteBoundGlobalHandle() =>
+        [Benchmark(Description = "Execute Prepared Global Handle")]
+        public DynValue ExecutePreparedGlobalHandle() =>
             _boundGlobalHandle.Execute(_arg1, _arg2, _arg3);
 
         /// <summary>
-        /// Executes a nested global function handle resolved once through the public binding API.
+        /// Executes a global function handle and converts the first scalar result through ExecuteAs.
         /// </summary>
-        [Benchmark(Description = "Execute Bound Nested Global Handle")]
-        public DynValue ExecuteBoundNestedGlobalHandle() =>
+        [Benchmark(Description = "Execute Prepared Global Handle As Double")]
+        public double ExecutePreparedGlobalHandleAsDouble() =>
+            _boundGlobalHandle.ExecuteAs<double>(_arg1, _arg2, _arg3);
+
+        /// <summary>
+        /// Executes a global function handle and reads the first scalar result through the strict number helper.
+        /// </summary>
+        [Benchmark(Description = "Execute Prepared Global Handle Number")]
+        public double ExecutePreparedGlobalHandleNumber() =>
+            _boundGlobalHandle.ExecuteNumber(_arg1, _arg2, _arg3);
+
+        /// <summary>
+        /// Executes a nested global function handle resolved once through the public prepare API.
+        /// </summary>
+        [Benchmark(Description = "Execute Prepared Nested Global Handle")]
+        public DynValue ExecutePreparedNestedGlobalHandle() =>
             _boundNestedGlobalHandle.Execute(_arg1, _arg2, _arg3);
 
         /// <summary>
-        /// Executes a six-argument global function handle resolved once through the public binding API.
+        /// Executes a six-argument global function handle resolved once through the public prepare API.
         /// </summary>
-        [Benchmark(Description = "Execute Bound 6-Arg Handle")]
-        public DynValue ExecuteBoundSixArgHandle() =>
+        [Benchmark(Description = "Execute Prepared 6-Arg Handle")]
+        public DynValue ExecutePreparedSixArgHandle() =>
             _boundSixArgHandle.Execute(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6);
 
         /// <summary>
-        /// Executes a seven-argument global function handle resolved once through the public binding API.
+        /// Executes a seven-argument global function handle resolved once through the public prepare API.
         /// </summary>
-        [Benchmark(Description = "Execute Bound 7-Arg Handle")]
-        public DynValue ExecuteBoundSevenArgHandle() =>
+        [Benchmark(Description = "Execute Prepared 7-Arg Handle")]
+        public DynValue ExecutePreparedSevenArgHandle() =>
             _boundSevenArgHandle.Execute(_arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7);
 
         /// <summary>
-        /// Executes a zero-argument global function handle resolved once through the public binding API.
+        /// Executes a zero-argument global function handle resolved once through the public prepare API.
         /// </summary>
-        [Benchmark(Description = "Execute Bound Zero-Arg Handle")]
-        public DynValue ExecuteBoundZeroArgHandle() => _boundZeroArgHandle.Execute();
+        [Benchmark(Description = "Execute Prepared Zero-Arg Handle")]
+        public DynValue ExecutePreparedZeroArgHandle() => _boundZeroArgHandle.Execute();
 
         /// <summary>
-        /// Resolves a top-level global function through the public binding API.
+        /// Resolves a top-level global function through the public prepare API.
         /// </summary>
-        [Benchmark(Description = "Bind Global Handle")]
-        public CompiledScript BindGlobalHandle() => _script.BindGlobalFunction("update");
+        [Benchmark(Description = "Prepare Global Handle")]
+        public CompiledScript PrepareGlobalHandle() => _script.PrepareGlobalFunction("update");
 
         /// <summary>
-        /// Resolves a nested global function through the fixed-key public binding API.
+        /// Resolves a nested global function through the fixed-key public prepare API.
         /// </summary>
-        [Benchmark(Description = "Bind Nested Global Fixed Handle")]
-        public CompiledScript BindNestedGlobalFixedHandle() =>
-            _script.BindGlobalFunction("api", "system", "update");
+        [Benchmark(Description = "Prepare Nested Global Fixed Handle")]
+        public CompiledScript PrepareNestedGlobalFixedHandle() =>
+            _script.PrepareGlobalFunction("api", "system", "update");
 
         /// <summary>
-        /// Resolves a nested global function through the caller-owned array path binding API.
+        /// Resolves a nested global function through the caller-owned array path prepare API.
         /// </summary>
-        [Benchmark(Description = "Bind Nested Global Array Path Handle")]
-        public CompiledScript BindNestedGlobalArrayPathHandle() =>
-            _script.BindGlobalFunctionPath(_nestedFunctionPath);
+        [Benchmark(Description = "Prepare Nested Global Array Path Handle")]
+        public CompiledScript PrepareNestedGlobalArrayPathHandle() =>
+            _script.PrepareGlobalFunctionPath(_nestedFunctionPath);
 
         /// <summary>
-        /// Resolves a nested global function through the caller-owned span path binding API.
+        /// Resolves a nested global function through the caller-owned span path prepare API.
         /// </summary>
-        [Benchmark(Description = "Bind Nested Global Span Path Handle")]
-        public CompiledScript BindNestedGlobalSpanPathHandle() =>
-            _script.BindGlobalFunctionPath(_nestedFunctionPath.AsSpan());
+        [Benchmark(Description = "Prepare Nested Global Span Path Handle")]
+        public CompiledScript PrepareNestedGlobalSpanPathHandle() =>
+            _script.PrepareGlobalFunctionPath(_nestedFunctionPath.AsSpan());
 
         /// <summary>
         /// Resolves a nested global function through a caller-owned path slice.
         /// </summary>
-        [Benchmark(Description = "Bind Nested Global Span Slice Path Handle")]
-        public CompiledScript BindNestedGlobalSpanSlicePathHandle() =>
-            _script.BindGlobalFunctionPath(_paddedNestedFunctionPath.AsSpan(1, 3));
+        [Benchmark(Description = "Prepare Nested Global Span Slice Path Handle")]
+        public CompiledScript PrepareNestedGlobalSpanSlicePathHandle() =>
+            _script.PrepareGlobalFunctionPath(_paddedNestedFunctionPath.AsSpan(1, 3));
     }
 }

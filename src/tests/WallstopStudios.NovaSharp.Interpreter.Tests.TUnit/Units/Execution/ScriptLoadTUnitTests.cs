@@ -1002,6 +1002,130 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CompiledScriptExecuteAsConvertsFirstScalarResult(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript compiled = script.PrepareFunction(
+                "function(a, b, c) return a + b + c, 'ignored' end",
+                funcFriendlyName: "compiled_typed_add"
+            );
+
+            double fixedResult = compiled.ExecuteAs<double>(
+                DynValue.FromNumber(1),
+                DynValue.FromNumber(2),
+                DynValue.FromNumber(3)
+            );
+            double spanResult = ExecuteCompiledScriptAsDoubleWithSpanArguments(
+                compiled,
+                new[] { DynValue.FromNumber(4), DynValue.FromNumber(5), DynValue.FromNumber(6) }
+            );
+            DynValue rawResult = compiled.Execute(
+                DynValue.FromNumber(7),
+                DynValue.FromNumber(8),
+                DynValue.FromNumber(9)
+            );
+
+            await Assert.That(fixedResult).IsEqualTo(6d).ConfigureAwait(false);
+            await Assert.That(spanResult).IsEqualTo(15d).ConfigureAwait(false);
+            await Assert.That(rawResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(rawResult.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(rawResult.Tuple[0].Number).IsEqualTo(24d).ConfigureAwait(false);
+            await Assert.That(rawResult.Tuple[1].String).IsEqualTo("ignored").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompiledScriptStrictResultHelpersUseScalarResults(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript numberResult = script.PrepareFunction(
+                "function(a, b, c, d, e, f, g) return g, 'ignored' end",
+                funcFriendlyName: "compiled_number_result"
+            );
+            CompiledScript booleanResult = script.PrepareFunction(
+                "function(value) return value > 10, 42 end",
+                funcFriendlyName: "compiled_boolean_result"
+            );
+            CompiledScript stringResult = script.PrepareString(
+                "return 'ready', 99",
+                codeFriendlyName: "compiled_string_result.lua"
+            );
+
+            double sevenArgNumber = numberResult.ExecuteNumber(
+                DynValue.FromNumber(1),
+                DynValue.FromNumber(2),
+                DynValue.FromNumber(3),
+                DynValue.FromNumber(4),
+                DynValue.FromNumber(5),
+                DynValue.FromNumber(6),
+                DynValue.FromNumber(7)
+            );
+            double spanNumber = ExecuteCompiledScriptNumberWithSpanArguments(
+                numberResult,
+                new[]
+                {
+                    DynValue.FromNumber(8),
+                    DynValue.FromNumber(9),
+                    DynValue.FromNumber(10),
+                    DynValue.FromNumber(11),
+                    DynValue.FromNumber(12),
+                    DynValue.FromNumber(13),
+                    DynValue.FromNumber(14),
+                }
+            );
+            bool fixedBoolean = booleanResult.ExecuteBoolean(DynValue.FromNumber(11));
+            bool spanBoolean = ExecuteCompiledScriptBooleanWithSpanArguments(
+                booleanResult,
+                new[] { DynValue.FromNumber(9) }
+            );
+            string scalarString = stringResult.ExecuteAs<string>();
+
+            await Assert.That(sevenArgNumber).IsEqualTo(7d).ConfigureAwait(false);
+            await Assert.That(spanNumber).IsEqualTo(14d).ConfigureAwait(false);
+            await Assert.That(fixedBoolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(spanBoolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(scalarString).IsEqualTo("ready").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CompiledScriptStrictResultHelpersRejectWrongScalarTypes(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript stringResult = script.PrepareString(
+                "return 'not-a-number'",
+                codeFriendlyName: "compiled_string_to_number.lua"
+            );
+            CompiledScript numberResult = script.PrepareString(
+                "return 1",
+                codeFriendlyName: "compiled_number_to_boolean.lua"
+            );
+
+            ScriptRuntimeException numberException = Assert.Throws<ScriptRuntimeException>(() =>
+                stringResult.ExecuteNumber()
+            );
+            ScriptRuntimeException booleanException = Assert.Throws<ScriptRuntimeException>(() =>
+                numberResult.ExecuteBoolean()
+            );
+
+            await Assert
+                .That(numberException.Message)
+                .Contains("System.Double")
+                .ConfigureAwait(false);
+            await Assert
+                .That(booleanException.Message)
+                .Contains("System.Boolean")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CompileFunctionExecutePreservesDebugFrameFunctionIdentity(
             LuaCompatibilityVersion version
         )
@@ -1793,6 +1917,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .That(Assert.Throws<InvalidOperationException>(() => compiled.Execute()).Message)
                 .Contains("Script compile or function binding method")
                 .ConfigureAwait(false);
+            await Assert
+                .That(
+                    Assert
+                        .Throws<InvalidOperationException>(() => compiled.ExecuteAs<double>())
+                        .Message
+                )
+                .Contains("Script compile or function binding method")
+                .ConfigureAwait(false);
+            await Assert
+                .That(
+                    Assert.Throws<InvalidOperationException>(() => compiled.ExecuteNumber()).Message
+                )
+                .Contains("Script compile or function binding method")
+                .ConfigureAwait(false);
+            await Assert
+                .That(
+                    Assert
+                        .Throws<InvalidOperationException>(() => compiled.ExecuteBoolean())
+                        .Message
+                )
+                .Contains("Script compile or function binding method")
+                .ConfigureAwait(false);
         }
 
         private static DynValue ExecuteCompiledScriptWithSpanArguments(
@@ -1801,6 +1947,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             return compiled.Execute(args.AsSpan());
+        }
+
+        private static double ExecuteCompiledScriptAsDoubleWithSpanArguments(
+            CompiledScript compiled,
+            DynValue[] args
+        )
+        {
+            return compiled.ExecuteAs<double>(args.AsSpan());
+        }
+
+        private static double ExecuteCompiledScriptNumberWithSpanArguments(
+            CompiledScript compiled,
+            DynValue[] args
+        )
+        {
+            return compiled.ExecuteNumber(args.AsSpan());
+        }
+
+        private static bool ExecuteCompiledScriptBooleanWithSpanArguments(
+            CompiledScript compiled,
+            DynValue[] args
+        )
+        {
+            return compiled.ExecuteBoolean(args.AsSpan());
         }
 
         private static DynValue ExecuteCompiledScriptWithObjectSpanArguments(

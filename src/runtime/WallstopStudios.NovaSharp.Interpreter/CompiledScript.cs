@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
     using System;
     using System.Runtime.CompilerServices;
     using DataTypes;
+    using Errors;
 
     /// <summary>
     /// Represents a Lua/NovaSharp chunk or callable value that has already been resolved for a
@@ -440,6 +441,411 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return GetScript().ExecuteTrustedCompiledFunction(_function, args);
         }
 
+        /// <summary>
+        /// Executes the compiled chunk and converts the first scalar result to the requested CLR type.
+        /// </summary>
+        /// <typeparam name="T">The CLR result type.</typeparam>
+        /// <returns>The converted first scalar result.</returns>
+        /// <remarks>
+        /// Use <see cref="Execute()"/> when tuple-preserving multi-result behavior is required.
+        /// </remarks>
+        public T ExecuteAs<T>()
+        {
+            return ConvertScalarResult<T>(Execute());
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one argument and converts the first scalar result to the requested CLR type.
+        /// </summary>
+        /// <typeparam name="T">The CLR result type.</typeparam>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The converted first scalar result.</returns>
+        public T ExecuteAs<T>(DynValue arg)
+        {
+            return ConvertScalarResult<T>(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with two arguments and converts the first scalar result to the requested CLR type.
+        /// </summary>
+        /// <typeparam name="T">The CLR result type.</typeparam>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <returns>The converted first scalar result.</returns>
+        public T ExecuteAs<T>(DynValue arg1, DynValue arg2)
+        {
+            return ConvertScalarResult<T>(Execute(arg1, arg2));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with three arguments and converts the first scalar result to the requested CLR type.
+        /// </summary>
+        /// <typeparam name="T">The CLR result type.</typeparam>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <returns>The converted first scalar result.</returns>
+        public T ExecuteAs<T>(DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with four arguments and converts the first scalar result to the requested CLR type.
+        /// </summary>
+        /// <typeparam name="T">The CLR result type.</typeparam>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <returns>The converted first scalar result.</returns>
+        public T ExecuteAs<T>(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        {
+            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3, arg4));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with five arguments and converts the first scalar result to the requested CLR type.
+        /// </summary>
+        /// <typeparam name="T">The CLR result type.</typeparam>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <returns>The converted first scalar result.</returns>
+        public T ExecuteAs<T>(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3, arg4, arg5));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with six arguments and converts the first scalar result to the requested CLR type.
+        /// </summary>
+        /// <typeparam name="T">The CLR result type.</typeparam>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <returns>The converted first scalar result.</returns>
+        public T ExecuteAs<T>(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3, arg4, arg5, arg6));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with seven arguments and converts the first scalar result to the requested CLR type.
+        /// </summary>
+        /// <typeparam name="T">The CLR result type.</typeparam>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <param name="arg7">The seventh argument to pass to the chunk.</param>
+        /// <returns>The converted first scalar result.</returns>
+        public T ExecuteAs<T>(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            return ConvertScalarResult<T>(Execute(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with caller-owned contiguous arguments and converts the first scalar result to the requested CLR type.
+        /// </summary>
+        /// <typeparam name="T">The CLR result type.</typeparam>
+        /// <param name="args">The arguments to pass to the chunk.</param>
+        /// <returns>The converted first scalar result.</returns>
+        public T ExecuteAs<T>(ReadOnlySpan<DynValue> args)
+        {
+            return ConvertScalarResult<T>(Execute(args));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk and returns a strict numeric scalar result.
+        /// </summary>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber()
+        {
+            return ConvertNumberResult(Execute());
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one argument and returns a strict numeric scalar result.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(DynValue arg)
+        {
+            return ConvertNumberResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with two arguments and returns a strict numeric scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(DynValue arg1, DynValue arg2)
+        {
+            return ConvertNumberResult(Execute(arg1, arg2));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with three arguments and returns a strict numeric scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            return ConvertNumberResult(Execute(arg1, arg2, arg3));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with four arguments and returns a strict numeric scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        {
+            return ConvertNumberResult(Execute(arg1, arg2, arg3, arg4));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with five arguments and returns a strict numeric scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            return ConvertNumberResult(Execute(arg1, arg2, arg3, arg4, arg5));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with six arguments and returns a strict numeric scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            return ConvertNumberResult(Execute(arg1, arg2, arg3, arg4, arg5, arg6));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with seven arguments and returns a strict numeric scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <param name="arg7">The seventh argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            return ConvertNumberResult(Execute(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with caller-owned contiguous arguments and returns a strict numeric scalar result.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR double.</returns>
+        public double ExecuteNumber(ReadOnlySpan<DynValue> args)
+        {
+            return ConvertNumberResult(Execute(args));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk and returns a strict Boolean scalar result.
+        /// </summary>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean()
+        {
+            return ConvertBooleanResult(Execute());
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one argument and returns a strict Boolean scalar result.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(DynValue arg)
+        {
+            return ConvertBooleanResult(Execute(arg));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with two arguments and returns a strict Boolean scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(DynValue arg1, DynValue arg2)
+        {
+            return ConvertBooleanResult(Execute(arg1, arg2));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with three arguments and returns a strict Boolean scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            return ConvertBooleanResult(Execute(arg1, arg2, arg3));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with four arguments and returns a strict Boolean scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        {
+            return ConvertBooleanResult(Execute(arg1, arg2, arg3, arg4));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with five arguments and returns a strict Boolean scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            return ConvertBooleanResult(Execute(arg1, arg2, arg3, arg4, arg5));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with six arguments and returns a strict Boolean scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            return ConvertBooleanResult(Execute(arg1, arg2, arg3, arg4, arg5, arg6));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with seven arguments and returns a strict Boolean scalar result.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the chunk.</param>
+        /// <param name="arg2">The second argument to pass to the chunk.</param>
+        /// <param name="arg3">The third argument to pass to the chunk.</param>
+        /// <param name="arg4">The fourth argument to pass to the chunk.</param>
+        /// <param name="arg5">The fifth argument to pass to the chunk.</param>
+        /// <param name="arg6">The sixth argument to pass to the chunk.</param>
+        /// <param name="arg7">The seventh argument to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            return ConvertBooleanResult(Execute(arg1, arg2, arg3, arg4, arg5, arg6, arg7));
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with caller-owned contiguous arguments and returns a strict Boolean scalar result.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the chunk.</param>
+        /// <returns>The first scalar result as a CLR Boolean.</returns>
+        public bool ExecuteBoolean(ReadOnlySpan<DynValue> args)
+        {
+            return ConvertBooleanResult(Execute(args));
+        }
+
         /// <inheritdoc />
         public bool Equals(CompiledScript other)
         {
@@ -506,6 +912,33 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             return _function;
+        }
+
+        private static T ConvertScalarResult<T>(DynValue result)
+        {
+            return result.ToScalar().ToObject<T>();
+        }
+
+        private static double ConvertNumberResult(DynValue result)
+        {
+            DynValue scalar = result.ToScalar();
+            if (scalar.Type != DataType.Number)
+            {
+                throw ScriptRuntimeException.ConvertObjectFailed(scalar.Type, typeof(double));
+            }
+
+            return scalar.Number;
+        }
+
+        private static bool ConvertBooleanResult(DynValue result)
+        {
+            DynValue scalar = result.ToScalar();
+            if (scalar.Type != DataType.Boolean)
+            {
+                throw ScriptRuntimeException.ConvertObjectFailed(scalar.Type, typeof(bool));
+            }
+
+            return scalar.Boolean;
         }
     }
 }
