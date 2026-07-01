@@ -6,6 +6,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
     using System.Threading;
     using Diagnostics;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
@@ -385,7 +386,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 }
                 else
                 {
-                    _setter.Invoke(IsStatic ? null : obj, new object[] { convertedValue }); // convoluted workaround for --full-aot Mono execution
+                    using PooledResource<object[]> pooled = ObjectArrayPool.Get(
+                        1,
+                        out object[] setterArguments
+                    );
+                    setterArguments[0] = convertedValue;
+                    _setter.Invoke(IsStatic ? null : obj, setterArguments); // convoluted workaround for --full-aot Mono execution
                 }
             }
             catch (ArgumentException)
