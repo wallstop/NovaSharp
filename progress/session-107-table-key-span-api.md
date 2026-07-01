@@ -34,7 +34,7 @@ Add caller-owned nested table key APIs so host code can reuse `object[]` buffers
 - [x] Targeted table tests run.
 - [x] Benchmark project compile checked.
 - [x] Build and broader checks run as appropriate.
-- [ ] Commit, push, request Copilot review, and poll PR CI.
+- [x] Commit, push, request Copilot review, and poll PR CI.
 
 ## Work Completed
 
@@ -53,6 +53,16 @@ Add caller-owned nested table key APIs so host code can reuse `object[]` buffers
 - Post-format `./scripts/build/quick.sh && ./scripts/test/quick.sh`: passed; 14,329 tests.
 - Post-format benchmark project build: passed with 0 warnings.
 
+## Remote Follow-Up
+
+- Pushed implementation commit `6f42e657`.
+- Requested Copilot review with `@copilot`.
+- GitHub Actions initially failed in the `benchmark` workflow during solution build because new tests used `var` for named tuple helper results and CI treats IDE0008 as an error.
+- Fixed the CI-only test style issue in follow-up commit `cf75cbed`.
+- Requested Copilot review again with `@copilot`.
+- PR CI on head `cf75cbed`: 22 checks passed, 2 expected jobs skipped.
+- Copilot review at `2026-07-01T06:56:08Z` reported the PR still exceeds the 20,000-line review limit; no actionable Copilot feedback was available.
+
 ## Status
 
-In progress.
+Completed for this slice.

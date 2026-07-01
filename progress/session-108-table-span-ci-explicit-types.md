@@ -28,7 +28,7 @@ This is a test-source style/build issue, not a production behavior failure and n
 3. [x] Re-run relevant local tests.
 4. [x] Run pre-commit.
 5. [x] Prepare the local CI-fix commit.
-6. [ ] Push, request Copilot review again, and poll PR CI.
+6. [x] Push, request Copilot review again, and poll PR CI.
 
 ## Validation
 
@@ -36,6 +36,13 @@ This is a test-source style/build issue, not a production behavior failure and n
 - `./scripts/test/quick.sh Table`: passed, 642 tests.
 - `bash ./scripts/dev/pre-commit.sh`: completed successfully. It emitted existing documentation/skill metadata warnings, with 0 reported errors.
 
+## Remote Result
+
+- Pushed follow-up commit `cf75cbed`.
+- Requested Copilot review with `@copilot`.
+- PR CI on head `cf75cbed`: 22 checks passed, 2 expected jobs skipped.
+- Copilot review at `2026-07-01T06:56:08Z` reported the PR still exceeds the 20,000-line review limit; no actionable Copilot feedback was available.
+
 ## Status
 
-In progress.
+Completed.
