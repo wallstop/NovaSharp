@@ -9,6 +9,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     using WallstopStudios.NovaSharp.Cli;
     using WallstopStudios.NovaSharp.Cli.Commands;
     using WallstopStudios.NovaSharp.Cli.Commands.Implementations;
+    using WallstopStudios.NovaSharp.Hardwire;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
@@ -344,6 +345,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task HardwireSwitchGeneratesDescriptorsViaProgramCheckArgs()
         {
             using PlatformDetectorOverrideScope platformScope =
@@ -396,6 +398,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task InterpreterLoopHardwireCommandGeneratesDescriptors()
         {
             using PlatformDetectorOverrideScope platformScope =

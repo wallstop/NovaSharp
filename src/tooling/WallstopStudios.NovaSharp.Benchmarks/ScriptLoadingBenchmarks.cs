@@ -275,9 +275,12 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     {
         private Script _script;
         private DynValue _function = DynValue.Nil;
+        private DynValue _nestedFunction = DynValue.Nil;
         private DynValue _sixArgFunction = DynValue.Nil;
         private DynValue _sevenArgFunction = DynValue.Nil;
         private DynValue _zeroArgFunction = DynValue.Nil;
+        private object[] _nestedFunctionPath = Array.Empty<object>();
+        private object[] _paddedNestedFunctionPath = Array.Empty<object>();
         private DynValue _arg1 = DynValue.Nil;
         private DynValue _arg2 = DynValue.Nil;
         private DynValue _arg3 = DynValue.Nil;
@@ -286,6 +289,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _arg6 = DynValue.Nil;
         private DynValue _arg7 = DynValue.Nil;
         private CompiledScript _boundGlobalHandle;
+        private CompiledScript _boundNestedGlobalHandle;
         private CompiledScript _boundSixArgHandle;
         private CompiledScript _boundSevenArgHandle;
         private CompiledScript _boundZeroArgHandle;
@@ -301,13 +305,25 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 "function update(a, b, c) return a + b + c end; "
                     + "function update6(a, b, c, d, e, f) return f end; "
                     + "function update7(a, b, c, d, e, f, g) return g end; "
-                    + "function tick() return 42 end"
+                    + "function tick() return 42 end; "
+                    + "api = { system = { update = function(a, b, c) return a + b + c end } }"
             );
             _function = _script.Globals.Get("update");
+            _nestedFunction = _script.Globals.Get("api", "system", "update");
             _sixArgFunction = _script.Globals.Get("update6");
             _sevenArgFunction = _script.Globals.Get("update7");
             _zeroArgFunction = _script.Globals.Get("tick");
+            _nestedFunctionPath = new object[] { "api", "system", "update" };
+            _paddedNestedFunctionPath = new object[]
+            {
+                "ignored",
+                "api",
+                "system",
+                "update",
+                "ignored",
+            };
             _boundGlobalHandle = _script.BindGlobalFunction("update");
+            _boundNestedGlobalHandle = _script.BindGlobalFunction("api", "system", "update");
             _boundSixArgHandle = _script.BindGlobalFunction("update6");
             _boundSevenArgHandle = _script.BindGlobalFunction("update7");
             _boundZeroArgHandle = _script.BindGlobalFunction("tick");
@@ -328,10 +344,24 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _script.Call(_script.Globals.Get("update"), _arg1, _arg2, _arg3);
 
         /// <summary>
+        /// Resolves a nested global function on every call before invoking it.
+        /// </summary>
+        [Benchmark(Description = "Call Nested Global Lookup")]
+        public DynValue CallNestedGlobalLookup() =>
+            _script.Call(_script.Globals.Get("api", "system", "update"), _arg1, _arg2, _arg3);
+
+        /// <summary>
         /// Calls a manually cached global function value.
         /// </summary>
         [Benchmark(Description = "Call Cached Global")]
         public DynValue CallCachedGlobal() => _script.Call(_function, _arg1, _arg2, _arg3);
+
+        /// <summary>
+        /// Calls a manually cached nested global function value.
+        /// </summary>
+        [Benchmark(Description = "Call Cached Nested Global")]
+        public DynValue CallCachedNestedGlobal() =>
+            _script.Call(_nestedFunction, _arg1, _arg2, _arg3);
 
         /// <summary>
         /// Calls a manually cached six-argument global function value.
@@ -361,6 +391,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _boundGlobalHandle.Execute(_arg1, _arg2, _arg3);
 
         /// <summary>
+        /// Executes a nested global function handle resolved once through the public binding API.
+        /// </summary>
+        [Benchmark(Description = "Execute Bound Nested Global Handle")]
+        public DynValue ExecuteBoundNestedGlobalHandle() =>
+            _boundNestedGlobalHandle.Execute(_arg1, _arg2, _arg3);
+
+        /// <summary>
         /// Executes a six-argument global function handle resolved once through the public binding API.
         /// </summary>
         [Benchmark(Description = "Execute Bound 6-Arg Handle")]
@@ -379,5 +416,39 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Execute Bound Zero-Arg Handle")]
         public DynValue ExecuteBoundZeroArgHandle() => _boundZeroArgHandle.Execute();
+
+        /// <summary>
+        /// Resolves a top-level global function through the public binding API.
+        /// </summary>
+        [Benchmark(Description = "Bind Global Handle")]
+        public CompiledScript BindGlobalHandle() => _script.BindGlobalFunction("update");
+
+        /// <summary>
+        /// Resolves a nested global function through the fixed-key public binding API.
+        /// </summary>
+        [Benchmark(Description = "Bind Nested Global Fixed Handle")]
+        public CompiledScript BindNestedGlobalFixedHandle() =>
+            _script.BindGlobalFunction("api", "system", "update");
+
+        /// <summary>
+        /// Resolves a nested global function through the caller-owned array path binding API.
+        /// </summary>
+        [Benchmark(Description = "Bind Nested Global Array Path Handle")]
+        public CompiledScript BindNestedGlobalArrayPathHandle() =>
+            _script.BindGlobalFunctionPath(_nestedFunctionPath);
+
+        /// <summary>
+        /// Resolves a nested global function through the caller-owned span path binding API.
+        /// </summary>
+        [Benchmark(Description = "Bind Nested Global Span Path Handle")]
+        public CompiledScript BindNestedGlobalSpanPathHandle() =>
+            _script.BindGlobalFunctionPath(_nestedFunctionPath.AsSpan());
+
+        /// <summary>
+        /// Resolves a nested global function through a caller-owned path slice.
+        /// </summary>
+        [Benchmark(Description = "Bind Nested Global Span Slice Path Handle")]
+        public CompiledScript BindNestedGlobalSpanSlicePathHandle() =>
+            _script.BindGlobalFunctionPath(_paddedNestedFunctionPath.AsSpan(1, 3));
     }
 }

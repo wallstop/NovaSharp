@@ -114,6 +114,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task GenerateCodeInvokesRegisteredGenerators()
         {
             string managedType = "Hardwire.Tests.Context." + Guid.NewGuid().ToString("N");
@@ -196,6 +197,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task DispatchTablePairsSkipsEntriesMarkedForSkip()
         {
             string managedType = "Hardwire.Tests.Skip." + Guid.NewGuid().ToString("N");
@@ -217,6 +219,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task DispatchTablePairsLogsWarningWhenVisibilityRejected()
         {
             CapturingCodeGenerationLogger logger = new();

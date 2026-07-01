@@ -834,6 +834,73 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Resolves a nested global function once and returns an executable handle for repeated calls.
+        /// </summary>
+        /// <param name="key1">The key used to locate the nested table.</param>
+        /// <param name="key2">The key used to resolve the callable value in the nested table.</param>
+        /// <returns>An executable handle for the current nested global value.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when the resolved nested global value is not callable.
+        /// </exception>
+        public CompiledScript BindGlobalFunction(object key1, object key2)
+        {
+            return BindFunction(Globals.Get(key1, key2));
+        }
+
+        /// <summary>
+        /// Resolves a nested global function once and returns an executable handle for repeated calls.
+        /// </summary>
+        /// <param name="key1">The first key used to locate the nested table.</param>
+        /// <param name="key2">The second key used to locate the nested table.</param>
+        /// <param name="key3">The key used to resolve the callable value in the nested table.</param>
+        /// <returns>An executable handle for the current nested global value.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when the resolved nested global value is not callable.
+        /// </exception>
+        public CompiledScript BindGlobalFunction(object key1, object key2, object key3)
+        {
+            return BindFunction(Globals.Get(key1, key2, key3));
+        }
+
+        /// <summary>
+        /// Resolves a nested global function path once and returns an executable handle for repeated calls.
+        /// </summary>
+        /// <param name="keys">The global-table key path to resolve.</param>
+        /// <returns>An executable handle for the current nested global value.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="keys"/> is null.</exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="keys"/> is empty or when the resolved value is not callable.
+        /// </exception>
+        public CompiledScript BindGlobalFunctionPath(object[] keys)
+        {
+            if (keys == null)
+            {
+                throw new ArgumentNullException(nameof(keys));
+            }
+
+            return BindGlobalFunctionPath(keys.AsSpan());
+        }
+
+        /// <summary>
+        /// Resolves a caller-owned nested global function path once and returns an executable handle
+        /// for repeated calls.
+        /// </summary>
+        /// <param name="keys">The global-table key path to resolve.</param>
+        /// <returns>An executable handle for the current nested global value.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="keys"/> is empty or when the resolved value is not callable.
+        /// </exception>
+        public CompiledScript BindGlobalFunctionPath(ReadOnlySpan<object> keys)
+        {
+            if (keys.Length == 0)
+            {
+                throw new ArgumentException("Global function path cannot be empty.", nameof(keys));
+            }
+
+            return BindFunction(Globals.Get(keys));
+        }
+
+        /// <summary>
         /// Validates that a compiled handle target belongs to this script and can be called.
         /// </summary>
         /// <param name="function">The function or callable value to validate.</param>

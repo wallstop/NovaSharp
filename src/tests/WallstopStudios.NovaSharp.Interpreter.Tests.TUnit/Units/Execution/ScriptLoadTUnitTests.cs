@@ -1153,6 +1153,164 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task BindGlobalFunctionNestedFixedPathsExecuteInitiallyResolvedGlobal(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString(
+                """
+                api = {
+                    update = function(value) return value + 1 end,
+                    system = { update = function(value) return value + 2 end }
+                }
+                """
+            );
+            CompiledScript twoKey = script.BindGlobalFunction("api", "update");
+            CompiledScript threeKey = script.BindGlobalFunction("api", "system", "update");
+
+            script.DoString(
+                """
+                api.update = function(value) return value + 100 end
+                api.system.update = function(value) return value + 200 end
+                """
+            );
+
+            DynValue twoKeyResult = twoKey.Execute(DynValue.FromNumber(10));
+            DynValue threeKeyResult = threeKey.Execute(DynValue.FromNumber(10));
+            DynValue currentTwoKey = script.Call(
+                script.Globals.Get("api", "update"),
+                DynValue.FromNumber(10)
+            );
+            DynValue currentThreeKey = script.Call(
+                script.Globals.Get("api", "system", "update"),
+                DynValue.FromNumber(10)
+            );
+
+            await Assert.That(twoKeyResult.Number).IsEqualTo(11d).ConfigureAwait(false);
+            await Assert.That(threeKeyResult.Number).IsEqualTo(12d).ConfigureAwait(false);
+            await Assert.That(currentTwoKey.Number).IsEqualTo(110d).ConfigureAwait(false);
+            await Assert.That(currentThreeKey.Number).IsEqualTo(210d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task BindGlobalFunctionPathSupportsArraysSpansSlicesAndNumericKeys(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString(
+                """
+                api = {
+                    [1] = { run = function(value) return value + 3 end },
+                    system = { tick = function(value) return value + 4 end }
+                }
+                """
+            );
+            object[] numericPath = new object[] { "api", 1, "run" };
+            object[] systemPath = new object[] { "api", "system", "tick" };
+            object[] paddedPath = new object[] { "ignored", "api", "system", "tick", "ignored" };
+
+            CompiledScript arrayBound = script.BindGlobalFunctionPath(numericPath);
+            CompiledScript spanBound = BindGlobalFunctionPathWithSpan(script, systemPath);
+            CompiledScript sliceBound = BindGlobalFunctionPathWithSlice(script, paddedPath, 1, 3);
+
+            DynValue arrayResult = arrayBound.Execute(DynValue.FromNumber(10));
+            DynValue spanResult = spanBound.Execute(DynValue.FromNumber(10));
+            DynValue sliceResult = sliceBound.Execute(DynValue.FromNumber(10));
+
+            await Assert.That(arrayResult.Number).IsEqualTo(13d).ConfigureAwait(false);
+            await Assert.That(spanResult.Number).IsEqualTo(14d).ConfigureAwait(false);
+            await Assert.That(sliceResult.Number).IsEqualTo(14d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task BindGlobalFunctionPathSupportsCallableTables(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString(
+                """
+                api = {
+                    callable = setmetatable({}, {
+                        __call = function(_, value) return value * 2 end
+                    })
+                }
+                """
+            );
+
+            CompiledScript boundCallable = script.BindGlobalFunction("api", "callable");
+            DynValue result = boundCallable.Execute(DynValue.FromNumber(21));
+
+            await Assert.That(result.Number).IsEqualTo(42d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task BindGlobalFunctionPathRejectsNullOrEmptyPath()
+        {
+            Script script = new(CoreModulePresets.Complete);
+
+            ArgumentNullException nullException = Assert.Throws<ArgumentNullException>(() =>
+                script.BindGlobalFunctionPath((object[])null)
+            );
+            ArgumentException emptyArrayException = Assert.Throws<ArgumentException>(() =>
+                script.BindGlobalFunctionPath(Array.Empty<object>())
+            );
+            ArgumentException emptySpanException = Assert.Throws<ArgumentException>(() =>
+                BindGlobalFunctionPathWithSpan(script, Array.Empty<object>())
+            );
+
+            await Assert.That(nullException.ParamName).IsEqualTo("keys").ConfigureAwait(false);
+            await Assert
+                .That(emptyArrayException.Message)
+                .Contains("cannot be empty")
+                .ConfigureAwait(false);
+            await Assert
+                .That(emptySpanException.Message)
+                .Contains("cannot be empty")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task BindGlobalFunctionNestedPathErrorsMatchTableLookup(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString("api = { leaf = 5 }");
+
+            ArgumentException missingFinalException = Assert.Throws<ArgumentException>(() =>
+                script.BindGlobalFunction("api", "missing")
+            );
+            ScriptRuntimeException missingIntermediateException =
+                Assert.Throws<ScriptRuntimeException>(() =>
+                    script.BindGlobalFunction("missing", "update")
+                );
+            ScriptRuntimeException nonTableIntermediateException =
+                Assert.Throws<ScriptRuntimeException>(() =>
+                    script.BindGlobalFunction("api", "leaf", "update")
+                );
+
+            await Assert
+                .That(missingFinalException.Message)
+                .Contains("__call metamethod")
+                .ConfigureAwait(false);
+            await Assert
+                .That(missingIntermediateException.Message)
+                .Contains("did not point to anything")
+                .ConfigureAwait(false);
+            await Assert
+                .That(nonTableIntermediateException.Message)
+                .Contains("did not point to a table")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task BindFunctionSupportsCallableMetamethods(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
@@ -1320,7 +1478,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             Script script = new(CoreModulePresets.Complete);
 
             ArgumentException nullException = Assert.Throws<ArgumentException>(() =>
-                script.BindGlobalFunction(null)
+                script.BindGlobalFunction((string)null)
             );
             ArgumentException emptyException = Assert.Throws<ArgumentException>(() =>
                 script.BindGlobalFunction(string.Empty)
@@ -1445,6 +1603,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         )
         {
             return compiled.ExecuteObjectArguments(args.AsSpan());
+        }
+
+        private static CompiledScript BindGlobalFunctionPathWithSpan(Script script, object[] keys)
+        {
+            return script.BindGlobalFunctionPath(keys.AsSpan());
+        }
+
+        private static CompiledScript BindGlobalFunctionPathWithSlice(
+            Script script,
+            object[] keys,
+            int start,
+            int length
+        )
+        {
+            return script.BindGlobalFunctionPath(keys.AsSpan(start, length));
         }
 
         private static async Task AssertCompiledCaptureResult(DynValue result, int arity)
