@@ -461,6 +461,74 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(PrepareSourceKind.InlineChunk)]
+        [global::TUnit.Core.Arguments(PrepareSourceKind.CallerStream)]
+        [global::TUnit.Core.Arguments(PrepareSourceKind.LoaderFile)]
+        [global::TUnit.Core.Arguments(PrepareSourceKind.FunctionBody)]
+        public async Task PrepareSourceAliasesExecuteRepeatedlyWithoutGrowingSources(
+            PrepareSourceKind sourceKind
+        )
+        {
+            const string chunkCode = "counter = (counter or 0) + 1; return counter";
+            CountingStringScriptLoader fileLoader = new(chunkCode);
+            ScriptOptions options = new() { EnableScriptCaching = true, ScriptLoader = fileLoader };
+            Script script = new(CoreModulePresets.Complete, options);
+            int initialSourceCount = script.SourceCodeCount;
+
+            byte[] streamCode = System.Text.Encoding.UTF8.GetBytes(chunkCode);
+            using TrackingMemoryStream stream = new(streamCode);
+            CompiledScript prepared = sourceKind switch
+            {
+                PrepareSourceKind.InlineChunk => script.PrepareString(
+                    chunkCode,
+                    codeFriendlyName: "prepared_string.lua"
+                ),
+                PrepareSourceKind.CallerStream => script.PrepareStream(
+                    stream,
+                    codeFriendlyName: "prepared_stream.lua"
+                ),
+                PrepareSourceKind.LoaderFile => script.PrepareFile("prepared_file.lua"),
+                PrepareSourceKind.FunctionBody => script.PrepareFunction(
+                    "function() counter = (counter or 0) + 1; return counter end",
+                    funcFriendlyName: "prepared_function"
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(sourceKind)),
+            };
+
+            DynValue first = prepared.Execute();
+            DynValue second = prepared.Execute();
+
+            await Assert.That(prepared.IsValid).IsTrue().ConfigureAwait(false);
+            await Assert.That(prepared.Script).IsSameReferenceAs(script).ConfigureAwait(false);
+            await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + 1)
+                .Because($"Prepare source kind {sourceKind} should add exactly one source")
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.CompilationCacheCount)
+                .IsEqualTo(sourceKind == PrepareSourceKind.FunctionBody ? 0 : 1)
+                .Because($"Prepare source kind {sourceKind} should preserve compile cache behavior")
+                .ConfigureAwait(false);
+            await Assert
+                .That(fileLoader.LoadCount)
+                .IsEqualTo(sourceKind == PrepareSourceKind.LoaderFile ? 1 : 0)
+                .Because($"Prepare source kind {sourceKind} should only load files for file input")
+                .ConfigureAwait(false);
+
+            if (sourceKind == PrepareSourceKind.CallerStream)
+            {
+                await Assert
+                    .That(stream.IsDisposed)
+                    .IsFalse()
+                    .Because("PrepareStream should preserve caller-owned stream ownership")
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task CompileStringExecutePreservesDebugFrameFunctionIdentity(
             LuaCompatibilityVersion version
@@ -1153,6 +1221,89 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task PrepareCallableAndGlobalAliasesExecuteInitiallyResolvedTargets(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.DoString(
+                """
+                function update(value) return value + 1 end
+                api = {
+                    update = function(value) return value + 2 end,
+                    [1] = { run = function(value) return value + 3 end },
+                    system = { tick = function(value) return value + 4 end },
+                    callable = setmetatable({}, {
+                        __call = function(_, value) return value * 2 end
+                    })
+                }
+                """
+            );
+            object[] numericPath = new object[] { "api", 1, "run" };
+            object[] systemPath = new object[] { "api", "system", "tick" };
+            object[] paddedPath = new object[] { "ignored", "api", "system", "tick", "ignored" };
+
+            CompiledScript preparedCallable = script.PrepareCallable(script.Globals.Get("update"));
+            CompiledScript preparedGlobal = script.PrepareGlobalFunction("update");
+            CompiledScript preparedTwoKey = script.PrepareGlobalFunction("api", "update");
+            CompiledScript preparedThreeKey = script.PrepareGlobalFunction("api", "system", "tick");
+            CompiledScript preparedArrayPath = script.PrepareGlobalFunctionPath(numericPath);
+            CompiledScript preparedSpanPath = PrepareGlobalFunctionPathWithSpan(script, systemPath);
+            CompiledScript preparedSlicePath = PrepareGlobalFunctionPathWithSlice(
+                script,
+                paddedPath,
+                1,
+                3
+            );
+            CompiledScript preparedCallableTable = script.PrepareCallable(
+                script.Globals.Get("api", "callable")
+            );
+
+            script.DoString(
+                """
+                update = function(value) return value + 100 end
+                api.update = function(value) return value + 200 end
+                api[1].run = function(value) return value + 300 end
+                api.system.tick = function(value) return value + 400 end
+                """
+            );
+
+            await Assert
+                .That(preparedCallable.Execute(DynValue.FromNumber(10)).Number)
+                .IsEqualTo(11d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(preparedGlobal.Execute(DynValue.FromNumber(10)).Number)
+                .IsEqualTo(11d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(preparedTwoKey.Execute(DynValue.FromNumber(10)).Number)
+                .IsEqualTo(12d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(preparedThreeKey.Execute(DynValue.FromNumber(10)).Number)
+                .IsEqualTo(14d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(preparedArrayPath.Execute(DynValue.FromNumber(10)).Number)
+                .IsEqualTo(13d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(preparedSpanPath.Execute(DynValue.FromNumber(10)).Number)
+                .IsEqualTo(14d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(preparedSlicePath.Execute(DynValue.FromNumber(10)).Number)
+                .IsEqualTo(14d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(preparedCallableTable.Execute(DynValue.FromNumber(21)).Number)
+                .IsEqualTo(42d)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task BindGlobalFunctionNestedFixedPathsExecuteInitiallyResolvedGlobal(
             LuaCompatibilityVersion version
         )
@@ -1489,6 +1640,61 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        public async Task PrepareAliasesPreserveCallableValidationDiagnostics()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            script.Globals.Set("notCallable", DynValue.FromNumber(42));
+
+            ArgumentNullException nullCallableException = Assert.Throws<ArgumentNullException>(() =>
+                script.PrepareCallable(null)
+            );
+            ArgumentException directCallableException = Assert.Throws<ArgumentException>(() =>
+                script.PrepareCallable(DynValue.FromNumber(42))
+            );
+            ArgumentException nullGlobalException = Assert.Throws<ArgumentException>(() =>
+                script.PrepareGlobalFunction((string)null)
+            );
+            ArgumentException nonCallableGlobalException = Assert.Throws<ArgumentException>(() =>
+                script.PrepareGlobalFunction("notCallable")
+            );
+            ArgumentNullException nullPathException = Assert.Throws<ArgumentNullException>(() =>
+                script.PrepareGlobalFunctionPath((object[])null)
+            );
+            ArgumentException emptyArrayException = Assert.Throws<ArgumentException>(() =>
+                script.PrepareGlobalFunctionPath(Array.Empty<object>())
+            );
+            ArgumentException emptySpanException = Assert.Throws<ArgumentException>(() =>
+                PrepareGlobalFunctionPathWithSpan(script, Array.Empty<object>())
+            );
+
+            await Assert
+                .That(nullCallableException.ParamName)
+                .IsEqualTo("function")
+                .ConfigureAwait(false);
+            await Assert
+                .That(directCallableException.Message)
+                .Contains("__call metamethod")
+                .ConfigureAwait(false);
+            await Assert
+                .That(nullGlobalException.ParamName)
+                .IsEqualTo("name")
+                .ConfigureAwait(false);
+            await Assert
+                .That(nonCallableGlobalException.Message)
+                .Contains("function is not a function")
+                .ConfigureAwait(false);
+            await Assert.That(nullPathException.ParamName).IsEqualTo("keys").ConfigureAwait(false);
+            await Assert
+                .That(emptyArrayException.Message)
+                .Contains("cannot be empty")
+                .ConfigureAwait(false);
+            await Assert
+                .That(emptySpanException.Message)
+                .Contains("cannot be empty")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task CompileStringRuntimeErrorUsesFriendlyName(LuaCompatibilityVersion version)
         {
@@ -1620,6 +1826,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             return script.BindGlobalFunctionPath(keys.AsSpan(start, length));
         }
 
+        private static CompiledScript PrepareGlobalFunctionPathWithSpan(
+            Script script,
+            object[] keys
+        )
+        {
+            return script.PrepareGlobalFunctionPath(keys.AsSpan());
+        }
+
+        private static CompiledScript PrepareGlobalFunctionPathWithSlice(
+            Script script,
+            object[] keys,
+            int start,
+            int length
+        )
+        {
+            return script.PrepareGlobalFunctionPath(keys.AsSpan(start, length));
+        }
+
         private static async Task AssertCompiledCaptureResult(DynValue result, int arity)
         {
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
@@ -1736,6 +1960,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 return target
                 """
             );
+        }
+
+        public enum PrepareSourceKind
+        {
+            InlineChunk,
+            CallerStream,
+            LoaderFile,
+            FunctionBody,
         }
 
         [global::TUnit.Core.Test]

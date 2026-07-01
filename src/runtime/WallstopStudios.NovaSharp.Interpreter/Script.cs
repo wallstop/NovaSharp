@@ -714,6 +714,22 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return new CompiledScript(this, LoadFunction(code, globalTable, funcFriendlyName));
         }
 
+        /// <summary>
+        /// Prepares a string containing a Lua/NovaSharp function for repeated execution.
+        /// </summary>
+        /// <param name="code">The code.</param>
+        /// <param name="globalTable">The global table to bind to this function.</param>
+        /// <param name="funcFriendlyName">Name of the function used to report errors, etc.</param>
+        /// <returns>A prepared handle that can be executed repeatedly without source text.</returns>
+        public CompiledScript PrepareFunction(
+            string code,
+            Table globalTable = null,
+            string funcFriendlyName = null
+        )
+        {
+            return CompileFunction(code, globalTable, funcFriendlyName);
+        }
+
         private void SignalByteCodeChange()
         {
             if (_debugger != null)
@@ -796,6 +812,22 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Prepares a string containing a Lua/NovaSharp script for repeated execution.
+        /// </summary>
+        /// <param name="code">The code.</param>
+        /// <param name="globalTable">The global table to bind to this chunk.</param>
+        /// <param name="codeFriendlyName">Name of the code - used to report errors, etc. Also used by debuggers to locate the original source file.</param>
+        /// <returns>A prepared handle that can be executed repeatedly without source text.</returns>
+        public CompiledScript PrepareString(
+            string code,
+            Table globalTable = null,
+            string codeFriendlyName = null
+        )
+        {
+            return CompileString(code, globalTable, codeFriendlyName);
+        }
+
+        /// <summary>
         /// Creates an executable handle for a function or callable value that has already been
         /// resolved for this script.
         /// </summary>
@@ -809,6 +841,21 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public CompiledScript BindFunction(DynValue function)
         {
             return new CompiledScript(this, function);
+        }
+
+        /// <summary>
+        /// Prepares a function or callable value that has already been resolved for this script.
+        /// </summary>
+        /// <param name="function">The function or callable value to prepare.</param>
+        /// <returns>An executable handle that can be called repeatedly without resolving the value again.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="function"/> is null.</exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="function"/> is not directly callable and has no callable
+        /// <c>__call</c> metamethod.
+        /// </exception>
+        public CompiledScript PrepareCallable(DynValue function)
+        {
+            return BindFunction(function);
         }
 
         /// <summary>
@@ -834,6 +881,20 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Prepares a global function once and returns an executable handle for repeated calls.
+        /// </summary>
+        /// <param name="name">The global function name.</param>
+        /// <returns>An executable handle for the current global value.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="name"/> is null or empty, or when the global value is not
+        /// callable.
+        /// </exception>
+        public CompiledScript PrepareGlobalFunction(string name)
+        {
+            return BindGlobalFunction(name);
+        }
+
+        /// <summary>
         /// Resolves a nested global function once and returns an executable handle for repeated calls.
         /// </summary>
         /// <param name="key1">The key used to locate the nested table.</param>
@@ -845,6 +906,20 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public CompiledScript BindGlobalFunction(object key1, object key2)
         {
             return BindFunction(Globals.Get(key1, key2));
+        }
+
+        /// <summary>
+        /// Prepares a nested global function once and returns an executable handle for repeated calls.
+        /// </summary>
+        /// <param name="key1">The key used to locate the nested table.</param>
+        /// <param name="key2">The key used to resolve the callable value in the nested table.</param>
+        /// <returns>An executable handle for the current nested global value.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when the resolved nested global value is not callable.
+        /// </exception>
+        public CompiledScript PrepareGlobalFunction(object key1, object key2)
+        {
+            return BindGlobalFunction(key1, key2);
         }
 
         /// <summary>
@@ -860,6 +935,21 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public CompiledScript BindGlobalFunction(object key1, object key2, object key3)
         {
             return BindFunction(Globals.Get(key1, key2, key3));
+        }
+
+        /// <summary>
+        /// Prepares a nested global function once and returns an executable handle for repeated calls.
+        /// </summary>
+        /// <param name="key1">The first key used to locate the nested table.</param>
+        /// <param name="key2">The second key used to locate the nested table.</param>
+        /// <param name="key3">The key used to resolve the callable value in the nested table.</param>
+        /// <returns>An executable handle for the current nested global value.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when the resolved nested global value is not callable.
+        /// </exception>
+        public CompiledScript PrepareGlobalFunction(object key1, object key2, object key3)
+        {
+            return BindGlobalFunction(key1, key2, key3);
         }
 
         /// <summary>
@@ -882,6 +972,20 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
+        /// Prepares a nested global function path once and returns an executable handle for repeated calls.
+        /// </summary>
+        /// <param name="keys">The global-table key path to resolve.</param>
+        /// <returns>An executable handle for the current nested global value.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="keys"/> is null.</exception>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="keys"/> is empty or when the resolved value is not callable.
+        /// </exception>
+        public CompiledScript PrepareGlobalFunctionPath(object[] keys)
+        {
+            return BindGlobalFunctionPath(keys);
+        }
+
+        /// <summary>
         /// Resolves a caller-owned nested global function path once and returns an executable handle
         /// for repeated calls.
         /// </summary>
@@ -898,6 +1002,20 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             return BindFunction(Globals.Get(keys));
+        }
+
+        /// <summary>
+        /// Prepares a caller-owned nested global function path once and returns an executable handle
+        /// for repeated calls.
+        /// </summary>
+        /// <param name="keys">The global-table key path to resolve.</param>
+        /// <returns>An executable handle for the current nested global value.</returns>
+        /// <exception cref="ArgumentException">
+        /// Thrown when <paramref name="keys"/> is empty or when the resolved value is not callable.
+        /// </exception>
+        public CompiledScript PrepareGlobalFunctionPath(ReadOnlySpan<object> keys)
+        {
+            return BindGlobalFunctionPath(keys);
         }
 
         /// <summary>
@@ -1624,6 +1742,23 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return new CompiledScript(this, LoadStream(stream, globalTable, codeFriendlyName));
         }
 
+        /// <summary>
+        /// Prepares a Lua/NovaSharp script from a System.IO.Stream for repeated execution.
+        /// NOTE: This will *NOT* close the stream!
+        /// </summary>
+        /// <param name="stream">The stream containing code.</param>
+        /// <param name="globalTable">The global table to bind to this chunk.</param>
+        /// <param name="codeFriendlyName">Name of the code - used to report errors, etc.</param>
+        /// <returns>A prepared handle that can be executed repeatedly without retaining the stream.</returns>
+        public CompiledScript PrepareStream(
+            Stream stream,
+            Table globalTable = null,
+            string codeFriendlyName = null
+        )
+        {
+            return CompileStream(stream, globalTable, codeFriendlyName);
+        }
+
         private DynValue LoadStreamCore(
             Stream stream,
             Table globalTable = null,
@@ -1831,6 +1966,22 @@ namespace WallstopStudios.NovaSharp.Interpreter
         )
         {
             return new CompiledScript(this, LoadFile(filename, globalContext, friendlyFilename));
+        }
+
+        /// <summary>
+        /// Prepares a Lua/NovaSharp script from a file for repeated execution.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <param name="globalContext">The global table to bind to this chunk.</param>
+        /// <param name="friendlyFilename">The filename to be used in error messages.</param>
+        /// <returns>A prepared handle that can be executed repeatedly without reloading the file.</returns>
+        public CompiledScript PrepareFile(
+            string filename,
+            Table globalContext = null,
+            string friendlyFilename = null
+        )
+        {
+            return CompileFile(filename, globalContext, friendlyFilename);
         }
 
         /// <summary>

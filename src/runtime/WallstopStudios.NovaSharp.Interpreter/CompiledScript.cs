@@ -9,10 +9,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
     /// specific <see cref="Script"/> instance.
     /// </summary>
     /// <remarks>
-    /// Use <see cref="Script.CompileString"/>, <see cref="Script.CompileStream"/>,
-    /// <see cref="Script.CompileFile"/>, <see cref="Script.CompileFunction"/>, or
-    /// <see cref="Script.BindGlobalFunction"/> when a caller needs to execute the same callable
-    /// repeatedly without keeping source text, streams, files, or global lookup on the hot path.
+    /// Use <see cref="Script.PrepareString"/>, <see cref="Script.PrepareStream"/>,
+    /// <see cref="Script.PrepareFile"/>, <see cref="Script.PrepareFunction"/>,
+    /// <see cref="Script.PrepareCallable"/>, or <see cref="Script.PrepareGlobalFunction"/>
+    /// when a caller needs to execute the same callable repeatedly without keeping source text,
+    /// streams, files, or global lookup on the hot path.
     /// </remarks>
     public readonly struct CompiledScript : IEquatable<CompiledScript>
     {
