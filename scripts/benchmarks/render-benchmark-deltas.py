@@ -524,6 +524,8 @@ def render_external_section(lines: list[str], rows: list[RuntimeMatrixRow]) -> N
         [
             "Each row is one scenario/operation from the same BenchmarkDotNet comparison run. "
             "NovaSharp values are raw results; external columns show raw results plus the NovaSharp delta against that runtime.",
+            "NovaSharp comparison rows intentionally use the prepared-handle public API "
+            "(`PrepareString`/`CompiledScript.Execute`) so the matrix reports the preferred execution surface.",
             "",
         ]
     )

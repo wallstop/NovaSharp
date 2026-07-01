@@ -81,58 +81,183 @@ namespace WallstopStudios.NovaSharp.Interpreter
         }
 
         /// <summary>
-        /// Executes the compiled chunk with one CLR double argument without routing through the
-        /// boxed <see cref="object"/> conversion overload.
+        /// Executes the compiled chunk with one CLR double argument while preserving custom
+        /// converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(double arg)
         {
-            return Execute(DynValue.FromNumber(arg));
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertDoubleArgument(script, arg)
+            );
         }
 
         /// <summary>
-        /// Executes the compiled chunk with one CLR float argument without routing through the
-        /// boxed <see cref="object"/> conversion overload.
+        /// Executes the compiled chunk with one CLR float argument while preserving custom
+        /// converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(float arg)
         {
-            return Execute(DynValue.FromNumber(arg));
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertFloatArgument(script, arg)
+            );
         }
 
         /// <summary>
-        /// Executes the compiled chunk with one CLR integer argument without routing through the
-        /// boxed <see cref="object"/> conversion overload.
+        /// Executes the compiled chunk with one CLR integer argument while preserving custom
+        /// converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(int arg)
         {
-            return Execute(DynValue.FromInteger(arg));
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertIntArgument(script, arg)
+            );
         }
 
         /// <summary>
-        /// Executes the compiled chunk with one CLR integer argument without routing through the
-        /// boxed <see cref="object"/> conversion overload.
+        /// Executes the compiled chunk with one CLR long integer argument while preserving custom
+        /// converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(long arg)
         {
-            return Execute(DynValue.FromInteger(arg));
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertLongArgument(script, arg)
+            );
         }
 
         /// <summary>
-        /// Executes the compiled chunk with one CLR Boolean argument without routing through the
-        /// boxed <see cref="object"/> conversion overload.
+        /// Executes the compiled chunk with one CLR Boolean argument while preserving custom
+        /// converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The return value(s) of the chunk.</returns>
         public DynValue Execute(bool arg)
         {
-            return Execute(DynValue.FromBoolean(arg));
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertBoolArgument(script, arg)
+            );
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR character argument while preserving custom
+        /// converter precedence and standard character-to-string conversion.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(char arg)
+        {
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertCharArgument(script, arg)
+            );
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR byte argument while preserving custom
+        /// converter precedence.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(byte arg)
+        {
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertByteArgument(script, arg)
+            );
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR signed byte argument while preserving custom
+        /// converter precedence.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(sbyte arg)
+        {
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertSByteArgument(script, arg)
+            );
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR short integer argument while preserving custom
+        /// converter precedence.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(short arg)
+        {
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertShortArgument(script, arg)
+            );
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR unsigned short integer argument while
+        /// preserving custom converter precedence.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(ushort arg)
+        {
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertUShortArgument(script, arg)
+            );
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR unsigned integer argument while preserving
+        /// custom converter precedence.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(uint arg)
+        {
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertUIntArgument(script, arg)
+            );
+        }
+
+        /// <summary>
+        /// Executes the compiled chunk with one CLR unsigned long integer argument while preserving
+        /// custom converter precedence and standard checked integer conversion.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the chunk.</param>
+        /// <returns>The return value(s) of the chunk.</returns>
+        public DynValue Execute(ulong arg)
+        {
+            Script script = GetScript();
+            return script.ExecuteTrustedCompiledFunction(
+                _function,
+                ConvertULongArgument(script, arg)
+            );
         }
 
         /// <summary>
@@ -660,8 +785,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR double argument and returns a strict numeric
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
@@ -672,8 +796,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR float argument and returns a strict numeric
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
@@ -684,8 +807,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR integer argument and returns a strict numeric
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
@@ -696,8 +818,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR integer argument and returns a strict numeric
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
@@ -708,8 +829,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR Boolean argument and returns a strict numeric
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR double.</returns>
@@ -851,8 +971,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR double argument and returns a strict Boolean
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
@@ -863,8 +982,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR float argument and returns a strict Boolean
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
@@ -875,8 +993,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR integer argument and returns a strict Boolean
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
@@ -887,8 +1004,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR integer argument and returns a strict Boolean
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
@@ -899,8 +1015,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Executes the compiled chunk with one CLR Boolean argument and returns a strict Boolean
-        /// scalar result without routing the argument through the boxed <see cref="object"/>
-        /// conversion overload.
+        /// scalar result while preserving custom converter precedence.
         /// </summary>
         /// <param name="arg">The argument to pass to the chunk.</param>
         /// <returns>The first scalar result as a CLR Boolean.</returns>
@@ -1092,6 +1207,151 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private static T ConvertScalarResult<T>(DynValue result)
         {
             return result.ToScalar().ToObject<T>();
+        }
+
+        private static DynValue ConvertBoolArgument(Script script, bool arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromBoolean(arg);
+        }
+
+        private static DynValue ConvertCharArgument(Script script, char arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.NewString(arg.ToString());
+        }
+
+        private static DynValue ConvertDoubleArgument(Script script, double arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromNumber(arg);
+        }
+
+        private static DynValue ConvertFloatArgument(Script script, float arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromNumber(arg);
+        }
+
+        private static DynValue ConvertLongArgument(Script script, long arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromInteger(arg);
+        }
+
+        private static DynValue ConvertIntArgument(Script script, int arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromInteger(arg);
+        }
+
+        private static DynValue ConvertShortArgument(Script script, short arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromInteger(arg);
+        }
+
+        private static DynValue ConvertSByteArgument(Script script, sbyte arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromInteger(arg);
+        }
+
+        private static DynValue ConvertULongArgument(Script script, ulong arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromInteger(checked((long)arg));
+        }
+
+        private static DynValue ConvertUIntArgument(Script script, uint arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromInteger(arg);
+        }
+
+        private static DynValue ConvertUShortArgument(Script script, ushort arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromInteger(arg);
+        }
+
+        private static DynValue ConvertByteArgument(Script script, byte arg)
+        {
+            DynValue converted = TryCustomPrimitiveArgument(script, arg);
+            if (converted != null)
+            {
+                return converted;
+            }
+
+            return DynValue.FromInteger(arg);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static DynValue TryCustomPrimitiveArgument<T>(Script script, T arg)
+        {
+            Func<Script, object, DynValue> converter =
+                Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(typeof(T));
+            if (converter == null)
+            {
+                return null;
+            }
+
+            return converter(script, arg);
         }
 
         private static double ConvertNumberResult(DynValue result)

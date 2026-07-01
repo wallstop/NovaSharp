@@ -825,6 +825,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(identity.Execute(300).Number).IsEqualTo(300d).ConfigureAwait(false);
             await Assert.That(identity.Execute(301L).Number).IsEqualTo(301d).ConfigureAwait(false);
             await Assert.That(identity.Execute(true).Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(identity.Execute('x').String).IsEqualTo("x").ConfigureAwait(false);
+            await Assert.That(identity.Execute((byte)7).Number).IsEqualTo(7d).ConfigureAwait(false);
+            await Assert
+                .That(identity.Execute((sbyte)-7).Number)
+                .IsEqualTo(-7d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(identity.Execute((short)-8).Number)
+                .IsEqualTo(-8d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(identity.Execute((ushort)8).Number)
+                .IsEqualTo(8d)
+                .ConfigureAwait(false);
+            await Assert.That(identity.Execute(9u).Number).IsEqualTo(9d).ConfigureAwait(false);
+            await Assert.That(identity.Execute(10ul).Number).IsEqualTo(10d).ConfigureAwait(false);
+            Assert.Throws<OverflowException>(() => identity.Execute(ulong.MaxValue));
 
             await Assert.That(increment.ExecuteNumber(1.5d)).IsEqualTo(2.5d).ConfigureAwait(false);
             await Assert.That(increment.ExecuteNumber(2.5f)).IsEqualTo(3.5d).ConfigureAwait(false);
@@ -837,6 +854,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(positive.ExecuteBoolean(300)).IsTrue().ConfigureAwait(false);
             await Assert.That(positive.ExecuteBoolean(301L)).IsTrue().ConfigureAwait(false);
             await Assert.That(identity.ExecuteBoolean(false)).IsFalse().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        public async Task CompileFunctionPrimitiveExecuteHonorsCustomConverters(
+            LuaCompatibilityVersion version
+        )
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                    registry.SetClrToScriptCustomConversion<int>(
+                        (_, value) => DynValue.NewString("custom:" + value)
+                    )
+            );
+            Script script = new(version, CoreModulePresets.Complete);
+            CompiledScript identity = script.CompileFunction(
+                "function(a) return a end",
+                funcFriendlyName: "compiled_primitive_custom_identity"
+            );
+            CompiledScript isConverted = script.CompileFunction(
+                "function(a) return a == 'custom:42' end",
+                funcFriendlyName: "compiled_primitive_custom_check"
+            );
+
+            DynValue result = identity.Execute(42);
+
+            await Assert.That(result.String).IsEqualTo("custom:42").ConfigureAwait(false);
+            await Assert.That(isConverted.ExecuteBoolean(42)).IsTrue().ConfigureAwait(false);
+            Assert.Throws<ScriptRuntimeException>(() => identity.ExecuteNumber(42));
         }
 
         [global::TUnit.Core.Test]
