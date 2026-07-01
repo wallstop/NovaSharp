@@ -1798,6 +1798,9 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private object _thirdObject = 3d;
         private object _fourthObject = 4d;
         private object _fifthObject = 5d;
+        private object[] _modTwoObjectArgs = Array.Empty<object>();
+        private object[] _modFiveObjectArgs = Array.Empty<object>();
+        private object[] _modPaddedFiveObjectArgs = Array.Empty<object>();
 
         /// <summary>
         /// Loads a mod and manager with small Lua functions used by the call benchmarks.
@@ -1810,6 +1813,25 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _thirdObject = 3d;
             _fourthObject = 4d;
             _fifthObject = 5d;
+            _modTwoObjectArgs = new object[] { _firstObject, _secondObject };
+            _modFiveObjectArgs = new object[]
+            {
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+            };
+            _modPaddedFiveObjectArgs = new object[]
+            {
+                -1d,
+                _firstObject,
+                _secondObject,
+                _thirdObject,
+                _fourthObject,
+                _fifthObject,
+                -1d,
+            };
 
             _mod = new ModContainer("bench").AddEntryPoint(
                 """
@@ -1846,6 +1868,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Mod CallFunction: params 2 objects")]
         public DynValue CallFunctionTwoParamsArray() =>
             _mod.CallFunction("second", new object[] { _firstObject, _secondObject });
+
+        /// <summary>
+        /// Calls a mod function through the caller-owned span two-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod CallFunction: span 2 objects")]
+        public DynValue CallFunctionTwoObjectSpan() =>
+            _mod.CallFunctionObjectArguments("second", _modTwoObjectArgs.AsSpan());
 
         /// <summary>
         /// Calls a mod function through the fixed four-argument overload.
@@ -1896,6 +1925,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             );
 
         /// <summary>
+        /// Calls a mod function through the caller-owned span five-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod CallFunction: span 5 objects")]
+        public DynValue CallFunctionFiveObjectSpan() =>
+            _mod.CallFunctionObjectArguments("fifth", _modFiveObjectArgs.AsSpan());
+
+        /// <summary>
+        /// Calls a mod function through the caller-owned span slice five-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod CallFunction: span slice 5 objects")]
+        public DynValue CallFunctionFiveObjectSpanSlice() =>
+            _mod.CallFunctionObjectArguments("fifth", _modPaddedFiveObjectArgs.AsSpan(1, 5));
+
+        /// <summary>
         /// Broadcasts a mod function through the fixed two-argument overload.
         /// </summary>
         [Benchmark(Description = "Mod BroadcastCall: 2 fixed objects")]
@@ -1908,6 +1951,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         [Benchmark(Description = "Mod BroadcastCall: params 2 objects")]
         public IDictionary<string, DynValue> BroadcastCallTwoParamsArray() =>
             _manager.BroadcastCall("second", new object[] { _firstObject, _secondObject });
+
+        /// <summary>
+        /// Broadcasts a mod function through the caller-owned span two-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod BroadcastCall: span 2 objects")]
+        public IDictionary<string, DynValue> BroadcastCallTwoObjectSpan() =>
+            _manager.BroadcastCallObjectArguments("second", _modTwoObjectArgs.AsSpan());
 
         /// <summary>
         /// Broadcasts a mod function through the fixed four-argument overload.
@@ -1962,5 +2012,19 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                     _fifthObject,
                 }
             );
+
+        /// <summary>
+        /// Broadcasts a mod function through the caller-owned span five-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod BroadcastCall: span 5 objects")]
+        public IDictionary<string, DynValue> BroadcastCallFiveObjectSpan() =>
+            _manager.BroadcastCallObjectArguments("fifth", _modFiveObjectArgs.AsSpan());
+
+        /// <summary>
+        /// Broadcasts a mod function through the caller-owned span slice five-argument overload.
+        /// </summary>
+        [Benchmark(Description = "Mod BroadcastCall: span slice 5 objects")]
+        public IDictionary<string, DynValue> BroadcastCallFiveObjectSpanSlice() =>
+            _manager.BroadcastCallObjectArguments("fifth", _modPaddedFiveObjectArgs.AsSpan(1, 5));
     }
 }

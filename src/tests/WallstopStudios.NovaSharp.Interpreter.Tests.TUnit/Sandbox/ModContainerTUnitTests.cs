@@ -603,6 +603,96 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
+        public async Task ModContainerCallFunctionObjectArgumentsSupportsCallerOwnedSpan()
+        {
+            ModContainer mod = new ModContainer("test").AddEntryPoint(
+                """
+                function argc(...) return select('#', ...) end
+                function sum(...) local total = 0 for i = 1, select('#', ...) do total = total + select(i, ...) end return total end
+                """
+            );
+            object[] paddedArgs = new object[] { -1, 1, 2, 3, -1 };
+
+            mod.Load();
+
+            DynValue empty = mod.CallFunctionObjectArguments("argc", ReadOnlySpan<object>.Empty);
+            DynValue sliced = mod.CallFunctionObjectArguments("sum", paddedArgs.AsSpan(1, 3));
+
+            await Assert.That(empty.Number).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(sliced.Number).IsEqualTo(6).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModContainerCallFunctionObjectArgumentsObjectArrayOverloadPassesArgumentList()
+        {
+            ModContainer mod = new ModContainer("test").AddEntryPoint(
+                "function sum(...) local total = 0 for i = 1, select('#', ...) do total = total + select(i, ...) end return total end"
+            );
+            object[] args = new object[] { 1, 2, 3 };
+
+            mod.Load();
+
+            DynValue result = mod.CallFunctionObjectArguments("sum", args);
+
+            await Assert.That(result.Number).IsEqualTo(6).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModContainerCallFunctionObjectArgumentsPreservesNullAsNil()
+        {
+            ModContainer mod = new ModContainer("test").AddEntryPoint(
+                "function inspect(a) if a == nil then return 'nil' else return type(a) end end"
+            );
+            object[] args = new object[] { null };
+
+            mod.Load();
+
+            DynValue result = mod.CallFunctionObjectArguments("inspect", args.AsSpan());
+
+            await Assert.That(result.String).IsEqualTo("nil").ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModContainerCallFunctionObjectArgumentsRejectsForeignResources()
+        {
+            ModContainer mod = new ModContainer("test").AddEntryPoint(
+                "function echo(value) return value end"
+            );
+            Script foreignScript = new Script();
+            DynValue foreignTable = DynValue.NewTable(foreignScript);
+            object[] args = new object[] { foreignTable };
+
+            mod.Load();
+
+            Errors.ScriptRuntimeException exception = Assert.Throws<Errors.ScriptRuntimeException>(
+                () =>
+                    mod.CallFunctionObjectArguments("echo", args.AsSpan())
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModContainerCallFunctionObjectArgumentsRejectsNullArray()
+        {
+            ModContainer mod = new ModContainer("test").AddEntryPoint(
+                "function argc(...) return select('#', ...) end"
+            );
+            object[] nullArgs = null;
+
+            mod.Load();
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                mod.CallFunctionObjectArguments("argc", nullArgs)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task ModContainerFixedCallThrowsOnNonFunctionGlobal()
         {
             ModContainer mod = new ModContainer("test").AddEntryPoint("value = 1");
@@ -1214,6 +1304,230 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
         }
 
         [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsPassesCallerOwnedSpan()
+        {
+            ModManager manager = new ModManager();
+            ModContainer mod1 = new ModContainer("mod1").AddEntryPoint(
+                "function sum(...) local total = 0 for i = 1, select('#', ...) do total = total + select(i, ...) end return total end"
+            );
+            ModContainer mod2 = new ModContainer("mod2").AddEntryPoint(
+                "function sum(...) local total = 0 for i = 1, select('#', ...) do total = total + select(i, ...) end return total * 2 end"
+            );
+            object[] paddedArgs = new object[] { -1, 1, 2, 3, -1 };
+
+            manager.Register(mod1);
+            manager.Register(mod2);
+            manager.LoadAll();
+
+            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+                "sum",
+                paddedArgs.AsSpan(1, 3)
+            );
+
+            await Assert.That(results.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(results["mod1"].Number).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(results["mod2"].Number).IsEqualTo(12).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsObjectArrayOverloadPassesArgumentList()
+        {
+            ModManager manager = new ModManager();
+            ModContainer mod1 = new ModContainer("mod1").AddEntryPoint(
+                "function sum(...) local total = 0 for i = 1, select('#', ...) do total = total + select(i, ...) end return total end"
+            );
+            ModContainer mod2 = new ModContainer("mod2").AddEntryPoint(
+                "function sum(...) local total = 0 for i = 1, select('#', ...) do total = total + select(i, ...) end return total * 2 end"
+            );
+            object[] args = new object[] { 1, 2, 3 };
+
+            manager.Register(mod1);
+            manager.Register(mod2);
+            manager.LoadAll();
+
+            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+                "sum",
+                args
+            );
+
+            await Assert.That(results.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(results["mod1"].Number).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(results["mod2"].Number).IsEqualTo(12).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsSkipsMissingFunctions()
+        {
+            ModManager manager = new ModManager();
+            ModContainer target = new ModContainer("target").AddEntryPoint(
+                "function tick(value) return value end"
+            );
+            ModContainer missing = new ModContainer("missing").AddEntryPoint("value = 42");
+            object[] args = new object[] { 7 };
+
+            manager.Register(target);
+            manager.Register(missing);
+            manager.LoadAll();
+
+            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+                "tick",
+                args.AsSpan()
+            );
+
+            await Assert.That(results.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(results["target"].Number).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(results.ContainsKey("missing")).IsFalse().ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsSkipsUnloadedMods()
+        {
+            ModManager manager = new ModManager();
+            ModContainer loaded = new ModContainer("loaded").AddEntryPoint(
+                "function tick(value) return value end"
+            );
+            ModContainer unloaded = new ModContainer("unloaded").AddEntryPoint(
+                "function tick(value) return value * 2 end"
+            );
+            object[] args = new object[] { 7 };
+
+            loaded.Load();
+            manager.Register(loaded);
+            manager.Register(unloaded);
+
+            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+                "tick",
+                args.AsSpan()
+            );
+
+            await Assert.That(results.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(results["loaded"].Number).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(results.ContainsKey("unloaded")).IsFalse().ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsCapturesPerModErrors()
+        {
+            ModManager manager = new ModManager();
+            ModContainer failing = new ModContainer("failing").AddEntryPoint(
+                "function tick(value) error('boom') end"
+            );
+            ModContainer passing = new ModContainer("passing").AddEntryPoint(
+                "function tick(value) return value end"
+            );
+            object[] args = new object[] { 7 };
+
+            manager.Register(failing);
+            manager.Register(passing);
+            manager.LoadAll();
+
+            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+                "tick",
+                args.AsSpan()
+            );
+
+            await Assert.That(results.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(results["passing"].Number).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(results["failing"].String).Contains("Error:").ConfigureAwait(false);
+            await Assert.That(results["failing"].String).Contains("boom").ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsPreservesNullAsNil()
+        {
+            ModManager manager = new ModManager();
+            ModContainer mod = new ModContainer("mod1").AddEntryPoint(
+                "function inspect(a) if a == nil then return 'nil' else return type(a) end end"
+            );
+            object[] args = new object[] { null };
+
+            manager.Register(mod);
+            manager.LoadAll();
+
+            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+                "inspect",
+                args.AsSpan()
+            );
+
+            await Assert.That(results["mod1"].String).IsEqualTo("nil").ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsUsesAlreadyResolvedBuiltInFunction()
+        {
+            ModManager manager = new ModManager();
+            CountingModContainer mod = CreateCountingModContainer("span");
+            object[] args = new object[] { 1, 2, 3, 4, 5, 6 };
+
+            manager.Register(mod);
+            manager.LoadAll();
+
+            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+                "add",
+                args.AsSpan()
+            );
+
+            await Assert.That(results["span"].Number).IsEqualTo(21).ConfigureAwait(false);
+            await Assert.That(mod.GetGlobalCallCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(mod.CallFunctionCallCount).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsRejectsNullArray()
+        {
+            ModManager manager = new ModManager();
+            object[] nullArgs = null;
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                manager.BroadcastCallObjectArguments("inspect", nullArgs)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsFallsBackToCustomContainer()
+        {
+            ModManager manager = new ModManager();
+            CustomModContainer mod = new CustomModContainer();
+            object[] paddedArgs = new object[] { -1, 1, 2, 3, 4, 5, -1 };
+
+            manager.Register(mod);
+
+            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+                "target",
+                paddedArgs.AsSpan(1, 5)
+            );
+
+            await Assert.That(results.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(results["custom"].Number).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(mod.LastFunctionName).IsEqualTo("target").ConfigureAwait(false);
+            await Assert.That(mod.LastArgumentCount).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(mod.LastFifthArgument).IsEqualTo(5).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ModManagerBroadcastCallObjectArgumentsUsesSpanAwareCustomContainer()
+        {
+            ModManager manager = new ModManager();
+            SpanAwareCustomModContainer mod = new SpanAwareCustomModContainer();
+            object[] paddedArgs = new object[] { -1, 1, 2, 3, -1 };
+
+            manager.Register(mod);
+
+            IDictionary<string, DynValue> results = manager.BroadcastCallObjectArguments(
+                "target",
+                paddedArgs.AsSpan(1, 3)
+            );
+
+            await Assert.That(results.Count).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(results["span-custom"].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(mod.CallFunctionCallCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(mod.SpanCallCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(mod.LastArgumentCount).IsEqualTo(3).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task ModManagerBroadcastDistinguishesSingleNullFromNullParamsArray()
         {
             ModManager manager = new ModManager();
@@ -1481,6 +1795,130 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Sandbox
                 LastArgumentCount = args == null ? -1 : args.Length;
                 LastFifthArgument = args == null || args.Length < 5 ? null : args[4];
                 return DynValue.NewNumber(LastArgumentCount);
+            }
+
+            public DynValue GetGlobal(string name)
+            {
+                return name == "target" ? _function : DynValue.Nil;
+            }
+
+            public void SetGlobal(string name, DynValue value)
+            {
+                _script.Globals.Set(name, value);
+            }
+        }
+
+        private sealed class SpanAwareCustomModContainer
+            : IModContainer,
+                IModContainerObjectArguments
+        {
+            private readonly Script _script = new(CoreModulePresets.Default);
+            private readonly DynValue _function;
+
+            public SpanAwareCustomModContainer()
+            {
+                _function = _script.LoadString("return function() end");
+            }
+
+            public string ModId => "span-custom";
+
+            public string DisplayName => "span-custom";
+
+            public ModLoadState State => ModLoadState.Loaded;
+
+            public Script Script => _script;
+
+            public Table Globals => _script.Globals;
+
+            public Exception LastError => null;
+
+            public ScriptOptions ScriptOptions { get; set; } = Script.DefaultOptions;
+
+            public CoreModules CoreModules { get; set; } = CoreModulePresets.Default;
+
+            public event EventHandler<ModEventArgs> OnLoading
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnLoaded
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnUnloading
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnUnloaded
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnReloading
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModEventArgs> OnReloaded
+            {
+                add { }
+                remove { }
+            }
+
+            public event EventHandler<ModErrorEventArgs> OnError
+            {
+                add { }
+                remove { }
+            }
+
+            public int CallFunctionCallCount { get; private set; }
+
+            public int SpanCallCount { get; private set; }
+
+            public int LastArgumentCount { get; private set; }
+
+            public ModOperationResult Load()
+            {
+                return ModOperationResult.Succeeded(ModLoadState.Loaded);
+            }
+
+            public ModOperationResult Unload()
+            {
+                return ModOperationResult.Succeeded(ModLoadState.Unloaded);
+            }
+
+            public ModOperationResult Reload()
+            {
+                return ModOperationResult.Succeeded(ModLoadState.Loaded);
+            }
+
+            public DynValue DoString(string code, string codeFriendlyName = null)
+            {
+                return _script.DoString(code, null, codeFriendlyName);
+            }
+
+            public DynValue CallFunction(string functionName, params object[] args)
+            {
+                CallFunctionCallCount++;
+                LastArgumentCount = args == null ? -1 : args.Length;
+                return DynValue.NewNumber(LastArgumentCount);
+            }
+
+            public DynValue CallFunctionObjectArguments(
+                string functionName,
+                ReadOnlySpan<object> args
+            )
+            {
+                SpanCallCount++;
+                LastArgumentCount = args.Length;
+                return DynValue.NewNumber(args.Length);
             }
 
             public DynValue GetGlobal(string name)

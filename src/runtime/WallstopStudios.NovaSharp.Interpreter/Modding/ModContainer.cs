@@ -12,7 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
     /// Provides an isolated container for loading, executing, and managing Lua mods
     /// with lifecycle hooks (load, unload, reload).
     /// </summary>
-    public class ModContainer : IModContainer
+    public class ModContainer : IModContainer, IModContainerObjectArguments
     {
         private readonly object _stateLock = new object();
         private readonly List<string> _entryPoints;
@@ -544,6 +544,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             }
 
             return script.Call(function, args);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with caller-owned CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="args">Arguments to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="args"/> is null.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        /// <remarks>
+        /// The array is interpreted as the function's argument list. To pass an array as a
+        /// single Lua argument, use <see cref="CallFunction(string, object)" /> and cast
+        /// the array to <see cref="object" />.
+        /// </remarks>
+        public DynValue CallFunctionObjectArguments(string functionName, object[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return CallFunctionObjectArguments(functionName, args.AsSpan());
+        }
+
+        /// <inheritdoc/>
+        public DynValue CallFunctionObjectArguments(string functionName, ReadOnlySpan<object> args)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.CallObjectArguments(function, args);
         }
 
         /// <inheritdoc/>

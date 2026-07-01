@@ -688,6 +688,121 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         }
 
         /// <summary>
+        /// Calls a function on all loaded mods that have it defined with caller-owned CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="args">Arguments to pass to the function.</param>
+        /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="args"/> is null.</exception>
+        /// <remarks>
+        /// The array is interpreted as the function's argument list. To pass an array as a
+        /// single Lua argument, use <see cref="BroadcastCall(string, object)" /> and cast
+        /// the array to <see cref="object" />.
+        /// </remarks>
+        [SuppressMessage(
+            "Design",
+            "CA1031:Do not catch general exception types",
+            Justification = "BroadcastCall must capture all errors to report them per-mod"
+        )]
+        public IDictionary<string, DynValue> BroadcastCallObjectArguments(
+            string functionName,
+            object[] args
+        )
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return BroadcastCallObjectArguments(functionName, args.AsSpan());
+        }
+
+        /// <summary>
+        /// Calls a function on all loaded mods that have it defined with caller-owned CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="args">Arguments to pass to the function.</param>
+        /// <returns>A dictionary mapping mod IDs to their return values, or error strings when a mod call throws.</returns>
+        /// <remarks>
+        /// The span is interpreted as the function's argument list. To pass an array as a
+        /// single Lua argument, use <see cref="BroadcastCall(string, object)" /> and cast
+        /// the array to <see cref="object" />. Concrete <see cref="ModContainer" />
+        /// instances and containers implementing <see cref="IModContainerObjectArguments" />
+        /// consume this span without a caller-side params array; legacy
+        /// <see cref="IModContainer" /> implementations are called through a copied array.
+        /// </remarks>
+        [SuppressMessage(
+            "Design",
+            "CA1031:Do not catch general exception types",
+            Justification = "BroadcastCall must capture all errors to report them per-mod"
+        )]
+        public IDictionary<string, DynValue> BroadcastCallObjectArguments(
+            string functionName,
+            ReadOnlySpan<object> args
+        )
+        {
+            ValidateFunctionName(functionName);
+
+            IReadOnlyList<string> modIds = GetLoadOrder();
+            Dictionary<string, DynValue> results = new Dictionary<string, DynValue>(
+                StringComparer.Ordinal
+            );
+
+            foreach (string modId in modIds)
+            {
+                IModContainer mod = GetMod(modId);
+                if (mod == null || mod.State != ModLoadState.Loaded)
+                {
+                    continue;
+                }
+
+                DynValue func = mod.GetGlobal(functionName);
+                if (func.Type != DataType.Function)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    results[modId] = CallObjectArguments(mod, functionName, func, args);
+                }
+                catch (Exception ex)
+                {
+                    // Store error as string for debugging
+                    results[modId] = DynValue.NewString(ZString.Concat("Error: ", ex.Message));
+                }
+            }
+
+            return results;
+        }
+
+        private static DynValue CallObjectArguments(
+            IModContainer mod,
+            string functionName,
+            DynValue function,
+            ReadOnlySpan<object> args
+        )
+        {
+            if (mod is ModContainer modContainer)
+            {
+                return RequireLoadedScript(modContainer).CallObjectArguments(function, args);
+            }
+
+            if (mod is IModContainerObjectArguments objectArguments)
+            {
+                return objectArguments.CallFunctionObjectArguments(functionName, args);
+            }
+
+            if (args.Length == 0)
+            {
+                return mod.CallFunction(functionName);
+            }
+
+            object[] copiedArgs = args.ToArray();
+            return mod.CallFunction(functionName, copiedArgs);
+        }
+
+        /// <summary>
         /// Calls a function on all loaded mods that have it defined.
         /// </summary>
         /// <param name="functionName">The name of the function to call.</param>
