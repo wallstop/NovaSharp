@@ -78,25 +78,44 @@ run_benchmark() {
 
 run_benchmark "src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj" "NovaSharp runtime"
 
+COMPARISON_ARTIFACTS="artifacts/benchmarkdotnet/comparison"
+rm -rf "$COMPARISON_ARTIFACTS"
+
 if [[ "$SKIP_COMPARISON" == "false" ]]; then
-    run_benchmark "src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj" "comparison"
+    mkdir -p "$COMPARISON_ARTIFACTS"
+
+    echo ""
+    echo "Running comparison benchmarks..."
+    dotnet run \
+        --project "src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj" \
+        -c "$CONFIGURATION" \
+        --no-build \
+        -- \
+        --filter "*LuaPerformanceBenchmarks*" \
+        --exporters json \
+        --artifacts "$COMPARISON_ARTIFACTS"
+    echo "comparison benchmarks complete."
 else
     echo ""
     echo "Skipping comparison benchmarks (per --skip-comparison)."
 fi
 
 echo ""
-echo "Rendering MoonSharp benchmark delta report..."
+echo "Rendering benchmark comparison delta report..."
 run_python scripts/benchmarks/render-benchmark-deltas.py \
     --current-root BenchmarkDotNet.Artifacts \
-    --baseline-doc docs/Performance.md \
+    --comparison-root artifacts/benchmarkdotnet/comparison \
+    --self-baseline-root docs/performance-history/current-baseline \
     --output artifacts/benchmark-deltas.md
 
 ARTIFACTS_PATH="$REPO_ROOT/BenchmarkDotNet.Artifacts"
+COMPARISON_ARTIFACTS_PATH="$REPO_ROOT/artifacts/benchmarkdotnet/comparison"
 echo ""
 echo "BenchmarkDotNet artifacts are available under:"
 echo "  $ARTIFACTS_PATH"
-echo "MoonSharp benchmark delta report:"
+echo "Comparison BenchmarkDotNet artifacts are available under:"
+echo "  $COMPARISON_ARTIFACTS_PATH"
+echo "Benchmark comparison delta report:"
 echo "  artifacts/benchmark-deltas.md"
 echo ""
 echo "Review the updated sections in docs/Performance.md and attach relevant artifacts when opening a PR."

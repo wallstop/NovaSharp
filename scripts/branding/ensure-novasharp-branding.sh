@@ -17,7 +17,9 @@ fi
 readarray -t allowlist <<'EOF'
 :(exclude)docs/Performance.md
 :(exclude)docs/Testing.md
+:(exclude)docs/performance-history/README.md
 :(exclude)progress/session-119-load-reader-and-ci-delta-reporting.md
+:(exclude)progress/session-121-same-run-comparison-deltas.md
 :(exclude)README.md
 :(exclude).github/pull_request_template.md
 :(exclude).github/workflows/benchmarks.yml

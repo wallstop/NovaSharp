@@ -20,126 +20,231 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         if self.work_dir.exists():
             shutil.rmtree(self.work_dir)
         self.current_root = self.work_dir / "current"
-        self.current_results = self.current_root / "results"
-        self.current_results.mkdir(parents=True)
-        self.baseline_doc = self.work_dir / "Performance.md"
+        self.comparison_root = self.work_dir / "comparison"
+        self.self_baseline_root = self.work_dir / "self-baseline"
         self.output = self.work_dir / "benchmark-deltas.md"
 
     def tearDown(self) -> None:
         if self.work_dir.exists():
             shutil.rmtree(self.work_dir)
 
-    def write_current(
+    def write_report(self, root: Path, name: str, benchmarks: list[dict]) -> None:
+        results = root / "results"
+        results.mkdir(parents=True, exist_ok=True)
+        report = {"Benchmarks": benchmarks}
+        (results / f"{name}-report-full-compressed.json").write_text(
+            json.dumps(report),
+            encoding="utf-8",
+        )
+
+    def benchmark(
+        self,
+        namespace: str,
+        benchmark_type: str,
+        method_title: str,
+        parameters: str,
+        mean: float,
+        p95: float,
+        allocated: float,
+        gen0: float = 0,
+        gen1: float = 0,
+        gen2: float = 0,
+    ) -> dict:
+        method = method_title.replace(" ", "")
+        return {
+            "Namespace": namespace,
+            "Type": benchmark_type,
+            "Method": method,
+            "MethodTitle": f"'{method_title}'",
+            "Parameters": parameters,
+            "Statistics": {
+                "Mean": mean,
+                "Percentiles": {
+                    "P95": p95,
+                },
+            },
+            "Memory": {
+                "BytesAllocatedPerOperation": allocated,
+            },
+            "Metrics": [
+                {
+                    "Value": gen0,
+                    "Descriptor": {
+                        "Id": "Gen0Collects",
+                        "DisplayName": "Gen0",
+                    },
+                },
+                {
+                    "Value": gen1,
+                    "Descriptor": {
+                        "Id": "Gen1Collects",
+                        "DisplayName": "Gen1",
+                    },
+                },
+                {
+                    "Value": gen2,
+                    "Descriptor": {
+                        "Id": "Gen2Collects",
+                        "DisplayName": "Gen2",
+                    },
+                },
+                {
+                    "Value": allocated,
+                    "Descriptor": {
+                        "Id": "Allocated Memory",
+                        "DisplayName": "Allocated",
+                    },
+                },
+            ],
+        }
+
+    def comparison_benchmark(
+        self,
+        method_title: str,
+        mean: float,
+        p95: float,
+        allocated: float,
+        gen0: float = 0,
+    ) -> dict:
+        return self.benchmark(
+            "WallstopStudios.NovaSharp.Comparison",
+            "LuaPerformanceBenchmarks",
+            method_title,
+            "ScenarioName=NumericLoops",
+            mean,
+            p95,
+            allocated,
+            gen0=gen0,
+        )
+
+    def current_benchmark(
         self,
         mean: float,
         p95: float,
         allocated: float,
         scenario: str = "NumericLoops",
-    ) -> None:
-        report = {
-            "Benchmarks": [
-                {
-                    "Namespace": "WallstopStudios.NovaSharp.Benchmarks",
-                    "Type": "RuntimeBenchmarks",
-                    "Method": "ExecuteScenario",
-                    "MethodTitle": "'Scenario Execution'",
-                    "Parameters": f"ScenarioName={scenario}",
-                    "Statistics": {
-                        "Mean": mean,
-                        "Percentiles": {
-                            "P95": p95,
-                        },
-                    },
-                    "Memory": {
-                        "BytesAllocatedPerOperation": allocated,
-                    },
-                }
-            ]
-        }
-        (self.current_results / "RuntimeBenchmarks-report-full-compressed.json").write_text(
-            json.dumps(report),
-            encoding="utf-8",
+    ) -> dict:
+        return self.benchmark(
+            "WallstopStudios.NovaSharp.Benchmarks",
+            "RuntimeBenchmarks",
+            "Scenario Execution",
+            f"ScenarioName={scenario}",
+            mean,
+            p95,
+            allocated,
         )
 
-    def write_baseline(self, scenario: str = "NumericLoops") -> None:
-        self.baseline_doc.write_text(
-            "\n".join(
+    def run_script(self, self_baseline_root: Path | None = None) -> subprocess.CompletedProcess[str]:
+        args = [
+            "python3",
+            str(SCRIPT.relative_to(ROOT)),
+            "--current-root",
+            str(self.current_root.relative_to(ROOT)),
+            "--comparison-root",
+            str(self.comparison_root.relative_to(ROOT)),
+            "--output",
+            str(self.output.relative_to(ROOT)),
+            "--tolerance",
+            "0.02",
+            "--regression-threshold",
+            "0.10",
+        ]
+        if self_baseline_root is not None:
+            args.extend(
                 [
-                    "# Performance",
-                    "",
-                    "## Windows",
-                    "",
-                    "### MoonSharp Baseline (captured 2025-01-01 00:00:00 +00:00)",
-                    "",
-                    "### MoonSharp.Benchmarks.RuntimeBenchmarks-20250101-000000",
-                    "",
-                    "| Method | Scenario | Mean | P95 | Rank | Allocated |",
-                    "| --- | --- | ---: | ---: | ---: | ---: |",
-                    f"| 'Scenario Execution' | {scenario} | 100 ns | 120 ns | 1 | 100 B |",
-                    "",
+                    "--self-baseline-root",
+                    str(self_baseline_root.relative_to(ROOT)),
                 ]
-            ),
-            encoding="utf-8",
-        )
+            )
 
-    def run_script(self) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            [
-                "python3",
-                str(SCRIPT.relative_to(ROOT)),
-                "--current-root",
-                str(self.current_root.relative_to(ROOT)),
-                "--baseline-doc",
-                str(self.baseline_doc.relative_to(ROOT)),
-                "--output",
-                str(self.output.relative_to(ROOT)),
-                "--tolerance",
-                "0.02",
-                "--regression-threshold",
-                "0.10",
-            ],
+            args,
             cwd=ROOT,
             text=True,
             capture_output=True,
             check=False,
         )
 
-    def test_renders_matched_moonsharp_baseline_delta(self) -> None:
-        self.write_current(mean=90, p95=110, allocated=80)
-        self.write_baseline()
+    def test_renders_same_run_external_runtime_deltas(self) -> None:
+        self.write_report(
+            self.current_root,
+            "RuntimeBenchmarks",
+            [self.current_benchmark(mean=90, p95=110, allocated=80)],
+        )
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 90, 110, 80, gen0=1),
+                self.comparison_benchmark("MoonSharp Execute", 100, 120, 100, gen0=2),
+                self.comparison_benchmark("NLua Execute", 150, 180, 140, gen0=3),
+            ],
+        )
 
         result = self.run_script()
 
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("changed=true", result.stdout)
         self.assertIn("regressed=false", result.stdout)
+        self.assertIn("external_rows=2", result.stdout)
         output = self.output.read_text(encoding="utf-8")
-        self.assertIn("MoonSharp Benchmark Deltas", output)
-        self.assertIn("Matched rows: 1 of 1 current rows and 1 baseline rows", output)
-        self.assertIn("NumericLoops", output)
-        self.assertIn("-10.00%", output)
+        self.assertIn("Benchmark Comparison Deltas", output)
+        self.assertIn("MoonSharp", output)
+        self.assertIn("NLua", output)
+        self.assertIn("-10 ns (-10.00%)", output)
+        self.assertIn("1 / 0 / 0", output)
 
-    def test_marks_regressed_when_current_is_worse_than_threshold(self) -> None:
-        self.write_current(mean=130, p95=150, allocated=120)
-        self.write_baseline()
+    def test_marks_regressed_when_novasharp_is_worse_than_external_runtime(self) -> None:
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 130, 150, 150, gen0=4),
+                self.comparison_benchmark("MoonSharp Execute", 100, 120, 100, gen0=2),
+            ],
+        )
 
         result = self.run_script()
 
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("regressed=true", result.stdout)
+        self.assertIn("external_rows=1", result.stdout)
 
-    def test_handles_missing_matching_baseline(self) -> None:
-        self.write_current(mean=90, p95=110, allocated=80, scenario="TableMutation")
-        self.write_baseline(scenario="NumericLoops")
+    def test_renders_self_baseline_deltas_when_checked_in_artifacts_exist(self) -> None:
+        self.write_report(
+            self.current_root,
+            "RuntimeBenchmarks",
+            [self.current_benchmark(mean=130, p95=150, allocated=130)],
+        )
+        self.write_report(
+            self.self_baseline_root,
+            "RuntimeBenchmarks",
+            [self.current_benchmark(mean=100, p95=120, allocated=100)],
+        )
+
+        result = self.run_script(self.self_baseline_root)
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("self_rows=1", result.stdout)
+        self.assertIn("regressed=true", result.stdout)
+        output = self.output.read_text(encoding="utf-8")
+        self.assertIn("Self Baseline Comparisons", output)
+        self.assertIn("+30 ns (+30.00%)", output)
+
+    def test_reports_comparison_groups_without_novasharp_row(self) -> None:
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [self.comparison_benchmark("MoonSharp Execute", 100, 120, 100)],
+        )
 
         result = self.run_script()
 
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("changed=true", result.stdout)
-        self.assertIn("rows=0", result.stdout)
+        self.assertIn("external_rows=0", result.stdout)
         output = self.output.read_text(encoding="utf-8")
-        self.assertIn("No benchmark rows matched", output)
-        self.assertIn("Current rows without MoonSharp baseline: 1", output)
+        self.assertIn("Comparison groups without a NovaSharp row", output)
+        self.assertIn("No same-run external comparison rows were found", output)
 
 
 if __name__ == "__main__":

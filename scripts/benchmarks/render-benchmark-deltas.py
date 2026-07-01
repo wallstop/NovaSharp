@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render BenchmarkDotNet deltas against the checked-in MoonSharp baseline."""
+"""Render BenchmarkDotNet deltas from same-run comparison artifacts."""
 
 from __future__ import annotations
 
@@ -13,10 +13,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CURRENT_ROOT = Path("BenchmarkDotNet.Artifacts")
-DEFAULT_BASELINE_DOC = Path("docs/Performance.md")
+DEFAULT_COMPARISON_ROOT = Path("BenchmarkDotNet.Artifacts")
+DEFAULT_SELF_BASELINE_ROOT = Path("docs/performance-history/current-baseline")
 DEFAULT_OUTPUT = Path("artifacts/benchmark-deltas.md")
 DEFAULT_TOLERANCE = 0.02
 DEFAULT_REGRESSION_THRESHOLD = 0.10
+NOVA_RUNTIME = "NovaSharp"
+RUNTIME_PREFIXES = ("NovaSharp", "MoonSharp", "NLua", "KeraLua", "Lua")
 
 
 @dataclass(frozen=True, order=True)
@@ -26,43 +29,44 @@ class BenchmarkKey:
     parameters: str
 
 
+@dataclass(frozen=True, order=True)
+class ComparisonKey:
+    summary: str
+    operation: str
+    parameters: str
+
+
 @dataclass(frozen=True)
 class Metrics:
     mean_ns: float
     p95_ns: float
+    gen0_per_1k: float
+    gen1_per_1k: float
+    gen2_per_1k: float
     allocated_bytes: float
 
 
 @dataclass(frozen=True)
-class DeltaRow:
+class MetricRecord:
+    metrics: Metrics
+    parameter_display: str
+
+
+@dataclass(frozen=True)
+class ExternalDeltaRow:
+    key: ComparisonKey
+    runtime: str
+    parameter_display: str
+    nova: Metrics
+    comparison: Metrics
+
+
+@dataclass(frozen=True)
+class SelfDeltaRow:
     key: BenchmarkKey
     parameter_display: str
     current: Metrics
     baseline: Metrics
-
-    @property
-    def mean_delta_percent(self) -> float:
-        return percentage_delta(self.current.mean_ns, self.baseline.mean_ns)
-
-    @property
-    def p95_delta_percent(self) -> float:
-        return percentage_delta(self.current.p95_ns, self.baseline.p95_ns)
-
-    @property
-    def allocation_delta_percent(self) -> float:
-        return percentage_delta(self.current.allocated_bytes, self.baseline.allocated_bytes)
-
-    @property
-    def mean_delta_ns(self) -> float:
-        return self.current.mean_ns - self.baseline.mean_ns
-
-    @property
-    def p95_delta_ns(self) -> float:
-        return self.current.p95_ns - self.baseline.p95_ns
-
-    @property
-    def allocation_delta_bytes(self) -> float:
-        return self.current.allocated_bytes - self.baseline.allocated_bytes
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -71,13 +75,22 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--current-root",
         type=Path,
         default=DEFAULT_CURRENT_ROOT,
-        help="Directory containing current BenchmarkDotNet artifacts.",
+        help="Directory containing current NovaSharp BenchmarkDotNet artifacts.",
     )
     parser.add_argument(
-        "--baseline-doc",
+        "--comparison-root",
         type=Path,
-        default=DEFAULT_BASELINE_DOC,
-        help="Markdown document containing the frozen MoonSharp baseline.",
+        default=DEFAULT_COMPARISON_ROOT,
+        help="Directory containing same-run comparison BenchmarkDotNet artifacts.",
+    )
+    parser.add_argument(
+        "--self-baseline-root",
+        type=Path,
+        default=DEFAULT_SELF_BASELINE_ROOT,
+        help=(
+            "Directory containing checked-in NovaSharp BenchmarkDotNet artifacts "
+            "for self comparison. Missing directories are reported as not configured."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -95,7 +108,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--regression-threshold",
         type=float,
         default=DEFAULT_REGRESSION_THRESHOLD,
-        help="Fractional worse-than-baseline threshold for regressed=true.",
+        help="Fractional worse-than-comparison threshold for regressed=true.",
     )
     return parser.parse_args(argv)
 
@@ -103,26 +116,45 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str]) -> int:
     args = parse_args(argv)
     current_root = resolve_repo_path(args.current_root)
-    baseline_doc = resolve_repo_path(args.baseline_doc)
+    comparison_root = resolve_repo_path(args.comparison_root)
+    self_baseline_root = resolve_repo_path(args.self_baseline_root)
     output = resolve_repo_path(args.output)
 
-    current = load_current_metrics(current_root)
-    baseline = load_moonsharp_baseline(baseline_doc)
-    rows = build_delta_rows(current, baseline)
-    current_without_baseline = sorted(key for key in current if key not in baseline)
-    baseline_without_current = sorted(key for key in baseline if key not in current)
+    current = load_benchmark_metrics(current_root, include_external=False)
+    self_baseline = (
+        load_benchmark_metrics(self_baseline_root, include_external=False)
+        if self_baseline_root.exists()
+        else {}
+    )
+    self_rows = build_self_delta_rows(current, self_baseline)
+    current_without_baseline = sorted(key for key in current if key not in self_baseline)
+    baseline_without_current = sorted(key for key in self_baseline if key not in current)
 
-    changed = bool(current_without_baseline) or any(row_changed(row, args.tolerance) for row in rows)
-    regressed = any(row_regressed(row, args.regression_threshold) for row in rows)
+    comparison = load_comparison_metrics(comparison_root)
+    external_rows = build_external_delta_rows(comparison)
+    comparison_groups_without_nova = sorted(
+        key for key, runtimes in comparison.items() if NOVA_RUNTIME not in runtimes
+    )
+
+    changed = any(external_row_changed(row, args.tolerance) for row in external_rows) or any(
+        self_row_changed(row, args.tolerance) for row in self_rows
+    )
+    regressed = any(
+        external_row_regressed(row, args.regression_threshold) for row in external_rows
+    ) or any(self_row_regressed(row, args.regression_threshold) for row in self_rows)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
         render_markdown(
-            rows,
+            external_rows,
+            self_rows,
             current_root,
-            baseline_doc,
+            comparison_root,
+            self_baseline_root,
             len(current),
-            len(baseline),
+            len(self_baseline),
+            len(comparison),
+            comparison_groups_without_nova,
             current_without_baseline,
             baseline_without_current,
         ),
@@ -131,7 +163,8 @@ def main(argv: list[str]) -> int:
 
     print(f"changed={str(changed).lower()}")
     print(f"regressed={str(regressed).lower()}")
-    print(f"rows={len(rows)}")
+    print(f"external_rows={len(external_rows)}")
+    print(f"self_rows={len(self_rows)}")
     print(f"output={repo_relative(output)}")
     return 0
 
@@ -140,8 +173,8 @@ def resolve_repo_path(path: Path) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
-def load_current_metrics(root: Path) -> dict[BenchmarkKey, tuple[Metrics, str]]:
-    metrics: dict[BenchmarkKey, tuple[Metrics, str]] = {}
+def load_benchmark_metrics(root: Path, include_external: bool) -> dict[BenchmarkKey, MetricRecord]:
+    metrics: dict[BenchmarkKey, MetricRecord] = {}
     for report in find_benchmark_reports(root):
         data = json.loads(report.read_text(encoding="utf-8"))
         for benchmark in data.get("Benchmarks", []):
@@ -149,12 +182,50 @@ def load_current_metrics(root: Path) -> dict[BenchmarkKey, tuple[Metrics, str]]:
             if key is None:
                 continue
 
+            runtime_method = split_runtime_method(key.method)
+            if (
+                not include_external
+                and runtime_method is not None
+                and runtime_method[0] != NOVA_RUNTIME
+            ):
+                continue
+
             benchmark_metrics = metrics_from_json(benchmark)
             if benchmark_metrics is None:
                 continue
 
-            parameter_display = build_parameter_display_from_json(benchmark)
-            metrics[key] = (benchmark_metrics, parameter_display)
+            metrics[key] = MetricRecord(
+                benchmark_metrics,
+                build_parameter_display_from_json(benchmark),
+            )
+
+    return metrics
+
+
+def load_comparison_metrics(root: Path) -> dict[ComparisonKey, dict[str, MetricRecord]]:
+    metrics: dict[ComparisonKey, dict[str, MetricRecord]] = {}
+    for report in find_benchmark_reports(root):
+        data = json.loads(report.read_text(encoding="utf-8"))
+        for benchmark in data.get("Benchmarks", []):
+            key = benchmark_key_from_json(benchmark)
+            if key is None:
+                continue
+
+            runtime_method = split_runtime_method(key.method)
+            if runtime_method is None:
+                continue
+
+            runtime, operation = runtime_method
+            benchmark_metrics = metrics_from_json(benchmark)
+            if benchmark_metrics is None:
+                continue
+
+            comparison_key = ComparisonKey(key.summary, operation, key.parameters)
+            runtimes = metrics.setdefault(comparison_key, {})
+            runtimes[runtime] = MetricRecord(
+                benchmark_metrics,
+                build_parameter_display_from_json(benchmark),
+            )
 
     return metrics
 
@@ -184,161 +255,309 @@ def benchmark_key_from_json(benchmark: dict) -> BenchmarkKey | None:
     return BenchmarkKey(benchmark_type, method, parameters)
 
 
+def split_runtime_method(method: str) -> tuple[str, str] | None:
+    normalized = normalize_method_name(method)
+    for runtime in RUNTIME_PREFIXES:
+        prefix = f"{runtime} "
+        if normalized.startswith(prefix):
+            operation = normalized[len(prefix) :].strip()
+            if operation:
+                return runtime, operation
+
+    return None
+
+
 def metrics_from_json(benchmark: dict) -> Metrics | None:
     statistics = benchmark.get("Statistics") or {}
     memory = benchmark.get("Memory") or {}
     percentiles = statistics.get("Percentiles") or {}
 
     mean = to_float(statistics.get("Mean"))
-    p95 = to_float(percentiles.get("P95", statistics.get("P95")))
-    allocated = to_float(memory.get("BytesAllocatedPerOperation"))
+    p95 = to_float(percentiles.get("P95", statistics.get("P95", mean)))
+    allocated = metric_value(benchmark, "Allocated Memory", "Allocated")
+    if not math.isfinite(allocated):
+        allocated = to_float(memory.get("BytesAllocatedPerOperation"))
+    if not math.isfinite(allocated):
+        allocated = 0.0
 
-    if not all(math.isfinite(value) for value in (mean, p95, allocated)):
+    gen0 = gc_metric_value(benchmark, memory, "Gen0Collects", "Gen0Collections", "Gen0")
+    gen1 = gc_metric_value(benchmark, memory, "Gen1Collects", "Gen1Collections", "Gen1")
+    gen2 = gc_metric_value(benchmark, memory, "Gen2Collects", "Gen2Collections", "Gen2")
+
+    if not math.isfinite(p95):
+        p95 = mean
+
+    if not math.isfinite(mean):
         return None
 
-    return Metrics(mean, p95, allocated)
+    return Metrics(mean, p95, gen0, gen1, gen2, allocated)
 
 
-def load_moonsharp_baseline(path: Path) -> dict[BenchmarkKey, Metrics]:
-    if not path.exists():
-        return {}
+def metric_value(benchmark: dict, metric_id: str, display_name: str) -> float:
+    for metric in benchmark.get("Metrics") or []:
+        descriptor = metric.get("Descriptor") or {}
+        if descriptor.get("Id") == metric_id or descriptor.get("DisplayName") == display_name:
+            return to_float(metric.get("Value"))
 
-    baseline: dict[BenchmarkKey, Metrics] = {}
-    current_summary = ""
-    header: list[str] | None = None
+    return math.nan
 
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if line.startswith("### "):
-            current_summary = normalize_summary_name(line[4:])
-            header = None
+
+def gc_metric_value(
+    benchmark: dict, memory: dict, metric_id: str, memory_key: str, display_name: str
+) -> float:
+    value = metric_value(benchmark, metric_id, display_name)
+    if math.isfinite(value):
+        return value
+
+    collections = to_float(memory.get(memory_key))
+    total_operations = to_float(memory.get("TotalOperations"))
+    if math.isfinite(collections) and math.isfinite(total_operations) and total_operations > 0:
+        return collections / total_operations * 1000
+
+    return 0.0
+
+
+def build_external_delta_rows(
+    comparison: dict[ComparisonKey, dict[str, MetricRecord]]
+) -> list[ExternalDeltaRow]:
+    rows: list[ExternalDeltaRow] = []
+    for key in sorted(comparison):
+        runtimes = comparison[key]
+        nova = runtimes.get(NOVA_RUNTIME)
+        if nova is None:
             continue
 
-        if not current_summary.startswith("NovaSharp."):
-            continue
-
-        if not line.startswith("|"):
-            continue
-
-        if re.match(r"^\|\s*-+", line):
-            continue
-
-        cells = parse_table_cells(line)
-        if header is None:
-            header = cells
-            continue
-
-        if len(cells) != len(header):
-            continue
-
-        key_metrics = baseline_row_to_metrics(current_summary, header, cells)
-        if key_metrics is None:
-            continue
-
-        key, metrics = key_metrics
-        baseline.setdefault(key, metrics)
-
-    return baseline
-
-
-def baseline_row_to_metrics(
-    current_summary: str, header: list[str], cells: list[str]
-) -> tuple[BenchmarkKey, Metrics] | None:
-    try:
-        method_index = header.index("Method")
-        mean_index = header.index("Mean")
-        allocated_index = header.index("Allocated")
-    except ValueError:
-        return None
-
-    method = normalize_method_name(cells[method_index])
-    parameters = build_parameter_signature_from_cells(header, cells, method_index, mean_index)
-    mean = parse_duration_to_ns(cells[mean_index])
-    p95 = parse_duration_to_ns(cells[header.index("P95")]) if "P95" in header else mean
-    allocated = parse_bytes(cells[allocated_index])
-
-    if not all(math.isfinite(value) for value in (mean, p95, allocated)):
-        return None
-
-    return BenchmarkKey(current_summary, method, parameters), Metrics(mean, p95, allocated)
-
-
-def build_delta_rows(
-    current: dict[BenchmarkKey, tuple[Metrics, str]],
-    baseline: dict[BenchmarkKey, Metrics],
-) -> list[DeltaRow]:
-    rows: list[DeltaRow] = []
-    for key in sorted(current):
-        if key not in baseline:
-            continue
-
-        current_metrics, parameter_display = current[key]
-        rows.append(DeltaRow(key, parameter_display, current_metrics, baseline[key]))
+        for runtime in sorted(runtimes):
+            if runtime == NOVA_RUNTIME:
+                continue
+            comparison_record = runtimes[runtime]
+            rows.append(
+                ExternalDeltaRow(
+                    key,
+                    runtime,
+                    nova.parameter_display,
+                    nova.metrics,
+                    comparison_record.metrics,
+                )
+            )
 
     return rows
 
 
-def row_changed(row: DeltaRow, tolerance: float) -> bool:
+def build_self_delta_rows(
+    current: dict[BenchmarkKey, MetricRecord],
+    baseline: dict[BenchmarkKey, MetricRecord],
+) -> list[SelfDeltaRow]:
+    rows: list[SelfDeltaRow] = []
+    for key in sorted(current):
+        if key not in baseline:
+            continue
+
+        rows.append(
+            SelfDeltaRow(
+                key,
+                current[key].parameter_display,
+                current[key].metrics,
+                baseline[key].metrics,
+            )
+        )
+
+    return rows
+
+
+def external_row_changed(row: ExternalDeltaRow, tolerance: float) -> bool:
+    return metrics_changed(row.nova, row.comparison, tolerance)
+
+
+def self_row_changed(row: SelfDeltaRow, tolerance: float) -> bool:
+    return metrics_changed(row.current, row.baseline, tolerance)
+
+
+def metrics_changed(current: Metrics, baseline: Metrics, tolerance: float) -> bool:
     return any(
         abs(value) >= tolerance
-        for value in (
-            fraction_delta(row.current.mean_ns, row.baseline.mean_ns),
-            fraction_delta(row.current.p95_ns, row.baseline.p95_ns),
-            fraction_delta(row.current.allocated_bytes, row.baseline.allocated_bytes),
-        )
-        if math.isfinite(value)
+        for value in metric_fraction_deltas(current, baseline)
+        if math.isfinite(value) or math.isinf(value)
     )
 
 
-def row_regressed(row: DeltaRow, threshold: float) -> bool:
+def external_row_regressed(row: ExternalDeltaRow, threshold: float) -> bool:
+    return metrics_regressed(row.nova, row.comparison, threshold)
+
+
+def self_row_regressed(row: SelfDeltaRow, threshold: float) -> bool:
+    return metrics_regressed(row.current, row.baseline, threshold)
+
+
+def metrics_regressed(current: Metrics, baseline: Metrics, threshold: float) -> bool:
     return any(
         value >= threshold
-        for value in (
-            fraction_delta(row.current.mean_ns, row.baseline.mean_ns),
-            fraction_delta(row.current.p95_ns, row.baseline.p95_ns),
-            fraction_delta(row.current.allocated_bytes, row.baseline.allocated_bytes),
-        )
-        if math.isfinite(value)
+        for value in metric_fraction_deltas(current, baseline)
+        if math.isfinite(value) or math.isinf(value)
+    )
+
+
+def metric_fraction_deltas(current: Metrics, baseline: Metrics) -> tuple[float, ...]:
+    return (
+        fraction_delta(current.mean_ns, baseline.mean_ns),
+        fraction_delta(current.p95_ns, baseline.p95_ns),
+        fraction_delta(current.gen0_per_1k, baseline.gen0_per_1k),
+        fraction_delta(current.gen1_per_1k, baseline.gen1_per_1k),
+        fraction_delta(current.gen2_per_1k, baseline.gen2_per_1k),
+        fraction_delta(current.allocated_bytes, baseline.allocated_bytes),
     )
 
 
 def render_markdown(
-    rows: list[DeltaRow],
+    external_rows: list[ExternalDeltaRow],
+    self_rows: list[SelfDeltaRow],
     current_root: Path,
-    baseline_doc: Path,
+    comparison_root: Path,
+    self_baseline_root: Path,
     current_count: int,
-    baseline_count: int,
+    self_baseline_count: int,
+    comparison_group_count: int,
+    comparison_groups_without_nova: list[ComparisonKey],
     current_without_baseline: list[BenchmarkKey],
     baseline_without_current: list[BenchmarkKey],
 ) -> str:
     lines = [
-        "## MoonSharp Benchmark Deltas",
+        "## Benchmark Comparison Deltas",
         "",
-        "Lower values are better. Positive deltas mean NovaSharp is above the MoonSharp baseline for that metric.",
+        "Lower values are better for mean, P95, GC collections, and allocated bytes. "
+        "Positive deltas mean NovaSharp is above the comparison row or self baseline.",
         "",
-        f"- Current artifacts: `{repo_relative(current_root)}`",
-        f"- Baseline: `{repo_relative(baseline_doc)}`",
-        f"- Matched rows: {len(rows)} of {current_count} current rows and {baseline_count} baseline rows",
-        f"- Current rows without MoonSharp baseline: {len(current_without_baseline)}",
-        f"- MoonSharp baseline rows not present in current artifacts: {len(baseline_without_current)}",
+        "External comparison rows are apples-to-apples: NovaSharp and the comparison "
+        "runtimes are restored, built, and benchmarked in the same workflow job on the same runner.",
+        "",
+        f"- Current NovaSharp artifacts: `{repo_relative(current_root)}`",
+        f"- Same-run comparison artifacts: `{repo_relative(comparison_root)}`",
+        f"- Checked-in self baseline artifacts: `{repo_relative(self_baseline_root)}`",
+        f"- Same-run comparison groups: {comparison_group_count}",
+        f"- Same-run external delta rows: {len(external_rows)}",
+        f"- Self baseline matches: {len(self_rows)} of {current_count} current rows and {self_baseline_count} baseline rows",
         "",
     ]
 
-    append_key_preview(lines, "Current rows without MoonSharp baseline", current_without_baseline)
+    append_comparison_key_preview(
+        lines,
+        "Comparison groups without a NovaSharp row",
+        comparison_groups_without_nova,
+    )
+
+    render_external_section(lines, external_rows)
+    render_self_section(
+        lines,
+        self_rows,
+        self_baseline_root,
+        current_without_baseline,
+        baseline_without_current,
+    )
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_external_section(lines: list[str], rows: list[ExternalDeltaRow]) -> None:
+    lines.extend(
+        [
+            "### Same-Run Runtime Comparisons",
+            "",
+        ]
+    )
 
     if not rows:
         lines.extend(
             [
-                "No benchmark rows matched the checked-in MoonSharp baseline.",
+                "No same-run external comparison rows were found. Run the comparison "
+                "BenchmarkDotNet project and pass its artifacts with `--comparison-root`.",
                 "",
             ]
         )
-        return "\n".join(lines)
+        return
 
     lines.extend(
         [
-            "| Summary | Method | Parameters | Current Mean | MoonSharp Mean | Mean Delta | Current P95 | MoonSharp P95 | P95 Delta | Current Alloc | MoonSharp Alloc | Alloc Delta |",
-            "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+            "| Summary | Operation | Parameters | Runtime | Nova Mean | Runtime Mean | Mean Delta | Nova P95 | Runtime P95 | P95 Delta | Nova GC0/1/2 | Runtime GC0/1/2 | GC Delta | Nova Alloc | Runtime Alloc | Alloc Delta |",
+            "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
+
+    for row in rows:
+        lines.append(
+            " | ".join(
+                [
+                    f"| {row.key.summary}",
+                    row.key.operation,
+                    row.parameter_display or "-",
+                    row.runtime,
+                    format_time(row.nova.mean_ns),
+                    format_time(row.comparison.mean_ns),
+                    format_metric_delta(row.nova.mean_ns, row.comparison.mean_ns, format_time_delta),
+                    format_time(row.nova.p95_ns),
+                    format_time(row.comparison.p95_ns),
+                    format_metric_delta(row.nova.p95_ns, row.comparison.p95_ns, format_time_delta),
+                    format_gc_triplet(row.nova),
+                    format_gc_triplet(row.comparison),
+                    format_gc_delta_triplet(row.nova, row.comparison),
+                    format_bytes(row.nova.allocated_bytes),
+                    format_bytes(row.comparison.allocated_bytes),
+                    f"{format_bytes_delta(row.nova.allocated_bytes - row.comparison.allocated_bytes)} ({format_percent(fraction_delta(row.nova.allocated_bytes, row.comparison.allocated_bytes))}) |",
+                ]
+            )
+        )
+
+    lines.append("")
+
+
+def render_self_section(
+    lines: list[str],
+    rows: list[SelfDeltaRow],
+    self_baseline_root: Path,
+    current_without_baseline: list[BenchmarkKey],
+    baseline_without_current: list[BenchmarkKey],
+) -> None:
+    lines.extend(
+        [
+            "### Self Baseline Comparisons",
+            "",
+        ]
+    )
+
+    if not self_baseline_root.exists():
+        lines.extend(
+            [
+                "No checked-in self baseline artifacts were found at "
+                f"`{repo_relative(self_baseline_root)}`. Add BenchmarkDotNet JSON artifacts there "
+                "or pass `--self-baseline-root` to enable NovaSharp-vs-NovaSharp deltas.",
+                "",
+            ]
+        )
+        return
+
+    append_benchmark_key_preview(
+        lines,
+        "Current rows without self baseline",
+        current_without_baseline,
+    )
+    append_benchmark_key_preview(
+        lines,
+        "Self baseline rows not present in current artifacts",
+        baseline_without_current,
+    )
+
+    if not rows:
+        lines.extend(
+            [
+                "No current NovaSharp rows matched the checked-in self baseline artifacts.",
+                "",
+            ]
+        )
+        return
+
+    lines.extend(
+        [
+            "| Summary | Method | Parameters | Current Mean | Baseline Mean | Mean Delta | Current P95 | Baseline P95 | P95 Delta | Current GC0/1/2 | Baseline GC0/1/2 | GC Delta | Current Alloc | Baseline Alloc | Alloc Delta |",
+            "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ]
     )
 
@@ -351,29 +570,46 @@ def render_markdown(
                     row.parameter_display or "-",
                     format_time(row.current.mean_ns),
                     format_time(row.baseline.mean_ns),
-                    f"{format_time_delta(row.mean_delta_ns)} ({format_percent(row.mean_delta_percent)})",
+                    format_metric_delta(row.current.mean_ns, row.baseline.mean_ns, format_time_delta),
                     format_time(row.current.p95_ns),
                     format_time(row.baseline.p95_ns),
-                    f"{format_time_delta(row.p95_delta_ns)} ({format_percent(row.p95_delta_percent)})",
+                    format_metric_delta(row.current.p95_ns, row.baseline.p95_ns, format_time_delta),
+                    format_gc_triplet(row.current),
+                    format_gc_triplet(row.baseline),
+                    format_gc_delta_triplet(row.current, row.baseline),
                     format_bytes(row.current.allocated_bytes),
                     format_bytes(row.baseline.allocated_bytes),
-                    f"{format_bytes_delta(row.allocation_delta_bytes)} ({format_percent(row.allocation_delta_percent)}) |",
+                    f"{format_bytes_delta(row.current.allocated_bytes - row.baseline.allocated_bytes)} ({format_percent(fraction_delta(row.current.allocated_bytes, row.baseline.allocated_bytes))}) |",
                 ]
             )
         )
 
     lines.append("")
-    return "\n".join(lines)
 
 
-def append_key_preview(lines: list[str], title: str, keys: list[BenchmarkKey]) -> None:
+def append_benchmark_key_preview(lines: list[str], title: str, keys: list[BenchmarkKey]) -> None:
     if not keys:
         return
 
-    lines.append(f"### {title}")
+    lines.append(f"#### {title}")
     lines.append("")
     for key in keys[:10]:
         lines.append(f"- {key.summary} / {key.method} / {key.parameters or '-'}")
+    if len(keys) > 10:
+        lines.append(f"- ... {len(keys) - 10} more")
+    lines.append("")
+
+
+def append_comparison_key_preview(
+    lines: list[str], title: str, keys: list[ComparisonKey]
+) -> None:
+    if not keys:
+        return
+
+    lines.append(f"#### {title}")
+    lines.append("")
+    for key in keys[:10]:
+        lines.append(f"- {key.summary} / {key.operation} / {key.parameters or '-'}")
     if len(keys) > 10:
         lines.append(f"- ... {len(keys) - 10} more")
     lines.append("")
@@ -386,25 +622,16 @@ def repo_relative(path: Path) -> str:
         return path.as_posix()
 
 
-def parse_table_cells(line: str) -> list[str]:
-    return [normalize_cell(cell) for cell in line.strip().strip("|").split("|")]
-
-
 def normalize_summary_name(value: str) -> str:
     normalized = normalize_cell(value)
     normalized = re.sub(r"-\d{8}-\d{6}$", "", normalized)
     if normalized.startswith("WallstopStudios."):
         normalized = normalized[len("WallstopStudios.") :]
-    if normalized.startswith("MoonSharp"):
-        normalized = "NovaSharp" + normalized[len("MoonSharp") :]
     return normalized
 
 
 def normalize_method_name(value: str) -> str:
-    normalized = normalize_cell(value)
-    if normalized.startswith("MoonSharp"):
-        normalized = "NovaSharp" + normalized[len("MoonSharp") :]
-    return normalized
+    return normalize_cell(value)
 
 
 def normalize_cell(value: object) -> str:
@@ -440,59 +667,11 @@ def build_parameter_signature_from_text(value: str) -> str:
     return "|".join(sorted(parts))
 
 
-def build_parameter_signature_from_cells(
-    header: list[str], cells: list[str], method_index: int, mean_index: int
-) -> str:
-    parts: list[str] = []
-    for index in range(method_index + 1, mean_index):
-        name = normalize_parameter_name(header[index])
-        value = normalize_cell(cells[index])
-        if name and value:
-            parts.append(f"{name}:{value}")
-    return "|".join(sorted(parts))
-
-
 def build_parameter_display_from_json(benchmark: dict) -> str:
     signature = build_parameter_signature_from_text(benchmark.get("Parameters", ""))
     if not signature:
         return ""
     return ", ".join(part.replace(":", "=", 1) for part in signature.split("|"))
-
-
-def parse_duration_to_ns(value: str) -> float:
-    normalized = normalize_cell(value).replace(",", "")
-    if normalized in {"", "-"}:
-        return math.nan
-    match = re.match(r"^([-+]?\d*\.?\d+)\s*([a-zA-Zµμ]+)$", normalized)
-    if not match:
-        return math.nan
-    magnitude = float(match.group(1))
-    unit = match.group(2)
-    return {
-        "ns": magnitude,
-        "us": magnitude * 1_000,
-        "µs": magnitude * 1_000,
-        "μs": magnitude * 1_000,
-        "ms": magnitude * 1_000_000,
-        "s": magnitude * 1_000_000_000,
-    }.get(unit, math.nan)
-
-
-def parse_bytes(value: str) -> float:
-    normalized = normalize_cell(value).replace(",", "")
-    if normalized in {"", "-"}:
-        return 0.0
-    match = re.match(r"^([-+]?\d*\.?\d+)\s*([A-Za-z]+)?$", normalized)
-    if not match:
-        return math.nan
-    magnitude = float(match.group(1))
-    unit = match.group(2) or "B"
-    return {
-        "B": magnitude,
-        "KB": magnitude * 1024,
-        "MB": magnitude * 1024 * 1024,
-        "GB": magnitude * 1024 * 1024 * 1024,
-    }.get(unit, magnitude)
 
 
 def to_float(value: object) -> float:
@@ -503,14 +682,26 @@ def to_float(value: object) -> float:
 
 
 def fraction_delta(current: float, baseline: float) -> float:
-    if not math.isfinite(current) or not math.isfinite(baseline) or baseline <= 0:
+    if not math.isfinite(current) or not math.isfinite(baseline):
         return math.nan
+    if baseline == 0:
+        if current == 0:
+            return 0.0
+        return math.inf if current > 0 else -math.inf
     return (current - baseline) / baseline
 
 
 def percentage_delta(current: float, baseline: float) -> float:
     value = fraction_delta(current, baseline)
-    return value * 100 if math.isfinite(value) else math.nan
+    return value * 100 if math.isfinite(value) else value
+
+
+def format_metric_delta(
+    current: float,
+    baseline: float,
+    formatter,
+) -> str:
+    return f"{formatter(current - baseline)} ({format_percent(percentage_delta(current, baseline))})"
 
 
 def format_time(ns: float) -> str:
@@ -543,6 +734,41 @@ def format_time_magnitude(ns: float) -> str:
     return f"{value:.3g} {unit}"
 
 
+def format_gc_triplet(metrics: Metrics) -> str:
+    return " / ".join(
+        [
+            format_count(metrics.gen0_per_1k),
+            format_count(metrics.gen1_per_1k),
+            format_count(metrics.gen2_per_1k),
+        ]
+    )
+
+
+def format_gc_delta_triplet(current: Metrics, baseline: Metrics) -> str:
+    return " / ".join(
+        [
+            format_count_delta(current.gen0_per_1k - baseline.gen0_per_1k),
+            format_count_delta(current.gen1_per_1k - baseline.gen1_per_1k),
+            format_count_delta(current.gen2_per_1k - baseline.gen2_per_1k),
+        ]
+    )
+
+
+def format_count(value: float) -> str:
+    if not math.isfinite(value):
+        return "-"
+    return f"{value:.4g}"
+
+
+def format_count_delta(value: float) -> str:
+    if not math.isfinite(value):
+        return "-"
+    if abs(value) < 1e-9:
+        return "0"
+    prefix = "+" if value > 0 else "-"
+    return f"{prefix}{abs(value):.4g}"
+
+
 def format_bytes(value: float) -> str:
     if not math.isfinite(value):
         return "-"
@@ -569,6 +795,8 @@ def format_bytes_magnitude(value: float) -> str:
 
 
 def format_percent(value: float) -> str:
+    if math.isinf(value):
+        return "+inf%" if value > 0 else "-inf%"
     if not math.isfinite(value):
         return "-"
     return f"{value:+.2f}%"

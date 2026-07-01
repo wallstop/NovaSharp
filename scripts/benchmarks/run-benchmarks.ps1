@@ -82,8 +82,28 @@ function Invoke-Benchmark {
 
 Invoke-Benchmark -Project $RuntimeBenchmarkProject -Configuration $Configuration -Description "NovaSharp runtime"
 
+$comparisonArtifacts = "artifacts/benchmarkdotnet/comparison"
+if (Test-Path $comparisonArtifacts) {
+    Remove-Item -LiteralPath $comparisonArtifacts -Recurse -Force
+}
+
 if (-not $SkipComparison) {
-    Invoke-Benchmark -Project $ComparisonBenchmarkProject -Configuration $Configuration -Description "comparison"
+    New-Item -ItemType Directory -Path $comparisonArtifacts -Force | Out-Null
+
+    Write-Host ""
+    Write-Host "Running comparison benchmarks..."
+    dotnet run `
+        --project $ComparisonBenchmarkProject `
+        -c $Configuration `
+        --no-build `
+        -- `
+        --filter "*LuaPerformanceBenchmarks*" `
+        --exporters json `
+        --artifacts $comparisonArtifacts
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet run --project $ComparisonBenchmarkProject -c $Configuration failed. See output above."
+    }
+    Write-Host "comparison benchmarks complete."
 }
 else {
     Write-Host ""
@@ -91,21 +111,25 @@ else {
 }
 
 Write-Host ""
-Write-Host "Rendering MoonSharp benchmark delta report..."
+Write-Host "Rendering benchmark comparison delta report..."
 $pythonCommand = Resolve-PythonCommand
 & $pythonCommand "scripts/benchmarks/render-benchmark-deltas.py" `
     "--current-root" "BenchmarkDotNet.Artifacts" `
-    "--baseline-doc" "docs/Performance.md" `
+    "--comparison-root" $comparisonArtifacts `
+    "--self-baseline-root" "docs/performance-history/current-baseline" `
     "--output" "artifacts/benchmark-deltas.md"
 if ($LASTEXITCODE -ne 0) {
     throw "scripts/benchmarks/render-benchmark-deltas.py failed. See output above."
 }
 
 $artifactsPath = Join-Path $repoRoot "BenchmarkDotNet.Artifacts"
+$comparisonArtifactsPath = Join-Path $repoRoot $comparisonArtifacts
 Write-Host ""
 Write-Host "BenchmarkDotNet artifacts are available under:"
 Write-Host "  $artifactsPath"
-Write-Host "MoonSharp benchmark delta report:"
+Write-Host "Comparison BenchmarkDotNet artifacts are available under:"
+Write-Host "  $comparisonArtifactsPath"
+Write-Host "Benchmark comparison delta report:"
 Write-Host "  artifacts/benchmark-deltas.md"
 Write-Host ""
 Write-Host "Review the updated sections in docs/Performance.md and attach relevant artifacts when opening a PR."
