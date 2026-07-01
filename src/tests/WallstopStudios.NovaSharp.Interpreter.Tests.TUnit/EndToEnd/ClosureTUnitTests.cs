@@ -1,10 +1,12 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 {
+    using System;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -27,6 +29,182 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new Script(version, CoreModulePresets.Complete);
             await EndToEndDynValueAssert
                 .ExpectAsync(script.DoString(code), 5)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ClosureCallSupportsSixAndSevenFixedArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+            Closure closure = function.Function;
+
+            DynValue sixDynValueResult = closure.Call(
+                DynValue.FromNumber(1),
+                DynValue.FromNumber(2),
+                DynValue.FromNumber(3),
+                DynValue.FromNumber(4),
+                DynValue.FromNumber(5),
+                DynValue.FromNumber(6)
+            );
+            DynValue sevenDynValueResult = closure.Call(
+                DynValue.FromNumber(1),
+                DynValue.FromNumber(2),
+                DynValue.FromNumber(3),
+                DynValue.FromNumber(4),
+                DynValue.FromNumber(5),
+                DynValue.FromNumber(6),
+                DynValue.FromNumber(7)
+            );
+            DynValue sixObjectResult = closure.Call((object)null, 2d, 3d, 4d, 5d, 6d);
+            DynValue sevenObjectResult = closure.Call((object)null, 2d, 3d, 4d, 5d, 6d, 7d);
+
+            await AssertClosureCaptureResult(sixDynValueResult, 6, expectedNilAtFirst: false)
+                .ConfigureAwait(false);
+            await AssertClosureCaptureResult(sevenDynValueResult, 7, expectedNilAtFirst: false)
+                .ConfigureAwait(false);
+            await AssertClosureCaptureResult(sixObjectResult, 6, expectedNilAtFirst: true)
+                .ConfigureAwait(false);
+            await AssertClosureCaptureResult(sevenObjectResult, 7, expectedNilAtFirst: true)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ClosureCallObjectArgumentsSupportsCallerOwnedSpan(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+            Closure closure = function.Function;
+            object[] args = { "padding", null, "value", 42, true, 5d, "tail", "padding" };
+
+            DynValue result = closure.CallObjectArguments(args.AsSpan(1, 6));
+            DynValue scriptResult = script.CallObjectArguments((object)closure, args.AsSpan(1, 6));
+            DynValue emptyResult = closure.CallObjectArguments(ReadOnlySpan<object>.Empty);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(6d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[6].String).IsEqualTo("tail").ConfigureAwait(false);
+            await Assert.That(scriptResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(scriptResult.Tuple.Length).IsEqualTo(7).ConfigureAwait(false);
+            await Assert
+                .That(scriptResult.Tuple[0].Number)
+                .IsEqualTo(result.Tuple[0].Number)
+                .ConfigureAwait(false);
+            await Assert
+                .That(scriptResult.Tuple[6].String)
+                .IsEqualTo(result.Tuple[6].String)
+                .ConfigureAwait(false);
+            await Assert.That(emptyResult.Number).IsEqualTo(0d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ClosureCallObjectArgumentsPreservesArrayApiShape(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString(
+                "return function(...) return select('#', ...), type((...)), ... end"
+            );
+            Closure closure = function.Function;
+            object[] args = { "left", "right" };
+
+            DynValue argumentList = closure.CallObjectArguments(args);
+            DynValue singleObject = closure.Call((object)args);
+
+            await Assert.That(argumentList.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(argumentList.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(argumentList.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(argumentList.Tuple[1].String)
+                .IsEqualTo("string")
+                .ConfigureAwait(false);
+            await Assert.That(argumentList.Tuple[2].String).IsEqualTo("left").ConfigureAwait(false);
+            await Assert
+                .That(argumentList.Tuple[3].String)
+                .IsEqualTo("right")
+                .ConfigureAwait(false);
+
+            await Assert.That(singleObject.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(singleObject.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(singleObject.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert
+                .That(singleObject.Tuple[1].String)
+                .IsEqualTo("table")
+                .ConfigureAwait(false);
+            await Assert
+                .That(singleObject.Tuple[2].Type)
+                .IsEqualTo(DataType.Table)
+                .ConfigureAwait(false);
+            await Assert
+                .That(singleObject.Tuple[2].Table.Get(1).String)
+                .IsEqualTo("left")
+                .ConfigureAwait(false);
+            await Assert
+                .That(singleObject.Tuple[2].Table.Get(2).String)
+                .IsEqualTo("right")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ClosureCallObjectArgumentsRejectsNullArray()
+        {
+            Script script = new Script(CoreModulePresets.Complete);
+            DynValue function = script.DoString("return function(...) return select('#', ...) end");
+            Closure closure = function.Function;
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                closure.CallObjectArguments((object[])null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ClosureCallObjectArgumentsRejectsForeignObjectResource(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script foreignScript = new Script(version, CoreModulePresets.Complete);
+            object foreignTable = foreignScript.DoString("return {}");
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString("return function(value) return value end");
+            Closure closure = function.Function;
+            object[] args = { "padding", foreignTable, "padding" };
+
+            ScriptRuntimeException arrayException = Assert.Throws<ScriptRuntimeException>(() =>
+                closure.CallObjectArguments(new[] { foreignTable })
+            );
+            ScriptRuntimeException spanException = Assert.Throws<ScriptRuntimeException>(() =>
+                closure.CallObjectArguments(args.AsSpan(1, 1))
+            );
+
+            await Assert
+                .That(arrayException.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+            await Assert
+                .That(spanException.Message)
+                .Contains("different scripts")
                 .ConfigureAwait(false);
         }
 
@@ -238,6 +416,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             Script script = new Script(version, CoreModulePresets.HardSandbox);
             await EndToEndDynValueAssert
                 .ExpectAsync(script.DoString(code), "helloXX")
+                .ConfigureAwait(false);
+        }
+
+        private static async Task AssertClosureCaptureResult(
+            DynValue result,
+            int arity,
+            bool expectedNilAtFirst
+        )
+        {
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(arity + 1).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            if (expectedNilAtFirst)
+            {
+                await Assert
+                    .That(result.Tuple[1].Type)
+                    .IsEqualTo(DataType.Nil)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(result.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
+            }
+
+            await Assert
+                .That(result.Tuple[arity].Number)
+                .IsEqualTo((double)arity)
                 .ConfigureAwait(false);
         }
     }

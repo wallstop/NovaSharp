@@ -140,6 +140,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         }
 
         /// <summary>
+        /// Tries to expose this slice as contiguous storage.
+        /// </summary>
+        internal bool TryGetSpan(out ReadOnlySpan<T> span)
+        {
+            return TryGetSpan(0, _length, out span);
+        }
+
+        /// <summary>
+        /// Tries to expose a subrange of this slice as contiguous storage.
+        /// </summary>
+        internal bool TryGetSpan(int from, int length, out ReadOnlySpan<T> span)
+        {
+            if (_reversed || from < 0 || length < 0 || from > _length - length)
+            {
+                span = default;
+                return false;
+            }
+
+            int sourceFrom = _from + from;
+            if (_sourceList is T[] array)
+            {
+                if (sourceFrom < 0 || sourceFrom > array.Length - length)
+                {
+                    span = default;
+                    return false;
+                }
+
+                span = new ReadOnlySpan<T>(array, sourceFrom, length);
+                return true;
+            }
+
+            if (_sourceList is FastStack<T> stack)
+            {
+                return stack.TryGetSpan(sourceFrom, length, out span);
+            }
+
+            if (_sourceList is Slice<T> slice)
+            {
+                return slice.TryGetSpan(sourceFrom, length, out span);
+            }
+
+            span = default;
+            return false;
+        }
+
+        /// <summary>
         /// Calculates the real index in the underlying collection
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -24,6 +24,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public static class BasicModule
     {
+        [ThreadStatic]
+        private static CallbackFunction ToStringContinuationCallback;
+
         /// <summary>
         /// Implements Lua's <c>type</c> function (§6.1), returning the textual Lua type name for the first argument.
         /// </summary>
@@ -233,12 +236,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return DynValue.NewString(v.ToPrintString(version));
             }
 
-            tail.TailCallData.Continuation = new CallbackFunction(
-                ToStringContinuation,
-                Metamethods.ToStringMeta
-            );
+            tail.TailCallData.Continuation = GetToStringContinuationCallback();
 
             return tail;
+        }
+
+        private static CallbackFunction GetToStringContinuationCallback()
+        {
+            CallbackFunction callback = ToStringContinuationCallback;
+            if (callback == null)
+            {
+                callback = new CallbackFunction(ToStringContinuation, Metamethods.ToStringMeta);
+                ToStringContinuationCallback = callback;
+            }
+
+            callback.AdditionalData = null;
+            return callback;
         }
 
         /// <summary>
@@ -1352,7 +1365,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
                 // The first upvalue should be _ENV
                 if (
-                    closureScope.Symbols.Length > 0
+                    closureScope.Symbols.Count > 0
                     && closureScope.Symbols[0] == WellKnownSymbols.ENV
                 )
                 {
@@ -1450,7 +1463,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (
                 context != null
                 && context.Count > 0
-                && context.Symbols.Length > 0
+                && context.Symbols.Count > 0
                 && context.Symbols[0] == WellKnownSymbols.ENV
             )
             {

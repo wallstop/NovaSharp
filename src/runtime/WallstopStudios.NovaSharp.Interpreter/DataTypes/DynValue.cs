@@ -565,6 +565,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Returns a DynValue wrapping the specified CLR callback, reusing the callback's cached wrapper when available.
+        /// </summary>
+        internal static DynValue FromCallback(CallbackFunction function)
+        {
+            if (function == null)
+            {
+                return Nil;
+            }
+
+            DynValue cached = function.CachedDynValue;
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            DynValue newValue = NewCallback(function);
+            function.CachedDynValue = newValue;
+            return newValue;
+        }
+
+        /// <summary>
         /// Creates a new writable value initialized to the specified CLR callback.
         /// </summary>
         public static DynValue NewCallback(
@@ -575,6 +596,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return new DynValue()
             {
                 _object = new CallbackFunction(callBack, name),
+                _type = DataType.ClrFunction,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new writable value initialized to a CLR callback that receives a stack-only argument view.
+        /// </summary>
+        public static DynValue NewCallbackView(
+            ScriptFunctionCallbackView callBack,
+            string name = null
+        )
+        {
+            return new DynValue()
+            {
+                _object = CallbackFunction.FromArgumentView(callBack, name),
+                _type = DataType.ClrFunction,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new writable value initialized to a CLR callback that receives a stack-only
+        /// argument view and does not require a script execution context.
+        /// </summary>
+        public static DynValue NewCallbackView(
+            ScriptFunctionCallbackViewNoContext callBack,
+            string name = null
+        )
+        {
+            return new DynValue()
+            {
+                _object = CallbackFunction.FromArgumentView(callBack, name),
                 _type = DataType.ClrFunction,
             };
         }
@@ -684,6 +736,82 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Creates a new request for a yield of the current coroutine with no return values.
+        /// </summary>
+        /// <returns>A yield request <see cref="DynValue"/>.</returns>
+        internal static DynValue NewYieldReq()
+        {
+            return new DynValue() { _object = new YieldRequest(), _type = DataType.YieldRequest };
+        }
+
+        /// <summary>
+        /// Creates a new request for a yield of the current coroutine with one return value.
+        /// </summary>
+        /// <param name="arg">The yielded return value.</param>
+        /// <returns>A yield request <see cref="DynValue"/>.</returns>
+        internal static DynValue NewYieldReq(DynValue arg)
+        {
+            return new DynValue()
+            {
+                _object = YieldRequest.New(arg),
+                _type = DataType.YieldRequest,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new request for a yield of the current coroutine with two return values.
+        /// </summary>
+        /// <param name="arg0">The first yielded return value.</param>
+        /// <param name="arg1">The second yielded return value.</param>
+        /// <returns>A yield request <see cref="DynValue"/>.</returns>
+        internal static DynValue NewYieldReq(DynValue arg0, DynValue arg1)
+        {
+            return new DynValue()
+            {
+                _object = YieldRequest.New(arg0, arg1),
+                _type = DataType.YieldRequest,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new request for a yield of the current coroutine with three return values.
+        /// </summary>
+        /// <param name="arg0">The first yielded return value.</param>
+        /// <param name="arg1">The second yielded return value.</param>
+        /// <param name="arg2">The third yielded return value.</param>
+        /// <returns>A yield request <see cref="DynValue"/>.</returns>
+        internal static DynValue NewYieldReq(DynValue arg0, DynValue arg1, DynValue arg2)
+        {
+            return new DynValue()
+            {
+                _object = YieldRequest.New(arg0, arg1, arg2),
+                _type = DataType.YieldRequest,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new request for a yield of the current coroutine with four return values.
+        /// </summary>
+        /// <param name="arg0">The first yielded return value.</param>
+        /// <param name="arg1">The second yielded return value.</param>
+        /// <param name="arg2">The third yielded return value.</param>
+        /// <param name="arg3">The fourth yielded return value.</param>
+        /// <returns>A yield request <see cref="DynValue"/>.</returns>
+        internal static DynValue NewYieldReq(
+            DynValue arg0,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3
+        )
+        {
+            return new DynValue()
+            {
+                _object = YieldRequest.New(arg0, arg1, arg2, arg3),
+                _type = DataType.YieldRequest,
+            };
+        }
+
+        /// <summary>
         /// Creates a new request for a yield of the current coroutine.
         /// </summary>
         /// <param name="args">The yield arguments.</param>
@@ -703,7 +831,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(DynValue value)
         {
-            return value;
+            return value ?? Nil;
         }
 
         /// <summary>
@@ -712,7 +840,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewTuple(DynValue value1, DynValue value2)
         {
-            return new DynValue() { _object = new[] { value1, value2 }, _type = DataType.Tuple };
+            return new DynValue()
+            {
+                _object = new[] { value1 ?? Nil, value2 ?? Nil },
+                _type = DataType.Tuple,
+            };
         }
 
         /// <summary>
@@ -723,7 +855,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             return new DynValue()
             {
-                _object = new[] { value1, value2, value3 },
+                _object = new[] { value1 ?? Nil, value2 ?? Nil, value3 ?? Nil },
+                _type = DataType.Tuple,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new tuple initialized to four values.
+        /// This is an optimized overload that avoids params array allocation.
+        /// </summary>
+        public static DynValue NewTuple(
+            DynValue value1,
+            DynValue value2,
+            DynValue value3,
+            DynValue value4
+        )
+        {
+            return new DynValue()
+            {
+                _object = new[] { value1 ?? Nil, value2 ?? Nil, value3 ?? Nil, value4 ?? Nil },
+                _type = DataType.Tuple,
+            };
+        }
+
+        /// <summary>
+        /// Creates a new tuple initialized to five values.
+        /// This is an optimized overload that avoids params array allocation.
+        /// </summary>
+        public static DynValue NewTuple(
+            DynValue value1,
+            DynValue value2,
+            DynValue value3,
+            DynValue value4,
+            DynValue value5
+        )
+        {
+            return new DynValue()
+            {
+                _object = new[]
+                {
+                    value1 ?? Nil,
+                    value2 ?? Nil,
+                    value3 ?? Nil,
+                    value4 ?? Nil,
+                    value5 ?? Nil,
+                },
                 _type = DataType.Tuple,
             };
         }
@@ -740,15 +916,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             if (values.Length == 0)
             {
-                return NewNil();
+                return EmptyTuple;
             }
 
             if (values.Length == 1)
             {
-                return values[0];
+                return values[0] ?? Nil;
             }
 
-            return new DynValue() { _object = values, _type = DataType.Tuple };
+            return new DynValue()
+            {
+                _object = NormalizeTupleValues(values),
+                _type = DataType.Tuple,
+            };
+        }
+
+        private static DynValue[] NormalizeTupleValues(DynValue[] values)
+        {
+            for (int i = 0; i < values.Length; ++i)
+            {
+                if (values[i] != null)
+                {
+                    continue;
+                }
+
+                DynValue[] normalized = new DynValue[values.Length];
+                Array.Copy(values, normalized, values.Length);
+                normalized[i] = Nil;
+
+                for (int j = i + 1; j < normalized.Length; ++j)
+                {
+                    normalized[j] ??= Nil;
+                }
+
+                return normalized;
+            }
+
+            return values;
         }
 
         /// <summary>

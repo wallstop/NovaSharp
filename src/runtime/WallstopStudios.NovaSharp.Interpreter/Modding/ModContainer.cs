@@ -12,7 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
     /// Provides an isolated container for loading, executing, and managing Lua mods
     /// with lifecycle hooks (load, unload, reload).
     /// </summary>
-    public class ModContainer : IModContainer
+    public class ModContainer : IModContainer, IModContainerObjectArguments
     {
         private readonly object _stateLock = new object();
         private readonly List<string> _entryPoints;
@@ -406,8 +406,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
             return script.DoString(code, null, codeFriendlyName);
         }
 
-        /// <inheritdoc/>
-        public DynValue CallFunction(string functionName, params object[] args)
+        private DynValue GetCallableFunction(string functionName, out Script script)
         {
             if (string.IsNullOrEmpty(functionName))
             {
@@ -417,7 +416,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 );
             }
 
-            Script script = GetLoadedScriptOrThrow();
+            script = GetLoadedScriptOrThrow();
             DynValue function = script.Globals.Get(functionName);
 
             if (function.Type != DataType.Function)
@@ -431,7 +430,150 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
                 throw new ScriptRuntimeException(sb.ToString());
             }
 
+            return function;
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod without allocating a params array.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(string functionName)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with one CLR object argument.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(string functionName, object arg)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with two CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(string functionName, object arg1, object arg2)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg1, arg2);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with three CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(string functionName, object arg1, object arg2, object arg3)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg1, arg2, arg3);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with four CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(
+            string functionName,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4
+        )
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg1, arg2, arg3, arg4);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with five CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        public DynValue CallFunction(
+            string functionName,
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5
+        )
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.Call(function, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        /// <inheritdoc/>
+        public DynValue CallFunction(string functionName, params object[] args)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
             return script.Call(function, args);
+        }
+
+        /// <summary>
+        /// Invokes a global function defined in this mod with caller-owned CLR object arguments.
+        /// </summary>
+        /// <param name="functionName">The name of the function to call.</param>
+        /// <param name="args">Arguments to pass to the function.</param>
+        /// <returns>The result of the function call.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="args"/> is null.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
+        /// <remarks>
+        /// The array is interpreted as the function's argument list. To pass an array as a
+        /// single Lua argument, use <see cref="CallFunction(string, object)" /> and cast
+        /// the array to <see cref="object" />.
+        /// </remarks>
+        public DynValue CallFunctionObjectArguments(string functionName, object[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return CallFunctionObjectArguments(functionName, args.AsSpan());
+        }
+
+        /// <inheritdoc/>
+        public DynValue CallFunctionObjectArguments(string functionName, ReadOnlySpan<object> args)
+        {
+            DynValue function = GetCallableFunction(functionName, out Script script);
+            return script.CallObjectArguments(function, args);
         }
 
         /// <inheritdoc/>

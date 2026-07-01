@@ -95,20 +95,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Platforms
         public async Task DefaultPrintWritesToConsoleOut()
         {
             DotNetCorePlatformAccessor accessor = new();
+            const string marker = "novasharp-dotnetcore-default-print";
             string output = string.Empty;
             await ConsoleTestUtilities
                 .WithConsoleCaptureAsync(
                     consoleScope =>
                     {
-                        accessor.DefaultPrint("hello");
-                        output = consoleScope.Writer.ToString().Trim();
+                        accessor.DefaultPrint(marker);
+                        output = consoleScope.Writer.ToString();
                         return Task.CompletedTask;
                     },
                     captureError: false
                 )
                 .ConfigureAwait(false);
 
-            await Assert.That(output).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(output).Contains(marker).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

@@ -2,8 +2,10 @@
 
 This document tracks benchmark snapshots used for regression analysis. Each OS section must follow this order:
 
-1. `### NovaSharp Latest` – contains the NovaSharp vs MoonSharp comparison table at the top plus the detailed NovaSharp benchmark output.
+1. `### NovaSharp Latest` – contains the historical NovaSharp vs MoonSharp comparison table at the top plus the detailed NovaSharp benchmark output.
 1. `### MoonSharp Baseline` – a frozen point-in-time snapshot (do not overwrite).
+
+CI benchmark PR comments do not use this frozen baseline. They run NovaSharp and external runtime comparisons on the same runner and render deltas from those same-run BenchmarkDotNet artifacts.
 
 When capturing new data, replace the entire `### NovaSharp Latest` section instead of appending new content to the top of the file.
 
@@ -16,7 +18,7 @@ When capturing new data, replace the entire `### NovaSharp Latest` section inste
 - When you need to run only one suite manually, use the underlying commands:
   - Runtime benchmarks: `dotnet run --project src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj -c Release`
   - NLua/MoonSharp comparison: `dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj -c Release`
-- The runtime harness updates the `### NovaSharp Latest` block automatically; the comparison harness refreshes the NLua/MoonSharp tables referenced later in this document.
+- The runtime harness updates the `### NovaSharp Latest` block automatically; CI comparison comments use same-run BenchmarkDotNet artifacts for MoonSharp and NLua deltas.
 - After each run, inspect the generated markdown diff in this file and attach the raw BenchmarkDotNet artifacts (`BenchmarkDotNet.Artifacts`) to the PR when results change materially.
 
 ### Thresholds

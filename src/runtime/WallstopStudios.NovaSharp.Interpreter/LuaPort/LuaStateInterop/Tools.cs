@@ -419,7 +419,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
             @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])"
         );
 
+        public static string StringFormat(string format, object parameter)
+        {
+            return StringFormatCore(format, parameter, null, true);
+        }
+
         public static string StringFormat(string format, params object[] parameters)
+        {
+            return StringFormatCore(format, null, parameters, false);
+        }
+
+        private static string StringFormatCore(
+            string format,
+            object singleParameter,
+            object[] parameters,
+            bool useSingleParameter
+        )
         {
             StringBuilder f = new();
             //Regex FormatRegex = new Regex( @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])" );
@@ -540,14 +555,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.LuaPort.LuaStateInterop
                 }
 
                 // get next value parameter and convert value parameter depending on short / long indicator
-                if (parameters == null || paramIx >= parameters.Length)
+                if (useSingleParameter)
+                {
+                    o = paramIx == 0 ? singleParameter : null;
+                }
+                else if (parameters == null || paramIx >= parameters.Length)
                 {
                     o = null;
                 }
                 else
                 {
                     o = parameters[paramIx];
+                }
 
+                if (o != null)
+                {
                     if (shortLongIndicator == 'h')
                     {
                         if (o is int i)

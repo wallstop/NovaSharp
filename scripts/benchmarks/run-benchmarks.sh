@@ -34,6 +34,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
+run_python() {
+    if [[ -n "${PYTHON:-}" ]]; then
+        "$PYTHON" "$@"
+        return
+    fi
+
+    if command -v python3 >/dev/null 2>&1; then
+        python3 "$@"
+        return
+    fi
+
+    if command -v python >/dev/null 2>&1; then
+        python "$@"
+        return
+    fi
+
+    echo "Python 3 is required to render the benchmark delta report. Set PYTHON to override." >&2
+    exit 1
+}
+
 # Set roll-forward for .NET version compatibility
 if [[ -z "${DOTNET_ROLL_FORWARD:-}" ]]; then
     export DOTNET_ROLL_FORWARD="Major"
@@ -58,16 +78,44 @@ run_benchmark() {
 
 run_benchmark "src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj" "NovaSharp runtime"
 
+COMPARISON_ARTIFACTS="artifacts/benchmarkdotnet/comparison"
+rm -rf "$COMPARISON_ARTIFACTS"
+
 if [[ "$SKIP_COMPARISON" == "false" ]]; then
-    run_benchmark "src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj" "comparison"
+    mkdir -p "$COMPARISON_ARTIFACTS"
+
+    echo ""
+    echo "Running comparison benchmarks..."
+    dotnet run \
+        --project "src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj" \
+        -c "$CONFIGURATION" \
+        --no-build \
+        -- \
+        --filter "*LuaPerformanceBenchmarks*" \
+        --exporters json \
+        --artifacts "$COMPARISON_ARTIFACTS"
+    echo "comparison benchmarks complete."
 else
     echo ""
     echo "Skipping comparison benchmarks (per --skip-comparison)."
 fi
 
+echo ""
+echo "Rendering benchmark comparison delta report..."
+run_python scripts/benchmarks/render-benchmark-deltas.py \
+    --current-root BenchmarkDotNet.Artifacts \
+    --comparison-root artifacts/benchmarkdotnet/comparison \
+    --self-baseline-root docs/performance-history/current-baseline \
+    --output artifacts/benchmark-deltas.md
+
 ARTIFACTS_PATH="$REPO_ROOT/BenchmarkDotNet.Artifacts"
+COMPARISON_ARTIFACTS_PATH="$REPO_ROOT/artifacts/benchmarkdotnet/comparison"
 echo ""
 echo "BenchmarkDotNet artifacts are available under:"
 echo "  $ARTIFACTS_PATH"
+echo "Comparison BenchmarkDotNet artifacts are available under:"
+echo "  $COMPARISON_ARTIFACTS_PATH"
+echo "Benchmark comparison delta report:"
+echo "  artifacts/benchmark-deltas.md"
 echo ""
 echo "Review the updated sections in docs/Performance.md and attach relevant artifacts when opening a PR."

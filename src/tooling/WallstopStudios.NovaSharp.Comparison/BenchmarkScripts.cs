@@ -5,17 +5,53 @@ namespace WallstopStudios.NovaSharp.Comparison;
 /// </summary>
 internal static class BenchmarkScripts
 {
+    private const int LoopIterations = 2_000;
+    private const int TableEntryCount = 128;
+    private const int CoroutineSteps = 256;
+
     /// <summary>
     /// Returns the script associated with <paramref name="scenario"/>.
     /// </summary>
     public static string GetScript(ScriptScenario scenario) =>
         scenario switch
         {
+            ScriptScenario.NumericLoops => NumericLoops,
+            ScriptScenario.TableMutation => TableMutation,
             ScriptScenario.TowerOfHanoi => TowerOfHanoi,
             ScriptScenario.EightQueens => EightQueens,
             ScriptScenario.CoroutinePingPong => CoroutinePingPong,
             _ => TowerOfHanoi,
         };
+
+    private static readonly string NumericLoops =
+        $@"
+        local sum = 0.0
+        for i = 1, {LoopIterations} do
+            sum = sum + math.sin(i) * math.cos(i * 0.5)
+            if (i % 7) == 0 then
+                sum = sum / 2.0
+            end
+        end
+        return sum
+    ";
+
+    private static readonly string TableMutation =
+        $@"
+        local source = {{}}
+        for i = 1, {TableEntryCount} do
+            source[i] = i * 1.5
+        end
+
+        local acc = 0
+        for i = 1, #source do
+            acc = acc + source[i]
+            source[i] = acc % 17
+        end
+        for k = #source, 1, -3 do
+            source[k] = nil
+        end
+        return acc
+    ";
 
     private const string TowerOfHanoi =
         @"
@@ -67,8 +103,8 @@ internal static class BenchmarkScripts
         solve(1)
     ";
 
-    private const string CoroutinePingPong =
-        @"
+    private static readonly string CoroutinePingPong =
+        $@"
         local function producer(n)
             local value = 0
             for i = 1, n do
@@ -89,6 +125,6 @@ internal static class BenchmarkScripts
             return last
         end
 
-        run(256)
+        run({CoroutineSteps})
     ";
 }

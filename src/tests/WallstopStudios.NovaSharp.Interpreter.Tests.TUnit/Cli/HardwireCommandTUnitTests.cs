@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Cli;
     using WallstopStudios.NovaSharp.Cli.Commands.Implementations;
+    using WallstopStudios.NovaSharp.Hardwire;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
@@ -152,6 +153,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task GenerateCreatesCSharpSourceFromDump()
         {
             await GenerateAndVerify(
@@ -166,6 +168,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task GenerateWithInternalVisibilityAndNoInternalsEmitsWarning()
         {
             await GenerateAndVerify(
@@ -180,6 +183,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task GenerateCreatesVbSourceWhenRequested()
         {
             await GenerateAndVerify(
@@ -194,6 +198,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Cli
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task GenerateWithInternalsAllowedSuppressesWarning()
         {
             await GenerateAndVerify(

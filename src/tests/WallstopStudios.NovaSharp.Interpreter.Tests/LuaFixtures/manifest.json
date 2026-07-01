@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1777,
+  "total_snippets": 1779,
   "novasharp_only": 460,
-  "comparable": 1317,
+  "comparable": 1319,
   "by_version": {
-    "5.1": 871,
-    "5.2": 580,
-    "5.3": 818,
-    "5.4": 858,
-    "5.5": 899
+    "5.1": 872,
+    "5.2": 581,
+    "5.3": 819,
+    "5.4": 859,
+    "5.5": 900
   },
   "snippets": [
     {
@@ -19574,8 +19574,31 @@
       "expects_error": false
     },
     {
+      "path": "MetatableTUnitTests/TableValuedCallMetamethodDoesNotChainBeforeLua54.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:90",
+      "test": "MetatableTUnitTests.TableValuedCallMetamethodDoesNotChainBeforeLua54",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3"
+      ],
+      "novasharp_only": false,
+      "expects_error": true
+    },
+    {
+      "path": "MetatableTUnitTests/TableValuedCallMetamethodChainsFromLua54.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:117",
+      "test": "MetatableTUnitTests.TableValuedCallMetamethodChainsFromLua54",
+      "lua_versions": [
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
       "path": "MetatableTUnitTests/PairsMetamethodControlsIteration.lua",
-      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:93",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:178",
       "test": "MetatableTUnitTests.PairsMetamethodControlsIteration",
       "lua_versions": [
         "5.1",
@@ -19589,7 +19612,7 @@
     },
     {
       "path": "MetatableTUnitTests/PairsMetamethodControlsIteration_1.lua",
-      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:116",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:201",
       "test": "MetatableTUnitTests.PairsMetamethodControlsIteration",
       "lua_versions": [
         "5.1",
@@ -19603,7 +19626,7 @@
     },
     {
       "path": "MetatableTUnitTests/ProtectedMetatablePreventsMutation.lua",
-      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:126",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:211",
       "test": "MetatableTUnitTests.ProtectedMetatablePreventsMutation",
       "lua_versions": [
         "5.1",
@@ -19617,7 +19640,7 @@
     },
     {
       "path": "MetatableTUnitTests/ProtectedMetatablePreventsMutation_1.lua",
-      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:135",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:223",
       "test": "MetatableTUnitTests.ProtectedMetatablePreventsMutation",
       "lua_versions": [
         "5.1",
@@ -19631,7 +19654,7 @@
     },
     {
       "path": "MetatableTUnitTests/ProtectedMetatablePreventsMutation_2.lua",
-      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:138",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\MetatableTUnitTests.cs:234",
       "test": "MetatableTUnitTests.ProtectedMetatablePreventsMutation",
       "lua_versions": [
         "5.1",

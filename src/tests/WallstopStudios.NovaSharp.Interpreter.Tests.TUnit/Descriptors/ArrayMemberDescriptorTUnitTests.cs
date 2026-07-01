@@ -7,9 +7,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.MemberDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Tests;
+    using WallstopStudios.NovaSharp.Interpreter.Tests.Units;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     [UserDataIsolation]
@@ -142,6 +145,191 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         }
 
         [Test]
+        [AllLuaVersions]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Performance",
+            "CA1814:Prefer jagged arrays over multidimensional",
+            Justification = "Test specifically verifies multi-dimensional array support."
+        )]
+        public async Task ThreeDimensionalArrayAccess(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            int[,,] array = new int[2, 2, 2];
+            array[1, 1, 1] = 7;
+            UserData.RegisterType<int[,,]>();
+            script.Globals["arr"] = array;
+
+            DynValue result = script.DoString("return arr[1, 1, 1]");
+
+            await Assert.That(result.Number).IsEqualTo(7).ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Performance",
+            "CA1814:Prefer jagged arrays over multidimensional",
+            Justification = "Test specifically verifies multi-dimensional array support."
+        )]
+        public async Task ThreeDimensionalArraySet(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            int[,,] array = new int[2, 2, 2];
+            UserData.RegisterType<int[,,]>();
+            script.Globals["arr"] = array;
+
+            script.DoString("arr[1, 0, 1] = 77");
+
+            await Assert.That(array[1, 0, 1]).IsEqualTo(77).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task RankOneArraySetterAvoidsIndexArrayAllocation()
+        {
+            const int iterations = 1024;
+            const long maxAllocatedBytesPerCall = 16L;
+            Script script = new();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            object[] array = new object[2];
+            ArrayMemberDescriptor descriptor = new("set_Item", isSetter: true);
+            DynValue index = DynValue.NewNumber(1);
+            DynValue value = DynValue.NewString("payload");
+            CallbackArguments args = TestHelpers.CreateArguments(index, value);
+
+            DynValue warmup = descriptor.Execute(script, array, context, args);
+            await Assert.That(warmup.Type).IsEqualTo(DataType.Void).ConfigureAwait(false);
+            await Assert.That(array[1]).IsEqualTo("payload").ConfigureAwait(false);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long allocated = MeasureRankOneArraySetterAllocations(
+                descriptor,
+                script,
+                array,
+                context,
+                args,
+                value.String,
+                iterations
+            );
+            long allocatedPerCall = allocated / iterations;
+
+            await Assert
+                .That(allocatedPerCall)
+                .IsLessThan(maxAllocatedBytesPerCall)
+                .Because(
+                    $"Rank-one array setter dispatch allocated {allocated} bytes across {iterations} iterations ({allocatedPerCall} bytes/call)."
+                )
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task RankOneArrayGetterAvoidsIndexArrayAllocation()
+        {
+            const int iterations = 1024;
+            const long maxAllocatedBytesPerCall = 16L;
+            Script script = new();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            DynValue expected = DynValue.NewString("payload");
+            object[] array = { DynValue.Nil, expected };
+            ArrayMemberDescriptor descriptor = new("get_Item", isSetter: false);
+            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewNumber(1));
+
+            DynValue warmup = descriptor.Execute(script, array, context, args);
+            await Assert.That(warmup).IsEqualTo(expected).ConfigureAwait(false);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long allocated = MeasureRankOneArrayGetterAllocations(
+                descriptor,
+                script,
+                array,
+                context,
+                args,
+                expected,
+                iterations
+            );
+            long allocatedPerCall = allocated / iterations;
+
+            await Assert
+                .That(allocatedPerCall)
+                .IsLessThan(maxAllocatedBytesPerCall)
+                .Because(
+                    $"Rank-one array getter dispatch allocated {allocated} bytes across {iterations} iterations ({allocatedPerCall} bytes/call)."
+                )
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArraySetterConvertsIndexBeforeAssignedValue()
+        {
+            Script script = new();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            int[] array = new int[2];
+            ArrayMemberDescriptor descriptor = new("set_Item", isSetter: true);
+            CallbackArguments args = TestHelpers.CreateArguments(
+                DynValue.NewString("bad-index"),
+                DynValue.NewPrimeTable()
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.Execute(script, array, context, args)
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("userdata_array_indexer")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ArraySetterConvertsAssignedValueBeforeBoundsValidation()
+        {
+            Script script = new();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            int[] array = new int[1];
+            ArrayMemberDescriptor descriptor = new("set_Item", isSetter: true);
+            CallbackArguments args = TestHelpers.CreateArguments(
+                DynValue.NewNumber(99),
+                DynValue.NewPrimeTable()
+            );
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                descriptor.Execute(script, array, context, args)
+            );
+
+            await Assert.That(exception.Message).Contains("cannot convert").ConfigureAwait(false);
+        }
+
+        [Test]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Performance",
+            "CA1814:Prefer jagged arrays over multidimensional",
+            Justification = "Test specifically verifies multi-dimensional array support."
+        )]
+        public async Task WrongRankArrayAccessUsesVectorIndexFallback()
+        {
+            Script script = new();
+            ScriptExecutionContext context = TestHelpers.CreateExecutionContext(script);
+            int[,] array = new int[2, 2];
+            ArrayMemberDescriptor descriptor = new("get_Item", isSetter: false);
+            CallbackArguments args = TestHelpers.CreateArguments(DynValue.NewNumber(0));
+
+            ArgumentException actual = Assert.Throws<ArgumentException>(() =>
+                descriptor.Execute(script, array, context, args)
+            );
+            ArgumentException expected = Assert.Throws<ArgumentException>(() =>
+                LegacyArrayIndexerGet(array, args)
+            );
+
+            await Assert.That(actual.GetType()).IsEqualTo(expected.GetType()).ConfigureAwait(false);
+            await Assert.That(actual.Message).IsEqualTo(expected.Message).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task PrepareForWiringDoesNotSetParamsWhenUsingConstructorWithoutParams()
         {
             ArrayMemberDescriptor descriptor = new("NoParams", isSetter: true);
@@ -170,6 +358,78 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             DynValue paramsTable = table.Get("params");
             await Assert.That(paramsTable.Table.Length).IsEqualTo(2).ConfigureAwait(false);
+        }
+
+        private static long MeasureRankOneArraySetterAllocations(
+            ArrayMemberDescriptor descriptor,
+            Script script,
+            object[] array,
+            ScriptExecutionContext context,
+            CallbackArguments args,
+            string expectedValue,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = descriptor.Execute(script, array, context, args);
+
+                if (result.Type != DataType.Void || !ReferenceEquals(array[1], expectedValue))
+                {
+                    throw new InvalidOperationException(
+                        "Rank-one array setter allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureRankOneArrayGetterAllocations(
+            ArrayMemberDescriptor descriptor,
+            Script script,
+            object[] array,
+            ScriptExecutionContext context,
+            CallbackArguments args,
+            DynValue expectedValue,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = descriptor.Execute(script, array, context, args);
+
+                if (!ReferenceEquals(result, expectedValue))
+                {
+                    throw new InvalidOperationException(
+                        "Rank-one array getter allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static object LegacyArrayIndexerGet(Array array, CallbackArguments args)
+        {
+            int[] indices = BuildArrayIndicesForTest(args, args.Count);
+            return array.GetValue(indices);
+        }
+
+        private static int[] BuildArrayIndicesForTest(CallbackArguments args, int count)
+        {
+            int[] indices = new int[count];
+
+            for (int i = 0; i < count; i++)
+            {
+                indices[i] = args.AsInt(i, "userdata_array_indexer");
+            }
+
+            return indices;
         }
     }
 }

@@ -1,9 +1,12 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 {
+    using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -28,6 +31,141 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(tuple.Tuple[2].Number).IsEqualTo(2d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PcallContinuationPreservesReturnArity(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue tuple = script.DoString(
+                @"
+                local noneOk, noneValue = pcall(function() end)
+                local oneOk, oneValue, oneExtra = pcall(function() return 42 end)
+                local manyOk, first, second, third = pcall(function() return 1, 2, 3 end)
+                return
+                    noneOk,
+                    noneValue == nil,
+                    oneOk,
+                    oneValue,
+                    oneExtra == nil,
+                    manyOk,
+                    first,
+                    second,
+                    third
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[5].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[6].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[7].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[8].Number).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PcallTailRequestsReuseInternalCallbacks(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue function = script.DoString("return function() return 1 end");
+            CallbackArguments args = new(new[] { function }, false);
+
+            DynValue first = ErrorHandlingModule.Pcall(context, args);
+            DynValue second = ErrorHandlingModule.Pcall(context, args);
+            second.TailCallData.Continuation.AdditionalData = "dirty";
+            second.TailCallData.ErrorHandler.AdditionalData = "dirty";
+            DynValue third = ErrorHandlingModule.Pcall(context, args);
+
+            await Assert.That(first.Type).IsEqualTo(DataType.TailCallRequest).ConfigureAwait(false);
+            await Assert
+                .That(second.Type)
+                .IsEqualTo(DataType.TailCallRequest)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(second.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler)
+                .IsSameReferenceAs(second.TailCallData.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(third.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler)
+                .IsSameReferenceAs(third.TailCallData.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation.Name)
+                .IsEqualTo("pcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler.Name)
+                .IsEqualTo("pcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(third.TailCallData.Continuation.AdditionalData)
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(third.TailCallData.ErrorHandler.AdditionalData)
+                .IsNull()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task PcallAndXpcallTailRequestsUseThreadLocalInternalCallbacks()
+        {
+            (CallbackFunction Continuation, CallbackFunction ErrorHandler) mainPcall =
+                CreatePcallCallbacksOnCurrentThread();
+            (CallbackFunction Continuation, CallbackFunction ErrorHandler) workerPcall =
+                RunOnNewThread(CreatePcallCallbacksOnCurrentThread);
+            (CallbackFunction Continuation, CallbackFunction ErrorHandler) mainXpcall =
+                CreateXpcallCallbacksOnCurrentThread();
+            (CallbackFunction Continuation, CallbackFunction ErrorHandler) workerXpcall =
+                RunOnNewThread(CreateXpcallCallbacksOnCurrentThread);
+
+            await Assert
+                .That(mainPcall.Continuation)
+                .IsNotSameReferenceAs(workerPcall.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(mainPcall.ErrorHandler)
+                .IsNotSameReferenceAs(workerPcall.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(mainXpcall.Continuation)
+                .IsNotSameReferenceAs(workerXpcall.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(mainXpcall.ErrorHandler)
+                .IsNotSameReferenceAs(workerXpcall.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(workerPcall.Continuation.Name)
+                .IsEqualTo("pcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(workerPcall.ErrorHandler.Name)
+                .IsEqualTo("pcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(workerXpcall.Continuation.Name)
+                .IsEqualTo("xpcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(workerXpcall.ErrorHandler.Name)
+                .IsEqualTo("xpcall")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -82,6 +220,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task PcallHandlesCallbackViewSuccess(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["clr"] = DynValue.NewCallbackView(
+                (context, args) =>
+                    DynValue.NewTuple(DynValue.NewString("hello"), DynValue.NewNumber(args.Count)),
+                "clr-view"
+            );
+
+            DynValue tuple = script.DoString("return pcall(clr, 1, 2, 3)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).IsEqualTo("hello").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].Number).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task PcallForwardsArgumentsToScriptFunction(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
@@ -109,6 +265,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             script.Globals["clr"] = DynValue.NewCallback(
                 (context, args) => throw new ScriptRuntimeException("fail"),
                 "clr-fail"
+            );
+
+            DynValue tuple = script.DoString("return pcall(clr)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("fail").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PcallDecoratesCallbackViewScriptRuntimeExceptions(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["clr"] = DynValue.NewCallbackView(
+                (context, args) => throw new ScriptRuntimeException("fail"),
+                "clr-view-fail"
             );
 
             DynValue tuple = script.DoString("return pcall(clr)");
@@ -165,6 +339,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task PcallWrapsCallbackViewTailCallRequestWithoutHandlers(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["tailing"] = DynValue.NewCallbackView(
+                (context, args) =>
+                    DynValue.NewTailCallReq(
+                        DynValue.NewCallbackView(
+                            (ctx, innerArgs) => DynValue.NewNumber(88),
+                            "inner-view"
+                        )
+                    ),
+                "tailing-view"
+            );
+
+            DynValue record = script.DoString(
+                @"
+                local ok, value = pcall(tailing)
+                return { ok = ok, value = value, valueType = type(value) }
+                "
+            );
+
+            await Assert.That(record.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+            Table table = record.Table;
+
+            DynValue ok = table.Get("ok");
+            DynValue valueType = table.Get("valueType");
+            DynValue value = table.Get("value");
+
+            await Assert.That(ok.Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(valueType.String == "number" || valueType.String == "nil")
+                .IsTrue()
+                .ConfigureAwait(false);
+
+            if (valueType.String == "number")
+            {
+                await Assert.That(value.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
+                await Assert.That(value.Number).IsEqualTo(88d).ConfigureAwait(false);
+            }
+            else
+            {
+                await Assert.That(value.IsNil()).IsTrue().ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task PcallRejectsClrTailCallWithContinuation(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
@@ -197,12 +420,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task PcallRejectsCallbackViewTailCallWithContinuation(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["tailing"] = DynValue.NewCallbackView(
+                (context, args) =>
+                {
+                    TailCallData tailCall = new()
+                    {
+                        Function = DynValue.NewCallbackView(
+                            (ctx, innerArgs) => DynValue.True,
+                            "inner-view"
+                        ),
+                        Args = System.Array.Empty<DynValue>(),
+                        Continuation = new CallbackFunction(
+                            (ctx, continuationArgs) => DynValue.True,
+                            "continuation"
+                        ),
+                    };
+
+                    return DynValue.NewTailCallReq(tailCall);
+                },
+                "tailing-view"
+            );
+
+            DynValue tuple = script.DoString("return pcall(tailing)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("wrap in a script function instead")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task PcallRejectsClrYieldRequest(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);
             script.Globals["yielding"] = DynValue.NewCallback(
                 (context, args) => DynValue.NewYieldReq(System.Array.Empty<DynValue>()),
                 "yielding-clr"
+            );
+
+            DynValue tuple = script.DoString("return pcall(yielding)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("wrap in a script function instead")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PcallRejectsCallbackViewYieldRequest(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["yielding"] = DynValue.NewCallbackView(
+                (context, args) => DynValue.NewYieldReq(System.Array.Empty<DynValue>()),
+                "yielding-view"
             );
 
             DynValue tuple = script.DoString("return pcall(yielding)");
@@ -239,6 +518,88 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).Contains("decorated:").ConfigureAwait(false);
             await Assert.That(tuple.Tuple[1].String).Contains("failure").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task XpcallDecoratesCallbackViewExceptionWithHandlerBeforeUnwind(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            script.Globals["clr"] = DynValue.NewCallbackView(
+                (context, args) => throw new ScriptRuntimeException("failure"),
+                "clr-view-fail"
+            );
+
+            script.DoString(
+                @"
+                function decorator(message)
+                    return 'decorated:' .. message
+                end
+                "
+            );
+
+            DynValue tuple = script.DoString("return xpcall(clr, decorator)");
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("decorated:").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].String).Contains("failure").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task XpcallTailRequestsReuseInternalCallbacks(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue handler = script.DoString("return function(err) return err end");
+            CallbackArguments args = new(new[] { function, handler }, false);
+
+            DynValue first = ErrorHandlingModule.Xpcall(context, args);
+            DynValue second = ErrorHandlingModule.Xpcall(context, args);
+            second.TailCallData.Continuation.AdditionalData = "dirty";
+            second.TailCallData.ErrorHandler.AdditionalData = "dirty";
+            DynValue third = ErrorHandlingModule.Xpcall(context, args);
+
+            await Assert.That(first.Type).IsEqualTo(DataType.TailCallRequest).ConfigureAwait(false);
+            await Assert
+                .That(second.Type)
+                .IsEqualTo(DataType.TailCallRequest)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(second.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler)
+                .IsSameReferenceAs(second.TailCallData.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(third.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler)
+                .IsSameReferenceAs(third.TailCallData.ErrorHandler)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation.Name)
+                .IsEqualTo("xpcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.ErrorHandler.Name)
+                .IsEqualTo("xpcall")
+                .ConfigureAwait(false);
+            await Assert
+                .That(third.TailCallData.Continuation.AdditionalData)
+                .IsNull()
+                .ConfigureAwait(false);
+            await Assert
+                .That(third.TailCallData.ErrorHandler.AdditionalData)
+                .IsNull()
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -643,6 +1004,83 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
             Script script = new(CoreModulePresets.Complete, options);
             script.Options.DebugPrint = _ => { };
             return script;
+        }
+
+        private static (
+            CallbackFunction Continuation,
+            CallbackFunction ErrorHandler
+        ) CreatePcallCallbacksOnCurrentThread()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua54);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue function = script.DoString("return function() return 1 end");
+            CallbackArguments args = new(new[] { function }, false);
+            DynValue request = ErrorHandlingModule.Pcall(context, args);
+
+            if (request.Type != DataType.TailCallRequest)
+            {
+                throw new InvalidOperationException("pcall did not return a tail call request.");
+            }
+
+            return (request.TailCallData.Continuation, request.TailCallData.ErrorHandler);
+        }
+
+        private static (
+            CallbackFunction Continuation,
+            CallbackFunction ErrorHandler
+        ) CreateXpcallCallbacksOnCurrentThread()
+        {
+            Script script = CreateScriptWithVersion(LuaCompatibilityVersion.Lua54);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue function = script.DoString("return function() return 1 end");
+            DynValue handler = script.DoString("return function(err) return err end");
+            CallbackArguments args = new(new[] { function, handler }, false);
+            DynValue request = ErrorHandlingModule.Xpcall(context, args);
+
+            if (request.Type != DataType.TailCallRequest)
+            {
+                throw new InvalidOperationException("xpcall did not return a tail call request.");
+            }
+
+            return (request.TailCallData.Continuation, request.TailCallData.ErrorHandler);
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1031:Do not catch general exception types",
+            Justification = "Worker thread exceptions must be marshaled back to the test thread."
+        )]
+        private static T RunOnNewThread<T>(Func<T> action)
+        {
+            T result = default;
+            Exception error = null;
+            Thread thread = new(() =>
+            {
+                try
+                {
+                    result = action();
+                }
+                catch (Exception ex)
+                {
+                    error = ex;
+                }
+            })
+            {
+                IsBackground = true,
+            };
+
+            thread.Start();
+            if (!thread.Join(TimeSpan.FromSeconds(10)))
+            {
+                throw new TimeoutException("Worker thread did not finish.");
+            }
+
+            if (error != null)
+            {
+                throw new InvalidOperationException("Worker thread failed.", error);
+            }
+
+            return result;
         }
     }
 }

@@ -14,6 +14,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     public sealed class StandardUserDataDescriptorGeneratorTUnitTests
     {
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task GenerateAddsMembersAndMetaMembers()
         {
             const string userDataType = "NovaSharp.Tests.SampleUserData";

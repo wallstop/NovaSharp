@@ -1,20 +1,53 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
+    using System.Collections.Generic;
+    using System.Reflection;
+    using System.Reflection.Emit;
+    using System.Runtime.InteropServices;
     using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.CoreLib;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Execution;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class CoroutineModuleTUnitTests
     {
+        private static readonly OpCode[] SingleByteOpCodes = new OpCode[256];
+        private static readonly OpCode[] MultiByteOpCodes = new OpCode[256];
+
+        static CoroutineModuleTUnitTests()
+        {
+            FieldInfo[] fields = typeof(OpCodes).GetFields(
+                BindingFlags.Public | BindingFlags.Static
+            );
+            for (int i = 0; i < fields.Length; i++)
+            {
+                if (fields[i].GetValue(null) is not OpCode opCode)
+                {
+                    continue;
+                }
+
+                ushort value = unchecked((ushort)opCode.Value);
+                if (value < 0x100)
+                {
+                    SingleByteOpCodes[value] = opCode;
+                }
+                else if ((value & 0xff00) == 0xfe00)
+                {
+                    MultiByteOpCodes[value & 0xff] = opCode;
+                }
+            }
+        }
+
         // =====================================================
         // coroutine.running() Tests (Version-specific behavior)
         // Lua 5.1: returns only the coroutine
@@ -481,6 +514,183 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task ResumeZeroValueYieldReturnsOnlyStatus(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+
+            DynValue result = script.DoString(
+                @"
+                local co = coroutine.create(function()
+                    coroutine.yield()
+                end)
+
+                return select('#', coroutine.resume(co))
+            "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task WrapZeroValueYieldReturnsNoValues(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+
+            DynValue result = script.DoString(
+                @"
+                local wrapped = coroutine.wrap(function()
+                    coroutine.yield()
+                    return 'done'
+                end)
+
+                local yieldCount = select('#', wrapped())
+                local finalCount = select('#', wrapped())
+                return yieldCount, finalCount
+            "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ResumeAndWrapDispatchThroughFixedArityCoroutinePaths()
+        {
+            MethodInfo getArray = RequireMethod(
+                typeof(CallbackArguments),
+                nameof(CallbackArguments.GetArray),
+                typeof(int)
+            );
+            MethodInfo moduleResume = RequireMethod(
+                typeof(CoroutineModule),
+                nameof(CoroutineModule.Resume),
+                typeof(ScriptExecutionContext),
+                typeof(CallbackArguments)
+            );
+            MethodInfo helper = RequireMethod(
+                typeof(CoroutineModule),
+                "ResumeCoroutineWithArguments",
+                BindingFlags.NonPublic | BindingFlags.Static,
+                typeof(Coroutine),
+                typeof(CallbackArguments),
+                typeof(int)
+            );
+            MethodInfo resumeOne = RequireMethod(
+                typeof(Coroutine),
+                nameof(Coroutine.Resume),
+                typeof(DynValue)
+            );
+            MethodInfo resumeTwo = RequireMethod(
+                typeof(Coroutine),
+                nameof(Coroutine.Resume),
+                typeof(DynValue),
+                typeof(DynValue)
+            );
+            MethodInfo resumeThree = RequireMethod(
+                typeof(Coroutine),
+                nameof(Coroutine.Resume),
+                typeof(DynValue),
+                typeof(DynValue),
+                typeof(DynValue)
+            );
+            MethodInfo resumeFour = RequireMethod(
+                typeof(Coroutine),
+                nameof(Coroutine.Resume),
+                typeof(DynValue),
+                typeof(DynValue),
+                typeof(DynValue),
+                typeof(DynValue)
+            );
+
+            await Assert
+                .That(CountMethodCalls(moduleResume, getArray))
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(moduleResume, helper))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(CountMethodCalls(helper, getArray))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(helper, resumeOne))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(helper, resumeTwo))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(helper, resumeThree))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(helper, resumeFour))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+
+            List<MethodInfo> nestedMethods = GetCoroutineModuleNestedMethods();
+            int nestedGetArrayCalls = 0;
+            int nestedHelperCalls = 0;
+            for (int i = 0; i < nestedMethods.Count; i++)
+            {
+                MethodInfo method = nestedMethods[i];
+                nestedGetArrayCalls += CountMethodCalls(method, getArray);
+                nestedHelperCalls += CountMethodCalls(method, helper);
+            }
+
+            await Assert.That(nestedGetArrayCalls).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(nestedHelperCalls).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ProcessorYieldReturnUsesLazyYieldRequestTuplePath()
+        {
+            Type processorType =
+                typeof(WallstopStudios.NovaSharp.Interpreter.Execution.VM.Processor);
+            Type clrCallArguments = processorType.GetNestedType(
+                "ClrCallArguments",
+                BindingFlags.NonPublic
+            );
+            if (clrCallArguments == null)
+            {
+                throw new MissingMemberException(processorType.FullName, "ClrCallArguments");
+            }
+
+            MethodInfo processorResume = RequireMethod(
+                processorType,
+                "ResumeCoroutine",
+                BindingFlags.NonPublic | BindingFlags.Instance,
+                clrCallArguments
+            );
+            MethodInfo toTuple = RequireMethod(
+                typeof(YieldRequest),
+                "ToTuple",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            );
+            MethodInfo borrowBuffer = RequireMethod(
+                typeof(YieldRequest),
+                "BorrowReturnValuesBuffer",
+                BindingFlags.NonPublic | BindingFlags.Instance
+            );
+
+            await Assert
+                .That(CountMethodCalls(processorResume, toTuple))
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
+            await Assert
+                .That(CountMethodCalls(processorResume, borrowBuffer))
+                .IsEqualTo(0)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task ResumeFlattensTrailingTupleResults(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -523,6 +733,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task ResumePreservesTupleExpandedYieldArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            script.DoString(
+                @"
+                function buildYieldValues()
+                    return 'expanded-a', 'expanded-b'
+                end
+
+                function yieldExpanded()
+                    coroutine.yield('head', buildYieldValues())
+                end
+            "
+            );
+
+            DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
+            DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("yieldExpanded"));
+
+            DynValue result = script.Call(resumeFunc, coroutineValue);
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("head").ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("expanded-a").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].String).IsEqualTo("expanded-b").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task WrapForwardsArgumentsToCoroutineFunction(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
@@ -545,6 +787,139 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             await Assert.That(result.String).IsEqualTo("alpha-beta-gamma").ConfigureAwait(false);
+        }
+
+        private static List<MethodInfo> GetCoroutineModuleNestedMethods()
+        {
+            Type[] nestedTypes = typeof(CoroutineModule).GetNestedTypes(BindingFlags.NonPublic);
+            List<MethodInfo> methods = new(nestedTypes.Length);
+            const BindingFlags flags =
+                BindingFlags.Public
+                | BindingFlags.NonPublic
+                | BindingFlags.Instance
+                | BindingFlags.Static
+                | BindingFlags.DeclaredOnly;
+
+            for (int i = 0; i < nestedTypes.Length; i++)
+            {
+                MethodInfo[] declaredMethods = nestedTypes[i].GetMethods(flags);
+                for (int j = 0; j < declaredMethods.Length; j++)
+                {
+                    methods.Add(declaredMethods[j]);
+                }
+            }
+
+            return methods;
+        }
+
+        private static MethodInfo RequireMethod(
+            Type type,
+            string name,
+            params Type[] parameterTypes
+        )
+        {
+            const BindingFlags flags =
+                BindingFlags.Public
+                | BindingFlags.NonPublic
+                | BindingFlags.Instance
+                | BindingFlags.Static;
+            return RequireMethod(type, name, flags, parameterTypes);
+        }
+
+        private static MethodInfo RequireMethod(
+            Type type,
+            string name,
+            BindingFlags bindingFlags,
+            params Type[] parameterTypes
+        )
+        {
+            MethodInfo method = type.GetMethod(name, bindingFlags, null, parameterTypes, null);
+            if (method == null)
+            {
+                throw new MissingMethodException(type.FullName, name);
+            }
+
+            return method;
+        }
+
+        private static int CountMethodCalls(MethodInfo method, MethodInfo target)
+        {
+            MethodBody body = method.GetMethodBody();
+            byte[] il = body?.GetILAsByteArray() ?? Array.Empty<byte>();
+            Module module = method.Module;
+            Type[] typeArguments = method.DeclaringType?.GetGenericArguments() ?? Type.EmptyTypes;
+            Type[] methodArguments = method.GetGenericArguments();
+            int count = 0;
+
+            for (int offset = 0; offset < il.Length; )
+            {
+                OpCode opCode = ReadOpCode(il, ref offset);
+                if (opCode.OperandType == OperandType.InlineMethod)
+                {
+                    int token = BitConverter.ToInt32(il, offset);
+                    offset += sizeof(int);
+                    MethodBase resolved = module.ResolveMethod(
+                        token,
+                        typeArguments,
+                        methodArguments
+                    );
+                    if (
+                        resolved.Module == target.Module
+                        && resolved.MetadataToken == target.MetadataToken
+                    )
+                    {
+                        count++;
+                    }
+                    continue;
+                }
+
+                offset += GetOperandSize(opCode.OperandType, il, offset);
+            }
+
+            return count;
+        }
+
+        private static OpCode ReadOpCode(byte[] il, ref int offset)
+        {
+            byte value = il[offset++];
+            if (value == 0xfe)
+            {
+                return MultiByteOpCodes[il[offset++]];
+            }
+
+            return SingleByteOpCodes[value];
+        }
+
+        private static int GetOperandSize(OperandType operandType, byte[] il, int offset)
+        {
+            switch (operandType)
+            {
+                case OperandType.InlineNone:
+                    return 0;
+                case OperandType.ShortInlineBrTarget:
+                case OperandType.ShortInlineI:
+                case OperandType.ShortInlineVar:
+                    return 1;
+                case OperandType.InlineVar:
+                    return 2;
+                case OperandType.InlineBrTarget:
+                case OperandType.InlineField:
+                case OperandType.InlineI:
+                case OperandType.InlineSig:
+                case OperandType.InlineString:
+                case OperandType.InlineTok:
+                case OperandType.InlineType:
+                case OperandType.ShortInlineR:
+                    return 4;
+                case OperandType.InlineI8:
+                case OperandType.InlineR:
+                    return 8;
+                case OperandType.InlineSwitch:
+                    int targetCount = BitConverter.ToInt32(il, offset);
+                    return sizeof(int) + (targetCount * sizeof(int));
+                default:
+                    throw new NotSupportedException($"Unsupported IL operand type: {operandType}");
+            }
         }
 
         // =====================================================
@@ -1113,11 +1488,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 TaskCreationOptions.RunContinuationsAsynchronously
             );
 
+            int successCount = 0;
+            int failureCount = 0;
+            int callbackEnterCount = 0;
+            int completedAttempts = 0;
+            InvalidOperationException caughtException = null;
+            int readyCount = 0;
+            string[] outcomes = new string[ConcurrentThreads];
+
             Script script = new Script(version, CoreModulePresets.Complete);
 
             script.Globals["waitForSignal"] = DynValue.NewCallback(
                 (_, _) =>
                 {
+                    Interlocked.Increment(ref callbackEnterCount);
                     callbackEntered.TrySetResult(true);
                     allowCompletion.Task.GetAwaiter().GetResult();
                     return DynValue.Nil;
@@ -1136,28 +1520,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             DynValue resumeFunc = script.Globals.Get("coroutine").Table.Get("resume");
             DynValue coroutineValue = script.CreateCoroutine(script.Globals.Get("pause"));
 
-            int successCount = 0;
-            int failureCount = 0;
-            InvalidOperationException caughtException = null;
-            int readyCount = 0;
-
             Task[] tasks = new Task[ConcurrentThreads];
             for (int i = 0; i < ConcurrentThreads; i++)
             {
+                int taskIndex = i;
                 tasks[i] = Task.Run(async () =>
                 {
+                    int threadId = Environment.CurrentManagedThreadId;
                     Interlocked.Increment(ref readyCount);
                     await startSignal.Task.ConfigureAwait(false);
 
                     try
                     {
-                        script.Call(resumeFunc, coroutineValue);
+                        DynValue result = script.Call(resumeFunc, coroutineValue);
                         Interlocked.Increment(ref successCount);
+                        outcomes[taskIndex] = $"success thread={threadId} type={result.Type}";
+                        Interlocked.Increment(ref completedAttempts);
                     }
                     catch (InvalidOperationException ex)
                     {
                         Interlocked.Increment(ref failureCount);
                         Interlocked.CompareExchange(ref caughtException, ex, null);
+                        outcomes[taskIndex] =
+                            $"invalid-operation thread={threadId} message={ex.Message}";
+                        Interlocked.Increment(ref completedAttempts);
+                    }
+                    catch (Exception ex)
+                    {
+                        outcomes[taskIndex] =
+                            $"unexpected {ex.GetType().Name} thread={threadId} message={ex.Message}";
+                        Interlocked.Increment(ref completedAttempts);
+                        throw;
                     }
                 });
             }
@@ -1173,8 +1566,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Release all threads simultaneously
             startSignal.TrySetResult(true);
 
-            // Wait for the callback to be invoked with timeout
-            await callbackEntered.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+            try
+            {
+                // Wait for one resume to enter the coroutine and block in the callback.
+                await callbackEntered.Task.WaitAsync(cts.Token).ConfigureAwait(false);
+
+                // Keep that winning resume blocked until the other ready tasks have attempted entry.
+                while (Volatile.Read(ref completedAttempts) < ConcurrentThreads - 1)
+                {
+                    cts.Token.ThrowIfCancellationRequested();
+                    await Task.Delay(1, cts.Token).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException ex)
+            {
+                allowCompletion.TrySetResult(true);
+                try
+                {
+                    await Task.WhenAll(tasks)
+                        .WaitAsync(TimeSpan.FromSeconds(2))
+                        .ConfigureAwait(false);
+                }
+                catch (TimeoutException) { }
+
+                throw new TimeoutException(
+                    BuildConcurrentResumeDiagnostics(
+                        ConcurrentThreads,
+                        successCount,
+                        failureCount,
+                        callbackEnterCount,
+                        completedAttempts,
+                        outcomes
+                    ),
+                    ex
+                );
+            }
 
             // Allow completion
             allowCompletion.TrySetResult(true);
@@ -1182,17 +1608,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             // Wait for all tasks to complete
             await Task.WhenAll(tasks).ConfigureAwait(false);
 
+            string diagnostics = BuildConcurrentResumeDiagnostics(
+                ConcurrentThreads,
+                successCount,
+                failureCount,
+                callbackEnterCount,
+                completedAttempts,
+                outcomes
+            );
+
             // Exactly one thread should have succeeded
-            await Assert
-                .That(successCount)
-                .IsEqualTo(1)
-                .Because(
-                    $"Expected exactly one thread to succeed, but {successCount} succeeded and {failureCount} failed"
-                )
-                .ConfigureAwait(false);
+            await Assert.That(successCount).IsEqualTo(1).Because(diagnostics).ConfigureAwait(false);
 
             // All other threads should have failed with InvalidOperationException
-            await Assert.That(failureCount).IsEqualTo(ConcurrentThreads - 1).ConfigureAwait(false);
+            await Assert
+                .That(failureCount)
+                .IsEqualTo(ConcurrentThreads - 1)
+                .Because(diagnostics)
+                .ConfigureAwait(false);
 
             // Verify the exception message
             await Assert.That(caughtException).IsNotNull().ConfigureAwait(false);
@@ -1200,6 +1633,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 .That(caughtException.Message)
                 .Contains("Cannot enter the same NovaSharp processor")
                 .ConfigureAwait(false);
+        }
+
+        private static string BuildConcurrentResumeDiagnostics(
+            int concurrentThreads,
+            int successCount,
+            int failureCount,
+            int callbackEnterCount,
+            int completedAttempts,
+            string[] outcomes
+        )
+        {
+            string[] outcomeDescriptions = new string[outcomes.Length];
+            for (int i = 0; i < outcomes.Length; i++)
+            {
+                outcomeDescriptions[i] = outcomes[i] ?? "pending";
+            }
+
+            return string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "Expected exactly one thread to succeed. Threads={0}; successes={1}; failures={2}; callbackEntries={3}; completedAttempts={4}; outcomes=[{5}]",
+                concurrentThreads,
+                successCount,
+                failureCount,
+                callbackEnterCount,
+                completedAttempts,
+                string.Join("; ", outcomeDescriptions)
+            );
         }
 
         /// <summary>
@@ -1321,6 +1781,147 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         // =====================================================
 
         [global::TUnit.Core.Test]
+        public async Task YieldOneArgumentAvoidsPerCallArgumentArrayAllocation()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+
+            CallbackArguments noArgArguments = new(Array.Empty<DynValue>(), isMethodCall: false);
+            DynValue[] oneArgStorage = { DynValue.NewNumber(7) };
+            CallbackArguments oneArgArguments = new(oneArgStorage, isMethodCall: false);
+
+            MeasureYieldAllocations(context, noArgArguments, iterations: 8);
+            MeasureYieldAllocations(context, oneArgArguments, iterations: 8);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            const int iterations = 1024;
+            long noArgAllocated = MeasureYieldAllocations(context, noArgArguments, iterations);
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            long oneArgAllocated = MeasureYieldAllocations(context, oneArgArguments, iterations);
+
+            long extraBytesPerYield = (oneArgAllocated - noArgAllocated) / iterations;
+
+            await Assert.That(extraBytesPerYield).IsLessThan(16).ConfigureAwait(false);
+
+            DynValue result = CoroutineModule.Yield(context, oneArgArguments);
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            await Assert.That(values.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(values.Span[0].Number).IsEqualTo(7d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task YieldRequestToTuplePreservesZeroYieldEmptyTuple()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments arguments = new(Array.Empty<DynValue>(), isMethodCall: false);
+
+            DynValue directResult = CoroutineModule.Yield(context, arguments);
+            DynValue directTuple = directResult.YieldRequest.ToTuple();
+
+            await Assert
+                .That(directTuple)
+                .IsSameReferenceAs(DynValue.EmptyTuple)
+                .ConfigureAwait(false);
+
+            DynValue materializedResult = CoroutineModule.Yield(context, arguments);
+            ReadOnlyMemory<DynValue> values = materializedResult.YieldRequest.ReturnValues;
+            DynValue materializedTuple = materializedResult.YieldRequest.ToTuple();
+
+            await Assert.That(values.Length).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(materializedTuple)
+                .IsSameReferenceAs(DynValue.EmptyTuple)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task YieldRequestToTupleReusesFixedArityReturnValuesBuffer()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            CallbackArguments arguments = new(
+                new[] { DynValue.NewString("alpha"), DynValue.NewNumber(2) },
+                isMethodCall: false
+            );
+
+            DynValue result = CoroutineModule.Yield(context, arguments);
+            DynValue tuple = result.YieldRequest.ToTuple();
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+
+            bool hasArray = MemoryMarshal.TryGetArray(values, out ArraySegment<DynValue> segment);
+
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(values.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(hasArray).IsTrue().ConfigureAwait(false);
+            await Assert.That(segment.Offset).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(segment.Count).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(segment.Array).IsSameReferenceAs(tuple.Tuple).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task YieldRequestNormalizesNullArrayReturnValuesToNil()
+        {
+            DynValue[] originalValues =
+            {
+                DynValue.NewString("head"),
+                null,
+                DynValue.NewString("tail"),
+            };
+            DynValue result = DynValue.NewYieldReq(originalValues);
+
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            DynValue tuple = result.YieldRequest.ToTuple();
+
+            await Assert.That(originalValues[1]).IsNull().ConfigureAwait(false);
+            await Assert.That(values.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(values.Span[0].String).IsEqualTo("head").ConfigureAwait(false);
+            await Assert.That(values.Span[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(values.Span[2].String).IsEqualTo("tail").ConfigureAwait(false);
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task YieldRequestNormalizesSingleFixedNullReturnValueToNil()
+        {
+            DynValue result = DynValue.NewYieldReq((DynValue)null);
+
+            DynValue tuple = result.YieldRequest.ToTuple();
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(values.Length).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(values.Span[0].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task YieldRequestNormalizesFixedNullReturnValuesToNil()
+        {
+            DynValue result = DynValue.NewYieldReq(
+                DynValue.NewString("head"),
+                null,
+                DynValue.NewString("tail")
+            );
+
+            ReadOnlyMemory<DynValue> values = result.YieldRequest.ReturnValues;
+            DynValue tuple = result.YieldRequest.ToTuple();
+
+            await Assert.That(values.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(values.Span[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task YieldReturnsYieldRequestWithArguments(LuaCompatibilityVersion version)
         {
@@ -1340,6 +1941,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             await Assert.That(values.Length).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(values.Span[0].Number).IsEqualTo(7d).ConfigureAwait(false);
             await Assert.That(values.Span[1].String).IsEqualTo("value").ConfigureAwait(false);
+        }
+
+        private static long MeasureYieldAllocations(
+            ScriptExecutionContext context,
+            CallbackArguments arguments,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = CoroutineModule.Yield(context, arguments);
+                if (result.Type != DataType.YieldRequest || result.YieldRequest.Forced)
+                {
+                    throw new ScriptRuntimeException("coroutine.yield allocation probe failed");
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
         }
 
         // =====================================================

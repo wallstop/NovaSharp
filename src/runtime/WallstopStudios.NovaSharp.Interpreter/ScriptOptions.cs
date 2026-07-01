@@ -169,9 +169,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
         /// <summary>
         /// Gets or sets a value indicating whether script compilation caching is enabled.
-        /// When enabled, scripts loaded with <see cref="Script.LoadString"/> that have identical
-        /// source text will reuse previously compiled bytecode, dramatically reducing compilation
-        /// time and memory allocation for repeated script loads.
+        /// When enabled, scripts loaded with <see cref="Script.LoadString"/> and functions loaded
+        /// with <see cref="Script.LoadFunction"/> that have identical source text, friendly/source
+        /// names, compatibility versions, and compilation shape will reuse previously compiled
+        /// bytecode, dramatically reducing compilation time and memory allocation for repeated
+        /// script loads.
         /// Defaults to <c>true</c>.
         /// </summary>
         /// <remarks>
@@ -181,14 +183,16 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// <item>Game engines that load the same mod scripts for multiple entities</item>
         /// <item>Template-based script generation where the base script is reused</item>
         /// </list>
-        /// Disable this option if you need to ensure each <see cref="Script.LoadString"/> call
-        /// produces a fresh compilation (e.g., for debugging compiler behavior).
+        /// Disable this option if you need to ensure each <see cref="Script.LoadString"/> or
+        /// <see cref="Script.LoadFunction"/> call produces a fresh compilation (e.g., for debugging
+        /// compiler behavior).
         /// </remarks>
         public bool EnableScriptCaching { get; set; } = true;
 
         /// <summary>
         /// Gets or sets the maximum number of compiled scripts to cache per Script instance.
         /// Only used when <see cref="EnableScriptCaching"/> is <c>true</c>.
+        /// Set to 0 to keep caching enabled but store no compiled script entries.
         /// Defaults to 64.
         /// </summary>
         public int ScriptCacheMaxEntries { get; set; } = 64;

@@ -23,9 +23,59 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue single = DynValue.NewNumber(42);
             DynValue wrappedSingle = DynValue.NewTuple(single);
 
-            await Assert.That(empty.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(empty).IsSameReferenceAs(DynValue.EmptyTuple).ConfigureAwait(false);
 
             await Assert.That(wrappedSingle).IsSameReferenceAs(single).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task NewTupleTreatsSingleNullInputAsNil()
+        {
+            DynValue singleOverload = DynValue.NewTuple((DynValue)null);
+            DynValue paramsOverload = DynValue.NewTuple(new DynValue[] { null });
+
+            await Assert.That(singleOverload.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(paramsOverload.Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(2, false, 1)]
+        [global::TUnit.Core.Arguments(3, false, 1)]
+        [global::TUnit.Core.Arguments(4, false, 2)]
+        [global::TUnit.Core.Arguments(5, true, 2)]
+        public async Task NewTupleTreatsMultiValueNullInputsAsNil(
+            int arity,
+            bool useParamsArray,
+            int expectedNilCount
+        )
+        {
+            DynValue one = DynValue.NewNumber(1);
+            DynValue two = DynValue.NewNumber(2);
+            DynValue tuple = (arity, useParamsArray) switch
+            {
+                (2, false) => DynValue.NewTuple(null, one),
+                (3, false) => DynValue.NewTuple(one, null, two),
+                (4, false) => DynValue.NewTuple(null, one, null, two),
+                (5, true) => DynValue.NewTuple(
+                    new DynValue[] { one, null, two, null, DynValue.NewBoolean(true) }
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(arity), arity, null),
+            };
+
+            await Assert.That(tuple.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple.Length).IsEqualTo(arity).ConfigureAwait(false);
+
+            int nilCount = 0;
+            foreach (DynValue value in tuple.Tuple)
+            {
+                await Assert.That(value).IsNotNull().ConfigureAwait(false);
+                if (value.Type == DataType.Nil)
+                {
+                    ++nilCount;
+                }
+            }
+
+            await Assert.That(nilCount).IsEqualTo(expectedNilCount).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

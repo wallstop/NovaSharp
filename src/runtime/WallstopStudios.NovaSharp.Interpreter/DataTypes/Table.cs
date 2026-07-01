@@ -126,6 +126,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Gets or sets the
+        /// <see cref="System.Object" /> with the specified nested keys.
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <value>
+        /// The <see cref="System.Object" />.
+        /// </value>
+        /// <param name="key1">The key used to locate the nested table.</param>
+        /// <param name="key2">The key to access in the nested table.</param>
+        [SuppressMessage(
+            "Design",
+            "CA1043:Use Integral Or String Argument For Indexers",
+            Justification = "Lua tables support arbitrary key sequences and the indexer mirrors that flexibility."
+        )]
+        public object this[object key1, object key2]
+        {
+            get { return Get(key1, key2).ToObject(); }
+            set { Set(key1, key2, DynValue.FromObject(OwnerScript, value)); }
+        }
+
+        /// <summary>
+        /// Gets or sets the
+        /// <see cref="System.Object" /> with the specified nested keys.
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <value>
+        /// The <see cref="System.Object" />.
+        /// </value>
+        /// <param name="key1">The first key used to locate the nested table.</param>
+        /// <param name="key2">The second key used to locate the nested table.</param>
+        /// <param name="key3">The key to access in the nested table.</param>
+        [SuppressMessage(
+            "Design",
+            "CA1043:Use Integral Or String Argument For Indexers",
+            Justification = "Lua tables support arbitrary key sequences and the indexer mirrors that flexibility."
+        )]
+        public object this[object key1, object key2, object key3]
+        {
+            get { return Get(key1, key2, key3).ToObject(); }
+            set { Set(key1, key2, key3, DynValue.FromObject(OwnerScript, value)); }
+        }
+
+        /// <summary>
         /// Gets or sets the <see cref="System.Object"/> with the specified key(s).
         /// This will marshall CLR and NovaSharp objects in the best possible way.
         /// </summary>
@@ -140,29 +185,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             set { Set(key, DynValue.FromObject(OwnerScript, value)); }
         }
 
+        private static Table ResolveNextTable(Table table, object key)
+        {
+            DynValue value = table.RawGet(key);
+
+            if (value == null)
+            {
+                throw new ScriptRuntimeException("Key '{0}' did not point to anything", key);
+            }
+
+            if (value.Type != DataType.Table)
+            {
+                throw new ScriptRuntimeException("Key '{0}' did not point to a table", key);
+            }
+
+            return value.Table;
+        }
+
+        private Table ResolveNestedKeys(object key1, object key2, out object key)
+        {
+            key = key2;
+            return ResolveNextTable(this, key1);
+        }
+
+        private Table ResolveNestedKeys(object key1, object key2, object key3, out object key)
+        {
+            Table table = ResolveNextTable(this, key1);
+            key = key3;
+            return ResolveNextTable(table, key2);
+        }
+
         private Table ResolveMultipleKeys(object[] keys, out object key)
         {
             //Contract.Ensures(Contract.Result<Table>() != null);
             //Contract.Requires(keys != null);
 
+            return ResolveMultipleKeys(keys.AsSpan(), out key);
+        }
+
+        private Table ResolveMultipleKeys(ReadOnlySpan<object> keys, out object key)
+        {
             Table t = this;
             key = (keys.Length > 0) ? keys[0] : null;
 
             for (int i = 1; i < keys.Length; ++i)
             {
-                DynValue vt = t.RawGet(key);
-
-                if (vt == null)
-                {
-                    throw new ScriptRuntimeException("Key '{0}' did not point to anything");
-                }
-
-                if (vt.Type != DataType.Table)
-                {
-                    throw new ScriptRuntimeException("Key '{0}' did not point to a table");
-                }
-
-                t = vt.Table;
+                t = ResolveNextTable(t, key);
                 key = keys[i];
             }
 
@@ -413,6 +481,62 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Sets the value associated with the specified caller-owned nested keys.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The keys to access the table and subtables.</param>
+        /// <param name="value">The value.</param>
+        public void Set(ReadOnlySpan<object> keys, DynValue value)
+        {
+            if (keys.Length == 0)
+            {
+                throw ScriptRuntimeException.TableIndexIsNil();
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            ResolveMultipleKeys(keys, out object key).Set(key, value);
+        }
+
+        /// <summary>
+        /// Sets the value associated with the specified nested keys.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="key1">The key used to locate the nested table.</param>
+        /// <param name="key2">The key to set in the nested table.</param>
+        /// <param name="value">The value.</param>
+        public void Set(object key1, object key2, DynValue value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            ResolveNestedKeys(key1, key2, out object key).Set(key, value);
+        }
+
+        /// <summary>
+        /// Sets the value associated with the specified nested keys.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="key1">The first key used to locate the nested table.</param>
+        /// <param name="key2">The second key used to locate the nested table.</param>
+        /// <param name="key3">The key to set in the nested table.</param>
+        /// <param name="value">The value.</param>
+        public void Set(object key1, object key2, object key3, DynValue value)
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            ResolveNestedKeys(key1, key2, key3, out object key).Set(key, value);
+        }
+
+        /// <summary>
         /// Gets the value associated with the specified key.
         /// </summary>
         /// <param name="key">The key.</param>
@@ -464,6 +588,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
             return RawGet(keys) ?? DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified caller-owned nested keys.
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The keys to access the table and subtables.</param>
+        public DynValue Get(ReadOnlySpan<object> keys)
+        {
+            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            return RawGet(keys) ?? DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified nested keys.
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="key1">The key used to locate the nested table.</param>
+        /// <param name="key2">The key to access in the nested table.</param>
+        public DynValue Get(object key1, object key2)
+        {
+            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            return RawGet(key1, key2) ?? DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified nested keys.
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="key1">The first key used to locate the nested table.</param>
+        /// <param name="key2">The second key used to locate the nested table.</param>
+        /// <param name="key3">The key to access in the nested table.</param>
+        public DynValue Get(object key1, object key2, object key3)
+        {
+            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            return RawGet(key1, key2, key3) ?? DynValue.Nil;
         }
 
         private static DynValue RawGetValue(LinkedListNode<TablePair> linkedListNode)
@@ -553,6 +716,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             return ResolveMultipleKeys(keys, out object key).RawGet(key);
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified caller-owned nested keys,
+        /// without bringing to Nil the non-existent values.
+        /// </summary>
+        /// <param name="keys">The keys to access the table and subtables.</param>
+        public DynValue RawGet(ReadOnlySpan<object> keys)
+        {
+            if (keys.Length == 0)
+            {
+                return null;
+            }
+
+            return ResolveMultipleKeys(keys, out object key).RawGet(key);
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified nested keys,
+        /// without bringing to Nil the non-existent values.
+        /// </summary>
+        /// <param name="key1">The key used to locate the nested table.</param>
+        /// <param name="key2">The key to access in the nested table.</param>
+        public DynValue RawGet(object key1, object key2)
+        {
+            return ResolveNestedKeys(key1, key2, out object key).RawGet(key);
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified nested keys,
+        /// without bringing to Nil the non-existent values.
+        /// </summary>
+        /// <param name="key1">The first key used to locate the nested table.</param>
+        /// <param name="key2">The second key used to locate the nested table.</param>
+        /// <param name="key3">The key to access in the nested table.</param>
+        public DynValue RawGet(object key1, object key2, object key3)
+        {
+            return ResolveNestedKeys(key1, key2, key3, out object key).RawGet(key);
         }
 
         private bool PerformTableRemove<T>(
@@ -646,6 +847,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public bool Remove(params object[] keys)
         {
             return keys is { Length: > 0 } && ResolveMultipleKeys(keys, out object key).Remove(key);
+        }
+
+        /// <summary>
+        /// Remove the value associated with the specified caller-owned nested keys from the table.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The key.</param>
+        /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(ReadOnlySpan<object> keys)
+        {
+            return keys.Length > 0 && ResolveMultipleKeys(keys, out object key).Remove(key);
+        }
+
+        /// <summary>
+        /// Remove the value associated with the specified nested keys from the table.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="key1">The key used to locate the nested table.</param>
+        /// <param name="key2">The key to remove from the nested table.</param>
+        /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(object key1, object key2)
+        {
+            return ResolveNestedKeys(key1, key2, out object key).Remove(key);
+        }
+
+        /// <summary>
+        /// Remove the value associated with the specified nested keys from the table.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="key1">The first key used to locate the nested table.</param>
+        /// <param name="key2">The second key used to locate the nested table.</param>
+        /// <param name="key3">The key to remove from the nested table.</param>
+        /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(object key1, object key2, object key3)
+        {
+            return ResolveNestedKeys(key1, key2, key3, out object key).Remove(key);
         }
 
         /// <summary>

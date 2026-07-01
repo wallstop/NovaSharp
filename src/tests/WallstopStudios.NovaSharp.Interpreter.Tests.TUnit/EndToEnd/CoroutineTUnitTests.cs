@@ -212,6 +212,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task CoroutineResumeSupportsSixAndSevenFixedArguments(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script host = new Script(version, CoreModulePresets.Complete);
+            DynValue factory = host.DoString(
+                "return function(...) return coroutine.yield(select('#', ...), select(select('#', ...), ...)) end"
+            );
+
+            DynValue sixDynValueResult = host.CreateCoroutine(factory)
+                .Coroutine.Resume(
+                    DynValue.FromNumber(1),
+                    DynValue.FromNumber(2),
+                    DynValue.FromNumber(3),
+                    DynValue.FromNumber(4),
+                    DynValue.FromNumber(5),
+                    DynValue.FromNumber(6)
+                );
+            DynValue sevenDynValueResult = host.CreateCoroutine(factory)
+                .Coroutine.Resume(
+                    DynValue.FromNumber(1),
+                    DynValue.FromNumber(2),
+                    DynValue.FromNumber(3),
+                    DynValue.FromNumber(4),
+                    DynValue.FromNumber(5),
+                    DynValue.FromNumber(6),
+                    DynValue.FromNumber(7)
+                );
+            DynValue sixObjectResult = host.CreateCoroutine(factory)
+                .Coroutine.Resume(1d, 2d, 3d, 4d, 5d, 6d);
+            DynValue sevenObjectResult = host.CreateCoroutine(factory)
+                .Coroutine.Resume(1d, 2d, 3d, 4d, 5d, 6d, 7d);
+
+            await AssertCoroutineCaptureResult(sixDynValueResult, 6).ConfigureAwait(false);
+            await AssertCoroutineCaptureResult(sevenDynValueResult, 7).ConfigureAwait(false);
+            await AssertCoroutineCaptureResult(sixObjectResult, 6).ConfigureAwait(false);
+            await AssertCoroutineCaptureResult(sevenObjectResult, 7).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task CoroutineSupportsTypedEnumerable(LuaCompatibilityVersion version)
         {
             string code =
@@ -274,6 +315,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             await Assert.That(result.Type).IsEqualTo(DataType.Number).ConfigureAwait(false);
             await Assert.That(result.Number).IsEqualTo(34).ConfigureAwait(false);
             await Assert.That(cycles > 10).IsTrue().ConfigureAwait(false);
+        }
+
+        private static async Task AssertCoroutineCaptureResult(DynValue result, int arity)
+        {
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[0].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].Number)
+                .IsEqualTo((double)arity)
+                .ConfigureAwait(false);
         }
     }
 }

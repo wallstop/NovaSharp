@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
 {
     using System;
     using System.Collections.Generic;
+    using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
@@ -16,6 +17,279 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
     {
         private readonly Processor _processor;
         private readonly CallbackFunction _callback;
+
+        private readonly struct FixedCallArguments
+        {
+            private readonly DynValue _arg0;
+            private readonly DynValue _arg1;
+            private readonly DynValue _arg2;
+            private readonly DynValue _arg3;
+            private readonly DynValue _arg4;
+            private readonly DynValue _arg5;
+            private readonly DynValue _arg6;
+            private readonly int _count;
+
+            internal FixedCallArguments(DynValue arg)
+            {
+                _arg0 = arg;
+                _arg1 = null;
+                _arg2 = null;
+                _arg3 = null;
+                _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
+                _count = 1;
+            }
+
+            internal FixedCallArguments(DynValue arg1, DynValue arg2)
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = null;
+                _arg3 = null;
+                _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
+                _count = 2;
+            }
+
+            internal FixedCallArguments(DynValue arg1, DynValue arg2, DynValue arg3)
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = null;
+                _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
+                _count = 3;
+            }
+
+            internal FixedCallArguments(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _arg4 = null;
+                _arg5 = null;
+                _arg6 = null;
+                _count = 4;
+            }
+
+            internal FixedCallArguments(
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5
+            )
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _arg4 = arg5;
+                _arg5 = null;
+                _arg6 = null;
+                _count = 5;
+            }
+
+            internal FixedCallArguments(
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5,
+                DynValue arg6
+            )
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _arg4 = arg5;
+                _arg5 = arg6;
+                _arg6 = null;
+                _count = 6;
+            }
+
+            internal FixedCallArguments(
+                DynValue arg1,
+                DynValue arg2,
+                DynValue arg3,
+                DynValue arg4,
+                DynValue arg5,
+                DynValue arg6,
+                DynValue arg7
+            )
+            {
+                _arg0 = arg1;
+                _arg1 = arg2;
+                _arg2 = arg3;
+                _arg3 = arg4;
+                _arg4 = arg5;
+                _arg5 = arg6;
+                _arg6 = arg7;
+                _count = 7;
+            }
+
+            /// <summary>
+            /// Gets the number of fixed arguments currently stored.
+            /// </summary>
+            internal int Count
+            {
+                get { return _count; }
+            }
+
+            /// <summary>
+            /// Gets a fixed argument by zero-based index.
+            /// </summary>
+            internal DynValue this[int index]
+            {
+                get
+                {
+                    return index switch
+                    {
+                        0 => _arg0,
+                        1 => _arg1,
+                        2 => _arg2,
+                        3 => _arg3,
+                        4 => _arg4,
+                        5 => _arg5,
+                        6 => _arg6,
+                        _ => throw new ArgumentOutOfRangeException(nameof(index)),
+                    };
+                }
+            }
+
+            /// <summary>
+            /// Prepends a callable self value when the fixed argument buffer has capacity.
+            /// </summary>
+            internal bool TryPrepend(DynValue value, out FixedCallArguments args)
+            {
+                switch (_count)
+                {
+                    case 1:
+                        args = new FixedCallArguments(value, _arg0);
+                        return true;
+                    case 2:
+                        args = new FixedCallArguments(value, _arg0, _arg1);
+                        return true;
+                    case 3:
+                        args = new FixedCallArguments(value, _arg0, _arg1, _arg2);
+                        return true;
+                    case 4:
+                        args = new FixedCallArguments(value, _arg0, _arg1, _arg2, _arg3);
+                        return true;
+                    case 5:
+                        args = new FixedCallArguments(value, _arg0, _arg1, _arg2, _arg3, _arg4);
+                        return true;
+                    case 6:
+                        args = new FixedCallArguments(
+                            value,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4,
+                            _arg5
+                        );
+                        return true;
+                    default:
+                        args = default;
+                        return false;
+                }
+            }
+
+            /// <summary>
+            /// Copies the fixed arguments into an existing argument buffer.
+            /// </summary>
+            internal void CopyTo(DynValue[] destination, int destinationIndex)
+            {
+                for (int i = 0; i < Count; i++)
+                {
+                    destination[destinationIndex + i] = this[i];
+                }
+            }
+
+            /// <summary>
+            /// Invokes the specified callback with the stored fixed arguments.
+            /// </summary>
+            internal DynValue InvokeCallback(
+                ScriptExecutionContext context,
+                CallbackFunction callback
+            )
+            {
+                if (callback.HasArgumentViewCallback)
+                {
+                    return _count switch
+                    {
+                        1 => callback.InvokeArgumentViewFixed(context, _arg0),
+                        2 => callback.InvokeArgumentViewFixed(context, _arg0, _arg1),
+                        3 => callback.InvokeArgumentViewFixed(context, _arg0, _arg1, _arg2),
+                        4 => callback.InvokeArgumentViewFixed(context, _arg0, _arg1, _arg2, _arg3),
+                        5 => callback.InvokeArgumentViewFixed(
+                            context,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4
+                        ),
+                        6 => callback.InvokeArgumentViewFixed(
+                            context,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4,
+                            _arg5
+                        ),
+                        7 => callback.InvokeArgumentViewFixed(
+                            context,
+                            _arg0,
+                            _arg1,
+                            _arg2,
+                            _arg3,
+                            _arg4,
+                            _arg5,
+                            _arg6
+                        ),
+                        _ => throw new InvalidOperationException("Invalid fixed argument count."),
+                    };
+                }
+
+                return _count switch
+                {
+                    1 => callback.InvokeLegacyFixed(context, _arg0),
+                    2 => callback.InvokeLegacyFixed(context, _arg0, _arg1),
+                    3 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2),
+                    4 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2, _arg3),
+                    5 => callback.InvokeLegacyFixed(context, _arg0, _arg1, _arg2, _arg3, _arg4),
+                    6 => callback.InvokeLegacyFixed(
+                        context,
+                        _arg0,
+                        _arg1,
+                        _arg2,
+                        _arg3,
+                        _arg4,
+                        _arg5
+                    ),
+                    7 => callback.InvokeLegacyFixed(
+                        context,
+                        _arg0,
+                        _arg1,
+                        _arg2,
+                        _arg3,
+                        _arg4,
+                        _arg5,
+                        _arg6
+                    ),
+                    _ => throw new InvalidOperationException("Invalid fixed argument count."),
+                };
+            }
+        }
 
         internal ScriptExecutionContext(
             Processor p,
@@ -205,6 +479,376 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// Calls the specified function, supporting most cases. The called function must not yield.
         /// </summary>
         /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <returns></returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func);
+            }
+
+            if (func.Type == DataType.ClrFunction && func.Callback.HasArgumentViewCallback)
+            {
+                return CompleteDirectClrCall(func.Callback.InvokeArgumentViewFixed(this));
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                return CompleteDirectClrCall(func.Callback.InvokeLegacyFixed(this));
+            }
+
+            return CallNonFunction(func);
+        }
+
+        /// <summary>
+        /// Calls the specified function with one argument, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg">The argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func, DynValue arg)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments callArgs = new(arg);
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return CallNonFunction(func, arg);
+        }
+
+        /// <summary>
+        /// Calls the specified function with two arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func, DynValue arg1, DynValue arg2)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments callArgs = new(arg1, arg2);
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return CallNonFunction(func, arg1, arg2);
+        }
+
+        /// <summary>
+        /// Calls the specified function with three arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func, DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3);
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return CallNonFunction(func, arg1, arg2, arg3);
+        }
+
+        /// <summary>
+        /// Calls the specified function with four arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <param name="arg4">The fourth argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4
+        )
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3, arg4);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4);
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return CallNonFunction(func, arg1, arg2, arg3, arg4);
+        }
+
+        /// <summary>
+        /// Calls the specified function with five arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <param name="arg4">The fourth argument.</param>
+        /// <param name="arg5">The fifth argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3, arg4, arg5);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4, arg5);
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return CallNonFunction(func, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        /// <summary>
+        /// Calls the specified function with six arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <param name="arg4">The fourth argument.</param>
+        /// <param name="arg5">The fifth argument.</param>
+        /// <param name="arg6">The sixth argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3, arg4, arg5, arg6);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4, arg5, arg6);
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return CallNonFunction(func, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        /// <summary>
+        /// Calls the specified function with seven arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <param name="arg4">The fourth argument.</param>
+        /// <param name="arg5">The fifth argument.</param>
+        /// <param name="arg6">The sixth argument.</param>
+        /// <param name="arg7">The seventh argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return CallNonFunction(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        }
+
+        /// <summary>
+        /// Calls the specified function with caller-owned contiguous arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="args">The arguments.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(DynValue func, ReadOnlySpan<DynValue> args)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                DynValue ret = func.Callback.HasArgumentViewCallback
+                    ? func.Callback.InvokeArgumentViewSpan(this, args)
+                    : func.Callback.InvokeLegacySpan(this, args);
+                return CompleteDirectClrCall(ret);
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                switch (args.Length)
+                {
+                    case 0:
+                        return Call(func);
+                    case 1:
+                        return Call(func, args[0]);
+                    case 2:
+                        return Call(func, args[0], args[1]);
+                    case 3:
+                        return Call(func, args[0], args[1], args[2]);
+                    case 4:
+                        return Call(func, args[0], args[1], args[2], args[3]);
+                    case 5:
+                        return Call(func, args[0], args[1], args[2], args[3], args[4]);
+                    case 6:
+                        return Call(func, args[0], args[1], args[2], args[3], args[4], args[5]);
+                    case 7:
+                        return Call(
+                            func,
+                            args[0],
+                            args[1],
+                            args[2],
+                            args[3],
+                            args[4],
+                            args[5],
+                            args[6]
+                        );
+                }
+
+                return Script.Call(func, args);
+            }
+
+            int maxloops = 10;
+            bool isFirstCallMetamethodResolution = true;
+
+            while (maxloops > 0)
+            {
+                DynValue v = GetMetamethod(func, Metamethods.Call);
+
+                if (v == null || v.IsNil() || !CanCallMetamethod(v))
+                {
+                    throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
+                }
+
+                DynValue previousFunc = func;
+                if (
+                    isFirstCallMetamethodResolution
+                    && TryCallDirectMetamethod(v, previousFunc, args, out DynValue directResult)
+                )
+                {
+                    return directResult;
+                }
+
+                func = v;
+                DynValue[] nextArgs = CreateCallMetamethodArguments(previousFunc, args);
+                if (func.Type == DataType.Function || func.Type == DataType.ClrFunction)
+                {
+                    return Call(func, nextArgs.AsSpan());
+                }
+
+                args = nextArgs;
+                isFirstCallMetamethodResolution = false;
+                maxloops--;
+            }
+
+            throw ScriptRuntimeException.LoopInCall();
+        }
+
+        /// <summary>
+        /// Calls the specified function, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
         /// <param name="args">The arguments.</param>
         /// <returns></returns>
         /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
@@ -213,6 +857,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             if (func == null)
             {
                 throw new ArgumentNullException(nameof(func));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
             }
 
             if (func.Type == DataType.Function)
@@ -254,27 +903,426 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             else
             {
                 int maxloops = 10;
+                bool isFirstCallMetamethodResolution = true;
 
                 while (maxloops > 0)
                 {
                     DynValue v = GetMetamethod(func, Metamethods.Call);
 
-                    if (v == null || v.IsNil())
+                    if (v == null || v.IsNil() || !CanCallMetamethod(v))
                     {
                         throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
+                    }
+
+                    DynValue previousFunc = func;
+                    if (
+                        isFirstCallMetamethodResolution
+                        && TryCallDirectMetamethod(v, previousFunc, args, out DynValue directResult)
+                    )
+                    {
+                        return directResult;
                     }
 
                     func = v;
 
                     if (func.Type == DataType.Function || func.Type == DataType.ClrFunction)
                     {
-                        return Call(func, args);
+                        DynValue[] metaargs = CreateCallMetamethodArguments(previousFunc, args);
+                        return Call(func, metaargs);
                     }
 
+                    DynValue[] nextArgs = CreateCallMetamethodArguments(previousFunc, args);
+                    args = nextArgs;
+
+                    isFirstCallMetamethodResolution = false;
                     maxloops--;
                 }
 
                 throw ScriptRuntimeException.LoopInCall();
+            }
+        }
+
+        private static DynValue[] CreateCallMetamethodArguments(
+            DynValue function,
+            ReadOnlySpan<DynValue> args
+        )
+        {
+            DynValue[] metaargs = new DynValue[args.Length + 1];
+            metaargs[0] = function;
+            for (int i = 0; i < args.Length; i++)
+            {
+                metaargs[i + 1] = args[i];
+            }
+
+            return metaargs;
+        }
+
+        private bool TryCallDirectMetamethod(
+            DynValue metafunction,
+            DynValue self,
+            ReadOnlySpan<DynValue> args,
+            out DynValue result
+        )
+        {
+            if (!IsDirectCallTarget(metafunction))
+            {
+                result = null;
+                return false;
+            }
+
+            switch (args.Length)
+            {
+                case 0:
+                    result = Call(metafunction, self);
+                    return true;
+                case 1:
+                    result = Call(metafunction, self, args[0]);
+                    return true;
+                case 2:
+                    result = Call(metafunction, self, args[0], args[1]);
+                    return true;
+                case 3:
+                    result = Call(metafunction, self, args[0], args[1], args[2]);
+                    return true;
+                case 4:
+                    result = Call(metafunction, self, args[0], args[1], args[2], args[3]);
+                    return true;
+                case 5:
+                    result = CallDirectTarget(
+                        metafunction,
+                        self,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4]
+                    );
+                    return true;
+                case 6:
+                    result = CallDirectTarget(
+                        metafunction,
+                        self,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        args[5]
+                    );
+                    return true;
+                default:
+                    result = null;
+                    return false;
+            }
+        }
+
+        private DynValue CallDirectTarget(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments args = new(arg1, arg2, arg3, arg4, arg5, arg6);
+                return CompleteDirectClrCall(args.InvokeCallback(this, func.Callback));
+            }
+
+            return Script.CallDirectLuaFunction(func, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        private DynValue CallDirectTarget(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments args = new(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                return CompleteDirectClrCall(args.InvokeCallback(this, func.Callback));
+            }
+
+            return Script.CallDirectLuaFunction(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        }
+
+        private DynValue CallNonFunction(DynValue func)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                FixedCallArguments args = new(func);
+                return CallChainedNonFunction(metafunction, args);
+            }
+
+            return Call(metafunction, func);
+        }
+
+        private DynValue CallNonFunction(DynValue func, DynValue arg)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                FixedCallArguments args = new(func, arg);
+                return CallChainedNonFunction(metafunction, args);
+            }
+
+            return Call(metafunction, func, arg);
+        }
+
+        private DynValue CallNonFunction(DynValue func, DynValue arg1, DynValue arg2)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                FixedCallArguments args = new(func, arg1, arg2);
+                return CallChainedNonFunction(metafunction, args);
+            }
+
+            return Call(metafunction, func, arg1, arg2);
+        }
+
+        private DynValue CallNonFunction(DynValue func, DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                FixedCallArguments args = new(func, arg1, arg2, arg3);
+                return CallChainedNonFunction(metafunction, args);
+            }
+
+            return Call(metafunction, func, arg1, arg2, arg3);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                FixedCallArguments args = new(func, arg1, arg2, arg3, arg4);
+                return CallChainedNonFunction(metafunction, args);
+            }
+
+            return Call(metafunction, func, arg1, arg2, arg3, arg4);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                FixedCallArguments args = new(func, arg1, arg2, arg3, arg4, arg5);
+                return CallChainedNonFunction(metafunction, args);
+            }
+
+            return CallDirectTarget(metafunction, func, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                FixedCallArguments args = new(func, arg1, arg2, arg3, arg4, arg5, arg6);
+                return CallChainedNonFunction(metafunction, args);
+            }
+
+            return CallDirectTarget(metafunction, func, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                8,
+                out DynValue[] arguments
+            );
+            arguments[0] = func;
+            arguments[1] = arg1;
+            arguments[2] = arg2;
+            arguments[3] = arg3;
+            arguments[4] = arg4;
+            arguments[5] = arg5;
+            arguments[6] = arg6;
+            arguments[7] = arg7;
+
+            return Call(metafunction, arguments.AsSpan(0, 8));
+        }
+
+        private DynValue CallChainedNonFunction(DynValue func, FixedCallArguments args)
+        {
+            int maxloops = 9;
+
+            while (func.Type != DataType.Function && func.Type != DataType.ClrFunction)
+            {
+                if (maxloops <= 0)
+                {
+                    throw ScriptRuntimeException.LoopInCall();
+                }
+
+                DynValue metafunction = GetCallableMetamethodOrThrow(func);
+                if (!args.TryPrepend(func, out FixedCallArguments nextArgs))
+                {
+                    return CallOverflowChainedNonFunction(func, metafunction, args, maxloops);
+                }
+
+                args = nextArgs;
+                func = metafunction;
+                maxloops--;
+            }
+
+            return CallFixed(func, args);
+        }
+
+        private DynValue CallOverflowChainedNonFunction(
+            DynValue func,
+            DynValue metafunction,
+            FixedCallArguments args,
+            int maxloops
+        )
+        {
+            int count = args.Count + 1;
+            int capacity = count + Math.Max(0, maxloops - 1);
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                capacity,
+                out DynValue[] arguments
+            );
+            arguments[0] = func;
+            args.CopyTo(arguments, 1);
+
+            func = metafunction;
+            maxloops--;
+
+            while (func.Type != DataType.Function && func.Type != DataType.ClrFunction)
+            {
+                if (maxloops <= 0)
+                {
+                    throw ScriptRuntimeException.LoopInCall();
+                }
+
+                metafunction = GetCallableMetamethodOrThrow(func);
+                Array.Copy(arguments, 0, arguments, 1, count);
+                arguments[0] = func;
+                count++;
+                func = metafunction;
+                maxloops--;
+            }
+
+            return Call(func, arguments.AsSpan(0, count));
+        }
+
+        private DynValue CallFixed(DynValue func, FixedCallArguments args)
+        {
+            return args.Count switch
+            {
+                1 => Call(func, args[0]),
+                2 => Call(func, args[0], args[1]),
+                3 => Call(func, args[0], args[1], args[2]),
+                4 => Call(func, args[0], args[1], args[2], args[3]),
+                5 => Call(func, args[0], args[1], args[2], args[3], args[4]),
+                6 => CallDirectTarget(func, args[0], args[1], args[2], args[3], args[4], args[5]),
+                7 => CallDirectTarget(
+                    func,
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[4],
+                    args[5],
+                    args[6]
+                ),
+                _ => Call(func),
+            };
+        }
+
+        private static bool IsDirectCallTarget(DynValue func)
+        {
+            return func.Type == DataType.Function || func.Type == DataType.ClrFunction;
+        }
+
+        private DynValue GetCallableMetamethodOrThrow(DynValue func)
+        {
+            DynValue metafunction = GetMetamethod(func, Metamethods.Call);
+            if (metafunction != null && !metafunction.IsNil() && CanCallMetamethod(metafunction))
+            {
+                return metafunction;
+            }
+
+            throw ScriptRuntimeException.AttemptToCallNonFunc(func.Type);
+        }
+
+        private bool CanCallMetamethod(DynValue metafunction)
+        {
+            return LuaVersionDefaults.Resolve(Script.Options.CompatibilityVersion)
+                    >= LuaCompatibilityVersion.Lua54
+                || metafunction.Type == DataType.Function
+                || metafunction.Type == DataType.ClrFunction;
+        }
+
+        private DynValue CompleteDirectClrCall(DynValue ret)
+        {
+            while (true)
+            {
+                if (ret.Type == DataType.YieldRequest)
+                {
+                    throw ScriptRuntimeException.CannotYield();
+                }
+
+                if (ret.Type != DataType.TailCallRequest)
+                {
+                    return ret;
+                }
+
+                TailCallData tail = ret.TailCallData;
+
+                if (tail.Continuation != null || tail.ErrorHandler != null)
+                {
+                    throw new ScriptRuntimeException(
+                        "the function passed cannot be called directly. wrap in a script function instead."
+                    );
+                }
+
+                ret = Call(tail.Function, tail.BorrowArgsBuffer());
             }
         }
 
@@ -374,14 +1422,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         /// Source reference representing the instruction that invoked the current CLR callback.
         /// </param>
         /// <returns>An immutable snapshot of the active call stack.</returns>
-        internal IReadOnlyList<WatchItem> GetCallStackSnapshot(SourceRef startingLocation)
+        internal IReadOnlyList<WatchItem> GetCallStackSnapshot(
+            SourceRef startingLocation,
+            bool includeFunctions = false
+        )
         {
             if (_processor == null || IsDynamicExecution)
             {
                 return Array.Empty<WatchItem>();
             }
 
-            return _processor.GetDebuggerCallStack(startingLocation ?? CallingLocation);
+            return _processor.GetDebuggerCallStack(
+                startingLocation ?? CallingLocation,
+                includeFunctions
+            );
         }
 
         /// <summary>

@@ -1,11 +1,13 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 {
     using System;
+    using System.Threading;
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.CoreLib;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -27,6 +29,61 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
             );
 
             await Assert.That(exception.ParamName).IsEqualTo("args");
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ToStringMetamethodTailRequestsReuseContinuation(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue value = script.DoString(
+                "return setmetatable({}, { __tostring = function() return 'value' end })"
+            );
+            CallbackArguments args = new(new[] { value }, isMethodCall: false);
+
+            DynValue first = BasicModule.ToString(context, args);
+            DynValue second = BasicModule.ToString(context, args);
+            second.TailCallData.Continuation.AdditionalData = "dirty";
+            DynValue third = BasicModule.ToString(context, args);
+
+            await Assert.That(first.Type).IsEqualTo(DataType.TailCallRequest).ConfigureAwait(false);
+            await Assert
+                .That(second.Type)
+                .IsEqualTo(DataType.TailCallRequest)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(second.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation)
+                .IsSameReferenceAs(third.TailCallData.Continuation)
+                .ConfigureAwait(false);
+            await Assert
+                .That(first.TailCallData.Continuation.Name)
+                .IsEqualTo(Metamethods.ToStringMeta)
+                .ConfigureAwait(false);
+            await Assert
+                .That(third.TailCallData.Continuation.AdditionalData)
+                .IsNull()
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ToStringMetamethodTailRequestsUseThreadLocalContinuation()
+        {
+            CallbackFunction main = CreateToStringContinuationOnCurrentThread();
+            CallbackFunction worker = RunOnNewThread(CreateToStringContinuationOnCurrentThread);
+
+            await Assert.That(main).IsNotSameReferenceAs(worker).ConfigureAwait(false);
+            await Assert
+                .That(worker.Name)
+                .IsEqualTo(Metamethods.ToStringMeta)
+                .ConfigureAwait(false);
+            await Assert.That(worker.AdditionalData).IsNull().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1239,6 +1296,62 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             // CLR tostring should be called
             await Assert.That(output).IsEqualTo("CLR:Table").ConfigureAwait(false);
+        }
+
+        private static CallbackFunction CreateToStringContinuationOnCurrentThread()
+        {
+            Script script = CreateScript(LuaCompatibilityVersion.Lua54);
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            DynValue value = script.DoString(
+                "return setmetatable({}, { __tostring = function() return 'value' end })"
+            );
+            CallbackArguments args = new(new[] { value }, isMethodCall: false);
+            DynValue request = BasicModule.ToString(context, args);
+
+            if (request.Type != DataType.TailCallRequest)
+            {
+                throw new InvalidOperationException("tostring did not return a tail call request.");
+            }
+
+            return request.TailCallData.Continuation;
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1031:Do not catch general exception types",
+            Justification = "Worker thread exceptions must be marshaled back to the test thread."
+        )]
+        private static T RunOnNewThread<T>(Func<T> action)
+        {
+            T result = default;
+            Exception error = null;
+            Thread thread = new(() =>
+            {
+                try
+                {
+                    result = action();
+                }
+                catch (Exception ex)
+                {
+                    error = ex;
+                }
+            })
+            {
+                IsBackground = true,
+            };
+
+            thread.Start();
+            if (!thread.Join(TimeSpan.FromSeconds(10)))
+            {
+                throw new TimeoutException("Worker thread did not finish.");
+            }
+
+            if (error != null)
+            {
+                throw new InvalidOperationException("Worker thread failed.", error);
+            }
+
+            return result;
         }
 
         private static Script CreateScript(

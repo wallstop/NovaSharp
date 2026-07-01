@@ -7,6 +7,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
@@ -276,6 +277,53 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             descriptor.SetValue(CreateScript(), instance, DynValue.NewNumber(5.1));
 
             await Assert.That(instance.InstanceValue).IsEqualTo(5);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReflectionSetValueReturnsInvokeArgumentsAfterSuccess(
+            LuaCompatibilityVersion version
+        )
+        {
+            PropertyMemberDescriptor descriptor = new(
+                SamplePropertiesMetadata.InstanceValue,
+                InteropAccessMode.Reflection
+            );
+            SampleProperties instance = new();
+
+            descriptor.SetValue(CreateScript(), instance, DynValue.NewNumber(7));
+            object retainedArgument = RentSingleObjectArraySlotAfterDescriptorUse();
+
+            await Assert.That(instance.InstanceValue).IsEqualTo(7);
+            await Assert.That(retainedArgument).IsNull();
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ReflectionSetValueReturnsInvokeArgumentsAfterSetterException(
+            LuaCompatibilityVersion version
+        )
+        {
+            PropertyMemberDescriptor descriptor = new(
+                SamplePropertiesMetadata.ThrowingSetter,
+                InteropAccessMode.Reflection
+            );
+
+            TargetInvocationException exception = ExpectException<TargetInvocationException>(() =>
+                descriptor.SetValue(CreateScript(), new SampleProperties(), DynValue.NewNumber(7))
+            );
+            object retainedArgument = RentSingleObjectArraySlotAfterDescriptorUse();
+
+            await Assert.That(exception.InnerException).IsTypeOf<InvalidOperationException>();
+            await Assert.That(retainedArgument).IsNull();
         }
 
         [global::TUnit.Core.Test]
@@ -569,6 +617,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             PropertyMemberDescriptor.TestHooks.SetOptimizedSetter(descriptor, setter);
         }
 
+        private static object RentSingleObjectArraySlotAfterDescriptorUse()
+        {
+            using PooledResource<object[]> pooled = ObjectArrayPool.Get(1, out object[] rented);
+            return rented[0];
+        }
+
         private static TException ExpectException<TException>(Action action)
             where TException : Exception
         {
@@ -605,6 +659,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             public short ShortValue { get; set; }
 
+            public int ThrowingSetter
+            {
+                set
+                {
+                    _throwingSetterBacking = value;
+                    throw new InvalidOperationException("setter failure");
+                }
+            }
+
             [NovaSharpHidden]
             public int HiddenProperty { get; set; }
 
@@ -619,6 +682,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             private int PrivateButVisible { get; set; } = 6;
 
             private int _hiddenSetterBacking = 5;
+            private int _throwingSetterBacking;
 
             internal static PropertyInfo PrivateButVisibleProperty { get; } =
                 GetPropertyInfo(p => p.PrivateButVisible);
@@ -671,6 +735,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
 
             internal static PropertyInfo ShortValue { get; } =
                 typeof(SampleProperties).GetProperty(nameof(SampleProperties.ShortValue));
+
+            internal static PropertyInfo ThrowingSetter { get; } =
+                typeof(SampleProperties).GetProperty(nameof(SampleProperties.ThrowingSetter));
 
             internal static PropertyInfo HiddenProperty { get; } =
                 typeof(SampleProperties).GetProperty(nameof(SampleProperties.HiddenProperty));

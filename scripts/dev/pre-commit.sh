@@ -559,8 +559,12 @@ check_branding() {
   for file in $staged_output; do
     # Skip allowlisted files
     case "$file" in
-      docs/Performance.md|README.md|src/samples/Tutorial/Tutorials/readme.md|moonsharp_DescriptorHelpers.cs|AGENTS.md|PLAN.md) continue ;;
+      docs/Performance.md|docs/Testing.md|docs/performance-history/README.md|progress/session-119-load-reader-and-ci-delta-reporting.md|progress/session-121-same-run-comparison-deltas.md|README.md|src/samples/Tutorial/Tutorials/readme.md|moonsharp_DescriptorHelpers.cs|AGENTS.md|PLAN.md) continue ;;
+      .github/pull_request_template.md|.github/workflows/benchmarks.yml) continue ;;
       src/tooling/WallstopStudios.NovaSharp.Benchmarks/PerformanceReportWriter.cs) continue ;;
+      scripts/README.md|scripts/benchmarks/README.md|scripts/benchmarks/render-benchmark-deltas.py) continue ;;
+      scripts/benchmarks/run-benchmarks.ps1|scripts/benchmarks/run-benchmarks.sh) continue ;;
+      tools/test_render_benchmark_deltas.py) continue ;;
       scripts/branding/ensure-novasharp-branding.sh) continue ;;
       scripts/dev/pre-commit.sh|scripts/dev/README.md) continue ;;  # Branding check documentation
       src/tooling/WallstopStudios.NovaSharp.Comparison*) continue ;;

@@ -123,6 +123,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modding
         /// <param name="functionName">The name of the function to call.</param>
         /// <param name="args">Arguments to pass to the function.</param>
         /// <returns>The result of the function call.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="args"/> is null.</exception>
         /// <exception cref="InvalidOperationException">Thrown if the mod is not loaded.</exception>
         public DynValue CallFunction(string functionName, params object[] args);
 

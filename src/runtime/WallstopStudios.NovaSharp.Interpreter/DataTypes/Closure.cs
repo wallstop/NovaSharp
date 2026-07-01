@@ -124,6 +124,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="Closure"/> class with a single _ENV upvalue.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <param name="idx">The bytecode entry point index.</param>
+        /// <param name="environmentValue">The mutable environment upvalue slot for this closure.</param>
+        internal Closure(Script script, int idx, DynValue environmentValue)
+        {
+            OwnerScript = script;
+            EntryPointByteCodeLocation = idx;
+            ClosureContext = new ClosureContext(environmentValue);
+            TrackAllocation(script, 1);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Closure"/> class with an existing closure context.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <param name="idx">The bytecode entry point index.</param>
+        /// <param name="closureContext">The closure context to reuse.</param>
+        internal Closure(Script script, int idx, ClosureContext closureContext)
+        {
+            OwnerScript = script;
+            EntryPointByteCodeLocation = idx;
+            ClosureContext = closureContext ?? EmptyClosure;
+            TrackAllocation(script, ClosureContext.Count);
+        }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Closure"/> class.
         /// </summary>
         /// <param name="script">The script.</param>
@@ -160,7 +188,316 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call()
         {
-            return OwnerScript.Call(this);
+            return OwnerScript.Call(DynValue.FromClosure(this));
+        }
+
+        /// <summary>
+        /// Calls this function with one CLR object argument.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object arg)
+        {
+            return OwnerScript.Call(this, arg);
+        }
+
+        /// <summary>
+        /// Calls this function with two CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object arg1, object arg2)
+        {
+            return OwnerScript.Call(this, arg1, arg2);
+        }
+
+        /// <summary>
+        /// Calls this function with three CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object arg1, object arg2, object arg3)
+        {
+            return OwnerScript.Call(this, arg1, arg2, arg3);
+        }
+
+        /// <summary>
+        /// Calls this function with four CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object arg1, object arg2, object arg3, object arg4)
+        {
+            return OwnerScript.Call(this, arg1, arg2, arg3, arg4);
+        }
+
+        /// <summary>
+        /// Calls this function with five CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(object arg1, object arg2, object arg3, object arg4, object arg5)
+        {
+            return OwnerScript.Call(this, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        /// <summary>
+        /// Calls this function with six CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5,
+            object arg6
+        )
+        {
+            return OwnerScript.Call(this, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        /// <summary>
+        /// Calls this function with seven CLR object arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <param name="arg7">The seventh argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            object arg1,
+            object arg2,
+            object arg3,
+            object arg4,
+            object arg5,
+            object arg6,
+            object arg7
+        )
+        {
+            return OwnerScript.Call(this, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        }
+
+        /// <summary>
+        /// Calls this function with one pre-created DynValue argument.
+        /// </summary>
+        /// <param name="arg">The argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue arg)
+        {
+            return OwnerScript.Call(DynValue.FromClosure(this), arg ?? DynValue.Nil);
+        }
+
+        /// <summary>
+        /// Calls this function with two pre-created DynValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue arg1, DynValue arg2)
+        {
+            return OwnerScript.Call(
+                DynValue.FromClosure(this),
+                arg1 ?? DynValue.Nil,
+                arg2 ?? DynValue.Nil
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with three pre-created DynValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue arg1, DynValue arg2, DynValue arg3)
+        {
+            return OwnerScript.Call(
+                DynValue.FromClosure(this),
+                arg1 ?? DynValue.Nil,
+                arg2 ?? DynValue.Nil,
+                arg3 ?? DynValue.Nil
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with four pre-created DynValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(DynValue arg1, DynValue arg2, DynValue arg3, DynValue arg4)
+        {
+            return OwnerScript.Call(
+                DynValue.FromClosure(this),
+                arg1 ?? DynValue.Nil,
+                arg2 ?? DynValue.Nil,
+                arg3 ?? DynValue.Nil,
+                arg4 ?? DynValue.Nil
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with five pre-created DynValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5
+        )
+        {
+            return OwnerScript.Call(
+                DynValue.FromClosure(this),
+                arg1 ?? DynValue.Nil,
+                arg2 ?? DynValue.Nil,
+                arg3 ?? DynValue.Nil,
+                arg4 ?? DynValue.Nil,
+                arg5 ?? DynValue.Nil
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with six pre-created DynValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            return OwnerScript.Call(
+                DynValue.FromClosure(this),
+                arg1 ?? DynValue.Nil,
+                arg2 ?? DynValue.Nil,
+                arg3 ?? DynValue.Nil,
+                arg4 ?? DynValue.Nil,
+                arg5 ?? DynValue.Nil,
+                arg6 ?? DynValue.Nil
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with seven pre-created DynValue arguments.
+        /// </summary>
+        /// <param name="arg1">The first argument to pass to the function.</param>
+        /// <param name="arg2">The second argument to pass to the function.</param>
+        /// <param name="arg3">The third argument to pass to the function.</param>
+        /// <param name="arg4">The fourth argument to pass to the function.</param>
+        /// <param name="arg5">The fifth argument to pass to the function.</param>
+        /// <param name="arg6">The sixth argument to pass to the function.</param>
+        /// <param name="arg7">The seventh argument to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            return OwnerScript.Call(
+                DynValue.FromClosure(this),
+                arg1 ?? DynValue.Nil,
+                arg2 ?? DynValue.Nil,
+                arg3 ?? DynValue.Nil,
+                arg4 ?? DynValue.Nil,
+                arg5 ?? DynValue.Nil,
+                arg6 ?? DynValue.Nil,
+                arg7 ?? DynValue.Nil
+            );
+        }
+
+        /// <summary>
+        /// Calls this function with caller-owned contiguous DynValue arguments.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
+        public DynValue Call(ReadOnlySpan<DynValue> args)
+        {
+            return OwnerScript.Call(DynValue.FromClosure(this), args);
+        }
+
+        /// <summary>
+        /// Calls this function with caller-owned CLR object argument storage.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public DynValue CallObjectArguments(object[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return CallObjectArguments(args.AsSpan());
+        }
+
+        /// <summary>
+        /// Calls this function with caller-owned contiguous CLR object arguments.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public DynValue CallObjectArguments(ReadOnlySpan<object> args)
+        {
+            return OwnerScript.CallObjectArguments(DynValue.FromClosure(this), args);
         }
 
         /// <summary>
@@ -182,7 +519,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <exception cref="System.ArgumentException">Thrown if function is not of DataType.Function</exception>
         public DynValue Call(params DynValue[] args)
         {
-            return OwnerScript.Call(this, args);
+            return OwnerScript.Call(DynValue.FromClosure(this), NormalizeNullArguments(args));
+        }
+
+        private static DynValue[] NormalizeNullArguments(DynValue[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == null)
+                {
+                    DynValue[] normalizedArgs = new DynValue[args.Length];
+                    Array.Copy(args, normalizedArgs, i);
+                    normalizedArgs[i] = DynValue.Nil;
+
+                    for (int j = i + 1; j < args.Length; j++)
+                    {
+                        normalizedArgs[j] = args[j] ?? DynValue.Nil;
+                    }
+
+                    return normalizedArgs;
+                }
+            }
+
+            return args;
         }
 
         /// <summary>

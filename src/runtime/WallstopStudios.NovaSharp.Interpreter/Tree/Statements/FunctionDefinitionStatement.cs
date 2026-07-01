@@ -24,6 +24,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
         private readonly List<string> _tableAccessors;
         private readonly FunctionDefinitionExpression _funcDef;
 
+        private readonly struct SetFunctionPostEmitter : IFunctionDeclarationPostEmitter
+        {
+            private readonly FunctionDefinitionStatement _statement;
+            private readonly int _numPop;
+
+            internal SetFunctionPostEmitter(FunctionDefinitionStatement statement, int numPop)
+            {
+                _statement = statement;
+                _numPop = numPop;
+            }
+
+            /// <inheritdoc />
+            public int Emit(Execution.VM.ByteCode bc) => _statement.SetFunction(bc, _numPop);
+        }
+
+        private readonly struct SetMethodPostEmitter : IFunctionDeclarationPostEmitter
+        {
+            private readonly FunctionDefinitionStatement _statement;
+
+            internal SetMethodPostEmitter(FunctionDefinitionStatement statement)
+            {
+                _statement = statement;
+            }
+
+            /// <inheritdoc />
+            public int Emit(Execution.VM.ByteCode bc) => _statement.SetMethod(bc);
+        }
+
         /// <summary>
         /// Parses a function definition, tracking whether it is local, table-qualified, or method syntax.
         /// </summary>
@@ -119,15 +147,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
                 {
                     bc.EmitLiteral(DynValue.Nil);
                     bc.EmitStore(_funcSymbol, 0, 0);
-                    _funcDef.Compile(bc, () => SetFunction(bc, 2), _friendlyName);
+                    _funcDef.Compile(bc, new SetFunctionPostEmitter(this, 2), _friendlyName);
                 }
                 else if (_methodName == null)
                 {
-                    _funcDef.Compile(bc, () => SetFunction(bc, 1), _friendlyName);
+                    _funcDef.Compile(bc, new SetFunctionPostEmitter(this, 1), _friendlyName);
                 }
                 else
                 {
-                    _funcDef.Compile(bc, () => SetMethod(bc), _friendlyName);
+                    _funcDef.Compile(bc, new SetMethodPostEmitter(this), _friendlyName);
                 }
             }
         }
@@ -138,8 +166,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Statements
 
             cnt += bc.EmitLoad(_funcSymbol);
 
-            foreach (string str in _tableAccessors)
+            for (int i = 0; i < _tableAccessors.Count; i++)
             {
+                string str = _tableAccessors[i];
                 bc.EmitIndex(DynValue.NewString(str), true);
                 cnt += 1;
             }

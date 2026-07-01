@@ -374,8 +374,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
                     {
                         if (char.IsLetter(c) || c == '_')
                         {
-                            string name = ReadNameToken();
-                            return CreateNameToken(name, fromLine, fromCol);
+                            int nameStart = _cursor;
+                            int nameLength = ReadNameTokenLength();
+                            return CreateNameToken(nameStart, nameLength, fromLine, fromCol);
                         }
                         else if (LexerUtils.CharIsDigit(c))
                         {
@@ -570,9 +571,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
 
         private Token CreateSingleCharToken(TokenType tokenType, int fromLine, int fromCol)
         {
-            char c = CursorChar();
             CursorCharNext();
-            return CreateToken(tokenType, fromLine, fromCol, c.ToString());
+            return CreateFixedSyntaxToken(tokenType, fromLine, fromCol);
         }
 
         private Token ReadHashBang(int fromLine, int fromCol)
@@ -711,33 +711,49 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             int fromCol
         )
         {
-            string op = CursorChar().ToString();
-
             CursorCharNext();
 
             if (CursorChar() == expectedSecondChar)
             {
                 CursorCharNext();
-                return CreateToken(doubleCharToken, fromLine, fromCol, op + expectedSecondChar);
+                return CreateFixedSyntaxToken(doubleCharToken, fromLine, fromCol);
             }
             else
             {
-                return CreateToken(singleCharToken, fromLine, fromCol, op);
+                return CreateFixedSyntaxToken(singleCharToken, fromLine, fromCol);
             }
         }
 
-        private Token CreateNameToken(string name, int fromLine, int fromCol)
+        private Token CreateFixedSyntaxToken(TokenType tokenType, int fromLine, int fromCol)
         {
-            TokenType? reservedType = Token.GetReservedTokenType(name);
+            if (Token.TryGetFixedSyntaxText(tokenType, out string text))
+            {
+                return CreateToken(tokenType, fromLine, fromCol, text);
+            }
 
-            if (reservedType.HasValue)
+            throw new InternalErrorException(
+                "Token type '{0}' does not have fixed syntax text.",
+                tokenType
+            );
+        }
+
+        private Token CreateNameToken(int nameStart, int nameLength, int fromLine, int fromCol)
+        {
+            if (
+                Token.TryGetReservedTokenType(
+                    _code,
+                    nameStart,
+                    nameLength,
+                    out TokenType reservedType,
+                    out string reservedText
+                )
+            )
             {
-                return CreateToken(reservedType.Value, fromLine, fromCol, name);
+                return CreateToken(reservedType, fromLine, fromCol, reservedText);
             }
-            else
-            {
-                return CreateToken(TokenType.Name, fromLine, fromCol, name);
-            }
+
+            string name = _code.Substring(nameStart, nameLength);
+            return CreateToken(TokenType.Name, fromLine, fromCol, name);
         }
 
         private Token CreateToken(
@@ -763,15 +779,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
             return t;
         }
 
-        private string ReadNameToken()
+        private int ReadNameTokenLength()
         {
-            using Utf16ValueStringBuilder name = ZStringBuilder.CreateNested();
-
-            for (char c = CursorChar(); CursorNotEof(); c = CursorCharNext())
+            int start = _cursor;
+            while (CursorNotEof())
             {
+                char c = CursorChar();
                 if (char.IsLetterOrDigit(c) || c == '_')
                 {
-                    name.Append(c);
+                    CursorNext();
                 }
                 else
                 {
@@ -779,7 +795,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
                 }
             }
 
-            return name.ToString();
+            return _cursor - start;
         }
     }
 }

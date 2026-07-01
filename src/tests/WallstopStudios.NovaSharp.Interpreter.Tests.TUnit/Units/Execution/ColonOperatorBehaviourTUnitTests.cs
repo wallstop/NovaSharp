@@ -72,6 +72,64 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task TreatAsDotKeepsMethodCallForCallbackViews(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            bool? observed = null;
+            DataType? firstArgumentType = null;
+
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    observed = args.IsMethodCall;
+                    firstArgumentType = args.Count > 0 ? args[0].Type : null;
+                    return DynValue.NewNumber(args.Count);
+                }
+            );
+
+            Table target = new(script);
+            target.Set("invoke", callback);
+            script.Globals["target"] = DynValue.NewTable(target);
+            script.Options.ColonOperatorClrCallbackBehaviour = ColonOperatorBehaviour.TreatAsDot;
+
+            script.DoString("return target:invoke(123)");
+
+            await Assert.That(observed).IsTrue().ConfigureAwait(false);
+            await Assert.That(firstArgumentType).IsEqualTo(DataType.Table).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task TreatAsColonDisablesMethodCallFlagForCallbackViews(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            bool? observed = null;
+            DataType? firstArgumentType = null;
+
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    observed = args.IsMethodCall;
+                    firstArgumentType = args.Count > 0 ? args[0].Type : null;
+                    return DynValue.NewNumber(args.Count);
+                }
+            );
+
+            Table target = new(script);
+            target.Set("invoke", callback);
+            script.Globals["target"] = DynValue.NewTable(target);
+            script.Options.ColonOperatorClrCallbackBehaviour = ColonOperatorBehaviour.TreatAsColon;
+
+            script.DoString("return target:invoke(123)");
+
+            await Assert.That(observed).IsFalse().ConfigureAwait(false);
+            await Assert.That(firstArgumentType).IsEqualTo(DataType.Table).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task TreatAsDotOnUserDataOnlyPreservesUserDataMethodCalls(
             LuaCompatibilityVersion version
         )

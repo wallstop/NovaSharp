@@ -19,6 +19,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
     public sealed class ProcessorCoreLifecycleTUnitTests
     {
+        private static readonly TimeSpan WorkerJoinTimeout = TimeSpan.FromSeconds(10);
+
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task CallThrowsWhenEnteredFromDifferentThread(LuaCompatibilityVersion version)
@@ -32,6 +34,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 Environment.CurrentManagedThreadId,
                 executionNesting: 1
             );
+            using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
+            {
+                processor.SetThreadOwnershipStateForTests(-1, executionNesting: 0);
+                script.Options.CheckThreadAccess = false;
+            });
 
             InvalidOperationException observed = null;
             Thread worker = new(() =>
@@ -49,15 +56,66 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 IsBackground = true,
             };
             worker.Start();
-            worker.Join();
+            JoinWorker(worker);
 
             await Assert.That(observed).IsNotNull();
             await Assert
                 .That(observed.Message)
                 .Contains("Cannot enter the same NovaSharp processor");
+        }
 
-            processor.SetThreadOwnershipStateForTests(-1, executionNesting: 0);
-            script.Options.CheckThreadAccess = false;
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task NestedEntryKeepsThreadOwnershipUntilOutermostLeave(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            script.Options.CheckThreadAccess = true;
+            DynValue chunk = script.LoadString("return 42");
+            Processor processor = script.GetMainProcessorForTests();
+
+            processor.EnterProcessorForTests();
+            processor.EnterProcessorForTests();
+            processor.LeaveProcessorForTests();
+            using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
+            {
+                processor.LeaveProcessorForTests();
+                script.Options.CheckThreadAccess = false;
+            });
+
+            InvalidOperationException observed = null;
+            Thread worker = new(() =>
+            {
+                try
+                {
+                    script.Call(chunk);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    observed = ex;
+                }
+            })
+            {
+                IsBackground = true,
+            };
+
+            worker.Start();
+            JoinWorker(worker);
+
+            await Assert.That(observed).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(observed.Message)
+                .Contains("Cannot enter the same NovaSharp processor")
+                .ConfigureAwait(false);
+        }
+
+        private static void JoinWorker(Thread worker)
+        {
+            if (!worker.Join(WorkerJoinTimeout))
+            {
+                throw new TimeoutException("Worker thread did not finish.");
+            }
         }
 
         [global::TUnit.Core.Test]

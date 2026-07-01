@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 {
+    using System;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
@@ -32,6 +33,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             foreach (DynValue v in values)
             {
                 CheckScriptOwnership(containingResource, v);
+            }
+        }
+
+        /// <summary>
+        /// Ensures every DynValue in the span belongs to the same script as the containing resource.
+        /// </summary>
+        public static void CheckScriptOwnership(
+            this IScriptPrivateResource containingResource,
+            ReadOnlySpan<DynValue> values
+        )
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                CheckScriptOwnership(containingResource, values[i]);
             }
         }
 

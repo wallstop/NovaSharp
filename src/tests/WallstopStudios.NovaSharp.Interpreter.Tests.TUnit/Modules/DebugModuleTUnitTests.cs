@@ -1073,11 +1073,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task GetInfoFromFrameReturnsStringPlaceholderForClrFunction(
+        public async Task GetInfoFromFrameReturnsClrFunctionWithFFlag(
             LuaCompatibilityVersion version
         )
         {
-            // Tests BuildFunctionPlaceholder for CLR functions (frame.Address < 0)
             // Using a callback to get a frame-based getinfo for a CLR frame
             Script script = CreateScriptWithVersion(version);
 
@@ -1098,9 +1097,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
             await Assert.That(infoTable).IsNotNull().ConfigureAwait(false);
             DynValue func = infoTable.Get("func");
-            // Frame-based getinfo for CLR frames returns a string placeholder
-            await Assert.That(func.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert.That(func.String).StartsWith("function:").ConfigureAwait(false);
+            await Assert.That(func.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -1109,11 +1106,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task GetInfoFromFrameReturnsStringPlaceholderForLuaFunction(
+        public async Task GetInfoFromFrameReturnsLuaFunctionWithFFlag(
             LuaCompatibilityVersion version
         )
         {
-            // Tests BuildFunctionPlaceholder for Lua functions (frame.Address >= 0)
             // Level 1 gets the Lua caller's frame (probe), level 0 is getinfo itself
             Script script = CreateScriptWithVersion(version);
 
@@ -1121,15 +1117,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                 @"
                 local function probe()
                     local info = debug.getinfo(1, 'f')
-                    return info.func
+                    local funcInfo = debug.getinfo(info.func, 'S')
+                    return type(info.func) .. ':' .. funcInfo.what .. ':' .. funcInfo.short_src
                 end
                 return probe()
-                "
+                ",
+                codeFriendlyName: "frame-info.lua"
             );
 
-            // Frame-based getinfo for Lua frames returns a hex address placeholder
             await Assert.That(result.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-            await Assert.That(result.String).StartsWith("function: 0x").ConfigureAwait(false);
+            await Assert
+                .That(result.String)
+                .IsEqualTo("function:Lua:frame-info.lua")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -3106,6 +3106,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
                     .Because("Lua 5.2+: threeExplicitUpvalues has 3 upvalues (a + b + c)")
                     .ConfigureAwait(false);
             }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task GetInfoReportsParameterAndVarargMetadata(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local function describe(value)
+                    if value == nil then
+                        return 'nil'
+                    end
+                    return tostring(value)
+                end
+
+                local function fixed(a, b)
+                    return a + b
+                end
+
+                local function vararg(a, b, ...)
+                    local active = debug.getinfo(1, 'u')
+                    return active.nparams, active.isvararg
+                end
+
+                local fixedInfo = debug.getinfo(fixed, 'u')
+                local varargInfo = debug.getinfo(vararg, 'u')
+                local activeParams, activeVararg = vararg(1, 2, 3)
+
+                return table.concat({
+                    describe(fixedInfo.nparams),
+                    describe(fixedInfo.isvararg),
+                    describe(varargInfo.nparams),
+                    describe(varargInfo.isvararg),
+                    describe(activeParams),
+                    describe(activeVararg),
+                }, ':')
+                "
+            );
+
+            string expected =
+                version == LuaCompatibilityVersion.Lua51
+                    ? "nil:nil:nil:nil:nil:nil"
+                    : "2:false:2:true:2:true";
+
+            await Assert.That(result.String).IsEqualTo(expected).ConfigureAwait(false);
         }
 
         // ========================

@@ -59,6 +59,53 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
         }
 
         [global::TUnit.Core.Test]
+        public async Task TryObjectToTrivialDynValueUsesCachedScalars()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
+            Script script = new();
+
+            DynValue trueResult = ClrToScriptConversions.TryObjectToTrivialDynValue(script, true);
+            await Assert.That(trueResult).IsSameReferenceAs(DynValue.True).ConfigureAwait(false);
+
+            DynValue falseResult = ClrToScriptConversions.TryObjectToTrivialDynValue(script, false);
+            await Assert.That(falseResult).IsSameReferenceAs(DynValue.False).ConfigureAwait(false);
+
+            DynValue integerResult = ClrToScriptConversions.TryObjectToTrivialDynValue(script, 42);
+            await Assert
+                .That(integerResult)
+                .IsSameReferenceAs(DynValue.FromInteger(42))
+                .ConfigureAwait(false);
+            await Assert.That(integerResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue negativeIntegerResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                -1
+            );
+            await Assert
+                .That(negativeIntegerResult)
+                .IsSameReferenceAs(DynValue.FromInteger(-1))
+                .ConfigureAwait(false);
+            await Assert.That(negativeIntegerResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue wholeDoubleResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                1d
+            );
+            await Assert
+                .That(wholeDoubleResult)
+                .IsSameReferenceAs(DynValue.FromNumber(1d))
+                .ConfigureAwait(false);
+            await Assert.That(wholeDoubleResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue fractionalDoubleResult = ClrToScriptConversions.TryObjectToTrivialDynValue(
+                script,
+                3.5d
+            );
+            await Assert.That(fractionalDoubleResult.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(fractionalDoubleResult.Number).IsEqualTo(3.5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task TryObjectToSimpleDynValueUsesCustomConverters()
         {
             using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
@@ -75,6 +122,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             );
 
             await Assert.That(result.String).IsEqualTo("converted").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TryObjectToSimpleDynValuePrefersPrimitiveCustomConverters()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear(
+                registry =>
+                    registry.SetClrToScriptCustomConversion<int>(
+                        (_, value) => DynValue.NewString("custom:" + value)
+                    )
+            );
+            Script script = new();
+
+            DynValue result = ClrToScriptConversions.TryObjectToSimpleDynValue(script, 42);
+
+            await Assert.That(result.String).IsEqualTo("custom:42").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TryObjectToSimpleDynValueUsesCachedScalars()
+        {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
+            Script script = new();
+
+            DynValue trueResult = ClrToScriptConversions.TryObjectToSimpleDynValue(script, true);
+            await Assert.That(trueResult).IsSameReferenceAs(DynValue.True).ConfigureAwait(false);
+
+            DynValue integerResult = ClrToScriptConversions.TryObjectToSimpleDynValue(script, 42);
+            await Assert
+                .That(integerResult)
+                .IsSameReferenceAs(DynValue.FromInteger(42))
+                .ConfigureAwait(false);
+            await Assert.That(integerResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue wholeDoubleResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                1d
+            );
+            await Assert
+                .That(wholeDoubleResult)
+                .IsSameReferenceAs(DynValue.FromNumber(1d))
+                .ConfigureAwait(false);
+            await Assert.That(wholeDoubleResult.IsInteger).IsTrue().ConfigureAwait(false);
+
+            DynValue fractionalDoubleResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                3.5d
+            );
+            await Assert.That(fractionalDoubleResult.IsFloat).IsTrue().ConfigureAwait(false);
+            await Assert.That(fractionalDoubleResult.Number).IsEqualTo(3.5d).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -95,6 +192,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .That(closureResult.Type)
                 .IsEqualTo(DataType.Function)
                 .ConfigureAwait(false);
+            await Assert
+                .That(closureResult.Function)
+                .IsSameReferenceAs(closureValue.Function)
+                .ConfigureAwait(false);
+
+            DynValue repeatedClosureResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                closureValue.Function
+            );
+            await Assert
+                .That(repeatedClosureResult)
+                .IsSameReferenceAs(closureResult)
+                .ConfigureAwait(false);
 
             CallbackFunction callback = new((_, _) => DynValue.NewNumber(7));
             DynValue callbackResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
@@ -105,6 +215,65 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
                 .That(callbackResult.Type)
                 .IsEqualTo(DataType.ClrFunction)
                 .ConfigureAwait(false);
+
+            DynValue repeatedCallbackResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                callback
+            );
+            await Assert
+                .That(repeatedCallbackResult)
+                .IsSameReferenceAs(callbackResult)
+                .ConfigureAwait(false);
+
+            int? callbackViewCount = null;
+            ScriptFunctionCallbackView callbackView = (_, args) =>
+            {
+                callbackViewCount = args.Count;
+                return DynValue.NewNumber(args.Count);
+            };
+            DynValue callbackViewResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                callbackView
+            );
+            await Assert
+                .That(callbackViewResult.Type)
+                .IsEqualTo(DataType.ClrFunction)
+                .ConfigureAwait(false);
+
+            DynValue callbackViewReturn = script.Call(
+                callbackViewResult,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2)
+            );
+            await Assert.That(callbackViewReturn.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(callbackViewCount).IsEqualTo(2).ConfigureAwait(false);
+
+            int? noContextCallbackViewCount = null;
+            ScriptFunctionCallbackViewNoContext noContextCallbackView = args =>
+            {
+                noContextCallbackViewCount = args.Count;
+                return DynValue.NewNumber(args.Count);
+            };
+            DynValue noContextCallbackViewResult = ClrToScriptConversions.TryObjectToSimpleDynValue(
+                script,
+                noContextCallbackView
+            );
+            await Assert
+                .That(noContextCallbackViewResult.Type)
+                .IsEqualTo(DataType.ClrFunction)
+                .ConfigureAwait(false);
+
+            DynValue noContextCallbackViewReturn = script.Call(
+                noContextCallbackViewResult,
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3)
+            );
+            await Assert
+                .That(noContextCallbackViewReturn.Number)
+                .IsEqualTo(3d)
+                .ConfigureAwait(false);
+            await Assert.That(noContextCallbackViewCount).IsEqualTo(3).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -200,8 +369,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop.Conver
             CallbackFunction function = new((_, _) => DynValue.NewNumber(7));
 
             DynValue result = ClrToScriptConversions.ObjectToDynValue(script, function);
+            DynValue repeatedResult = ClrToScriptConversions.ObjectToDynValue(script, function);
 
             await Assert.That(result.Type).IsEqualTo(DataType.ClrFunction).ConfigureAwait(false);
+            await Assert.That(repeatedResult).IsSameReferenceAs(result).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

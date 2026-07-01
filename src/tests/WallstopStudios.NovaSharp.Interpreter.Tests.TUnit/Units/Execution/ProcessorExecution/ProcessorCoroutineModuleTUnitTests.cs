@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
     public sealed class ProcessorCoroutineModuleTUnitTests
     {
@@ -208,6 +209,397 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             await Assert.That(result.Type).IsEqualTo(DataType.String);
             await Assert.That(result.String).IsEqualTo("running");
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task InitialResumeFixedOverloadsPreserveTupleExpansion(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+
+            DynValue oneArgCoroutine = script.CreateCoroutine(capture);
+            DynValue oneArgResult = oneArgCoroutine.Coroutine.Resume(
+                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2))
+            );
+            await AssertTupleNumbers(oneArgResult, 2d, 1d, 2d).ConfigureAwait(false);
+
+            DynValue twoArgCoroutine = script.CreateCoroutine(capture);
+            DynValue twoArgResult = twoArgCoroutine.Coroutine.Resume(
+                DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2)),
+                DynValue.NewNumber(3)
+            );
+            await AssertTupleNumbers(twoArgResult, 2d, 1d, 3d).ConfigureAwait(false);
+
+            DynValue nestedTail = DynValue.NewTuple(
+                DynValue.NewNumber(3),
+                DynValue.NewTuple(DynValue.NewNumber(4), DynValue.NewNumber(5))
+            );
+            DynValue threeArgCoroutine = script.CreateCoroutine(capture);
+            DynValue threeArgResult = threeArgCoroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                nestedTail
+            );
+            await AssertTupleNumbers(threeArgResult, 5d, 1d, 2d, 3d, 4d, 5d).ConfigureAwait(false);
+
+            DynValue fourArgTail = DynValue.NewTuple(
+                DynValue.NewNumber(4),
+                DynValue.NewTuple(DynValue.NewNumber(5), DynValue.NewNumber(6))
+            );
+            DynValue fourArgCoroutine = script.CreateCoroutine(capture);
+            DynValue fourArgResult = fourArgCoroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                fourArgTail
+            );
+            await AssertTupleNumbers(fourArgResult, 6d, 1d, 2d, 3d, 4d, 5d, 6d)
+                .ConfigureAwait(false);
+
+            DynValue fiveArgTail = DynValue.NewTuple(
+                DynValue.NewNumber(5),
+                DynValue.NewTuple(DynValue.NewNumber(6), DynValue.NewNumber(7))
+            );
+            DynValue fiveArgCoroutine = script.CreateCoroutine(capture);
+            DynValue fiveArgResult = fiveArgCoroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(4),
+                fiveArgTail
+            );
+            await AssertTupleNumbers(fiveArgResult, 7d, 1d, 2d, 3d, 4d, 5d, 6d, 7d)
+                .ConfigureAwait(false);
+
+            DynValue emptyTailCoroutine = script.CreateCoroutine(capture);
+            DynValue emptyTailResult = emptyTailCoroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.EmptyTuple
+            );
+            await AssertTupleNumbers(emptyTailResult, 1d, 1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedResumeFixedFourDynValuesPreservesArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function() local a, b, c, d = coroutine.yield('ready') return select('#', a, b, c, d), a, b, c, d end"
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            DynValue first = coroutine.Coroutine.Resume();
+            await Assert.That(first.String).IsEqualTo("ready").ConfigureAwait(false);
+
+            DynValue resumed = coroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(4)
+            );
+
+            await AssertTupleNumbers(resumed, 4d, 1d, 2d, 3d, 4d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedResumeFixedFiveDynValuesPreservesArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function() local a, b, c, d, e = coroutine.yield('ready') return select('#', a, b, c, d, e), a, b, c, d, e end"
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            DynValue first = coroutine.Coroutine.Resume();
+            await Assert.That(first.String).IsEqualTo("ready").ConfigureAwait(false);
+
+            DynValue resumed = coroutine.Coroutine.Resume(
+                DynValue.NewNumber(1),
+                DynValue.NewNumber(2),
+                DynValue.NewNumber(3),
+                DynValue.NewNumber(4),
+                DynValue.NewNumber(5)
+            );
+
+            await AssertTupleNumbers(resumed, 5d, 1d, 2d, 3d, 4d, 5d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedResumeWithNoArgumentsPreservesZeroArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function() return select('#', coroutine.yield('ready')) end"
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            DynValue first = coroutine.Coroutine.Resume();
+            await Assert.That(first.String).IsEqualTo("ready").ConfigureAwait(false);
+
+            DynValue resumed = coroutine.Coroutine.Resume();
+
+            await Assert.That(resumed.Number).IsEqualTo(0d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task InitialResumeObjectOverloadsPreserveNilAndArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+
+            DynValue oneArgCoroutine = script.CreateCoroutine(capture);
+            DynValue oneArgResult = oneArgCoroutine.Coroutine.Resume((object)null);
+            await Assert.That(oneArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(oneArgResult.Tuple.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(oneArgResult.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert
+                .That(oneArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+
+            DynValue threeArgCoroutine = script.CreateCoroutine(capture);
+            DynValue threeArgResult = threeArgCoroutine.Coroutine.Resume((object)null, "value", 42);
+            await Assert.That(threeArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(threeArgResult.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(threeArgResult.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert
+                .That(threeArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(threeArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(threeArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+
+            DynValue fourArgCoroutine = script.CreateCoroutine(capture);
+            DynValue fourArgResult = fourArgCoroutine.Coroutine.Resume(
+                (object)null,
+                "value",
+                42,
+                true
+            );
+            await Assert.That(fourArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple.Length).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple[0].Number).IsEqualTo(4d).ConfigureAwait(false);
+            await Assert
+                .That(fourArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(fourArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(fourArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+
+            DynValue fiveArgCoroutine = script.CreateCoroutine(capture);
+            DynValue fiveArgResult = fiveArgCoroutine.Coroutine.Resume(
+                (object)null,
+                "value",
+                42,
+                true,
+                "tail"
+            );
+            await Assert.That(fiveArgResult.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(fiveArgResult.Tuple.Length).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(fiveArgResult.Tuple[0].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert
+                .That(fiveArgResult.Tuple[1].Type)
+                .IsEqualTo(DataType.Nil)
+                .ConfigureAwait(false);
+            await Assert
+                .That(fiveArgResult.Tuple[2].String)
+                .IsEqualTo("value")
+                .ConfigureAwait(false);
+            await Assert.That(fiveArgResult.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(fiveArgResult.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(fiveArgResult.Tuple[5].String)
+                .IsEqualTo("tail")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SuspendedResumeDynValueArrayPreservesNullsAsNil(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                @"
+                return function()
+                    local a, b, c = coroutine.yield('pause')
+                    return select('#', a, b, c), a == nil, b, c == nil
+                end
+                "
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            DynValue yielded = coroutine.Coroutine.Resume();
+            await Assert.That(yielded.String).IsEqualTo("pause").ConfigureAwait(false);
+
+            DynValue resumed = coroutine.Coroutine.Resume(
+                new DynValue[] { null, DynValue.NewString("middle"), null }
+            );
+
+            await Assert.That(resumed.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(resumed.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(resumed.Tuple[0].Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(resumed.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(resumed.Tuple[2].String).IsEqualTo("middle").ConfigureAwait(false);
+            await Assert.That(resumed.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task InitialResumeObjectArrayPreservesSpreadAndSingleObjectForms(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), type((...)), ... end"
+            );
+            object[] args = new object[] { 1, 2 };
+
+            DynValue spreadCoroutine = script.CreateCoroutine(capture);
+            DynValue spread = spreadCoroutine.Coroutine.Resume(args);
+            await Assert.That(spread.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(spread.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(spread.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(spread.Tuple[1].String).IsEqualTo("number").ConfigureAwait(false);
+            await Assert.That(spread.Tuple[2].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(spread.Tuple[3].Number).IsEqualTo(2d).ConfigureAwait(false);
+
+            DynValue castCoroutine = script.CreateCoroutine(capture);
+            DynValue cast = castCoroutine.Coroutine.Resume((object)args);
+            await Assert.That(cast.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(cast.Tuple.Length).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(cast.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(cast.Tuple[1].String).IsEqualTo("table").ConfigureAwait(false);
+            await Assert.That(cast.Tuple[2].Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task InitialResumeObjectArgumentsSupportsCallerOwnedSpanSlice(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                "return function(...) return select('#', ...), ... end"
+            );
+            object[] args = { "prefix", null, "value", 42, true, "tail", "suffix" };
+
+            DynValue coroutine = script.CreateCoroutine(capture);
+            DynValue result = coroutine.Coroutine.ResumeObjectArguments(args.AsSpan(1, 5));
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(5d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Type).IsEqualTo(DataType.Nil).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].String).IsEqualTo("value").ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(42d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[4].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[5].String).IsEqualTo("tail").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task SuspendedResumeObjectArgumentsSupportsPooledSpanSlice(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue capture = script.DoString(
+                @"
+                return function()
+                    local a, b, c, d, e, f = coroutine.yield('ready')
+                    return select('#', a, b, c, d, e, f), a, b, c, d, e, f
+                end
+                "
+            );
+            DynValue coroutine = script.CreateCoroutine(capture);
+            object[] args = { "prefix", 1, 2, 3, 4, 5, 6, "suffix" };
+
+            DynValue yielded = coroutine.Coroutine.Resume();
+            DynValue result = coroutine.Coroutine.ResumeObjectArguments(args.AsSpan(1, 6));
+
+            await Assert.That(yielded.String).IsEqualTo("ready").ConfigureAwait(false);
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(6d).ConfigureAwait(false);
+            for (int i = 1; i < result.Tuple.Length; i++)
+            {
+                await Assert
+                    .That(result.Tuple[i].Number)
+                    .IsEqualTo((double)i)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task InitialResumeObjectArgumentsWithNullArrayThrows()
+        {
+            Script script = new(CoreModulePresets.Complete);
+            DynValue capture = script.DoString("return function(...) return ... end");
+            DynValue coroutine = script.CreateCoroutine(capture);
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                coroutine.Coroutine.ResumeObjectArguments((object[])null)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("args").ConfigureAwait(false);
         }
 
         /// <summary>
@@ -692,6 +1084,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
                 .That(result.Coroutine)
                 .IsEqualTo(created.Coroutine)
                 .Because("coroutine.running() should return the same coroutine as create");
+        }
+
+        private static async Task AssertTupleNumbers(DynValue value, params double[] expected)
+        {
+            await Assert.That(value.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(value.Tuple.Length).IsEqualTo(expected.Length).ConfigureAwait(false);
+
+            for (int i = 0; i < expected.Length; i++)
+            {
+                await Assert
+                    .That(value.Tuple[i].Number)
+                    .IsEqualTo(expected[i])
+                    .ConfigureAwait(false);
+            }
         }
     }
 }

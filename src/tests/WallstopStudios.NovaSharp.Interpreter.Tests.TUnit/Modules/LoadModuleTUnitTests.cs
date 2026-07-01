@@ -212,6 +212,130 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 128)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, 128)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 128)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 128)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 1)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 128)]
+        public async Task LoadReaderAggregatesFragmentCounts(
+            LuaCompatibilityVersion version,
+            int fragmentCount
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString(
+                $@"
+                local fragment_count = {fragmentCount}
+                local emitted = 0
+                local reader = function()
+                    emitted = emitted + 1
+                    if emitted == 1 then
+                        return 'local total = 0\n'
+                    end
+                    if emitted <= fragment_count + 1 then
+                        return 'total = total + 1\n'
+                    end
+                    if emitted == fragment_count + 2 then
+                        return 'return total'
+                    end
+                    return nil
+                end
+                local chunk, err = load(reader, 'chunk-many-fragments')
+                if chunk == nil then
+                    error(err)
+                end
+                return chunk()
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo((double)fragmentCount);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 42d)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52, null)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, null)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, null)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, null)]
+        public async Task LoadReaderHandlesEmptyStringByVersion(
+            LuaCompatibilityVersion version,
+            double? expectedNumber
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString(
+                @"
+                local emitted = 0
+                local reader = function()
+                    emitted = emitted + 1
+                    if emitted == 1 then
+                        return ''
+                    end
+                    if emitted == 2 then
+                        return 'return 42'
+                    end
+                    return nil
+                end
+                local chunk, err = load(reader, 'chunk-empty-fragment')
+                if chunk == nil then
+                    error(err)
+                end
+                local value = chunk()
+                if value == nil then
+                    return nil
+                end
+                return value
+                "
+            );
+
+            if (expectedNumber.HasValue)
+            {
+                await Assert.That(result.Number).IsEqualTo(expectedNumber.Value);
+            }
+            else
+            {
+                await Assert.That(result.IsNil()).IsTrue();
+            }
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task LoadReaderUsesFirstReturnValueWhenReaderReturnsMultipleValues(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+            DynValue result = script.DoString(
+                @"
+                local emitted = false
+                local reader = function()
+                    if emitted then
+                        return nil, 'ignored'
+                    end
+                    emitted = true
+                    return 'return 77', 'ignored'
+                end
+                local chunk, err = load(reader, 'chunk-multiple-reader-results')
+                if chunk == nil then
+                    error(err)
+                end
+                return chunk()
+                "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(77d);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]

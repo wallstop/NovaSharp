@@ -7,9 +7,12 @@ using NLua;
 using WallstopStudios.NovaSharp.Interpreter;
 using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 using WallstopStudios.NovaSharp.Interpreter.Modules;
+using MoonCoreModules = MoonSharp.Interpreter.CoreModules;
+using MoonDynValue = MoonSharp.Interpreter.DynValue;
+using MoonScript = MoonSharp.Interpreter.Script;
 
 /// <summary>
-/// BenchmarkDotNet suite that compares NovaSharp and NLua compilation/execution throughput.
+/// BenchmarkDotNet suite that compares NovaSharp, MoonSharp, and NLua compilation/execution throughput.
 /// </summary>
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]
@@ -22,7 +25,9 @@ public class LuaPerformanceBenchmarks : IDisposable
 {
     private string _source = string.Empty;
     private Script _novaSharpScript;
-    private DynValue _novaSharpFunction = DynValue.Nil;
+    private CompiledScript _novaSharpFunction;
+    private MoonScript _moonSharpScript;
+    private MoonDynValue _moonSharpFunction = MoonDynValue.Nil;
     private Lua _nLua;
     private LuaFunction _nLuaFunction;
     private bool _disposed;
@@ -31,6 +36,8 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// Scenario executed for each benchmark iteration.
     /// </summary>
     [Params(
+        nameof(ScriptScenario.NumericLoops),
+        nameof(ScriptScenario.TableMutation),
         nameof(ScriptScenario.TowerOfHanoi),
         nameof(ScriptScenario.EightQueens),
         nameof(ScriptScenario.CoroutinePingPong)
@@ -48,16 +55,24 @@ public class LuaPerformanceBenchmarks : IDisposable
 
     [GlobalSetup]
     /// <summary>
-    /// Compiles the selected scenario for both NovaSharp and NLua before the benchmarks run.
+    /// Compiles the selected scenario for NovaSharp, MoonSharp, and NLua before the benchmarks run.
     /// </summary>
     public void Setup()
     {
         Script.WarmUp();
+        MoonScript.WarmUp();
 
         _source = BenchmarkScripts.GetScript(CurrentScenario);
 
         _novaSharpScript = new Script(CoreModulePresets.Complete);
-        _novaSharpFunction = _novaSharpScript.LoadString(
+        _novaSharpFunction = _novaSharpScript.PrepareString(
+            _source,
+            null,
+            $"precompiled_{CurrentScenario}"
+        );
+
+        _moonSharpScript = new MoonScript(MoonCoreModules.Preset_Complete);
+        _moonSharpFunction = _moonSharpScript.LoadString(
             _source,
             null,
             $"precompiled_{CurrentScenario}"
@@ -77,17 +92,33 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// <summary>
     /// Compiles the scenario using a fresh NovaSharp script instance.
     /// </summary>
-    public DynValue NovaSharpCompile()
+    public CompiledScript NovaSharpCompile()
     {
         Script script = new(CoreModulePresets.Complete);
-        return script.LoadString(_source, null, $"compile_{CurrentScenario}");
+        return script.PrepareString(_source, null, $"compile_{CurrentScenario}");
     }
 
     [Benchmark(Description = "NovaSharp Execute")]
     /// <summary>
     /// Executes the previously compiled NovaSharp chunk.
     /// </summary>
-    public DynValue NovaSharpExecute() => _novaSharpScript.Call(_novaSharpFunction);
+    public DynValue NovaSharpExecute() => _novaSharpFunction.Execute();
+
+    [Benchmark(Description = "MoonSharp Compile")]
+    /// <summary>
+    /// Compiles the scenario using MoonSharp.
+    /// </summary>
+    public MoonDynValue MoonSharpCompile()
+    {
+        MoonScript script = new(MoonCoreModules.Preset_Complete);
+        return script.LoadString(_source, null, $"compile_{CurrentScenario}");
+    }
+
+    [Benchmark(Description = "MoonSharp Execute")]
+    /// <summary>
+    /// Executes the previously compiled MoonSharp chunk.
+    /// </summary>
+    public MoonDynValue MoonSharpExecute() => _moonSharpScript.Call(_moonSharpFunction);
 
     [Benchmark(Description = "NLua Compile")]
     /// <summary>

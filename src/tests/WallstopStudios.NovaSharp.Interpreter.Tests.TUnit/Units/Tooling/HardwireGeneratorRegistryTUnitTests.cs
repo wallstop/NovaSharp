@@ -19,6 +19,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task UnknownGeneratorFallsBackToNullGenerator()
         {
             string typeName = "Hardwire.Tests.Unknown." + Guid.NewGuid().ToString("N");
@@ -41,6 +42,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task RegisterOverridesExistingGenerator()
         {
             string typeName = "Hardwire.Tests.Custom." + Guid.NewGuid().ToString("N");
@@ -71,12 +73,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public void RegisterThrowsWhenGeneratorNull()
         {
             Assert.Throws<ArgumentNullException>(() => HardwireGeneratorRegistry.Register(null));
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public void RegisterThrowsWhenManagedTypeMissing()
         {
             RecordingGenerator generator = new(managedType: "   ");
@@ -85,6 +89,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public void GetGeneratorThrowsWhenTypeNullOrWhitespace()
         {
             Assert.Throws<ArgumentException>(() => HardwireGeneratorRegistry.GetGenerator(null));
@@ -92,6 +97,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public async Task DiscoverFromAssemblyRegistersGenerators()
         {
             string managedType = typeof(DynValueMemberDescriptor).FullName;
@@ -105,27 +111,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
             await Assert
                 .That(generator)
                 .IsTypeOf<DynValueMemberDescriptorGenerator>()
+                .Because(
+                    $"Discovery should register {managedType}, but resolved {generator.GetType().FullName}."
+                )
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task RegisterPredefinedPopulatesBuiltInGenerators()
+        [global::TUnit.Core.Arguments(
+            typeof(DynValueMemberDescriptor),
+            nameof(DynValueMemberDescriptorGenerator)
+        )]
+        [global::TUnit.Core.Arguments(
+            typeof(MethodMemberDescriptor),
+            nameof(MethodMemberDescriptorGenerator)
+        )]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
+        public async Task RegisterPredefinedPopulatesBuiltInGenerators(
+            Type descriptorType,
+            string expectedGeneratorName
+        )
         {
+            ArgumentNullException.ThrowIfNull(descriptorType);
+            ArgumentNullException.ThrowIfNull(expectedGeneratorName);
+
             HardwireGeneratorRegistry.RegisterPredefined();
 
-            string methodDescriptorType = typeof(MethodMemberDescriptor).FullName;
-
-            IHardwireGenerator generator = HardwireGeneratorRegistry.GetGenerator(
-                methodDescriptorType
-            );
+            string managedType = descriptorType.FullName;
+            IHardwireGenerator generator = HardwireGeneratorRegistry.GetGenerator(managedType);
 
             await Assert
                 .That(generator.ManagedType)
-                .IsEqualTo(methodDescriptorType)
+                .IsEqualTo(managedType)
+                .Because(
+                    $"Predefined registry should contain {managedType}, but resolved {generator.GetType().FullName}."
+                )
                 .ConfigureAwait(false);
             await Assert
                 .That(generator.GetType().Name)
-                .IsEqualTo(nameof(MethodMemberDescriptorGenerator))
+                .IsEqualTo(expectedGeneratorName)
+                .Because($"Unexpected generator for {managedType}.")
                 .ConfigureAwait(false);
         }
 

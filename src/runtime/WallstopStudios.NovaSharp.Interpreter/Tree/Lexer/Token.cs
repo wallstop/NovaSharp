@@ -235,54 +235,417 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Lexer
         /// <returns>The matched token type, or <c>null</c> when the word is not reserved.</returns>
         public static TokenType? GetReservedTokenType(string reservedWord)
         {
-            switch (reservedWord)
+            if (reservedWord == null)
             {
-                case LuaKeywords.And:
-                    return TokenType.And;
-                case LuaKeywords.Break:
-                    return TokenType.Break;
-                case LuaKeywords.Do:
-                    return TokenType.Do;
-                case LuaKeywords.Else:
-                    return TokenType.Else;
-                case LuaKeywords.ElseIf:
-                    return TokenType.ElseIf;
-                case LuaKeywords.End:
-                    return TokenType.End;
-                case LuaKeywords.False:
-                    return TokenType.False;
-                case LuaKeywords.For:
-                    return TokenType.For;
-                case LuaKeywords.Function:
-                    return TokenType.Function;
-                case LuaKeywords.Goto:
-                    return TokenType.Goto;
-                case LuaKeywords.If:
-                    return TokenType.If;
-                case LuaKeywords.In:
-                    return TokenType.In;
-                case LuaKeywords.Local:
-                    return TokenType.Local;
-                case LuaKeywords.Nil:
-                    return TokenType.Nil;
-                case LuaKeywords.Not:
-                    return TokenType.Not;
-                case LuaKeywords.Or:
-                    return TokenType.Or;
-                case LuaKeywords.Repeat:
-                    return TokenType.Repeat;
-                case LuaKeywords.Return:
-                    return TokenType.Return;
-                case LuaKeywords.Then:
-                    return TokenType.Then;
-                case LuaKeywords.True:
-                    return TokenType.True;
-                case LuaKeywords.Until:
-                    return TokenType.Until;
-                case LuaKeywords.While:
-                    return TokenType.While;
+                return null;
+            }
+
+            return TryGetReservedTokenType(
+                reservedWord,
+                0,
+                reservedWord.Length,
+                out TokenType tokenType,
+                out _
+            )
+                ? tokenType
+                : null;
+        }
+
+        /// <summary>
+        /// Maps a reserved word range to its token type and canonical keyword text, if any.
+        /// </summary>
+        /// <param name="source">Source string containing the identifier text.</param>
+        /// <param name="start">The start offset of the identifier.</param>
+        /// <param name="length">The identifier length.</param>
+        /// <param name="tokenType">The matched token type.</param>
+        /// <param name="text">The canonical keyword text.</param>
+        /// <returns>true when the range is a reserved word; otherwise, false.</returns>
+        internal static bool TryGetReservedTokenType(
+            string source,
+            int start,
+            int length,
+            out TokenType tokenType,
+            out string text
+        )
+        {
+            tokenType = default;
+            text = null;
+
+            if (source == null || start < 0 || length < 0 || start > source.Length - length)
+            {
+                return false;
+            }
+
+            switch (length)
+            {
+                case 2:
+                    return TryGetTwoCharacterKeyword(source, start, out tokenType, out text);
+                case 3:
+                    return TryGetThreeCharacterKeyword(source, start, out tokenType, out text);
+                case 4:
+                    return TryGetFourCharacterKeyword(source, start, out tokenType, out text);
+                case 5:
+                    return TryGetFiveCharacterKeyword(source, start, out tokenType, out text);
+                case 6:
+                    return TryGetSixCharacterKeyword(source, start, out tokenType, out text);
+                case 8:
+                    if (MatchesKeyword(source, start, LuaKeywords.Function))
+                    {
+                        tokenType = TokenType.Function;
+                        text = LuaKeywords.Function;
+                        return true;
+                    }
+
+                    return false;
                 default:
-                    return null;
+                    return false;
+            }
+        }
+
+        private static bool TryGetTwoCharacterKeyword(
+            string source,
+            int start,
+            out TokenType tokenType,
+            out string text
+        )
+        {
+            char first = source[start];
+            char second = source[start + 1];
+            if (first == 'd' && second == 'o')
+            {
+                tokenType = TokenType.Do;
+                text = LuaKeywords.Do;
+                return true;
+            }
+
+            if (first == 'i' && second == 'f')
+            {
+                tokenType = TokenType.If;
+                text = LuaKeywords.If;
+                return true;
+            }
+
+            if (first == 'i' && second == 'n')
+            {
+                tokenType = TokenType.In;
+                text = LuaKeywords.In;
+                return true;
+            }
+
+            if (first == 'o' && second == 'r')
+            {
+                tokenType = TokenType.Or;
+                text = LuaKeywords.Or;
+                return true;
+            }
+
+            tokenType = default;
+            text = null;
+            return false;
+        }
+
+        private static bool TryGetThreeCharacterKeyword(
+            string source,
+            int start,
+            out TokenType tokenType,
+            out string text
+        )
+        {
+            char first = source[start];
+            if (first == 'a' && MatchesKeyword(source, start, LuaKeywords.And))
+            {
+                tokenType = TokenType.And;
+                text = LuaKeywords.And;
+                return true;
+            }
+
+            if (first == 'e' && MatchesKeyword(source, start, LuaKeywords.End))
+            {
+                tokenType = TokenType.End;
+                text = LuaKeywords.End;
+                return true;
+            }
+
+            if (first == 'f' && MatchesKeyword(source, start, LuaKeywords.For))
+            {
+                tokenType = TokenType.For;
+                text = LuaKeywords.For;
+                return true;
+            }
+
+            if (first == 'n' && MatchesKeyword(source, start, LuaKeywords.Nil))
+            {
+                tokenType = TokenType.Nil;
+                text = LuaKeywords.Nil;
+                return true;
+            }
+
+            if (first == 'n' && MatchesKeyword(source, start, LuaKeywords.Not))
+            {
+                tokenType = TokenType.Not;
+                text = LuaKeywords.Not;
+                return true;
+            }
+
+            tokenType = default;
+            text = null;
+            return false;
+        }
+
+        private static bool TryGetFourCharacterKeyword(
+            string source,
+            int start,
+            out TokenType tokenType,
+            out string text
+        )
+        {
+            char first = source[start];
+            if (first == 'e' && MatchesKeyword(source, start, LuaKeywords.Else))
+            {
+                tokenType = TokenType.Else;
+                text = LuaKeywords.Else;
+                return true;
+            }
+
+            if (first == 'g' && MatchesKeyword(source, start, LuaKeywords.Goto))
+            {
+                tokenType = TokenType.Goto;
+                text = LuaKeywords.Goto;
+                return true;
+            }
+
+            if (first == 't' && MatchesKeyword(source, start, LuaKeywords.Then))
+            {
+                tokenType = TokenType.Then;
+                text = LuaKeywords.Then;
+                return true;
+            }
+
+            if (first == 't' && MatchesKeyword(source, start, LuaKeywords.True))
+            {
+                tokenType = TokenType.True;
+                text = LuaKeywords.True;
+                return true;
+            }
+
+            tokenType = default;
+            text = null;
+            return false;
+        }
+
+        private static bool TryGetFiveCharacterKeyword(
+            string source,
+            int start,
+            out TokenType tokenType,
+            out string text
+        )
+        {
+            char first = source[start];
+            if (first == 'b' && MatchesKeyword(source, start, LuaKeywords.Break))
+            {
+                tokenType = TokenType.Break;
+                text = LuaKeywords.Break;
+                return true;
+            }
+
+            if (first == 'f' && MatchesKeyword(source, start, LuaKeywords.False))
+            {
+                tokenType = TokenType.False;
+                text = LuaKeywords.False;
+                return true;
+            }
+
+            if (first == 'l' && MatchesKeyword(source, start, LuaKeywords.Local))
+            {
+                tokenType = TokenType.Local;
+                text = LuaKeywords.Local;
+                return true;
+            }
+
+            if (first == 'u' && MatchesKeyword(source, start, LuaKeywords.Until))
+            {
+                tokenType = TokenType.Until;
+                text = LuaKeywords.Until;
+                return true;
+            }
+
+            if (first == 'w' && MatchesKeyword(source, start, LuaKeywords.While))
+            {
+                tokenType = TokenType.While;
+                text = LuaKeywords.While;
+                return true;
+            }
+
+            tokenType = default;
+            text = null;
+            return false;
+        }
+
+        private static bool TryGetSixCharacterKeyword(
+            string source,
+            int start,
+            out TokenType tokenType,
+            out string text
+        )
+        {
+            char first = source[start];
+            if (first == 'e' && MatchesKeyword(source, start, LuaKeywords.ElseIf))
+            {
+                tokenType = TokenType.ElseIf;
+                text = LuaKeywords.ElseIf;
+                return true;
+            }
+
+            if (first == 'r' && MatchesKeyword(source, start, LuaKeywords.Repeat))
+            {
+                tokenType = TokenType.Repeat;
+                text = LuaKeywords.Repeat;
+                return true;
+            }
+
+            if (first == 'r' && MatchesKeyword(source, start, LuaKeywords.Return))
+            {
+                tokenType = TokenType.Return;
+                text = LuaKeywords.Return;
+                return true;
+            }
+
+            tokenType = default;
+            text = null;
+            return false;
+        }
+
+        private static bool MatchesKeyword(string source, int start, string keyword)
+        {
+            for (int i = 0; i < keyword.Length; i++)
+            {
+                if (source[start + i] != keyword[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Maps syntax tokens with one canonical source spelling to their shared text.
+        /// </summary>
+        /// <param name="tokenType">The token type to map.</param>
+        /// <param name="text">The fixed source spelling, when one exists.</param>
+        /// <returns>true when the token type has exactly one fixed source spelling.</returns>
+        internal static bool TryGetFixedSyntaxText(TokenType tokenType, out string text)
+        {
+            switch (tokenType)
+            {
+                case TokenType.Eof:
+                    text = "<eof>";
+                    return true;
+                case TokenType.Pipe:
+                    text = "|";
+                    return true;
+                case TokenType.OpEqual:
+                    text = "==";
+                    return true;
+                case TokenType.OpAssignment:
+                    text = "=";
+                    return true;
+                case TokenType.OpLessThan:
+                    text = "<";
+                    return true;
+                case TokenType.OpLessThanEqual:
+                    text = "<=";
+                    return true;
+                case TokenType.OpGreaterThanEqual:
+                    text = ">=";
+                    return true;
+                case TokenType.OpGreaterThan:
+                    text = ">";
+                    return true;
+                case TokenType.OpConcat:
+                    text = "..";
+                    return true;
+                case TokenType.VarArgs:
+                    text = "...";
+                    return true;
+                case TokenType.Dot:
+                    text = ".";
+                    return true;
+                case TokenType.Colon:
+                    text = ":";
+                    return true;
+                case TokenType.DoubleColon:
+                    text = "::";
+                    return true;
+                case TokenType.Comma:
+                    text = ",";
+                    return true;
+                case TokenType.BrkCloseCurly:
+                    text = "}";
+                    return true;
+                case TokenType.BrkOpenCurly:
+                    text = "{";
+                    return true;
+                case TokenType.BrkCloseRound:
+                    text = ")";
+                    return true;
+                case TokenType.BrkOpenRound:
+                    text = "(";
+                    return true;
+                case TokenType.BrkCloseSquare:
+                    text = "]";
+                    return true;
+                case TokenType.BrkOpenSquare:
+                    text = "[";
+                    return true;
+                case TokenType.OpLen:
+                    text = "#";
+                    return true;
+                case TokenType.OpPwr:
+                    text = "^";
+                    return true;
+                case TokenType.OpMod:
+                    text = "%";
+                    return true;
+                case TokenType.OpDiv:
+                    text = "/";
+                    return true;
+                case TokenType.OpMul:
+                    text = "*";
+                    return true;
+                case TokenType.OpMinusOrSub:
+                    text = "-";
+                    return true;
+                case TokenType.OpAdd:
+                    text = "+";
+                    return true;
+                case TokenType.SemiColon:
+                    text = ";";
+                    return true;
+                case TokenType.BrkOpenCurlyShared:
+                    text = "${";
+                    return true;
+                case TokenType.OpDollar:
+                    text = "$";
+                    return true;
+                case TokenType.OpBitNotOrXor:
+                    text = "~";
+                    return true;
+                case TokenType.OpBitAnd:
+                    text = "&";
+                    return true;
+                case TokenType.OpShiftLeft:
+                    text = "<<";
+                    return true;
+                case TokenType.OpShiftRight:
+                    text = ">>";
+                    return true;
+                case TokenType.OpFloorDiv:
+                    text = "//";
+                    return true;
+                default:
+                    text = null;
+                    return false;
             }
         }
 

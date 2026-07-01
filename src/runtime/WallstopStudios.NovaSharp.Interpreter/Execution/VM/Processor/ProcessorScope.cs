@@ -242,7 +242,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     if (closure != null)
                     {
-                        for (int i = 0; i < closure.Symbols.Length; i++)
+                        for (int i = 0; i < closure.Symbols.Count; i++)
                         {
                             if (closure.Symbols[i] == name)
                             {

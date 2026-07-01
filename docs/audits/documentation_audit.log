@@ -8,19 +8,19 @@ Found 74 undocumented public/internal type declarations.
   - line 9: missing XML docs for `class ComVisibleAttribute`
   - line 14: missing XML docs for `class GuidAttribute`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/DebugModule.cs
-  - line 1357: missing XML docs for `Function`
-  - line 1358: missing XML docs for `Mask`
-  - line 1359: missing XML docs for `Count`
-  - line 1370: missing XML docs for `Upvalue`
-  - line 1372: missing XML docs for `ReferenceId`
-  - line 1374: missing XML docs for `ToString()`
-  - line 1385: missing XML docs for `Name`
-  - line 1387: missing XML docs for `Type`
-  - line 1389: missing XML docs for `Index()`
-  - line 1394: missing XML docs for `SetIndex()`
-  - line 1405: missing XML docs for `AsString()`
-  - line 1415: missing XML docs for `MetaIndex()`
-  - line 1420: missing XML docs for `IsTypeCompatible()`
+  - line 1383: missing XML docs for `Function`
+  - line 1384: missing XML docs for `Mask`
+  - line 1385: missing XML docs for `Count`
+  - line 1396: missing XML docs for `Upvalue`
+  - line 1398: missing XML docs for `ReferenceId`
+  - line 1400: missing XML docs for `ToString()`
+  - line 1411: missing XML docs for `Name`
+  - line 1413: missing XML docs for `Type`
+  - line 1415: missing XML docs for `Index()`
+  - line 1420: missing XML docs for `SetIndex()`
+  - line 1431: missing XML docs for `AsString()`
+  - line 1441: missing XML docs for `MetaIndex()`
+  - line 1446: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
   - line 20: missing XML docs for `Name`
   - line 22: missing XML docs for `Type`
@@ -43,8 +43,8 @@ Found 74 undocumented public/internal type declarations.
   - line 96: missing XML docs for `Clone()`
   - line 313: missing XML docs for `EnterIsolationScope()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
-  - line 289: missing XML docs for `BeginDefaultOptionsScope()`
-  - line 1557: missing XML docs for `Dispose()`
+  - line 617: missing XML docs for `BeginDefaultOptionsScope()`
+  - line 4808: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`

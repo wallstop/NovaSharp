@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
     using System;
     using System.Collections.Generic;
     using System.Reflection;
+    using System.Runtime.CompilerServices;
     using Cysharp.Text;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
@@ -18,6 +19,229 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
     /// </summary>
     public static class ModuleRegister
     {
+        private static readonly ConditionalWeakTable<
+            Type,
+            ModuleRegistrationDescriptor
+        > ModuleRegistrationDescriptors = new();
+
+        private enum ModuleRegistrationActionKind
+        {
+            Callback,
+            Init,
+        }
+
+        private sealed class ModuleRegistrationDescriptor
+        {
+            /// <summary>
+            /// Creates immutable registration metadata for a module type.
+            /// </summary>
+            /// <param name="moduleNamespace">The Lua namespace table name, or null for globals.</param>
+            /// <param name="methodActions">Ordered method and init actions from the module type.</param>
+            /// <param name="scriptFields">Script-backed function fields from the module type.</param>
+            /// <param name="constants">Constant fields from the module type.</param>
+            public ModuleRegistrationDescriptor(
+                string moduleNamespace,
+                ModuleMethodRegistration[] methodActions,
+                ModuleFieldRegistration[] scriptFields,
+                ModuleConstantRegistration[] constants
+            )
+            {
+                ModuleNamespace = moduleNamespace;
+                MethodActions = methodActions;
+                ScriptFields = scriptFields;
+                Constants = constants;
+            }
+
+            /// <summary>
+            /// Gets the Lua namespace table name, or null for globals.
+            /// </summary>
+            public string ModuleNamespace { get; }
+
+            /// <summary>
+            /// Gets ordered method callback and init actions.
+            /// </summary>
+            public ModuleMethodRegistration[] MethodActions { get; }
+
+            /// <summary>
+            /// Gets script-backed function fields.
+            /// </summary>
+            public ModuleFieldRegistration[] ScriptFields { get; }
+
+            /// <summary>
+            /// Gets constant fields.
+            /// </summary>
+            public ModuleConstantRegistration[] Constants { get; }
+        }
+
+        private sealed class ModuleMethodRegistration
+        {
+            /// <summary>
+            /// Creates immutable metadata for a method callback or init action.
+            /// </summary>
+            /// <param name="kind">The registration action kind.</param>
+            /// <param name="method">The reflected method.</param>
+            /// <param name="compatibility">Optional Lua compatibility gate.</param>
+            /// <param name="names">Precomputed Lua aliases for callback methods.</param>
+            /// <param name="legacyCallback">Cached legacy callback delegate, when applicable.</param>
+            /// <param name="argumentViewCallback">Cached argument-view callback delegate, when applicable.</param>
+            /// <param name="argumentViewNoContextCallback">Cached contextless argument-view callback delegate, when applicable.</param>
+            /// <param name="init">Cached module init delegate, when applicable.</param>
+            public ModuleMethodRegistration(
+                ModuleRegistrationActionKind kind,
+                MethodInfo method,
+                LuaCompatibilityAttribute compatibility,
+                string[] names,
+                Func<ScriptExecutionContext, CallbackArguments, DynValue> legacyCallback,
+                ScriptFunctionCallbackView argumentViewCallback,
+                ScriptFunctionCallbackViewNoContext argumentViewNoContextCallback,
+                Action<Table, Table> init
+            )
+            {
+                Kind = kind;
+                Method = method;
+                Compatibility = compatibility;
+                Names = names;
+                LegacyCallback = legacyCallback;
+                ArgumentViewCallback = argumentViewCallback;
+                ArgumentViewNoContextCallback = argumentViewNoContextCallback;
+                Init = init;
+            }
+
+            /// <summary>
+            /// Gets the registration action kind.
+            /// </summary>
+            public ModuleRegistrationActionKind Kind { get; }
+
+            /// <summary>
+            /// Gets the reflected method.
+            /// </summary>
+            public MethodInfo Method { get; }
+
+            /// <summary>
+            /// Gets the optional Lua compatibility gate.
+            /// </summary>
+            public LuaCompatibilityAttribute Compatibility { get; }
+
+            /// <summary>
+            /// Gets precomputed Lua aliases for callback methods.
+            /// </summary>
+            public string[] Names { get; }
+
+            /// <summary>
+            /// Gets the cached legacy callback delegate, when applicable.
+            /// </summary>
+            public Func<ScriptExecutionContext, CallbackArguments, DynValue> LegacyCallback { get; }
+
+            /// <summary>
+            /// Gets the cached argument-view callback delegate, when applicable.
+            /// </summary>
+            public ScriptFunctionCallbackView ArgumentViewCallback { get; }
+
+            /// <summary>
+            /// Gets the cached contextless argument-view callback delegate, when applicable.
+            /// </summary>
+            public ScriptFunctionCallbackViewNoContext ArgumentViewNoContextCallback { get; }
+
+            /// <summary>
+            /// Gets the cached module init delegate, when applicable.
+            /// </summary>
+            public Action<Table, Table> Init { get; }
+        }
+
+        private sealed class ModuleFieldRegistration
+        {
+            /// <summary>
+            /// Creates immutable metadata for a script-backed function field.
+            /// </summary>
+            /// <param name="field">The reflected field.</param>
+            /// <param name="compatibility">Optional Lua compatibility gate.</param>
+            /// <param name="memberName">The CLR field name.</param>
+            /// <param name="primaryName">The debugger-facing primary Lua name.</param>
+            /// <param name="names">Precomputed Lua aliases.</param>
+            public ModuleFieldRegistration(
+                FieldInfo field,
+                LuaCompatibilityAttribute compatibility,
+                string memberName,
+                string primaryName,
+                string[] names
+            )
+            {
+                Field = field;
+                Compatibility = compatibility;
+                MemberName = memberName;
+                PrimaryName = primaryName;
+                Names = names;
+            }
+
+            /// <summary>
+            /// Gets the reflected field.
+            /// </summary>
+            public FieldInfo Field { get; }
+
+            /// <summary>
+            /// Gets the optional Lua compatibility gate.
+            /// </summary>
+            public LuaCompatibilityAttribute Compatibility { get; }
+
+            /// <summary>
+            /// Gets the CLR field name.
+            /// </summary>
+            public string MemberName { get; }
+
+            /// <summary>
+            /// Gets the debugger-facing primary Lua name.
+            /// </summary>
+            public string PrimaryName { get; }
+
+            /// <summary>
+            /// Gets precomputed Lua aliases.
+            /// </summary>
+            public string[] Names { get; }
+        }
+
+        private sealed class ModuleConstantRegistration
+        {
+            /// <summary>
+            /// Creates immutable metadata for a module constant field.
+            /// </summary>
+            /// <param name="field">The reflected field.</param>
+            /// <param name="compatibility">Optional Lua compatibility gate.</param>
+            /// <param name="name">The primary Lua constant name.</param>
+            /// <param name="names">Precomputed Lua aliases.</param>
+            public ModuleConstantRegistration(
+                FieldInfo field,
+                LuaCompatibilityAttribute compatibility,
+                string name,
+                string[] names
+            )
+            {
+                Field = field;
+                Compatibility = compatibility;
+                Name = name;
+                Names = names;
+            }
+
+            /// <summary>
+            /// Gets the reflected field.
+            /// </summary>
+            public FieldInfo Field { get; }
+
+            /// <summary>
+            /// Gets the optional Lua compatibility gate.
+            /// </summary>
+            public LuaCompatibilityAttribute Compatibility { get; }
+
+            /// <summary>
+            /// Gets the primary Lua constant name.
+            /// </summary>
+            public string Name { get; }
+
+            /// <summary>
+            /// Gets precomputed Lua aliases.
+            /// </summary>
+            public string[] Names { get; }
+        }
+
         /// <summary>
         /// Register the core modules to a table
         /// </summary>
@@ -199,17 +423,122 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 throw new ArgumentNullException(nameof(t));
             }
 
-            Table table = CreateModuleNamespace(gtable, t);
+            ModuleRegistrationDescriptor descriptor = ModuleRegistrationDescriptors.GetValue(
+                t,
+                CreateModuleRegistrationDescriptor
+            );
+            Table table = CreateModuleNamespace(gtable, descriptor.ModuleNamespace);
             Script ownerScript = table.OwnerScript;
             LuaCompatibilityVersion scriptVersion =
                 ownerScript?.CompatibilityVersion ?? Script.GlobalOptions.CompatibilityVersion;
 
-            MethodInfo[] methods = Framework.Do.GetMethods(t);
+            ModuleMethodRegistration[] methodActions = descriptor.MethodActions;
+            for (int i = 0; i < methodActions.Length; i++)
+            {
+                ModuleMethodRegistration action = methodActions[i];
 
+                if (action.Kind == ModuleRegistrationActionKind.Init)
+                {
+                    action.Init(gtable, table);
+                    continue;
+                }
+
+                if (!IsMemberCompatible(action.Compatibility, scriptVersion))
+                {
+                    continue;
+                }
+
+                if (
+                    action.ArgumentViewCallback == null
+                    && action.ArgumentViewNoContextCallback == null
+                    && action.LegacyCallback == null
+                )
+                {
+                    throw new ArgumentException(
+                        ZString.Concat(
+                            "Method ",
+                            action.Method.Name,
+                            " does not have the right signature."
+                        )
+                    );
+                }
+
+                string[] names = action.Names;
+                if (action.ArgumentViewNoContextCallback != null)
+                {
+                    for (int nameIndex = 0; nameIndex < names.Length; nameIndex++)
+                    {
+                        string name = names[nameIndex];
+                        table.Set(
+                            name,
+                            DynValue.NewCallbackView(action.ArgumentViewNoContextCallback, name)
+                        );
+                    }
+                    continue;
+                }
+
+                if (action.ArgumentViewCallback != null)
+                {
+                    for (int nameIndex = 0; nameIndex < names.Length; nameIndex++)
+                    {
+                        string name = names[nameIndex];
+                        table.Set(
+                            name,
+                            DynValue.NewCallbackView(action.ArgumentViewCallback, name)
+                        );
+                    }
+                    continue;
+                }
+
+                for (int nameIndex = 0; nameIndex < names.Length; nameIndex++)
+                {
+                    string name = names[nameIndex];
+                    table.Set(name, DynValue.NewCallback(action.LegacyCallback, name));
+                }
+            }
+
+            ModuleFieldRegistration[] scriptFields = descriptor.ScriptFields;
+            for (int i = 0; i < scriptFields.Length; i++)
+            {
+                ModuleFieldRegistration scriptField = scriptFields[i];
+                if (!IsMemberCompatible(scriptField.Compatibility, scriptVersion))
+                {
+                    continue;
+                }
+
+                RegisterScriptField(scriptField, null, table);
+            }
+
+            ModuleConstantRegistration[] constants = descriptor.Constants;
+            for (int i = 0; i < constants.Length; i++)
+            {
+                ModuleConstantRegistration constant = constants[i];
+                if (!IsMemberCompatible(constant.Compatibility, scriptVersion))
+                {
+                    continue;
+                }
+
+                RegisterScriptFieldAsConst(constant, null, table);
+            }
+
+            return gtable;
+        }
+
+        private static ModuleRegistrationDescriptor CreateModuleRegistrationDescriptor(Type t)
+        {
+            Attribute[] moduleAttributes = Framework.Do.GetCustomAttributes(
+                t,
+                typeof(NovaSharpModuleAttribute),
+                inherit: false
+            );
+            NovaSharpModuleAttribute moduleAttribute = (NovaSharpModuleAttribute)
+                moduleAttributes[0];
+
+            List<ModuleMethodRegistration> methodActions = new();
+            MethodInfo[] methods = Framework.Do.GetMethods(t);
             for (int i = 0; i < methods.Length; i++)
             {
                 MethodInfo mi = methods[i];
-
                 if (!mi.IsStatic)
                 {
                     continue;
@@ -224,57 +553,72 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 {
                     NovaSharpModuleMethodAttribute attr = (NovaSharpModuleMethodAttribute)
                         methodAttributes[0];
-
-                    if (!IsMemberCompatible(mi, scriptVersion))
-                    {
-                        continue;
-                    }
-
-                    if (!CallbackFunction.CheckCallbackSignature(mi, true))
-                    {
-                        throw new ArgumentException(
-                            ZString.Concat(
-                                "Method ",
-                                mi.Name,
-                                " does not have the right signature."
-                            )
-                        );
-                    }
-
-#if NETFX_CORE
-                    Delegate deleg = mi.CreateDelegate(
-                        typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>)
+                    LuaCompatibilityAttribute compatibility =
+                        mi.GetCustomAttribute<LuaCompatibilityAttribute>();
+                    bool hasArgumentViewNoContextSignature =
+                        CallbackFunction.CheckArgumentViewNoContextCallbackSignature(mi, true);
+                    bool hasArgumentViewSignature =
+                        CallbackFunction.CheckArgumentViewCallbackSignature(mi, true);
+                    bool hasLegacySignature = CallbackFunction.CheckLegacyCallbackSignature(
+                        mi,
+                        true
                     );
-#else
-                    Delegate deleg = Delegate.CreateDelegate(
-                        typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>),
-                        mi
-                    );
-#endif
+                    ScriptFunctionCallbackView viewFunc = null;
+                    ScriptFunctionCallbackViewNoContext viewNoContextFunc = null;
+                    Func<ScriptExecutionContext, CallbackArguments, DynValue> func = null;
 
-                    Func<ScriptExecutionContext, CallbackArguments, DynValue> func =
-                        (Func<ScriptExecutionContext, CallbackArguments, DynValue>)deleg;
-
-                    foreach (string name in GetModuleNameVariants(attr.Name, mi.Name))
+                    if (hasArgumentViewNoContextSignature)
                     {
-                        table.Set(name, DynValue.NewCallback(func, name));
+                        viewNoContextFunc = CreateArgumentViewNoContextCallback(mi);
                     }
+                    else if (hasArgumentViewSignature)
+                    {
+                        viewFunc = CreateArgumentViewCallback(mi);
+                    }
+                    else if (hasLegacySignature)
+                    {
+                        func = CreateLegacyCallback(mi);
+                    }
+
+                    methodActions.Add(
+                        new ModuleMethodRegistration(
+                            ModuleRegistrationActionKind.Callback,
+                            mi,
+                            compatibility,
+                            GetModuleNameVariants(attr.Name, mi.Name),
+                            func,
+                            viewFunc,
+                            viewNoContextFunc,
+                            null
+                        )
+                    );
                     continue;
                 }
 
                 if (mi.Name == "NovaSharpInit")
                 {
-                    object[] args = new object[2] { gtable, table };
-                    mi.Invoke(null, args);
+                    methodActions.Add(
+                        new ModuleMethodRegistration(
+                            ModuleRegistrationActionKind.Init,
+                            mi,
+                            null,
+                            Array.Empty<string>(),
+                            null,
+                            null,
+                            null,
+                            CreateModuleInit(mi)
+                        )
+                    );
                 }
             }
 
+            List<ModuleFieldRegistration> scriptFields = new();
+            List<ModuleConstantRegistration> constants = new();
             FieldInfo[] fields = Framework.Do.GetFields(t);
 
             for (int i = 0; i < fields.Length; i++)
             {
                 FieldInfo fi = fields[i];
-
                 if (!fi.IsStatic)
                 {
                     continue;
@@ -290,20 +634,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                     continue;
                 }
 
-                if (!IsMemberCompatible(fi, scriptVersion))
-                {
-                    continue;
-                }
-
                 NovaSharpModuleMethodAttribute attr = (NovaSharpModuleMethodAttribute)
                     methodAttributes[0];
-                RegisterScriptField(fi, null, table, t, attr.Name, fi.Name);
+                string primaryName = !string.IsNullOrEmpty(attr.Name) ? attr.Name : fi.Name;
+                scriptFields.Add(
+                    new ModuleFieldRegistration(
+                        fi,
+                        fi.GetCustomAttribute<LuaCompatibilityAttribute>(),
+                        fi.Name,
+                        primaryName,
+                        GetModuleNameVariants(attr.Name, fi.Name)
+                    )
+                );
             }
 
             for (int i = 0; i < fields.Length; i++)
             {
                 FieldInfo fi = fields[i];
-
                 if (!fi.IsStatic)
                 {
                     continue;
@@ -319,76 +666,139 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                     continue;
                 }
 
-                if (!IsMemberCompatible(fi, scriptVersion))
-                {
-                    continue;
-                }
-
                 NovaSharpModuleConstantAttribute attr = (NovaSharpModuleConstantAttribute)
                     constantAttributes[0];
                 string name = string.IsNullOrEmpty(attr.Name) ? fi.Name : attr.Name;
 
-                RegisterScriptFieldAsConst(fi, null, table, t, name);
+                constants.Add(
+                    new ModuleConstantRegistration(
+                        fi,
+                        fi.GetCustomAttribute<LuaCompatibilityAttribute>(),
+                        name,
+                        GetModuleNameVariants(name, fi.Name)
+                    )
+                );
             }
 
-            return gtable;
+            return new ModuleRegistrationDescriptor(
+                moduleAttribute.Namespace,
+                methodActions.ToArray(),
+                scriptFields.ToArray(),
+                constants.ToArray()
+            );
+        }
+
+        private static ScriptFunctionCallbackView CreateArgumentViewCallback(MethodInfo mi)
+        {
+#if NETFX_CORE
+            Delegate viewDeleg = mi.CreateDelegate(typeof(ScriptFunctionCallbackView));
+#else
+            Delegate viewDeleg = Delegate.CreateDelegate(typeof(ScriptFunctionCallbackView), mi);
+#endif
+
+            return (ScriptFunctionCallbackView)viewDeleg;
+        }
+
+        private static ScriptFunctionCallbackViewNoContext CreateArgumentViewNoContextCallback(
+            MethodInfo mi
+        )
+        {
+#if NETFX_CORE
+            Delegate viewDeleg = mi.CreateDelegate(typeof(ScriptFunctionCallbackViewNoContext));
+#else
+            Delegate viewDeleg = Delegate.CreateDelegate(
+                typeof(ScriptFunctionCallbackViewNoContext),
+                mi
+            );
+#endif
+
+            return (ScriptFunctionCallbackViewNoContext)viewDeleg;
+        }
+
+        private static Func<
+            ScriptExecutionContext,
+            CallbackArguments,
+            DynValue
+        > CreateLegacyCallback(MethodInfo mi)
+        {
+#if NETFX_CORE
+            Delegate deleg = mi.CreateDelegate(
+                typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>)
+            );
+#else
+            Delegate deleg = Delegate.CreateDelegate(
+                typeof(Func<ScriptExecutionContext, CallbackArguments, DynValue>),
+                mi
+            );
+#endif
+
+            return (Func<ScriptExecutionContext, CallbackArguments, DynValue>)deleg;
+        }
+
+        private static Action<Table, Table> CreateModuleInit(MethodInfo mi)
+        {
+#if NETFX_CORE
+            Delegate init = mi.CreateDelegate(typeof(Action<Table, Table>));
+#else
+            Delegate init = Delegate.CreateDelegate(typeof(Action<Table, Table>), mi);
+#endif
+
+            return (Action<Table, Table>)init;
         }
 
         private static void RegisterScriptFieldAsConst(
-            FieldInfo fi,
+            ModuleConstantRegistration constant,
             object o,
-            Table table,
-            Type t,
-            string name
+            Table table
         )
         {
-            DynValue constant;
+            FieldInfo fi = constant.Field;
+            DynValue constantValue;
 
             if (fi.FieldType == typeof(string))
             {
-                constant = DynValue.NewString(fi.GetValue(o) as string);
+                constantValue = DynValue.NewString(fi.GetValue(o) as string);
             }
             else if (fi.FieldType == typeof(double))
             {
-                constant = DynValue.NewNumber((double)fi.GetValue(o));
+                constantValue = DynValue.NewNumber((double)fi.GetValue(o));
             }
             else if (fi.FieldType == typeof(long))
             {
                 // Lua 5.3+ integer constants (math.maxinteger, math.mininteger)
-                constant = DynValue.NewInteger((long)fi.GetValue(o));
+                constantValue = DynValue.NewInteger((long)fi.GetValue(o));
             }
             else
             {
                 throw new ArgumentException(
                     ZString.Concat(
                         "Field ",
-                        name,
+                        constant.Name,
                         " does not have the right type - it must be string, double, or long."
                     )
                 );
             }
 
-            foreach (string alias in GetModuleNameVariants(name, fi.Name))
+            string[] names = constant.Names;
+            for (int i = 0; i < names.Length; i++)
             {
-                table.Set(alias, constant);
+                table.Set(names[i], constantValue);
             }
         }
 
         private static void RegisterScriptField(
-            FieldInfo fi,
+            ModuleFieldRegistration scriptField,
             object o,
-            Table table,
-            Type t,
-            string explicitName,
-            string memberName
+            Table table
         )
         {
+            FieldInfo fi = scriptField.Field;
             if (fi.FieldType != typeof(string))
             {
                 throw new ArgumentException(
                     ZString.Concat(
                         "Field ",
-                        memberName,
+                        scriptField.MemberName,
                         " does not have the right type - it must be string."
                     )
                 );
@@ -396,26 +806,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
 
             string val = fi.GetValue(o) as string;
 
-            string primaryName = !string.IsNullOrEmpty(explicitName) ? explicitName : memberName;
+            DynValue fn = table.OwnerScript.LoadFunctionWithoutCompilationCache(
+                val,
+                table,
+                scriptField.PrimaryName
+            );
 
-            DynValue fn = table.OwnerScript.LoadFunction(val, table, primaryName);
-
-            foreach (string alias in GetModuleNameVariants(explicitName, memberName))
+            string[] names = scriptField.Names;
+            for (int i = 0; i < names.Length; i++)
             {
-                table.Set(alias, fn);
+                table.Set(names[i], fn);
             }
         }
 
-        private static Table CreateModuleNamespace(Table gtable, Type t)
+        private static Table CreateModuleNamespace(Table gtable, string moduleNamespace)
         {
-            Attribute[] moduleAttributes = Framework.Do.GetCustomAttributes(
-                t,
-                typeof(NovaSharpModuleAttribute),
-                inherit: false
-            );
-            NovaSharpModuleAttribute attr = (NovaSharpModuleAttribute)moduleAttributes[0];
-
-            if (string.IsNullOrEmpty(attr.Namespace))
+            if (string.IsNullOrEmpty(moduleNamespace))
             {
                 return gtable;
             }
@@ -423,7 +829,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             {
                 Table table = null;
 
-                DynValue found = gtable.Get(attr.Namespace);
+                DynValue found = gtable.Get(moduleNamespace);
 
                 if (found.Type == DataType.Table)
                 {
@@ -432,7 +838,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 else
                 {
                     table = new Table(gtable.OwnerScript);
-                    gtable.Set(attr.Namespace, DynValue.NewTable(table));
+                    gtable.Set(moduleNamespace, DynValue.NewTable(table));
                 }
 
                 DynValue package = gtable.RawGet("package");
@@ -449,7 +855,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                     package.Table.Set("loaded", loaded = DynValue.NewTable(gtable.OwnerScript));
                 }
 
-                loaded.Table.Set(attr.Namespace, DynValue.NewTable(table));
+                loaded.Table.Set(moduleNamespace, DynValue.NewTable(table));
 
                 return table;
             }
@@ -472,7 +878,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
             return RegisterModuleType(table, typeof(T));
         }
 
-        private static HashSet<string> GetModuleNameVariants(string explicitName, string memberName)
+        private static string[] GetModuleNameVariants(string explicitName, string memberName)
         {
             HashSet<string> names = new(StringComparer.Ordinal);
 
@@ -519,15 +925,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Modules
                 }
             }
 
-            return names;
+            string[] result = new string[names.Count];
+            names.CopyTo(result);
+            return result;
         }
 
         private static bool IsMemberCompatible(
-            MemberInfo member,
+            LuaCompatibilityAttribute attr,
             LuaCompatibilityVersion scriptVersion
         )
         {
-            LuaCompatibilityAttribute attr = member.GetCustomAttribute<LuaCompatibilityAttribute>();
             return attr == null || attr.IsSupported(scriptVersion);
         }
 

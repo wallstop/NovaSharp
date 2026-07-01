@@ -13,11 +13,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     public sealed class CallbackFunction : RefIdObject
     {
         private static InteropAccessMode DefaultAccessModeValue = InteropAccessMode.LazyOptimized;
+        private readonly ScriptFunctionCallbackView _argumentViewCallback;
+        private readonly ScriptFunctionCallbackViewNoContext _argumentViewNoContextCallback;
 
         /// <summary>
         /// Gets the name of the function
         /// </summary>
         public string Name { get; private set; }
+
+        /// <summary>
+        /// Gets or sets a cached <see cref="DynValue"/> wrapping this callback.
+        /// </summary>
+        internal DynValue CachedDynValue { get; set; }
 
         /// <summary>
         /// Gets the call back.
@@ -50,6 +57,69 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             Name = name;
         }
 
+        private CallbackFunction(ScriptFunctionCallbackView callBack, string name)
+        {
+            if (callBack == null)
+            {
+                throw new ArgumentNullException(nameof(callBack));
+            }
+
+            _argumentViewCallback = callBack;
+            ClrCallback = InvokeArgumentViewCallback;
+            Name = name;
+        }
+
+        private CallbackFunction(ScriptFunctionCallbackViewNoContext callBack, string name)
+        {
+            if (callBack == null)
+            {
+                throw new ArgumentNullException(nameof(callBack));
+            }
+
+            _argumentViewNoContextCallback = callBack;
+            ClrCallback = InvokeArgumentViewCallback;
+            Name = name;
+        }
+
+        /// <summary>
+        /// Creates a callback function that receives a stack-only argument view.
+        /// </summary>
+        /// <param name="callBack">The callback function to be called.</param>
+        /// <param name="name">The callback name, used in stacktraces, debugger, etc..</param>
+        /// <returns>The callback function.</returns>
+        public static CallbackFunction FromArgumentView(
+            ScriptFunctionCallbackView callBack,
+            string name = null
+        )
+        {
+            return new CallbackFunction(callBack, name);
+        }
+
+        /// <summary>
+        /// Creates a callback function that receives a stack-only argument view without requiring
+        /// a script execution context.
+        /// </summary>
+        /// <param name="callBack">The callback function to be called.</param>
+        /// <param name="name">The callback name, used in stacktraces, debugger, etc..</param>
+        /// <returns>The callback function.</returns>
+        public static CallbackFunction FromArgumentView(
+            ScriptFunctionCallbackViewNoContext callBack,
+            string name = null
+        )
+        {
+            return new CallbackFunction(callBack, name);
+        }
+
+        internal bool HasArgumentViewCallback
+        {
+            get { return _argumentViewCallback != null || _argumentViewNoContextCallback != null; }
+        }
+
+        internal bool HasArgumentViewNoContextCallback
+        {
+            get { return _argumentViewNoContextCallback != null; }
+        }
+
         /// <summary>
         /// Invokes the callback function
         /// </summary>
@@ -73,24 +143,904 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentNullException(nameof(args));
             }
 
-            if (isMethodCall)
-            {
-                ColonOperatorBehaviour colon = executionContext
-                    .Script
-                    .Options
-                    .ColonOperatorClrCallbackBehaviour;
+            isMethodCall = NormalizeMethodCall(
+                executionContext,
+                args.Count,
+                args.Count > 0 ? args[0] : null,
+                isMethodCall
+            );
 
-                if (colon == ColonOperatorBehaviour.TreatAsColon)
-                {
-                    isMethodCall = false;
-                }
-                else if (colon == ColonOperatorBehaviour.TreatAsDotOnUserData)
-                {
-                    isMethodCall = (args.Count > 0 && args[0].Type == DataType.UserData);
-                }
+            if (HasArgumentViewCallback)
+            {
+                return InvokeArgumentViewCallback(
+                    executionContext,
+                    new CallbackArgumentsView(args, isMethodCall)
+                );
             }
 
             return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes the callback function, creating a dynamic context only when the callback
+        /// contract requires one.
+        /// </summary>
+        internal DynValue Invoke(Script script, IList<DynValue> args, bool isMethodCall = false)
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return Invoke(script.CreateDynamicExecutionContext(this), args, isMethodCall);
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                script,
+                args.Count,
+                args.Count > 0 ? args[0] : null,
+                isMethodCall
+            );
+
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(args, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with no arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 0, null, isMethodCall);
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with no arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(Script script, bool isMethodCall = false)
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 0, null, isMethodCall);
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with one fixed argument.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 1, arg, isMethodCall);
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with one fixed argument.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 1, arg, isMethodCall);
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(arg, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with two fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 2, arg1, isMethodCall);
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with two fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 2, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
+                new CallbackArgumentsView(arg1, arg2, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with three fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 3, arg1, isMethodCall);
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with three fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 3, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
+                new CallbackArgumentsView(arg1, arg2, arg3, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with four fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 4, arg1, isMethodCall);
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with four fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 4, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with five fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 5, arg1, isMethodCall);
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with five fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 5, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with six fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 6, arg1, isMethodCall);
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with six fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 6, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with seven fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 7, arg1, isMethodCall);
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, arg7, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with seven fixed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewFixed(
+            Script script,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewFixed(
+                    script.CreateDynamicExecutionContext(this),
+                    arg1,
+                    arg2,
+                    arg3,
+                    arg4,
+                    arg5,
+                    arg6,
+                    arg7,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(script, 7, arg1, isMethodCall);
+            return _argumentViewNoContextCallback(
+                new CallbackArgumentsView(arg1, arg2, arg3, arg4, arg5, arg6, arg7, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with a subrange of stack-backed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewStack(
+            ScriptExecutionContext executionContext,
+            IList<DynValue> args,
+            int offset,
+            int count,
+            bool isMethodCall = false
+        )
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (offset < 0 || offset > args.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            }
+
+            if (count < 0 || count > args.Count - offset)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                executionContext,
+                count,
+                count > 0 ? args[offset] : null,
+                isMethodCall
+            );
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(args, offset, count, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with a subrange of stack-backed arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewStack(
+            Script script,
+            IList<DynValue> args,
+            int offset,
+            int count,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewStack(
+                    script.CreateDynamicExecutionContext(this),
+                    args,
+                    offset,
+                    count,
+                    isMethodCall
+                );
+            }
+
+            ValidateStackRange(args, offset, count);
+
+            isMethodCall = NormalizeMethodCall(
+                script,
+                count,
+                count > 0 ? args[offset] : null,
+                isMethodCall
+            );
+            return _argumentViewNoContextCallback(
+                new CallbackArgumentsView(args, offset, count, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with caller-owned contiguous arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewSpan(
+            ScriptExecutionContext executionContext,
+            ReadOnlySpan<DynValue> args,
+            bool isMethodCall = false
+        )
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                executionContext,
+                args.Length,
+                args.Length > 0 ? args[0] : null,
+                isMethodCall
+            );
+            return InvokeArgumentViewCallback(
+                executionContext,
+                new CallbackArgumentsView(args, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes an argument-view callback with caller-owned contiguous arguments.
+        /// </summary>
+        internal DynValue InvokeArgumentViewSpan(
+            Script script,
+            ReadOnlySpan<DynValue> args,
+            bool isMethodCall = false
+        )
+        {
+            if (_argumentViewNoContextCallback == null)
+            {
+                return InvokeArgumentViewSpan(
+                    script.CreateDynamicExecutionContext(this),
+                    args,
+                    isMethodCall
+                );
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                script,
+                args.Length,
+                args.Length > 0 ? args[0] : null,
+                isMethodCall
+            );
+            return _argumentViewNoContextCallback(new CallbackArgumentsView(args, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback that receives materialized <see cref="CallbackArguments"/>.
+        /// </summary>
+        internal DynValue InvokeLegacy(
+            ScriptExecutionContext executionContext,
+            IList<DynValue> args,
+            bool isMethodCall = false
+        )
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            isMethodCall = NormalizeMethodCall(
+                executionContext,
+                args.Count,
+                args.Count > 0 ? args[0] : null,
+                isMethodCall
+            );
+            return ClrCallback(executionContext, new CallbackArguments(args, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with no fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 0, null, isMethodCall);
+            return ClrCallback(executionContext, new CallbackArguments(isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with one fixed argument.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 1, arg, isMethodCall);
+            return ClrCallback(executionContext, new CallbackArguments(arg, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with two fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 2, arg1, isMethodCall);
+            return ClrCallback(executionContext, new CallbackArguments(arg1, arg2, isMethodCall));
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with three fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 3, arg1, isMethodCall);
+            return ClrCallback(
+                executionContext,
+                new CallbackArguments(arg1, arg2, arg3, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with four fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 4, arg1, isMethodCall);
+            return ClrCallback(
+                executionContext,
+                new CallbackArguments(arg1, arg2, arg3, arg4, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with five fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 5, arg1, isMethodCall);
+            return ClrCallback(
+                executionContext,
+                new CallbackArguments(arg1, arg2, arg3, arg4, arg5, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with six fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 6, arg1, isMethodCall);
+            return ClrCallback(
+                executionContext,
+                new CallbackArguments(arg1, arg2, arg3, arg4, arg5, arg6, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with seven fixed arguments.
+        /// </summary>
+        internal DynValue InvokeLegacyFixed(
+            ScriptExecutionContext executionContext,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7,
+            bool isMethodCall = false
+        )
+        {
+            isMethodCall = NormalizeMethodCall(executionContext, 7, arg1, isMethodCall);
+            return ClrCallback(
+                executionContext,
+                new CallbackArguments(arg1, arg2, arg3, arg4, arg5, arg6, arg7, isMethodCall)
+            );
+        }
+
+        /// <summary>
+        /// Invokes a legacy callback with caller-owned contiguous arguments, materializing only when
+        /// the legacy callback contract requires more than fixed storage can carry.
+        /// </summary>
+        internal DynValue InvokeLegacySpan(
+            ScriptExecutionContext executionContext,
+            ReadOnlySpan<DynValue> args,
+            bool isMethodCall = false
+        )
+        {
+            switch (args.Length)
+            {
+                case 0:
+                    return InvokeLegacyFixed(executionContext, isMethodCall);
+                case 1:
+                    return InvokeLegacyFixed(executionContext, args[0], isMethodCall);
+                case 2:
+                    return InvokeLegacyFixed(executionContext, args[0], args[1], isMethodCall);
+                case 3:
+                    return InvokeLegacyFixed(
+                        executionContext,
+                        args[0],
+                        args[1],
+                        args[2],
+                        isMethodCall
+                    );
+                case 4:
+                    return InvokeLegacyFixed(
+                        executionContext,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        isMethodCall
+                    );
+                case 5:
+                    return InvokeLegacyFixed(
+                        executionContext,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        isMethodCall
+                    );
+                case 6:
+                    return InvokeLegacyFixed(
+                        executionContext,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        args[5],
+                        isMethodCall
+                    );
+                case 7:
+                    return InvokeLegacyFixed(
+                        executionContext,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        args[5],
+                        args[6],
+                        isMethodCall
+                    );
+                default:
+                    DynValue[] copiedArgs = new DynValue[args.Length];
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        copiedArgs[i] = args[i];
+                    }
+
+                    return InvokeLegacy(executionContext, copiedArgs, isMethodCall);
+            }
+        }
+
+        private DynValue InvokeArgumentViewCallback(
+            ScriptExecutionContext executionContext,
+            CallbackArguments args
+        )
+        {
+            return InvokeArgumentViewCallback(executionContext, new CallbackArgumentsView(args));
+        }
+
+        private DynValue InvokeArgumentViewCallback(
+            ScriptExecutionContext executionContext,
+            CallbackArgumentsView args
+        )
+        {
+            if (_argumentViewCallback != null)
+            {
+                return _argumentViewCallback(executionContext, args);
+            }
+
+            return _argumentViewNoContextCallback(args);
+        }
+
+        private static bool NormalizeMethodCall(
+            ScriptExecutionContext executionContext,
+            int count,
+            DynValue firstArgument,
+            bool isMethodCall
+        )
+        {
+            if (executionContext == null)
+            {
+                throw new ArgumentNullException(nameof(executionContext));
+            }
+
+            if (!isMethodCall)
+            {
+                return false;
+            }
+
+            ColonOperatorBehaviour colon = executionContext
+                .Script
+                .Options
+                .ColonOperatorClrCallbackBehaviour;
+
+            return NormalizeMethodCall(colon, count, firstArgument, isMethodCall);
+        }
+
+        private static bool NormalizeMethodCall(
+            Script script,
+            int count,
+            DynValue firstArgument,
+            bool isMethodCall
+        )
+        {
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
+            ColonOperatorBehaviour colon = script.Options.ColonOperatorClrCallbackBehaviour;
+
+            return NormalizeMethodCall(colon, count, firstArgument, isMethodCall);
+        }
+
+        private static bool NormalizeMethodCall(
+            ColonOperatorBehaviour colon,
+            int count,
+            DynValue firstArgument,
+            bool isMethodCall
+        )
+        {
+            if (!isMethodCall)
+            {
+                return false;
+            }
+
+            if (colon == ColonOperatorBehaviour.TreatAsColon)
+            {
+                return false;
+            }
+
+            if (colon == ColonOperatorBehaviour.TreatAsDotOnUserData)
+            {
+                return count > 0 && firstArgument?.Type == DataType.UserData;
+            }
+
+            return isMethodCall;
+        }
+
+        private static void ValidateStackRange(IList<DynValue> args, int offset, int count)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            if (offset < 0 || offset > args.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            }
+
+            if (count < 0 || count > args.Count - offset)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
         }
 
         /// <summary>
@@ -205,6 +1155,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             bool requirePublicVisibility
         )
         {
+            return CheckLegacyCallbackSignature(mi, requirePublicVisibility)
+                || CheckArgumentViewCallbackSignature(mi, requirePublicVisibility)
+                || CheckArgumentViewNoContextCallbackSignature(mi, requirePublicVisibility);
+        }
+
+        /// <summary>
+        /// Checks whether a method has the classic callback signature.
+        /// </summary>
+        internal static bool CheckLegacyCallbackSignature(
+            System.Reflection.MethodInfo mi,
+            bool requirePublicVisibility
+        )
+        {
+            return CheckCallbackSignatureCore(
+                mi,
+                requirePublicVisibility,
+                typeof(CallbackArguments)
+            );
+        }
+
+        /// <summary>
+        /// Checks whether a method has the argument-view callback signature.
+        /// </summary>
+        internal static bool CheckArgumentViewCallbackSignature(
+            System.Reflection.MethodInfo mi,
+            bool requirePublicVisibility
+        )
+        {
+            return CheckCallbackSignatureCore(
+                mi,
+                requirePublicVisibility,
+                typeof(CallbackArgumentsView)
+            );
+        }
+
+        /// <summary>
+        /// Checks whether a method has the contextless argument-view callback signature.
+        /// </summary>
+        internal static bool CheckArgumentViewNoContextCallbackSignature(
+            System.Reflection.MethodInfo mi,
+            bool requirePublicVisibility
+        )
+        {
+            if (mi == null)
+            {
+                throw new ArgumentNullException(nameof(mi));
+            }
+
+            System.Reflection.ParameterInfo[] pi = mi.GetParameters();
+
+            return pi.Length == 1
+                && pi[0].ParameterType == typeof(CallbackArgumentsView)
+                && mi.ReturnType == typeof(DynValue)
+                && (requirePublicVisibility || mi.IsPublic);
+        }
+
+        private static bool CheckCallbackSignatureCore(
+            System.Reflection.MethodInfo mi,
+            bool requirePublicVisibility,
+            Type argumentsType
+        )
+        {
             if (mi == null)
             {
                 throw new ArgumentNullException(nameof(mi));
@@ -215,7 +1227,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return (
                 pi.Length == 2
                 && pi[0].ParameterType == typeof(ScriptExecutionContext)
-                && pi[1].ParameterType == typeof(CallbackArguments)
+                && pi[1].ParameterType == argumentsType
                 && mi.ReturnType == typeof(DynValue)
                 && (requirePublicVisibility || mi.IsPublic)
             );

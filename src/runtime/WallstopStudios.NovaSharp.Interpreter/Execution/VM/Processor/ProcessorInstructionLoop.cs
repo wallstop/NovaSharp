@@ -448,47 +448,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 while (_executionStack.Count > 0)
                 {
                     CallStackItem csi = PopToBasePointer();
+                    bool returnedToPool = false;
 
-                    CloseAllPendingBlocks(csi, closeError);
-
-                    if (csi.ErrorHandler != null)
+                    try
                     {
-                        instructionPtr = csi.ReturnAddress;
+                        CloseAllPendingBlocks(csi, closeError);
 
-                        if (csi.ClrFunction == null)
+                        if (csi.ErrorHandler != null)
                         {
-                            int argscnt = (int)(_valueStack.Pop().Number);
-                            _valueStack.RemoveLast(argscnt + 1);
-                        }
+                            instructionPtr = csi.ReturnAddress;
 
-                        // Use pooled array for error handler invocation
-                        using (
-                            PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
-                                1,
-                                out DynValue[] cbargs
+                            if (csi.ClrFunction == null)
+                            {
+                                int argscnt = (int)(_valueStack.Pop().Number);
+                                _valueStack.RemoveLast(argscnt + 1);
+                            }
+
+                            CallbackFunction errorHandler = csi.ErrorHandler;
+                            SourceRef sourceRef = GetCurrentSourceRef(instructionPtr);
+                            CallStackItemPool.Return(csi);
+                            returnedToPool = true;
+
+                            // Use pooled array for error handler invocation
+                            using (
+                                PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                                    1,
+                                    out DynValue[] cbargs
+                                )
                             )
-                        )
-                        {
-                            cbargs[0] = DynValue.NewString(exception.DecoratedMessage);
+                            {
+                                cbargs[0] = DynValue.NewString(exception.DecoratedMessage);
 
-                            DynValue handled = csi.ErrorHandler.Invoke(
-                                new ScriptExecutionContext(
-                                    this,
-                                    csi.ErrorHandler,
-                                    GetCurrentSourceRef(instructionPtr)
-                                ),
-                                cbargs
-                            );
+                                DynValue handled = errorHandler.Invoke(
+                                    new ScriptExecutionContext(this, errorHandler, sourceRef),
+                                    cbargs
+                                );
 
-                            _valueStack.Push(handled);
+                                _valueStack.Push(handled);
+                            }
+
+                            goto repeat_execution;
                         }
 
-                        goto repeat_execution;
+                        if ((csi.Flags & CallStackItemFlags.EntryPoint) != 0)
+                        {
+                            exception.Rethrow();
+                            throw;
+                        }
                     }
-                    else if ((csi.Flags & CallStackItemFlags.EntryPoint) != 0)
+                    finally
                     {
-                        exception.Rethrow();
-                        throw;
+                        if (!returnedToPool)
+                        {
+                            CallStackItemPool.Return(csi);
+                        }
                     }
                 }
 
@@ -1178,10 +1191,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem xs = _executionStack.Pop();
             if (vstackguard != xs.BasePointer)
             {
+                CallStackItemPool.Return(xs);
                 throw new InternalErrorException("StackGuard violation");
             }
 
-            return xs.ReturnAddress;
+            int returnAddress = xs.ReturnAddress;
+            CallStackItemPool.Return(xs);
+            return returnAddress;
         }
 
         private IList<DynValue> CreateArgsListForFunctionCall(int numargs, int offsFromTop)
@@ -1380,65 +1396,86 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (fn.Type == DataType.ClrFunction)
             {
-                //IList<DynValue> args = new Slice<DynValue>(_valueStack, _valueStack.Count - argsCount, argsCount, false);
-                IList<DynValue> args = CreateArgsListForFunctionCall(argsCount, 0);
-                // we expand tuples before callbacks
-                // args = DynValue.ExpandArgumentsToList(args);
-
                 // instructionPtr - 1: instructionPtr already points to the next instruction at this moment
                 // but we need the current instruction here
                 SourceRef sref = GetCurrentSourceRef(instructionPtr - 1);
+                CallbackFunction callback = fn.Callback;
 
-                _executionStack.Push(
-                    new CallStackItem()
+                CallStackItem frame = CallStackItemPool.Rent();
+                frame.ClrFunction = callback;
+                frame.ReturnAddress = instructionPtr;
+                frame.CallingSourceRef = sref;
+                frame.BasePointer = -1;
+                frame.ErrorHandler = handler;
+                frame.Continuation = Continuation;
+                frame.ErrorHandlerBeforeUnwind = unwindHandler;
+                frame.Flags = Flags;
+                _executionStack.Push(frame);
+
+                DynValue ret;
+                if (callback.HasArgumentViewNoContextCallback)
+                {
+                    ret = callback.InvokeArgumentViewStack(
+                        _script,
+                        _valueStack,
+                        _valueStack.Count - argsCount,
+                        argsCount,
+                        isMethodCall: thisCall
+                    );
+                }
+                else
+                {
+                    ScriptExecutionContext context = new(this, callback, sref);
+                    if (callback.HasArgumentViewCallback)
                     {
-                        ClrFunction = fn.Callback,
-                        ReturnAddress = instructionPtr,
-                        CallingSourceRef = sref,
-                        BasePointer = -1,
-                        ErrorHandler = handler,
-                        Continuation = Continuation,
-                        ErrorHandlerBeforeUnwind = unwindHandler,
-                        Flags = Flags,
+                        ret = callback.InvokeArgumentViewStack(
+                            context,
+                            _valueStack,
+                            _valueStack.Count - argsCount,
+                            argsCount,
+                            isMethodCall: thisCall
+                        );
                     }
-                );
+                    else
+                    {
+                        ret = InvokeLegacyCallbackFromStack(
+                            callback,
+                            context,
+                            argsCount,
+                            isMethodCall: thisCall
+                        );
+                    }
+                }
 
-                DynValue ret = fn.Callback.Invoke(
-                    new ScriptExecutionContext(this, fn.Callback, sref),
-                    args,
-                    isMethodCall: thisCall
-                );
                 _valueStack.RemoveLast(argsCount + 1);
                 _valueStack.Push(ret);
 
-                _executionStack.Pop();
+                CallStackItemPool.Return(_executionStack.Pop());
 
                 return InternalCheckForTailRequests(null, instructionPtr);
             }
             else if (fn.Type == DataType.Function)
             {
                 _valueStack.Push(DynValue.FromNumber(argsCount));
-                _executionStack.Push(
-                    new CallStackItem()
-                    {
-                        BasePointer = _valueStack.Count,
-                        ReturnAddress = instructionPtr,
-                        DebugEntryPoint = fn.Function.EntryPointByteCodeLocation,
-                        CallingSourceRef = GetCurrentSourceRef(instructionPtr - 1), // See right above in GetCurrentSourceRef(instructionPtr - 1)
-                        ClosureScope = fn.Function.ClosureContext,
-                        ErrorHandler = handler,
-                        Continuation = Continuation,
-                        ErrorHandlerBeforeUnwind = unwindHandler,
-                        Flags = Flags,
-                    }
-                );
+                CallStackItem frame = CallStackItemPool.Rent();
+                frame.BasePointer = _valueStack.Count;
+                frame.ReturnAddress = instructionPtr;
+                frame.DebugEntryPoint = fn.Function.EntryPointByteCodeLocation;
+                frame.CallingSourceRef = GetCurrentSourceRef(instructionPtr - 1); // See right above in GetCurrentSourceRef(instructionPtr - 1)
+                frame.ClosureScope = fn.Function.ClosureContext;
+                frame.Function = fn;
+                frame.ErrorHandler = handler;
+                frame.Continuation = Continuation;
+                frame.ErrorHandlerBeforeUnwind = unwindHandler;
+                frame.Flags = Flags;
+                _executionStack.Push(frame);
                 return fn.Function.EntryPointByteCodeLocation;
             }
 
             // fallback to __call metamethod
             DynValue m = GetMetamethod(fn, Metamethods.Call);
 
-            if (m != null && m.IsNotNil())
+            if (m != null && m.IsNotNil() && CanCallMetamethod(m))
             {
                 // Use pooled array for __call metamethod invocation
                 using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
@@ -1464,6 +1501,96 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, debugText);
         }
 
+        private DynValue InvokeLegacyCallbackFromStack(
+            CallbackFunction callback,
+            ScriptExecutionContext context,
+            int argsCount,
+            bool isMethodCall
+        )
+        {
+            if (argsCount > 0 && _valueStack.Peek(0).Type == DataType.Tuple)
+            {
+                IList<DynValue> tupleExpandedArgs = CreateArgsListForFunctionCall(argsCount, 0);
+                return callback.InvokeLegacy(context, tupleExpandedArgs, isMethodCall);
+            }
+
+            switch (argsCount)
+            {
+                case 0:
+                    return callback.InvokeLegacyFixed(context, isMethodCall);
+                case 1:
+                    return callback.InvokeLegacyFixed(context, _valueStack.Peek(0), isMethodCall);
+                case 2:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 3:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 4:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(3),
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 5:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(4),
+                        _valueStack.Peek(3),
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 6:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(5),
+                        _valueStack.Peek(4),
+                        _valueStack.Peek(3),
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                case 7:
+                    return callback.InvokeLegacyFixed(
+                        context,
+                        _valueStack.Peek(6),
+                        _valueStack.Peek(5),
+                        _valueStack.Peek(4),
+                        _valueStack.Peek(3),
+                        _valueStack.Peek(2),
+                        _valueStack.Peek(1),
+                        _valueStack.Peek(0),
+                        isMethodCall
+                    );
+                default:
+                    IList<DynValue> args = CreateArgsListForFunctionCall(argsCount, 0);
+                    return callback.InvokeLegacy(context, args, isMethodCall);
+            }
+        }
+
+        private bool CanCallMetamethod(DynValue metamethod)
+        {
+            return LuaVersionDefaults.Resolve(_script.Options.CompatibilityVersion)
+                    >= LuaCompatibilityVersion.Lua54
+                || metamethod.Type == DataType.Function
+                || metamethod.Type == DataType.ClrFunction;
+        }
+
         private int PerformTco(int instructionPtr, int argsCount)
         {
             // Use pooled array for tail call optimization
@@ -1480,17 +1607,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             // perform a fake RET
             CallStackItem csi = PopToBasePointer();
-            int retpoint = csi.ReturnAddress;
-            int argscnt = (int)(_valueStack.Pop().Number);
-            _valueStack.RemoveLast(argscnt + 1);
-
-            // Re-push all cur args and func ptr
-            for (int i = argsCount; i >= 0; i--)
+            try
             {
-                _valueStack.Push(args[i]);
-            }
+                int retpoint = csi.ReturnAddress;
+                int argscnt = (int)(_valueStack.Pop().Number);
+                _valueStack.RemoveLast(argscnt + 1);
 
-            return retpoint;
+                // Re-push all cur args and func ptr
+                for (int i = argsCount; i >= 0; i--)
+                {
+                    _valueStack.Push(args[i]);
+                }
+
+                return retpoint;
+            }
+            finally
+            {
+                CallStackItemPool.Return(csi);
+            }
         }
 
         private int ExecRet(Instruction i)
@@ -1518,24 +1652,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem popped = PopToBasePointer();
             System.Diagnostics.Debug.Assert(object.ReferenceEquals(csi, popped));
 
-            int argscnt = (int)(_valueStack.Pop().Number);
-            _valueStack.RemoveLast(argscnt + 1);
+            CallbackFunction continuation = null;
 
-            _valueStack.Push(returnValue);
-
-            if (i.NumVal == 1)
+            try
             {
-                retpoint = InternalCheckForTailRequests(i, retpoint);
+                int argscnt = (int)(_valueStack.Pop().Number);
+                _valueStack.RemoveLast(argscnt + 1);
+
+                _valueStack.Push(returnValue);
+
+                if (i.NumVal == 1)
+                {
+                    retpoint = InternalCheckForTailRequests(i, retpoint);
+                }
+
+                continuation = csi.Continuation;
+            }
+            finally
+            {
+                CallStackItemPool.Return(csi);
             }
 
-            if (csi.Continuation != null)
+            if (continuation != null)
             {
-                _valueStack.Push(
-                    csi.Continuation.Invoke(
-                        new ScriptExecutionContext(this, csi.Continuation, i.SourceCodeRef),
-                        new DynValue[1] { _valueStack.Pop() }
-                    )
-                );
+                ScriptExecutionContext executionContext = new(this, continuation, i.SourceCodeRef);
+                DynValue continuationArgument = _valueStack.Pop();
+                // Argument-view continuations stay array-backed so TryGetSpan preserves
+                // the public behavior of CallbackFunction.Invoke.
+                DynValue continuationReturn = continuation.HasArgumentViewCallback
+                    ? continuation.Invoke(executionContext, new DynValue[] { continuationArgument })
+                    : continuation.InvokeLegacyFixed(executionContext, continuationArgument);
+
+                _valueStack.Push(continuationReturn);
             }
 
             return retpoint;
@@ -1613,6 +1761,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Add(lnFast, rnFast)));
+                return instructionPtr;
+            }
+
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
@@ -1639,6 +1793,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
+
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Subtract(lnFast, rnFast)));
+                return instructionPtr;
+            }
 
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
@@ -1667,6 +1827,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Multiply(lnFast, rnFast)));
+                return instructionPtr;
+            }
+
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
@@ -1693,6 +1859,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
+
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                _valueStack.Push(
+                    DynValue.NewNumber(
+                        LuaNumber.Modulo(lnFast, rnFast, _script.Options.CompatibilityVersion)
+                    )
+                );
+                return instructionPtr;
+            }
 
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
@@ -1725,6 +1901,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                // Regular division always returns float per Lua spec
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Divide(lnFast, rnFast)));
+                return instructionPtr;
+            }
+
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
 
@@ -1752,6 +1935,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
+
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                // LuaNumber.FloorDivide handles Lua 5.3+ semantics:
+                // - Integer // integer with div-by-zero throws error
+                // - Float // float with div-by-zero returns inf/-inf
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.FloorDivide(lnFast, rnFast)));
+                return instructionPtr;
+            }
 
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
@@ -1782,6 +1974,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
+
+            if (TryGetNumberOperands(l, r, out LuaNumber lnFast, out LuaNumber rnFast))
+            {
+                // Power always returns float per Lua spec
+                _valueStack.Push(DynValue.NewNumber(LuaNumber.Power(lnFast, rnFast)));
+                return instructionPtr;
+            }
 
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
             LuaNumber? ln = CastToLuaNumberForArithmetic(l);
@@ -1902,23 +2101,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private int ExecNeg(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
+            if (r.Type == DataType.Number)
+            {
+                LuaNumber result = NegateNumberForVersion(r.LuaNumber);
+
+                _valueStack.Push(DynValue.NewNumber(result));
+                return instructionPtr;
+            }
+
             LuaNumber? rn = CastToLuaNumberForArithmetic(r);
 
             if (rn.HasValue)
             {
-                LuaNumber result = LuaNumber.Negate(rn.Value);
-
-                // Lua 5.1/5.2: negating integer zero should produce float negative zero
-                // In 5.3+, integers are a distinct subtype, so -0 stays integer 0
-                // But in 5.1/5.2, all numbers are floats, so -0 must be negative zero
-                if (
-                    result.IsInteger
-                    && result.AsInteger == 0
-                    && _script.Options.CompatibilityVersion < LuaCompatibilityVersion.Lua53
-                )
-                {
-                    result = LuaNumber.FromFloat(-0.0);
-                }
+                LuaNumber result = NegateNumberForVersion(rn.Value);
 
                 _valueStack.Push(DynValue.NewNumber(result));
                 return instructionPtr;
@@ -1935,6 +2130,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     throw ScriptRuntimeException.ArithmeticOnNonNumber(r);
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool TryGetNumberOperands(
+            DynValue l,
+            DynValue r,
+            out LuaNumber ln,
+            out LuaNumber rn
+        )
+        {
+            if (l.Type == DataType.Number && r.Type == DataType.Number)
+            {
+                ln = l.LuaNumber;
+                rn = r.LuaNumber;
+                return true;
+            }
+
+            ln = default;
+            rn = default;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private LuaNumber NegateNumberForVersion(LuaNumber value)
+        {
+            LuaNumber result = LuaNumber.Negate(value);
+
+            // Lua 5.1/5.2: negating integer zero should produce float negative zero.
+            // In 5.3+, integers are a distinct subtype, so -0 stays integer 0.
+            if (
+                result.IsInteger
+                && result.AsInteger == 0
+                && _script.Options.CompatibilityVersion < LuaCompatibilityVersion.Lua53
+            )
+            {
+                return LuaNumber.FromFloat(-0.0);
+            }
+
+            return result;
         }
 
         private int ExecEq(Instruction i, int instructionPtr)

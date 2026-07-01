@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 {
+    using System;
     using System.Collections.Generic;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
@@ -14,6 +15,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     [NovaSharpModule]
     public static class ErrorHandlingModule
     {
+        [ThreadStatic]
+        private static CallbackFunction PcallContinuationCallback;
+
+        [ThreadStatic]
+        private static CallbackFunction PcallOnErrorCallback;
+
+        [ThreadStatic]
+        private static CallbackFunction XpcallContinuationCallback;
+
+        [ThreadStatic]
+        private static CallbackFunction XpcallOnErrorCallback;
+
         /// <summary>
         /// Implements Lua's <c>pcall</c>, wrapping a function invocation in protected mode.
         /// </summary>
@@ -42,6 +55,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             DynValue handlerBeforeUnwind
         )
         {
+            CallbackFunction continuationCallback;
+            CallbackFunction errorCallback;
+            if (funcName == "xpcall")
+            {
+                continuationCallback = GetXpcallContinuationCallback();
+                errorCallback = GetXpcallOnErrorCallback();
+            }
+            else
+            {
+                continuationCallback = GetPcallContinuationCallback();
+                errorCallback = GetPcallOnErrorCallback();
+            }
+
             executionContext = ModuleArgumentValidation.RequireExecutionContext(
                 executionContext,
                 nameof(executionContext)
@@ -79,8 +105,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                             {
                                 Args = ret.TailCallData.Args,
                                 Function = ret.TailCallData.Function,
-                                Continuation = new CallbackFunction(PcallContinuation, funcName),
-                                ErrorHandler = new CallbackFunction(PcallOnError, funcName),
+                                Continuation = continuationCallback,
+                                ErrorHandler = errorCallback,
                                 ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
                             }
                         );
@@ -120,12 +146,66 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     {
                         Args = a,
                         Function = v,
-                        Continuation = new CallbackFunction(PcallContinuation, funcName),
-                        ErrorHandler = new CallbackFunction(PcallOnError, funcName),
+                        Continuation = continuationCallback,
+                        ErrorHandler = errorCallback,
                         ErrorHandlerBeforeUnwind = handlerBeforeUnwind,
                     }
                 );
             }
+        }
+
+        private static CallbackFunction GetPcallContinuationCallback()
+        {
+            CallbackFunction callback = PcallContinuationCallback;
+            if (callback == null)
+            {
+                callback = new CallbackFunction(PcallContinuation, "pcall");
+                PcallContinuationCallback = callback;
+            }
+
+            return PrepareCachedCallback(callback);
+        }
+
+        private static CallbackFunction GetPcallOnErrorCallback()
+        {
+            CallbackFunction callback = PcallOnErrorCallback;
+            if (callback == null)
+            {
+                callback = new CallbackFunction(PcallOnError, "pcall");
+                PcallOnErrorCallback = callback;
+            }
+
+            return PrepareCachedCallback(callback);
+        }
+
+        private static CallbackFunction GetXpcallContinuationCallback()
+        {
+            CallbackFunction callback = XpcallContinuationCallback;
+            if (callback == null)
+            {
+                callback = new CallbackFunction(PcallContinuation, "xpcall");
+                XpcallContinuationCallback = callback;
+            }
+
+            return PrepareCachedCallback(callback);
+        }
+
+        private static CallbackFunction GetXpcallOnErrorCallback()
+        {
+            CallbackFunction callback = XpcallOnErrorCallback;
+            if (callback == null)
+            {
+                callback = new CallbackFunction(PcallOnError, "xpcall");
+                XpcallOnErrorCallback = callback;
+            }
+
+            return PrepareCachedCallback(callback);
+        }
+
+        private static CallbackFunction PrepareCachedCallback(CallbackFunction callback)
+        {
+            callback.AdditionalData = null;
+            return callback;
         }
 
         private static DynValue MakeReturnTuple(bool retstatus, CallbackArguments args)

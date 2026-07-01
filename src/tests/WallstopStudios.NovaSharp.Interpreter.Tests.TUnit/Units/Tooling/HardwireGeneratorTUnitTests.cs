@@ -18,6 +18,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
     public sealed class HardwireGeneratorTUnitTests
     {
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task BuildCodeModelRegistersCodeExpressions()
         {
             return RunWithRegistryLock(async () =>
@@ -40,6 +41,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task AllowInternalsFlagPropagatesToGeneratorContext()
         {
             return RunWithRegistryLock(async () =>
@@ -62,6 +64,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task MethodMemberDescriptorGeneratorEmitsDefaultDispatchAndRefHandling()
         {
             return RunWithRegistryLock(async () =>
@@ -96,6 +99,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task MethodMemberDescriptorGeneratorHandlesPropertySetterSpecialName()
         {
             return RunWithRegistryLock(async () =>
@@ -129,6 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task MethodMemberDescriptorGeneratorLogsErrorForStaticIndexer()
         {
             return RunWithRegistryLock(async () =>
@@ -179,6 +184,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task BuildCodeModelThrowsWhenTableNull()
         {
             return RunWithRegistryLock(() =>
@@ -189,6 +195,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task ConstructorThrowsWhenNamespaceMissing()
         {
             return RunWithRegistryLock(() =>
@@ -209,6 +216,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task ConstructorThrowsWhenEntryClassMissing()
         {
             return RunWithRegistryLock(() =>
@@ -229,6 +237,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task ConstructorThrowsWhenLoggerNull()
         {
             return RunWithRegistryLock(() =>
@@ -242,6 +251,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tooling
         }
 
         [global::TUnit.Core.Test]
+        [NotInParallel(nameof(HardwireGeneratorRegistry))]
         public Task GenerateSourceThrowsWhenLanguageMissingProvider()
         {
             return RunWithRegistryLock(async () =>

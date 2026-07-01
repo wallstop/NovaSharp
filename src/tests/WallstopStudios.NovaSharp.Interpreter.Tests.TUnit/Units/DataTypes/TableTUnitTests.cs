@@ -249,6 +249,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("missing", "did not point to anything", false)]
+        [global::TUnit.Core.Arguments("leaf", "did not point to a table", true)]
+        public async Task NestedPathErrorsIncludeOffendingKey(
+            string key,
+            string expectedMessage,
+            bool seedNonTable
+        )
+        {
+            Table table = new(new Script());
+            if (seedNonTable)
+            {
+                table.Set(key, DynValue.NewNumber(5));
+            }
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.RawGet(key, "child")
+            );
+
+            await Assert.That(exception.Message).Contains(expectedMessage).ConfigureAwait(false);
+            await Assert.That(exception.Message).Contains(key).ConfigureAwait(false);
+            await Assert.That(exception.Message).DoesNotContain("{0}").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
@@ -357,6 +381,58 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedSetOverloadsSetTwoAndThreeKeyPaths(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            Table table = new(script);
+            Table child = new(script);
+            Table grandchild = new(script);
+
+            table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+
+            table.Set("child", "leaf", DynValue.NewString("two"));
+            table.Set("child", "grandchild", "leaf", DynValue.NewString("three"));
+
+            await Assert.That(child.RawGet("leaf").String).IsEqualTo("two").ConfigureAwait(false);
+            await Assert
+                .That(grandchild.RawGet("leaf").String)
+                .IsEqualTo("three")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedSetRejectsForeignValue(LuaCompatibilityVersion version)
+        {
+            Script scriptA = new();
+            Script scriptB = new();
+            Table table = new(scriptA);
+            table.Set("child", DynValue.NewTable(scriptA));
+            DynValue foreignValue = DynValue.NewTable(scriptB);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set("child", "leaf", foreignValue)
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("resources owned by different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task GetParamsReturnsNestedValue(LuaCompatibilityVersion version)
         {
             Script script = new(version);
@@ -368,6 +444,264 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue value = table.Get("child", 1);
 
             await Assert.That(value.String).IsEqualTo("inner").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedGetAndRawGetOverloadsReturnNestedValues(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            Table table = new(script);
+            Table child = new(script);
+            Table grandchild = new(script);
+            table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+            child.Set("leaf", DynValue.NewString("two"));
+            grandchild.Set("leaf", DynValue.NewString("three"));
+
+            DynValue twoKeyGet = table.Get("child", "leaf");
+            DynValue twoKeyRawGet = table.RawGet("child", "leaf");
+            DynValue threeKeyGet = table.Get("child", "grandchild", "leaf");
+            DynValue threeKeyRawGet = table.RawGet("child", "grandchild", "leaf");
+
+            await Assert.That(twoKeyGet.String).IsEqualTo("two").ConfigureAwait(false);
+            await Assert.That(twoKeyRawGet.String).IsEqualTo("two").ConfigureAwait(false);
+            await Assert.That(threeKeyGet.String).IsEqualTo("three").ConfigureAwait(false);
+            await Assert.That(threeKeyRawGet.String).IsEqualTo("three").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedIndexersGetAndSetNestedValues(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            Table table = new(script);
+            Table child = new(script);
+            Table grandchild = new(script);
+            table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+
+            table["child", "leaf"] = "two";
+            table["child", "grandchild", "leaf"] = "three";
+
+            await Assert.That(table["child", "leaf"]).IsEqualTo("two").ConfigureAwait(false);
+            await Assert
+                .That(table["child", "grandchild", "leaf"])
+                .IsEqualTo("three")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedTerminalNullMatchesArrayPath(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            Table table = new(script);
+            table.Set("child", DynValue.NewTable(script));
+
+            DynValue fixedGet = table.Get("child", (object)null);
+            DynValue fixedRawGet = table.RawGet("child", (object)null);
+            bool removed = table.Remove("child", (object)null);
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set("child", (object)null, DynValue.NewNumber(1))
+            );
+
+            await Assert.That(fixedGet.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(fixedRawGet).IsNull().ConfigureAwait(false);
+            await Assert.That(removed).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("table index is nil")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ObjectArrayNestedGetStillUsesArrayPath(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            Table table = new(script);
+            table.Set("child", DynValue.NewTable(script));
+            table.Set(new object[] { "child", "leaf" }, DynValue.NewString("array"));
+            object[] keys = new object[] { "child", "leaf" };
+
+            DynValue getValue = table.Get(keys);
+            DynValue rawValue = table.RawGet(keys);
+            DynValue castGetValue = table.Get((object)keys);
+            DynValue castRawValue = table.RawGet((object)keys);
+
+            await Assert.That(getValue.String).IsEqualTo("array").ConfigureAwait(false);
+            await Assert.That(rawValue.String).IsEqualTo("array").ConfigureAwait(false);
+            await Assert.That(castGetValue.IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(castRawValue).IsNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SpanNestedKeyPathsAccessSlicesAndMutateNestedValues(
+            LuaCompatibilityVersion version
+        )
+        {
+            (
+                string RootGet,
+                bool RootRemoved,
+                bool RootMissingAfterRemove,
+                string TwoKeyGet,
+                string TwoKeySliceRawGet,
+                string ThreeKeySliceRawGet,
+                string UpdatedLeaf,
+                bool RemovedTwoKey,
+                bool TwoKeyMissingAfterRemove,
+                bool RemovedThreeKey,
+                bool ThreeKeyMissingAfterRemove
+            ) result = ExerciseSpanNestedKeyPaths(version);
+
+            await Assert.That(result.RootGet).IsEqualTo("rooted").ConfigureAwait(false);
+            await Assert.That(result.RootRemoved).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.RootMissingAfterRemove).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.TwoKeyGet).IsEqualTo("two").ConfigureAwait(false);
+            await Assert.That(result.TwoKeySliceRawGet).IsEqualTo("two").ConfigureAwait(false);
+            await Assert.That(result.ThreeKeySliceRawGet).IsEqualTo("three").ConfigureAwait(false);
+            await Assert.That(result.UpdatedLeaf).IsEqualTo("updated").ConfigureAwait(false);
+            await Assert.That(result.RemovedTwoKey).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.TwoKeyMissingAfterRemove).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.RemovedThreeKey).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.ThreeKeyMissingAfterRemove).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SpanNestedKeyPathsTreatEmptyAndDefaultLikeArrayPath(
+            LuaCompatibilityVersion version
+        )
+        {
+            (
+                bool EmptyGetIsNil,
+                bool DefaultGetIsNil,
+                bool EmptyRawGetIsNull,
+                bool DefaultRawGetIsNull,
+                bool EmptyRemoveResult,
+                bool DefaultRemoveResult,
+                string EmptySetExceptionMessage,
+                string DefaultSetExceptionMessage
+            ) result = ExerciseEmptyAndDefaultSpanKeyPaths();
+
+            await Assert.That(result.EmptyGetIsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.DefaultGetIsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.EmptyRawGetIsNull).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.DefaultRawGetIsNull).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.EmptyRemoveResult).IsFalse().ConfigureAwait(false);
+            await Assert.That(result.DefaultRemoveResult).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.EmptySetExceptionMessage)
+                .Contains("table index is nil")
+                .ConfigureAwait(false);
+            await Assert
+                .That(result.DefaultSetExceptionMessage)
+                .Contains("table index is nil")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SpanNestedTerminalNullMatchesArrayPath(LuaCompatibilityVersion version)
+        {
+            (
+                bool GetIsNil,
+                bool RawGetIsNull,
+                bool RemoveResult,
+                string SetExceptionMessage
+            ) result = ExerciseTerminalNullSpanKeyPath(version);
+
+            await Assert.That(result.GetIsNil).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.RawGetIsNull).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.RemoveResult).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.SetExceptionMessage)
+                .Contains("table index is nil")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments("missing", "did not point to anything", false)]
+        [global::TUnit.Core.Arguments("leaf", "did not point to a table", true)]
+        public async Task SpanNestedPathErrorsIncludeOffendingKey(
+            string key,
+            string expectedMessage,
+            bool seedNonTable
+        )
+        {
+            (
+                string GetMessage,
+                string RawGetMessage,
+                string SetMessage,
+                string RemoveMessage
+            ) messages = CaptureSpanPathErrorMessages(key, seedNonTable);
+
+            await Assert.That(messages.GetMessage).Contains(expectedMessage).ConfigureAwait(false);
+            await Assert
+                .That(messages.RawGetMessage)
+                .Contains(expectedMessage)
+                .ConfigureAwait(false);
+            await Assert.That(messages.SetMessage).Contains(expectedMessage).ConfigureAwait(false);
+            await Assert
+                .That(messages.RemoveMessage)
+                .Contains(expectedMessage)
+                .ConfigureAwait(false);
+            await Assert.That(messages.GetMessage).Contains(key).ConfigureAwait(false);
+            await Assert.That(messages.RawGetMessage).Contains(key).ConfigureAwait(false);
+            await Assert.That(messages.SetMessage).Contains(key).ConfigureAwait(false);
+            await Assert.That(messages.RemoveMessage).Contains(key).ConfigureAwait(false);
+            await Assert.That(messages.GetMessage).DoesNotContain("{0}").ConfigureAwait(false);
+            await Assert.That(messages.RawGetMessage).DoesNotContain("{0}").ConfigureAwait(false);
+            await Assert.That(messages.SetMessage).DoesNotContain("{0}").ConfigureAwait(false);
+            await Assert.That(messages.RemoveMessage).DoesNotContain("{0}").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task SpanNestedSetRejectsForeignValue(LuaCompatibilityVersion version)
+        {
+            string message = CaptureSpanForeignValueExceptionMessage(version);
+
+            await Assert
+                .That(message)
+                .Contains("resources owned by different scripts")
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -441,6 +775,66 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RawGetObjectArrayThrowsWhenPathMissing(LuaCompatibilityVersion version)
+        {
+            Table table = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.RawGet(new object[] { "missing", "child" })
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to anything")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedGetThrowsWhenPathMissing(LuaCompatibilityVersion version)
+        {
+            Table table = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Get("missing", "child")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to anything")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedSetThrowsWhenPathMissing(LuaCompatibilityVersion version)
+        {
+            Table table = new(new Script());
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Set("missing", "child", DynValue.NewNumber(1))
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to anything")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task RawGetParamsThrowsWhenIntermediateIsNotTable(
             LuaCompatibilityVersion version
         )
@@ -450,6 +844,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
                 table.RawGet("leaf", "child")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to a table")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedRawGetThrowsWhenIntermediateIsNotTable(
+            LuaCompatibilityVersion version
+        )
+        {
+            Table table = new(new Script());
+            table.Set("leaf", DynValue.NewNumber(5));
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.RawGet("leaf", "child")
+            );
+
+            await Assert
+                .That(exception.Message)
+                .Contains("did not point to a table")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedRemoveThrowsWhenIntermediateIsNotTable(
+            LuaCompatibilityVersion version
+        )
+        {
+            Table table = new(new Script());
+            table.Set("leaf", DynValue.NewNumber(5));
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                table.Remove("leaf", "child")
             );
 
             await Assert
@@ -668,6 +1108,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task FixedNestedRemoveOverloadsDeleteNestedEntries(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            Table table = new(script);
+            Table child = new(script);
+            Table grandchild = new(script);
+            table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+            child.Set("leaf", DynValue.NewNumber(2));
+            grandchild.Set("leaf", DynValue.NewNumber(3));
+
+            bool removedTwoKey = table.Remove("child", "leaf");
+            bool removedThreeKey = table.Remove("child", "grandchild", "leaf");
+
+            await Assert.That(removedTwoKey).IsTrue().ConfigureAwait(false);
+            await Assert.That(removedThreeKey).IsTrue().ConfigureAwait(false);
+            await Assert.That(child.RawGet("leaf")).IsNull().ConfigureAwait(false);
+            await Assert.That(grandchild.RawGet("leaf")).IsNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task RawGetParamsNavigatesNestedTables(LuaCompatibilityVersion version)
         {
             Script script = new(version);
@@ -703,6 +1171,223 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .That(keys.Any(k => k is long l && l == 2 || k is double d && d == 2d))
                 .IsTrue()
                 .ConfigureAwait(false);
+        }
+
+        private static (
+            string RootGet,
+            bool RootRemoved,
+            bool RootMissingAfterRemove,
+            string TwoKeyGet,
+            string TwoKeySliceRawGet,
+            string ThreeKeySliceRawGet,
+            string UpdatedLeaf,
+            bool RemovedTwoKey,
+            bool TwoKeyMissingAfterRemove,
+            bool RemovedThreeKey,
+            bool ThreeKeyMissingAfterRemove
+        ) ExerciseSpanNestedKeyPaths(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            Table table = new(script);
+            Table child = new(script);
+            Table grandchild = new(script);
+            table.Set("child", DynValue.NewTable(child));
+            child.Set("grandchild", DynValue.NewTable(grandchild));
+            child.Set("leaf", DynValue.NewString("two"));
+            grandchild.Set("leaf", DynValue.NewString("three"));
+
+            object[] rootKey = new object[] { "root" };
+            object[] twoKeys = new object[] { "child", "leaf" };
+            object[] threeKeys = new object[] { "child", "grandchild", "leaf" };
+            object[] paddedTwoKeys = new object[] { "ignored", "child", "leaf", "ignored" };
+            object[] paddedThreeKeys = new object[]
+            {
+                "ignored",
+                "child",
+                "grandchild",
+                "leaf",
+                "ignored",
+            };
+
+            table.Set(rootKey.AsSpan(), DynValue.NewString("rooted"));
+            string rootGet = table.Get(rootKey.AsSpan()).String;
+            bool rootRemoved = table.Remove(rootKey.AsSpan());
+            bool rootMissingAfterRemove = table.RawGet("root") == null;
+            string twoKeyGet = table.Get(twoKeys.AsSpan()).String;
+            string twoKeySliceRawGet = table.RawGet(paddedTwoKeys.AsSpan(1, 2)).String;
+            string threeKeySliceRawGet = table.RawGet(paddedThreeKeys.AsSpan(1, 3)).String;
+
+            table.Set(paddedTwoKeys.AsSpan(1, 2), DynValue.NewString("updated"));
+            string updatedLeaf = child.RawGet("leaf").String;
+
+            bool removedTwoKey = table.Remove(twoKeys.AsSpan());
+            bool twoKeyMissingAfterRemove = child.RawGet("leaf") == null;
+
+            table.Set(threeKeys.AsSpan(), DynValue.NewString("reset"));
+            bool removedThreeKey = table.Remove(paddedThreeKeys.AsSpan(1, 3));
+            bool threeKeyMissingAfterRemove = grandchild.RawGet("leaf") == null;
+
+            return (
+                rootGet,
+                rootRemoved,
+                rootMissingAfterRemove,
+                twoKeyGet,
+                twoKeySliceRawGet,
+                threeKeySliceRawGet,
+                updatedLeaf,
+                removedTwoKey,
+                twoKeyMissingAfterRemove,
+                removedThreeKey,
+                threeKeyMissingAfterRemove
+            );
+        }
+
+        private static (
+            bool EmptyGetIsNil,
+            bool DefaultGetIsNil,
+            bool EmptyRawGetIsNull,
+            bool DefaultRawGetIsNull,
+            bool EmptyRemoveResult,
+            bool DefaultRemoveResult,
+            string EmptySetExceptionMessage,
+            string DefaultSetExceptionMessage
+        ) ExerciseEmptyAndDefaultSpanKeyPaths()
+        {
+            Table table = new(new Script());
+            ReadOnlySpan<object> defaultKeys = default;
+
+            return (
+                table.Get(ReadOnlySpan<object>.Empty).IsNil(),
+                table.Get(defaultKeys).IsNil(),
+                table.RawGet(ReadOnlySpan<object>.Empty) == null,
+                table.RawGet(defaultKeys) == null,
+                table.Remove(ReadOnlySpan<object>.Empty),
+                table.Remove(defaultKeys),
+                CaptureSpanSetExceptionMessage(table, ReadOnlySpan<object>.Empty),
+                CaptureSpanSetExceptionMessage(table, defaultKeys)
+            );
+        }
+
+        private static (
+            bool GetIsNil,
+            bool RawGetIsNull,
+            bool RemoveResult,
+            string SetExceptionMessage
+        ) ExerciseTerminalNullSpanKeyPath(LuaCompatibilityVersion version)
+        {
+            Script script = new(version);
+            Table table = new(script);
+            table.Set("child", DynValue.NewTable(script));
+            object[] keys = new object[] { "child", null };
+
+            return (
+                table.Get(keys.AsSpan()).IsNil(),
+                table.RawGet(keys.AsSpan()) == null,
+                table.Remove(keys.AsSpan()),
+                CaptureSpanSetExceptionMessage(table, keys.AsSpan())
+            );
+        }
+
+        private static (
+            string GetMessage,
+            string RawGetMessage,
+            string SetMessage,
+            string RemoveMessage
+        ) CaptureSpanPathErrorMessages(string key, bool seedNonTable)
+        {
+            Table table = new(new Script());
+            if (seedNonTable)
+            {
+                table.Set(key, DynValue.NewNumber(5));
+            }
+
+            object[] keys = new object[] { key, "child" };
+
+            return (
+                CaptureSpanGetExceptionMessage(table, keys),
+                CaptureSpanRawGetExceptionMessage(table, keys),
+                CaptureSpanSetExceptionMessage(table, keys.AsSpan()),
+                CaptureSpanRemoveExceptionMessage(table, keys)
+            );
+        }
+
+        private static string CaptureSpanForeignValueExceptionMessage(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script scriptA = new(version);
+            Script scriptB = new(version);
+            Table table = new(scriptA);
+            table.Set("child", DynValue.NewTable(scriptA));
+            DynValue foreignValue = DynValue.NewTable(scriptB);
+            object[] keys = new object[] { "child", "leaf" };
+
+            return CaptureSpanSetExceptionMessage(table, keys.AsSpan(), foreignValue);
+        }
+
+        private static string CaptureSpanGetExceptionMessage(Table table, object[] keys)
+        {
+            try
+            {
+                _ = table.Get(keys.AsSpan());
+            }
+            catch (ScriptRuntimeException exception)
+            {
+                return exception.Message;
+            }
+
+            return string.Empty;
+        }
+
+        private static string CaptureSpanRawGetExceptionMessage(Table table, object[] keys)
+        {
+            try
+            {
+                _ = table.RawGet(keys.AsSpan());
+            }
+            catch (ScriptRuntimeException exception)
+            {
+                return exception.Message;
+            }
+
+            return string.Empty;
+        }
+
+        private static string CaptureSpanSetExceptionMessage(
+            Table table,
+            ReadOnlySpan<object> keys
+        ) => CaptureSpanSetExceptionMessage(table, keys, DynValue.NewNumber(1));
+
+        private static string CaptureSpanSetExceptionMessage(
+            Table table,
+            ReadOnlySpan<object> keys,
+            DynValue value
+        )
+        {
+            try
+            {
+                table.Set(keys, value);
+            }
+            catch (ScriptRuntimeException exception)
+            {
+                return exception.Message;
+            }
+
+            return string.Empty;
+        }
+
+        private static string CaptureSpanRemoveExceptionMessage(Table table, object[] keys)
+        {
+            try
+            {
+                _ = table.Remove(keys.AsSpan());
+            }
+            catch (ScriptRuntimeException exception)
+            {
+                return exception.Message;
+            }
+
+            return string.Empty;
         }
     }
 }

@@ -7,6 +7,10 @@ on:
     paths:
       - 'src/runtime/**'
       - 'src/tooling/WallstopStudios.NovaSharp.Benchmarks/**'
+      - 'src/tooling/WallstopStudios.NovaSharp.Comparison/**'
+      - 'scripts/benchmarks/**'
+      - 'docs/Performance.md'
+      - 'docs/performance-history/**'
       - '.github/workflows/benchmarks.yml'
   workflow_dispatch:
     inputs:
@@ -21,6 +25,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
   pull-requests: write
 
 concurrency:
@@ -73,6 +78,27 @@ jobs:
           DOTNET_ROLL_FORWARD: Major
           # Skip Performance.md update in CI to avoid git conflicts
           NOVASHARP_SKIP_PERFORMANCE_DOC: '1'
+
+      - name: Run same-run comparison benchmarks
+        id: run_comparison_benchmarks
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          comparison_artifacts="artifacts/benchmarkdotnet/comparison"
+          rm -rf "$comparison_artifacts"
+          mkdir -p "$comparison_artifacts"
+
+          echo "Running NovaSharp vs MoonSharp/NLua comparison benchmarks on this runner..."
+          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
+            -c Release --no-build -- \
+            --filter "*LuaPerformanceBenchmarks*" \
+            --exporters json \
+            --artifacts "$comparison_artifacts"
+          echo "Comparison benchmark run completed"
+          echo "Contents of $comparison_artifacts:"
+          find "$comparison_artifacts" -type f -name "*.json" || echo "No comparison JSON files found"
+        env:
+          DOTNET_ROLL_FORWARD: Major
 
       - name: Find and validate benchmark results
         id: find_result
@@ -261,6 +287,106 @@ jobs:
           echo ""
           echo "has_output=true" >> "$GITHUB_OUTPUT"
 
+      - name: Render benchmark delta matrix
+        id: benchmark_deltas
+        if: steps.find_result.outputs.has_results == 'true'
+        run: |
+          set -euo pipefail
+          delta_out="$(python3 scripts/benchmarks/render-benchmark-deltas.py \
+            --current-root BenchmarkDotNet.Artifacts \
+            --comparison-root artifacts/benchmarkdotnet/comparison \
+            --self-baseline-root docs/performance-history/current-baseline \
+            --output artifacts/benchmark-deltas.md)"
+          printf '%s\n' "$delta_out"
+          changed="$(printf '%s\n' "$delta_out" | sed -n 's/^changed=//p' | tail -n1)"
+          regressed="$(printf '%s\n' "$delta_out" | sed -n 's/^regressed=//p' | tail -n1)"
+          external_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^external_rows=//p' | tail -n1)"
+          self_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^self_rows=//p' | tail -n1)"
+          {
+            echo "has_report=true"
+            echo "report_file=artifacts/benchmark-deltas.md"
+            echo "changed=${changed:-false}"
+            echo "regressed=${regressed:-false}"
+            echo "external_rows=${external_rows:-0}"
+            echo "self_rows=${self_rows:-0}"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ -f artifacts/benchmark-deltas.md ]; then
+            cat artifacts/benchmark-deltas.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+        shell: bash
+
+      - name: Warn on benchmark self-regression signal
+        if: steps.benchmark_deltas.outputs.regressed == 'true'
+        run: |
+          echo "::warning::Benchmark delta report flagged one or more worse-than-self-baseline metrics. Review the PR comment and artifacts before merging."
+        shell: bash
+
+      - name: Warn when external comparison rows are unavailable
+        if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.external_rows == '0'
+        run: |
+          echo "::warning::No external comparison rows were rendered. Check the same-run comparison benchmark logs and artifacts."
+        shell: bash
+
+      - name: Comment benchmark comparison deltas on PR
+        if: github.event_name == 'pull_request' && steps.benchmark_deltas.outputs.has_report == 'true'
+        uses: actions/github-script@v8
+        env:
+          BENCHMARK_DELTAS_FILE: ${{ steps.benchmark_deltas.outputs.report_file }}
+          BENCHMARK_CHANGED: ${{ steps.benchmark_deltas.outputs.changed }}
+          BENCHMARK_REGRESSED: ${{ steps.benchmark_deltas.outputs.regressed }}
+          BENCHMARK_EXTERNAL_ROWS: ${{ steps.benchmark_deltas.outputs.external_rows }}
+          BENCHMARK_SELF_ROWS: ${{ steps.benchmark_deltas.outputs.self_rows }}
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- novasharp-benchmark-deltas -->';
+            const reportPath = process.env.BENCHMARK_DELTAS_FILE;
+            let report = '';
+            if (reportPath && fs.existsSync(reportPath)) {
+              report = fs.readFileSync(reportPath, 'utf8').trim();
+            } else {
+              report = 'Benchmark delta report was not generated.';
+            }
+            const changed = process.env.BENCHMARK_CHANGED === 'true';
+            const regressed = process.env.BENCHMARK_REGRESSED === 'true';
+            const externalRows = process.env.BENCHMARK_EXTERNAL_ROWS || '0';
+            const selfRows = process.env.BENCHMARK_SELF_ROWS || '0';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              marker,
+              report,
+              '',
+              `Changed beyond tolerance: ${changed ? 'yes' : 'no'}. Self-regression signal: ${regressed ? 'yes' : 'no'}.`,
+              `External runtime cells: ${externalRows}. Self-baseline rows: ${selfRows}.`,
+              '',
+              `_Generated by benchmark CI ([run logs](${runUrl}))._`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const previous = comments.find((comment) =>
+              comment.user?.type === 'Bot' && comment.body?.includes(marker)
+            );
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: previous.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
       - name: Set output when no results
         id: set_no_output
         if: steps.find_result.outputs.has_results != 'true'
@@ -332,8 +458,10 @@ jobs:
           auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           # Alert threshold (default 115% = 15% regression)
           alert-threshold: ${{ github.event.inputs.alert_threshold || '115%' }}
-          # Fail on alert for PRs, configurable via input
-          fail-on-alert: ${{ github.event.inputs.fail_on_alert == 'true' || (github.event_name == 'pull_request') }}
+          # Hosted PR runners are too noisy for single-sample microbenchmark alerts
+          # to be reliable merge gates. Keep PR alerts visible in comments/artifacts,
+          # and reserve failing alerts for explicit manual benchmark runs.
+          fail-on-alert: ${{ github.event.inputs.fail_on_alert == 'true' }}
           # Comment on PR with results
           comment-on-alert: true
           # Store data in gh-pages branch under benchmarks directory
@@ -360,48 +488,26 @@ jobs:
           name: benchmark-results
           path: |
             BenchmarkDotNet.Artifacts/
+            artifacts/benchmarkdotnet/comparison/
             benchmark-results.json
+            artifacts/benchmark-deltas.md
           if-no-files-found: warn
 
-  # Comparison benchmarks run separately and less frequently
   comparison:
+    name: comparison
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: benchmark
-    timeout-minutes: 45
+    if: always()
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          global-json-file: global.json
-          cache: true
-          cache-dependency-path: 'src/**/packages.lock.json'
-
-      - name: Restore dependencies
-        run: dotnet restore src/NovaSharp.sln
-
-      - name: Restore tools
-        run: dotnet tool restore
-
-      - name: Build solution
-        run: dotnet build src/NovaSharp.sln -c Release --no-restore
-
-      - name: Run comparison benchmarks
+      - name: Confirm same-run comparison location
+        if: needs.benchmark.result == 'success'
         run: |
-          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
-            -c Release --no-build -- \
-            --filter "*" \
-            --exporters json
-        env:
-          DOTNET_ROLL_FORWARD: Major
+          echo "Comparison benchmarks now run inside the benchmark job so external runtime deltas use the same runner hardware."
+          echo "Inspect the benchmark-results artifact for artifacts/benchmarkdotnet/comparison/."
 
-      - name: Upload comparison artifacts
-        uses: actions/upload-artifact@v5
-        with:
-          name: comparison-results
-          path: BenchmarkDotNet.Artifacts/
-          if-no-files-found: warn
+      - name: Propagate benchmark job failure
+        if: needs.benchmark.result != 'success'
+        run: |
+          echo "::error::The benchmark job did not complete successfully; same-run comparison artifacts may be missing."
+          exit 1

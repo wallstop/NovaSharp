@@ -31,26 +31,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 return value;
             }
 
-            Type t = obj.GetType();
-
-            if (obj is bool b)
+            DynValue primitive = TryObjectToPrimitiveDynValue(obj);
+            if (primitive != null)
             {
-                return DynValue.NewBoolean(b);
-            }
-
-            if (obj is string || obj is StringBuilder || obj is char)
-            {
-                return DynValue.NewString(obj.ToString());
-            }
-
-            if (NumericConversions.NumericTypes.Contains(t))
-            {
-                // Preserve integer/float subtype distinction for Lua 5.3+ compliance
-                if (NumericConversions.IsIntegerType(t))
-                {
-                    return DynValue.NewInteger(NumericConversions.TypeToLong(t, obj));
-                }
-                return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
+                return primitive;
             }
 
             if (obj is Table table)
@@ -77,8 +61,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 return value;
             }
 
+            Type type = obj.GetType();
             Func<Script, object, DynValue> converter =
-                Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(obj.GetType());
+                Script.GlobalOptions.CustomConverters.GetClrToScriptCustomConversion(type);
             if (converter != null)
             {
                 DynValue v = converter(script, obj);
@@ -88,31 +73,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
                 }
             }
 
-            Type t = obj.GetType();
-
-            if (obj is bool b)
+            DynValue primitive = TryObjectToPrimitiveDynValue(obj);
+            if (primitive != null)
             {
-                return DynValue.NewBoolean(b);
-            }
-
-            if (obj is string || obj is StringBuilder || obj is char)
-            {
-                return DynValue.NewString(obj.ToString());
+                return primitive;
             }
 
             if (obj is Closure closure)
             {
-                return DynValue.NewClosure(closure);
-            }
-
-            if (NumericConversions.NumericTypes.Contains(t))
-            {
-                // Preserve integer/float subtype distinction for Lua 5.3+ compliance
-                if (NumericConversions.IsIntegerType(t))
-                {
-                    return DynValue.NewInteger(NumericConversions.TypeToLong(t, obj));
-                }
-                return DynValue.NewNumber(NumericConversions.TypeToDouble(t, obj));
+                return DynValue.FromClosure(closure);
             }
 
             if (obj is Table table)
@@ -122,21 +91,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
 
             if (obj is CallbackFunction function)
             {
-                return DynValue.NewCallback(function);
+                return DynValue.FromCallback(function);
+            }
+
+            if (obj is ScriptFunctionCallbackView argumentViewCallback)
+            {
+                return DynValue.NewCallbackView(argumentViewCallback);
+            }
+
+            if (obj is ScriptFunctionCallbackViewNoContext argumentViewNoContextCallback)
+            {
+                return DynValue.NewCallbackView(argumentViewNoContextCallback);
             }
 
             if (obj is Delegate @delegate)
             {
 #if NETFX_CORE
-                MethodInfo mi = d.GetMethodInfo();
+                MethodInfo mi = @delegate.GetMethodInfo();
 #else
                 MethodInfo mi = @delegate.Method;
 #endif
 
-                if (CallbackFunction.CheckCallbackSignature(mi, false))
+                if (CallbackFunction.CheckArgumentViewNoContextCallbackSignature(mi, false))
+                {
+                    return DynValue.NewCallbackView(
+                        CreateDelegate<ScriptFunctionCallbackViewNoContext>(@delegate, mi)
+                    );
+                }
+
+                if (CallbackFunction.CheckArgumentViewCallbackSignature(mi, false))
+                {
+                    return DynValue.NewCallbackView(
+                        CreateDelegate<ScriptFunctionCallbackView>(@delegate, mi)
+                    );
+                }
+
+                if (CallbackFunction.CheckLegacyCallbackSignature(mi, false))
                 {
                     return DynValue.NewCallback(
-                        (Func<ScriptExecutionContext, CallbackArguments, DynValue>)@delegate
+                        CreateDelegate<Func<ScriptExecutionContext, CallbackArguments, DynValue>>(
+                            @delegate,
+                            mi
+                        )
                     );
                 }
             }
@@ -212,6 +208,92 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.Converters
             }
 
             throw ScriptRuntimeException.ConvertObjectFailed(obj);
+        }
+
+        private static DynValue TryObjectToPrimitiveDynValue(object obj)
+        {
+            if (obj is bool boolValue)
+            {
+                return DynValue.FromBoolean(boolValue);
+            }
+
+            if (obj is string stringValue)
+            {
+                return DynValue.NewString(stringValue);
+            }
+
+            if (obj is StringBuilder || obj is char)
+            {
+                return DynValue.NewString(obj.ToString());
+            }
+
+            if (obj is double doubleValue)
+            {
+                return DynValue.FromNumber(doubleValue);
+            }
+
+            if (obj is decimal decimalValue)
+            {
+                return DynValue.FromNumber(Convert.ToDouble(decimalValue));
+            }
+
+            if (obj is float floatValue)
+            {
+                return DynValue.FromNumber(floatValue);
+            }
+
+            if (obj is long longValue)
+            {
+                return DynValue.FromInteger(longValue);
+            }
+
+            if (obj is int intValue)
+            {
+                return DynValue.FromInteger(intValue);
+            }
+
+            if (obj is short shortValue)
+            {
+                return DynValue.FromInteger(shortValue);
+            }
+
+            if (obj is sbyte sbyteValue)
+            {
+                return DynValue.FromInteger(sbyteValue);
+            }
+
+            if (obj is ulong ulongValue)
+            {
+                return DynValue.FromInteger(checked((long)ulongValue));
+            }
+
+            if (obj is uint uintValue)
+            {
+                return DynValue.FromInteger(uintValue);
+            }
+
+            if (obj is ushort ushortValue)
+            {
+                return DynValue.FromInteger(ushortValue);
+            }
+
+            if (obj is byte byteValue)
+            {
+                return DynValue.FromInteger(byteValue);
+            }
+
+            return null;
+        }
+
+        private static TDelegate CreateDelegate<TDelegate>(Delegate source, MethodInfo mi)
+            where TDelegate : Delegate
+        {
+            if (source is TDelegate typed)
+            {
+                return typed;
+            }
+
+            return (TDelegate)Delegate.CreateDelegate(typeof(TDelegate), source.Target, mi);
         }
 
         /// <summary>

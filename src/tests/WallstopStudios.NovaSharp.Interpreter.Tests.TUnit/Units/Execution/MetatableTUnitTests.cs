@@ -5,6 +5,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Tests.TestInfrastructure.TUnit;
 
@@ -82,6 +83,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(first.Number).IsEqualTo(3).ConfigureAwait(false);
             await Assert.That(second.Number).IsEqualTo(5).ConfigureAwait(false);
             await Assert.That(total.Number).IsEqualTo(5).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua53)]
+        public async Task TableValuedCallMetamethodDoesNotChainBeforeLua54(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScript(version);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                script.DoString(
+                    @"
+                    local target = {}
+                    local proxy = {}
+                    setmetatable(target, { __call = proxy })
+                    setmetatable(proxy, {
+                        __call = function()
+                            return 'unexpected'
+                        end
+                    })
+                    return target()
+                "
+                )
+            );
+
+            await Assert.That(exception.Message).Contains("attempt to call").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task TableValuedCallMetamethodChainsFromLua54(LuaCompatibilityVersion version)
+        {
+            Script script = CreateScript(version);
+
+            DynValue result = script.DoString(
+                @"
+                local target = {}
+                local proxy = {}
+                setmetatable(target, { __call = proxy })
+                setmetatable(proxy, {
+                    __call = function(...)
+                        local a, b, c = ...
+                        return select('#', ...), a == proxy, b == target, c == nil
+                    end
+                })
+                return target()
+            "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task TableValuedCallMetamethodChainsInLatestDefault()
+        {
+            Script script = new(CoreModulePresets.Complete);
+
+            DynValue result = script.DoString(
+                @"
+                local target = {}
+                local proxy = {}
+                setmetatable(target, { __call = proxy })
+                setmetatable(proxy, {
+                    __call = function(...)
+                        local a, b, c = ...
+                        return select('#', ...), a == proxy, b == target, c == nil
+                    end
+                })
+                return target()
+            "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Boolean).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

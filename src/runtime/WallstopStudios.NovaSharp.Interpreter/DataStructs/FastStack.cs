@@ -61,6 +61,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         }
 
         /// <summary>
+        /// Tries to expose a contiguous read-only span over a range currently stored in the stack.
+        /// </summary>
+        public bool TryGetSpan(int from, int length, out ReadOnlySpan<T> span)
+        {
+            if (from < 0 || length < 0 || from > _headIdx - length)
+            {
+                span = default;
+                return false;
+            }
+
+            span = new ReadOnlySpan<T>(_storage, from, length);
+            return true;
+        }
+
+        /// <summary>
         /// Overwrites the element at the given offset from the top.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
