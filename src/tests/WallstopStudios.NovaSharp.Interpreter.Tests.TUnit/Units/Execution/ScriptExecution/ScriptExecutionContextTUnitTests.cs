@@ -272,57 +272,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [AllLuaVersions]
         public async Task FixedCallOverloadsInvokeLuaFunctions(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
-            script.DoString("function add5(a, b, c, d, e) return a + b + c + d + e end");
-            DynValue add5 = script.Globals.Get("add5");
-            DynValue callback = DynValue.NewCallbackView(
-                (context, _) =>
-                    context.Call(
-                        add5,
-                        DynValue.NewNumber(10),
-                        DynValue.NewNumber(20),
-                        DynValue.NewNumber(30),
-                        DynValue.NewNumber(40),
-                        DynValue.NewNumber(50)
-                    )
-            );
-            script.Globals["callAdd5"] = callback;
+            for (int arity = 5; arity <= 7; arity++)
+            {
+                Script script = CreateScript(version);
+                DynValue sum = script.DoString(
+                    @"return function(...)
+                        local total = 0
+                        for i = 1, select('#', ...) do
+                            total = total + select(i, ...)
+                        end
+                        return total
+                    end"
+                );
+                DynValue[] values = CreateSequentialArguments(arity);
+                DynValue callback = DynValue.NewCallbackView(
+                    (context, _) => CallWithFixedArguments(context, sum, values)
+                );
+                script.Globals["callSum"] = callback;
 
-            DynValue result = script.DoString("return callAdd5()");
-            await Assert.That(result.Number).IsEqualTo(150d);
+                DynValue result = script.DoString("return callSum()");
+                await Assert.That(result.Number).IsEqualTo(arity * (arity + 1) / 2d);
+            }
         }
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task FixedCallOverloadsInvokeCallbackViews(LuaCompatibilityVersion version)
         {
-            Script script = CreateScript(version);
-            DynValue inner = DynValue.NewCallbackView(
-                (_, args) =>
-                    DynValue.NewNumber(
-                        args.Count
-                            + args[0].Number
-                            + args[1].Number
-                            + args[2].Number
-                            + args[3].Number
-                            + args[4].Number
-                    )
-            );
-            DynValue callback = DynValue.NewCallbackView(
-                (context, _) =>
-                    context.Call(
-                        inner,
-                        DynValue.NewNumber(10),
-                        DynValue.NewNumber(20),
-                        DynValue.NewNumber(30),
-                        DynValue.NewNumber(40),
-                        DynValue.NewNumber(50)
-                    )
-            );
-            script.Globals["callInner"] = callback;
+            for (int arity = 5; arity <= 7; arity++)
+            {
+                Script script = CreateScript(version);
+                DynValue inner = DynValue.NewCallbackView(
+                    (_, args) =>
+                    {
+                        double sum = args.Count;
+                        for (int i = 0; i < args.Count; i++)
+                        {
+                            sum += args[i].Number;
+                        }
 
-            DynValue result = script.DoString("return callInner()");
-            await Assert.That(result.Number).IsEqualTo(155d);
+                        return DynValue.NewNumber(sum);
+                    }
+                );
+                DynValue[] values = CreateSequentialArguments(arity);
+                DynValue callback = DynValue.NewCallbackView(
+                    (context, _) => CallWithFixedArguments(context, inner, values)
+                );
+                script.Globals["callInner"] = callback;
+
+                DynValue result = script.DoString("return callInner()");
+                await Assert.That(result.Number).IsEqualTo(arity + arity * (arity + 1) / 2d);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -400,6 +400,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Arguments(3)]
         [global::TUnit.Core.Arguments(4)]
         [global::TUnit.Core.Arguments(5)]
+        [global::TUnit.Core.Arguments(6)]
+        [global::TUnit.Core.Arguments(7)]
         public async Task CallWithReadOnlySpanDynValuesExposesSpanToCallbackView(int arity)
         {
             Script script = new(default(CoreModules));
@@ -448,38 +450,47 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             LuaCompatibilityVersion version
         )
         {
-            Script script = CreateScript(version);
-            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
-            Table target = new(script);
-            Table meta = new(script);
-            DynValue[] values = CreateSequentialArguments(5);
-            meta.Set(
-                "__call",
-                DynValue.NewCallback(
-                    (_, args) =>
-                    {
-                        double sum = 0d;
-                        for (int i = 1; i < args.Count; i++)
+            for (int arity = 5; arity <= 6; arity++)
+            {
+                Script script = CreateScript(version);
+                ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+                Table target = new(script);
+                Table meta = new(script);
+                DynValue[] values = CreateSequentialArguments(arity);
+                meta.Set(
+                    "__call",
+                    DynValue.NewCallback(
+                        (_, args) =>
                         {
-                            sum += args[i].Number;
+                            double sum = 0d;
+                            for (int i = 1; i < args.Count; i++)
+                            {
+                                sum += args[i].Number;
+                            }
+
+                            return DynValue.NewTuple(
+                                DynValue.NewNumber(args.Count),
+                                DynValue.NewBoolean(ReferenceEquals(args[0].Table, target)),
+                                DynValue.NewNumber(sum)
+                            );
                         }
+                    )
+                );
+                target.MetaTable = meta;
 
-                        return DynValue.NewTuple(
-                            DynValue.NewNumber(args.Count),
-                            DynValue.NewBoolean(ReferenceEquals(args[0].Table, target)),
-                            DynValue.NewNumber(sum)
-                        );
-                    }
-                )
-            );
-            target.MetaTable = meta;
+                DynValue result = context.Call(DynValue.NewTable(target), values.AsSpan());
 
-            DynValue result = context.Call(DynValue.NewTable(target), values.AsSpan());
-
-            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
-            await Assert.That(result.Tuple[0].Number).IsEqualTo(6d).ConfigureAwait(false);
-            await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
-            await Assert.That(result.Tuple[2].Number).IsEqualTo(15d).ConfigureAwait(false);
+                await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+                await Assert
+                    .That(result.Tuple[0].Number)
+                    .IsEqualTo(arity + 1d)
+                    .ConfigureAwait(false);
+                await Assert.That(result.Tuple[1].Boolean).IsTrue().ConfigureAwait(false);
+                await Assert
+                    .That(result.Tuple[2].Number)
+                    .IsEqualTo(arity * (arity + 1) / 2d)
+                    .ConfigureAwait(false);
+            }
         }
 
         [global::TUnit.Core.Test]
@@ -566,14 +577,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                     return DynValue.Nil;
                 }
             );
+            DynValue sixArgCallback = DynValue.NewCallback(
+                (_, args) =>
+                {
+                    if (
+                        args.Count != 6
+                        || args[0].Number != 1d
+                        || args[1].Number != 2d
+                        || args[2].Number != 3d
+                        || args[3].Number != 4d
+                        || args[4].Number != 5d
+                        || args[5].Number != 6d
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Fixed six-argument allocation probe received unexpected arguments."
+                        );
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
             DynValue spanProbeCallback = DynValue.NewCallback(
                 (_, args) =>
                 {
                     bool hasSpan = args.TryGetSpan(out ReadOnlySpan<DynValue> span);
-                    if (!hasSpan || span.Length != 5)
+                    if (!hasSpan || span.Length != 7)
                     {
                         throw new InvalidOperationException(
-                            "Fixed five-argument allocation probe did not expose the expected span."
+                            "Fixed seven-argument allocation probe did not expose the expected span."
                         );
                     }
 
@@ -585,6 +617,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             DynValue third = DynValue.NewNumber(3);
             DynValue fourth = DynValue.NewNumber(4);
             DynValue fifth = DynValue.NewNumber(5);
+            DynValue sixth = DynValue.NewNumber(6);
+            DynValue seventh = DynValue.NewNumber(7);
 
             MeasureNoArgumentContextCallAllocations(context, noArgCallback, iterations: 8);
             MeasureFixedFiveArgumentContextCallAllocations(
@@ -597,7 +631,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 fifth,
                 iterations: 8
             );
-            MeasureFixedFiveArgumentContextCallAllocations(
+            MeasureFixedSixArgumentContextCallAllocations(
+                context,
+                sixArgCallback,
+                first,
+                second,
+                third,
+                fourth,
+                fifth,
+                sixth,
+                iterations: 8
+            );
+            MeasureFixedSevenArgumentContextCallAllocations(
                 context,
                 spanProbeCallback,
                 first,
@@ -605,6 +650,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 third,
                 fourth,
                 fifth,
+                sixth,
+                seventh,
                 iterations: 8
             );
 
@@ -624,7 +671,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 fifth,
                 iterations
             );
-            long spanProbeAllocated = MeasureFixedFiveArgumentContextCallAllocations(
+            long sixArgumentAllocated = MeasureFixedSixArgumentContextCallAllocations(
+                context,
+                sixArgCallback,
+                first,
+                second,
+                third,
+                fourth,
+                fifth,
+                sixth,
+                iterations
+            );
+            long spanProbeAllocated = MeasureFixedSevenArgumentContextCallAllocations(
                 context,
                 spanProbeCallback,
                 first,
@@ -632,14 +690,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 third,
                 fourth,
                 fifth,
+                sixth,
+                seventh,
                 iterations
             );
             long extraBytesPerCall = (fixedArgumentAllocated - noArgumentAllocated) / iterations;
+            long sixArgumentExtraBytesPerCall =
+                (sixArgumentAllocated - noArgumentAllocated) / iterations;
             long spanProbeExtraBytesPerCall =
                 (spanProbeAllocated - noArgumentAllocated) / iterations;
 
-            await Assert.That(extraBytesPerCall).IsLessThan(16L);
-            await Assert.That(spanProbeExtraBytesPerCall).IsLessThan(16L);
+            await Assert
+                .That(extraBytesPerCall)
+                .IsLessThan(16L)
+                .Because(
+                    $"No-argument context calls allocated {noArgumentAllocated} bytes; five fixed-argument context calls allocated {fixedArgumentAllocated} bytes."
+                );
+            await Assert
+                .That(sixArgumentExtraBytesPerCall)
+                .IsLessThan(16L)
+                .Because(
+                    $"No-argument context calls allocated {noArgumentAllocated} bytes; six fixed-argument context calls allocated {sixArgumentAllocated} bytes."
+                );
+            await Assert
+                .That(spanProbeExtraBytesPerCall)
+                .IsLessThan(16L)
+                .Because(
+                    $"No-argument context calls allocated {noArgumentAllocated} bytes; seven fixed-argument span-probe context calls allocated {spanProbeAllocated} bytes."
+                );
         }
 
         [global::TUnit.Core.Test]
@@ -732,7 +810,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task FixedFiveArgumentCallOverloadAvoidsCallMetamethodArgumentArrayAllocation()
+        public async Task FixedCallOverloadsAvoidHighArityCallMetamethodArgumentArrayAllocation()
         {
             const int iterations = 1_024;
             Script script = new(default(CoreModules));
@@ -745,6 +823,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             DynValue third = DynValue.NewNumber(3);
             DynValue fourth = DynValue.NewNumber(4);
             DynValue fifth = DynValue.NewNumber(5);
+            DynValue sixth = DynValue.NewNumber(6);
             DynValue fourArgumentCallback = DynValue.NewCallbackView(
                 (_, args) =>
                 {
@@ -786,6 +865,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                     return DynValue.Nil;
                 }
             );
+            DynValue sixArgumentCallback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    if (
+                        args.Count != 7
+                        || !ReferenceEquals(args[0].Table, callable)
+                        || args[1].Number != 1d
+                        || args[2].Number != 2d
+                        || args[3].Number != 3d
+                        || args[4].Number != 4d
+                        || args[5].Number != 5d
+                        || args[6].Number != 6d
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Context six-argument metamethod allocation probe received unexpected arguments."
+                        );
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
             callable.MetaTable = meta;
 
             meta.Set("__call", fourArgumentCallback);
@@ -807,6 +908,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 third,
                 fourth,
                 fifth,
+                iterations: 8
+            );
+            meta.Set("__call", sixArgumentCallback);
+            MeasureFixedSixArgumentContextCallMetamethodAllocations(
+                context,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                fifth,
+                sixth,
                 iterations: 8
             );
 
@@ -840,9 +953,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 fifth,
                 iterations
             );
-            long extraBytesPerCall = (fiveArgumentAllocated - fourArgumentAllocated) / iterations;
 
-            await Assert.That(extraBytesPerCall).IsLessThan(16L);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            meta.Set("__call", sixArgumentCallback);
+            long sixArgumentAllocated = MeasureFixedSixArgumentContextCallMetamethodAllocations(
+                context,
+                callableValue,
+                first,
+                second,
+                third,
+                fourth,
+                fifth,
+                sixth,
+                iterations
+            );
+            long fiveExtraBytesPerCall =
+                (fiveArgumentAllocated - fourArgumentAllocated) / iterations;
+            long sixExtraBytesPerCall = (sixArgumentAllocated - fiveArgumentAllocated) / iterations;
+
+            await Assert
+                .That(fiveExtraBytesPerCall)
+                .IsLessThan(16L)
+                .Because(
+                    $"Four-user-argument callable-table calls allocated {fourArgumentAllocated} bytes; five-user-argument calls allocated {fiveArgumentAllocated} bytes."
+                );
+            await Assert
+                .That(sixExtraBytesPerCall)
+                .IsLessThan(16L)
+                .Because(
+                    $"Five-user-argument callable-table calls allocated {fiveArgumentAllocated} bytes; six-user-argument calls allocated {sixArgumentAllocated} bytes."
+                );
         }
 
         [global::TUnit.Core.Test]
@@ -1359,6 +1502,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Arguments(3)]
         [global::TUnit.Core.Arguments(4)]
         [global::TUnit.Core.Arguments(5)]
+        [global::TUnit.Core.Arguments(6)]
+        [global::TUnit.Core.Arguments(7)]
         public async Task FixedCallOverloadsPreserveLegacyCallbackArity(int arity)
         {
             Script script = new(default(CoreModules));
@@ -1379,33 +1524,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 }
             );
 
-            DynValue result = arity switch
-            {
-                1 => context.Call(inspect, DynValue.NewNumber(1)),
-                2 => context.Call(inspect, DynValue.NewNumber(1), DynValue.NewNumber(2)),
-                3 => context.Call(
-                    inspect,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3)
-                ),
-                4 => context.Call(
-                    inspect,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4)
-                ),
-                5 => context.Call(
-                    inspect,
-                    DynValue.NewNumber(1),
-                    DynValue.NewNumber(2),
-                    DynValue.NewNumber(3),
-                    DynValue.NewNumber(4),
-                    DynValue.NewNumber(5)
-                ),
-                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
-            };
+            DynValue result = CallWithFixedArguments(
+                context,
+                inspect,
+                CreateSequentialArguments(arity)
+            );
 
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
             await Assert.That(result.Tuple[0].Number).IsEqualTo((double)arity);
@@ -1418,6 +1541,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         [global::TUnit.Core.Arguments(3)]
         [global::TUnit.Core.Arguments(4)]
         [global::TUnit.Core.Arguments(5)]
+        [global::TUnit.Core.Arguments(6)]
+        [global::TUnit.Core.Arguments(7)]
         public async Task FixedCallOverloadsPreserveLegacyCallbackSpecialArguments(int arity)
         {
             Script script = new(default(CoreModules));
@@ -1449,33 +1574,53 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 }
             );
 
-            DynValue result = arity switch
+            DynValue[] values = arity switch
             {
-                1 => context.Call(inspect, (DynValue)null),
-                2 => context.Call(inspect, DynValue.NewNumber(1), DynValue.Void),
-                3 => context.Call(
-                    inspect,
+                1 => new DynValue[] { null },
+                2 => new[] { DynValue.NewNumber(1), DynValue.Void },
+                3 => new[]
+                {
                     DynValue.NewNumber(1),
                     DynValue.NewNumber(2),
-                    DynValue.NewTuple(DynValue.NewNumber(3), null)
-                ),
-                4 => context.Call(
-                    inspect,
+                    DynValue.NewTuple(DynValue.NewNumber(3), null),
+                },
+                4 => new DynValue[]
+                {
                     null,
                     DynValue.NewNumber(2),
                     DynValue.NewNumber(3),
-                    DynValue.NewTuple(DynValue.NewNumber(4), null)
-                ),
-                5 => context.Call(
-                    inspect,
+                    DynValue.NewTuple(DynValue.NewNumber(4), null),
+                },
+                5 => new[]
+                {
                     DynValue.NewNumber(1),
                     null,
                     DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
                     DynValue.NewNumber(3),
-                    DynValue.NewTuple(DynValue.NewNumber(4), null)
-                ),
+                    DynValue.NewTuple(DynValue.NewNumber(4), null),
+                },
+                6 => new[]
+                {
+                    DynValue.NewNumber(1),
+                    null,
+                    DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(5),
+                    DynValue.NewTuple(DynValue.NewNumber(4), null),
+                },
+                7 => new[]
+                {
+                    DynValue.NewNumber(1),
+                    null,
+                    DynValue.NewTuple(DynValue.NewNumber(2), DynValue.NewNumber(20)),
+                    DynValue.NewNumber(3),
+                    DynValue.NewTuple(DynValue.NewNumber(4), DynValue.NewNumber(40)),
+                    DynValue.NewNumber(5),
+                    DynValue.NewTuple(DynValue.NewNumber(6), null),
+                },
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
+            DynValue result = CallWithFixedArguments(context, inspect, values);
 
             double expectedCount = arity switch
             {
@@ -1484,6 +1629,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 3 => 4d,
                 4 => 5d,
                 5 => 6d,
+                6 => 7d,
+                7 => 8d,
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
             double expectedNilCount = arity switch
@@ -1493,6 +1640,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 3 => 1d,
                 4 => 2d,
                 5 => 2d,
+                6 => 2d,
+                7 => 2d,
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
             double expectedSum = arity switch
@@ -1502,6 +1651,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 3 => 6d,
                 4 => 9d,
                 5 => 10d,
+                6 => 15d,
+                7 => 21d,
                 _ => throw new ArgumentOutOfRangeException(nameof(arity)),
             };
 
@@ -1534,7 +1685,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
-        public async Task CallUsesCallMetamethod()
+        [global::TUnit.Core.Arguments(1)]
+        [global::TUnit.Core.Arguments(6)]
+        [global::TUnit.Core.Arguments(7)]
+        public async Task CallUsesCallMetamethod(int arity)
         {
             Script script = new(default(CoreModules));
             ScriptExecutionContext context = script.CreateDynamicExecutionContext();
@@ -1544,20 +1698,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 "__call",
                 DynValue.NewCallback(
                     (_, args) =>
-                        DynValue.NewTuple(
-                            DynValue.NewBoolean(args.Count == 2),
+                    {
+                        double sum = 0d;
+                        for (int i = 1; i < args.Count; i++)
+                        {
+                            sum += args[i].Number;
+                        }
+
+                        return DynValue.NewTuple(
+                            DynValue.NewBoolean(args.Count == arity + 1),
                             DynValue.NewBoolean(ReferenceEquals(args[0].Table, target)),
-                            args[1]
-                        )
+                            DynValue.NewNumber(sum)
+                        );
+                    }
                 )
             );
             target.MetaTable = meta;
 
-            DynValue result = context.Call(DynValue.NewTable(target), DynValue.NewNumber(1));
+            DynValue result = CallWithFixedArguments(
+                context,
+                DynValue.NewTable(target),
+                CreateSequentialArguments(arity)
+            );
             await Assert.That(result.Type).IsEqualTo(DataType.Tuple);
             await Assert.That(result.Tuple[0].Boolean).IsTrue();
             await Assert.That(result.Tuple[1].Boolean).IsTrue();
-            await Assert.That(result.Tuple[2].Number).IsEqualTo(1d);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(arity * (arity + 1) / 2d);
         }
 
         [global::TUnit.Core.Test]
@@ -2049,6 +2215,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             return args;
         }
 
+        private static DynValue CallWithFixedArguments(
+            ScriptExecutionContext context,
+            DynValue callback,
+            DynValue[] args
+        )
+        {
+            return args.Length switch
+            {
+                0 => context.Call(callback),
+                1 => context.Call(callback, args[0]),
+                2 => context.Call(callback, args[0], args[1]),
+                3 => context.Call(callback, args[0], args[1], args[2]),
+                4 => context.Call(callback, args[0], args[1], args[2], args[3]),
+                5 => context.Call(callback, args[0], args[1], args[2], args[3], args[4]),
+                6 => context.Call(callback, args[0], args[1], args[2], args[3], args[4], args[5]),
+                7 => context.Call(
+                    callback,
+                    args[0],
+                    args[1],
+                    args[2],
+                    args[3],
+                    args[4],
+                    args[5],
+                    args[6]
+                ),
+                _ => context.Call(callback, args.AsSpan()),
+            };
+        }
+
         private static long MeasureNoArgumentContextCallAllocations(
             ScriptExecutionContext context,
             DynValue callback,
@@ -2091,6 +2286,80 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 {
                     throw new InvalidOperationException(
                         "Fixed-argument context call allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedSixArgumentContextCallAllocations(
+            ScriptExecutionContext context,
+            DynValue callback,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            DynValue fourth,
+            DynValue fifth,
+            DynValue sixth,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = context.Call(
+                    callback,
+                    first,
+                    second,
+                    third,
+                    fourth,
+                    fifth,
+                    sixth
+                );
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Fixed six-argument context call allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedSevenArgumentContextCallAllocations(
+            ScriptExecutionContext context,
+            DynValue callback,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            DynValue fourth,
+            DynValue fifth,
+            DynValue sixth,
+            DynValue seventh,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = context.Call(
+                    callback,
+                    first,
+                    second,
+                    third,
+                    fourth,
+                    fifth,
+                    sixth,
+                    seventh
+                );
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Fixed seven-argument context call allocation probe returned an unexpected value."
                     );
                 }
             }
@@ -2144,6 +2413,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 {
                     throw new InvalidOperationException(
                         "Context five-argument metamethod allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedSixArgumentContextCallMetamethodAllocations(
+            ScriptExecutionContext context,
+            DynValue callable,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            DynValue fourth,
+            DynValue fifth,
+            DynValue sixth,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = context.Call(
+                    callable,
+                    first,
+                    second,
+                    third,
+                    fourth,
+                    fifth,
+                    sixth
+                );
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Context six-argument metamethod allocation probe returned an unexpected value."
                     );
                 }
             }

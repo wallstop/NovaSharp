@@ -1432,6 +1432,8 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _threeArgFunction = DynValue.Nil;
         private DynValue _fourArgFunction = DynValue.Nil;
         private DynValue _fiveArgFunction = DynValue.Nil;
+        private DynValue _sixArgFunction = DynValue.Nil;
+        private DynValue _sevenArgFunction = DynValue.Nil;
         private DynValue _contextFixedThreeCallback = DynValue.Nil;
         private DynValue _contextParamsThreeCallback = DynValue.Nil;
         private DynValue _contextFixedFourCallback = DynValue.Nil;
@@ -1439,12 +1441,18 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private DynValue _contextFixedFiveCallback = DynValue.Nil;
         private DynValue _contextParamsFiveCallback = DynValue.Nil;
         private DynValue _contextSpanFiveCallback = DynValue.Nil;
+        private DynValue _contextFixedSixCallback = DynValue.Nil;
+        private DynValue _contextFixedSevenCallback = DynValue.Nil;
+        private DynValue _contextSpanSevenCallback = DynValue.Nil;
         private DynValue _first = DynValue.Nil;
         private DynValue _second = DynValue.Nil;
         private DynValue _third = DynValue.Nil;
         private DynValue _fourth = DynValue.Nil;
         private DynValue _fifth = DynValue.Nil;
+        private DynValue _sixth = DynValue.Nil;
+        private DynValue _seventh = DynValue.Nil;
         private DynValue[] _fiveDynValueArgs = Array.Empty<DynValue>();
+        private DynValue[] _sevenDynValueArgs = Array.Empty<DynValue>();
 
         /// <summary>
         /// Prepares callback-to-Lua call benchmarks.
@@ -1456,12 +1464,28 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             _threeArgFunction = _script.DoString("return function(a, b, c) return c end");
             _fourArgFunction = _script.DoString("return function(a, b, c, d) return d end");
             _fiveArgFunction = _script.DoString("return function(a, b, c, d, e) return e end");
+            _sixArgFunction = _script.DoString("return function(a, b, c, d, e, f) return f end");
+            _sevenArgFunction = _script.DoString(
+                "return function(a, b, c, d, e, f, g) return g end"
+            );
             _first = DynValue.NewNumber(1d);
             _second = DynValue.NewNumber(2d);
             _third = DynValue.NewNumber(3d);
             _fourth = DynValue.NewNumber(4d);
             _fifth = DynValue.NewNumber(5d);
+            _sixth = DynValue.NewNumber(6d);
+            _seventh = DynValue.NewNumber(7d);
             _fiveDynValueArgs = new[] { _first, _second, _third, _fourth, _fifth };
+            _sevenDynValueArgs = new[]
+            {
+                _first,
+                _second,
+                _third,
+                _fourth,
+                _fifth,
+                _sixth,
+                _seventh,
+            };
             _contextFixedThreeCallback = DynValue.NewCallbackView(
                 (context, _) => context.Call(_threeArgFunction, _first, _second, _third)
             );
@@ -1492,6 +1516,26 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             );
             _contextSpanFiveCallback = DynValue.NewCallbackView(
                 (context, _) => context.Call(_fiveArgFunction, _fiveDynValueArgs.AsSpan())
+            );
+            _contextFixedSixCallback = DynValue.NewCallbackView(
+                (context, _) =>
+                    context.Call(_sixArgFunction, _first, _second, _third, _fourth, _fifth, _sixth)
+            );
+            _contextFixedSevenCallback = DynValue.NewCallbackView(
+                (context, _) =>
+                    context.Call(
+                        _sevenArgFunction,
+                        _first,
+                        _second,
+                        _third,
+                        _fourth,
+                        _fifth,
+                        _sixth,
+                        _seventh
+                    )
+            );
+            _contextSpanSevenCallback = DynValue.NewCallbackView(
+                (context, _) => context.Call(_sevenArgFunction, _sevenDynValueArgs.AsSpan())
             );
         }
 
@@ -1539,6 +1583,24 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Context Call: span 5 DynValues")]
         public DynValue CallContextFiveDynValuesSpan() => _script.Call(_contextSpanFiveCallback);
+
+        /// <summary>
+        /// Calls back into Lua from a CLR callback through the fixed six-argument context overload.
+        /// </summary>
+        [Benchmark(Description = "Context Call: 6 fixed DynValues")]
+        public DynValue CallContextSixDynValues() => _script.Call(_contextFixedSixCallback);
+
+        /// <summary>
+        /// Calls back into Lua from a CLR callback through the fixed seven-argument context overload.
+        /// </summary>
+        [Benchmark(Description = "Context Call: 7 fixed DynValues")]
+        public DynValue CallContextSevenDynValues() => _script.Call(_contextFixedSevenCallback);
+
+        /// <summary>
+        /// Calls back into Lua from a CLR callback through the span context overload.
+        /// </summary>
+        [Benchmark(Description = "Context Call: span 7 DynValues")]
+        public DynValue CallContextSevenDynValuesSpan() => _script.Call(_contextSpanSevenCallback);
     }
 
     /// <summary>

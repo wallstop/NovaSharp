@@ -659,6 +659,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         }
 
         /// <summary>
+        /// Calls the specified function with six arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <param name="arg4">The fourth argument.</param>
+        /// <param name="arg5">The fifth argument.</param>
+        /// <param name="arg6">The sixth argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3, arg4, arg5, arg6);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4, arg5, arg6);
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return CallNonFunction(func, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        /// <summary>
+        /// Calls the specified function with seven arguments, supporting most cases. The called function must not yield.
+        /// </summary>
+        /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
+        /// <param name="arg1">The first argument.</param>
+        /// <param name="arg2">The second argument.</param>
+        /// <param name="arg3">The third argument.</param>
+        /// <param name="arg4">The fourth argument.</param>
+        /// <param name="arg5">The fifth argument.</param>
+        /// <param name="arg6">The sixth argument.</param>
+        /// <param name="arg7">The seventh argument.</param>
+        /// <returns>The function result.</returns>
+        /// <exception cref="ScriptRuntimeException">If the function yields, returns a tail call request with continuations/handlers or, of course, if it encounters errors.</exception>
+        public DynValue Call(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            if (func.Type == DataType.Function)
+            {
+                return Script.Call(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+            }
+
+            if (func.Type == DataType.ClrFunction)
+            {
+                FixedCallArguments callArgs = new(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+                return CompleteDirectClrCall(callArgs.InvokeCallback(this, func.Callback));
+            }
+
+            return CallNonFunction(func, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        }
+
+        /// <summary>
         /// Calls the specified function with caller-owned contiguous arguments, supporting most cases. The called function must not yield.
         /// </summary>
         /// <param name="func">The function; it must be a Function or ClrFunction or have a call metamethod defined.</param>
@@ -696,6 +780,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         return Call(func, args[0], args[1], args[2], args[3]);
                     case 5:
                         return Call(func, args[0], args[1], args[2], args[3], args[4]);
+                    case 6:
+                        return Call(func, args[0], args[1], args[2], args[3], args[4], args[5]);
+                    case 7:
+                        return Call(
+                            func,
+                            args[0],
+                            args[1],
+                            args[2],
+                            args[3],
+                            args[4],
+                            args[5],
+                            args[6]
+                        );
                 }
 
                 return Script.Call(func, args);
@@ -890,6 +987,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
                         args[4]
                     );
                     return true;
+                case 6:
+                    result = CallDirectTarget(
+                        metafunction,
+                        self,
+                        args[0],
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        args[5]
+                    );
+                    return true;
                 default:
                     result = null;
                     return false;
@@ -1048,6 +1157,60 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
             }
 
             return CallDirectTarget(metafunction, func, arg1, arg2, arg3, arg4, arg5);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+            if (!IsDirectCallTarget(metafunction))
+            {
+                FixedCallArguments args = new(func, arg1, arg2, arg3, arg4, arg5, arg6);
+                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
+                {
+                    return result;
+                }
+
+                return Call(func, new DynValue[] { arg1, arg2, arg3, arg4, arg5, arg6 });
+            }
+
+            return CallDirectTarget(metafunction, func, arg1, arg2, arg3, arg4, arg5, arg6);
+        }
+
+        private DynValue CallNonFunction(
+            DynValue func,
+            DynValue arg1,
+            DynValue arg2,
+            DynValue arg3,
+            DynValue arg4,
+            DynValue arg5,
+            DynValue arg6,
+            DynValue arg7
+        )
+        {
+            DynValue metafunction = GetCallableMetamethodOrThrow(func);
+
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                8,
+                out DynValue[] arguments
+            );
+            arguments[0] = func;
+            arguments[1] = arg1;
+            arguments[2] = arg2;
+            arguments[3] = arg3;
+            arguments[4] = arg4;
+            arguments[5] = arg5;
+            arguments[6] = arg6;
+            arguments[7] = arg7;
+
+            return Call(metafunction, arguments.AsSpan(0, 8));
         }
 
         private bool TryCallChainedNonFunction(
