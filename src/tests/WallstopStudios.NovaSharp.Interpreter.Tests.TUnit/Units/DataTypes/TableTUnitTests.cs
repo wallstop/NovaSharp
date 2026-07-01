@@ -564,7 +564,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             LuaCompatibilityVersion version
         )
         {
-            var result = ExerciseSpanNestedKeyPaths(version);
+            (
+                string RootGet,
+                bool RootRemoved,
+                bool RootMissingAfterRemove,
+                string TwoKeyGet,
+                string TwoKeySliceRawGet,
+                string ThreeKeySliceRawGet,
+                string UpdatedLeaf,
+                bool RemovedTwoKey,
+                bool TwoKeyMissingAfterRemove,
+                bool RemovedThreeKey,
+                bool ThreeKeyMissingAfterRemove
+            ) result = ExerciseSpanNestedKeyPaths(version);
 
             await Assert.That(result.RootGet).IsEqualTo("rooted").ConfigureAwait(false);
             await Assert.That(result.RootRemoved).IsTrue().ConfigureAwait(false);
@@ -589,7 +601,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             LuaCompatibilityVersion version
         )
         {
-            var result = ExerciseEmptyAndDefaultSpanKeyPaths();
+            (
+                bool EmptyGetIsNil,
+                bool DefaultGetIsNil,
+                bool EmptyRawGetIsNull,
+                bool DefaultRawGetIsNull,
+                bool EmptyRemoveResult,
+                bool DefaultRemoveResult,
+                string EmptySetExceptionMessage,
+                string DefaultSetExceptionMessage
+            ) result = ExerciseEmptyAndDefaultSpanKeyPaths();
 
             await Assert.That(result.EmptyGetIsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(result.DefaultGetIsNil).IsTrue().ConfigureAwait(false);
@@ -615,7 +636,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task SpanNestedTerminalNullMatchesArrayPath(LuaCompatibilityVersion version)
         {
-            var result = ExerciseTerminalNullSpanKeyPath(version);
+            (
+                bool GetIsNil,
+                bool RawGetIsNull,
+                bool RemoveResult,
+                string SetExceptionMessage
+            ) result = ExerciseTerminalNullSpanKeyPath(version);
 
             await Assert.That(result.GetIsNil).IsTrue().ConfigureAwait(false);
             await Assert.That(result.RawGetIsNull).IsTrue().ConfigureAwait(false);
@@ -635,7 +661,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             bool seedNonTable
         )
         {
-            var messages = CaptureSpanPathErrorMessages(key, seedNonTable);
+            (
+                string GetMessage,
+                string RawGetMessage,
+                string SetMessage,
+                string RemoveMessage
+            ) messages = CaptureSpanPathErrorMessages(key, seedNonTable);
 
             await Assert.That(messages.GetMessage).Contains(expectedMessage).ConfigureAwait(false);
             await Assert
