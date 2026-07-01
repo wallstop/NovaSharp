@@ -88,6 +88,18 @@ Microsoft.Testing.Platform/TUnit, plus Lua specification parity harnesses.
 - **Output:** `comparison.json` with match/mismatch statistics, full `both_error` ratchet entries, and CI summary data.
 - **Enforcement:** `mismatch`, `lua_only`, and `nova_only` fail under `--enforce`. New or changed unclassified `both_error` signatures fail against `docs/testing/lua-error-ratchet.json`; removed entries are allowed.
 
+### render-lua-comparison-report.py
+
+- **Purpose:** Aggregate one or more `lua-comparison-*` artifact directories into the same PR-friendly Markdown table used by CI.
+- **Usage:**
+  ```bash
+  python3 scripts/tests/render-lua-comparison-report.py \
+      --input-root artifacts \
+      --output artifacts/lua-comparison-report.md
+  ```
+- **Output:** `artifacts/lua-comparison-report.md`, plus stdout lines `changed=true|false`, `regressed=true|false`, `rows=<count>`, and `output=<path>`.
+- **Signal:** Unexpected deltas are mismatches, one-sided outputs, missing outputs, or new/changed/missing entries in the both-error ratchet. The renderer reports those signals; `compare-lua-outputs.py --enforce` remains the pass/fail gate.
+
 ### tools/lua_error_ratchet.py
 
 - **Purpose:** Check or regenerate the unclassified `both_error` ratchet baseline.

@@ -29,6 +29,24 @@ $scriptRoot = $PSScriptRoot
 $repoRoot = Resolve-RepoRoot -StartPath $scriptRoot
 Set-Location $repoRoot
 
+function Resolve-PythonCommand {
+    if (-not [string]::IsNullOrWhiteSpace($env:PYTHON)) {
+        return $env:PYTHON
+    }
+
+    $python3 = Get-Command python3 -ErrorAction SilentlyContinue
+    if ($null -ne $python3) {
+        return $python3.Source
+    }
+
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if ($null -ne $python) {
+        return $python.Source
+    }
+
+    throw "Python 3 is required to render the benchmark delta report. Set PYTHON to override."
+}
+
 if ([string]::IsNullOrWhiteSpace($env:DOTNET_ROLL_FORWARD)) {
     $env:DOTNET_ROLL_FORWARD = "Major"
     Write-Host "DOTNET_ROLL_FORWARD not set; defaulting to 'Major' so .NET 9 hosts can execute the .NET 8 benchmarks."
@@ -72,9 +90,22 @@ else {
     Write-Host "Skipping comparison benchmarks (per -SkipComparison)."
 }
 
+Write-Host ""
+Write-Host "Rendering MoonSharp benchmark delta report..."
+$pythonCommand = Resolve-PythonCommand
+& $pythonCommand "scripts/benchmarks/render-benchmark-deltas.py" `
+    "--current-root" "BenchmarkDotNet.Artifacts" `
+    "--baseline-doc" "docs/Performance.md" `
+    "--output" "artifacts/benchmark-deltas.md"
+if ($LASTEXITCODE -ne 0) {
+    throw "scripts/benchmarks/render-benchmark-deltas.py failed. See output above."
+}
+
 $artifactsPath = Join-Path $repoRoot "BenchmarkDotNet.Artifacts"
 Write-Host ""
 Write-Host "BenchmarkDotNet artifacts are available under:"
 Write-Host "  $artifactsPath"
+Write-Host "MoonSharp benchmark delta report:"
+Write-Host "  artifacts/benchmark-deltas.md"
 Write-Host ""
 Write-Host "Review the updated sections in docs/Performance.md and attach relevant artifacts when opening a PR."

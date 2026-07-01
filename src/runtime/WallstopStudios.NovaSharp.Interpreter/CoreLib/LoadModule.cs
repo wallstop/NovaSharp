@@ -238,27 +238,74 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 Script s = executionContext.Script;
                 DynValue ld = args[0];
-                string script = "";
+                string script = string.Empty;
+                LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                    s.CompatibilityVersion
+                );
 
                 if (ld.Type == DataType.Function)
                 {
-                    while (true)
+                    string firstFragment = null;
+                    bool hasFirstFragment = false;
+                    bool hasBuilder = false;
+                    Utf16ValueStringBuilder scriptBuilder = default;
+
+                    try
                     {
-                        DynValue ret = executionContext.Script.Call(ld);
-                        if (ret.Type == DataType.String && ret.String.Length > 0)
+                        while (true)
                         {
-                            script += ret.String;
-                        }
-                        else if (ret.IsNil())
-                        {
-                            break;
-                        }
-                        else
-                        {
+                            DynValue ret = executionContext.Script.Call(ld).ToScalar();
+                            if (ret.Type == DataType.String)
+                            {
+                                string fragment = ret.String;
+                                if (
+                                    fragment.Length == 0
+                                    && version >= LuaCompatibilityVersion.Lua52
+                                )
+                                {
+                                    break;
+                                }
+
+                                if (!hasFirstFragment)
+                                {
+                                    firstFragment = fragment;
+                                    hasFirstFragment = true;
+                                }
+                                else
+                                {
+                                    if (!hasBuilder)
+                                    {
+                                        scriptBuilder = ZStringBuilder.Create();
+                                        scriptBuilder.Append(firstFragment);
+                                        hasBuilder = true;
+                                    }
+
+                                    scriptBuilder.Append(fragment);
+                                }
+
+                                continue;
+                            }
+
+                            if (ret.IsNil())
+                            {
+                                break;
+                            }
+
                             return DynValue.NewTuple(
                                 DynValue.Nil,
                                 DynValue.NewString("reader function must return a string")
                             );
+                        }
+
+                        script = hasBuilder
+                            ? scriptBuilder.ToString()
+                            : firstFragment ?? string.Empty;
+                    }
+                    finally
+                    {
+                        if (hasBuilder)
+                        {
+                            scriptBuilder.Dispose();
                         }
                     }
                 }
