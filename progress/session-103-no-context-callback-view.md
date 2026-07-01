@@ -36,13 +36,13 @@ Continue the public API and compiler/runtime performance redesign by removing av
 - [x] Benchmark project build
 - [x] Focused callback benchmarks
 - [x] Pre-commit
-- [ ] Push hook
-- [ ] PR CI
-- [ ] Copilot review request after push
+- [x] Push hook
+- [x] PR CI
+- [x] Copilot review request after push
 
 ## Status
 
-In progress.
+Implementation commit pushed and PR CI observed green.
 
 ## Implementation Log
 
@@ -62,4 +62,7 @@ In progress.
 - Repo-wide `./scripts/test/quick.sh` passed: 14,305 tests, 0 failed, 0 skipped.
 - Focused BenchmarkDotNet filter `*NoContextThree*` ran 4 benchmarks. Host fixed/span no-context callback-view calls reported zero allocated bytes; params-array calls reported the expected 48 B caller array allocation; Lua-to-CLR no-context calls reported 304 B including VM-call overhead.
 - Pre-commit completed successfully. It refreshed `docs/audits/documentation_audit.log` with a line-number-only update caused by the `Script.cs` edits.
-- Push, PR CI, and Copilot review request remain pending.
+- Commit `9c2f68dc` (`Add contextless callback view API`) pushed to `dev/wallstop/api-perf`; pre-push checks passed.
+- GitHub PR checks passed for the pushed commit: CSharpier `format-check`, Benchmarks `benchmark`, Tests `lint`, `dotnet-tests` on ubuntu/windows/macos, `code-coverage`, and Lua comparisons for 5.1-5.5 across ubuntu/windows/macos. Optional `comparison` and `lint-autofix` jobs were skipped.
+- Copilot review was requested after the push. Copilot responded that the PR exceeds its 20,000 changed-line review limit, so there was no actionable new Copilot feedback from this request.
+- Thread-aware PR comment inspection found no unresolved, non-outdated review threads after the push.
