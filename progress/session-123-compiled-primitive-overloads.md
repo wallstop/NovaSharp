@@ -22,6 +22,7 @@
 - An adversarial review found that the first overload implementation changed source-level behavior: `Execute('x')` could bind to the numeric overload and pass `120`, and `Execute(42)` bypassed registered primitive custom converters.
 - The production fix keeps the ergonomic overloads but routes each primitive through a converter-preserving helper. If no custom converter is registered for that exact CLR type, the helper uses the direct Lua primitive conversion without boxing. If a converter is registered, it wins and may return `null` to fall back to standard conversion.
 - The custom-converter regression is intentionally single-version because `Script.GlobalOptions.CustomConverters` is global host state. Running one converter-mutation test per Lua version in parallel corrupted the shared dictionary, so the test now validates the host conversion contract once under Lua 5.4.
+- PR CI on macOS later showed the all-version primitive happy-path test could still observe a concurrently registered `int` converter from another test and read a string result as numeric zero. Both primitive overload tests now use `ScriptGlobalOptionsIsolation`; the happy-path test also clears converters inside that isolated scope.
 
 ## Measurement Notes
 
@@ -46,4 +47,7 @@
 - Passed: `./scripts/dev/pre-commit.sh`
 - Passed after review fix: `git diff --check`.
 - Passed after review fix: `./scripts/dev/pre-commit.sh`.
+- Passed after macOS CI test-isolation fix: `./scripts/test/quick.sh --full PrimitiveArgumentOverloads`.
+- Passed after macOS CI test-isolation fix: `./scripts/test/quick.sh --full PrimitiveExecuteHonorsCustomConverters`.
+- Passed after macOS CI test-isolation fix: `./scripts/dev/pre-commit.sh`.
 - Pending: push and PR CI observation.

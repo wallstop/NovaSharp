@@ -798,10 +798,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        [ScriptGlobalOptionsIsolation]
         public async Task CompileFunctionExecuteSupportsPrimitiveArgumentOverloads(
             LuaCompatibilityVersion version
         )
         {
+            using ScriptCustomConvertersScope converterScope = ScriptCustomConvertersScope.Clear();
             Script script = new(version, CoreModulePresets.Complete);
             CompiledScript identity = script.CompileFunction(
                 "function(a) return a end",
@@ -858,6 +860,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [ScriptGlobalOptionsIsolation]
         public async Task CompileFunctionPrimitiveExecuteHonorsCustomConverters(
             LuaCompatibilityVersion version
         )
