@@ -7,7 +7,7 @@ Use this folder to regenerate the NovaSharp benchmark baselines documented in `d
 The `.github/workflows/benchmarks.yml` workflow runs benchmarks automatically:
 
 - **On push to main**: Full benchmark run with results stored in `gh-pages` branch
-- **On PRs**: Benchmark run plus same-run external comparisons; comments on PRs with comparison alerts and a GC-aware delta table
+- **On PRs**: Benchmark run plus same-run external comparisons; comments on PRs with a GC-aware delta table
 - **Manual dispatch**: Configurable threshold and fail-on-alert settings
 
 ### Regression Detection
@@ -17,8 +17,8 @@ The workflow uses `benchmark-action/github-action-benchmark` to track performanc
 - **Alert threshold**: 115% by default (15% regression triggers alert)
 - **Fail on alert**: Enabled for manual benchmark gates; PR alerts are advisory because hosted-runner microbenchmarks are noisy
 - **PR comments**: Automatic comments when regressions are detected
-- **External runtime deltas**: `scripts/benchmarks/render-benchmark-deltas.py` renders a sticky PR comment and `artifacts/benchmark-deltas.md`; positive deltas mean NovaSharp is slower, collects more GC, or allocates more than the same-run comparison runtime row
-- **Self deltas**: the same renderer can compare current NovaSharp results to checked-in BenchmarkDotNet JSON artifacts under `docs/performance-history/current-baseline` once that baseline exists
+- **External runtime deltas**: `scripts/benchmarks/render-benchmark-deltas.py` renders a sticky PR comment and `artifacts/benchmark-deltas.md`; positive deltas mean NovaSharp is slower, collects more GC, or allocates more than the same-run comparison runtime row. These rows are report-only and do not set `regressed=true`.
+- **Self deltas**: the same renderer can compare current NovaSharp results to checked-in BenchmarkDotNet JSON artifacts under `docs/performance-history/current-baseline` once that baseline exists. Self deltas drive the `regressed=true` signal.
 - **Historical tracking**: Results stored in `gh-pages` branch under `/benchmarks`
 
 ## `run-benchmarks.ps1` (PowerShell)

@@ -194,7 +194,7 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertIn("-10 ns (-10.00%)", output)
         self.assertIn("1 / 0 / 0", output)
 
-    def test_marks_regressed_when_novasharp_is_worse_than_external_runtime(self) -> None:
+    def test_external_runtime_deltas_are_report_only_for_regressed_signal(self) -> None:
         self.write_report(
             self.comparison_root,
             "LuaPerformanceBenchmarks",
@@ -207,7 +207,8 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         result = self.run_script()
 
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
-        self.assertIn("regressed=true", result.stdout)
+        self.assertIn("changed=true", result.stdout)
+        self.assertIn("regressed=false", result.stdout)
         self.assertIn("external_rows=1", result.stdout)
 
     def test_renders_self_baseline_deltas_when_checked_in_artifacts_exist(self) -> None:

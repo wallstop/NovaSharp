@@ -108,7 +108,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--regression-threshold",
         type=float,
         default=DEFAULT_REGRESSION_THRESHOLD,
-        help="Fractional worse-than-comparison threshold for regressed=true.",
+        help="Fractional worse-than-self-baseline threshold for regressed=true.",
     )
     return parser.parse_args(argv)
 
@@ -139,9 +139,7 @@ def main(argv: list[str]) -> int:
     changed = any(external_row_changed(row, args.tolerance) for row in external_rows) or any(
         self_row_changed(row, args.tolerance) for row in self_rows
     )
-    regressed = any(
-        external_row_regressed(row, args.regression_threshold) for row in external_rows
-    ) or any(self_row_regressed(row, args.regression_threshold) for row in self_rows)
+    regressed = any(self_row_regressed(row, args.regression_threshold) for row in self_rows)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
@@ -429,6 +427,8 @@ def render_markdown(
         "",
         "External comparison rows are apples-to-apples: NovaSharp and the comparison "
         "runtimes are restored, built, and benchmarked in the same workflow job on the same runner.",
+        "External rows are report-only; `regressed=true` is reserved for NovaSharp "
+        "self-baseline regressions once checked-in baseline artifacts exist.",
         "",
         f"- Current NovaSharp artifacts: `{repo_relative(current_root)}`",
         f"- Same-run comparison artifacts: `{repo_relative(comparison_root)}`",

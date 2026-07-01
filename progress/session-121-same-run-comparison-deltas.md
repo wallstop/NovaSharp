@@ -11,6 +11,7 @@
 - Added the MoonSharp NuGet package to the comparison tooling and added MoonSharp compile/execute benchmark methods.
 - Expanded the comparison script corpus with numeric loop and table mutation scenarios in addition to Tower of Hanoi, Eight Queens, and coroutine ping-pong.
 - Reworked `scripts/benchmarks/render-benchmark-deltas.py` to parse BenchmarkDotNet JSON artifacts directly, render mean, P95, Gen0/Gen1/Gen2, and allocated-byte deltas, and emit external/self row counts for CI.
+- Kept external runtime deltas report-only; `regressed=true` is reserved for NovaSharp self-baseline regressions once checked-in baseline artifacts exist.
 - Updated `.github/workflows/benchmarks.yml` so runtime and external comparison benchmarks run in the same benchmark job and same runner, while the legacy `comparison` check is now a proxy for branch-protection continuity.
 - Updated local benchmark scripts and docs to render same-run external deltas and optional checked-in self deltas.
 
