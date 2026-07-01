@@ -33,11 +33,11 @@ Remove avoidable argument materialization from common userdata indexer get/set c
 - [x] Implementation added.
 - [x] Targeted tests run.
 - [x] Build/broader checks run as appropriate.
-- [ ] Commit, push, request Copilot review, and poll PR CI.
+- [x] Commit, push, request Copilot review, and poll PR CI.
 
 ## Status
 
-Implementation and local validation are complete. Commit, push, Copilot review, and remote PR validation are pending.
+Implementation commit `057493f4` was pushed, Copilot review was requested, and PR CI passed for that head. This progress-only update records the observed remote validation.
 
 ## Implementation Notes
 
@@ -70,4 +70,8 @@ Implementation and local validation are complete. Commit, push, Copilot review, 
 
 ## Remote Validation
 
-- Pending.
+- Pushed implementation commit `057493f4` to PR `#43`.
+- Requested Copilot review with `gh pr edit 43 --add-reviewer copilot-pull-request-reviewer`.
+- Copilot's latest review response at `2026-07-01T14:36:37Z` said the PR exceeds the 20,000-line review limit, so no new actionable Copilot code comments were produced for this slice.
+- Thread-aware review inspection found 0 current unresolved non-outdated review threads. Older unresolved Copilot threads are outdated, and current non-outdated threads are resolved.
+- PR CI on `057493f4` passed: `benchmark`, `code-coverage`, `dotnet-tests` on Ubuntu/macOS/Windows, `format-check`, `lint`, and all Lua comparison matrix jobs for Lua 5.1 through 5.5 on Ubuntu/macOS/Windows. Expected skipped jobs: `comparison`, `lint-autofix`.
