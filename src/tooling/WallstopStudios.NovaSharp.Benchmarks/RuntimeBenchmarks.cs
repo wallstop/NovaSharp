@@ -1632,6 +1632,8 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         private Table _table;
         private object[] _twoKeys = Array.Empty<object>();
         private object[] _threeKeys = Array.Empty<object>();
+        private object[] _paddedTwoKeys = Array.Empty<object>();
+        private object[] _paddedThreeKeys = Array.Empty<object>();
         private DynValue _value = DynValue.Nil;
 
         /// <summary>
@@ -1652,6 +1654,8 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             grandchild.Set("leaf", _value);
             _twoKeys = new object[] { "child", "leaf" };
             _threeKeys = new object[] { "child", "grandchild", "leaf" };
+            _paddedTwoKeys = new object[] { "ignored", "child", "leaf", "ignored" };
+            _paddedThreeKeys = new object[] { "ignored", "child", "grandchild", "leaf", "ignored" };
         }
 
         /// <summary>
@@ -1665,6 +1669,18 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Table RawGet: array 2 keys")]
         public DynValue RawGetTwoArrayKeys() => _table.RawGet(_twoKeys);
+
+        /// <summary>
+        /// Reads a nested value through the span-backed raw lookup overload with a stable key buffer.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: span 2 keys")]
+        public DynValue RawGetTwoSpanKeys() => _table.RawGet(_twoKeys.AsSpan());
+
+        /// <summary>
+        /// Reads a nested value through the span-backed raw lookup overload with a caller-owned slice.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: span slice 2 keys")]
+        public DynValue RawGetTwoSpanSliceKeys() => _table.RawGet(_paddedTwoKeys.AsSpan(1, 2));
 
         /// <summary>
         /// Reads a nested value through the array-backed raw lookup overload with caller allocation.
@@ -1685,6 +1701,18 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public DynValue RawGetThreeArrayKeys() => _table.RawGet(_threeKeys);
 
         /// <summary>
+        /// Reads a nested value through the span-backed raw lookup overload with a stable key buffer.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: span 3 keys")]
+        public DynValue RawGetThreeSpanKeys() => _table.RawGet(_threeKeys.AsSpan());
+
+        /// <summary>
+        /// Reads a nested value through the span-backed raw lookup overload with a caller-owned slice.
+        /// </summary>
+        [Benchmark(Description = "Table RawGet: span slice 3 keys")]
+        public DynValue RawGetThreeSpanSliceKeys() => _table.RawGet(_paddedThreeKeys.AsSpan(1, 3));
+
+        /// <summary>
         /// Reads a nested value through the array-backed raw lookup overload with caller allocation.
         /// </summary>
         [Benchmark(Description = "Table RawGet: new array 3 keys")]
@@ -1696,6 +1724,18 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Table Get: 2 fixed keys")]
         public DynValue GetTwoFixedKeys() => _table.Get("child", "leaf");
+
+        /// <summary>
+        /// Reads a nested value through the span-backed lookup overload with a stable key buffer.
+        /// </summary>
+        [Benchmark(Description = "Table Get: span 2 keys")]
+        public DynValue GetTwoSpanKeys() => _table.Get(_twoKeys.AsSpan());
+
+        /// <summary>
+        /// Reads a nested value through the span-backed lookup overload with a caller-owned slice.
+        /// </summary>
+        [Benchmark(Description = "Table Get: span slice 2 keys")]
+        public DynValue GetTwoSpanSliceKeys() => _table.Get(_paddedTwoKeys.AsSpan(1, 2));
 
         /// <summary>
         /// Reads a nested value through the array-backed lookup overload with caller allocation.
@@ -1720,6 +1760,18 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         /// </summary>
         [Benchmark(Description = "Table Set: array 2 keys")]
         public void SetTwoArrayKeys() => _table.Set(_twoKeys, _value);
+
+        /// <summary>
+        /// Writes a nested value through the span-backed setter overload with a stable key buffer.
+        /// </summary>
+        [Benchmark(Description = "Table Set: span 2 keys")]
+        public void SetTwoSpanKeys() => _table.Set(_twoKeys.AsSpan(), _value);
+
+        /// <summary>
+        /// Writes a nested value through the span-backed setter overload with a caller-owned slice.
+        /// </summary>
+        [Benchmark(Description = "Table Set: span slice 2 keys")]
+        public void SetTwoSpanSliceKeys() => _table.Set(_paddedTwoKeys.AsSpan(1, 2), _value);
 
         /// <summary>
         /// Writes a nested value through the array-backed setter overload with caller allocation.

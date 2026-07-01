@@ -220,6 +220,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             //Contract.Ensures(Contract.Result<Table>() != null);
             //Contract.Requires(keys != null);
 
+            return ResolveMultipleKeys(keys.AsSpan(), out key);
+        }
+
+        private Table ResolveMultipleKeys(ReadOnlySpan<object> keys, out object key)
+        {
             Table t = this;
             key = (keys.Length > 0) ? keys[0] : null;
 
@@ -476,6 +481,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Sets the value associated with the specified caller-owned nested keys.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The keys to access the table and subtables.</param>
+        /// <param name="value">The value.</param>
+        public void Set(ReadOnlySpan<object> keys, DynValue value)
+        {
+            if (keys.Length == 0)
+            {
+                throw ScriptRuntimeException.TableIndexIsNil();
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            ResolveMultipleKeys(keys, out object key).Set(key, value);
+        }
+
+        /// <summary>
         /// Sets the value associated with the specified nested keys.
         /// Multiple keys can be used to access subtables.
         /// </summary>
@@ -559,6 +585,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="keys">The keys to access the table and subtables</param>
         public DynValue Get(params object[] keys)
+        {
+            //Contract.Ensures(Contract.Result<DynValue>() != null);
+            return RawGet(keys) ?? DynValue.Nil;
+        }
+
+        /// <summary>
+        /// Gets the value associated with the specified caller-owned nested keys.
+        /// This will marshall CLR and NovaSharp objects in the best possible way.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The keys to access the table and subtables.</param>
+        public DynValue Get(ReadOnlySpan<object> keys)
         {
             //Contract.Ensures(Contract.Result<DynValue>() != null);
             return RawGet(keys) ?? DynValue.Nil;
@@ -681,6 +719,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Gets the value associated with the specified caller-owned nested keys,
+        /// without bringing to Nil the non-existent values.
+        /// </summary>
+        /// <param name="keys">The keys to access the table and subtables.</param>
+        public DynValue RawGet(ReadOnlySpan<object> keys)
+        {
+            if (keys.Length == 0)
+            {
+                return null;
+            }
+
+            return ResolveMultipleKeys(keys, out object key).RawGet(key);
+        }
+
+        /// <summary>
         /// Gets the value associated with the specified nested keys,
         /// without bringing to Nil the non-existent values.
         /// </summary>
@@ -794,6 +847,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public bool Remove(params object[] keys)
         {
             return keys is { Length: > 0 } && ResolveMultipleKeys(keys, out object key).Remove(key);
+        }
+
+        /// <summary>
+        /// Remove the value associated with the specified caller-owned nested keys from the table.
+        /// Multiple keys can be used to access subtables.
+        /// </summary>
+        /// <param name="keys">The key.</param>
+        /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
+        public bool Remove(ReadOnlySpan<object> keys)
+        {
+            return keys.Length > 0 && ResolveMultipleKeys(keys, out object key).Remove(key);
         }
 
         /// <summary>
