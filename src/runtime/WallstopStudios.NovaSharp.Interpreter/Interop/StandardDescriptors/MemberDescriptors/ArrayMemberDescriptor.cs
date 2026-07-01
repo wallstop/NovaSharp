@@ -105,21 +105,55 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         )
         {
             Array array = (Array)arrayObj;
-            int[] indices = BuildArrayIndices(args, args.Count - 1);
-            DynValue value = args[^1];
+            int indexCount = args.Count - 1;
 
-            Type elemType = array.GetType().GetElementType();
-
-            object objValue = ScriptToClrConversions.DynValueToObjectOfType(
-                value,
-                elemType,
-                null,
-                false
-            );
-
-            array.SetValue(objValue, indices);
+            switch (indexCount)
+            {
+                case 1 when array.Rank == 1:
+                {
+                    int index0 = args.AsInt(0, "userdata_array_indexer");
+                    DynValue value = args[^1];
+                    object objValue = ConvertArrayValue(array, value);
+                    array.SetValue(objValue, index0);
+                    break;
+                }
+                case 2 when array.Rank == 2:
+                {
+                    int index0 = args.AsInt(0, "userdata_array_indexer");
+                    int index1 = args.AsInt(1, "userdata_array_indexer");
+                    DynValue value = args[^1];
+                    object objValue = ConvertArrayValue(array, value);
+                    array.SetValue(objValue, index0, index1);
+                    break;
+                }
+                case 3 when array.Rank == 3:
+                {
+                    int index0 = args.AsInt(0, "userdata_array_indexer");
+                    int index1 = args.AsInt(1, "userdata_array_indexer");
+                    int index2 = args.AsInt(2, "userdata_array_indexer");
+                    DynValue value = args[^1];
+                    object objValue = ConvertArrayValue(array, value);
+                    array.SetValue(objValue, index0, index1, index2);
+                    break;
+                }
+                default:
+                {
+                    int[] indices = BuildArrayIndices(args, indexCount);
+                    DynValue value = args[^1];
+                    object objValue = ConvertArrayValue(array, value);
+                    array.SetValue(objValue, indices);
+                    break;
+                }
+            }
 
             return DynValue.Void;
+        }
+
+        private static object ConvertArrayValue(Array array, DynValue value)
+        {
+            Type elemType = array.GetType().GetElementType();
+
+            return ScriptToClrConversions.DynValueToObjectOfType(value, elemType, null, false);
         }
 
         private static object ArrayIndexerGet(
@@ -129,9 +163,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Memb
         )
         {
             Array array = (Array)arrayObj;
-            int[] indices = BuildArrayIndices(args, args.Count);
 
-            return array.GetValue(indices);
+            switch (args.Count)
+            {
+                case 1 when array.Rank == 1:
+                {
+                    int index0 = args.AsInt(0, "userdata_array_indexer");
+                    return array.GetValue(index0);
+                }
+                case 2 when array.Rank == 2:
+                {
+                    int index0 = args.AsInt(0, "userdata_array_indexer");
+                    int index1 = args.AsInt(1, "userdata_array_indexer");
+                    return array.GetValue(index0, index1);
+                }
+                case 3 when array.Rank == 3:
+                {
+                    int index0 = args.AsInt(0, "userdata_array_indexer");
+                    int index1 = args.AsInt(1, "userdata_array_indexer");
+                    int index2 = args.AsInt(2, "userdata_array_indexer");
+                    return array.GetValue(index0, index1, index2);
+                }
+                default:
+                    int[] indices = BuildArrayIndices(args, args.Count);
+                    return array.GetValue(indices);
+            }
         }
     }
 }
