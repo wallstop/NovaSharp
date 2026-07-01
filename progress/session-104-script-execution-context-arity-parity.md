@@ -42,7 +42,7 @@ Continue the public API and runtime performance redesign by extending `ScriptExe
 
 ## Status
 
-Implementation commit `bbcbfc0e` pushed and PR CI observed green. A progress-log-only follow-up update is being prepared.
+Implementation commit `bbcbfc0e` and progress follow-up commit `4b2cc4b3` pushed. PR CI was observed green for the final head.
 
 ## Implementation Log
 
@@ -65,8 +65,11 @@ Implementation commit `bbcbfc0e` pushed and PR CI observed green. A progress-log
 - GitHub PR checks passed for `bbcbfc0e`: benchmark, format-check, lint, code coverage, dotnet tests on ubuntu/windows/macos, and Lua comparisons for 5.1-5.5 across ubuntu/windows/macos. Optional benchmark comparison and lint-autofix jobs were skipped.
 - Copilot review was requested after the push. Copilot responded at `2026-07-01T05:01:33Z` that the PR exceeds its 20,000 changed-line review limit, so there was no actionable new Copilot feedback from this request.
 - Thread-aware PR comment inspection found `0` unresolved, non-outdated review threads after the push.
+- Progress follow-up commit `4b2cc4b3` (`Update context arity progress log`) pushed to `dev/wallstop/api-perf`; pre-push checks passed.
+- GitHub PR checks passed for final head `4b2cc4b3`: benchmark, format-check, lint, code coverage, dotnet tests on ubuntu/windows/macos, and Lua comparisons for 5.1-5.5 across ubuntu/windows/macos. Optional benchmark comparison and lint-autofix jobs were skipped.
+- Copilot review was requested again after the progress follow-up push. Copilot responded at `2026-07-01T05:11:30Z` that the PR exceeds its 20,000 changed-line review limit, so there was no actionable new Copilot feedback from this request.
+- Thread-aware PR comment inspection again found `0` unresolved, non-outdated review threads after the final push.
 
 ## Current Risks
 
-- This progress-log-only update still needs its own push and PR CI observation.
 - The change is API additive and does not alter Lua source semantics directly. Focused callable-table dispatch, callback argument-adjustment tests, repo-wide tests, and PR CI for the implementation commit pass.

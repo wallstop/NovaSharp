@@ -642,6 +642,20 @@ namespace WallstopStudios.NovaSharp.Benchmarks
             );
 
         /// <summary>
+        /// Calls a Lua closure through the closure caller-owned object storage overload.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: object span 5 objects")]
+        public DynValue ClosureCallFiveObjectArgumentsSpan() =>
+            _fiveArgClosure.CallObjectArguments(_fiveObjectArgs.AsSpan());
+
+        /// <summary>
+        /// Calls a Lua closure through the closure caller-owned object storage overload with a slice.
+        /// </summary>
+        [Benchmark(Description = "Closure Call: object span slice 5 objects")]
+        public DynValue ClosureCallFiveObjectArgumentsSpanSlice() =>
+            _fiveArgClosure.CallObjectArguments(_fiveObjectArgsWithPadding.AsSpan(1, 5));
+
+        /// <summary>
         /// Calls a Lua closure through the object-function overload with three pre-created CLR object arguments.
         /// </summary>
         [Benchmark(Description = "Host Call: closure object + 3 objects")]

@@ -474,6 +474,33 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Calls this function with caller-owned CLR object argument storage.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public DynValue CallObjectArguments(object[] args)
+        {
+            if (args == null)
+            {
+                throw new ArgumentNullException(nameof(args));
+            }
+
+            return CallObjectArguments(args.AsSpan());
+        }
+
+        /// <summary>
+        /// Calls this function with caller-owned contiguous CLR object arguments.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the function.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentException">Thrown if function is not callable.</exception>
+        public DynValue CallObjectArguments(ReadOnlySpan<object> args)
+        {
+            return OwnerScript.CallObjectArguments(DynValue.FromClosure(this), args);
+        }
+
+        /// <summary>
         /// Calls this function with the specified args
         /// </summary>
         /// <param name="args">The arguments to pass to the function.</param>
