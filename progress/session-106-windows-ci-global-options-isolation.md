@@ -32,13 +32,13 @@ Diagnose and fix the Windows PR CI failure from the closure object-argument span
 - [x] Runtime build
 - [x] Repo-wide tests
 - [x] Pre-commit
-- [ ] Push hook
-- [ ] PR CI
-- [ ] Copilot review request after follow-up push
+- [x] Push hook
+- [x] PR CI
+- [x] Copilot review request after follow-up push
 
 ## Status
 
-Implementation in progress. The isolation fix is applied locally; targeted tests, runtime build, repo-wide tests, and pre-commit pass.
+Fix commit `95ecbc11` pushed. PR CI was observed green for the follow-up head, including the previously failing Windows dotnet test job.
 
 ## Implementation Log
 
@@ -47,8 +47,11 @@ Implementation in progress. The isolation fix is applied locally; targeted tests
 - `./scripts/build/quick.sh` completed successfully.
 - `./scripts/test/quick.sh` passed: 14,329 tests, 0 failed, 0 skipped.
 - `bash ./scripts/dev/pre-commit.sh` completed successfully. Documentation audit and LLM skill metadata checks emitted existing warnings, but no errors.
+- Fix commit `95ecbc11` (`Isolate global options in descriptor tests`) pushed to `dev/wallstop/api-perf`; pre-push checks passed.
+- Copilot review was requested after the follow-up push. Copilot responded at `2026-07-01T06:14:34Z` that the PR exceeds its 20,000 changed-line review limit, so there was no actionable new Copilot feedback from that request.
+- GitHub PR checks passed for `95ecbc11`: benchmark, format-check, lint, code coverage, dotnet tests on ubuntu/windows/macos, and Lua comparisons for 5.1-5.5 across ubuntu/windows/macos. Optional benchmark comparison and lint-autofix jobs were skipped.
+- Thread-aware PR comment inspection found `0` unresolved, non-outdated review threads after the follow-up push.
 
 ## Current Risks
 
-- The Windows failure was not reproducible on Linux before the fix, so PR CI is the decisive validation for this specific race.
 - The `ScriptGlobalOptionsIsolation` attribute serializes this class with other global-options-sensitive tests, trading a small amount of test parallelism for deterministic global state.

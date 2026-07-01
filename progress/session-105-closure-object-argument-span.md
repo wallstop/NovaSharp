@@ -34,13 +34,13 @@ Continue the public API and runtime performance redesign by filling the remainin
 - [x] Benchmark project build
 - [x] Repo-wide tests
 - [x] Pre-commit
-- [ ] Push hook
-- [ ] PR CI
-- [ ] Copilot review request after push
+- [x] Push hook
+- [x] PR CI
+- [x] Copilot review request after push
 
 ## Status
 
-Implementation in progress. Focused closure tests, runtime quick build, benchmark project build, repo-wide tests, and pre-commit pass; push and remote validation are pending.
+Implementation commit `111fabf8` pushed. Its only PR CI failure was a Windows-only test isolation issue diagnosed and fixed by follow-up commit `95ecbc11`; final PR CI for the follow-up head was observed green.
 
 ## Implementation Log
 
@@ -54,8 +54,14 @@ Implementation in progress. Focused closure tests, runtime quick build, benchmar
 - `dotnet build -c Release src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj` completed successfully with 0 warnings and 0 errors.
 - `./scripts/test/quick.sh` passed: 14,329 tests, 0 failed, 0 skipped.
 - `bash ./scripts/dev/pre-commit.sh` completed successfully. Documentation audit and LLM skill metadata checks emitted existing warnings, but no errors.
+- Implementation commit `111fabf8` (`Add closure object argument span API`) pushed to `dev/wallstop/api-perf`; pre-push checks passed.
+- Copilot review was requested after the implementation push. Copilot responded at `2026-07-01T05:52:53Z` that the PR exceeds its 20,000 changed-line review limit, so there was no actionable new Copilot feedback from that request.
+- PR CI for `111fabf8` passed benchmark, format-check, lint, code coverage, Ubuntu/macOS dotnet tests, and all Lua comparisons, but failed `dotnet-tests (windows-latest)` in `MethodWithOutParamsInterleavedWithDifferentMethods`.
+- The Windows failure was diagnosed as test global-state isolation rather than a closure API production regression, and fixed in session 106 by commit `95ecbc11`.
+- Final PR CI for follow-up head `95ecbc11` was observed green: benchmark, format-check, lint, code coverage, dotnet tests on ubuntu/windows/macos, and Lua comparisons for 5.1-5.5 across ubuntu/windows/macos. Optional benchmark comparison and lint-autofix jobs were skipped.
+- Copilot review was requested again after the follow-up push. Copilot responded at `2026-07-01T06:14:34Z` with the same 20,000 changed-line limit message, so there was no actionable new Copilot feedback.
+- Thread-aware PR comment inspection found `0` unresolved, non-outdated review threads after the final follow-up push.
 
 ## Current Risks
 
-- Push, PR CI, and Copilot review are still pending.
 - Object argument conversion can still allocate `DynValue` wrappers for primitive CLR values; this slice avoids caller `params` array allocation and provides caller-owned span ergonomics, not zero-allocation object conversion.
