@@ -36,13 +36,13 @@ Continue the public API and runtime performance redesign by extending `ScriptExe
 - [x] Benchmark project build
 - [x] Repo-wide tests
 - [x] Pre-commit
-- [ ] Push hook
-- [ ] PR CI
-- [ ] Copilot review request after push
+- [x] Push hook
+- [x] PR CI
+- [x] Copilot review request after push
 
 ## Status
 
-Implementation in progress. Focused context-call tests, runtime quick build, benchmark project build, repo-wide tests, and pre-commit pass; remote validation is still pending.
+Implementation commit `bbcbfc0e` pushed and PR CI observed green. A progress-log-only follow-up update is being prepared.
 
 ## Implementation Log
 
@@ -61,8 +61,12 @@ Implementation in progress. Focused context-call tests, runtime quick build, ben
 - Sub-agent diff review completed with no findings.
 - `bash ./scripts/dev/pre-commit.sh` completed successfully. It reported existing documentation/LLM skill metadata warnings but no errors and did not add unrelated tracked changes.
 - The commit hook initially rejected the staged progress note for a banned legacy branding term; the note was reworded without changing code.
+- Commit `bbcbfc0e` (`Add context call arity parity`) pushed to `dev/wallstop/api-perf`; pre-push checks passed.
+- GitHub PR checks passed for `bbcbfc0e`: benchmark, format-check, lint, code coverage, dotnet tests on ubuntu/windows/macos, and Lua comparisons for 5.1-5.5 across ubuntu/windows/macos. Optional benchmark comparison and lint-autofix jobs were skipped.
+- Copilot review was requested after the push. Copilot responded at `2026-07-01T05:01:33Z` that the PR exceeds its 20,000 changed-line review limit, so there was no actionable new Copilot feedback from this request.
+- Thread-aware PR comment inspection found `0` unresolved, non-outdated review threads after the push.
 
 ## Current Risks
 
-- Push, PR CI, and Copilot review are still pending.
-- The change is API additive and does not alter Lua source semantics directly. Focused callable-table dispatch and callback argument-adjustment tests now pass.
+- This progress-log-only update still needs its own push and PR CI observation.
+- The change is API additive and does not alter Lua source semantics directly. Focused callable-table dispatch, callback argument-adjustment tests, repo-wide tests, and PR CI for the implementation commit pass.
