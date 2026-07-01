@@ -1329,6 +1329,151 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         }
 
         [global::TUnit.Core.Test]
+        public async Task FixedSixArgumentCallOverloadAvoidsChainedCallMetamethodFallbackArgumentArrayAllocation()
+        {
+            const int iterations = 1_024;
+            Script script = new(default(CoreModules));
+            ScriptExecutionContext context = script.CreateDynamicExecutionContext();
+            Table target = new(script);
+            Table proxy = new(script);
+            Table targetMeta = new(script);
+            Table proxyMeta = new(script);
+            DynValue targetValue = DynValue.NewTable(target);
+            DynValue proxyValue = DynValue.NewTable(proxy);
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewNumber(2);
+            DynValue third = DynValue.NewNumber(3);
+            DynValue fourth = DynValue.NewNumber(4);
+            DynValue fifth = DynValue.NewNumber(5);
+            DynValue sixth = DynValue.NewNumber(6);
+            int expectedCount = 0;
+            DynValue callback = DynValue.NewCallbackView(
+                (_, args) =>
+                {
+                    if (expectedCount == 8)
+                    {
+                        if (
+                            !args.TryGetSpan(out ReadOnlySpan<DynValue> span)
+                            || span.Length != expectedCount
+                            || !ReferenceEquals(span[0].Table, proxy)
+                            || !ReferenceEquals(span[1].Table, target)
+                        )
+                        {
+                            throw new InvalidOperationException(
+                                "Context six-argument chained metamethod allocation probe received unexpected span/self arguments."
+                            );
+                        }
+
+                        for (int i = 2; i < span.Length; i++)
+                        {
+                            if (span[i].Number != i - 1d)
+                            {
+                                throw new InvalidOperationException(
+                                    "Context six-argument chained metamethod allocation probe received unexpected user arguments."
+                                );
+                            }
+                        }
+                    }
+                    else if (
+                        args.Count != expectedCount
+                        || !ReferenceEquals(args[0].Table, proxy)
+                        || !ReferenceEquals(args[1].Table, target)
+                    )
+                    {
+                        throw new InvalidOperationException(
+                            "Context six-argument chained metamethod allocation probe received unexpected fixed/self arguments."
+                        );
+                    }
+                    else
+                    {
+                        for (int i = 2; i < args.Count; i++)
+                        {
+                            if (args[i].Number != i - 1d)
+                            {
+                                throw new InvalidOperationException(
+                                    "Context six-argument chained metamethod allocation probe received unexpected user arguments."
+                                );
+                            }
+                        }
+                    }
+
+                    return DynValue.Nil;
+                }
+            );
+            targetMeta.Set("__call", proxyValue);
+            proxyMeta.Set("__call", callback);
+            target.MetaTable = targetMeta;
+            proxy.MetaTable = proxyMeta;
+
+            expectedCount = 7;
+            MeasureFixedFiveArgumentContextChainedCallMetamethodAllocations(
+                context,
+                targetValue,
+                first,
+                second,
+                third,
+                fourth,
+                fifth,
+                iterations: 8
+            );
+            expectedCount = 8;
+            MeasureFixedSixArgumentContextChainedCallMetamethodAllocations(
+                context,
+                targetValue,
+                first,
+                second,
+                third,
+                fourth,
+                fifth,
+                sixth,
+                iterations: 8
+            );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            expectedCount = 7;
+            long fiveArgumentAllocated =
+                MeasureFixedFiveArgumentContextChainedCallMetamethodAllocations(
+                    context,
+                    targetValue,
+                    first,
+                    second,
+                    third,
+                    fourth,
+                    fifth,
+                    iterations
+                );
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            expectedCount = 8;
+            long sixArgumentAllocated =
+                MeasureFixedSixArgumentContextChainedCallMetamethodAllocations(
+                    context,
+                    targetValue,
+                    first,
+                    second,
+                    third,
+                    fourth,
+                    fifth,
+                    sixth,
+                    iterations
+                );
+            long extraBytesPerCall = (sixArgumentAllocated - fiveArgumentAllocated) / iterations;
+
+            await Assert
+                .That(extraBytesPerCall)
+                .IsLessThan(16L)
+                .Because(
+                    $"Five-user-argument context chained calls allocated {fiveArgumentAllocated} bytes; six-user-argument context chained calls allocated {sixArgumentAllocated} bytes."
+                );
+        }
+
+        [global::TUnit.Core.Test]
         public async Task SpanAndArrayCallOverloadsAvoidCallMetamethodArgumentArrayAllocation()
         {
             const int iterations = 1_024;
@@ -2550,6 +2695,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 {
                     throw new InvalidOperationException(
                         "Context five-argument chained metamethod allocation probe returned an unexpected value."
+                    );
+                }
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static long MeasureFixedSixArgumentContextChainedCallMetamethodAllocations(
+            ScriptExecutionContext context,
+            DynValue callable,
+            DynValue first,
+            DynValue second,
+            DynValue third,
+            DynValue fourth,
+            DynValue fifth,
+            DynValue sixth,
+            int iterations
+        )
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            for (int i = 0; i < iterations; i++)
+            {
+                DynValue result = context.Call(
+                    callable,
+                    first,
+                    second,
+                    third,
+                    fourth,
+                    fifth,
+                    sixth
+                );
+                if (result.Type != DataType.Nil)
+                {
+                    throw new InvalidOperationException(
+                        "Context six-argument chained metamethod allocation probe returned an unexpected value."
                     );
                 }
             }

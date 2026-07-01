@@ -367,6 +367,17 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         return false;
                 }
             }
+
+            /// <summary>
+            /// Copies the fixed arguments into an existing argument buffer.
+            /// </summary>
+            internal void CopyTo(DynValue[] destination, int destinationIndex)
+            {
+                for (int i = 0; i < Count; i++)
+                {
+                    destination[destinationIndex + i] = this[i];
+                }
+            }
         }
 
         /// <summary>
@@ -3233,12 +3244,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function);
-                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
-                {
-                    return result;
-                }
-
-                return Call(function, Array.Empty<DynValue>());
+                return CallChainedNonFunction(metafunction, args);
             }
 
             return Call(metafunction, function);
@@ -3250,12 +3256,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg);
-                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
-                {
-                    return result;
-                }
-
-                return Call(function, new DynValue[] { arg });
+                return CallChainedNonFunction(metafunction, args);
             }
 
             return Call(metafunction, function, arg);
@@ -3267,12 +3268,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2);
-                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
-                {
-                    return result;
-                }
-
-                return Call(function, new DynValue[] { arg1, arg2 });
+                return CallChainedNonFunction(metafunction, args);
             }
 
             return Call(metafunction, function, arg1, arg2);
@@ -3289,12 +3285,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2, arg3);
-                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
-                {
-                    return result;
-                }
-
-                return Call(function, new DynValue[] { arg1, arg2, arg3 });
+                return CallChainedNonFunction(metafunction, args);
             }
 
             return Call(metafunction, function, arg1, arg2, arg3);
@@ -3312,12 +3303,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2, arg3, arg4);
-                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
-                {
-                    return result;
-                }
-
-                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4 });
+                return CallChainedNonFunction(metafunction, args);
             }
 
             return Call(metafunction, function, arg1, arg2, arg3, arg4);
@@ -3336,12 +3322,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2, arg3, arg4, arg5);
-                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
-                {
-                    return result;
-                }
-
-                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4, arg5 });
+                return CallChainedNonFunction(metafunction, args);
             }
 
             return CallDirectTarget(metafunction, function, arg1, arg2, arg3, arg4, arg5);
@@ -3361,12 +3342,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             if (!IsDirectCallTarget(metafunction))
             {
                 FixedChainedCallArguments args = new(function, arg1, arg2, arg3, arg4, arg5, arg6);
-                if (TryCallChainedNonFunction(metafunction, args, out DynValue result))
-                {
-                    return result;
-                }
-
-                return Call(function, new DynValue[] { arg1, arg2, arg3, arg4, arg5, arg6 });
+                return CallChainedNonFunction(metafunction, args);
             }
 
             return CallDirectTarget(metafunction, function, arg1, arg2, arg3, arg4, arg5, arg6);
@@ -3401,11 +3377,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             return Call(metafunction, arguments.AsSpan(0, 8));
         }
 
-        private bool TryCallChainedNonFunction(
-            DynValue function,
-            FixedChainedCallArguments args,
-            out DynValue result
-        )
+        private DynValue CallChainedNonFunction(DynValue function, FixedChainedCallArguments args)
         {
             int maxloops = 9;
 
@@ -3419,8 +3391,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 DynValue metafunction = GetCallableMetamethodOrThrow(function);
                 if (!args.TryPrepend(function, out FixedChainedCallArguments nextArgs))
                 {
-                    result = null;
-                    return false;
+                    return CallOverflowChainedNonFunction(function, metafunction, args, maxloops);
                 }
 
                 args = nextArgs;
@@ -3428,8 +3399,44 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 maxloops--;
             }
 
-            result = CallFixed(function, args);
-            return true;
+            return CallFixed(function, args);
+        }
+
+        private DynValue CallOverflowChainedNonFunction(
+            DynValue function,
+            DynValue metafunction,
+            FixedChainedCallArguments args,
+            int maxloops
+        )
+        {
+            int count = args.Count + 1;
+            int capacity = count + Math.Max(0, maxloops - 1);
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                capacity,
+                out DynValue[] arguments
+            );
+            arguments[0] = function;
+            args.CopyTo(arguments, 1);
+
+            function = metafunction;
+            maxloops--;
+
+            while (function.Type != DataType.Function && function.Type != DataType.ClrFunction)
+            {
+                if (maxloops <= 0)
+                {
+                    throw ScriptRuntimeException.LoopInCall();
+                }
+
+                metafunction = GetCallableMetamethodOrThrow(function);
+                Array.Copy(arguments, 0, arguments, 1, count);
+                arguments[0] = function;
+                count++;
+                function = metafunction;
+                maxloops--;
+            }
+
+            return Call(function, arguments.AsSpan(0, count));
         }
 
         private DynValue CallFixed(DynValue function, FixedChainedCallArguments args)
