@@ -1,4 +1,4 @@
-# Modern Testing & Coverage Plan
+# NovaSharp Project Plan
 
 ## 🔴 Lua Spec Compliance Core Principle
 
@@ -10,6 +10,328 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 1. **NEVER adjust tests to accommodate bugs** — fix the runtime instead
 
 **Current Status**: Local comparison artifacts were rechecked on 2026-06-27 with `compare-lua-outputs.py --enforce` for Lua 5.1-5.5 and showed zero hard mismatches. A fresh PR CI run must still be observed passing before work is marked accepted.
+
+______________________________________________________________________
+
+## 🚀 STRATEGIC ROADMAP: Performance Parity + Unity-First API (2026)
+
+**Status**: 🔴 **TOP PRIORITY** — supersedes Initiative 21 Phases 3-5. All other initiatives are subordinate to this roadmap unless they block CI health.
+
+### Vision
+
+NovaSharp becomes the definitive Lua modding framework for Unity:
+
+1. Extremely simple to use; interop is first-class ("pit of success" API: RAII, pattern matching, small surface)
+1. IL2CPP and Mono safe (no Reflection.Emit, no native binaries, works on WebGL/consoles where NLua cannot)
+1. Highly configurable sandboxing (game creators specify features; tiered capability model for untrusted mods)
+1. Lua 5.1-5.5 spec-accurate (the moat: no competitor has this + the reference-comparison harness)
+1. Roslyn source-generator interop (compile-time bindings, zero reflection)
+1. First-class VS Code extension/DAP debugging (already exists; retarget to new API)
+
+### The Performance Problem (measured evidence)
+
+| Workload | NovaSharp/MoonSharp lineage | NLua (native via P/Invoke) | Gap |
+| ---------------------------------- | --------------------------- | -------------------------- | ---------------------- |
+| Tower of Hanoi (pure Lua) | ~7,175 μs / 35.5 MB alloc | 430 μs / 24 B | **~15x slower** |
+| EightQueens (pure Lua) | ~978 μs / 3.5 MB | 82 μs / 24 B | **~12x** |
+| Hanoi + C# callback per step | ~600 ms | ~20,000 ms | **33x FASTER** |
+| Empty Lua fn 5,000×/frame (Unity) | MoonSharp 315 fps | 170 fps | managed wins 2x |
+
+Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author's published Hanoi numbers; Lua-CSharp issue #156 (where Lua-CSharp v0.5, a pure-C# register VM with struct values, hit **395 fps** — beating both).
+
+**Conclusion**: the decisive variable is interop density, not raw VM speed. A tuned managed interpreter realistically lands **2-5x of native C Lua on pure compute** (currently 10-15x) and **beats NLua outright on interop-heavy workloads** — which is the actual Unity modding workload. WattleScript proved ~6x is recoverable from the MoonSharp lineage via struct conversion alone; Lua-CSharp proved the full recipe works on IL2CPP.
+
+### Root Causes (confirmed in source)
+
+1. **`DynValue` is a sealed heap class** (`src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/DynValue.cs`) — every Lua value is a GC allocation with `_refId`, `_hashCode`, `_readOnly` baggage. Native Lua's TValue is 16 inline bytes.
+1. **`Instruction` is a heap class with 8 fields** (`Execution/VM/Instruction.cs`): `SymbolRef[]`, `string`, `DynValue`, `SourceRef` — cache-hostile pointer chasing per dispatch.
+1. **Per-instruction overhead in the hot loop** (`Execution/VM/Processor/ProcessorInstructionLoop.cs`): debugger check, auto-yield check, sandbox instruction check, sandbox memory check, and `shouldYieldToCaller` recomputed after most arithmetic opcodes — paid regardless of configuration.
+1. **`Table` = `LinkedList<TablePair>` + three Dictionary indexes** (`DataTypes/Table.cs`): one `LinkedListNode` heap allocation per entry, ~64 B/entry overhead. Native Lua uses an array part + open-addressed hash part.
+1. **Call path allocates**: `DynValue[]` tuples for multi-returns/varargs, per-Script `FastStack` defaults of 2 × 131,072 slots (>2 MiB per Script, per coroutine).
+
+### Established Research Verdicts (do not re-litigate; see docs/performance/ research note)
+
+- **Value type**: `readonly struct LuaValue { LuaNumber num; object refValue; DataType tag; }`, `LayoutKind.Auto`, ~24-32 B. True NaN-boxing is impossible on the CLR (ECMA-335 §II.10.7 forbids object-ref/scalar overlap; TypeLoadException). Ref-over-ref overlap is legal (16 B DynaJson-style) but defer until measured — IL2CPP verification risk. Keep the existing `LuaNumber` int/float union verbatim.
+- **Dispatch**: one `while(true)` + `switch` over a **dense, zero-based opcode enum**. This is what Mono's interpreter, the new CoreCLR (.NET 10) interpreter, MoonSharp, and Lua-CSharp all converge on; it compiles to a jump table on RyuJIT **and** under IL2CPP. Do NOT use delegate arrays (worst on IL2CPP), tail-call threading (no C# `tail.`; 60x pathological slowdowns; unavailable on IL2CPP), or instruction-object virtual dispatch (DLR-interpreter design, known slow). `delegate*` tables are unproven and IL2CPP's shakiest corner.
+- **Loop hygiene**: PC/stack-base in `ref` locals; `Unsafe.Add`/`MemoryMarshal.GetArrayDataReference` for slot access (Lua-CSharp ships this on IL2CPP); `[MethodImpl(NoInlining)]` on cold/error paths; try/catch OUTSIDE the loop; never allocate per instruction. IL2CPP/Mono get NO PGO or tiering — design for the static-compile case.
+- **No exceptions on hot call paths** — this exact mistake cost Lua-CSharp 10x (v0.4.2 → v0.5 fix).
+- **Interop**: Roslyn incremental source generator (attribute + partial class) is the industry-consensus binding pattern (System.Text.Json, MessagePack v3, MemoryPack, VContainer, Lua-CSharp). Performance bar: xLua gencode ≈ 107 ns/call on mid-range Android. NLua's structural weakness: `MethodBase.Invoke` per call + boxing + link.xml fragility + per-platform native binaries + no WebGL.
+- **Platform floor**: Unity 2021.2 minimum (C# 9, netstandard2.1, Roslyn generators via `RoslynAnalyzer` label, Microsoft.CodeAnalysis 3.8 for the generator).
+- **No legacy/back-compat obligations** (pre-1.0). The ONLY invariant is Lua runtime correctness, enforced by the fixture/comparison harness.
+
+### Methodology (iron rules for every phase)
+
+1. **Scoreboard before surgery**: no optimization phase starts until Phase A0's comparison benchmarks exist and a baseline is committed.
+1. **No phase merges with a red fixture.** Any fixture edit requires reference-Lua output as arbiter.
+1. Each phase ends with: targeted tests, `./scripts/build/quick.sh`, `./scripts/test/quick.sh`, `compare-lua-outputs.py --enforce` (5 versions), scoreboard run with committed JSON baseline, PR CI observed green.
+1. Allocation claims are verified by **exact B/op BenchmarkDotNet assertions** (noise-free); speed claims by ratio-vs-NLua gates (±10% tolerance).
+1. IL2CPP spot-check (minimal stopwatch Unity player scene) at phase boundaries A1, A5, A8, B2 — RyuJIT wins don't automatically translate.
+
+______________________________________________________________________
+
+### Workstream A: VM Core Re-Architecture (staged hybrid)
+
+**Strategy**: convert data layout inside the current stack VM first (A1-A7) — each phase lands green against the full fixture suite. A register-based VM (A8) is the **gated endgame**, built side-by-side only if data shows the stack VM plateaued short of target. Rationale: the 12K-test harness only pays off if it runs green continuously; a from-scratch VM has a months-long dark period where failures are needles in haystacks. All A1-A7 work (value type, tables, call convention, CoreLib migration, pooling) carries into A8 unchanged; only the loop bodies + emitter would be rewritten (~15-20% of effort).
+
+#### Phase A0 — Comparison Scoreboard (~1 week) 🔴 FIRST
+
+Extend `src/tooling/WallstopStudios.NovaSharp.Comparison/`:
+
+- [ ] Add **Lua-CSharp** (NuGet `LuaCSharp`) as a benchmark target alongside existing NLua/MoonSharp.
+- [ ] Add **reference `lua` CLI** wall-time as an out-of-process context column (reuse LuaBatchRunner plumbing; not BenchmarkDotNet).
+- [ ] Benchmarks: fib(30), hanoi, n-body, binary-trees, spectral-norm; table-heavy (int-key fill/iterate, string-key lookup, `next` traversal, insert/remove churn); string-heavy (concat chains, `gsub`/`find`, `string.format`); **interop both directions** (1M Lua→C# registered-fn calls with 2 args + return; 1M C#→Lua `Call`); coroutine ping-pong; compile cold + cached.
+- [ ] `[MemoryDiagnoser]` on everything; per-phase JSON baselines committed under `progress/`; one command emits the scoreboard markdown table (rows = benchmarks; columns = NovaSharp current/baseline, MoonSharp, NLua, Lua-CSharp, lua CLI).
+- [ ] CI gates: ratio-vs-NLua ±10% + exact B/op assertions.
+- [ ] Minimal stopwatch-based Unity player scene for IL2CPP spot checks.
+
+**Exit criteria**: baseline table for all 5 engines committed; allocation numbers recorded.
+
+#### Phase A1 — `LuaValue` struct (~3-5 weeks; highest impact, highest risk)
+
+Replace the `DynValue` class with:
+
+```csharp
+[StructLayout(LayoutKind.Auto)]
+public readonly struct LuaValue : IEquatable<LuaValue>
+{
+    private readonly LuaNumber _number;  // existing 16B explicit-layout int/float union, kept verbatim
+    private readonly object _ref;        // Table / Closure / string / Coroutine / UserData / tuple
+    private readonly DataType _type;     // byte-backed enum; default(LuaValue) == Nil
+}
+```
+
+Sub-steps, each landing green:
+
+- [ ] **A1a (prep)**: remove `_readOnly`/clone-as-writable machinery; audit and remove `DynValue.ReferenceId` consumers (only `CoreLib/DebugModule.cs` and `ProcessorDebugger.cs` — derive identity from the referenced object, which matches Lua `tostring(t)` semantics; `Table`/`Closure`/`Coroutine` remain classes so identity survives). Kill the `_hashCode` cache.
+- [ ] **A1b (targeted fixtures FIRST)**: `select('#', ...)`, `table.pack(...).n`, nil-in-middle tuples, function-call-in-expression vs statement position — the `null` vs `Nil` vs `Void` drift hazards.
+- [ ] **A1c (the conversion)**: class→struct, compiler-error-driven across interpreter + CoreLib + tests. `default(LuaValue)` = Nil; `Void` stays an explicit tag; every `== null` / `?? DynValue.Nil` site audited manually (not regex).
+- [ ] **A1d (tuning)**: aggressive-inline accessors; `in`/`ref readonly` passing on hot helpers. Struct copy semantics delete the shared-readonly-literal concern entirely.
+
+**Exit criteria**: fixtures green on 5.1-5.5; NumericLoops **0 B/op steady-state**; compute suite ≥1.5-2x vs A0 baseline; no test relies on value reference identity.
+
+#### Phase A2 — Struct `Instruction` + packed chunks (~1-2 weeks)
+
+- [ ] `Instruction` class → `readonly struct { OpCode Op; int A, B, C; }` stored in a contiguous `Instruction[]` per chunk.
+- [ ] Constants (`Value`/`Name`) move to a per-chunk `LuaValue[]` constant pool indexed by operand; `Symbol`/`SymbolList` to per-chunk symbol tables; `SourceCodeRef` to a **parallel line-info array** (PUC-style), consulted only on error/debug.
+- [ ] Keep the opcode enum dense from 0; verify the dispatch switch compiles to a jump table.
+- [ ] Rework the `ByteCode.cs` emitter for packed operands; new binary dump format with version-bumped header; drop old-format load support (pre-1.0); add cross-version load-rejection test.
+
+**Exit criteria**: fixtures + `SerializationTests/` round-trip green; chunk memory ≥4x smaller; measurable dispatch win on branch-heavy microbench.
+
+#### Phase A3 — Hot-loop hygiene (~1-2 weeks; parallelizable with A4)
+
+- [ ] **Loop specialization**: select at entry between a *plain loop* (zero per-instruction checks) and an *instrumented loop* (debugger/sandbox/auto-yield); re-select on state change (debugger attach, options change).
+- [ ] **Fuel-based sandbox limits**: instruction-limit counter decrements only at loop back-edges (backward jumps) and call sites. Sandbox limits become basic-block-granular — an intentional, documented behavior change; sandbox tests assert "trips within limit + K", not exact counts.
+- [ ] **Memory checks move to allocation sites** (`Table` growth, string creation — `AllocationTracker` already lives there), out of the dispatch loop.
+- [ ] Kill per-arith `shouldYieldToCaller`: the `YieldSpecialTrap` sentinel check remains only on call/return/meta-invoke opcodes; yielding arith metamethods route through call machinery.
+- [ ] try/catch stays outside `while(true)`; `NoInlining` on throw helpers and metamethod slow paths; hoist stack top into ref locals.
+
+**Exit criteria**: plain-loop dispatch within ~2x of Lua-CSharp; sandbox/debugger/auto-yield suites green under documented granularity; zero measurable tax on the non-debugged path.
+
+#### Phase A4 — Table rewrite (~2-3 weeks; parallelizable with A3)
+
+- [ ] Replace `LinkedList<TablePair>` + three `LinkedListIndex` maps with PUC-style **array part (`LuaValue[]`) + open-addressed hash part** (`(LuaValue key, LuaValue value, int next)[]` node array); PUC `luaH_resize` array/hash split heuristic; border-search `#` semantics per version.
+- [ ] **Before rewriting**: verify no fixture depends on insertion order (fixtures compare against reference Lua, whose order already differs) — smoke-test with a shuffled-iteration debug table; add `next`-contract fixtures (every key visited once; assignment-during-traversal legal; `next` after removal semantics; `#` border behavior per version).
+- [ ] Re-point `AllocationTracker` hooks to actual array/hash sizing.
+- [ ] Keep the public `Table` API shape; swap internals.
+
+**Exit criteria**: table-heavy suite ≥3-5x vs baseline; ~24-40 B/entry; binary-trees ≥2x; `next`-contract fixtures green.
+
+#### Phase A5 — Call path + interop signatures (~3-4 weeks)
+
+- [ ] `CallStackItem` → struct frames in a growable stack; delete `CallStackItemPool(s)`.
+- [ ] Shrink per-Script stacks: grow-on-demand from 512 values / 64 frames (currently 2 × 131,072 = >2 MiB); geometric growth, configurable ceiling. This is also the coroutine-cost fix.
+- [ ] Args as stack windows (base + count); CLR callbacks receive `ReadOnlySpan<LuaValue>`; multi-return via return-buffer writer. `LuaValue[]` tuples remain only for varargs capture / `table.pack`, pooled.
+- [ ] Migrate `CallbackFunction.ClrCallback` to the span-based form; migrate ~20 `CoreLib/` modules **one module per PR** (per-module fixture suites localize failures).
+- [ ] **No exceptions on hot call/return/yield paths.**
+
+**Exit criteria**: fib/hanoi ≤2-3x of NLua; **Lua→CLR interop benchmark beats NLua outright**; `new Script()` <100 KB; coroutine create/resume near-zero steady-state alloc.
+
+#### Phase A6 — Strings (~1-2 weeks)
+
+- [ ] N-ary `Concat` via pooled builder (one allocation per chain, not per pair).
+- [ ] Optional per-engine intern pool for table string keys + constants → reference-equality fast path in hash probes.
+- [ ] Span-based scanning for `gsub`/`find`/`match` hot paths; `string.format` fully on ZString.
+
+**Exit criteria**: string-heavy suite ≤2-3x native; `StringPatternBenchmarks` regression gate green.
+
+#### Phase A7 — Compile time (~1-2 weeks, profile-first)
+
+Loading is 20-60x behind `luaL_loadstring`. Do NOT rewrite the parser. Profile, then:
+
+- [ ] Lexer token payloads as `ReadOnlyMemory<char>` slices (no per-token string until identifier/string is materialized, then interned).
+- [ ] Pooled AST lists; struct leaf nodes only where mechanical.
+- [ ] Keep/strengthen the chunk cache; bytecode dump/load is the "precompile for Unity" story.
+
+**Exit criteria**: cold `LoadString` within 5-10x of `luaL_loadstring` (honest ceiling for an AST pipeline); loading allocations ↓ ≥5x.
+
+#### Phase A8 — GATED: Register-based VM v2 (~6-10 weeks IF triggered)
+
+**Gate (evaluate after A6)**: proceed iff compute suite is >5x native lua OR call-heavy is >2x behind Lua-CSharp. Otherwise defer indefinitely.
+
+- [ ] New compiler backend from the existing AST (`Tree/`) emitting PUC-5.4-style register bytecode; new executor with struct frames and `Unsafe.Add` register access; loop-specialization variants reused from A3.
+- [ ] Side-by-side migration: internal engine-selection option; CI matrix runs the full fixture suite against BOTH engines; flip the default when green + faster across the whole scoreboard; delete the stack VM (`ProcessorInstructionLoop.cs`, stack emitter, stack opcodes) one milestone later.
+- [ ] Coroutines: pooled per-coroutine frame stacks from day one; suspend = save frame window (no exceptions).
+- [ ] Debugger: line-info array maps PCs to `SourceRef`; instrumented loop variant interprets the same bytecode.
+
+#### End-state estimates (vs native C Lua; honest uncertainty)
+
+| Class | After A1-A7 (stack VM) | After A8 (register VM) | Confidence |
+| ----------------------------- | ---------------------- | ---------------------- | ------------------------------------ |
+| Numeric loops | 2.5-5x | 2-3.5x | High (WattleScript/Lua-CSharp precedent) |
+| Call-heavy (fib/hanoi) | 3-7x | 2-4x | Medium — the register-VM fork |
+| Table-heavy | 2-4x | 2-3x | Medium-high |
+| String-heavy | 1.5-3x | same | High (BCL strings are good) |
+| Interop Lua↔CLR | **beats NLua 2-10x** | same or better | High — the structural advantage |
+| Compile (cold) | 5-15x slower | same | Medium |
+
+Total A0-A7 ≈ 14-20 engineer-weeks; A8 +6-10 if triggered.
+
+______________________________________________________________________
+
+### Workstream B: Public API + Unity Experience (facade-first, parallel with A)
+
+**Strategy**: land the new small API as a **facade over the current VM** immediately (B0), so the source generator, Unity package, and modding framework proceed in parallel with — not behind — the VM work. The facade's `LuaValue` becomes the VM-native type when A1 lands.
+
+#### Locked design decisions
+
+- Root namespace **`NovaSharp`** (assemblies/NuGet keep the `WallstopStudios.` prefix). Hard break; no public compat package, ever. Target **~30 core public types** (vs ~114 today).
+- **Options record + presets**, not a fluent builder: `LuaEngineOptions { Version, Modules, Sandbox, Loader, Time, Random, Print }` with `Default` / `HardSandbox` presets composed via `with`.
+- **Dual sync/async; sync is the hot path**: `Run`/`RunAsync`, `Call`/`CallAsync` (`ValueTask`-based). A sync call that hits an async suspension throws a teaching `LuaBlockedException` ("this chunk awaited a host task; use RunAsync").
+- **`LuaValue` struct is the only value currency**: implicit conversions in (`lua.Globals["speed"] = 3f`); `Read<T>()` / `TryRead<T>(out T)` / `AsNumber()`-family out; pattern matching via `Kind` enum + property patterns. **No boxed class hierarchy** (permanent allocation trap dressed as ergonomics).
+- **RAII**: `using var lua = LuaEngine.Create(options);` — the engine owns pooled stacks, interner, compilation cache; disposal invalidates handles.
+- **Calls**: arity ladder `Call(a0..a3)` (zero-alloc for per-frame use) + `ReadOnlySpan<LuaValue>` overloads + multi-return into caller `Span<LuaValue>`. No generic `Call<T>` matrix — chain `.Read<T>()`.
+- Public API consumable from **C# 9** (Unity 2021.2 floor): no `required`, no ref-struct interfaces; `init`/records fine.
+
+#### Core API sketch (the contract; refine in B0 RFC)
+
+```csharp
+namespace NovaSharp;
+
+public sealed class LuaEngine : IDisposable
+{
+    public static LuaEngine Create();
+    public static LuaEngine Create(LuaEngineOptions options);
+    public LuaTable Globals { get; }
+    public LuaValue Run(string code, string chunkName = null);
+    public ValueTask<LuaValue> RunAsync(string code, string chunkName = null, CancellationToken ct = default);
+    public LuaChunk Compile(string code, string chunkName = null);  // cached, dump/load capable
+    public LuaTable CreateTable(int arrayCapacity = 0, int hashCapacity = 0);
+    public LuaCoroutine CreateCoroutine(LuaFunction fn);
+    public void Dispose();
+}
+
+public delegate LuaValue LuaCallback(LuaContext ctx, ReadOnlySpan<LuaValue> args);
+
+// Pattern matching idiom (no boxing):
+// value switch
+// {
+//     { IsNil: true }           => "nil",
+//     { Kind: LuaKind.Integer } => $"int {value.AsInteger()}",
+//     { IsString: true }        => value.AsString(),
+//     _                         => value.Kind.ToString(),
+// }
+```
+
+Pit-of-success targets: a sandboxed mod host in **<15 lines**; a bound game API class in **<30 lines**; per-frame `onUpdate.Call(Time.deltaTime)` with **0 B GC/frame**.
+
+#### Packaging
+
+| Package | Contents |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `NovaSharp` (core) | VM, LuaValue/LuaEngine/LuaTable/LuaFunction/LuaCoroutine, stdlib, sandbox, 5.1-5.5 profiles; `Tree/`, `Execution/`, descriptors → internal |
+| `NovaSharp.Interop.Generator` | Roslyn incremental generator + analyzers (netstandard2.0; ships as analyzer asset + raw DLL for Unity `RoslynAnalyzer` label) |
+| `NovaSharp.Interop.Reflection` | today's `UserData.RegisterType<T>` descriptor system; desktop/dev fallback; explicitly unsupported on IL2CPP; ships link.xml |
+| `NovaSharp.Modding` | ModHost, capability manifests, per-mod isolation, hot reload, EmmyLua stub emission |
+| `NovaSharp.Debugging.Dap` | current VS Code debugger retargeted to the new engine |
+| `NovaSharp.Cli` (dotnet tool) | REPL, batch runner, luac-style compile, stub dump |
+| `com.wallstopstudios.novasharp` (UPM) | asmdefs, generator DLL, `LuaAsset` ScriptedImporter, Resources/Addressables/StreamingAssets loaders, Unity struct pack, `Samples~/ModHost` |
+
+#### Phase B0 — API facade + RFC (~2-3 weeks; parallel with A1)
+
+- [ ] `LuaValue`, `LuaEngine`, `LuaTable`, `LuaFunction`, `LuaCoroutine`, `LuaEngineOptions`, exception types — as a facade over the current VM (LuaValue wraps DynValue internally at first).
+- [ ] Public-API baseline file (`PublicAPI.Shipped.txt` style) checked in and CI-enforced (<40 core types).
+- [ ] Samples compile and run: hello world, per-frame call, sandboxed host.
+
+**Exit criteria**: facade `Run`/`Call` within 5% of `Script.DoString`/`Call` on the A0 scoreboard.
+
+#### Phase B1 — Source generator MVP
+
+- [ ] Attributes in core: `[LuaObject(name)]` on partial class/struct, `[LuaMember(name)]`, `[LuaMetamethod(...)]`, `[LuaIgnore]`. Enums referenced by members auto-exposed as string-keyed tables.
+- [ ] Generated shape targets the new span convention directly: string-switch member dispatch (no dictionary), typed arg unpack (no MethodInfo, no boxing), async members generate suspension markers.
+- [ ] Analyzer diagnostics: NS0001 not-partial; NS0002 unsupported parameter type (+fix); NS0003 ref/out/pointer/open-generic; NS0004 name collision; NS0005 async return type needs adapter package; NS0006 member on non-LuaObject type. Golden-file generator tests.
+- [ ] Deprecate the CodeDom Hardwire CLI; delete at generator parity (supersedes `docs/proposals/roslyn-hardwire-generator.md`'s keep-surface goal — the generator emits the NEW shape).
+- [ ] Bonus output: EmmyLua/LuaLS `.lua` stubs per `[LuaObject]` → modder autocomplete in the VS Code extension.
+
+**Exit criteria**: bound GameApi sample <30 lines; trimmed publish emits zero NovaSharp trim warnings; generated path verified reflection-free.
+
+#### Phase B2 — Unity package
+
+- [ ] UPM layout (extend `scripts/packaging/`), asmdefs, generator DLL with `RoslynAnalyzer` label.
+- [ ] `LuaAsset` ScriptedImporter (`.lua`/`.luac` → source + precompiled chunk); `require` resolvers for Resources/Addressables/StreamingAssets as `IScriptLoader` implementations.
+- [ ] Unity struct marshal pack (xLua `GCOptimize` equivalent): pre-generated pack/unpack for Vector2/3/4, Quaternion, Color, Rect, Bounds, Matrix4x4 via pooled-slot userdata (`LuaValue{ tag=UserData, ref=StructPool page, num=slot }`); generated field accessors (`pos.x` reads the slot, no reflection). Riskiest piece — own benchmark gate; fallback = pooled-table pack/unpack.
+
+**Exit criteria**: sample opens in Unity 2021.3 LTS; **IL2CPP iOS + Android builds with zero link.xml entries**; WebGL hello-world runs (the NLua-can't-do-this demo); Unity Profiler shows **0 B GC/frame** for per-frame Call + Vector3 read.
+
+#### Phase B3 — Async + coroutine bridge
+
+- [ ] `RunAsync`/`CallAsync`/`ResumeAsync`; async `[LuaMember]` (ValueTask/Task; Unity `Awaitable` in the Unity pack; UniTask adapter package); resumption on the engine's captured SynchronizationContext (Unity main thread); cancellation surfaces as a Lua error.
+- [ ] `game.wait(2.5)` sample: C# await inside a bound function transparently suspends the calling Lua coroutine.
+
+**Exit criteria**: cutscene sample works; sync-into-awaiting-chunk throws the teaching exception; cancellation suite green on Mono + IL2CPP.
+
+#### Phase B4 — Modding framework
+
+- [ ] `ModHost` (builds on `Modding/ModManager.cs`): one `LuaEngine` per mod (cheap post-A5), shared host API via generated bindings, cross-mod contact only through host-mediated events.
+- [ ] **Tiered permissions (Noita model)**: manifest gains `"capabilities": ["storage", "net", "unsafe.io"]`; each capability maps to deltas of `CoreModules` flags + `SandboxOptions` entries + extra API tables. Default tier = HardSandbox preset + instruction/memory/stack/coroutine limits. `unsafe.*` requires a host-supplied consent callback (game shows the dialog).
+- [ ] Hot reload: file watcher (editor/desktop); contract `mod.save_state() -> table` before teardown, `mod.load_state(t)` after; state serialized via the json module.
+- [ ] Determinism: `ITimeProvider`/`IRandomProvider`/UTC seams already exist — document a `Deterministic` preset; build no more yet.
+- [ ] `Samples~/ModHost`: one scene, a `[LuaObject]` GameApi, two mods (safe tier + one requesting `unsafe.io` to demo consent), permission prompt UI.
+
+**Exit criteria**: malicious-mod trio contained (infinite loop → instruction limit; memory bomb → memory limit; `io.open` at safe tier → capability denial; all as `SandboxViolationException` with the engine reusable after); hot reload preserves declared state; VS Code shows completions from emitted stubs.
+
+#### Phase B5 — Migration + surface lockdown
+
+- [ ] CoreLib is rewritten onto `LuaValue`/span signatures as part of A5 (not shimmed — required for zero-alloc goals).
+- [ ] ~12K TUnit tests migrated via a scripted Roslyn rewriter in `scripts/` (`DoString`→`Run`, `DynValue.NewNumber(x)`→`(LuaValue)x`, `.Number`→`.AsNumber()`, `.Type == DataType.X`→`.Kind == LuaKind.X`); a short-lived **in-repo** shim may bridge during migration but is never published and is deleted before 1.0.
+- [ ] Old `WallstopStudios.NovaSharp.Interpreter.*` public namespaces disappear; API-baseline CI check freezes the surface.
+
+**Exit criteria**: full suite green post-migration; surface diff reviewed and frozen.
+
+#### Phase B6 — Debugger alignment
+
+- [ ] DAP server + VS Code extension retargeted to `LuaEngine`/`LuaValue` (single `IDebugService`-style hook stays public in core so the DAP package needs no internals access).
+
+**Exit criteria**: breakpoint + variable inspection (LuaValue kinds rendered) in VS Code against the Unity sample.
+
+______________________________________________________________________
+
+### Spec-Compliance Risk Register
+
+| Risk | Phase | How the harness catches it / mitigation |
+| ---------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------- |
+| `null` vs `Nil` vs `Void` conflation | A1 | Targeted fixtures added BEFORE conversion; manual audit of every `== null` site |
+| Value identity semantics (`_refId` removal) | A1 | `Table`/`Closure`/`Coroutine` stay `RefIdObject` classes; tostring/debugger fixtures |
+| Shared readonly literals in instruction stream | A1-A2 | Struct copy semantics eliminate the bug class; delete readonly machinery only after fixtures green |
+| Bytecode dump/load format break | A2 | Version-bump header; `SerializationTests/` round-trip + load-rejection test |
+| Sandbox limit granularity (per-instr → fuel) | A3 | Intentional documented change; tests assert "trips within limit + K" |
+| Auto-yield timing shift | A3 | Assert yield happens, not exact instruction index |
+| **Table iteration order change** | A4 | Fixtures compare vs reference Lua (order already differs); shuffled-iteration smoke test; `next`-contract fixtures added pre-rewrite |
+| `#`/border semantics with array part | A4 | Port PUC border search exactly; per-version `#` fixtures; fuzz vs reference lua |
+| CoreLib signature migration typos | A5 | One module per PR; per-module fixture gates |
+| Int/float subtype (5.3+) | all | `LuaNumber` union preserved verbatim; numeric edge-case fixtures as canary |
+
+### Priority order (what to do next, in sequence)
+
+1. 🔴 **A0** — comparison scoreboard (everything else is blind without it)
+1. 🔴 **B0** — API facade + RFC (parallel; unblocks generator/Unity work)
+1. 🔴 **A1** — LuaValue struct (the single highest-impact change)
+1. 🟡 **B1** — source generator MVP ∥ **A2** — struct instructions
+1. 🟡 **A3 ∥ A4** — hot-loop hygiene ∥ table rewrite
+1. 🟡 **A5** — call path + span interop (then CoreLib migration, one module per PR)
+1. 🟡 **B2** — Unity package; **A6/A7** — strings/compile-time
+1. 🟢 **B3/B4** — async bridge, modding framework
+1. 🟢 **A8 gate decision** (data-driven), **B5/B6** — migration lockdown, debugger
 
 ______________________________________________________________________
 
@@ -603,11 +925,7 @@ ______________________________________________________________________
 - ❌ **SymbolRef → struct**: NOT FEASIBLE — Two-phase construction, binary deserialization back-patching
 - ❌ **Instruction list pooling**: NOT APPLICABLE — ByteCode persists for Script lifetime
 
-**Remaining Phases**:
-
-- 🔲 **Phase 3**: High-impact structural changes (DynValue struct experiment, register-based VM)
-- 🔲 **Phase 4**: String and pattern matching optimizations
-- 🔲 **Phase 5**: Benchmark validation and documentation
+**Remaining Phases**: ⛔ **SUPERSEDED** — Phases 3-5 (DynValue struct, register-based VM, string optimizations, benchmark validation) are now covered in full detail by the [Strategic Roadmap](#-strategic-roadmap-performance-parity--unity-first-api-2026) above (Workstream A: A1 = DynValue struct, A6 = strings, A0 = benchmark scoreboard, A8 = register VM gate). Do not start work from this section.
 
 See progress reports: [session-086](progress/session-086-script-compilation-cache.md), [session-087](progress/session-087-vm-execution-pooling-phase2.md), [session-088](progress/session-088-lazy-line-splitting.md), [session-092](progress/session-092-ipairs-metamethod-parity.md).
 
@@ -850,6 +1168,10 @@ ______________________________________________________________________
 
 ## Recommended Next Steps (Priority Order)
 
+### 🔴 HIGHEST: Strategic Roadmap
+
+See the [Strategic Roadmap](#-strategic-roadmap-performance-parity--unity-first-api-2026) at the top of this document. Immediate sequence: **A0** (comparison scoreboard) → **B0** (API facade) → **A1** (LuaValue struct). Everything below is subordinate.
+
 ### 🟡 MEDIUM: Remaining Version Parity Items
 
 1. **Version migration guides**
@@ -959,9 +1281,11 @@ expr.Initialize(value, sourceRef);
 
 **Alternative High-Value Targets** (same effort, runtime impact):
 
-- `DynValue` class → struct conversion (Phase 3 of Initiative 21)
-- `Instruction` class → struct conversion (bytecode execution hot path)
-- String interning improvements
+- `DynValue` class → struct conversion (now Roadmap Phase A1)
+- `Instruction` class → struct conversion (now Roadmap Phase A2)
+- String interning improvements (now Roadmap Phase A6)
+
+Compile-time/parsing allocation work is covered by Roadmap Phase A7 (profile-first, no parser rewrite).
 
 #### If Business Case Exists for Zero-Allocation Parsing
 
