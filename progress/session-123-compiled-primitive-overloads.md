@@ -14,6 +14,7 @@
 - Updated the same-run comparison benchmark to compile NovaSharp scenarios with `PrepareString` and execute with `CompiledScript.Execute`.
 - Added local benchmark rows comparing prepared-handle `DynValue`, primitive `double`, and forced `object` double argument paths.
 - Confirmed the benchmark delta renderer still presents NovaSharp raw results per scenario before external-runtime deltas.
+- Added a dedicated narrow NovaSharp raw-results table before the wider same-run runtime matrix so PR comments remain readable when external runtime columns make the matrix wide.
 - Added benchmark report copy explaining that NovaSharp comparison rows intentionally use the prepared-handle public API.
 - Added regression coverage for primitive overload custom-converter precedence, `char` string conversion, and checked `ulong` conversion.
 
@@ -31,6 +32,7 @@
 - The revised benchmark smoke showed cached `DynValue` remains the lowest-allocation path: 456 B/op. Primitive and pre-boxed object paths both allocate 512 B/op under the current VM design; per-call boxed object allocates 536 B/op.
 - The same-run comparison harness now measures NovaSharp through the same public prepared-handle path users should prefer: `PrepareString` once, then `CompiledScript.Execute`.
 - The PR benchmark matrix renderer keeps NovaSharp readable with raw mean/P95 and allocation/GC columns per scenario, then shows external runtime raw values and NovaSharp-vs-runtime deltas.
+- The renderer now repeats those NovaSharp raw values in a dedicated `NovaSharp Raw Results` section before the cross-runtime delta tables, so each scenario is readable without horizontal scanning.
 
 ## Validation
 
@@ -50,4 +52,7 @@
 - Passed after macOS CI test-isolation fix: `./scripts/test/quick.sh --full PrimitiveArgumentOverloads`.
 - Passed after macOS CI test-isolation fix: `./scripts/test/quick.sh --full PrimitiveExecuteHonorsCustomConverters`.
 - Passed after macOS CI test-isolation fix: `./scripts/dev/pre-commit.sh`.
-- Pending: push and PR CI observation.
+- Passed after raw-results report update: `python3 tools/test_render_benchmark_deltas.py`.
+- Passed after raw-results report update: `git diff --check`.
+- Passed after raw-results report update: `./scripts/dev/pre-commit.sh`.
+- Pending: push the raw-results report improvement and observe PR CI.

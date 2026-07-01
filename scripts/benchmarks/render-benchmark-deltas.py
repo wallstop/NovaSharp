@@ -529,8 +529,41 @@ def render_external_section(lines: list[str], rows: list[RuntimeMatrixRow]) -> N
             "",
         ]
     )
+    render_novasharp_raw_results(lines, rows)
     render_runtime_time_matrix(lines, rows, runtimes)
     render_runtime_memory_matrix(lines, rows, runtimes)
+
+
+def render_novasharp_raw_results(lines: list[str], rows: list[RuntimeMatrixRow]) -> None:
+    headers = [
+        "Scenario",
+        "Operation",
+        f"{NOVA_RUNTIME} Mean / P95",
+        f"{NOVA_RUNTIME} Alloc / GC0/1/2",
+    ]
+    alignments = ["---", "---", "---:", "---:"]
+    lines.extend(
+        [
+            f"#### {NOVA_RUNTIME} Raw Results",
+            "",
+            "This table repeats NovaSharp's own same-run values in a narrow form before the wider cross-runtime delta matrix.",
+            "",
+            render_markdown_row(headers),
+            render_markdown_row(alignments),
+        ]
+    )
+    for row in rows:
+        lines.append(
+            render_markdown_row(
+                [
+                    scenario_display(row),
+                    row.key.operation,
+                    format_time_pair(row.nova),
+                    format_memory_gc_pair(row.nova),
+                ]
+            )
+        )
+    lines.append("")
 
 
 def render_runtime_time_matrix(
