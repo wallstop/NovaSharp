@@ -85,6 +85,84 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DynValueCallPreservesDebugFrameFunctionIdentity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString(
+                """
+                return function()
+                    local info = debug.getinfo(1, "fS")
+                    local funcInfo = debug.getinfo(info.func, "S")
+                    local identity = info.func == expected and "same" or "different"
+                    return identity .. ":" .. type(info.func) .. ":" .. info.what .. ":" .. funcInfo.short_src
+                end
+                """,
+                codeFriendlyName: "call_debug.lua"
+            );
+            script.Globals.Set("expected", function);
+
+            DynValue result = script.Call(function);
+
+            await Assert
+                .That(result.String)
+                .IsEqualTo("same:function:Lua:call_debug.lua")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DynValueCallEmptyArgumentsUseZeroArgumentLuaFunction(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString(
+                """
+                return function(...)
+                    local info = debug.getinfo(1, "f")
+                    local identity = info.func == expected and "same" or "different"
+                    return select("#", ...), identity
+                end
+                """,
+                codeFriendlyName: "call_empty_span.lua"
+            );
+            script.Globals.Set("expected", function);
+
+            DynValue spanResult = CallWithSpan(script, function, Array.Empty<DynValue>());
+            DynValue paramsResult = CallWithParamsArray(script, function, Array.Empty<DynValue>());
+
+            await Assert.That(spanResult.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(spanResult.Tuple[1].String).IsEqualTo("same").ConfigureAwait(false);
+            await Assert.That(paramsResult.Tuple[0].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(paramsResult.Tuple[1].String).IsEqualTo("same").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsUntil(LuaCompatibilityVersion.Lua51)]
+        public async Task DynValueCallSupportsLua51SetfenvFrame(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            script.Globals.Set("marker", DynValue.FromNumber(5));
+            DynValue function = script.DoString(
+                """
+                return function()
+                    local before = getfenv(1).marker
+                    setfenv(1, { marker = 99, getfenv = getfenv, setfenv = setfenv })
+                    return before * 100 + getfenv(1).marker
+                end
+                """,
+                codeFriendlyName: "call_setfenv.lua"
+            );
+
+            DynValue result = script.Call(function);
+
+            await Assert.That(result.Number).IsEqualTo(599d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
@@ -3497,6 +3575,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             }
 
             return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        private static DynValue CallWithSpan(Script script, DynValue function, DynValue[] args)
+        {
+            return script.Call(function, args.AsSpan());
+        }
+
+        private static DynValue CallWithParamsArray(
+            Script script,
+            DynValue function,
+            DynValue[] args
+        )
+        {
+            return script.Call(function, args);
         }
 
         private sealed class UnregisteredHostObject { }

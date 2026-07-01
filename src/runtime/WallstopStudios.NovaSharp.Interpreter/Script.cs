@@ -961,6 +961,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
                 return Call(function);
             }
 
+            return ExecuteLuaFunctionWithoutArguments(function);
+        }
+
+        private DynValue ExecuteLuaFunctionWithoutArguments(DynValue function)
+        {
             return ExecuteWithCompatibilityGuard(
                 (_mainProcessor, function),
                 static state => state._mainProcessor.CallFunctionWithoutArguments(state.function)
@@ -1817,10 +1822,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             if (function.Type == DataType.Function)
             {
-                return ExecuteSpanCallWithCompatibilityGuard(
-                    function,
-                    ReadOnlySpan<DynValue>.Empty
-                );
+                return ExecuteLuaFunctionWithoutArguments(function);
             }
 
             if (function.Type == DataType.ClrFunction && function.Callback.HasArgumentViewCallback)
@@ -2310,6 +2312,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
                     CreateDynamicExecutionContext(function.Callback),
                     args
                 );
+            }
+
+            if (args.Length == 0)
+            {
+                return ExecuteLuaFunctionWithoutArguments(function);
             }
 
             return ExecuteWithCompatibilityGuard(

@@ -275,10 +275,12 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     {
         private Script _script;
         private DynValue _function = DynValue.Nil;
+        private DynValue _zeroArgFunction = DynValue.Nil;
         private DynValue _arg1 = DynValue.Nil;
         private DynValue _arg2 = DynValue.Nil;
         private DynValue _arg3 = DynValue.Nil;
         private CompiledScript _boundGlobalHandle;
+        private CompiledScript _boundZeroArgHandle;
 
         /// <summary>
         /// Prepares a global Lua function and cached argument values.
@@ -287,9 +289,13 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public void Setup()
         {
             _script = new Script(CoreModulePresets.Complete);
-            _script.DoString("function update(a, b, c) return a + b + c end");
+            _script.DoString(
+                "function update(a, b, c) return a + b + c end; function tick() return 42 end"
+            );
             _function = _script.Globals.Get("update");
+            _zeroArgFunction = _script.Globals.Get("tick");
             _boundGlobalHandle = _script.BindGlobalFunction("update");
+            _boundZeroArgHandle = _script.BindGlobalFunction("tick");
             _arg1 = DynValue.FromNumber(1);
             _arg2 = DynValue.FromNumber(2);
             _arg3 = DynValue.FromNumber(3);
@@ -309,10 +315,22 @@ namespace WallstopStudios.NovaSharp.Benchmarks
         public DynValue CallCachedGlobal() => _script.Call(_function, _arg1, _arg2, _arg3);
 
         /// <summary>
+        /// Calls a manually cached zero-argument global function value.
+        /// </summary>
+        [Benchmark(Description = "Call Cached Zero-Arg Global")]
+        public DynValue CallCachedZeroArgGlobal() => _script.Call(_zeroArgFunction);
+
+        /// <summary>
         /// Executes a global function handle resolved once through the public binding API.
         /// </summary>
         [Benchmark(Description = "Execute Bound Global Handle")]
         public DynValue ExecuteBoundGlobalHandle() =>
             _boundGlobalHandle.Execute(_arg1, _arg2, _arg3);
+
+        /// <summary>
+        /// Executes a zero-argument global function handle resolved once through the public binding API.
+        /// </summary>
+        [Benchmark(Description = "Execute Bound Zero-Arg Handle")]
+        public DynValue ExecuteBoundZeroArgHandle() => _boundZeroArgHandle.Execute();
     }
 }
