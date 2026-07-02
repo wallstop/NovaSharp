@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Comparison;
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +31,8 @@ using NLuaState = NLua.Lua;
 )]
 public class LuaPerformanceBenchmarks : IDisposable
 {
+    private static readonly string[] BenchmarkScenarioNames = BenchmarkScripts.GetScenarioNames();
+
     private string _source = string.Empty;
     private Script _novaSharpScript;
     private CompiledScript _novaSharpFunction;
@@ -44,21 +47,20 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// <summary>
     /// Scenario executed for each benchmark iteration.
     /// </summary>
-    [Params(
-        nameof(ScriptScenario.NumericLoops),
-        nameof(ScriptScenario.TableMutation),
-        nameof(ScriptScenario.TowerOfHanoi),
-        nameof(ScriptScenario.EightQueens),
-        nameof(ScriptScenario.CoroutinePingPong)
-    )]
+    [ParamsSource(nameof(ScenarioNames))]
     public string ScenarioName { get; set; } = nameof(ScriptScenario.TowerOfHanoi);
+
+    /// <summary>
+    /// Scenarios executed by BenchmarkDotNet. Kept in sync with CLI scenario export.
+    /// </summary>
+    public static IEnumerable<string> ScenarioNames => BenchmarkScenarioNames;
 
     private ScriptScenario CurrentScenario
     {
         get
         {
             ArgumentException.ThrowIfNullOrEmpty(ScenarioName);
-            return Enum.Parse<ScriptScenario>(ScenarioName, ignoreCase: false);
+            return BenchmarkScripts.GetScenario(ScenarioName);
         }
     }
 

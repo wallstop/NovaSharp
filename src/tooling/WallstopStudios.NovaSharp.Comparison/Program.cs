@@ -89,7 +89,10 @@ namespace WallstopStudios.NovaSharp.Comparison
             int exported = 0;
             foreach (ScriptScenario scenario in BenchmarkScripts.GetScenarios())
             {
-                string outputPath = Path.Combine(outputDirectory, string.Concat(scenario, ".lua"));
+                string outputPath = Path.Combine(
+                    outputDirectory,
+                    string.Concat(BenchmarkScripts.GetScenarioName(scenario), ".lua")
+                );
                 File.WriteAllText(outputPath, BenchmarkScripts.GetScript(scenario));
                 exported++;
             }
