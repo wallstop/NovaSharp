@@ -108,11 +108,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
         )
         {
             Script script = CreateScript(version);
-            LastTailCall = null;
+            DynValue lastTailCall = null;
             DynValue callback = DynValue.NewCallback(
                 (context, args) =>
                 {
-                    LastTailCall = context.GetMetamethodTailCall(
+                    lastTailCall = context.GetMetamethodTailCall(
                         args[0],
                         "__call",
                         args[0],
@@ -131,7 +131,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
             "
             );
 
-            DynValue tail = LastTailCall;
+            DynValue tail = lastTailCall;
             await Assert.That(tail).IsNotNull();
             await Assert.That(tail.Type).IsEqualTo(DataType.TailCallRequest);
             await Assert.That(tail.TailCallData.Function.Type).IsEqualTo(DataType.Function);
@@ -2783,7 +2783,5 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
 
             return GC.GetAllocatedBytesForCurrentThread() - before;
         }
-
-        private static DynValue LastTailCall;
     }
 }
