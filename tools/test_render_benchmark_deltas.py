@@ -117,8 +117,14 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             gen0=gen0,
         )
 
-    def lua_cli_benchmark(self, mean: float, p95: float) -> dict:
-        return {
+    def lua_cli_benchmark(
+        self,
+        mean: float,
+        p95: float,
+        *,
+        include_show_delta_percent: bool = True,
+    ) -> dict:
+        benchmark = {
             "Namespace": "WallstopStudios.NovaSharp.Comparison",
             "Type": "LuaPerformanceBenchmarks",
             "Method": "LuaExecute",
@@ -126,7 +132,7 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             "Parameters": "ScenarioName=NumericLoops",
             "RuntimeDisplayName": "Lua CLI wall-time",
             "RuntimeContext": "lua5.4: Lua 5.4.6",
-            "ShowDeltaPercent": False,
+            "RuntimeKind": "LuaCliWallTime",
             "Statistics": {
                 "Mean": mean,
                 "Percentiles": {
@@ -134,6 +140,9 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
                 },
             },
         }
+        if include_show_delta_percent:
+            benchmark["ShowDeltaPercent"] = False
+        return benchmark
 
     def current_benchmark(
         self,
@@ -289,6 +298,7 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         result = self.run_script()
 
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("changed=false", result.stdout)
         self.assertIn("external_rows=1", result.stdout)
         output = self.output.read_text(encoding="utf-8")
         self.assertIn("Reference `lua` CLI rows", output)
@@ -325,6 +335,31 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         output = self.output.read_text(encoding="utf-8")
         self.assertIn("Expected reference lua CLI rows missing: 1", output)
         self.assertIn("Lua", output)
+
+    def test_runtime_kind_marks_reference_lua_cli_context_report_only(self) -> None:
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 90, 110, 80, gen0=1),
+                self.lua_cli_benchmark(
+                    mean=50,
+                    p95=70,
+                    include_show_delta_percent=False,
+                ),
+            ],
+        )
+
+        result = self.run_script()
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("changed=false", result.stdout)
+        self.assertIn("external_rows=1", result.stdout)
+        output = self.output.read_text(encoding="utf-8")
+        self.assertIn(
+            "| NumericLoops | Execute | 90 ns / 110 ns | 50 ns / 70 ns | +40 ns / +40 ns |",
+            output,
+        )
 
     def test_renders_self_baseline_deltas_when_checked_in_artifacts_exist(self) -> None:
         self.write_report(

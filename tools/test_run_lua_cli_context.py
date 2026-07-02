@@ -44,6 +44,18 @@ class RunLuaCliContextTests(unittest.TestCase):
 
         self.assertIsNone(result)
 
+    def test_benchmark_record_marks_lua_cli_wall_time_report_only(self) -> None:
+        result = self.module.benchmark_record(
+            "NumericLoops",
+            [100, 200, 300],
+            "/usr/bin/lua5.4",
+            "Lua 5.4.6",
+        )
+
+        self.assertEqual("Lua CLI wall-time", result["RuntimeDisplayName"])
+        self.assertEqual("LuaCliWallTime", result["RuntimeKind"])
+        self.assertFalse(result["ShowDeltaPercent"])
+
 
 if __name__ == "__main__":
     unittest.main()

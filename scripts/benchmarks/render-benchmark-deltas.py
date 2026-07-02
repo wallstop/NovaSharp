@@ -53,6 +53,7 @@ class MetricRecord:
     parameter_display: str
     runtime_display_name: str = ""
     runtime_context: str = ""
+    runtime_kind: str = ""
     show_delta_percent: bool = True
 
 
@@ -79,6 +80,7 @@ class ExternalDeltaRow:
     parameter_display: str
     nova: Metrics
     comparison: Metrics
+    contributes_to_changed_signal: bool
 
 
 @dataclass(frozen=True)
@@ -245,11 +247,12 @@ def load_benchmark_metrics(root: Path, include_external: bool) -> dict[Benchmark
                 continue
 
             metrics[key] = MetricRecord(
-                benchmark_metrics,
-                build_parameter_display_from_json(benchmark),
-                runtime_display_name_from_json(benchmark),
-                runtime_context_from_json(benchmark),
-                show_delta_percent_from_json(benchmark),
+                metrics=benchmark_metrics,
+                parameter_display=build_parameter_display_from_json(benchmark),
+                runtime_display_name=runtime_display_name_from_json(benchmark),
+                runtime_context=runtime_context_from_json(benchmark),
+                runtime_kind=runtime_kind_from_json(benchmark),
+                show_delta_percent=show_delta_percent_from_json(benchmark),
             )
 
     return metrics
@@ -276,11 +279,12 @@ def load_comparison_metrics(root: Path) -> dict[ComparisonKey, dict[str, MetricR
             comparison_key = ComparisonKey(key.summary, operation, key.parameters)
             runtimes = metrics.setdefault(comparison_key, {})
             runtimes[runtime] = MetricRecord(
-                benchmark_metrics,
-                build_parameter_display_from_json(benchmark),
-                runtime_display_name_from_json(benchmark),
-                runtime_context_from_json(benchmark),
-                show_delta_percent_from_json(benchmark),
+                metrics=benchmark_metrics,
+                parameter_display=build_parameter_display_from_json(benchmark),
+                runtime_display_name=runtime_display_name_from_json(benchmark),
+                runtime_context=runtime_context_from_json(benchmark),
+                runtime_kind=runtime_kind_from_json(benchmark),
+                show_delta_percent=show_delta_percent_from_json(benchmark),
             )
 
     return metrics
@@ -400,6 +404,7 @@ def build_external_delta_rows(
                     nova.parameter_display,
                     nova.metrics,
                     comparison_record.metrics,
+                    record_contributes_to_changed_signal(comparison_record),
                 )
             )
 
@@ -494,7 +499,14 @@ def build_self_delta_rows(
 
 
 def external_row_changed(row: ExternalDeltaRow, tolerance: float) -> bool:
+    if not row.contributes_to_changed_signal:
+        return False
+
     return metrics_changed(row.nova, row.comparison, tolerance)
+
+
+def record_contributes_to_changed_signal(record: MetricRecord) -> bool:
+    return record.show_delta_percent and record.runtime_kind != "LuaCliWallTime"
 
 
 def self_row_changed(row: SelfDeltaRow, tolerance: float) -> bool:
@@ -1085,7 +1097,14 @@ def runtime_context_from_json(benchmark: dict) -> str:
     return normalize_cell(benchmark.get("RuntimeContext", ""))
 
 
+def runtime_kind_from_json(benchmark: dict) -> str:
+    return normalize_cell(benchmark.get("RuntimeKind", ""))
+
+
 def show_delta_percent_from_json(benchmark: dict) -> bool:
+    if runtime_kind_from_json(benchmark) == "LuaCliWallTime":
+        return False
+
     value = benchmark.get("ShowDeltaPercent")
     if isinstance(value, bool):
         return value

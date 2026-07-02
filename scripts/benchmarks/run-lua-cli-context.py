@@ -239,6 +239,7 @@ def benchmark_record(
         "Parameters": f"ScenarioName={scenario_name}",
         "RuntimeDisplayName": "Lua CLI wall-time",
         "RuntimeContext": f"{lua_cmd}: {lua_version}",
+        "RuntimeKind": "LuaCliWallTime",
         "ShowDeltaPercent": False,
         "Statistics": {
             "Mean": mean,
