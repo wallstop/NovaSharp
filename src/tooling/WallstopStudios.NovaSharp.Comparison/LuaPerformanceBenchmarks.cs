@@ -2,17 +2,24 @@ namespace WallstopStudios.NovaSharp.Comparison;
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
-using NLua;
+using Lua;
+using Lua.Runtime;
+using Lua.Standard;
 using WallstopStudios.NovaSharp.Interpreter;
 using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 using WallstopStudios.NovaSharp.Interpreter.Modules;
+using LuaCSharpValue = Lua.LuaValue;
 using MoonCoreModules = MoonSharp.Interpreter.CoreModules;
 using MoonDynValue = MoonSharp.Interpreter.DynValue;
 using MoonScript = MoonSharp.Interpreter.Script;
+using NLuaFunction = NLua.LuaFunction;
+using NLuaState = NLua.Lua;
 
 /// <summary>
-/// BenchmarkDotNet suite that compares NovaSharp, MoonSharp, and NLua compilation/execution throughput.
+/// BenchmarkDotNet suite that compares NovaSharp, MoonSharp, NLua, and Lua-CSharp compilation/execution throughput.
 /// </summary>
 [MemoryDiagnoser]
 [HideColumns("Job", "Error", "StdDev")]
@@ -28,8 +35,10 @@ public class LuaPerformanceBenchmarks : IDisposable
     private CompiledScript _novaSharpFunction;
     private MoonScript _moonSharpScript;
     private MoonDynValue _moonSharpFunction = MoonDynValue.Nil;
-    private Lua _nLua;
-    private LuaFunction _nLuaFunction;
+    private NLuaState _nLua;
+    private NLuaFunction _nLuaFunction;
+    private LuaState _luaCSharpState;
+    private LuaClosure _luaCSharpFunction;
     private bool _disposed;
 
     /// <summary>
@@ -55,7 +64,7 @@ public class LuaPerformanceBenchmarks : IDisposable
 
     [GlobalSetup]
     /// <summary>
-    /// Compiles the selected scenario for NovaSharp, MoonSharp, and NLua before the benchmarks run.
+    /// Compiles the selected scenario for NovaSharp, MoonSharp, NLua, and Lua-CSharp before the benchmarks run.
     /// </summary>
     public void Setup()
     {
@@ -78,13 +87,20 @@ public class LuaPerformanceBenchmarks : IDisposable
             $"precompiled_{CurrentScenario}"
         );
 
-        _nLua = new Lua();
-        _nLuaFunction = _nLua.LoadString(_source, $"precompiled_{CurrentScenario}") as LuaFunction;
+        _nLua = new NLuaState();
+        _nLuaFunction = _nLua.LoadString(_source, $"precompiled_{CurrentScenario}") as NLuaFunction;
+
+        _luaCSharpState = CreateLuaCSharpState();
+        _luaCSharpFunction = _luaCSharpState.Load(
+            _source.AsSpan(),
+            $"precompiled_{CurrentScenario}",
+            _luaCSharpState.Environment
+        );
     }
 
     [GlobalCleanup]
     /// <summary>
-    /// Releases NLua resources after the benchmark run.
+    /// Releases runtime resources after the benchmark run.
     /// </summary>
     public void Cleanup() => Dispose();
 
@@ -92,10 +108,12 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// <summary>
     /// Compiles the scenario using a fresh NovaSharp script instance.
     /// </summary>
-    public CompiledScript NovaSharpCompile()
+    public int NovaSharpCompile()
     {
         Script script = new(CoreModulePresets.Complete);
-        return script.PrepareString(_source, null, $"compile_{CurrentScenario}");
+        CompiledScript compiled = script.PrepareString(_source, null, $"compile_{CurrentScenario}");
+        GC.KeepAlive(compiled);
+        return 1;
     }
 
     [Benchmark(Description = "NovaSharp Execute")]
@@ -106,12 +124,14 @@ public class LuaPerformanceBenchmarks : IDisposable
 
     [Benchmark(Description = "MoonSharp Compile")]
     /// <summary>
-    /// Compiles the scenario using MoonSharp.
+    /// Compiles the scenario using a fresh MoonSharp script instance.
     /// </summary>
-    public MoonDynValue MoonSharpCompile()
+    public int MoonSharpCompile()
     {
         MoonScript script = new(MoonCoreModules.Preset_Complete);
-        return script.LoadString(_source, null, $"compile_{CurrentScenario}");
+        MoonDynValue compiled = script.LoadString(_source, null, $"compile_{CurrentScenario}");
+        GC.KeepAlive(compiled);
+        return 1;
     }
 
     [Benchmark(Description = "MoonSharp Execute")]
@@ -122,19 +142,43 @@ public class LuaPerformanceBenchmarks : IDisposable
 
     [Benchmark(Description = "NLua Compile")]
     /// <summary>
-    /// Compiles the scenario using NLua.
+    /// Compiles the scenario using a fresh NLua state.
     /// </summary>
-    public LuaFunction NLuaCompile()
+    public int NLuaCompile()
     {
-        LuaFunction compiled =
-            _nLua.LoadString(_source, $"compile_{CurrentScenario}") as LuaFunction;
+        using NLuaState state = new();
+        NLuaFunction compiled =
+            state.LoadString(_source, $"compile_{CurrentScenario}") as NLuaFunction;
         if (compiled == null)
         {
             throw new InvalidOperationException("NLua failed to compile the benchmark script.");
         }
 
-        return compiled;
+        compiled.Dispose();
+        return 1;
     }
+
+    [Benchmark(Description = "LuaCSharp Compile")]
+    /// <summary>
+    /// Compiles the scenario using a fresh Lua-CSharp state.
+    /// </summary>
+    public int LuaCSharpCompile()
+    {
+        using LuaState state = CreateLuaCSharpState();
+        LuaClosure compiled = state.Load(
+            _source.AsSpan(),
+            $"compile_{CurrentScenario}",
+            state.Environment
+        );
+        GC.KeepAlive(compiled);
+        return 1;
+    }
+
+    [Benchmark(Description = "LuaCSharp Execute")]
+    /// <summary>
+    /// Executes the previously compiled Lua-CSharp chunk.
+    /// </summary>
+    public LuaCSharpValue LuaCSharpExecute() => RunLuaCSharp(_luaCSharpState, _luaCSharpFunction);
 
     [Benchmark(Description = "NLua Execute")]
     /// <summary>
@@ -155,8 +199,31 @@ public class LuaPerformanceBenchmarks : IDisposable
         return result;
     }
 
+    private static LuaState CreateLuaCSharpState()
+    {
+        LuaState state = LuaState.Create();
+        state.OpenStandardLibraries();
+        return state;
+    }
+
+    private static LuaCSharpValue RunLuaCSharp(LuaState state, LuaClosure closure)
+    {
+        ValueTask<int> runTask = state.RunAsync(closure, CancellationToken.None);
+        int returnCount = runTask.IsCompletedSuccessfully
+            ? runTask.Result
+            : runTask.AsTask().GetAwaiter().GetResult();
+        if (returnCount <= 0)
+        {
+            return LuaCSharpValue.Nil;
+        }
+
+        using LuaStackReader reader = state.ReadStack(returnCount);
+        ReadOnlySpan<LuaCSharpValue> values = reader.AsSpan();
+        return values.Length > 0 ? values[^1] : LuaCSharpValue.Nil;
+    }
+
     /// <summary>
-    /// Disposes NLua resources created by the benchmark.
+    /// Disposes runtime resources created by the benchmark.
     /// </summary>
     public void Dispose()
     {
@@ -173,8 +240,20 @@ public class LuaPerformanceBenchmarks : IDisposable
 
         if (disposing)
         {
-            _nLuaFunction?.Dispose();
-            _nLua?.Dispose();
+            if (_nLuaFunction != null)
+            {
+                _nLuaFunction.Dispose();
+            }
+
+            if (_nLua != null)
+            {
+                _nLua.Dispose();
+            }
+
+            if (_luaCSharpState != null)
+            {
+                _luaCSharpState.Dispose();
+            }
         }
 
         _disposed = true;

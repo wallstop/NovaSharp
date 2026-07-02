@@ -23,7 +23,7 @@ The workflow uses `benchmark-action/github-action-benchmark` to track performanc
 
 ## `run-benchmarks.ps1` (PowerShell)
 
-Runs both the NovaSharp runtime benchmarks and the external comparison suite that exercises MoonSharp and NLua on the same machine. The script restores local tools, builds `src/NovaSharp.sln`, executes the BenchmarkDotNet harnesses, and reminds you where BenchmarkDotNet artifacts land.
+Runs both the NovaSharp runtime benchmarks and the external comparison suite that exercises MoonSharp, NLua, and Lua-CSharp on the same machine. The script restores local tools, builds `src/NovaSharp.sln`, executes the BenchmarkDotNet harnesses, and reminds you where BenchmarkDotNet artifacts land.
 
 ### Prerequisites
 
@@ -79,13 +79,15 @@ python3 scripts/benchmarks/render-benchmark-deltas.py \
   --output artifacts/benchmark-deltas.md
 ```
 
-The script writes `changed=true|false`, `regressed=true|false`, external/self row counts, and the output path to stdout so GitHub Actions and local tooling can consume it consistently. The generated markdown groups same-run comparison output by scenario and operation so NovaSharp, MoonSharp, NLua, and future implementers are readable side-by-side.
+The script writes `changed=true|false`, `regressed=true|false`, external/self row counts, missing expected external runtime cell counts, and the output path to stdout so GitHub Actions and local tooling can consume it consistently. The generated markdown groups same-run comparison output by scenario and operation so NovaSharp, MoonSharp, NLua, Lua-CSharp, and future implementers are readable side-by-side.
+
+The comparison suite's `Compile` rows create a fresh runtime state for each engine before loading the scenario. `Execute` rows use each engine's prepared public execution surface to reflect the host API NovaSharp is trying to compete with; add a separate normalized-result-read suite before treating return-materialization cost as isolated interpreter cost.
 
 ## Output
 
 - BenchmarkDotNet artifacts land under `BenchmarkDotNet.Artifacts/` (git-ignored).
 - `docs/Performance.md` is updated automatically by the benchmark harnesses; review the diff before committing.
-- `artifacts/benchmarkdotnet/comparison/` contains same-run comparison artifacts for MoonSharp, NLua, and future external runtimes.
+- `artifacts/benchmarkdotnet/comparison/` contains same-run comparison artifacts for MoonSharp, NLua, Lua-CSharp, and future external runtimes.
 - `artifacts/benchmark-deltas.md` compares current NovaSharp artifacts to same-run external runtime matrix cells and, when present, checked-in self baseline artifacts.
 - The scripts print paths to the BenchmarkDotNet artifact folders so you can attach them to PRs when results change.
 - CI workflow uploads artifacts as `benchmark-results` for inspection.

@@ -178,6 +178,7 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
                 self.comparison_benchmark("NovaSharp Execute", 90, 110, 80, gen0=1),
                 self.comparison_benchmark("MoonSharp Execute", 100, 120, 100, gen0=2),
                 self.comparison_benchmark("NLua Execute", 150, 180, 140, gen0=3),
+                self.comparison_benchmark("LuaCSharp Execute", 70, 90, 24),
             ],
         )
 
@@ -186,7 +187,8 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertIn("changed=true", result.stdout)
         self.assertIn("regressed=false", result.stdout)
-        self.assertIn("external_rows=2", result.stdout)
+        self.assertIn("external_rows=3", result.stdout)
+        self.assertIn("missing_external_runtime_cells=0", result.stdout)
         output = self.output.read_text(encoding="utf-8")
         self.assertIn("Benchmark Comparison Deltas", output)
         self.assertIn("Same-Run Runtime Matrix", output)
@@ -199,16 +201,18 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertIn("NovaSharp Delta vs MoonSharp", output)
         self.assertIn("NLua Mean / P95", output)
         self.assertIn("NovaSharp Delta vs NLua", output)
+        self.assertIn("LuaCSharp Mean / P95", output)
+        self.assertIn("NovaSharp Delta vs LuaCSharp", output)
         self.assertIn(
             "| NumericLoops | Execute | 90 ns / 110 ns | 80 B / 1 / 0 / 0 |",
             output,
         )
         self.assertIn(
-            "| NumericLoops | Execute | 90 ns / 110 ns | 100 ns / 120 ns | -10 ns (-10.00%) / -10 ns (-8.33%) | 150 ns / 180 ns | -60 ns (-40.00%) / -70 ns (-38.89%) |",
+            "| NumericLoops | Execute | 90 ns / 110 ns | 100 ns / 120 ns | -10 ns (-10.00%) / -10 ns (-8.33%) | 150 ns / 180 ns | -60 ns (-40.00%) / -70 ns (-38.89%) | 70 ns / 90 ns | +20 ns (+28.57%) / +20 ns (+22.22%) |",
             output,
         )
         self.assertIn(
-            "| NumericLoops | Execute | 80 B / 1 / 0 / 0 | 100 B / 2 / 0 / 0 | -20 B (-20.00%) / -1 / 0 / 0 | 140 B / 3 / 0 / 0 | -60 B (-42.86%) / -2 / 0 / 0 |",
+            "| NumericLoops | Execute | 80 B / 1 / 0 / 0 | 100 B / 2 / 0 / 0 | -20 B (-20.00%) / -1 / 0 / 0 | 140 B / 3 / 0 / 0 | -60 B (-42.86%) / -2 / 0 / 0 | 24 B / 0 / 0 / 0 | +56 B (+233.33%) / +1 / 0 / 0 |",
             output,
         )
 
@@ -228,6 +232,25 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertIn("changed=true", result.stdout)
         self.assertIn("regressed=false", result.stdout)
         self.assertIn("external_rows=1", result.stdout)
+
+    def test_reports_missing_expected_external_runtime_cells(self) -> None:
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 90, 110, 80),
+                self.comparison_benchmark("MoonSharp Execute", 100, 120, 100),
+                self.comparison_benchmark("NLua Execute", 150, 180, 140),
+            ],
+        )
+
+        result = self.run_script()
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("missing_external_runtime_cells=1", result.stdout)
+        output = self.output.read_text(encoding="utf-8")
+        self.assertIn("Expected external runtime cells missing", output)
+        self.assertIn("LuaCSharp", output)
 
     def test_renders_self_baseline_deltas_when_checked_in_artifacts_exist(self) -> None:
         self.write_report(

@@ -77,7 +77,7 @@ ______________________________________________________________________
 
 Extend `src/tooling/WallstopStudios.NovaSharp.Comparison/`:
 
-- [ ] Add **Lua-CSharp** (NuGet `LuaCSharp`) as a benchmark target alongside existing NLua/MoonSharp.
+- [x] Add **Lua-CSharp** (NuGet `LuaCSharp`) as a benchmark target alongside existing NLua/MoonSharp.
 - [ ] Add **reference `lua` CLI** wall-time as an out-of-process context column (reuse LuaBatchRunner plumbing; not BenchmarkDotNet).
 - [ ] Benchmarks: fib(30), hanoi, n-body, binary-trees, spectral-norm; table-heavy (int-key fill/iterate, string-key lookup, `next` traversal, insert/remove churn); string-heavy (concat chains, `gsub`/`find`, `string.format`); **interop both directions** (1M Lua→C# registered-fn calls with 2 args + return; 1M C#→Lua `Call`); coroutine ping-pong; compile cold + cached.
 - [ ] `[MemoryDiagnoser]` on everything; per-phase JSON baselines committed under `progress/`; one command emits the scoreboard markdown table (rows = benchmarks; columns = NovaSharp current/baseline, MoonSharp, NLua, Lua-CSharp, lua CLI).
@@ -85,6 +85,8 @@ Extend `src/tooling/WallstopStudios.NovaSharp.Comparison/`:
 - [ ] Minimal stopwatch-based Unity player scene for IL2CPP spot checks.
 
 **Exit criteria**: baseline table for all 5 engines committed; allocation numbers recorded.
+
+**Progress**: Lua-CSharp comparison rows were wired on 2026-07-01. See [progress/session-124-phase-a0-luacsharp-comparison.md](progress/session-124-phase-a0-luacsharp-comparison.md). Full five-engine scoreboard baselines, reference `lua` CLI timing, expanded workload coverage, and CI gates remain open.
 
 #### Phase A1 — `LuaValue` struct (~3-5 weeks; highest impact, highest risk)
 

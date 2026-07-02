@@ -8,7 +8,7 @@ namespace WallstopStudios.NovaSharp.Comparison
     using BenchmarkDotNet.Running;
 
     /// <summary>
-    /// Entry point for running NovaSharp vs. NLua comparison benchmarks.
+    /// Entry point for running NovaSharp external-runtime comparison benchmarks.
     /// </summary>
     internal static class Program
     {

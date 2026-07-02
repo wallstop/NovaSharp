@@ -19,7 +19,8 @@ DEFAULT_OUTPUT = Path("artifacts/benchmark-deltas.md")
 DEFAULT_TOLERANCE = 0.02
 DEFAULT_REGRESSION_THRESHOLD = 0.10
 NOVA_RUNTIME = "NovaSharp"
-RUNTIME_PREFIXES = ("NovaSharp", "MoonSharp", "NLua", "KeraLua", "Lua")
+RUNTIME_PREFIXES = ("NovaSharp", "MoonSharp", "NLua", "LuaCSharp", "KeraLua", "Lua")
+EXPECTED_EXTERNAL_RUNTIMES = ("MoonSharp", "NLua", "LuaCSharp")
 
 
 @dataclass(frozen=True, order=True)
@@ -67,6 +68,12 @@ class RuntimeMatrixRow:
     parameter_display: str
     nova: Metrics
     comparisons: tuple[tuple[str, Metrics], ...]
+
+
+@dataclass(frozen=True, order=True)
+class MissingRuntimeCell:
+    key: ComparisonKey
+    runtime: str
 
 
 @dataclass(frozen=True)
@@ -141,6 +148,7 @@ def main(argv: list[str]) -> int:
     comparison = load_comparison_metrics(comparison_root)
     external_rows = build_external_delta_rows(comparison)
     runtime_matrix_rows = build_runtime_matrix_rows(comparison)
+    missing_expected_runtime_cells = build_missing_expected_runtime_cells(comparison)
     comparison_groups_without_nova = sorted(
         key for key, runtimes in comparison.items() if NOVA_RUNTIME not in runtimes
     )
@@ -163,6 +171,7 @@ def main(argv: list[str]) -> int:
             len(self_baseline),
             len(comparison),
             comparison_groups_without_nova,
+            missing_expected_runtime_cells,
             current_without_baseline,
             baseline_without_current,
         ),
@@ -172,6 +181,7 @@ def main(argv: list[str]) -> int:
     print(f"changed={str(changed).lower()}")
     print(f"regressed={str(regressed).lower()}")
     print(f"external_rows={len(external_rows)}")
+    print(f"missing_external_runtime_cells={len(missing_expected_runtime_cells)}")
     print(f"self_rows={len(self_rows)}")
     print(f"output={repo_relative(output)}")
     return 0
@@ -372,6 +382,22 @@ def build_runtime_matrix_rows(
     return rows
 
 
+def build_missing_expected_runtime_cells(
+    comparison: dict[ComparisonKey, dict[str, MetricRecord]]
+) -> list[MissingRuntimeCell]:
+    cells: list[MissingRuntimeCell] = []
+    for key in sorted(comparison, key=comparison_matrix_sort_key):
+        runtimes = comparison[key]
+        if NOVA_RUNTIME not in runtimes:
+            continue
+
+        for runtime in EXPECTED_EXTERNAL_RUNTIMES:
+            if runtime not in runtimes:
+                cells.append(MissingRuntimeCell(key, runtime))
+
+    return cells
+
+
 def comparison_matrix_sort_key(key: ComparisonKey) -> tuple[str, str, str]:
     return (key.parameters, key.operation, key.summary)
 
@@ -459,6 +485,7 @@ def render_markdown(
     self_baseline_count: int,
     comparison_group_count: int,
     comparison_groups_without_nova: list[ComparisonKey],
+    missing_expected_runtime_cells: list[MissingRuntimeCell],
     current_without_baseline: list[BenchmarkKey],
     baseline_without_current: list[BenchmarkKey],
 ) -> str:
@@ -479,6 +506,7 @@ def render_markdown(
         f"- Same-run comparison groups: {comparison_group_count}",
         f"- Same-run scenario/operation rows with NovaSharp: {len(runtime_matrix_rows)}",
         f"- Same-run external runtime cells: {len(external_rows)}",
+        f"- Expected external runtime cells missing: {len(missing_expected_runtime_cells)}",
         f"- Self baseline matches: {len(self_rows)} of {current_count} current rows and {self_baseline_count} baseline rows",
         "",
     ]
@@ -487,6 +515,11 @@ def render_markdown(
         lines,
         "Comparison groups without a NovaSharp row",
         comparison_groups_without_nova,
+    )
+    append_missing_runtime_cell_preview(
+        lines,
+        "Expected external runtime cells missing",
+        missing_expected_runtime_cells,
     )
 
     render_external_section(lines, runtime_matrix_rows)
@@ -838,6 +871,29 @@ def append_comparison_key_preview(
         lines.append(f"- {key.summary} / {key.operation} / {key.parameters or '-'}")
     if len(keys) > 10:
         lines.append(f"- ... {len(keys) - 10} more")
+    lines.append("")
+
+
+def append_missing_runtime_cell_preview(
+    lines: list[str], title: str, cells: list[MissingRuntimeCell]
+) -> None:
+    if not cells:
+        return
+
+    lines.append(f"#### {title}")
+    lines.append("")
+    lines.append(
+        "These expected comparison cells were absent from the BenchmarkDotNet JSON. "
+        "Check benchmark descriptions and runtime setup before trusting the matrix."
+    )
+    lines.append("")
+    for cell in cells[:10]:
+        lines.append(
+            f"- {cell.key.summary} / {cell.key.operation} / "
+            f"{cell.key.parameters or '-'} / {cell.runtime}"
+        )
+    if len(cells) > 10:
+        lines.append(f"- ... {len(cells) - 10} more")
     lines.append("")
 
 

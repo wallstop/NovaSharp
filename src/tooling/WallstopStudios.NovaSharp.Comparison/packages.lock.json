@@ -26,6 +26,16 @@
         "resolved": "1.4.7",
         "contentHash": "CFkQpPGxCQYDjaum3oT9rFtMjQV/Pru10I2Lr6w5h6kMMyZUQ47s6Px3Uh0n0jIwvTijEVhHsiym2rREJX+huw=="
       },
+      "LuaCSharp": {
+        "type": "Direct",
+        "requested": "[0.5.5, )",
+        "resolved": "0.5.5",
+        "contentHash": "IL44DCbMtEafyiy8DzHFd/f+1pXuDUVFJMCJPAu8vQHNfO3ADSoWSOKMg9Py1za/ZE1K0gs0jll1viInoN+19Q==",
+        "dependencies": {
+          "LuaCSharp.Annotations": "0.5.5",
+          "LuaCSharp.SourceGenerator": "0.5.5"
+        }
+      },
       "MoonSharp": {
         "type": "Direct",
         "requested": "[2.0.0, )",
@@ -65,6 +75,16 @@
         "type": "Transitive",
         "resolved": "1.21.0",
         "contentHash": "dv5+81Q1TBQvVMSOOOmRcjJmvWcX3BZPZsIq31+RLc5cNft0IHAyNlkdb7ZarOWG913PyBoFDsDXoCIlKmLclg=="
+      },
+      "LuaCSharp.Annotations": {
+        "type": "Transitive",
+        "resolved": "0.5.5",
+        "contentHash": "5VcwcTNGCY5YXLz2BRko5/Z0YGd6MZqNsnnfPOsGHHpAtqWPFbD0vtOZR4jUqaQLtQUvl2+WRfmIOhp6L2S0rw=="
+      },
+      "LuaCSharp.SourceGenerator": {
+        "type": "Transitive",
+        "resolved": "0.5.5",
+        "contentHash": "2xHKGc1bYXTsmSzZCNmKkuAU6A+1azulNiPY/ICKBSHIgEPMNRQ7JS6PvAClrHe6bk8SKcC/fbba6igtDzDaAw=="
       },
       "Microsoft.CodeAnalysis.Analyzers": {
         "type": "Transitive",
