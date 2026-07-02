@@ -58,7 +58,7 @@ public class LuaPerformanceBenchmarks : IDisposable
         get
         {
             ArgumentException.ThrowIfNullOrEmpty(ScenarioName);
-            return Enum.Parse<ScriptScenario>(ScenarioName, ignoreCase: false);
+            return BenchmarkScripts.GetScenario(ScenarioName);
         }
     }
 

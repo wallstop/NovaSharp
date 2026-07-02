@@ -29,6 +29,7 @@ Date: 2026-07-02
 - After the Copilot-requested fail-fast switch change, the comparison build, benchmark renderer tests, Lua CLI context tests, `git diff --check`, and 16-scenario export smoke passed again.
 - PR #46 benchmark CI passed after the Copilot fix, but its delta comment reported 3 missing expected external cells and 3 missing reference `lua` CLI rows because BenchmarkDotNet truncated scenario names longer than 20 characters while exported `lua` CLI files still used enum names.
 - After the display/export alignment fix, the comparison build, benchmark renderer tests, Lua CLI context tests, 16-scenario export smoke, and one-iteration reference `lua` CLI context smoke passed again; the smoke artifact included `ScenarioName=StringPatternOps`, `ScenarioName=TableInsertRemove`, and `ScenarioName=TableIntFillIter`.
+- A follow-up Copilot pass suppressed a low-confidence note that was nevertheless valid: the shortened display names also needed an inverse lookup for `LuaPerformanceBenchmarks.CurrentScenario`. Added `BenchmarkScripts.GetScenario()` and validated all 16 display names through setup plus every managed runtime compile/execute path once.
 
 ## Notes
 

@@ -7,6 +7,10 @@ using System;
 /// </summary>
 internal static class BenchmarkScripts
 {
+    private const string TableIntegerFillIterateDisplayName = "TableIntFillIter";
+    private const string TableInsertRemoveChurnDisplayName = "TableInsertRemove";
+    private const string StringPatternGsubFindDisplayName = "StringPatternOps";
+
     private const int LoopIterations = 2_000;
     private const int TableEntryCount = 128;
     private const int CoroutineSteps = 256;
@@ -77,12 +81,12 @@ internal static class BenchmarkScripts
             ScriptScenario.NBody => nameof(ScriptScenario.NBody),
             ScriptScenario.BinaryTrees => nameof(ScriptScenario.BinaryTrees),
             ScriptScenario.SpectralNorm => nameof(ScriptScenario.SpectralNorm),
-            ScriptScenario.TableIntegerFillIterate => "TableIntFillIter",
+            ScriptScenario.TableIntegerFillIterate => TableIntegerFillIterateDisplayName,
             ScriptScenario.TableStringKeyLookup => nameof(ScriptScenario.TableStringKeyLookup),
             ScriptScenario.TableNextTraversal => nameof(ScriptScenario.TableNextTraversal),
-            ScriptScenario.TableInsertRemoveChurn => "TableInsertRemove",
+            ScriptScenario.TableInsertRemoveChurn => TableInsertRemoveChurnDisplayName,
             ScriptScenario.StringConcatChains => nameof(ScriptScenario.StringConcatChains),
-            ScriptScenario.StringPatternGsubFind => "StringPatternOps",
+            ScriptScenario.StringPatternGsubFind => StringPatternGsubFindDisplayName,
             ScriptScenario.StringFormat => nameof(ScriptScenario.StringFormat),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(scenario),
@@ -90,6 +94,40 @@ internal static class BenchmarkScripts
                 "Unknown comparison benchmark scenario."
             ),
         };
+
+    /// <summary>
+    /// Returns the scenario associated with a stable display name or legacy enum name.
+    /// </summary>
+    public static ScriptScenario GetScenario(string scenarioName)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(scenarioName);
+        return scenarioName switch
+        {
+            nameof(ScriptScenario.NumericLoops) => ScriptScenario.NumericLoops,
+            nameof(ScriptScenario.TableMutation) => ScriptScenario.TableMutation,
+            nameof(ScriptScenario.TowerOfHanoi) => ScriptScenario.TowerOfHanoi,
+            nameof(ScriptScenario.EightQueens) => ScriptScenario.EightQueens,
+            nameof(ScriptScenario.CoroutinePingPong) => ScriptScenario.CoroutinePingPong,
+            nameof(ScriptScenario.FibonacciRecursive) => ScriptScenario.FibonacciRecursive,
+            nameof(ScriptScenario.NBody) => ScriptScenario.NBody,
+            nameof(ScriptScenario.BinaryTrees) => ScriptScenario.BinaryTrees,
+            nameof(ScriptScenario.SpectralNorm) => ScriptScenario.SpectralNorm,
+            TableIntegerFillIterateDisplayName or nameof(ScriptScenario.TableIntegerFillIterate) =>
+                ScriptScenario.TableIntegerFillIterate,
+            nameof(ScriptScenario.TableStringKeyLookup) => ScriptScenario.TableStringKeyLookup,
+            nameof(ScriptScenario.TableNextTraversal) => ScriptScenario.TableNextTraversal,
+            TableInsertRemoveChurnDisplayName or nameof(ScriptScenario.TableInsertRemoveChurn) =>
+                ScriptScenario.TableInsertRemoveChurn,
+            nameof(ScriptScenario.StringConcatChains) => ScriptScenario.StringConcatChains,
+            StringPatternGsubFindDisplayName or nameof(ScriptScenario.StringPatternGsubFind) =>
+                ScriptScenario.StringPatternGsubFind,
+            nameof(ScriptScenario.StringFormat) => ScriptScenario.StringFormat,
+            _ => throw new ArgumentException(
+                "Unknown comparison benchmark scenario name.",
+                nameof(scenarioName)
+            ),
+        };
+    }
 
     /// <summary>
     /// Returns the script associated with <paramref name="scenario"/>.
