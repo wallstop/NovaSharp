@@ -77,14 +77,12 @@ internal static class BenchmarkScripts
             ScriptScenario.NBody => nameof(ScriptScenario.NBody),
             ScriptScenario.BinaryTrees => nameof(ScriptScenario.BinaryTrees),
             ScriptScenario.SpectralNorm => nameof(ScriptScenario.SpectralNorm),
-            ScriptScenario.TableIntegerFillIterate => nameof(
-                ScriptScenario.TableIntegerFillIterate
-            ),
+            ScriptScenario.TableIntegerFillIterate => "TableIntFillIter",
             ScriptScenario.TableStringKeyLookup => nameof(ScriptScenario.TableStringKeyLookup),
             ScriptScenario.TableNextTraversal => nameof(ScriptScenario.TableNextTraversal),
-            ScriptScenario.TableInsertRemoveChurn => nameof(ScriptScenario.TableInsertRemoveChurn),
+            ScriptScenario.TableInsertRemoveChurn => "TableInsertRemove",
             ScriptScenario.StringConcatChains => nameof(ScriptScenario.StringConcatChains),
-            ScriptScenario.StringPatternGsubFind => nameof(ScriptScenario.StringPatternGsubFind),
+            ScriptScenario.StringPatternGsubFind => "StringPatternOps",
             ScriptScenario.StringFormat => nameof(ScriptScenario.StringFormat),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(scenario),

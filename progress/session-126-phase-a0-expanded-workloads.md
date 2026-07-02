@@ -10,6 +10,7 @@ Date: 2026-07-02
 - Added string-heavy scenarios for concat chains, `string.gsub`/`string.find`, and `string.format`.
 - Kept all new scripts Lua 5.1-compatible so every managed comparison runtime and reference `lua` CLI can share the same exported scenario text.
 - Replaced the duplicated BenchmarkDotNet `[Params]` scenario list with a shared `ParamsSource` backed by `BenchmarkScripts.GetScenarioNames()`, so benchmark rows and CLI scenario export stay in sync.
+- Kept the stable scenario display names short enough to avoid BenchmarkDotNet parameter truncation, and exported reference `lua` CLI scenarios with the same names used by BenchmarkDotNet.
 - Updated `PLAN.md` to split completed pure-Lua workload coverage from the still-open interop and cached-compile Phase A0 rows.
 
 ## Validation
@@ -26,6 +27,8 @@ Date: 2026-07-02
 - `./scripts/test/quick.sh` passed with 14,529 succeeded, 0 failed, 0 skipped.
 - `bash ./scripts/dev/pre-commit.sh` passed.
 - After the Copilot-requested fail-fast switch change, the comparison build, benchmark renderer tests, Lua CLI context tests, `git diff --check`, and 16-scenario export smoke passed again.
+- PR #46 benchmark CI passed after the Copilot fix, but its delta comment reported 3 missing expected external cells and 3 missing reference `lua` CLI rows because BenchmarkDotNet truncated scenario names longer than 20 characters while exported `lua` CLI files still used enum names.
+- After the display/export alignment fix, the comparison build, benchmark renderer tests, Lua CLI context tests, 16-scenario export smoke, and one-iteration reference `lua` CLI context smoke passed again; the smoke artifact included `ScenarioName=StringPatternOps`, `ScenarioName=TableInsertRemove`, and `ScenarioName=TableIntFillIter`.
 
 ## Notes
 
