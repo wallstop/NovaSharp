@@ -154,7 +154,7 @@ public class LuaPerformanceBenchmarks : IDisposable
             throw new InvalidOperationException("NLua failed to compile the benchmark script.");
         }
 
-        compiled.Dispose();
+        GC.KeepAlive(compiled);
         return 1;
     }
 

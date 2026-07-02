@@ -5,15 +5,21 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
     using WallstopStudios.NovaSharp.Interpreter.Interop;
 
     /// <summary>
-    /// Captures <see cref="Script.GlobalOptions.CustomConverters"/> and restores the original mappings on disposal.
+    /// Captures <see cref="Script.GlobalOptions.CustomConverters"/> in an isolated global options
+    /// scope and restores the original mappings on disposal.
     /// </summary>
     internal sealed class ScriptCustomConvertersScope : IDisposable
     {
+        private readonly IDisposable _globalScope;
         private readonly CustomConverterRegistry _snapshot;
         private bool _disposed;
 
-        private ScriptCustomConvertersScope(CustomConverterRegistry snapshot)
+        private ScriptCustomConvertersScope(
+            IDisposable globalScope,
+            CustomConverterRegistry snapshot
+        )
         {
+            _globalScope = globalScope ?? throw new ArgumentNullException(nameof(globalScope));
             _snapshot = snapshot ?? new CustomConverterRegistry();
         }
 
@@ -22,16 +28,25 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
             Action<CustomConverterRegistry> configure = null
         )
         {
-            CustomConverterRegistry current = EnsureRegistry();
-            CustomConverterRegistry snapshot = current.Clone();
-
-            if (clear)
+            IDisposable globalScope = Script.BeginGlobalOptionsScope();
+            try
             {
-                current.Clear();
-            }
+                CustomConverterRegistry current = EnsureRegistry();
+                CustomConverterRegistry snapshot = current.Clone();
 
-            configure?.Invoke(Script.GlobalOptions.CustomConverters);
-            return new ScriptCustomConvertersScope(snapshot);
+                if (clear)
+                {
+                    current.Clear();
+                }
+
+                configure?.Invoke(Script.GlobalOptions.CustomConverters);
+                return new ScriptCustomConvertersScope(globalScope, snapshot);
+            }
+            catch
+            {
+                globalScope.Dispose();
+                throw;
+            }
         }
 
         public static ScriptCustomConvertersScope Clear(
@@ -50,6 +65,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
 
             Script.GlobalOptions.CustomConverters =
                 _snapshot?.Clone() ?? new CustomConverterRegistry();
+            _globalScope.Dispose();
             _disposed = true;
         }
 
