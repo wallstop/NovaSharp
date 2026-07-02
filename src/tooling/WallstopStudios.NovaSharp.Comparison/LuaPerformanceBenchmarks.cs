@@ -116,7 +116,7 @@ public class LuaPerformanceBenchmarks : IDisposable
     {
         Script script = new(CoreModulePresets.Complete);
         CompiledScript compiled = script.PrepareString(_source, null, $"compile_{CurrentScenario}");
-        GC.KeepAlive(compiled);
+        GC.KeepAlive(compiled.Function);
         return 1;
     }
 
