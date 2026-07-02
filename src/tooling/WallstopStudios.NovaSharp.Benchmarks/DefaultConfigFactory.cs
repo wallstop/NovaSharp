@@ -11,6 +11,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
     using BenchmarkDotNet.Diagnosers;
     using BenchmarkDotNet.EventProcessors;
     using BenchmarkDotNet.Exporters;
+    using BenchmarkDotNet.Exporters.Json;
     using BenchmarkDotNet.Filters;
     using BenchmarkDotNet.Jobs;
     using BenchmarkDotNet.Loggers;
@@ -39,6 +40,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 .Create(DefaultConfig.Instance)
                 .AddJob(ShortRunJob)
                 .AddDiagnoser(MemoryDiagnoser.Default)
+                .AddExporter(JsonExporter.FullCompressed)
                 .AddColumnProvider(DefaultColumnProviders.Instance)
                 .AddColumn(StatisticColumn.P95, RankColumn.Arabic);
 

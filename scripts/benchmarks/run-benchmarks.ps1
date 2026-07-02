@@ -102,7 +102,6 @@ if (-not $SkipComparison) {
         --no-build `
         -- `
         --filter "*" `
-        --exporters json `
         --artifacts $comparisonArtifacts
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet run --project $ComparisonBenchmarkProject -c $Configuration failed. See output above."

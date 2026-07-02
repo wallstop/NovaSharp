@@ -94,7 +94,6 @@ if [[ "$SKIP_COMPARISON" == "false" ]]; then
         --no-build \
         -- \
         --filter "*" \
-        --exporters json \
         --artifacts "$COMPARISON_ARTIFACTS"
     echo "comparison benchmarks complete."
 

@@ -33,13 +33,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  benchmark:
+  runtime-benchmark:
+    name: runtime benchmark
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 10
+    env:
+      DOTNET_ROLL_FORWARD: Major
+      NOVASHARP_SKIP_PERFORMANCE_DOC: '1'
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -49,15 +54,72 @@ jobs:
           cache-dependency-path: 'src/**/packages.lock.json'
 
       - name: Restore dependencies
+        run: dotnet restore src/NovaSharp.sln --locked-mode || dotnet restore src/NovaSharp.sln
+
+      - name: Build runtime benchmarks
+        run: dotnet build src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj -c Release --no-restore
+
+      - name: Run runtime benchmarks
         run: |
-          # Try locked-mode first, fall back to regular restore if lock files are out of sync
-          dotnet restore src/NovaSharp.sln --locked-mode || dotnet restore src/NovaSharp.sln
+          set -euo pipefail
+          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj \
+            -c Release --no-build -- \
+            --filter "*RuntimeBenchmarks*"
 
-      - name: Restore tools
-        run: dotnet tool restore
+      - name: Verify runtime benchmark results
+        run: |
+          set -euo pipefail
+          if ! find BenchmarkDotNet.Artifacts -name "*-report*.json" -type f | grep -q .; then
+            echo "::error::Runtime benchmark job did not produce a BenchmarkDotNet JSON report."
+            exit 1
+          fi
 
-      - name: Build solution
-        run: dotnet build src/NovaSharp.sln -c Release --no-restore
+      - name: Upload runtime benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: runtime-benchmark-artifacts
+          path: BenchmarkDotNet.Artifacts/
+          if-no-files-found: error
+
+  comparison-scenario:
+    name: comparison ${{ matrix.scenario }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - NumericLoops
+          - TableMutation
+          - TowerOfHanoi
+          - EightQueens
+          - CoroutinePingPong
+          - FibonacciRecursive
+          - NBody
+          - BinaryTrees
+          - SpectralNorm
+          - TableIntFillIter
+          - TableStringKeyLookup
+          - TableNextTraversal
+          - TableInsertRemove
+          - StringConcatChains
+          - StringPatternOps
+          - StringFormat
+    env:
+      DOTNET_ROLL_FORWARD: Major
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: 'src/**/packages.lock.json'
 
       - name: Install reference Lua CLI
         run: |
@@ -65,59 +127,170 @@ jobs:
           sudo apt-get install -y lua5.4
           lua5.4 -v
 
-      - name: Run benchmarks
-        id: run_benchmarks
-        continue-on-error: true
+      - name: Restore dependencies
+        run: dotnet restore src/NovaSharp.sln --locked-mode || dotnet restore src/NovaSharp.sln
+
+      - name: Build comparison benchmarks
+        run: dotnet build src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj -c Release --no-restore
+
+      - name: Run scenario comparison benchmark
         run: |
           set -euo pipefail
-          echo "Running benchmarks..."
-          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj \
-            -c Release --no-build -- \
-            --filter "*RuntimeBenchmarks*" \
-            --exporters json
-          echo "Benchmark run completed"
-          # List what was created for debugging
-          echo "Contents of BenchmarkDotNet.Artifacts:"
-          find BenchmarkDotNet.Artifacts -type f -name "*.json" || echo "No JSON files found"
-          ls -la BenchmarkDotNet.Artifacts/ || echo "BenchmarkDotNet.Artifacts directory not found"
-        env:
-          DOTNET_ROLL_FORWARD: Major
-          # Skip Performance.md update in CI to avoid git conflicts
-          NOVASHARP_SKIP_PERFORMANCE_DOC: '1'
+          scenario="${{ matrix.scenario }}"
+          output_root="artifacts/benchmarkdotnet/comparison/${scenario}"
+          rm -rf "$output_root"
+          mkdir -p "$output_root"
 
-      - name: Run same-run comparison benchmarks
-        id: run_comparison_benchmarks
-        continue-on-error: true
+          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
+            -c Release --no-build -- \
+            --filter "*${scenario}*" \
+            --artifacts "$output_root"
+
+          if ! find "$output_root" -name "*-report-full-compressed.json" -type f | grep -q .; then
+            echo "::error::Scenario comparison benchmark did not produce a full compressed JSON report for ${scenario}."
+            find "$output_root" -maxdepth 4 -type f | sort || true
+            exit 1
+          fi
+
+      - name: Run Lua CLI context for scenario
         run: |
           set -euo pipefail
-          comparison_artifacts="artifacts/benchmarkdotnet/comparison"
-          rm -rf "$comparison_artifacts"
-          mkdir -p "$comparison_artifacts"
+          scenario="${{ matrix.scenario }}"
+          scenario_dir="artifacts/benchmarkdotnet/lua-cli-scenarios/${scenario}"
+          output_root="artifacts/benchmarkdotnet/comparison/${scenario}"
+          rm -rf "$scenario_dir"
+          mkdir -p "$scenario_dir"
 
-          echo "Running NovaSharp vs MoonSharp/NLua/Lua-CSharp comparison benchmarks on this runner..."
           dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
             -c Release --no-build -- \
-            --filter "*" \
-            --exporters json \
-            --artifacts "$comparison_artifacts"
+            --export-scenarios "$scenario_dir"
 
-          scenario_artifacts="artifacts/benchmarkdotnet/lua-cli-scenarios"
-          rm -rf "$scenario_artifacts"
-          echo "Exporting comparison scenarios for reference lua CLI context..."
-          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
-            -c Release --no-build -- \
-            --export-scenarios "$scenario_artifacts"
+          find "$scenario_dir" -type f ! -name "${scenario}.lua" -delete
+          if [ ! -f "$scenario_dir/${scenario}.lua" ]; then
+            echo "::error::Expected exported Lua scenario ${scenario}.lua was not produced."
+            find "$scenario_dir" -maxdepth 2 -type f | sort || true
+            exit 1
+          fi
 
-          echo "Measuring reference lua CLI wall-time context..."
           python3 scripts/benchmarks/run-lua-cli-context.py \
-            --scenario-dir "$scenario_artifacts" \
-            --output-root "$comparison_artifacts" \
+            --scenario-dir "$scenario_dir" \
+            --output-root "$output_root" \
             --lua-cmd lua5.4
-          echo "Comparison benchmark run completed"
-          echo "Contents of $comparison_artifacts:"
-          find "$comparison_artifacts" -type f -name "*.json" || echo "No comparison JSON files found"
-        env:
-          DOTNET_ROLL_FORWARD: Major
+
+      - name: Upload scenario comparison artifacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: comparison-scenario-${{ matrix.scenario }}
+          path: artifacts/benchmarkdotnet/comparison/${{ matrix.scenario }}/
+          if-no-files-found: error
+
+  comparison-interop:
+    name: comparison ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: LuaToClrInterop
+            filter: '*LuaToClrInterop*'
+          - name: ClrToLuaInterop
+            filter: '*ClrToLuaInterop*'
+    env:
+      DOTNET_ROLL_FORWARD: Major
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: 'src/**/packages.lock.json'
+
+      - name: Restore dependencies
+        run: dotnet restore src/NovaSharp.sln --locked-mode || dotnet restore src/NovaSharp.sln
+
+      - name: Build comparison benchmarks
+        run: dotnet build src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj -c Release --no-restore
+
+      - name: Run interop comparison benchmark
+        run: |
+          set -euo pipefail
+          output_root="artifacts/benchmarkdotnet/comparison/interop-${{ matrix.name }}"
+          rm -rf "$output_root"
+          mkdir -p "$output_root"
+
+          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
+            -c Release --no-build -- \
+            --filter "${{ matrix.filter }}" \
+            --artifacts "$output_root"
+
+          if ! find "$output_root" -name "*-report-full-compressed.json" -type f | grep -q .; then
+            echo "::error::Interop comparison benchmark did not produce a full compressed JSON report for ${{ matrix.name }}."
+            find "$output_root" -maxdepth 4 -type f | sort || true
+            exit 1
+          fi
+
+      - name: Upload interop comparison artifacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: comparison-interop-${{ matrix.name }}
+          path: artifacts/benchmarkdotnet/comparison/interop-${{ matrix.name }}/
+          if-no-files-found: error
+
+  benchmark-report:
+    name: benchmark aggregate report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      - runtime-benchmark
+      - comparison-scenario
+      - comparison-interop
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Capture split job status
+        id: split_status
+        run: |
+          set -euo pipefail
+          failed=false
+          if [ "${{ needs.runtime-benchmark.result }}" != "success" ]; then
+            echo "::warning::Runtime benchmark job finished with ${{ needs.runtime-benchmark.result }}."
+            failed=true
+          fi
+          if [ "${{ needs.comparison-scenario.result }}" != "success" ]; then
+            echo "::warning::Scenario comparison matrix finished with ${{ needs.comparison-scenario.result }}."
+            failed=true
+          fi
+          if [ "${{ needs.comparison-interop.result }}" != "success" ]; then
+            echo "::warning::Interop comparison matrix finished with ${{ needs.comparison-interop.result }}."
+            failed=true
+          fi
+          echo "failed=${failed}" >> "$GITHUB_OUTPUT"
+
+      - name: Download runtime benchmark artifacts
+        uses: actions/download-artifact@v6
+        continue-on-error: true
+        with:
+          name: runtime-benchmark-artifacts
+          path: artifacts/benchmarkdotnet/runtime-download
+
+      - name: Download comparison benchmark artifacts
+        uses: actions/download-artifact@v6
+        continue-on-error: true
+        with:
+          pattern: comparison-*
+          path: artifacts/benchmarkdotnet/comparison-download
 
       - name: Find and validate benchmark results
         id: find_result
@@ -125,41 +298,32 @@ jobs:
         run: |
           set -uo pipefail
 
-          # Look for the benchmark result files
-          echo "Searching for benchmark results..."
-
-          # BenchmarkDotNet creates results in BenchmarkDotNet.Artifacts/results/
-          if [ ! -d "BenchmarkDotNet.Artifacts" ]; then
-            echo "::warning::BenchmarkDotNet.Artifacts directory not found"
+          echo "Searching downloaded runtime benchmark results..."
+          runtime_artifacts="artifacts/benchmarkdotnet/runtime-download"
+          if [ ! -d "$runtime_artifacts" ]; then
+            echo "::warning::Downloaded runtime benchmark artifact directory not found"
             echo "has_results=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # Find the full report JSON (preferred) or any JSON with benchmark data
           result_file=""
+          result_file=$(find "$runtime_artifacts" -name "*-report-full-compressed.json" -type f | head -1 || true)
 
-          # First try: full compressed report
-          result_file=$(find BenchmarkDotNet.Artifacts -name "*-report-full-compressed.json" -type f | head -1 || true)
-
-          # Second try: full report (uncompressed)
           if [ -z "$result_file" ]; then
-            result_file=$(find BenchmarkDotNet.Artifacts -name "*-report-full.json" -type f | head -1 || true)
-          fi
-
-          # Third try: any report with RuntimeBenchmarks
-          if [ -z "$result_file" ]; then
-            result_file=$(find BenchmarkDotNet.Artifacts -name "*RuntimeBenchmarks*.json" -type f | head -1 || true)
-          fi
-
-          # Fourth try: any report JSON
-          if [ -z "$result_file" ]; then
-            result_file=$(find BenchmarkDotNet.Artifacts -name "*-report*.json" -type f | head -1 || true)
+            result_file=$(find "$runtime_artifacts" -name "*-report-full.json" -type f | head -1 || true)
           fi
 
           if [ -z "$result_file" ]; then
-            echo "::warning::No benchmark result JSON file found in BenchmarkDotNet.Artifacts"
-            echo "Directory contents:"
-            find BenchmarkDotNet.Artifacts -type f || echo "Empty or missing"
+            result_file=$(find "$runtime_artifacts" -name "*RuntimeBenchmarks*.json" -type f | head -1 || true)
+          fi
+
+          if [ -z "$result_file" ]; then
+            result_file=$(find "$runtime_artifacts" -name "*-report*.json" -type f | head -1 || true)
+          fi
+
+          if [ -z "$result_file" ]; then
+            echo "::warning::No benchmark result JSON file found in downloaded runtime artifacts"
+            find "$runtime_artifacts" -type f || echo "Empty or missing"
             echo "has_results=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -179,28 +343,20 @@ jobs:
           from pathlib import Path
           import os
 
-          # Find the benchmark results
-          artifacts_dir = Path("BenchmarkDotNet.Artifacts")
+          artifacts_dir = Path("artifacts/benchmarkdotnet/runtime-download")
 
           if not artifacts_dir.exists():
-              print("::error::BenchmarkDotNet.Artifacts directory not found")
+              print("::error::Downloaded runtime benchmark artifact directory not found")
               sys.exit(1)
 
-          # Search for result files in priority order
-          result_files = []
-
-          # Priority 1: Full compressed report
           result_files = list(artifacts_dir.rglob("*-report-full-compressed.json"))
 
-          # Priority 2: Full report
           if not result_files:
               result_files = list(artifacts_dir.rglob("*-report-full.json"))
 
-          # Priority 3: Any report with RuntimeBenchmarks
           if not result_files:
               result_files = [f for f in artifacts_dir.rglob("*.json") if "RuntimeBenchmarks" in f.name]
 
-          # Priority 4: Any report JSON
           if not result_files:
               result_files = [f for f in artifacts_dir.rglob("*-report*.json")]
 
@@ -217,13 +373,11 @@ jobs:
           with open(result_file) as f:
               data = json.load(f)
 
-          # Transform to github-action-benchmark format
           benchmarks = []
           benchmark_list = data.get("Benchmarks", [])
 
           if not benchmark_list:
               print("::warning::No benchmarks found in result file, creating placeholder")
-              # Create a placeholder so the workflow doesn't fail
               benchmarks.append({
                   "name": "NovaSharp.Placeholder",
                   "unit": "ns",
@@ -236,11 +390,9 @@ jobs:
                   stats = benchmark.get("Statistics", {})
                   mean_ns = stats.get("Mean", 0)
 
-                  # Handle case where Statistics might be missing
                   if not stats and "Mean" in benchmark:
                       mean_ns = benchmark.get("Mean", 0)
 
-                  # Convert nanoseconds to appropriate unit for readability
                   if mean_ns > 1_000_000_000:
                       value = mean_ns / 1_000_000_000
                       unit = "s"
@@ -264,21 +416,18 @@ jobs:
                       "extra": extra
                   })
 
-          # Write output
           output_path = Path("benchmark-results.json")
           with open(output_path, "w") as f:
               json.dump(benchmarks, f, indent=2)
 
           print(f"Wrote {len(benchmarks)} benchmarks to {output_path}")
 
-          # Verify the file was created
           if not output_path.exists():
               print("::error::Failed to create benchmark-results.json")
               sys.exit(1)
 
           print(f"File size: {output_path.stat().st_size} bytes")
 
-          # Also write to step summary
           summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
           if summary:
               with open(summary, "a") as f:
@@ -312,8 +461,8 @@ jobs:
         run: |
           set -euo pipefail
           delta_out="$(python3 scripts/benchmarks/render-benchmark-deltas.py \
-            --current-root BenchmarkDotNet.Artifacts \
-            --comparison-root artifacts/benchmarkdotnet/comparison \
+            --current-root artifacts/benchmarkdotnet/runtime-download \
+            --comparison-root artifacts/benchmarkdotnet/comparison-download \
             --self-baseline-root docs/performance-history/current-baseline \
             --output artifacts/benchmark-deltas.md \
             --expect-lua-cli)"
@@ -349,13 +498,13 @@ jobs:
       - name: Warn when external comparison rows are unavailable
         if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.external_rows == '0'
         run: |
-          echo "::warning::No external comparison rows were rendered. Check the same-run comparison benchmark logs and artifacts."
+          echo "::warning::No external comparison rows were rendered. Check the split comparison benchmark logs and artifacts."
         shell: bash
 
       - name: Warn when expected external comparison cells are missing
         if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.missing_external_runtime_cells != '0'
         run: |
-          echo "::warning::Expected external runtime cells were missing. Check the same-run comparison benchmark logs and artifacts."
+          echo "::warning::Expected external runtime cells were missing. Check the split comparison benchmark logs and artifacts."
         shell: bash
 
       - name: Warn when reference lua CLI context is missing
@@ -455,7 +604,6 @@ jobs:
         if: steps.check_gh_pages.outputs.exists == 'false' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           echo "Creating gh-pages branch for benchmark storage..."
-          # Create orphan branch with initial benchmark data structure
           git checkout --orphan gh-pages
           git reset --hard
           mkdir -p benchmarks
@@ -467,7 +615,6 @@ jobs:
           git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
             commit -m "Initialize gh-pages branch for benchmark storage"
           git push origin gh-pages
-          # Return to original branch
           git checkout -
           echo "gh-pages branch created successfully"
 
@@ -484,8 +631,8 @@ jobs:
           fi
 
       - name: Store benchmark results
-        # Only run if the file physically exists AND gh-pages exists (either pre-existing or just created)
         if: |
+          steps.split_status.outputs.failed != 'true' &&
           steps.check_results_file.outputs.file_exists == 'true' &&
           (steps.check_gh_pages.outputs.exists == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
         uses: benchmark-action/github-action-benchmark@v1
@@ -494,32 +641,34 @@ jobs:
           tool: customSmallerIsBetter
           output-file-path: benchmark-results.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          # Auto-push only on main branch pushes
           auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          # Alert threshold (default 115% = 15% regression)
           alert-threshold: ${{ github.event.inputs.alert_threshold || '115%' }}
-          # Hosted PR runners are too noisy for single-sample microbenchmark alerts
-          # to be reliable merge gates. Keep PR alerts visible in comments/artifacts,
-          # and reserve failing alerts for explicit manual benchmark runs.
           fail-on-alert: ${{ github.event.inputs.fail_on_alert == 'true' }}
-          # Comment on PR with results
           comment-on-alert: true
-          # Store data in gh-pages branch under benchmarks directory
           gh-pages-branch: gh-pages
           benchmark-data-dir-path: benchmarks
 
-      - name: Skip benchmark storage (no gh-pages branch or no results)
+      - name: Skip benchmark storage
         if: |
+          steps.split_status.outputs.failed == 'true' ||
           steps.check_results_file.outputs.file_exists != 'true' ||
           (steps.check_gh_pages.outputs.exists == 'false' && !(github.event_name == 'push' && github.ref == 'refs/heads/main'))
         run: |
-          if [ "${{ steps.check_results_file.outputs.file_exists }}" != "true" ]; then
-            echo "::warning::Skipping benchmark storage - benchmark-results.json was not created."
+          if [ "${{ steps.split_status.outputs.failed }}" = "true" ]; then
+            echo "::warning::Skipping benchmark storage because at least one split benchmark job failed."
+          elif [ "${{ steps.check_results_file.outputs.file_exists }}" != "true" ]; then
+            echo "::warning::Skipping benchmark storage because benchmark-results.json was not created."
           else
-            echo "::warning::Skipping benchmark storage - gh-pages branch does not exist."
+            echo "::warning::Skipping benchmark storage because gh-pages branch does not exist."
             echo "The gh-pages branch will be created on the next push to main."
           fi
-          echo "Benchmark results are still available in the uploaded artifacts (if any)."
+          echo "Benchmark results are still available in the uploaded artifacts if any were produced."
+
+      - name: Fail when split benchmark jobs failed
+        if: steps.split_status.outputs.failed == 'true'
+        run: |
+          echo "::error::At least one split benchmark job failed. Inspect the matrix leg logs and uploaded artifacts."
+          exit 1
 
       - name: Upload benchmark artifacts
         uses: actions/upload-artifact@v5
@@ -527,27 +676,7 @@ jobs:
         with:
           name: benchmark-results
           path: |
-            BenchmarkDotNet.Artifacts/
-            artifacts/benchmarkdotnet/comparison/
+            artifacts/benchmarkdotnet/
             benchmark-results.json
             artifacts/benchmark-deltas.md
           if-no-files-found: warn
-
-  comparison:
-    name: comparison
-    runs-on: ubuntu-latest
-    needs: benchmark
-    if: always()
-    timeout-minutes: 5
-    steps:
-      - name: Confirm same-run comparison location
-        if: needs.benchmark.result == 'success'
-        run: |
-          echo "Comparison benchmarks now run inside the benchmark job so external runtime deltas use the same runner hardware."
-          echo "Inspect the benchmark-results artifact for artifacts/benchmarkdotnet/comparison/."
-
-      - name: Propagate benchmark job failure
-        if: needs.benchmark.result != 'success'
-        run: |
-          echo "::error::The benchmark job did not complete successfully; same-run comparison artifacts may be missing."
-          exit 1
