@@ -12,16 +12,20 @@ Date: 2026-07-02
 - Recorded the actual reference `lua` command and `lua -v` output in the synthetic JSON and rendered runtime context.
 - Updated the benchmark delta renderer to show missing memory/GC diagnostics as `-` instead of treating time-only rows as zero-allocation rows.
 - Extended renderer tests to cover reference `lua` CLI time context and unknown memory/GC cells.
+- Addressed Copilot review feedback by resolving and validating `--lua-cmd`/`LUA_CMD` before subprocess use, so missing executables skip cleanly and successful runs record the actual executable path.
 
 ## Validation
 
 - `python3 tools/test_render_benchmark_deltas.py` passed.
+- `python3 tools/test_run_lua_cli_context.py` passed.
 - `python3 -m py_compile scripts/benchmarks/render-benchmark-deltas.py scripts/benchmarks/run-lua-cli-context.py tools/test_render_benchmark_deltas.py` passed.
+- `python3 -m py_compile scripts/benchmarks/run-lua-cli-context.py tools/test_run_lua_cli_context.py` passed.
 - `bash -n scripts/benchmarks/run-benchmarks.sh` passed.
 - `pwsh -NoProfile -Command '[System.Management.Automation.Language.Parser]::ParseFile("scripts/benchmarks/run-benchmarks.ps1", [ref]$null, [ref]$null) | Out-Null'` passed.
 - `dotnet build src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj -c Release -v:minimal` passed.
 - `dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj -c Release --no-build -- --export-scenarios artifacts/benchmarkdotnet/lua-cli-scenarios-smoke` exported 5 scenarios.
 - `python3 scripts/benchmarks/run-lua-cli-context.py --scenario-dir artifacts/benchmarkdotnet/lua-cli-scenarios-smoke --output-root artifacts/benchmarkdotnet/comparison-smoke --lua-cmd lua5.4 --warmup-count 0 --iteration-count 1 --timeout-seconds 10` produced 5 reference CLI rows.
+- `python3 scripts/benchmarks/run-lua-cli-context.py --scenario-dir artifacts/benchmarkdotnet/lua-cli-scenarios-smoke --output-root artifacts/benchmarkdotnet/comparison-smoke --lua-cmd definitely-not-a-real-lua-command --warmup-count 0 --iteration-count 1 --timeout-seconds 10` skipped cleanly with `lua_cli_skipped=true`.
 - `LUA_INIT='print("polluted")' python3 scripts/benchmarks/run-lua-cli-context.py --scenario-dir artifacts/benchmarkdotnet/lua-cli-scenarios-smoke --output-root artifacts/benchmarkdotnet/comparison-smoke --lua-cmd lua5.4 --warmup-count 0 --iteration-count 1 --timeout-seconds 10` kept the version context sanitized and produced 5 reference CLI rows.
 - `git diff --check` passed.
 - `./scripts/build/quick.sh --all` passed.

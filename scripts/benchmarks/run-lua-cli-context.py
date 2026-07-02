@@ -129,14 +129,26 @@ def resolve_repo_path(path: Path) -> Path:
 
 def resolve_lua_command(lua_cmd: str) -> str | None:
     if lua_cmd:
-        return lua_cmd
+        return resolve_command(lua_cmd)
 
     for candidate in ("lua5.4", "lua54", "lua"):
-        resolved = shutil.which(candidate)
+        resolved = resolve_command(candidate)
         if resolved is not None:
-            return candidate
+            return resolved
 
     return None
+
+
+def resolve_command(command: str) -> str | None:
+    normalized = os.path.expanduser(command)
+    has_path_separator = os.sep in normalized or (os.altsep is not None and os.altsep in normalized)
+    if Path(normalized).is_absolute() or has_path_separator:
+        path = Path(normalized)
+        if path.is_file() and os.access(path, os.X_OK):
+            return str(path)
+        return None
+
+    return shutil.which(normalized)
 
 
 def read_lua_version(lua_cmd: str) -> str:
