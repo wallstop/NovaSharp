@@ -212,15 +212,7 @@ public class LuaPerformanceBenchmarks : IDisposable
 
     private static LuaCSharpValue RunLuaCSharp(LuaState state, LuaClosure closure)
     {
-        ValueTask<int> runTask = state.RunAsync(closure, CancellationToken.None);
-        if (!runTask.IsCompleted)
-        {
-            throw new InvalidOperationException(
-                "LuaCSharp benchmark execution did not complete synchronously."
-            );
-        }
-
-        int returnCount = runTask.GetAwaiter().GetResult();
+        int returnCount = GetLuaCSharpReturnCount(state.RunAsync(closure, CancellationToken.None));
         if (returnCount <= 0)
         {
             return LuaCSharpValue.Nil;
@@ -229,6 +221,21 @@ public class LuaPerformanceBenchmarks : IDisposable
         using LuaStackReader reader = state.ReadStack(returnCount);
         ReadOnlySpan<LuaCSharpValue> values = reader.AsSpan();
         return values.Length > 0 ? values[^1] : LuaCSharpValue.Nil;
+    }
+
+    private static int GetLuaCSharpReturnCount(ValueTask<int> runTask)
+    {
+        if (runTask.IsCompleted)
+        {
+            return runTask.GetAwaiter().GetResult();
+        }
+
+        return CompleteLuaCSharpRunAsync(runTask).GetAwaiter().GetResult();
+    }
+
+    private static async Task<int> CompleteLuaCSharpRunAsync(ValueTask<int> runTask)
+    {
+        return await runTask.ConfigureAwait(false);
     }
 
     /// <summary>
