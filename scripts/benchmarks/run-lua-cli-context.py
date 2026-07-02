@@ -143,12 +143,13 @@ def resolve_command(command: str) -> str | None:
     normalized = os.path.expanduser(command)
     has_path_separator = os.sep in normalized or (os.altsep is not None and os.altsep in normalized)
     if Path(normalized).is_absolute() or has_path_separator:
-        path = Path(normalized)
+        path = Path(normalized).resolve()
         if path.is_file() and os.access(path, os.X_OK):
             return str(path)
         return None
 
-    return shutil.which(normalized)
+    resolved = shutil.which(normalized)
+    return str(Path(resolved).resolve()) if resolved is not None else None
 
 
 def read_lua_version(lua_cmd: str) -> str:

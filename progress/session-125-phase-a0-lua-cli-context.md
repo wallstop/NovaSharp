@@ -28,6 +28,7 @@ Date: 2026-07-02
 - `python3 scripts/benchmarks/run-lua-cli-context.py --scenario-dir artifacts/benchmarkdotnet/lua-cli-scenarios-smoke --output-root artifacts/benchmarkdotnet/comparison-smoke --lua-cmd definitely-not-a-real-lua-command --warmup-count 0 --iteration-count 1 --timeout-seconds 10` skipped cleanly with `lua_cli_skipped=true`.
 - `LUA_INIT='print("polluted")' python3 scripts/benchmarks/run-lua-cli-context.py --scenario-dir artifacts/benchmarkdotnet/lua-cli-scenarios-smoke --output-root artifacts/benchmarkdotnet/comparison-smoke --lua-cmd lua5.4 --warmup-count 0 --iteration-count 1 --timeout-seconds 10` kept the version context sanitized and produced 5 reference CLI rows.
 - Cursor Bugbot found that report-only `lua` CLI wall-time rows still contributed to the generic `changed=true` signal; fixed by excluding rows marked `ShowDeltaPercent=false` or `RuntimeKind=LuaCliWallTime` from tolerance signaling while continuing to render their raw deltas and missing-row diagnostics.
+- Copilot found that relative path-like `--lua-cmd` values were validated relative to the caller but later executed with `cwd` set to the repo root; fixed by resolving all accepted executable paths, including relative `PATH` hits, to absolute paths.
 - `git diff --check` passed.
 - `./scripts/build/quick.sh --all` passed.
 - `./scripts/test/quick.sh` passed with 14,529 succeeded, 0 failed, 0 skipped.
