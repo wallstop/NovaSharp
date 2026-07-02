@@ -5,22 +5,17 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
     using WallstopStudios.NovaSharp.Interpreter.Interop;
 
     /// <summary>
-    /// Captures <see cref="Script.GlobalOptions.CustomConverters"/> in an isolated global options
-    /// scope and restores the original mappings on disposal.
+    /// Applies <see cref="Script.GlobalOptions.CustomConverters"/> overrides inside an isolated
+    /// global options scope.
     /// </summary>
     internal sealed class ScriptCustomConvertersScope : IDisposable
     {
         private readonly IDisposable _globalScope;
-        private readonly CustomConverterRegistry _snapshot;
         private bool _disposed;
 
-        private ScriptCustomConvertersScope(
-            IDisposable globalScope,
-            CustomConverterRegistry snapshot
-        )
+        private ScriptCustomConvertersScope(IDisposable globalScope)
         {
             _globalScope = globalScope ?? throw new ArgumentNullException(nameof(globalScope));
-            _snapshot = snapshot ?? new CustomConverterRegistry();
         }
 
         public static ScriptCustomConvertersScope Capture(
@@ -32,7 +27,6 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
             try
             {
                 CustomConverterRegistry current = EnsureRegistry();
-                CustomConverterRegistry snapshot = current.Clone();
 
                 if (clear)
                 {
@@ -40,7 +34,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
                 }
 
                 configure?.Invoke(Script.GlobalOptions.CustomConverters);
-                return new ScriptCustomConvertersScope(globalScope, snapshot);
+                return new ScriptCustomConvertersScope(globalScope);
             }
             catch
             {
@@ -63,8 +57,6 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
                 return;
             }
 
-            Script.GlobalOptions.CustomConverters =
-                _snapshot?.Clone() ?? new CustomConverterRegistry();
             _globalScope.Dispose();
             _disposed = true;
         }
