@@ -470,6 +470,10 @@ public class LuaInteropBenchmarks : IDisposable
         _nLuaClrToLua = new NLuaState();
         _nLuaClrToLua.DoString(ClrToLuaSource, "interop_clr_to_lua");
         _nLuaAddFunction = _nLuaClrToLua.GetFunction("add");
+        if (_nLuaAddFunction == null)
+        {
+            throw new InvalidOperationException("NLua failed to bind the interop add function.");
+        }
         _nLuaCallArgs = new object[] { 1d, 2d };
 
         _luaCSharpLuaToClrState = CreateLuaCSharpState();
