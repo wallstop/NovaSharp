@@ -85,6 +85,8 @@ The script writes `changed=true|false`, `regressed=true|false`, external/self ro
 
 The comparison suite's `Compile` rows create a fresh runtime state for each engine before loading the scenario. `Execute` rows use each engine's prepared public execution surface to reflect the host API NovaSharp is trying to compete with; add a separate normalized-result-read suite before treating return-materialization cost as isolated interpreter cost.
 
+Current comparison scenarios cover pure-Lua compute (`fib(30)`, hanoi, n-body, binary-trees, spectral-norm), table-heavy work (integer fill/iterate, string-key lookup, `next` traversal, insert/remove churn), string-heavy work (concat chains, `gsub`/`find`, `string.format`), coroutine ping-pong, and the earlier numeric/table/backtracking smoke cases. Cross-runtime host interop rows are intentionally separate because each engine needs its own host binding path and reference `lua` cannot execute those rows.
+
 `scripts/benchmarks/run-lua-cli-context.py` measures exported comparison scenarios by spawning the reference `lua` executable once per iteration and emits BenchmarkDotNet-shaped JSON under `artifacts/benchmarkdotnet/comparison/`. This is intentionally wall-clock process context, not a managed allocation measurement.
 
 ## Output
