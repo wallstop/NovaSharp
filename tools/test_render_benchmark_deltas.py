@@ -117,6 +117,25 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             gen0=gen0,
         )
 
+    def interop_benchmark(
+        self,
+        method_title: str,
+        mean: float,
+        p95: float,
+        allocated: float,
+        gen0: float = 0,
+    ) -> dict:
+        return self.benchmark(
+            "WallstopStudios.NovaSharp.Comparison",
+            "LuaInteropBenchmarks",
+            method_title,
+            "ScenarioName=TwoArgAdd",
+            mean,
+            p95,
+            allocated,
+            gen0=gen0,
+        )
+
     def lua_cli_benchmark(
         self,
         mean: float,
@@ -335,6 +354,32 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         output = self.output.read_text(encoding="utf-8")
         self.assertIn("Expected reference lua CLI rows missing: 1", output)
         self.assertIn("Lua", output)
+
+    def test_interop_rows_do_not_expect_reference_lua_cli_context(self) -> None:
+        self.write_report(
+            self.comparison_root,
+            "LuaInteropBenchmarks",
+            [
+                self.interop_benchmark("NovaSharp LuaToClrInterop", 90, 110, 80),
+                self.interop_benchmark("MoonSharp LuaToClrInterop", 100, 120, 100),
+                self.interop_benchmark("NLua LuaToClrInterop", 150, 180, 140),
+                self.interop_benchmark("LuaCSharp LuaToClrInterop", 70, 90, 24),
+                self.interop_benchmark("NovaSharp ClrToLuaInterop", 95, 115, 82),
+                self.interop_benchmark("MoonSharp ClrToLuaInterop", 105, 125, 102),
+                self.interop_benchmark("NLua ClrToLuaInterop", 155, 185, 142),
+                self.interop_benchmark("LuaCSharp ClrToLuaInterop", 75, 95, 26),
+            ],
+        )
+
+        result = self.run_script(expect_lua_cli=True)
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("external_rows=6", result.stdout)
+        self.assertIn("missing_external_runtime_cells=0", result.stdout)
+        self.assertIn("missing_lua_cli_rows=0", result.stdout)
+        output = self.output.read_text(encoding="utf-8")
+        self.assertIn("LuaToClrInterop", output)
+        self.assertIn("ClrToLuaInterop", output)
 
     def test_runtime_kind_marks_reference_lua_cli_context_report_only(self) -> None:
         self.write_report(

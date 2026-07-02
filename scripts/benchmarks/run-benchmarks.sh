@@ -93,7 +93,7 @@ if [[ "$SKIP_COMPARISON" == "false" ]]; then
         -c "$CONFIGURATION" \
         --no-build \
         -- \
-        --filter "*LuaPerformanceBenchmarks*" \
+        --filter "*" \
         --exporters json \
         --artifacts "$COMPARISON_ARTIFACTS"
     echo "comparison benchmarks complete."

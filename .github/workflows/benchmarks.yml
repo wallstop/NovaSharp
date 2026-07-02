@@ -35,7 +35,7 @@ concurrency:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
         with:
@@ -97,7 +97,7 @@ jobs:
           echo "Running NovaSharp vs MoonSharp/NLua/Lua-CSharp comparison benchmarks on this runner..."
           dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
             -c Release --no-build -- \
-            --filter "*LuaPerformanceBenchmarks*" \
+            --filter "*" \
             --exporters json \
             --artifacts "$comparison_artifacts"
 

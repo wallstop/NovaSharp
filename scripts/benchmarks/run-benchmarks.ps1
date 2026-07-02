@@ -101,7 +101,7 @@ if (-not $SkipComparison) {
         -c $Configuration `
         --no-build `
         -- `
-        --filter "*LuaPerformanceBenchmarks*" `
+        --filter "*" `
         --exporters json `
         --artifacts $comparisonArtifacts
     if ($LASTEXITCODE -ne 0) {

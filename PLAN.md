@@ -80,15 +80,15 @@ Extend `src/tooling/WallstopStudios.NovaSharp.Comparison/`:
 - [x] Add **Lua-CSharp** (NuGet `LuaCSharp`) as a benchmark target alongside existing NLua/MoonSharp.
 - [x] Add **reference `lua` CLI** wall-time as an out-of-process context column (export existing comparison scenarios and emit BenchmarkDotNet-shaped JSON; not a managed allocation measurement).
 - [x] Expanded pure-Lua comparison workloads: fib(30), hanoi, n-body, binary-trees, spectral-norm; table-heavy (int-key fill/iterate, string-key lookup, `next` traversal, insert/remove churn); string-heavy (concat chains, `gsub`/`find`, `string.format`); coroutine ping-pong.
-- [ ] Add **interop both directions** to the comparison matrix (1M Lua→C# registered-fn calls with 2 args + return; 1M C#→Lua `Call`) with per-engine host bindings and clear reference-`lua` skip behavior.
-- [ ] Add cached-compile comparison rows alongside the existing cold compile rows.
+- [x] Add **interop both directions** to the comparison matrix (1M Lua→C# registered-fn calls with 2 args + return; 1M C#→Lua `Call`) with per-engine host bindings and clear reference-`lua` skip behavior.
+- [x] Add cached-compile comparison rows alongside the existing cold compile rows.
 - [ ] `[MemoryDiagnoser]` on everything; per-phase JSON baselines committed under `progress/`; one command emits the scoreboard markdown table (rows = benchmarks; columns = NovaSharp current/baseline, MoonSharp, NLua, Lua-CSharp, lua CLI).
 - [ ] CI gates: ratio-vs-NLua ±10% + exact B/op assertions.
 - [ ] Minimal stopwatch-based Unity player scene for IL2CPP spot checks.
 
 **Exit criteria**: baseline table for all 5 engines committed; allocation numbers recorded.
 
-**Progress**: Lua-CSharp comparison rows were wired on 2026-07-01. Reference `lua` CLI wall-time context was wired on 2026-07-02. Pure-Lua Phase A0 workload coverage was expanded on 2026-07-02. See [progress/session-124-phase-a0-luacsharp-comparison.md](progress/session-124-phase-a0-luacsharp-comparison.md), [progress/session-125-phase-a0-lua-cli-context.md](progress/session-125-phase-a0-lua-cli-context.md), and [progress/session-126-phase-a0-expanded-workloads.md](progress/session-126-phase-a0-expanded-workloads.md). Full five-engine scoreboard baselines, interop/cached-compile rows, ratio/allocation gates, and Unity IL2CPP spot-check work remain open.
+**Progress**: Lua-CSharp comparison rows were wired on 2026-07-01. Reference `lua` CLI wall-time context was wired on 2026-07-02. Pure-Lua Phase A0 workload coverage was expanded on 2026-07-02. Interop and cached-compile comparison rows were wired on 2026-07-02. See [progress/session-124-phase-a0-luacsharp-comparison.md](progress/session-124-phase-a0-luacsharp-comparison.md), [progress/session-125-phase-a0-lua-cli-context.md](progress/session-125-phase-a0-lua-cli-context.md), [progress/session-126-phase-a0-expanded-workloads.md](progress/session-126-phase-a0-expanded-workloads.md), and [progress/session-127-phase-a0-interop-cached-compile.md](progress/session-127-phase-a0-interop-cached-compile.md). Full five-engine scoreboard baselines, ratio/allocation gates, and Unity IL2CPP spot-check work remain open.
 
 #### Phase A1 — `LuaValue` struct (~3-5 weeks; highest impact, highest risk)
 
