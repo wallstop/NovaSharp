@@ -205,7 +205,11 @@ public class LuaPerformanceBenchmarks : IDisposable
     public int NLuaCompile()
     {
         using NLuaState state = new();
-        NLuaFunction compiled = LoadNLuaFunction(state, _source, $"compile_{CurrentScenario}");
+        using NLuaFunction compiled = LoadNLuaFunction(
+            state,
+            _source,
+            $"compile_{CurrentScenario}"
+        );
         GC.KeepAlive(compiled);
         return 1;
     }
