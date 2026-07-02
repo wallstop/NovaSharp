@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783013897027,
+  "lastUpdate": 1783023288803,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -238,6 +238,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 633.397,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f8b03c4b7817f2df9017751f00e21a85476697b1",
+          "message": "[codex] Expand comparison benchmark workloads (#46)\n\n## Summary\n\n- expand the Phase A0 comparison benchmark catalog from 5 to 16 pure-Lua\nworkloads\n- keep BenchmarkDotNet scenario params and reference lua CLI export on\none shared scenario list\n- update PLAN.md, benchmark docs, and progress notes to mark pure-Lua\nworkload coverage complete while leaving interop/cached\ncompile/baseline/gate work open\n\n## Validation\n\n- `dotnet build\nsrc/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj\n-c Release -v:minimal`\n- `dotnet run --project\nsrc/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj\n-c Release --no-build -- --export-scenarios\nartifacts/benchmarkdotnet/lua-cli-scenarios-smoke`\n- `python3 scripts/benchmarks/run-lua-cli-context.py --scenario-dir\nartifacts/benchmarkdotnet/lua-cli-scenarios-smoke --output-root\nartifacts/benchmarkdotnet/comparison-smoke --lua-cmd lua5.4\n--warmup-count 0 --iteration-count 1 --timeout-seconds 30`\n- temporary ignored managed-runtime smoke harness over all 16 exported\nscenarios\n- `python3 tools/test_render_benchmark_deltas.py`\n- `python3 tools/test_run_lua_cli_context.py`\n- `python3 -m py_compile scripts/benchmarks/render-benchmark-deltas.py\nscripts/benchmarks/run-lua-cli-context.py\ntools/test_render_benchmark_deltas.py tools/test_run_lua_cli_context.py`\n- `git diff --check`\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh` (14,529 succeeded, 0 failed, 0 skipped)\n- `bash ./scripts/dev/pre-commit.sh`\n- pre-push hook\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Changes are limited to comparison tooling, docs, and benchmark\nscripts; the interpreter runtime is untouched.\n> \n> **Overview**\n> **Phase A0** comparison coverage grows from **5 to 16** pure-Lua\nBenchmarkDotNet scenarios (compute, table-heavy, string-heavy, plus\nexisting smoke cases), with **PLAN.md**, benchmark docs, and session\n**126** notes marking that slice done while interop, cached-compile,\nbaselines, and CI gates stay open.\n> \n> **`BenchmarkScripts`** centralizes the catalog: new Lua 5.1 scripts,\n**`GetScenarioNames` / `GetScenarioName` / `GetScenario`**, and\nshortened parameter names so BenchmarkDotNet and reference **`lua` CLI**\nexport share the same labels. Unknown scenario mappings **throw**\ninstead of silently falling back to Hanoi.\n> \n> **`LuaPerformanceBenchmarks`** drives **`[ParamsSource]`** from that\nlist; **`Program`** exports **`.lua`** files using the stable display\nnames.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n029c03becb97e2ba48a65fee20f426e1d716b95c. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-02T12:46:17-07:00",
+          "tree_id": "bd49c5358e92922c973466583ae1ba33ea7cc129",
+          "url": "https://github.com/wallstop/NovaSharp/commit/f8b03c4b7817f2df9017751f00e21a85476697b1"
+        },
+        "date": 1783023288462,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 601.762,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 386.18,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 7.854,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 696.302,
             "unit": "ns",
             "extra": ""
           }
