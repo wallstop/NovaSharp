@@ -225,17 +225,7 @@ public class LuaPerformanceBenchmarks : IDisposable
 
     private static int GetLuaCSharpReturnCount(ValueTask<int> runTask)
     {
-        if (runTask.IsCompleted)
-        {
-            return runTask.GetAwaiter().GetResult();
-        }
-
-        return CompleteLuaCSharpRunAsync(runTask).GetAwaiter().GetResult();
-    }
-
-    private static async Task<int> CompleteLuaCSharpRunAsync(ValueTask<int> runTask)
-    {
-        return await runTask.ConfigureAwait(false);
+        return runTask.ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
     /// <summary>
