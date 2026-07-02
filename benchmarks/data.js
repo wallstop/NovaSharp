@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782945396250,
+  "lastUpdate": 1782959784839,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -142,6 +142,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 708.201,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "28795615307ef60b882ddc80ecaca37c0c975c9a",
+          "message": "[codex] Add LuaCSharp comparison benchmark (#44)\n\n## Summary\n- Add LuaCSharp 0.5.5 as a same-run comparison benchmark target.\n- Normalize compile rows so every runtime creates a fresh state before\nloading the scenario.\n- Render LuaCSharp columns in benchmark delta reports and warn when\nexpected external runtime cells are missing.\n- Update Phase A0 documentation/progress notes without claiming the full\nscoreboard is complete.\n\n## Validation\n- dotnet build\nsrc/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj\n-c Release -v:minimal\n- python3 tools/test_render_benchmark_deltas.py\n- python3 -m py_compile scripts/benchmarks/render-benchmark-deltas.py\ntools/test_render_benchmark_deltas.py\n- direct LuaPerformanceBenchmarks LuaCSharp smoke for NumericLoops\n- ./scripts/build/quick.sh --all\n- ./scripts/test/quick.sh\n- bash ./scripts/dev/pre-commit.sh\n- git push pre-push hook checks\n\n## Remaining Phase A0 Work\n- Reference lua CLI wall-time context is not implemented yet.\n- Full workload suite and committed JSON baselines are not implemented\nyet.\n- Ratio-vs-NLua and exact allocation gates remain open.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Benchmarking, reporting, and documentation changes only; no\ninterpreter runtime behavior changes beyond test isolation helpers.\n> \n> **Overview**\n> Adds **Lua-CSharp** (`LuaCSharp` 0.5.5) as a fourth same-run\nBenchmarkDotNet target in `WallstopStudios.NovaSharp.Comparison`, with\ncompile/execute rows wired like MoonSharp and NLua. **Compile**\nbenchmarks now spin up a **fresh runtime state per engine** (returning a\ndummy `int` with `GC.KeepAlive`) so compile timings are comparable\nacross NovaSharp, MoonSharp, NLua, and Lua-CSharp.\n> \n> The delta renderer treats **LuaCSharp** as a first-class external\nruntime, expects **MoonSharp / NLua / LuaCSharp** cells when NovaSharp\nis present, and surfaces **missing expected cells** in markdown, stdout\n(`missing_external_runtime_cells=`), benchmark CI warnings, and PR\ncomment metadata. Tests cover Lua-CSharp matrix columns and\nmissing-runtime diagnostics.\n> \n> Docs and planning note **Phase A0** progress (Lua-CSharp wired; full\nscoreboard, `lua` CLI column, gates still open). Minor test fixes:\n`ScriptCustomConvertersScope` uses `Script.BeginGlobalOptionsScope()`\nfor isolation; a coroutine tail-call test drops static state.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\ncd2077e84293703b84b8e424a2874773f447cf95. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-01T19:24:41-07:00",
+          "tree_id": "256c5b49907a0bbfadb696ab283ef2f64d938a25",
+          "url": "https://github.com/wallstop/NovaSharp/commit/28795615307ef60b882ddc80ecaca37c0c975c9a"
+        },
+        "date": 1782959784503,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 558.264,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 382.003,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 7.445,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 696.316,
             "unit": "ns",
             "extra": ""
           }
