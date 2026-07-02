@@ -213,9 +213,14 @@ public class LuaPerformanceBenchmarks : IDisposable
     private static LuaCSharpValue RunLuaCSharp(LuaState state, LuaClosure closure)
     {
         ValueTask<int> runTask = state.RunAsync(closure, CancellationToken.None);
-        int returnCount = runTask.IsCompletedSuccessfully
-            ? runTask.Result
-            : runTask.AsTask().GetAwaiter().GetResult();
+        if (!runTask.IsCompleted)
+        {
+            throw new InvalidOperationException(
+                "LuaCSharp benchmark execution did not complete synchronously."
+            );
+        }
+
+        int returnCount = runTask.GetAwaiter().GetResult();
         if (returnCount <= 0)
         {
             return LuaCSharpValue.Nil;
