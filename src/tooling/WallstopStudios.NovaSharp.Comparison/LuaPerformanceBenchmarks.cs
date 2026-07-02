@@ -89,6 +89,10 @@ public class LuaPerformanceBenchmarks : IDisposable
 
         _nLua = new NLuaState();
         _nLuaFunction = _nLua.LoadString(_source, $"precompiled_{CurrentScenario}") as NLuaFunction;
+        if (_nLuaFunction == null)
+        {
+            throw new InvalidOperationException("NLua failed to compile the benchmark script.");
+        }
 
         _luaCSharpState = CreateLuaCSharpState();
         _luaCSharpFunction = _luaCSharpState.Load(

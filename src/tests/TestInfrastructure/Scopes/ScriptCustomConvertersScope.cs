@@ -47,7 +47,7 @@ namespace WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes
             Action<CustomConverterRegistry> configure = null
         )
         {
-            return Capture(clear: true, configure);
+            return Capture(clear: true, configure: configure);
         }
 
         public void Dispose()
