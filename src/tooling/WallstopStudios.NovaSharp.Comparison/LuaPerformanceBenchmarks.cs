@@ -469,11 +469,7 @@ public class LuaInteropBenchmarks : IDisposable
         );
         _nLuaClrToLua = new NLuaState();
         _nLuaClrToLua.DoString(ClrToLuaSource, "interop_clr_to_lua");
-        _nLuaAddFunction = _nLuaClrToLua.GetFunction("add");
-        if (_nLuaAddFunction == null)
-        {
-            throw new InvalidOperationException("NLua failed to bind the interop add function.");
-        }
+        _nLuaAddFunction = GetRequiredNLuaFunction(_nLuaClrToLua, "add");
         _nLuaCallArgs = new object[] { 1d, 2d };
 
         _luaCSharpLuaToClrState = CreateLuaCSharpState();
@@ -537,11 +533,10 @@ public class LuaInteropBenchmarks : IDisposable
     /// </summary>
     public object NLuaLuaToClrInterop()
     {
-        object result = null;
-        foreach (object value in _nLuaLuaToClrFunction.Call())
-        {
-            result = value;
-        }
+        object result = ReadFirstNLuaResult(
+            nameof(NLuaLuaToClrInterop),
+            _nLuaLuaToClrFunction.Call()
+        );
 
         ValidateInteropTotal(
             nameof(NLuaLuaToClrInterop),
@@ -611,11 +606,12 @@ public class LuaInteropBenchmarks : IDisposable
         double total = 0;
         for (int i = 0; i < InteropCallCount; i++)
         {
-            object[] values = _nLuaAddFunction.Call(_nLuaCallArgs);
-            if (values.Length > 0)
-            {
-                total += ReadNLuaNumber(values[0]);
-            }
+            total += ReadNLuaNumber(
+                ReadFirstNLuaResult(
+                    nameof(NLuaClrToLuaInterop),
+                    _nLuaAddFunction.Call(_nLuaCallArgs)
+                )
+            );
         }
 
         ValidateInteropTotal(nameof(NLuaClrToLuaInterop), total, ExpectedClrToLuaTotal);
@@ -695,6 +691,23 @@ public class LuaInteropBenchmarks : IDisposable
         return function;
     }
 
+    private static NLuaFunction GetRequiredNLuaFunction(NLuaState state, string functionName)
+    {
+        NLuaFunction function = state.GetFunction(functionName);
+        if (function == null)
+        {
+            throw new InvalidOperationException(
+                string.Format(
+                    CultureInfo.InvariantCulture,
+                    "NLua function '{0}' was not found after benchmark setup.",
+                    functionName
+                )
+            );
+        }
+
+        return function;
+    }
+
     private static LuaState CreateLuaCSharpState()
     {
         LuaState state = LuaState.Create();
@@ -757,6 +770,18 @@ public class LuaInteropBenchmarks : IDisposable
         }
 
         return Convert.ToDouble(value, CultureInfo.InvariantCulture);
+    }
+
+    private static object ReadFirstNLuaResult(string methodName, object[] values)
+    {
+        if (values.Length > 0)
+        {
+            return values[0];
+        }
+
+        throw new InvalidOperationException(
+            string.Format(CultureInfo.InvariantCulture, "{0} returned no values.", methodName)
+        );
     }
 
     private static void ValidateInteropTotal(string methodName, double actual, double expected)

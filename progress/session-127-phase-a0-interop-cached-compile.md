@@ -15,6 +15,7 @@ Date: 2026-07-02
 - Updated local benchmark runner scripts to use the same full comparison benchmark filter as CI.
 - Added deterministic result assertions to every interop benchmark row so a broken host binding fails before producing misleading timing data.
 - Raised the benchmark workflow timeout to accommodate the larger full comparison matrix without changing benchmark quality.
+- Addressed PR review feedback by failing fast when the NLua `add` binding is missing and by reading NLua return arrays directly with an empty-result diagnostic.
 - Updated `PLAN.md` to mark Phase A0 interop and cached-compile rows complete.
 
 ## Validation
@@ -23,6 +24,7 @@ Date: 2026-07-02
 - `dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj -c Release --no-build -- --list flat` listed the 8 interop rows and the new cached-compile rows.
 - `dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj -c Release --no-build -- --filter "*LuaInteropBenchmarks*" --launchCount 1 --warmupCount 0 --iterationCount 1 --artifacts artifacts/benchmarkdotnet/interopsmoke-postassertions` executed all 8 interop rows successfully with deterministic result assertions active.
 - `dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj -c Release --no-build -- --filter "*CachedCompile" --launchCount 1 --warmupCount 0 --iterationCount 1 --artifacts artifacts/benchmarkdotnet/cachedcompile-smoke-all` executed all 64 cached-compile rows across NovaSharp and the third-party managed comparison runtimes successfully.
+- `dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj -c Release --no-build -- --filter "*LuaInteropBenchmarks*" --launchCount 1 --warmupCount 0 --iterationCount 1 --artifacts artifacts/benchmarkdotnet/interopsmoke-reviewfix-rebased` executed all 8 interop rows successfully after the NLua review follow-up.
 - `python3 tools/test_render_benchmark_deltas.py` completed with 9 tests passing.
 - `python3 tools/test_run_lua_cli_context.py` completed with 6 tests passing.
 - `python3 -m py_compile scripts/benchmarks/render-benchmark-deltas.py scripts/benchmarks/run-lua-cli-context.py tools/test_render_benchmark_deltas.py tools/test_run_lua_cli_context.py` completed successfully.
