@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782959784839,
+  "lastUpdate": 1783013897027,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -190,6 +190,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 696.316,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fd148d38e28633abbbb5660e8b18e0f00699ed4a",
+          "message": "[codex] Add reference lua CLI benchmark context (#45)\n\n## Summary\n\n- Add a comparison-project export mode for benchmark Lua scenarios.\n- Add reference `lua` CLI wall-time context as a BenchmarkDotNet-shaped\ncomparison artifact.\n- Render the context as `Lua CLI wall-time`, with command/version\nmetadata, unknown memory/GC cells, and a CI-visible\n`missing_lua_cli_rows` signal.\n- Wire bash, PowerShell, and benchmark CI flows to produce the CLI\ncontext, update PLAN.md, and record progress in\n`progress/session-125-phase-a0-lua-cli-context.md`.\n- Address Copilot feedback by validating and resolving\n`--lua-cmd`/`LUA_CMD` before subprocess use.\n\n## Validation\n\n- `python3 tools/test_render_benchmark_deltas.py`\n- `python3 tools/test_run_lua_cli_context.py`\n- `python3 -m py_compile scripts/benchmarks/render-benchmark-deltas.py\nscripts/benchmarks/run-lua-cli-context.py\ntools/test_render_benchmark_deltas.py`\n- `python3 -m py_compile scripts/benchmarks/run-lua-cli-context.py\ntools/test_run_lua_cli_context.py`\n- `bash -n scripts/benchmarks/run-benchmarks.sh`\n- `pwsh -NoProfile -Command\n'[System.Management.Automation.Language.Parser]::ParseFile(\"scripts/benchmarks/run-benchmarks.ps1\",\n[ref]$null, [ref]$null) | Out-Null'`\n- `dotnet build\nsrc/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj\n-c Release -v:minimal`\n- `dotnet run --project\nsrc/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj\n-c Release --no-build -- --export-scenarios\nartifacts/benchmarkdotnet/lua-cli-scenarios-smoke`\n- `python3 scripts/benchmarks/run-lua-cli-context.py --scenario-dir\nartifacts/benchmarkdotnet/lua-cli-scenarios-smoke --output-root\nartifacts/benchmarkdotnet/comparison-smoke --lua-cmd lua5.4\n--warmup-count 0 --iteration-count 1 --timeout-seconds 10`\n- `python3 scripts/benchmarks/run-lua-cli-context.py --scenario-dir\nartifacts/benchmarkdotnet/lua-cli-scenarios-smoke --output-root\nartifacts/benchmarkdotnet/comparison-smoke --lua-cmd\ndefinitely-not-a-real-lua-command --warmup-count 0 --iteration-count 1\n--timeout-seconds 10`\n- `LUA_INIT='print(\"polluted\")' python3\nscripts/benchmarks/run-lua-cli-context.py --scenario-dir\nartifacts/benchmarkdotnet/lua-cli-scenarios-smoke --output-root\nartifacts/benchmarkdotnet/comparison-smoke --lua-cmd lua5.4\n--warmup-count 0 --iteration-count 1 --timeout-seconds 10`\n- `NOVASHARP_BASE_REF=origin/main ./scripts/ci/ensure-readme-updates.sh`\n- `git diff --check`\n- `./scripts/build/quick.sh --all`\n- `./scripts/test/quick.sh` (14,529 succeeded, 0 failed, 0 skipped)\n- `bash ./scripts/dev/pre-commit.sh`\n- push hook: formatting, markdown, branding, namespace, tooling,\nYAML/actionlint, and build checks passed\n\n## Notes\n\nThe reference `lua` row is intentionally process wall-time context, not\nan apples-to-apples managed execution/allocation benchmark. Full Phase\nA0 baseline artifacts, workload expansion, ratio/allocation gates, and\nUnity IL2CPP spot-checks remain open.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Changes are limited to benchmark tooling, Python scripts, and CI\nworkflows; the Lua interpreter runtime is untouched.\n> \n> **Overview**\n> Adds **reference `lua` CLI wall-time** as an out-of-process column on\nthe Phase A0 comparison scoreboard, alongside in-process MoonSharp,\nNLua, and Lua-CSharp runs.\n> \n> The comparison tool gains **`--export-scenarios`** so\n`BenchmarkScripts` scenarios are written once as `.lua` files for\nexternal runners. New **`run-lua-cli-context.py`** spawns the reference\nexecutable per iteration, records mean/P95 wall time, and writes\nBenchmarkDotNet-shaped JSON (with `RuntimeKind=LuaCliWallTime`,\ncommand/version context, and no managed memory/GC claims).\n**`render-benchmark-deltas.py`** renders that column, shows memory/GC as\n`-` when absent, supports **`--expect-lua-cli`** and\n**`missing_lua_cli_rows`**, and treats CLI rows as **report-only** (they\ndo not drive `changed=true`). Local **`run-benchmarks.sh` / `.ps1`** and\n**benchmark CI** export scenarios, install **`lua5.4`** on Ubuntu, run\nthe Python measurer, and surface missing CLI context in PR delta\ncomments.\n> \n> Tests cover the renderer and Lua command resolution; **PLAN.md** and\nsession progress document Phase A0 completion for this item.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n249acb4dc473794277b36146224df802827fbb56. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-02T10:26:18-07:00",
+          "tree_id": "9a27059027d3a2edc6fe39fe80a438e963cd4031",
+          "url": "https://github.com/wallstop/NovaSharp/commit/fd148d38e28633abbbb5660e8b18e0f00699ed4a"
+        },
+        "date": 1783013896685,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 513.919,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 373.47,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 6.939,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 633.397,
             "unit": "ns",
             "extra": ""
           }
