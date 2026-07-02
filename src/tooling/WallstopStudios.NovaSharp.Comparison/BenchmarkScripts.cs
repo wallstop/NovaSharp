@@ -10,6 +10,19 @@ internal static class BenchmarkScripts
     private const int CoroutineSteps = 256;
 
     /// <summary>
+    /// Returns the benchmark scenarios that should be exported for external runners.
+    /// </summary>
+    public static ScriptScenario[] GetScenarios() =>
+        new[]
+        {
+            ScriptScenario.NumericLoops,
+            ScriptScenario.TableMutation,
+            ScriptScenario.TowerOfHanoi,
+            ScriptScenario.EightQueens,
+            ScriptScenario.CoroutinePingPong,
+        };
+
+    /// <summary>
     /// Returns the script associated with <paramref name="scenario"/>.
     /// </summary>
     public static string GetScript(ScriptScenario scenario) =>

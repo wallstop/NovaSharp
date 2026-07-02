@@ -79,7 +79,9 @@ run_benchmark() {
 run_benchmark "src/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj" "NovaSharp runtime"
 
 COMPARISON_ARTIFACTS="artifacts/benchmarkdotnet/comparison"
+LUA_CLI_SCENARIOS="artifacts/benchmarkdotnet/lua-cli-scenarios"
 rm -rf "$COMPARISON_ARTIFACTS"
+rm -rf "$LUA_CLI_SCENARIOS"
 
 if [[ "$SKIP_COMPARISON" == "false" ]]; then
     mkdir -p "$COMPARISON_ARTIFACTS"
@@ -95,6 +97,21 @@ if [[ "$SKIP_COMPARISON" == "false" ]]; then
         --exporters json \
         --artifacts "$COMPARISON_ARTIFACTS"
     echo "comparison benchmarks complete."
+
+    echo ""
+    echo "Exporting comparison scenarios for reference lua CLI context..."
+    dotnet run \
+        --project "src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj" \
+        -c "$CONFIGURATION" \
+        --no-build \
+        -- \
+        --export-scenarios "$LUA_CLI_SCENARIOS"
+
+    echo ""
+    echo "Measuring reference lua CLI wall-time context..."
+    run_python scripts/benchmarks/run-lua-cli-context.py \
+        --scenario-dir "$LUA_CLI_SCENARIOS" \
+        --output-root "$COMPARISON_ARTIFACTS"
 else
     echo ""
     echo "Skipping comparison benchmarks (per --skip-comparison)."

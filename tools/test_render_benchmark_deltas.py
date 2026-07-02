@@ -117,6 +117,24 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             gen0=gen0,
         )
 
+    def lua_cli_benchmark(self, mean: float, p95: float) -> dict:
+        return {
+            "Namespace": "WallstopStudios.NovaSharp.Comparison",
+            "Type": "LuaPerformanceBenchmarks",
+            "Method": "LuaExecute",
+            "MethodTitle": "'Lua Execute'",
+            "Parameters": "ScenarioName=NumericLoops",
+            "RuntimeDisplayName": "Lua CLI wall-time",
+            "RuntimeContext": "lua5.4: Lua 5.4.6",
+            "ShowDeltaPercent": False,
+            "Statistics": {
+                "Mean": mean,
+                "Percentiles": {
+                    "P95": p95,
+                },
+            },
+        }
+
     def current_benchmark(
         self,
         mean: float,
@@ -134,7 +152,11 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             allocated,
         )
 
-    def run_script(self, self_baseline_root: Path | None = None) -> subprocess.CompletedProcess[str]:
+    def run_script(
+        self,
+        self_baseline_root: Path | None = None,
+        expect_lua_cli: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
         args = [
             "python3",
             str(SCRIPT.relative_to(ROOT)),
@@ -156,6 +178,8 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
                     str(self_baseline_root.relative_to(ROOT)),
                 ]
             )
+        if expect_lua_cli:
+            args.append("--expect-lua-cli")
 
         return subprocess.run(
             args,
@@ -251,6 +275,56 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         output = self.output.read_text(encoding="utf-8")
         self.assertIn("Expected external runtime cells missing", output)
         self.assertIn("LuaCSharp", output)
+
+    def test_renders_reference_lua_cli_time_context_without_memory_claim(self) -> None:
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 90, 110, 80, gen0=1),
+                self.lua_cli_benchmark(mean=50, p95=70),
+            ],
+        )
+
+        result = self.run_script()
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("external_rows=1", result.stdout)
+        output = self.output.read_text(encoding="utf-8")
+        self.assertIn("Reference `lua` CLI rows", output)
+        self.assertIn("Runtime Context", output)
+        self.assertIn("Lua CLI wall-time: lua5.4: Lua 5.4.6", output)
+        self.assertIn("Lua CLI wall-time Mean / P95", output)
+        self.assertIn("NovaSharp Delta vs Lua CLI wall-time", output)
+        self.assertIn(
+            "| NumericLoops | Execute | 90 ns / 110 ns | 50 ns / 70 ns | +40 ns / +40 ns |",
+            output,
+        )
+        self.assertIn("A `-` cell means that runtime did not report memory", output)
+        self.assertIn(
+            "| NumericLoops | Execute | 80 B / 1 / 0 / 0 | - / - / - / - | - / - / - / - |",
+            output,
+        )
+
+    def test_reports_missing_reference_lua_cli_context_when_expected(self) -> None:
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 90, 110, 80),
+                self.comparison_benchmark("MoonSharp Execute", 100, 120, 100),
+                self.comparison_benchmark("NLua Execute", 150, 180, 140),
+                self.comparison_benchmark("LuaCSharp Execute", 70, 90, 24),
+            ],
+        )
+
+        result = self.run_script(expect_lua_cli=True)
+
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("missing_lua_cli_rows=1", result.stdout)
+        output = self.output.read_text(encoding="utf-8")
+        self.assertIn("Expected reference lua CLI rows missing: 1", output)
+        self.assertIn("Lua", output)
 
     def test_renders_self_baseline_deltas_when_checked_in_artifacts_exist(self) -> None:
         self.write_report(

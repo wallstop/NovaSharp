@@ -51,6 +51,25 @@ class Metrics:
 class MetricRecord:
     metrics: Metrics
     parameter_display: str
+    runtime_display_name: str = ""
+    runtime_context: str = ""
+    show_delta_percent: bool = True
+
+
+@dataclass(frozen=True)
+class RuntimeComparison:
+    runtime: str
+    display_name: str
+    metrics: Metrics
+    runtime_context: str
+    show_delta_percent: bool
+
+
+@dataclass(frozen=True)
+class RuntimeColumn:
+    runtime: str
+    display_name: str
+    show_delta_percent: bool
 
 
 @dataclass(frozen=True)
@@ -67,7 +86,7 @@ class RuntimeMatrixRow:
     key: ComparisonKey
     parameter_display: str
     nova: Metrics
-    comparisons: tuple[tuple[str, Metrics], ...]
+    comparisons: tuple[RuntimeComparison, ...]
 
 
 @dataclass(frozen=True, order=True)
@@ -125,6 +144,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         default=DEFAULT_REGRESSION_THRESHOLD,
         help="Fractional worse-than-self-baseline threshold for regressed=true.",
     )
+    parser.add_argument(
+        "--expect-lua-cli",
+        action="store_true",
+        help="Report missing reference lua CLI wall-time rows for Execute scenarios.",
+    )
     return parser.parse_args(argv)
 
 
@@ -148,7 +172,13 @@ def main(argv: list[str]) -> int:
     comparison = load_comparison_metrics(comparison_root)
     external_rows = build_external_delta_rows(comparison)
     runtime_matrix_rows = build_runtime_matrix_rows(comparison)
-    missing_expected_runtime_cells = build_missing_expected_runtime_cells(comparison)
+    missing_expected_runtime_cells = build_missing_expected_runtime_cells(
+        comparison,
+        expect_lua_cli=args.expect_lua_cli,
+    )
+    missing_lua_cli_rows = [
+        cell for cell in missing_expected_runtime_cells if cell.runtime == "Lua"
+    ]
     comparison_groups_without_nova = sorted(
         key for key, runtimes in comparison.items() if NOVA_RUNTIME not in runtimes
     )
@@ -172,6 +202,7 @@ def main(argv: list[str]) -> int:
             len(comparison),
             comparison_groups_without_nova,
             missing_expected_runtime_cells,
+            missing_lua_cli_rows,
             current_without_baseline,
             baseline_without_current,
         ),
@@ -182,6 +213,7 @@ def main(argv: list[str]) -> int:
     print(f"regressed={str(regressed).lower()}")
     print(f"external_rows={len(external_rows)}")
     print(f"missing_external_runtime_cells={len(missing_expected_runtime_cells)}")
+    print(f"missing_lua_cli_rows={len(missing_lua_cli_rows)}")
     print(f"self_rows={len(self_rows)}")
     print(f"output={repo_relative(output)}")
     return 0
@@ -215,6 +247,9 @@ def load_benchmark_metrics(root: Path, include_external: bool) -> dict[Benchmark
             metrics[key] = MetricRecord(
                 benchmark_metrics,
                 build_parameter_display_from_json(benchmark),
+                runtime_display_name_from_json(benchmark),
+                runtime_context_from_json(benchmark),
+                show_delta_percent_from_json(benchmark),
             )
 
     return metrics
@@ -243,6 +278,9 @@ def load_comparison_metrics(root: Path) -> dict[ComparisonKey, dict[str, MetricR
             runtimes[runtime] = MetricRecord(
                 benchmark_metrics,
                 build_parameter_display_from_json(benchmark),
+                runtime_display_name_from_json(benchmark),
+                runtime_context_from_json(benchmark),
+                show_delta_percent_from_json(benchmark),
             )
 
     return metrics
@@ -289,6 +327,7 @@ def metrics_from_json(benchmark: dict) -> Metrics | None:
     statistics = benchmark.get("Statistics") or {}
     memory = benchmark.get("Memory") or {}
     percentiles = statistics.get("Percentiles") or {}
+    has_memory_payload = bool(memory) or bool(benchmark.get("Metrics"))
 
     mean = to_float(statistics.get("Mean"))
     p95 = to_float(percentiles.get("P95", statistics.get("P95", mean)))
@@ -296,11 +335,16 @@ def metrics_from_json(benchmark: dict) -> Metrics | None:
     if not math.isfinite(allocated):
         allocated = to_float(memory.get("BytesAllocatedPerOperation"))
     if not math.isfinite(allocated):
-        allocated = 0.0
+        allocated = math.nan
 
-    gen0 = gc_metric_value(benchmark, memory, "Gen0Collects", "Gen0Collections", "Gen0")
-    gen1 = gc_metric_value(benchmark, memory, "Gen1Collects", "Gen1Collections", "Gen1")
-    gen2 = gc_metric_value(benchmark, memory, "Gen2Collects", "Gen2Collections", "Gen2")
+    if has_memory_payload:
+        gen0 = gc_metric_value(benchmark, memory, "Gen0Collects", "Gen0Collections", "Gen0")
+        gen1 = gc_metric_value(benchmark, memory, "Gen1Collects", "Gen1Collections", "Gen1")
+        gen2 = gc_metric_value(benchmark, memory, "Gen2Collects", "Gen2Collections", "Gen2")
+    else:
+        gen0 = math.nan
+        gen1 = math.nan
+        gen2 = math.nan
 
     if not math.isfinite(p95):
         p95 = mean
@@ -372,18 +416,29 @@ def build_runtime_matrix_rows(
         if nova is None:
             continue
 
-        comparisons = tuple(
-            (runtime, runtimes[runtime].metrics)
-            for runtime in sorted(runtimes, key=runtime_sort_key)
-            if runtime != NOVA_RUNTIME
-        )
-        rows.append(RuntimeMatrixRow(key, nova.parameter_display, nova.metrics, comparisons))
+        comparisons = []
+        for runtime in sorted(runtimes, key=runtime_sort_key):
+            if runtime == NOVA_RUNTIME:
+                continue
+
+            record = runtimes[runtime]
+            comparisons.append(
+                RuntimeComparison(
+                    runtime,
+                    record.runtime_display_name or runtime,
+                    record.metrics,
+                    record.runtime_context,
+                    record.show_delta_percent,
+                )
+            )
+        rows.append(RuntimeMatrixRow(key, nova.parameter_display, nova.metrics, tuple(comparisons)))
 
     return rows
 
 
 def build_missing_expected_runtime_cells(
-    comparison: dict[ComparisonKey, dict[str, MetricRecord]]
+    comparison: dict[ComparisonKey, dict[str, MetricRecord]],
+    expect_lua_cli: bool,
 ) -> list[MissingRuntimeCell]:
     cells: list[MissingRuntimeCell] = []
     for key in sorted(comparison, key=comparison_matrix_sort_key):
@@ -391,11 +446,18 @@ def build_missing_expected_runtime_cells(
         if NOVA_RUNTIME not in runtimes:
             continue
 
-        for runtime in EXPECTED_EXTERNAL_RUNTIMES:
+        for runtime in expected_runtimes_for_key(key, expect_lua_cli):
             if runtime not in runtimes:
                 cells.append(MissingRuntimeCell(key, runtime))
 
     return cells
+
+
+def expected_runtimes_for_key(key: ComparisonKey, expect_lua_cli: bool) -> tuple[str, ...]:
+    if expect_lua_cli and key.operation == "Execute":
+        return EXPECTED_EXTERNAL_RUNTIMES + ("Lua",)
+
+    return EXPECTED_EXTERNAL_RUNTIMES
 
 
 def comparison_matrix_sort_key(key: ComparisonKey) -> tuple[str, str, str]:
@@ -486,6 +548,7 @@ def render_markdown(
     comparison_group_count: int,
     comparison_groups_without_nova: list[ComparisonKey],
     missing_expected_runtime_cells: list[MissingRuntimeCell],
+    missing_lua_cli_rows: list[MissingRuntimeCell],
     current_without_baseline: list[BenchmarkKey],
     baseline_without_current: list[BenchmarkKey],
 ) -> str:
@@ -507,6 +570,7 @@ def render_markdown(
         f"- Same-run scenario/operation rows with NovaSharp: {len(runtime_matrix_rows)}",
         f"- Same-run external runtime cells: {len(external_rows)}",
         f"- Expected external runtime cells missing: {len(missing_expected_runtime_cells)}",
+        f"- Expected reference lua CLI rows missing: {len(missing_lua_cli_rows)}",
         f"- Self baseline matches: {len(self_rows)} of {current_count} current rows and {self_baseline_count} baseline rows",
         "",
     ]
@@ -559,12 +623,32 @@ def render_external_section(lines: list[str], rows: list[RuntimeMatrixRow]) -> N
             "NovaSharp values are raw results; external columns show raw results plus the NovaSharp delta against that runtime.",
             "NovaSharp comparison rows intentionally use the prepared-handle public API "
             "(`PrepareString`/`CompiledScript.Execute`) so the matrix reports the preferred execution surface.",
+            "Reference `lua` CLI rows, when present, are synthetic out-of-process wall-time context "
+            "that includes process startup, parse, compile, and execution. Memory and GC cells are shown as `-` "
+            "because the CLI context does not report managed allocations.",
             "",
         ]
     )
+    render_runtime_contexts(lines, rows)
     render_novasharp_raw_results(lines, rows)
     render_runtime_time_matrix(lines, rows, runtimes)
     render_runtime_memory_matrix(lines, rows, runtimes)
+
+
+def render_runtime_contexts(lines: list[str], rows: list[RuntimeMatrixRow]) -> None:
+    contexts: dict[str, str] = {}
+    for row in rows:
+        for comparison in row.comparisons:
+            if comparison.runtime_context:
+                contexts[comparison.display_name] = comparison.runtime_context
+
+    if not contexts:
+        return
+
+    lines.extend(["#### Runtime Context", ""])
+    for display_name in sorted(contexts):
+        lines.append(f"- {display_name}: {contexts[display_name]}")
+    lines.append("")
 
 
 def render_novasharp_raw_results(lines: list[str], rows: list[RuntimeMatrixRow]) -> None:
@@ -602,37 +686,41 @@ def render_novasharp_raw_results(lines: list[str], rows: list[RuntimeMatrixRow])
 def render_runtime_time_matrix(
     lines: list[str],
     rows: list[RuntimeMatrixRow],
-    runtimes: list[str],
+    runtimes: list[RuntimeColumn],
 ) -> None:
     headers = ["Scenario", "Operation", f"{NOVA_RUNTIME} Mean / P95"]
     alignments = ["---", "---", "---:"]
     for runtime in runtimes:
         headers.extend(
             [
-                f"{runtime} Mean / P95",
-                f"{NOVA_RUNTIME} Delta vs {runtime}",
+                f"{runtime.display_name} Mean / P95",
+                f"{NOVA_RUNTIME} Delta vs {runtime.display_name}",
             ]
         )
         alignments.extend(["---:", "---:"])
 
     lines.extend(["#### Time", "", render_markdown_row(headers), render_markdown_row(alignments)])
     for row in rows:
-        comparison_by_runtime = dict(row.comparisons)
+        comparison_by_runtime = {comparison.runtime: comparison for comparison in row.comparisons}
         cells = [
             scenario_display(row),
             row.key.operation,
             format_time_pair(row.nova),
         ]
         for runtime in runtimes:
-            comparison = comparison_by_runtime.get(runtime)
+            comparison = comparison_by_runtime.get(runtime.runtime)
             if comparison is None:
                 cells.extend(["-", "-"])
                 continue
 
             cells.extend(
                 [
-                    format_time_pair(comparison),
-                    format_time_pair_delta(row.nova, comparison),
+                    format_time_pair(comparison.metrics),
+                    format_time_pair_delta(
+                        row.nova,
+                        comparison.metrics,
+                        include_percent=comparison.show_delta_percent,
+                    ),
                 ]
             )
 
@@ -643,15 +731,15 @@ def render_runtime_time_matrix(
 def render_runtime_memory_matrix(
     lines: list[str],
     rows: list[RuntimeMatrixRow],
-    runtimes: list[str],
+    runtimes: list[RuntimeColumn],
 ) -> None:
     headers = ["Scenario", "Operation", f"{NOVA_RUNTIME} Alloc / GC0/1/2"]
     alignments = ["---", "---", "---:"]
     for runtime in runtimes:
         headers.extend(
             [
-                f"{runtime} Alloc / GC0/1/2",
-                f"{NOVA_RUNTIME} Delta vs {runtime}",
+                f"{runtime.display_name} Alloc / GC0/1/2",
+                f"{NOVA_RUNTIME} Delta vs {runtime.display_name}",
             ]
         )
         alignments.extend(["---:", "---:"])
@@ -661,28 +749,33 @@ def render_runtime_memory_matrix(
             "#### Memory and GC",
             "",
             "GC columns are collections per 1,000 operations.",
+            "A `-` cell means that runtime did not report memory or GC diagnostics for that row.",
             "",
             render_markdown_row(headers),
             render_markdown_row(alignments),
         ]
     )
     for row in rows:
-        comparison_by_runtime = dict(row.comparisons)
+        comparison_by_runtime = {comparison.runtime: comparison for comparison in row.comparisons}
         cells = [
             scenario_display(row),
             row.key.operation,
             format_memory_gc_pair(row.nova),
         ]
         for runtime in runtimes:
-            comparison = comparison_by_runtime.get(runtime)
+            comparison = comparison_by_runtime.get(runtime.runtime)
             if comparison is None:
                 cells.extend(["-", "-"])
                 continue
 
             cells.extend(
                 [
-                    format_memory_gc_pair(comparison),
-                    format_memory_gc_delta(row.nova, comparison),
+                    format_memory_gc_pair(comparison.metrics),
+                    format_memory_gc_delta(
+                        row.nova,
+                        comparison.metrics,
+                        include_percent=comparison.show_delta_percent,
+                    ),
                 ]
             )
 
@@ -690,9 +783,20 @@ def render_runtime_memory_matrix(
     lines.append("")
 
 
-def external_runtimes_for_matrix(rows: list[RuntimeMatrixRow]) -> list[str]:
-    runtimes = {runtime for row in rows for runtime, _ in row.comparisons}
-    return sorted(runtimes, key=runtime_sort_key)
+def external_runtimes_for_matrix(rows: list[RuntimeMatrixRow]) -> list[RuntimeColumn]:
+    columns: dict[str, RuntimeColumn] = {}
+    for row in rows:
+        for comparison in row.comparisons:
+            columns.setdefault(
+                comparison.runtime,
+                RuntimeColumn(
+                    comparison.runtime,
+                    comparison.display_name,
+                    comparison.show_delta_percent,
+                ),
+            )
+
+    return sorted(columns.values(), key=lambda column: runtime_sort_key(column.runtime))
 
 
 def scenario_display(row: RuntimeMatrixRow) -> str:
@@ -747,11 +851,19 @@ def format_time_pair(metrics: Metrics) -> str:
     return f"{format_time(metrics.mean_ns)} / {format_time(metrics.p95_ns)}"
 
 
-def format_time_pair_delta(current: Metrics, baseline: Metrics) -> str:
+def format_time_pair_delta(current: Metrics, baseline: Metrics, include_percent: bool = True) -> str:
+    if include_percent:
+        return " / ".join(
+            [
+                format_metric_delta(current.mean_ns, baseline.mean_ns, format_time_delta),
+                format_metric_delta(current.p95_ns, baseline.p95_ns, format_time_delta),
+            ]
+        )
+
     return " / ".join(
         [
-            format_metric_delta(current.mean_ns, baseline.mean_ns, format_time_delta),
-            format_metric_delta(current.p95_ns, baseline.p95_ns, format_time_delta),
+            format_time_delta(current.mean_ns - baseline.mean_ns),
+            format_time_delta(current.p95_ns - baseline.p95_ns),
         ]
     )
 
@@ -760,11 +872,20 @@ def format_memory_gc_pair(metrics: Metrics) -> str:
     return f"{format_bytes(metrics.allocated_bytes)} / {format_gc_triplet(metrics)}"
 
 
-def format_memory_gc_delta(current: Metrics, baseline: Metrics) -> str:
-    allocation_delta = (
-        f"{format_bytes_delta(current.allocated_bytes - baseline.allocated_bytes)} "
-        f"({format_percent(percentage_delta(current.allocated_bytes, baseline.allocated_bytes))})"
-    )
+def format_memory_gc_delta(
+    current: Metrics,
+    baseline: Metrics,
+    include_percent: bool = True,
+) -> str:
+    if math.isfinite(current.allocated_bytes) and math.isfinite(baseline.allocated_bytes):
+        allocation_delta = format_bytes_delta(current.allocated_bytes - baseline.allocated_bytes)
+        if include_percent:
+            allocation_delta = (
+                f"{allocation_delta} "
+                f"({format_percent(percentage_delta(current.allocated_bytes, baseline.allocated_bytes))})"
+            )
+    else:
+        allocation_delta = "-"
     return f"{allocation_delta} / {format_gc_delta_triplet(current, baseline)}"
 
 
@@ -954,6 +1075,21 @@ def build_parameter_display_from_json(benchmark: dict) -> str:
     if not signature:
         return ""
     return ", ".join(part.replace(":", "=", 1) for part in signature.split("|"))
+
+
+def runtime_display_name_from_json(benchmark: dict) -> str:
+    return normalize_cell(benchmark.get("RuntimeDisplayName", ""))
+
+
+def runtime_context_from_json(benchmark: dict) -> str:
+    return normalize_cell(benchmark.get("RuntimeContext", ""))
+
+
+def show_delta_percent_from_json(benchmark: dict) -> bool:
+    value = benchmark.get("ShowDeltaPercent")
+    if isinstance(value, bool):
+        return value
+    return True
 
 
 def to_float(value: object) -> float:

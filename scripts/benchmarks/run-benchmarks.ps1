@@ -83,8 +83,12 @@ function Invoke-Benchmark {
 Invoke-Benchmark -Project $RuntimeBenchmarkProject -Configuration $Configuration -Description "NovaSharp runtime"
 
 $comparisonArtifacts = "artifacts/benchmarkdotnet/comparison"
+$luaCliScenarios = "artifacts/benchmarkdotnet/lua-cli-scenarios"
 if (Test-Path $comparisonArtifacts) {
     Remove-Item -LiteralPath $comparisonArtifacts -Recurse -Force
+}
+if (Test-Path $luaCliScenarios) {
+    Remove-Item -LiteralPath $luaCliScenarios -Recurse -Force
 }
 
 if (-not $SkipComparison) {
@@ -104,6 +108,28 @@ if (-not $SkipComparison) {
         throw "dotnet run --project $ComparisonBenchmarkProject -c $Configuration failed. See output above."
     }
     Write-Host "comparison benchmarks complete."
+
+    Write-Host ""
+    Write-Host "Exporting comparison scenarios for reference lua CLI context..."
+    dotnet run `
+        --project $ComparisonBenchmarkProject `
+        -c $Configuration `
+        --no-build `
+        -- `
+        --export-scenarios $luaCliScenarios
+    if ($LASTEXITCODE -ne 0) {
+        throw "dotnet run --project $ComparisonBenchmarkProject -c $Configuration -- --export-scenarios failed. See output above."
+    }
+
+    Write-Host ""
+    Write-Host "Measuring reference lua CLI wall-time context..."
+    $pythonCommand = Resolve-PythonCommand
+    & $pythonCommand "scripts/benchmarks/run-lua-cli-context.py" `
+        "--scenario-dir" $luaCliScenarios `
+        "--output-root" $comparisonArtifacts
+    if ($LASTEXITCODE -ne 0) {
+        throw "scripts/benchmarks/run-lua-cli-context.py failed. See output above."
+    }
 }
 else {
     Write-Host ""
