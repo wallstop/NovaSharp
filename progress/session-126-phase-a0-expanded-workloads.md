@@ -25,9 +25,11 @@ Date: 2026-07-02
 - `./scripts/build/quick.sh` passed.
 - `./scripts/test/quick.sh` passed with 14,529 succeeded, 0 failed, 0 skipped.
 - `bash ./scripts/dev/pre-commit.sh` passed.
+- After the Copilot-requested fail-fast switch change, the comparison build, benchmark renderer tests, Lua CLI context tests, `git diff --check`, and 16-scenario export smoke passed again.
 
 ## Notes
 
 - `dotnet run ... -- --filter "*LuaPerformanceBenchmarks*" --job Dry` was stopped because the project-level BenchmarkDotNet config still added the normal `Comparison` job, turning the intended dry smoke into a full 256-benchmark run.
+- Copilot review on PR #46 flagged silent `TowerOfHanoi` fallbacks in the scenario name/script switches. Both default arms now throw so missing scenario mappings fail during development or CI instead of exporting or benchmarking the wrong workload.
 - Cross-runtime Lua-to-C# and C#-to-Lua interop rows remain separate work because every engine needs a different host binding path and reference `lua` needs explicit skip/report behavior.
 - Full BenchmarkDotNet JSON baselines, one-command scoreboard markdown generation, ratio/allocation gates, and the Unity IL2CPP stopwatch scene remain open Phase A0 work.

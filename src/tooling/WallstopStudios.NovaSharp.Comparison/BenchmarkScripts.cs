@@ -1,5 +1,7 @@
 namespace WallstopStudios.NovaSharp.Comparison;
 
+using System;
+
 /// <summary>
 /// Supplies Lua scripts used by the comparison benchmarks.
 /// </summary>
@@ -84,7 +86,11 @@ internal static class BenchmarkScripts
             ScriptScenario.StringConcatChains => nameof(ScriptScenario.StringConcatChains),
             ScriptScenario.StringPatternGsubFind => nameof(ScriptScenario.StringPatternGsubFind),
             ScriptScenario.StringFormat => nameof(ScriptScenario.StringFormat),
-            _ => nameof(ScriptScenario.TowerOfHanoi),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(scenario),
+                scenario,
+                "Unknown comparison benchmark scenario."
+            ),
         };
 
     /// <summary>
@@ -109,7 +115,11 @@ internal static class BenchmarkScripts
             ScriptScenario.StringConcatChains => StringConcatChains,
             ScriptScenario.StringPatternGsubFind => StringPatternGsubFind,
             ScriptScenario.StringFormat => StringFormat,
-            _ => TowerOfHanoi,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(scenario),
+                scenario,
+                "Unknown comparison benchmark scenario."
+            ),
         };
 
     private static readonly string NumericLoops =
