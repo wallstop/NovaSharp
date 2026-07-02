@@ -13,6 +13,7 @@ Date: 2026-07-02
 - Preserved the existing benchmark-action storage/comment path in the aggregate job.
 - Made BenchmarkDotNet JSON export explicit in both benchmark configs so CI cannot run a benchmark successfully while leaving the aggregate without parseable JSON.
 - Removed redundant `--exporters json` flags from CI and local benchmark launchers now that JSON export is part of the benchmark configs.
+- Addressed Cursor Bugbot feedback on commit `5245eeba` by making the aggregate job fail when any expected split artifact is missing after successful measurement jobs.
 - Kept the Phase A0 scoreboard/gate/IL2CPP items open in `PLAN.md`; this change only fixes CI orchestration and artifact reliability.
 
 ## Validation
@@ -33,7 +34,8 @@ Date: 2026-07-02
 - `./scripts/build/quick.sh` completed successfully.
 - `./scripts/test/quick.sh` completed with 14,529 tests passing.
 - `bash ./scripts/dev/pre-commit.sh` completed successfully.
+- After the Bugbot aggregate-artifact fix, `/tmp/novasharp-actionlint/actionlint .github/workflows/benchmarks.yml`, YAML parsing, and `git diff --check` completed successfully.
 
 ## Remaining Work
 
-- Push the PR update, trigger GitHub Copilot and Cursor Bugbot reviews, and wait for CI/reviewer feedback.
+- Push the Bugbot follow-up commit, trigger GitHub Copilot and Cursor Bugbot reviews, and wait for CI/reviewer feedback.

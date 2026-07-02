@@ -292,18 +292,82 @@ jobs:
           pattern: comparison-*
           path: artifacts/benchmarkdotnet/comparison-download
 
+      - name: Verify downloaded benchmark artifacts
+        if: steps.split_status.outputs.failed != 'true'
+        run: |
+          set -euo pipefail
+          runtime_root="artifacts/benchmarkdotnet/runtime-download"
+          comparison_root="artifacts/benchmarkdotnet/comparison-download"
+          missing=false
+
+          require_report() {
+            local root="$1"
+            local pattern="$2"
+            local label="$3"
+            if find "$root" -name "$pattern" -type f | grep -q .; then
+              echo "Found ${label}."
+              return
+            fi
+
+            echo "::error::Missing ${label} under ${root}."
+            missing=true
+          }
+
+          require_report "$runtime_root" "*RuntimeBenchmarks-report-full-compressed.json" "runtime benchmark JSON report"
+
+          scenarios=(
+            NumericLoops
+            TableMutation
+            TowerOfHanoi
+            EightQueens
+            CoroutinePingPong
+            FibonacciRecursive
+            NBody
+            BinaryTrees
+            SpectralNorm
+            TableIntFillIter
+            TableStringKeyLookup
+            TableNextTraversal
+            TableInsertRemove
+            StringConcatChains
+            StringPatternOps
+            StringFormat
+          )
+          for scenario in "${scenarios[@]}"; do
+            scenario_root="${comparison_root}/comparison-scenario-${scenario}"
+            require_report "$scenario_root" "*LuaPerformanceBenchmarks-report-full-compressed.json" "${scenario} comparison BenchmarkDotNet JSON report"
+            require_report "$scenario_root" "*ReferenceLuaCli-report-full-compressed.json" "${scenario} reference lua CLI JSON report"
+          done
+
+          interops=(LuaToClrInterop ClrToLuaInterop)
+          for interop in "${interops[@]}"; do
+            interop_root="${comparison_root}/comparison-interop-${interop}"
+            require_report "$interop_root" "*LuaInteropBenchmarks-report-full-compressed.json" "${interop} interop BenchmarkDotNet JSON report"
+          done
+
+          if [ "$missing" = "true" ]; then
+            echo "::group::Downloaded benchmark artifact tree"
+            find artifacts/benchmarkdotnet -maxdepth 6 -type f | sort || true
+            echo "::endgroup::"
+            exit 1
+          fi
+
       - name: Find and validate benchmark results
         id: find_result
-        continue-on-error: true
         run: |
-          set -uo pipefail
+          set -euo pipefail
 
           echo "Searching downloaded runtime benchmark results..."
           runtime_artifacts="artifacts/benchmarkdotnet/runtime-download"
           if [ ! -d "$runtime_artifacts" ]; then
-            echo "::warning::Downloaded runtime benchmark artifact directory not found"
+            if [ "${{ steps.split_status.outputs.failed }}" = "true" ]; then
+              echo "::warning::Downloaded runtime benchmark artifact directory not found after a split job failure."
+              echo "has_results=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::Downloaded runtime benchmark artifact directory not found."
             echo "has_results=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            exit 1
           fi
 
           result_file=""
@@ -322,10 +386,16 @@ jobs:
           fi
 
           if [ -z "$result_file" ]; then
-            echo "::warning::No benchmark result JSON file found in downloaded runtime artifacts"
+            if [ "${{ steps.split_status.outputs.failed }}" = "true" ]; then
+              echo "::warning::No benchmark result JSON file found in downloaded runtime artifacts after a split job failure."
+              find "$runtime_artifacts" -type f || echo "Empty or missing"
+              echo "has_results=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::error::No benchmark result JSON file found in downloaded runtime artifacts."
             find "$runtime_artifacts" -type f || echo "Empty or missing"
             echo "has_results=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            exit 1
           fi
 
           echo "Found benchmark result: $result_file"
