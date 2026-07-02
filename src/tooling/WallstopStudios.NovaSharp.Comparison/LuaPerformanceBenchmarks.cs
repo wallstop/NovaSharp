@@ -31,6 +31,8 @@ using NLuaState = NLua.Lua;
 )]
 public class LuaPerformanceBenchmarks : IDisposable
 {
+    private static readonly string[] BenchmarkScenarioNames = BenchmarkScripts.GetScenarioNames();
+
     private string _source = string.Empty;
     private Script _novaSharpScript;
     private CompiledScript _novaSharpFunction;
@@ -51,7 +53,7 @@ public class LuaPerformanceBenchmarks : IDisposable
     /// <summary>
     /// Scenarios executed by BenchmarkDotNet. Kept in sync with CLI scenario export.
     /// </summary>
-    public static IEnumerable<string> ScenarioNames => BenchmarkScripts.GetScenarioNames();
+    public static IEnumerable<string> ScenarioNames => BenchmarkScenarioNames;
 
     private ScriptScenario CurrentScenario
     {

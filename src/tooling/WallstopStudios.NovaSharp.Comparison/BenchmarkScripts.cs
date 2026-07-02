@@ -367,8 +367,10 @@ internal static class BenchmarkScripts
         local n = {SpectralNormSize}
 
         local function a(i, j)
-            local ij = i + j - 1
-            return 1.0 / ((ij * (ij + 1) / 2) + i)
+            local x = i - 1
+            local y = j - 1
+            local ij = x + y
+            return 1.0 / ((ij * (ij + 1) / 2) + x + 1)
         end
 
         local function multiply_av(source, target)
