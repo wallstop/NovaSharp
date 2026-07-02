@@ -59,6 +59,12 @@ jobs:
       - name: Build solution
         run: dotnet build src/NovaSharp.sln -c Release --no-restore
 
+      - name: Install reference Lua CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.4
+          lua5.4 -v
+
       - name: Run benchmarks
         id: run_benchmarks
         continue-on-error: true
@@ -94,6 +100,19 @@ jobs:
             --filter "*LuaPerformanceBenchmarks*" \
             --exporters json \
             --artifacts "$comparison_artifacts"
+
+          scenario_artifacts="artifacts/benchmarkdotnet/lua-cli-scenarios"
+          rm -rf "$scenario_artifacts"
+          echo "Exporting comparison scenarios for reference lua CLI context..."
+          dotnet run --project src/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj \
+            -c Release --no-build -- \
+            --export-scenarios "$scenario_artifacts"
+
+          echo "Measuring reference lua CLI wall-time context..."
+          python3 scripts/benchmarks/run-lua-cli-context.py \
+            --scenario-dir "$scenario_artifacts" \
+            --output-root "$comparison_artifacts" \
+            --lua-cmd lua5.4
           echo "Comparison benchmark run completed"
           echo "Contents of $comparison_artifacts:"
           find "$comparison_artifacts" -type f -name "*.json" || echo "No comparison JSON files found"
@@ -296,12 +315,14 @@ jobs:
             --current-root BenchmarkDotNet.Artifacts \
             --comparison-root artifacts/benchmarkdotnet/comparison \
             --self-baseline-root docs/performance-history/current-baseline \
-            --output artifacts/benchmark-deltas.md)"
+            --output artifacts/benchmark-deltas.md \
+            --expect-lua-cli)"
           printf '%s\n' "$delta_out"
           changed="$(printf '%s\n' "$delta_out" | sed -n 's/^changed=//p' | tail -n1)"
           regressed="$(printf '%s\n' "$delta_out" | sed -n 's/^regressed=//p' | tail -n1)"
           external_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^external_rows=//p' | tail -n1)"
           missing_external_runtime_cells="$(printf '%s\n' "$delta_out" | sed -n 's/^missing_external_runtime_cells=//p' | tail -n1)"
+          missing_lua_cli_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^missing_lua_cli_rows=//p' | tail -n1)"
           self_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^self_rows=//p' | tail -n1)"
           {
             echo "has_report=true"
@@ -310,6 +331,7 @@ jobs:
             echo "regressed=${regressed:-false}"
             echo "external_rows=${external_rows:-0}"
             echo "missing_external_runtime_cells=${missing_external_runtime_cells:-0}"
+            echo "missing_lua_cli_rows=${missing_lua_cli_rows:-0}"
             echo "self_rows=${self_rows:-0}"
           } >> "$GITHUB_OUTPUT"
 
@@ -336,6 +358,12 @@ jobs:
           echo "::warning::Expected external runtime cells were missing. Check the same-run comparison benchmark logs and artifacts."
         shell: bash
 
+      - name: Warn when reference lua CLI context is missing
+        if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.missing_lua_cli_rows != '0'
+        run: |
+          echo "::warning::Reference lua CLI wall-time context was expected but missing. Check the comparison benchmark logs and artifacts."
+        shell: bash
+
       - name: Comment benchmark comparison deltas on PR
         if: github.event_name == 'pull_request' && steps.benchmark_deltas.outputs.has_report == 'true'
         uses: actions/github-script@v8
@@ -345,6 +373,7 @@ jobs:
           BENCHMARK_REGRESSED: ${{ steps.benchmark_deltas.outputs.regressed }}
           BENCHMARK_EXTERNAL_ROWS: ${{ steps.benchmark_deltas.outputs.external_rows }}
           BENCHMARK_MISSING_EXTERNAL_RUNTIME_CELLS: ${{ steps.benchmark_deltas.outputs.missing_external_runtime_cells }}
+          BENCHMARK_MISSING_LUA_CLI_ROWS: ${{ steps.benchmark_deltas.outputs.missing_lua_cli_rows }}
           BENCHMARK_SELF_ROWS: ${{ steps.benchmark_deltas.outputs.self_rows }}
         with:
           script: |
@@ -361,6 +390,7 @@ jobs:
             const regressed = process.env.BENCHMARK_REGRESSED === 'true';
             const externalRows = process.env.BENCHMARK_EXTERNAL_ROWS || '0';
             const missingExternalRuntimeCells = process.env.BENCHMARK_MISSING_EXTERNAL_RUNTIME_CELLS || '0';
+            const missingLuaCliRows = process.env.BENCHMARK_MISSING_LUA_CLI_ROWS || '0';
             const selfRows = process.env.BENCHMARK_SELF_ROWS || '0';
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = [
@@ -368,7 +398,7 @@ jobs:
               report,
               '',
               `Changed beyond tolerance: ${changed ? 'yes' : 'no'}. Self-regression signal: ${regressed ? 'yes' : 'no'}.`,
-              `External runtime cells: ${externalRows}. Missing expected external cells: ${missingExternalRuntimeCells}. Self-baseline rows: ${selfRows}.`,
+              `External runtime cells: ${externalRows}. Missing expected external cells: ${missingExternalRuntimeCells}. Missing lua CLI rows: ${missingLuaCliRows}. Self-baseline rows: ${selfRows}.`,
               '',
               `_Generated by benchmark CI ([run logs](${runUrl}))._`,
             ].join('\n');

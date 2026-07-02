@@ -98,6 +98,7 @@ jobs:
           python3 tools/test_migrate_csharp_version_annotations.py
           python3 tools/test_compare_lua_outputs.py
           python3 tools/test_render_benchmark_deltas.py
+          python3 tools/test_run_lua_cli_context.py
           python3 tools/test_render_lua_comparison_report.py
           python3 tools/test_lua_error_ratchet.py
           python3 tools/test_lua_fixture_metadata.py
