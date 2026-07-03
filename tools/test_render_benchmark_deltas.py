@@ -22,6 +22,7 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.current_root = self.work_dir / "current"
         self.comparison_root = self.work_dir / "comparison"
         self.self_baseline_root = self.work_dir / "self-baseline"
+        self.phase_baseline = self.work_dir / "phase-a0-baseline.json"
         self.output = self.work_dir / "benchmark-deltas.md"
 
     def tearDown(self) -> None:
@@ -211,6 +212,8 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             )
         if expect_lua_cli:
             args.append("--expect-lua-cli")
+        if phase_baseline is None:
+            phase_baseline = self.phase_baseline
         if phase_baseline is not None:
             args.extend(
                 [
