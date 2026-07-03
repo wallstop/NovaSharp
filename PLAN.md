@@ -37,9 +37,9 @@ NovaSharp becomes the definitive Lua modding framework for Unity:
 | Hanoi + C# callback per step | ~600 ms | ~20,000 ms | **33x FASTER** |
 | Empty Lua fn 5,000×/frame (Unity) | MoonSharp 315 fps | 170 fps | managed wins 2x |
 
-Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author's published Hanoi numbers; Lua-CSharp issue #156 (where Lua-CSharp v0.5, a pure-C# register VM with struct values, hit **395 fps** — beating both).
+Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author's published Hanoi numbers; Lua-CSharp issue #156 (where Lua-CSharp v0.5, a pure-C# register VM with struct values, hit **395 fps** — beating both; single-source, one reporter on Unity Mono, treat as directional).
 
-**Conclusion**: the decisive variable is interop density, not raw VM speed. A tuned managed interpreter realistically lands **2-5x of native C Lua on pure compute** (currently 10-15x) and **beats NLua outright on interop-heavy workloads** — which is the actual Unity modding workload. WattleScript proved ~6x is recoverable from the MoonSharp lineage via struct conversion alone; Lua-CSharp proved the full recipe works on IL2CPP.
+**Conclusion**: the decisive variable is interop density, not raw VM speed. A tuned managed interpreter realistically lands **2-5x of native C Lua on pure compute** (currently 10-15x) and **beats NLua outright on interop-heavy workloads** — which is the actual Unity modding workload. Two caveats on the compute target: (a) this holds on desktop CoreCLR; **IL2CPP/AOT will be worse** (Puerts data: interpreted Lua ~11x behind IL2CPP-native script paths on fib(40)), so compute-heavy scripts stay the weak flank; (b) supporting data clusters here — gopher-lua ≈3.2x on fib(35), LuaJ interpreted ≈1.5-3x — but no managed interpreter has *consistently beaten* C Lua without compiling to host bytecode, so sub-2x claims are unproven territory. WattleScript's "~6x recoverable via struct conversion" is a widely-repeated **developer claim with no published benchmark** (traceable to MoonSharp issue #320 comments, not the WattleScript README) — treat as motivating, not evidence. Lua-CSharp proved the struct-value recipe works on IL2CPP.
 
 ### Root Causes (confirmed in source)
 
@@ -52,10 +52,10 @@ Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author
 ### Established Research Verdicts (do not re-litigate; see docs/performance/ research note)
 
 - **Value type**: `readonly struct LuaValue { LuaNumber num; object refValue; DataType tag; }`, `LayoutKind.Auto`, ~24-32 B. True NaN-boxing is impossible on the CLR (ECMA-335 §II.10.7 forbids object-ref/scalar overlap; TypeLoadException). Ref-over-ref overlap is legal (16 B DynaJson-style) but defer until measured — IL2CPP verification risk. Keep the existing `LuaNumber` int/float union verbatim.
-- **Dispatch**: one `while(true)` + `switch` over a **dense, zero-based opcode enum**. This is what Mono's interpreter, the new CoreCLR (.NET 10) interpreter, MoonSharp, and Lua-CSharp all converge on; it compiles to a jump table on RyuJIT **and** under IL2CPP. Do NOT use delegate arrays (worst on IL2CPP), tail-call threading (no C# `tail.`; 60x pathological slowdowns; unavailable on IL2CPP), or instruction-object virtual dispatch (DLR-interpreter design, known slow). `delegate*` tables are unproven and IL2CPP's shakiest corner.
+- **Dispatch**: one `while(true)` + `switch` over a **dense, zero-based opcode enum**. Note the precise prior art: C interpreters (Mono, the new CoreCLR .NET 10/11 interpreter, Luau) prefer **computed goto where the compiler supports it and fall back to `switch`** — C# has no computed goto and no guaranteed tail call, so `switch` is the accepted fallback and C#'s only option (this is not a compromise: Rohou et al. CGO 2015, "don't trust folklore," shows indirect-branch misprediction fell to ~0.5-2 MPKI on Haswell+, and CPython 3.14's tail-call interpreter netted only 1-5% once an LLVM-19 baseline regression was corrected — the residual threaded-dispatch advantage is single-digit % and unreachable from C# anyway). The `switch` compiles to a jump table on RyuJIT and, on clang-compiled IL2CPP platforms, clang re-forms the jump table (Josh Peterson demo) — but **MSVC-compiled IL2CPP (Windows) is unverified; the A2 jump-table check must include an MSVC IL2CPP target.** Do NOT use delegate arrays (worst on IL2CPP), tail-call threading (no C# `tail.`; 60x pathological slowdowns; unavailable on IL2CPP), or instruction-object virtual dispatch (DLR-interpreter design, known slow). `delegate*` tables are unproven and IL2CPP's shakiest corner.
 - **Loop hygiene**: PC/stack-base in `ref` locals; `Unsafe.Add`/`MemoryMarshal.GetArrayDataReference` for slot access (Lua-CSharp ships this on IL2CPP); `[MethodImpl(NoInlining)]` on cold/error paths; try/catch OUTSIDE the loop; never allocate per instruction. IL2CPP/Mono get NO PGO or tiering — design for the static-compile case.
 - **No exceptions on hot call paths** — this exact mistake cost Lua-CSharp 10x (v0.4.2 → v0.5 fix).
-- **Interop**: Roslyn incremental source generator (attribute + partial class) is the industry-consensus binding pattern (System.Text.Json, MessagePack v3, MemoryPack, VContainer, Lua-CSharp). Performance bar: xLua gencode ≈ 107 ns/call on mid-range Android. NLua's structural weakness: `MethodBase.Invoke` per call + boxing + link.xml fragility + per-platform native binaries + no WebGL.
+- **Interop**: Roslyn incremental source generator (attribute + partial class) is the industry-consensus binding pattern (System.Text.Json, MessagePack v3, MemoryPack, VContainer, Lua-CSharp). Performance bar: generated-code bindings (xLua-style gencode) target low-hundreds-of-nanoseconds per call on mid-range mobile — the oft-quoted "xLua ≈107 ns/call" figure could not be traced to a current primary source, so benchmark against our own scoreboard rather than that number. NLua's structural weakness: `MethodBase.Invoke` per call + boxing + link.xml fragility + per-platform native binaries + no WebGL.
 - **Platform floor**: Unity 2021.2 minimum (C# 9, netstandard2.1, Roslyn generators via `RoslynAnalyzer` label, Microsoft.CodeAnalysis 3.8 for the generator).
 - **No legacy/back-compat obligations** (pre-1.0). The ONLY invariant is Lua runtime correctness, enforced by the fixture/comparison harness.
 
@@ -174,6 +174,8 @@ Loading is 20-60x behind `luaL_loadstring`. Do NOT rewrite the parser. Profile, 
 
 **Gate (evaluate after A6)**: proceed iff compute suite is >5x native lua OR call-heavy is >2x behind Lua-CSharp. Otherwise defer indefinitely.
 
+**Realistic upside (calibrated to literature)**: against a *tuned* stack VM (which A1-A7 produce), the register-VM win clusters at **~1.1-1.4x whole-suite**, not the ~1.8x sometimes implied: TACO 2008 measured 1.15x vs an inline-threaded stack VM on AMD64; the Lua 5.0 paper reports ~1.2x geomean on real workloads; Fang & Liu ~1.26x. Larger wins (approaching 1.8x) appear only on dispatch-bound numeric microbenchmarks and on Pentium-4-era misprediction data that modern branch predictors have erased. **The register VM's real payoff for NovaSharp is not fewer dispatches but less tagged-value copy traffic** — this is Lua 5.0's own stated rationale (avoiding push/pop of multi-byte `LuaValue`s), which is why it matters more here (24-32 B values) than in a byte-value VM. Keep the gate; treat A8 as a copy-traffic/plateau-breaker, not a dispatch multiplier.
+
 - [ ] New compiler backend from the existing AST (`Tree/`) emitting PUC-5.4-style register bytecode; new executor with struct frames and `Unsafe.Add` register access; loop-specialization variants reused from A3.
 - [ ] Side-by-side migration: internal engine-selection option; CI matrix runs the full fixture suite against BOTH engines; flip the default when green + faster across the whole scoreboard; delete the stack VM (`ProcessorInstructionLoop.cs`, stack emitter, stack opcodes) one milestone later.
 - [ ] Coroutines: pooled per-coroutine frame stacks from day one; suspend = save frame window (no exceptions).
@@ -181,16 +183,18 @@ Loading is 20-60x behind `luaL_loadstring`. Do NOT rewrite the parser. Profile, 
 
 #### End-state estimates (vs native C Lua; honest uncertainty)
 
+Numbers are **desktop CoreCLR** targets; expect IL2CPP/AOT to land worse on compute-heavy rows (see the Performance Problem caveats). The A8 column reflects the calibrated ~1.1-1.4x register-VM delta above, not a larger multiplier.
+
 | Class | After A1-A7 (stack VM) | After A8 (register VM) | Confidence |
 | ----------------------------- | ---------------------- | ---------------------- | ------------------------------------ |
-| Numeric loops | 2.5-5x | 2-3.5x | High (WattleScript/Lua-CSharp precedent) |
+| Numeric loops | 2.5-5x | 2-3.5x | High (Lua-CSharp precedent; WattleScript claim unverified) |
 | Call-heavy (fib/hanoi) | 3-7x | 2-4x | Medium — the register-VM fork |
 | Table-heavy | 2-4x | 2-3x | Medium-high |
 | String-heavy | 1.5-3x | same | High (BCL strings are good) |
 | Interop Lua↔CLR | **beats NLua 2-10x** | same or better | High — the structural advantage |
 | Compile (cold) | 5-15x slower | same | Medium |
 
-Total A0-A7 ≈ 14-20 engineer-weeks; A8 +6-10 if triggered.
+Total A0-A7 ≈ 14-20 engineer-weeks; A8 +6-10 if triggered. (A4.5 opcode specialization, added in the Research Review below, is a separate ~1-2 week item expected to buy 10-30% aggregate before the A8 gate is even evaluated.)
 
 ______________________________________________________________________
 
@@ -334,9 +338,65 @@ ______________________________________________________________________
 1. 🟡 **B1** — source generator MVP ∥ **A2** — struct instructions
 1. 🟡 **A3 ∥ A4** — hot-loop hygiene ∥ table rewrite
 1. 🟡 **A5** — call path + span interop (then CoreLib migration, one module per PR)
-1. 🟡 **B2** — Unity package; **A6/A7** — strings/compile-time
-1. 🟢 **B3/B4** — async bridge, modding framework
+1. 🟡 **B2** — Unity package; **A6/A7** — strings/compile-time; **A4.5** — opcode specialization (see Research Review)
+1. 🟢 **B3/B4** — async bridge, modding framework (fold the Sandbox Threat-Model items in the Research Review into A3/B4)
 1. 🟢 **A8 gate decision** (data-driven), **B5/B6** — migration lockdown, debugger
+
+______________________________________________________________________
+
+## Research Review (2026-07): External-Evidence Audit & Augmentations
+
+**Status**: 🔬 Research-only audit of this roadmap against source, interpreter/VM literature, the competitive landscape, and sandbox-security research. **No implementation performed.** This section augments — it does not redirect — the Strategic Roadmap above; each item cross-references the phase it modifies.
+
+### Overall verdict
+
+The roadmap is sound and unusually well-grounded. Its highest-stakes calls were **confirmed correct** against both source and literature: `switch`-over-dense-enum dispatch, the struct `LuaValue` representation (NaN-boxing genuinely impossible on the CLR), no-exceptions-on-hot-paths, the staged-hybrid-then-gated-register-VM strategy, and the facade-first API. The methodology (scoreboard-before-surgery, no-merge-on-red-fixture, per-phase CI + IL2CPP spot-checks) is exactly what the evidence recommends. Every "Root Cause" claim was verified in source (DynValue/Instruction/ProcessorInstructionLoop/Table/FastStack all as described). This audit corrects two overstated numbers (handled inline above: register-VM upside, dispatch prior-art wording), adds one missing optimization family (A4.5), and surfaces a cluster of security and positioning gaps.
+
+### A4.5 — Opcode specialization & inline caches (NEW; ~1-2 weeks; the biggest missing win)
+
+The roadmap has no opcode specialization, inline caching, or fastcall — the single most evidence-backed gap. All of the following are **self-modifying `Instruction[]` quickening: AOT-safe, IL2CPP-safe, no codegen**, and complementary to (cheaper than) the A8 register VM. Slot into the schedule after A4 (needs the new table) and before the A8 gate is evaluated.
+
+- [ ] **Table-field slot inline cache** for constant-key `GetTable`/`SetTable` (predicted hash slot + dynamic correction). Luau's highest-value IC; makes `obj.field` near-constant-time.
+- [ ] **Type-specialized arithmetic opcodes** with counter-based deopt (e.g. `Add` → `AddInt`/`AddFloat` fast paths reverting to generic on type miss). CPython PEP 659: ~10-15% aggregate, 10-25% per specialized op.
+- [ ] **Fastcall builtin opcodes** — invoke compile-time-known `math.*`/`string.*`/`type`/`rawget` etc. without a stack-frame setup (Luau: "only slightly slower than arithmetic").
+- [ ] **GETIMPORT / safeenv** — resolve global chains (`math.max`) at load time when the environment is provably unmutated; dynamically deopt on `setfenv`/`load`/global write. Directly attacks Lua's global-heavy idioms.
+- [ ] Skip classic **superinstructions**: CPython removed them in 3.12 and their payoff was misprediction elimination, which modern branch predictors already do (Rohou et al. 2015).
+
+**Exit criteria**: scoreboard gate showing net win on field-access/arith/builtin-call microbenchmarks; no fixture regression; deopt paths fixture-covered. Evidence base: Brunthaler ECOOP/DLS 2010 (1.7-2.2x on microbench), PEP 659, luau.org/performance.
+
+### Value-layout & IL2CPP refinements (into A1-A3, B2)
+
+- [ ] **A1d**: benchmark a **24 B `LuaValue` variant vs the ~32 B default**. If `LuaNumber` can present as an 8 B double/long union with the int/float discriminator carried in the `DataType` tag byte, the value drops from ~32 B (16 B LuaNumber union + ref + tag + padding) to ~24 B, and every stack-slot copy moves less memory — which is the entire register-VM rationale applied for free. Kept-verbatim `LuaNumber` (current plan) forecloses this; measure before committing.
+- [ ] **A2**: consider a **packed ≤8 B instruction encoding** instead of `{OpCode; int A,B,C}` (16 B). The Lua 5.0 paper names instruction decode+size as the register-VM's main tax; a smaller encoding improves i-cache and dispatch.
+- [ ] **A3**: apply **`[Il2CppSetOption(Option.NullChecks/ArrayBoundsChecks/DivideByZeroChecks, false)]`** to the dispatch loop and audited slot accessors — official Unity knob that removes IL2CPP's per-access null/bounds branches. **GATED on a sandbox-safety review**: bounds-check removal converts an interpreter bug into memory corruption, in direct tension with the "memory-safe by construction" guarantee below — scope strictly to internal, audited, index-proven accessors. (`Unsafe.Add`/`MemoryMarshal.GetArrayDataReference`, already planned, gets bounds-elision portably; `Il2CppSetOption` additionally kills null checks.)
+- [ ] **B2**: evaluate **inline float3 in the `LuaValue` numeric union** for Unity `Vector3` (Luau ships exactly this — a native vector TValue with dedicated opcodes) as a primary or fallback to B2's self-flagged-riskiest `StructPool` paged-userdata design. The 16 B numeric union has room.
+
+### Sandbox Threat-Model (into A3 sandbox work + B4 modding)
+
+The plan's sandbox architecture (capability manifest → module flags, per-mod engine isolation, fuel, memory limits, consent dialogs) is directionally right and maps cleanly onto object-capability theory (Miller, "Robust Composition"; POLA). Per-mod engine isolation is the strongest single decision — it structurally avoids the shared-Lua-state capability leak that produced Minetest/Luanti's CVE-2026-40960. The following concrete gaps should be closed. Prior-art checklist to cite: **Jint's `Constraints` model** (`LimitMemory`, `TimeoutInterval`, `MaxStatements`, `LimitRecursion`, `RegexTimeout`, `CancellationToken`) is the closest .NET-interpreter analog — and its documented statement-granularity bypass (Jint #683) is direct proof that back-edge fuel alone is insufficient. Preemption bar: **Cobalt** (yield/interrupt anywhere, incl. inside native calls — powers CC:Tweaked's runaway-mod kill) and **Piccolo** (stackless fuel that covers native callbacks; drop-to-cancel).
+
+1. [ ] **Per-match pattern step limit** — Lua patterns are a backtracking matcher with quadratic/exponential blowup (PIL 20.4: an unanchored pattern on a 200 K string runs 3+ hours). Pattern matching is a builtin, so **instruction fuel at back-edges cannot see it**. Needs a dedicated per-match step counter. Neither stock Lua nor Luau ships this — it is an original requirement. **← highest-value gap.**
+2. [ ] **Explicit interpreter call-depth / recursion guard** raising a catchable Lua error before the C# stack is exhausted. .NET `StackOverflowException` is **uncatchable and terminates the process** — deep Lua recursion, `__index` chains, and recursive `pcall` all map to deep C# recursion and would crash the entire Unity process. Existential for a managed host (cf. Jint `LimitRecursion`).
+3. [ ] **Per-call wall-clock watchdog** paired with the deterministic fuel counter. Fuel/statement metering is blind to time spent inside a single long host callback or builtin (Jint #683; Lua's count-hook has the same C-function blind spot). Wasmtime pairs deterministic fuel with a non-deterministic epoch/watchdog for exactly this reason. Note the watchdog can only *signal* on Unity's main thread (see item 7).
+4. [ ] **Bytecode policy — refuse precompiled/binary chunks entirely** (equivalent to `load(..., "t")`; no `string.dump` round-trip into execution). This is the free win from being managed and should be explicit and default-on.
+5. [ ] **Interop/reflection confinement** — in a managed host the new escape surface is CLR reflection and host-object leakage. Scripts get only unforgeable, wrapped capabilities: no reflection, no raw CLR types, a **read-only string metatable** and read-only library metatables (the `getmetatable("")` escape; Luau marks all builtins read-only).
+6. [ ] **Controlled OOM & boundary-exception normalization** — the memory cap must raise a Lua error *before* the CLR throws `OutOfMemoryException` (uncontained in .NET); host exceptions crossing the script boundary must be normalized so they neither leak type/stack info nor become capabilities.
+7. [ ] **Unity main-thread cooperative yielding** — long scripts on the main thread freeze the editor/game, and Unity's API is main-thread-only, so a background watchdog can abort but cannot touch Unity objects. Fuel must support cooperative main-thread yield points.
+8. [ ] **Determinism preset expansion** (B4) — beyond the existing time/random seams, a serious `Deterministic` preset also needs: defined `pairs` iteration order **and** a fixed string-hash seed (note the tension: fixing the seed re-opens hash-flooding DoS); an FP policy for IL2CPP ARM-vs-x64 divergence (transcendentals/FMA-contraction/subnormals — Lua numbers are `double`, this is the hardest part); and suppression of GC-observable APIs (`collectgarbage("count")`, `__gc` timing) and pointer-address leaks in `tostring(table)`. Factorio's deterministic-lockstep model is the reference; "seed time + random" alone misses items here.
+9. [ ] **Hot-reload state-migration contract** — explicit `mod.save_state()`/`mod.load_state(t)` (analogous to Erlang OTP `code_change/3`), with documented dangling-reference caveats (stale closures/coroutines/timers/event subscriptions). Per-mod isolation already simplifies this (reload = fresh engine + serialized state).
+10. [ ] **Distribution / supply-chain** — the Cities:Skylines 2022 malware arrived via the *update channel and a transitive dependency* (a swapped Harmony), not the initial upload. Gate auto-update/side-load as its own capability; sign/checksum artifacts; treat transitive mod dependencies as part of the manifest. Counter permission-prompt habituation with least-privilege defaults (Noita's "unsafe mods are visibly exceptional and Workshop-barred" model).
+
+### Positioning / moat (Vision section)
+
+- **State "memory-safe by construction" as an explicit guarantee.** A pure-C#/.NET interpreter categorically eliminates the entire memory-corruption escape class that has repeatedly broken C-based Lua sandboxes — crafted-bytecode type confusion (Peter Cawley's "Malicious Bytecode" work; Lua removed its bytecode verifier in 5.2 as impractical), the Factorio client RCE (patched 1.1.101), Redis' RediShell (CVE-2025-49844). Necessary-not-sufficient caveat: logical capability confinement (the Threat-Model items above) is still required — memory-safety removes a bug class, not the need for a sandbox.
+- **Strengthen the multi-version 5.1-5.5 moat claim.** Confirmed: **no engine anywhere implements runtime-selectable 5.1-5.5 semantics in one VM.** Every alternative selects a single upstream C interpreter at build/package time (mlua's mutually-exclusive Cargo features; nuskey8's new NuLua binds one native lib per package). LuaJIT=5.1, Fengari=5.3, gopher-lua=5.1, LuaJ≈5.2, Luau=own dialect. This plus the reference-comparison harness is the deepest moat and is currently under-sold.
+- **Note that structural preemption is table stakes** for an "ultimate modding framework" (the Cobalt/Luau/Piccolo bar). The current coroutine implementation is state-machine/sentinel-based; whether to adopt a stackless/fuel execution model is worth an explicit study (see Future Research).
+
+### Future Research additions
+
+- **Stackless / fuel-based execution model** (Piccolo blueprint — kyren's essay is the most relevant single architecture read). Reifying control flow into a steppable executor yields fuel preemption that *covers native callbacks*, drop-to-cancel, tasklet scheduling, and near-free async (serving both the Threat-Model and B3). Cost: interpreter overhead + large rewrite. Frame as a gated study, not a commitment; it overlaps heavily with the A8 register-VM fork and should be evaluated jointly.
+- **Host-GC semantics for weak tables + `__gc`** — MoonSharp, Fengari, and go-lua all quietly dropped weak tables/finalizers because they punted to the host GC. NovaSharp's spec-compliance-first priority forbids silent omission: design it explicitly (`ConditionalWeakTable` for weak references, a finalization queue for `__gc`). Also keep **byte-faithful strings** (not UTF-16) — Lua-CSharp's UTF-16 divergence is a spec-compliance wedge NovaSharp can win only by staying byte-accurate.
+- **Ecosystem tooling as product**: Factorio's success rests on a **machine-readable API description (JSON) → generated LuaLS/EmmyLua typed stubs + DAP stepping debugger + hot reload** (the FMTK toolchain). The plan already has stub emission (B1/B4) and a DAP debugger (B6); consider elevating a machine-readable API description as the single source of truth that feeds both stubs and docs.
 
 ______________________________________________________________________
 
@@ -1034,7 +1094,7 @@ ______________________________________________________________________
 - [`docs/lua-spec/lua-5.2-spec.md`](docs/lua-spec/lua-5.2-spec.md) — Lua 5.2 Reference Manual
 - [`docs/lua-spec/lua-5.3-spec.md`](docs/lua-spec/lua-5.3-spec.md) — Lua 5.3 Reference Manual
 - [`docs/lua-spec/lua-5.4-spec.md`](docs/lua-spec/lua-5.4-spec.md) — Lua 5.4 Reference Manual (primary target)
-- [`docs/lua-spec/lua-5.5-spec.md`](docs/lua-spec/lua-5.5-spec.md) — Lua 5.5 (Work in Progress)
+- [`docs/lua-spec/lua-5.5-spec.md`](docs/lua-spec/lua-5.5-spec.md) — Lua 5.5 Reference Manual (**released final 2025-12-22**; introduces `global` as a reserved keyword with optional global declarations — a lexer/parser impact — plus incremental major GC, ~60% more compact arrays, read-only for-loop control variables, `table.create`, named vararg tables, external strings, round-trip float printing, and a **bytecode-format break** vs 5.4)
 
 ### Reference Lua comparison harness
 
