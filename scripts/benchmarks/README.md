@@ -129,7 +129,7 @@ python3 scripts/benchmarks/render-benchmark-deltas.py \
   --output artifacts/phase-a0-scoreboard.md
 ```
 
-Use `--enforce-phase-gates` only after the baseline was produced from a representative run and reviewed. The gate checks same-run NovaSharp/NLua mean and P95 ratios with a 10% default tolerance and exact NovaSharp allocated B/op against the checked-in phase baseline. Reference `lua` CLI rows remain wall-time-only context and are excluded from allocation gates.
+Use `--enforce-phase-gates` only after the baseline was produced from a representative run and reviewed. The checked-in Phase A0 baseline should come from GitHub Actions benchmark artifacts, or a runner that intentionally matches the CI environment, because the gate checks same-run NovaSharp/NLua mean and P95 ratios with a 10% default tolerance and exact NovaSharp allocated B/op against the checked-in phase baseline. Reference `lua` CLI rows remain wall-time-only context and are excluded from allocation gates.
 
 The comparison suite's `Compile` rows create a fresh runtime state for each engine before loading the scenario. `Execute` rows use each engine's prepared public execution surface to reflect the host API NovaSharp is trying to compete with; add a separate normalized-result-read suite before treating return-materialization cost as isolated interpreter cost.
 
