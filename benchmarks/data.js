@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783098598033,
+  "lastUpdate": 1783113294571,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -382,6 +382,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 757.594,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "75a0d0bd97ae54bc5060af94530a8e551bba7809",
+          "message": "Advance Phase A0 baseline and Unity spot check (#49)\n\nSummary:\n- commit the Phase A0 scoreboard baseline JSON from a full five-engine\nlocal run\n- add tracked Unity UPM samples, including an IL2CPP stopwatch\nspot-check scene\n- make Unity package builders copy tracked samples and reject output\npaths overlapping source templates\n- adjust audits/branding allowlists for UPM sample templates and\nbenchmark baseline data\n\nLocal validation:\n- ./scripts/benchmarks/run-phase-a0-scoreboard.sh --write-phase-baseline\nprogress/benchmarks/phase-a0-scoreboard-baseline.json\n- python3 scripts/benchmarks/render-benchmark-deltas.py --current-root\nartifacts/benchmarkdotnet/phase-a0-comparison --comparison-root\nartifacts/benchmarkdotnet/phase-a0-comparison --phase-baseline\nprogress/benchmarks/phase-a0-scoreboard-baseline.json --output\nartifacts/phase-a0-scoreboard-enforced.md --expect-lua-cli\n--enforce-phase-gates\n- ./scripts/packaging/build-unity-package.sh --version 3.0.0-dev\n--output artifacts/unity-spotcheck-validation-current\n- pwsh -NoProfile -File scripts/packaging/build-unity-package.ps1\n-Version 3.0.0-dev -OutputPath\nartifacts/unity-spotcheck-validation-ps-current\n- bash ./scripts/dev/pre-commit.sh\n- ./scripts/build/quick.sh\n- ./scripts/test/quick.sh\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Changes affect CI benchmark gating and Unity package generation rather\nthan the core interpreter, but incorrect gate logic or baseline drift\ncould block merges or mis-signal performance regressions.\n> \n> **Overview**\n> Adds a **checked-in Phase A0 scoreboard baseline**\n(`progress/benchmarks/phase-a0-scoreboard-baseline.json`) sourced from\nCI runner artifacts so aggregate benchmark gates match hosted\nenvironments.\n> \n> **Phase A0 CI gates** in `render-benchmark-deltas.py` now fail only on\n**regressions**: NovaSharp/NLua ratio checks use a 100% catastrophic\nthreshold (improvements and small noise pass), and NovaSharp B/op gates\nallow decreases plus runner noise for larger rows while staying exact\nunder 1 KiB. Tests and benchmark docs reflect the new semantics.\n> \n> **Benchmark workflow** normalizes manual alert thresholds (`115` vs\n`115%`), keeps gh-pages historical storage, but **disables\n`comment-on-alert` on pull requests** so PR feedback comes from the\naggregate delta comment and Phase A0 gates instead of noisy historical\ncomparisons.\n> \n> **Unity packaging** moves samples into tracked `Samples~` templates\n(Basic Usage + **IL2CPP spot-check** scene/runner with single-line\n`NOVASHARP_IL2CPP_SPOTCHECK` pass/fail logs). Bash/PowerShell builders\n**copy** those templates, reject output paths overlapping package/sample\nsources, and the Bash script requires `python3` for portable path\nchecks. `.gitignore`, namespace audit skips, and branding allowlists\naccommodate UPM `Samples~` and the baseline JSON.\n> \n> **PLAN** and **UnityIntegration** docs mark Phase A0 baseline/IL2CPP\nspot-check items complete and describe how to run the sample.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n53b00c5f737aea28fc8755bba8c2bdaac19b2e59. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-03T14:09:43-07:00",
+          "tree_id": "dc16aaf42315e999a864f36beb9522b04c482984",
+          "url": "https://github.com/wallstop/NovaSharp/commit/75a0d0bd97ae54bc5060af94530a8e551bba7809"
+        },
+        "date": 1783113294290,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 499.707,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 363.184,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 6.938,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 673.474,
             "unit": "ns",
             "extra": ""
           }
