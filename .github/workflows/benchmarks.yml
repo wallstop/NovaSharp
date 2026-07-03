@@ -562,8 +562,12 @@ jobs:
           self_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^self_rows=//p' | tail -n1)"
           phase_baseline_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^phase_baseline_rows=//p' | tail -n1)"
           phase_gate_failures="$(printf '%s\n' "$delta_out" | sed -n 's/^phase_gate_failures=//p' | tail -n1)"
+          has_report=false
+          if [ -f artifacts/benchmark-deltas.md ]; then
+            has_report=true
+          fi
           {
-            echo "has_report=true"
+            echo "has_report=${has_report}"
             echo "report_file=artifacts/benchmark-deltas.md"
             echo "changed=${changed:-false}"
             echo "regressed=${regressed:-false}"
@@ -687,7 +691,7 @@ jobs:
             }
 
       - name: Fail when benchmark delta gates failed
-        if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.render_status != '0'
+        if: steps.benchmark_deltas.outputs.render_status != '' && steps.benchmark_deltas.outputs.render_status != '0'
         run: |
           echo "::error::Benchmark delta renderer or Phase A0 gates failed. Review artifacts/benchmark-deltas.md and the PR benchmark comment."
           exit 1

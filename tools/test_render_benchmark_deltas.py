@@ -539,6 +539,10 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             "NovaSharp allocation changed from 80 B to 81 B (+1 B).",
             self.output.read_text(encoding="utf-8"),
         )
+        self.assertIn(
+            "| NumericLoops | Execute | NovaSharp B/op | NovaSharp allocation changed from 80 B to 81 B (+1 B). |",
+            self.output.read_text(encoding="utf-8"),
+        )
 
     def test_phase_gate_fails_on_nlua_ratio_drift(self) -> None:
         phase_baseline = self.work_dir / "phase-a0-baseline.json"

@@ -112,7 +112,7 @@ if [[ "$EXPECT_LUA_CLI" == "true" ]]; then
 fi
 
 renderer_args=(
-    --current-root BenchmarkDotNet.Artifacts
+    --current-root "$COMPARISON_ARTIFACTS"
     --comparison-root "$COMPARISON_ARTIFACTS"
     --phase-baseline "$PHASE_BASELINE"
     --output "$OUTPUT"

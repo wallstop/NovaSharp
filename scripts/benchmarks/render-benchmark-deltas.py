@@ -1338,11 +1338,15 @@ def external_runtimes_for_matrix(rows: list[RuntimeMatrixRow]) -> list[RuntimeCo
 
 
 def scenario_display(row: RuntimeMatrixRow) -> str:
-    display = row.parameter_display or parameter_display_from_signature(row.key.parameters)
+    return scenario_display_from_key(row.key, row.parameter_display)
+
+
+def scenario_display_from_key(key: ComparisonKey, parameter_display: str = "") -> str:
+    display = parameter_display or parameter_display_from_signature(key.parameters)
     parameters = split_parameter_display(display)
     scenario = next((value for name, value in parameters if name == "Scenario"), "")
     if not scenario:
-        return display or "-"
+        return display or key.summary or "-"
 
     remaining = [(name, value) for name, value in parameters if name != "Scenario"]
     if not remaining:
@@ -1575,7 +1579,7 @@ def append_phase_gate_failure_preview(
         lines.append(
             render_markdown_row(
                 [
-                    parameter_display_from_signature(failure.key.parameters) or "-",
+                    scenario_display_from_key(failure.key),
                     failure.key.operation,
                     failure.metric,
                     failure.message,

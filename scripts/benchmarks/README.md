@@ -122,6 +122,7 @@ The renderer also supports Phase A0 baseline handling:
 
 ```bash
 python3 scripts/benchmarks/render-benchmark-deltas.py \
+  --current-root artifacts/benchmarkdotnet/phase-a0-comparison \
   --comparison-root artifacts/benchmarkdotnet/phase-a0-comparison \
   --phase-baseline progress/benchmarks/phase-a0-scoreboard-baseline.json \
   --write-phase-baseline progress/benchmarks/phase-a0-scoreboard-baseline.json \

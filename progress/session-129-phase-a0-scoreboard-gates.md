@@ -42,6 +42,10 @@ Date: 2026-07-03
   - `git diff --check`.
 - GitHub Copilot reported that the Phase A0 scoreboard text promised a single `-` for reference `lua` CLI memory cells while the formatter rendered `- / - / - / -`.
 - The renderer now preserves runtime kind through the Phase A0 matrix helpers and collapses `LuaCliWallTime` memory cells to a single `-`; `tools/test_render_benchmark_deltas.py` covers the documented row shape.
+- Cursor Bugbot reported that the Phase A0 gate failure table used raw parameter display for the `Scenario` column, which could render `-` and make failures hard to match to the scoreboard.
+- The failure preview now uses the scoreboard scenario formatter and falls back to the comparison summary when no scenario parameter exists.
+- GitHub Copilot reported that local Phase A0 runners could read stale `BenchmarkDotNet.Artifacts` rows through `--current-root`; both Bash and PowerShell runners now point current and comparison roots at the freshly cleaned Phase A0 artifact directory.
+- GitHub Copilot also reported that benchmark CI always emitted `has_report=true`; the workflow now bases `has_report` on whether `artifacts/benchmark-deltas.md` exists while still failing on any non-zero renderer status.
 
 ## Remaining Work
 

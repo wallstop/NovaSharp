@@ -117,7 +117,7 @@ if (-not $SkipLuaCli) {
 
 $rendererArgs = @(
     "scripts/benchmarks/render-benchmark-deltas.py",
-    "--current-root", "BenchmarkDotNet.Artifacts",
+    "--current-root", $comparisonArtifacts,
     "--comparison-root", $comparisonArtifacts,
     "--phase-baseline", $PhaseBaseline,
     "--output", $Output
