@@ -96,7 +96,7 @@ end
                 long managedBytesAfter = GC.GetTotalMemory(false);
 
                 int callsPerIteration = _runClrCallbackCheck ? 3 : 2;
-                double callCount = iterations * callsPerIteration;
+                long callCount = (long)iterations * callsPerIteration;
                 double nanosecondsPerCall =
                     stopwatch.Elapsed.TotalMilliseconds * 1000000.0 / callCount;
 
