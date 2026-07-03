@@ -20,6 +20,7 @@ readarray -t allowlist <<'EOF'
 :(exclude)docs/performance-history/README.md
 :(exclude)progress/session-119-load-reader-and-ci-delta-reporting.md
 :(exclude)progress/session-121-same-run-comparison-deltas.md
+:(exclude)progress/session-129-phase-a0-scoreboard-gates.md
 :(exclude)README.md
 :(exclude).github/pull_request_template.md
 :(exclude).github/workflows/benchmarks.yml

@@ -20,7 +20,7 @@ For fast iterative development, use the quick build and test scripts:
 ## Folder Index
 
 - `coverage/` — Coverlet + ReportGenerator wrappers (`coverage.ps1` / `coverage.sh`) that build the solution, run the interpreter tests, and publish Markdown/HTML/JSON summaries into `artifacts/coverage` + `docs/coverage/latest`.
-- `benchmarks/` — Helpers for running the runtime + same-run comparison BenchmarkDotNet suites (`run-benchmarks.ps1` / `run-benchmarks.sh`), adding reference `lua` CLI wall-time context (`run-lua-cli-context.py`), keeping `docs/Performance.md` up to date, and rendering `artifacts/benchmark-deltas.md` with external runtime and optional self-baseline deltas. CI integration via `.github/workflows/benchmarks.yml` tracks comparison alerts with PR comments.
+- `benchmarks/` — Helpers for running the runtime + same-run comparison BenchmarkDotNet suites (`run-benchmarks.ps1` / `run-benchmarks.sh`), emitting the Phase A0 scoreboard (`run-phase-a0-scoreboard.ps1` / `run-phase-a0-scoreboard.sh`), adding reference `lua` CLI wall-time context (`run-lua-cli-context.py`), keeping `docs/Performance.md` up to date, and rendering `artifacts/benchmark-deltas.md` with external runtime and optional self-baseline deltas. CI integration via `.github/workflows/benchmarks.yml` tracks comparison alerts with PR comments.
 - `build/` — Cross-platform build helpers including `quick.sh` for fast development builds and `build.ps1` / `build.sh` for CI.
 - `test/` — Quick test runner (`quick.sh`) with filtering support for fast iterative testing.
 - `tests/` — Lua specification parity harnesses, the aggregate Lua comparison report renderer (`render-lua-comparison-report.py`), and test utilities.
