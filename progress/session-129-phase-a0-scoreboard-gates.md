@@ -30,6 +30,17 @@ Date: 2026-07-03
 - `pwsh -NoProfile -Command '[scriptblock]::Create((Get-Content -Raw scripts/benchmarks/run-phase-a0-scoreboard.ps1)) | Out-Null; [scriptblock]::Create((Get-Content -Raw scripts/benchmarks/run-benchmarks.ps1)) | Out-Null'` completed successfully.
 - `git diff --check` completed successfully.
 
+## Reviewer Feedback
+
+- Cursor Bugbot reported that the benchmark workflow warning for unavailable Phase A0 gates inferred missing baseline state from `phase_baseline_rows == 0`.
+- The workflow now carries an explicit `phase_baseline_exists` output from the render step, uses that for the missing-baseline warning, and separately warns when a committed baseline file loads zero usable rows.
+- Follow-up focused validation completed successfully:
+  - `python3 tools/test_render_benchmark_deltas.py`;
+  - `artifacts/actionlint/actionlint .github/workflows/benchmarks.yml`;
+  - `python3 scripts/lint/check-shell-python-invocation.py`;
+  - `bash -n scripts/benchmarks/run-phase-a0-scoreboard.sh scripts/benchmarks/run-benchmarks.sh`;
+  - `git diff --check`.
+
 ## Remaining Work
 
 - Generate the canonical Phase A0 baseline from a representative full scoreboard run and commit `progress/benchmarks/phase-a0-scoreboard-baseline.json`.

@@ -534,8 +534,10 @@ jobs:
           phase_baseline="progress/benchmarks/phase-a0-scoreboard-baseline.json"
           phase_gate_args=(--phase-baseline "$phase_baseline")
           if [ -f "$phase_baseline" ]; then
+            phase_baseline_exists=true
             phase_gate_args+=(--enforce-phase-gates)
           else
+            phase_baseline_exists=false
             echo "::warning::Phase A0 scoreboard baseline not found at ${phase_baseline}; ratio and exact B/op gates are report-only until the baseline is committed."
           fi
           set +e
@@ -569,6 +571,7 @@ jobs:
             echo "missing_external_runtime_cells=${missing_external_runtime_cells:-0}"
             echo "missing_lua_cli_rows=${missing_lua_cli_rows:-0}"
             echo "self_rows=${self_rows:-0}"
+            echo "phase_baseline_exists=${phase_baseline_exists}"
             echo "phase_baseline_rows=${phase_baseline_rows:-0}"
             echo "phase_gate_failures=${phase_gate_failures:-0}"
             echo "render_status=${render_status}"
@@ -604,9 +607,15 @@ jobs:
         shell: bash
 
       - name: Warn when Phase A0 benchmark gates are unavailable
-        if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.phase_baseline_rows == '0'
+        if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.phase_baseline_exists != 'true'
         run: |
           echo "::warning::Phase A0 benchmark baseline is not committed yet, so ratio and exact B/op gates were not enforced."
+        shell: bash
+
+      - name: Warn when Phase A0 benchmark baseline has no usable rows
+        if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.phase_baseline_exists == 'true' && steps.benchmark_deltas.outputs.phase_baseline_rows == '0'
+        run: |
+          echo "::warning::Phase A0 benchmark baseline file exists but no usable rows were loaded. Check progress/benchmarks/phase-a0-scoreboard-baseline.json and the renderer diagnostics."
         shell: bash
 
       - name: Comment benchmark comparison deltas on PR
