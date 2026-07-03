@@ -149,6 +149,11 @@ end
 
         private static string ToSingleLogLine(string value)
         {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
             return value.Replace('\r', ' ').Replace('\n', ' ').Trim();
         }
 
