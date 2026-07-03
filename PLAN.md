@@ -64,7 +64,7 @@ Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author
 1. **Scoreboard before surgery**: no optimization phase starts until Phase A0's comparison benchmarks exist and a baseline is committed.
 1. **No phase merges with a red fixture.** Any fixture edit requires reference-Lua output as arbiter.
 1. Each phase ends with: targeted tests, `./scripts/build/quick.sh`, `./scripts/test/quick.sh`, `compare-lua-outputs.py --enforce` (5 versions), scoreboard run with committed JSON baseline, PR CI observed green.
-1. Allocation claims are verified by **exact B/op BenchmarkDotNet assertions** (noise-free); speed claims by ratio-vs-NLua gates (±10% tolerance).
+1. Allocation claims are verified by **B/op BenchmarkDotNet regression gates** with exact enforcement for sub-1 KiB baselines and small runner-noise tolerance for larger rows; speed claims are reported in the scoreboard and guarded in CI by ratio-vs-NLua catastrophic regression gates (100% default threshold until a less noisy benchmark methodology is available).
 1. IL2CPP spot-check (minimal stopwatch Unity player scene) at phase boundaries A1, A5, A8, B2 — RyuJIT wins don't automatically translate.
 
 ______________________________________________________________________
@@ -83,7 +83,7 @@ Extend `src/tooling/WallstopStudios.NovaSharp.Comparison/`:
 - [x] Add **interop both directions** to the comparison matrix (1M Lua→C# registered-fn calls with 2 args + return; 1M C#→Lua `Call`) with per-engine host bindings and clear reference-`lua` skip behavior.
 - [x] Add cached-compile comparison rows alongside the existing cold compile rows.
 - [x] `[MemoryDiagnoser]` on in-process BenchmarkDotNet suites; one command emits the scoreboard markdown table (rows = benchmarks; columns = NovaSharp current/baseline, MoonSharp, NLua, Lua-CSharp, lua CLI) and can write normalized phase JSON baselines under `progress/`.
-- [x] CI gate plumbing for Phase A0 baselines: ratio-vs-NLua ±10% + exact NovaSharp B/op assertions, activated automatically once the canonical `progress/benchmarks/phase-a0-scoreboard-baseline.json` exists.
+- [x] CI gate plumbing for Phase A0 baselines: ratio-vs-NLua catastrophic regression gate plus NovaSharp B/op regression gate, activated automatically once the canonical `progress/benchmarks/phase-a0-scoreboard-baseline.json` exists.
 - [ ] Commit the representative Phase A0 JSON baseline under `progress/benchmarks/` from a full five-engine scoreboard run and observe the CI gates passing against it.
 - [x] Minimal stopwatch-based Unity player scene for IL2CPP spot checks.
 

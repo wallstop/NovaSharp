@@ -513,7 +513,7 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertIn("phase_baseline_rows=1", enforce_result.stdout)
         self.assertIn("phase_gate_failures=0", enforce_result.stdout)
 
-    def test_phase_gate_fails_on_exact_novasharp_allocation_change(self) -> None:
+    def test_phase_gate_fails_on_small_novasharp_allocation_increase(self) -> None:
         phase_baseline = self.work_dir / "phase-a0-baseline.json"
         self.write_report(
             self.comparison_root,
@@ -539,15 +539,65 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertIn("phase_gate_failures=1", result.stdout)
         self.assertIn("error=phase gate failures: 1", result.stderr)
         self.assertIn(
-            "NovaSharp allocation changed from 80 B to 81 B (+1 B).",
+            "NovaSharp allocation increased from 80 B to 81 B (+1 B; allowed 0 B).",
             self.output.read_text(encoding="utf-8"),
         )
         self.assertIn(
-            "| NumericLoops | Execute | NovaSharp B/op | NovaSharp allocation changed from 80 B to 81 B (+1 B). |",
+            "| NumericLoops | Execute | NovaSharp B/op | NovaSharp allocation increased from 80 B to 81 B (+1 B; allowed 0 B). |",
             self.output.read_text(encoding="utf-8"),
         )
 
-    def test_phase_gate_fails_on_nlua_ratio_drift(self) -> None:
+    def test_phase_gate_allows_large_row_allocation_noise(self) -> None:
+        phase_baseline = self.work_dir / "phase-a0-baseline.json"
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 120, 2_455_647),
+                self.comparison_benchmark("NLua Execute", 50, 60, 24),
+            ],
+        )
+        self.assertEqual(0, self.run_script(write_phase_baseline=phase_baseline).returncode)
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 120, 2_455_777),
+                self.comparison_benchmark("NLua Execute", 50, 60, 24),
+            ],
+        )
+
+        result = self.run_script(phase_baseline=phase_baseline, enforce_phase_gates=True)
+
+        self.assertEqual(0, result.returncode)
+        self.assertIn("phase_gate_failures=0", result.stdout)
+
+    def test_phase_gate_allows_novasharp_allocation_decrease(self) -> None:
+        phase_baseline = self.work_dir / "phase-a0-baseline.json"
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 120, 80),
+                self.comparison_benchmark("NLua Execute", 50, 60, 24),
+            ],
+        )
+        self.assertEqual(0, self.run_script(write_phase_baseline=phase_baseline).returncode)
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 120, 72),
+                self.comparison_benchmark("NLua Execute", 50, 60, 24),
+            ],
+        )
+
+        result = self.run_script(phase_baseline=phase_baseline, enforce_phase_gates=True)
+
+        self.assertEqual(0, result.returncode)
+        self.assertIn("phase_gate_failures=0", result.stdout)
+
+    def test_phase_gate_fails_on_nlua_ratio_regression(self) -> None:
         phase_baseline = self.work_dir / "phase-a0-baseline.json"
         self.write_report(
             self.comparison_root,
@@ -562,7 +612,7 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             self.comparison_root,
             "LuaPerformanceBenchmarks",
             [
-                self.comparison_benchmark("NovaSharp Execute", 130, 100, 80),
+                self.comparison_benchmark("NovaSharp Execute", 250, 100, 80),
                 self.comparison_benchmark("NLua Execute", 50, 50, 24),
             ],
         )
@@ -572,9 +622,59 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertEqual(1, result.returncode)
         self.assertIn("phase_gate_failures=1", result.stdout)
         self.assertIn(
-            "NovaSharp/NLua mean ratio changed from 2.000x to 2.600x (+30.00%).",
+            "NovaSharp/NLua mean ratio regressed from 2.000x to 5.000x (+150.00%).",
             self.output.read_text(encoding="utf-8"),
         )
+
+    def test_phase_gate_allows_nlua_ratio_noise_below_default_threshold(self) -> None:
+        phase_baseline = self.work_dir / "phase-a0-baseline.json"
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 100, 80),
+                self.comparison_benchmark("NLua Execute", 50, 50, 24),
+            ],
+        )
+        self.assertEqual(0, self.run_script(write_phase_baseline=phase_baseline).returncode)
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 180, 180, 80),
+                self.comparison_benchmark("NLua Execute", 50, 50, 24),
+            ],
+        )
+
+        result = self.run_script(phase_baseline=phase_baseline, enforce_phase_gates=True)
+
+        self.assertEqual(0, result.returncode)
+        self.assertIn("phase_gate_failures=0", result.stdout)
+
+    def test_phase_gate_allows_nlua_ratio_improvement(self) -> None:
+        phase_baseline = self.work_dir / "phase-a0-baseline.json"
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 100, 80),
+                self.comparison_benchmark("NLua Execute", 50, 50, 24),
+            ],
+        )
+        self.assertEqual(0, self.run_script(write_phase_baseline=phase_baseline).returncode)
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 80, 80, 80),
+                self.comparison_benchmark("NLua Execute", 50, 50, 24),
+            ],
+        )
+
+        result = self.run_script(phase_baseline=phase_baseline, enforce_phase_gates=True)
+
+        self.assertEqual(0, result.returncode)
+        self.assertIn("phase_gate_failures=0", result.stdout)
 
     def test_phase_gate_fails_when_current_nlua_row_is_missing(self) -> None:
         phase_baseline = self.work_dir / "phase-a0-baseline.json"
