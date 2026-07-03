@@ -17,7 +17,7 @@ Date: 2026-07-03
 - With a restricted `PATH` containing `dirname` but no `python3`, `build-unity-package.sh` exited 1 and printed the intended `python3` diagnostic.
 - `bash scripts/packaging/build-unity-package.sh --output src/unity` exited 1 before build and rejected output overlapping tracked package templates.
 - `bash ./scripts/dev/pre-commit.sh` exited 0 after the fix.
-- Pending: push the follow-up commit and re-run PR CI plus Copilot/Bugbot review on the new head.
+- The follow-up commit was pushed, and PR CI plus Copilot/Bugbot review completed on `cb2bce50`. A non-blocking historical benchmark alert comment on that head is handled in session 142.
 
 ## Residual Risk
 

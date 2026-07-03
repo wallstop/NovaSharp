@@ -14,7 +14,7 @@ Date: 2026-07-03
 - `bash scripts/packaging/build-unity-package.sh --help` exited 0.
 - With a restricted `PATH` containing `dirname` but no `python3`, `build-unity-package.sh` exited 1 and printed the intended `python3` diagnostic.
 - `bash ./scripts/dev/pre-commit.sh` exited 0 after the fix.
-- Pending: push the follow-up commit and re-run PR CI plus Copilot/Bugbot review on the new head.
+- The follow-up commit was pushed, and later PR heads re-ran CI plus Copilot/Bugbot review. See sessions 141-142 for the subsequent reviewer loop.
 
 ## Residual Risk
 

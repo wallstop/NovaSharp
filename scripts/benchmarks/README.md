@@ -8,15 +8,15 @@ The `.github/workflows/benchmarks.yml` workflow runs benchmarks automatically:
 
 - **On push to main**: Full benchmark run with results stored in `gh-pages` branch
 - **On PRs**: Benchmark run plus same-run external comparisons; comments on PRs with a GC-aware delta table
-- **Manual dispatch**: Configurable threshold and fail-on-alert settings
+- **Manual dispatch**: Configurable threshold (for example `115` or `115%`) and fail-on-alert settings
 
 ### Regression Detection
 
-The workflow uses `benchmark-action/github-action-benchmark` to track performance over time:
+The workflow uses `benchmark-action/github-action-benchmark` to store historical performance results over time:
 
-- **Alert threshold**: 115% by default (15% regression triggers alert)
-- **Fail on alert**: Enabled for manual benchmark gates; PR alerts are advisory because hosted-runner microbenchmarks are noisy
-- **PR comments**: Automatic comments when regressions are detected
+- **Alert threshold**: 115% by default for historical benchmark tracking; manual inputs accept either numeric or percent-suffixed values
+- **Fail on alert**: Enabled only when requested for manual benchmark gates; historical PR alerts do not fail because hosted-runner microbenchmarks are noisy
+- **PR comments**: Historical-action regression comments are disabled on pull requests; PR feedback comes from the aggregate delta comment and Phase A0 gates below
 - **External runtime deltas**: `scripts/benchmarks/render-benchmark-deltas.py` renders a sticky PR comment and `artifacts/benchmark-deltas.md`; each scenario/operation is shown as a matrix row with NovaSharp raw results first, then same-run external runtime results and NovaSharp-vs-runtime deltas. Positive deltas mean NovaSharp is slower, collects more GC, or allocates more than the same-run comparison runtime row. Reference `lua` CLI rows are out-of-process wall-time context only, so memory and GC cells are shown as unknown. These cells are report-only and do not set `regressed=true`.
 - **Phase A0 scoreboard**: the same renderer emits a compact scoreboard section with NovaSharp current, NovaSharp baseline, MoonSharp, NLua, Lua-CSharp, and reference `lua` CLI columns. Once `progress/benchmarks/phase-a0-scoreboard-baseline.json` is committed, CI enforces NovaSharp/NLua ratio regressions and NovaSharp allocated B/op regressions from that baseline.
 - **Self deltas**: the same renderer can compare current NovaSharp results to checked-in BenchmarkDotNet JSON artifacts under `docs/performance-history/current-baseline` once that baseline exists. Self deltas drive the `regressed=true` signal.

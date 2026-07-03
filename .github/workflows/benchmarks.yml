@@ -16,9 +16,9 @@ on:
   workflow_dispatch:
     inputs:
       alert_threshold:
-        description: 'Percentage threshold for performance regression alerts'
+        description: 'Percentage threshold for performance regression alerts, for example 115 or 115%'
         required: false
-        default: '115'
+        default: '115%'
       fail_on_alert:
         description: 'Fail the workflow if regression is detected'
         required: false
@@ -756,6 +756,27 @@ jobs:
             echo "::warning::benchmark-results.json does not exist"
           fi
 
+      - name: Normalize benchmark alert threshold
+        id: alert_threshold
+        if: |
+          steps.split_status.outputs.failed != 'true' &&
+          steps.check_results_file.outputs.file_exists == 'true' &&
+          (steps.check_gh_pages.outputs.exists == 'true' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+        env:
+          ALERT_THRESHOLD: ${{ github.event.inputs.alert_threshold || '115%' }}
+        run: |
+          set -euo pipefail
+          threshold="${ALERT_THRESHOLD}"
+          if [[ "$threshold" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+            threshold="${threshold}%"
+          fi
+          if [[ ! "$threshold" =~ ^[0-9]+([.][0-9]+)?%$ ]]; then
+            echo "::error::Benchmark alert threshold must be a percentage like 115 or 115%."
+            exit 1
+          fi
+          echo "value=${threshold}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
       - name: Store benchmark results
         if: |
           steps.split_status.outputs.failed != 'true' &&
@@ -768,9 +789,12 @@ jobs:
           output-file-path: benchmark-results.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          alert-threshold: ${{ github.event.inputs.alert_threshold || '115%' }}
+          alert-threshold: ${{ steps.alert_threshold.outputs.value }}
           fail-on-alert: ${{ github.event.inputs.fail_on_alert == 'true' }}
-          comment-on-alert: true
+          # PR benchmark feedback comes from the aggregate delta comment and Phase A0
+          # gates above. The historical benchmark action compares against gh-pages
+          # history, which is useful for storage but too noisy for PR review alerts.
+          comment-on-alert: ${{ github.event_name != 'pull_request' }}
           gh-pages-branch: gh-pages
           benchmark-data-dir-path: benchmarks
 
