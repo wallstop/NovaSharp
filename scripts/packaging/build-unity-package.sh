@@ -60,10 +60,14 @@ path_is_within_or_equal() {
     local candidate_full
     local root_full
 
-    candidate_full="$(realpath -m "$candidate")"
-    root_full="$(realpath -m "$root")"
+    candidate_full="$(canonical_path "$candidate")"
+    root_full="$(canonical_path "$root")"
 
     [[ "$candidate_full" == "$root_full" || "$candidate_full" == "$root_full"/* ]]
+}
+
+canonical_path() {
+    python3 -c 'import pathlib, sys; print(pathlib.Path(sys.argv[1]).resolve(strict=False))' "$1"
 }
 
 paths_overlap() {
@@ -279,4 +283,4 @@ echo "  2. Click '+' > Add package from disk..."
 echo "  3. Navigate to: $PACKAGE_ROOT/package.json"
 echo ""
 echo "Or add to your project's manifest.json:"
-echo "  \"com.wallstop-studios.novasharp\": \"file:$(realpath "$PACKAGE_ROOT")\""
+echo "  \"com.wallstop-studios.novasharp\": \"file:$(canonical_path "$PACKAGE_ROOT")\""
