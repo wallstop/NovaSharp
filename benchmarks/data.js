@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783049008715,
+  "lastUpdate": 1783098598033,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -334,6 +334,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 646.575,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "27be4b4f0129bcda332bfee04a5f78f23202c76f",
+          "message": "[codex] Add Phase A0 benchmark scoreboard gates (#48)\n\n## Summary\n\n- extend the benchmark delta renderer with a Phase A0 scoreboard and\nnormalized progress/ baseline support\n- add opt-in Phase A0 gates for NovaSharp/NLua ratio drift and exact\nNovaSharp allocated B/op\n- add dedicated Bash and PowerShell scoreboard commands and wire\nbenchmark CI to enforce gates once the canonical baseline exists\n- update PLAN.md and progress/session-129-phase-a0-scoreboard-gates.md\n\n## Validation\n\n- python3 tools/test_render_benchmark_deltas.py\n- python3 tools/test_run_lua_cli_context.py\n- python3 -m py_compile scripts/benchmarks/render-benchmark-deltas.py\nscripts/benchmarks/run-lua-cli-context.py\ntools/test_render_benchmark_deltas.py tools/test_run_lua_cli_context.py\n- python3 scripts/lint/check-shell-python-invocation.py\n- bash -n scripts/benchmarks/run-phase-a0-scoreboard.sh\nscripts/benchmarks/run-benchmarks.sh\n- PowerShell parser check for run-phase-a0-scoreboard.ps1 and\nrun-benchmarks.ps1\n- scripts/branding/ensure-novasharp-branding.sh\n- actionlint .github/workflows/benchmarks.yml\n- ./scripts/build/quick.sh\n- ./scripts/test/quick.sh\n- bash ./scripts/dev/pre-commit.sh\n\n## Notes\n\nThe canonical progress/benchmarks/phase-a0-scoreboard-baseline.json is\nintentionally not committed in this slice because it should come from a\nrepresentative full scoreboard run, not a one-iteration smoke artifact.\nUntil that file exists, CI reports the Phase A0 gate status but keeps\nenforcement inactive by design.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> CI can fail merges once `phase-a0-scoreboard-baseline.json` exists and\nbenchmarks drift; until then behavior is mostly additive reporting and\ntooling.\n> \n> **Overview**\n> Adds **Phase A0 comparison scoreboard** plumbing:\n`render-benchmark-deltas.py` now emits a compact multi-engine scoreboard\n(time + memory), reads/writes normalized JSON at\n`progress/benchmarks/phase-a0-scoreboard-baseline.json`, and can\n**fail** on `--enforce-phase-gates` when NovaSharp/NLua mean or P95\nratios drift beyond ±10% or NovaSharp allocated B/op differs exactly\nfrom the baseline.\n> \n> New **`run-phase-a0-scoreboard`** Bash/PowerShell scripts run only the\ncomparison suite + optional `lua` CLI context and render the scoreboard\nwithout the full runtime benchmark suite. **Benchmark CI** passes the\nphase baseline path, turns on enforcement when that file exists,\nsurfaces gate metrics in PR comments, warns on missing/empty baselines,\nand **fails the job** on non-zero renderer exit status;\n`progress/benchmarks/**` triggers the workflow.\n> \n> Docs (`PLAN.md`, benchmark READMEs), session notes,\nbranding/pre-commit allowlists, and renderer unit tests are updated. The\ncanonical baseline JSON is **not** committed in this PR—gates stay\nreport-only until a representative run is checked in.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n43a180f5f02bcf3b50a087675a3131575b1d998c. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-03T10:04:51-07:00",
+          "tree_id": "16b6cf4aea9aad46838499a820a3611592732ae1",
+          "url": "https://github.com/wallstop/NovaSharp/commit/27be4b4f0129bcda332bfee04a5f78f23202c76f"
+        },
+        "date": 1783098597731,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 570.6,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 364.611,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 6.802,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 757.594,
             "unit": "ns",
             "extra": ""
           }
