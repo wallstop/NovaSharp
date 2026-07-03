@@ -11,6 +11,7 @@ on:
       - 'scripts/benchmarks/**'
       - 'docs/Performance.md'
       - 'docs/performance-history/**'
+      - 'progress/benchmarks/**'
       - '.github/workflows/benchmarks.yml'
   workflow_dispatch:
     inputs:
@@ -530,21 +531,47 @@ jobs:
         if: steps.find_result.outputs.has_results == 'true'
         run: |
           set -euo pipefail
+          phase_baseline="progress/benchmarks/phase-a0-scoreboard-baseline.json"
+          phase_gate_args=(--phase-baseline "$phase_baseline")
+          if [ -f "$phase_baseline" ]; then
+            phase_baseline_exists=true
+            phase_gate_args+=(--enforce-phase-gates)
+          else
+            phase_baseline_exists=false
+            echo "::warning::Phase A0 scoreboard baseline not found at ${phase_baseline}; ratio and exact B/op gates are report-only until the baseline is committed."
+          fi
+          set +e
           delta_out="$(python3 scripts/benchmarks/render-benchmark-deltas.py \
             --current-root artifacts/benchmarkdotnet/runtime-download \
             --comparison-root artifacts/benchmarkdotnet/comparison-download \
             --self-baseline-root docs/performance-history/current-baseline \
             --output artifacts/benchmark-deltas.md \
-            --expect-lua-cli)"
+            --expect-lua-cli \
+            "${phase_gate_args[@]}" 2>artifacts/benchmark-deltas.err)"
+          render_status=$?
+          set -e
           printf '%s\n' "$delta_out"
+          if [ -s artifacts/benchmark-deltas.err ]; then
+            cat artifacts/benchmark-deltas.err >&2
+          fi
           changed="$(printf '%s\n' "$delta_out" | sed -n 's/^changed=//p' | tail -n1)"
           regressed="$(printf '%s\n' "$delta_out" | sed -n 's/^regressed=//p' | tail -n1)"
           external_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^external_rows=//p' | tail -n1)"
           missing_external_runtime_cells="$(printf '%s\n' "$delta_out" | sed -n 's/^missing_external_runtime_cells=//p' | tail -n1)"
           missing_lua_cli_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^missing_lua_cli_rows=//p' | tail -n1)"
           self_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^self_rows=//p' | tail -n1)"
+          phase_baseline_rows="$(printf '%s\n' "$delta_out" | sed -n 's/^phase_baseline_rows=//p' | tail -n1)"
+          phase_gate_failures="$(printf '%s\n' "$delta_out" | sed -n 's/^phase_gate_failures=//p' | tail -n1)"
+          has_report=false
+          if [ -f artifacts/benchmark-deltas.md ]; then
+            has_report=true
+          fi
+          phase_baseline_rows_available=false
+          if [ -n "$phase_baseline_rows" ]; then
+            phase_baseline_rows_available=true
+          fi
           {
-            echo "has_report=true"
+            echo "has_report=${has_report}"
             echo "report_file=artifacts/benchmark-deltas.md"
             echo "changed=${changed:-false}"
             echo "regressed=${regressed:-false}"
@@ -552,6 +579,11 @@ jobs:
             echo "missing_external_runtime_cells=${missing_external_runtime_cells:-0}"
             echo "missing_lua_cli_rows=${missing_lua_cli_rows:-0}"
             echo "self_rows=${self_rows:-0}"
+            echo "phase_baseline_exists=${phase_baseline_exists}"
+            echo "phase_baseline_rows_available=${phase_baseline_rows_available}"
+            echo "phase_baseline_rows=${phase_baseline_rows:-0}"
+            echo "phase_gate_failures=${phase_gate_failures:-0}"
+            echo "render_status=${render_status}"
           } >> "$GITHUB_OUTPUT"
 
           if [ -f artifacts/benchmark-deltas.md ]; then
@@ -583,6 +615,18 @@ jobs:
           echo "::warning::Reference lua CLI wall-time context was expected but missing. Check the comparison benchmark logs and artifacts."
         shell: bash
 
+      - name: Warn when Phase A0 benchmark gates are unavailable
+        if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.phase_baseline_exists != 'true'
+        run: |
+          echo "::warning::Phase A0 benchmark baseline is not committed yet, so ratio and exact B/op gates were not enforced."
+        shell: bash
+
+      - name: Warn when Phase A0 benchmark baseline has no usable rows
+        if: steps.benchmark_deltas.outputs.has_report == 'true' && steps.benchmark_deltas.outputs.phase_baseline_exists == 'true' && steps.benchmark_deltas.outputs.phase_baseline_rows_available == 'true' && steps.benchmark_deltas.outputs.phase_baseline_rows == '0'
+        run: |
+          echo "::warning::Phase A0 benchmark baseline file exists but no usable rows were loaded. Check progress/benchmarks/phase-a0-scoreboard-baseline.json and the renderer diagnostics."
+        shell: bash
+
       - name: Comment benchmark comparison deltas on PR
         if: github.event_name == 'pull_request' && steps.benchmark_deltas.outputs.has_report == 'true'
         uses: actions/github-script@v8
@@ -594,6 +638,8 @@ jobs:
           BENCHMARK_MISSING_EXTERNAL_RUNTIME_CELLS: ${{ steps.benchmark_deltas.outputs.missing_external_runtime_cells }}
           BENCHMARK_MISSING_LUA_CLI_ROWS: ${{ steps.benchmark_deltas.outputs.missing_lua_cli_rows }}
           BENCHMARK_SELF_ROWS: ${{ steps.benchmark_deltas.outputs.self_rows }}
+          BENCHMARK_PHASE_BASELINE_ROWS: ${{ steps.benchmark_deltas.outputs.phase_baseline_rows }}
+          BENCHMARK_PHASE_GATE_FAILURES: ${{ steps.benchmark_deltas.outputs.phase_gate_failures }}
         with:
           script: |
             const fs = require('fs');
@@ -611,6 +657,8 @@ jobs:
             const missingExternalRuntimeCells = process.env.BENCHMARK_MISSING_EXTERNAL_RUNTIME_CELLS || '0';
             const missingLuaCliRows = process.env.BENCHMARK_MISSING_LUA_CLI_ROWS || '0';
             const selfRows = process.env.BENCHMARK_SELF_ROWS || '0';
+            const phaseBaselineRows = process.env.BENCHMARK_PHASE_BASELINE_ROWS || '0';
+            const phaseGateFailures = process.env.BENCHMARK_PHASE_GATE_FAILURES || '0';
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const body = [
               marker,
@@ -618,6 +666,7 @@ jobs:
               '',
               `Changed beyond tolerance: ${changed ? 'yes' : 'no'}. Self-regression signal: ${regressed ? 'yes' : 'no'}.`,
               `External runtime cells: ${externalRows}. Missing expected external cells: ${missingExternalRuntimeCells}. Missing lua CLI rows: ${missingLuaCliRows}. Self-baseline rows: ${selfRows}.`,
+              `Phase A0 baseline rows: ${phaseBaselineRows}. Phase A0 gate failures: ${phaseGateFailures}.`,
               '',
               `_Generated by benchmark CI ([run logs](${runUrl}))._`,
             ].join('\n');
@@ -645,6 +694,13 @@ jobs:
                 body,
               });
             }
+
+      - name: Fail when benchmark delta gates failed
+        if: steps.benchmark_deltas.outputs.render_status != '' && steps.benchmark_deltas.outputs.render_status != '0'
+        run: |
+          echo "::error::Benchmark delta renderer or Phase A0 gates failed. Review artifacts/benchmark-deltas.md and the PR benchmark comment."
+          exit 1
+        shell: bash
 
       - name: Set output when no results
         id: set_no_output
@@ -749,4 +805,5 @@ jobs:
             artifacts/benchmarkdotnet/
             benchmark-results.json
             artifacts/benchmark-deltas.md
+            artifacts/benchmark-deltas.err
           if-no-files-found: warn

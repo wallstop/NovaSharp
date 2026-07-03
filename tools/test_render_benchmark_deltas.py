@@ -184,6 +184,9 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self,
         self_baseline_root: Path | None = None,
         expect_lua_cli: bool = False,
+        phase_baseline: Path | None = None,
+        write_phase_baseline: Path | None = None,
+        enforce_phase_gates: bool = False,
     ) -> subprocess.CompletedProcess[str]:
         args = [
             "python3",
@@ -208,6 +211,22 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             )
         if expect_lua_cli:
             args.append("--expect-lua-cli")
+        if phase_baseline is not None:
+            args.extend(
+                [
+                    "--phase-baseline",
+                    str(phase_baseline.relative_to(ROOT)),
+                ]
+            )
+        if write_phase_baseline is not None:
+            args.extend(
+                [
+                    "--write-phase-baseline",
+                    str(write_phase_baseline.relative_to(ROOT)),
+                ]
+            )
+        if enforce_phase_gates:
+            args.append("--enforce-phase-gates")
 
         return subprocess.run(
             args,
@@ -243,6 +262,9 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertIn("missing_external_runtime_cells=0", result.stdout)
         output = self.output.read_text(encoding="utf-8")
         self.assertIn("Benchmark Comparison Deltas", output)
+        self.assertIn("Phase A0 Scoreboard", output)
+        self.assertIn("Scoreboard Time", output)
+        self.assertIn("Scoreboard Memory and GC", output)
         self.assertIn("Same-Run Runtime Matrix", output)
         self.assertIn("NovaSharp Raw Results", output)
         self.assertIn("#### Time", output)
@@ -327,6 +349,10 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertIn("NovaSharp Delta vs Lua CLI wall-time", output)
         self.assertIn(
             "| NumericLoops | Execute | 90 ns / 110 ns | 50 ns / 70 ns | +40 ns / +40 ns |",
+            output,
+        )
+        self.assertIn(
+            "| NumericLoops | Execute | 80 B / 1 / 0 / 0 | - | - | - | - | - |",
             output,
         )
         self.assertIn("A `-` cell means that runtime did not report memory", output)
@@ -441,6 +467,140 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         output = self.output.read_text(encoding="utf-8")
         self.assertIn("Comparison groups without a NovaSharp row", output)
         self.assertIn("No same-run external comparison rows were found", output)
+
+    def test_writes_phase_baseline_and_enforces_matching_rows(self) -> None:
+        phase_baseline = self.work_dir / "phase-a0-baseline.json"
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 120, 80),
+                self.comparison_benchmark("NLua Execute", 50, 60, 24),
+            ],
+        )
+
+        write_result = self.run_script(
+            phase_baseline=phase_baseline,
+            write_phase_baseline=phase_baseline,
+        )
+
+        self.assertEqual(0, write_result.returncode, write_result.stdout + write_result.stderr)
+        self.assertIn("phase_baseline_output=", write_result.stdout)
+        self.assertIn("phase_baseline_rows=1", write_result.stdout)
+        baseline_payload = json.loads(phase_baseline.read_text(encoding="utf-8"))
+        self.assertEqual("novasharp.phase-benchmark-baseline.v1", baseline_payload["schema"])
+        self.assertEqual(1, len(baseline_payload["rows"]))
+        self.assertIn("NovaSharp", baseline_payload["rows"][0]["runtimes"])
+        self.assertIn("NLua", baseline_payload["rows"][0]["runtimes"])
+        self.assertNotIn(
+            "No checked-in Phase A0 scoreboard baseline was found",
+            self.output.read_text(encoding="utf-8"),
+        )
+
+        enforce_result = self.run_script(
+            phase_baseline=phase_baseline,
+            enforce_phase_gates=True,
+        )
+
+        self.assertEqual(
+            0,
+            enforce_result.returncode,
+            enforce_result.stdout + enforce_result.stderr,
+        )
+        self.assertIn("phase_baseline_rows=1", enforce_result.stdout)
+        self.assertIn("phase_gate_failures=0", enforce_result.stdout)
+
+    def test_phase_gate_fails_on_exact_novasharp_allocation_change(self) -> None:
+        phase_baseline = self.work_dir / "phase-a0-baseline.json"
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 120, 80),
+                self.comparison_benchmark("NLua Execute", 50, 60, 24),
+            ],
+        )
+        self.assertEqual(0, self.run_script(write_phase_baseline=phase_baseline).returncode)
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 120, 81),
+                self.comparison_benchmark("NLua Execute", 50, 60, 24),
+            ],
+        )
+
+        result = self.run_script(phase_baseline=phase_baseline, enforce_phase_gates=True)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("phase_gate_failures=1", result.stdout)
+        self.assertIn("error=phase gate failures: 1", result.stderr)
+        self.assertIn(
+            "NovaSharp allocation changed from 80 B to 81 B (+1 B).",
+            self.output.read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            "| NumericLoops | Execute | NovaSharp B/op | NovaSharp allocation changed from 80 B to 81 B (+1 B). |",
+            self.output.read_text(encoding="utf-8"),
+        )
+
+    def test_phase_gate_fails_on_nlua_ratio_drift(self) -> None:
+        phase_baseline = self.work_dir / "phase-a0-baseline.json"
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 100, 80),
+                self.comparison_benchmark("NLua Execute", 50, 50, 24),
+            ],
+        )
+        self.assertEqual(0, self.run_script(write_phase_baseline=phase_baseline).returncode)
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 130, 100, 80),
+                self.comparison_benchmark("NLua Execute", 50, 50, 24),
+            ],
+        )
+
+        result = self.run_script(phase_baseline=phase_baseline, enforce_phase_gates=True)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("phase_gate_failures=1", result.stdout)
+        self.assertIn(
+            "NovaSharp/NLua mean ratio changed from 2.000x to 2.600x (+30.00%).",
+            self.output.read_text(encoding="utf-8"),
+        )
+
+    def test_phase_gate_fails_when_current_nlua_row_is_missing(self) -> None:
+        phase_baseline = self.work_dir / "phase-a0-baseline.json"
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 120, 80),
+                self.comparison_benchmark("NLua Execute", 50, 60, 24),
+            ],
+        )
+        self.assertEqual(0, self.run_script(write_phase_baseline=phase_baseline).returncode)
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Execute", 100, 120, 80),
+                self.comparison_benchmark("MoonSharp Execute", 90, 110, 40),
+            ],
+        )
+
+        result = self.run_script(phase_baseline=phase_baseline, enforce_phase_gates=True)
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("phase_gate_failures=1", result.stdout)
+        self.assertIn(
+            "Current comparison row is missing NLua",
+            self.output.read_text(encoding="utf-8"),
+        )
 
 
 if __name__ == "__main__":

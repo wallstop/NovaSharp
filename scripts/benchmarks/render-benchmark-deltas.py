@@ -9,6 +9,7 @@ import math
 import re
 import sys
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,11 +17,15 @@ DEFAULT_CURRENT_ROOT = Path("BenchmarkDotNet.Artifacts")
 DEFAULT_COMPARISON_ROOT = Path("BenchmarkDotNet.Artifacts")
 DEFAULT_SELF_BASELINE_ROOT = Path("docs/performance-history/current-baseline")
 DEFAULT_OUTPUT = Path("artifacts/benchmark-deltas.md")
+DEFAULT_PHASE_BASELINE = Path("progress/benchmarks/phase-a0-scoreboard-baseline.json")
 DEFAULT_TOLERANCE = 0.02
 DEFAULT_REGRESSION_THRESHOLD = 0.10
+DEFAULT_NLUA_RATIO_THRESHOLD = 0.10
 NOVA_RUNTIME = "NovaSharp"
 RUNTIME_PREFIXES = ("NovaSharp", "MoonSharp", "NLua", "LuaCSharp", "KeraLua", "Lua")
 EXPECTED_EXTERNAL_RUNTIMES = ("MoonSharp", "NLua", "LuaCSharp")
+SCOREBOARD_RUNTIMES = ("MoonSharp", "NLua", "LuaCSharp", "Lua")
+PHASE_BASELINE_SCHEMA = "novasharp.phase-benchmark-baseline.v1"
 
 
 @dataclass(frozen=True, order=True)
@@ -63,6 +68,7 @@ class RuntimeComparison:
     display_name: str
     metrics: Metrics
     runtime_context: str
+    runtime_kind: str
     show_delta_percent: bool
 
 
@@ -105,6 +111,13 @@ class SelfDeltaRow:
     baseline: Metrics
 
 
+@dataclass(frozen=True)
+class PhaseGateFailure:
+    key: ComparisonKey
+    metric: str
+    message: str
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -129,6 +142,25 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--phase-baseline",
+        type=Path,
+        default=DEFAULT_PHASE_BASELINE,
+        help=(
+            "Normalized phase comparison baseline JSON. The scoreboard reads this "
+            "for the NovaSharp baseline column, and --enforce-phase-gates compares "
+            "current comparison rows against it."
+        ),
+    )
+    parser.add_argument(
+        "--write-phase-baseline",
+        type=Path,
+        default=None,
+        help=(
+            "Write normalized comparison metrics to this JSON path. Intended for "
+            "checked-in phase baselines under progress/ after a representative run."
+        ),
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=DEFAULT_OUTPUT,
@@ -147,6 +179,24 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="Fractional worse-than-self-baseline threshold for regressed=true.",
     )
     parser.add_argument(
+        "--nlua-ratio-threshold",
+        type=float,
+        default=DEFAULT_NLUA_RATIO_THRESHOLD,
+        help=(
+            "Allowed fractional drift in NovaSharp/NLua mean and P95 ratios when "
+            "--enforce-phase-gates is enabled."
+        ),
+    )
+    parser.add_argument(
+        "--enforce-phase-gates",
+        action="store_true",
+        help=(
+            "Fail when the phase baseline is missing, when comparison rows do not "
+            "match the baseline shape, when NovaSharp/NLua ratios drift beyond the "
+            "configured threshold, or when NovaSharp allocated B/op changes."
+        ),
+    )
+    parser.add_argument(
         "--expect-lua-cli",
         action="store_true",
         help="Report missing reference lua CLI wall-time rows for Execute scenarios.",
@@ -159,6 +209,12 @@ def main(argv: list[str]) -> int:
     current_root = resolve_repo_path(args.current_root)
     comparison_root = resolve_repo_path(args.comparison_root)
     self_baseline_root = resolve_repo_path(args.self_baseline_root)
+    phase_baseline_path = resolve_repo_path(args.phase_baseline)
+    write_phase_baseline_path = (
+        resolve_repo_path(args.write_phase_baseline)
+        if args.write_phase_baseline is not None
+        else None
+    )
     output = resolve_repo_path(args.output)
 
     current = load_benchmark_metrics(current_root, include_external=False)
@@ -174,6 +230,19 @@ def main(argv: list[str]) -> int:
     comparison = load_comparison_metrics(comparison_root)
     external_rows = build_external_delta_rows(comparison)
     runtime_matrix_rows = build_runtime_matrix_rows(comparison)
+    if write_phase_baseline_path is not None:
+        write_phase_baseline(write_phase_baseline_path, comparison, comparison_root)
+
+    phase_baseline = load_phase_baseline(phase_baseline_path)
+    phase_gate_failures = (
+        build_phase_gate_failures(
+            comparison,
+            phase_baseline,
+            args.nlua_ratio_threshold,
+        )
+        if phase_baseline_path.exists()
+        else []
+    )
     missing_expected_runtime_cells = build_missing_expected_runtime_cells(
         comparison,
         expect_lua_cli=args.expect_lua_cli,
@@ -205,6 +274,9 @@ def main(argv: list[str]) -> int:
             comparison_groups_without_nova,
             missing_expected_runtime_cells,
             missing_lua_cli_rows,
+            phase_baseline,
+            phase_baseline_path,
+            phase_gate_failures,
             current_without_baseline,
             baseline_without_current,
         ),
@@ -217,7 +289,25 @@ def main(argv: list[str]) -> int:
     print(f"missing_external_runtime_cells={len(missing_expected_runtime_cells)}")
     print(f"missing_lua_cli_rows={len(missing_lua_cli_rows)}")
     print(f"self_rows={len(self_rows)}")
+    print(f"phase_baseline_rows={len(phase_baseline)}")
+    print(f"phase_gate_failures={len(phase_gate_failures)}")
+    if write_phase_baseline_path is not None:
+        print(f"phase_baseline_output={repo_relative(write_phase_baseline_path)}")
     print(f"output={repo_relative(output)}")
+    if args.enforce_phase_gates:
+        if not phase_baseline_path.exists():
+            print(
+                "error=phase baseline missing: "
+                f"{repo_relative(phase_baseline_path)}",
+                file=sys.stderr,
+            )
+            return 1
+        if phase_gate_failures:
+            print(
+                f"error=phase gate failures: {len(phase_gate_failures)}",
+                file=sys.stderr,
+            )
+            return 1
     return 0
 
 
@@ -288,6 +378,127 @@ def load_comparison_metrics(root: Path) -> dict[ComparisonKey, dict[str, MetricR
             )
 
     return metrics
+
+
+def load_phase_baseline(path: Path) -> dict[ComparisonKey, dict[str, MetricRecord]]:
+    if not path.exists():
+        return {}
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+    schema = data.get("schema")
+    if schema != PHASE_BASELINE_SCHEMA:
+        raise ValueError(
+            f"Unsupported phase baseline schema in {repo_relative(path)}: {schema!r}"
+        )
+
+    baseline: dict[ComparisonKey, dict[str, MetricRecord]] = {}
+    for row in data.get("rows") or []:
+        key = ComparisonKey(
+            normalize_cell(row.get("summary", "")),
+            normalize_cell(row.get("operation", "")),
+            normalize_cell(row.get("parameters", "")),
+        )
+        if not key.summary or not key.operation:
+            continue
+
+        runtimes: dict[str, MetricRecord] = {}
+        for runtime, runtime_payload in sorted((row.get("runtimes") or {}).items()):
+            metrics = metrics_from_baseline_json(runtime_payload)
+            if metrics is None:
+                continue
+
+            runtimes[normalize_cell(runtime)] = MetricRecord(
+                metrics=metrics,
+                parameter_display=normalize_cell(row.get("parameterDisplay", "")),
+                runtime_display_name=normalize_cell(
+                    runtime_payload.get("runtimeDisplayName", "")
+                ),
+                runtime_context=normalize_cell(runtime_payload.get("runtimeContext", "")),
+                runtime_kind=normalize_cell(runtime_payload.get("runtimeKind", "")),
+                show_delta_percent=bool(runtime_payload.get("showDeltaPercent", True)),
+            )
+
+        if runtimes:
+            baseline[key] = runtimes
+
+    return baseline
+
+
+def write_phase_baseline(
+    path: Path,
+    comparison: dict[ComparisonKey, dict[str, MetricRecord]],
+    comparison_root: Path,
+) -> None:
+    rows = []
+    for key in sorted(comparison, key=comparison_matrix_sort_key):
+        runtimes = comparison[key]
+        if NOVA_RUNTIME not in runtimes:
+            continue
+
+        runtime_payload = {}
+        for runtime in sorted(runtimes, key=runtime_sort_key):
+            record = runtimes[runtime]
+            runtime_payload[runtime] = metrics_to_baseline_json(record)
+
+        rows.append(
+            {
+                "summary": key.summary,
+                "operation": key.operation,
+                "parameters": key.parameters,
+                "parameterDisplay": runtimes[NOVA_RUNTIME].parameter_display,
+                "runtimes": runtime_payload,
+            }
+        )
+
+    payload = {
+        "schema": PHASE_BASELINE_SCHEMA,
+        "generatedAt": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "source": {
+            "comparisonRoot": repo_relative(comparison_root),
+        },
+        "rows": rows,
+    }
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def metrics_to_baseline_json(record: MetricRecord) -> dict[str, object]:
+    metrics = record.metrics
+    return {
+        "allocatedBytes": finite_or_none(metrics.allocated_bytes),
+        "gen0Per1K": finite_or_none(metrics.gen0_per_1k),
+        "gen1Per1K": finite_or_none(metrics.gen1_per_1k),
+        "gen2Per1K": finite_or_none(metrics.gen2_per_1k),
+        "meanNs": finite_or_none(metrics.mean_ns),
+        "p95Ns": finite_or_none(metrics.p95_ns),
+        "runtimeContext": record.runtime_context,
+        "runtimeDisplayName": record.runtime_display_name,
+        "runtimeKind": record.runtime_kind,
+        "showDeltaPercent": record.show_delta_percent,
+    }
+
+
+def metrics_from_baseline_json(payload: dict) -> Metrics | None:
+    mean = to_float(payload.get("meanNs"))
+    p95 = to_float(payload.get("p95Ns"))
+    if not math.isfinite(mean):
+        return None
+    if not math.isfinite(p95):
+        p95 = mean
+
+    return Metrics(
+        mean,
+        p95,
+        to_float(payload.get("gen0Per1K")),
+        to_float(payload.get("gen1Per1K")),
+        to_float(payload.get("gen2Per1K")),
+        to_float(payload.get("allocatedBytes")),
+    )
+
+
+def finite_or_none(value: float) -> float | None:
+    return value if math.isfinite(value) else None
 
 
 def find_benchmark_reports(root: Path) -> list[Path]:
@@ -433,6 +644,7 @@ def build_runtime_matrix_rows(
                     record.runtime_display_name or runtime,
                     record.metrics,
                     record.runtime_context,
+                    record.runtime_kind,
                     record.show_delta_percent,
                 )
             )
@@ -498,6 +710,145 @@ def build_self_delta_rows(
     return rows
 
 
+def build_phase_gate_failures(
+    current: dict[ComparisonKey, dict[str, MetricRecord]],
+    baseline: dict[ComparisonKey, dict[str, MetricRecord]],
+    nlua_ratio_threshold: float,
+) -> list[PhaseGateFailure]:
+    failures: list[PhaseGateFailure] = []
+    current_keys = {key for key, runtimes in current.items() if NOVA_RUNTIME in runtimes}
+    baseline_keys = {key for key, runtimes in baseline.items() if NOVA_RUNTIME in runtimes}
+
+    for key in sorted(current_keys - baseline_keys, key=comparison_matrix_sort_key):
+        failures.append(
+            PhaseGateFailure(
+                key,
+                "shape",
+                "Current comparison row has no checked-in phase baseline.",
+            )
+        )
+    for key in sorted(baseline_keys - current_keys, key=comparison_matrix_sort_key):
+        failures.append(
+            PhaseGateFailure(
+                key,
+                "shape",
+                "Checked-in phase baseline row is absent from current artifacts.",
+            )
+        )
+
+    for key in sorted(current_keys & baseline_keys, key=comparison_matrix_sort_key):
+        current_runtimes = current[key]
+        baseline_runtimes = baseline[key]
+        current_nova = current_runtimes.get(NOVA_RUNTIME)
+        baseline_nova = baseline_runtimes.get(NOVA_RUNTIME)
+        current_nlua = current_runtimes.get("NLua")
+        baseline_nlua = baseline_runtimes.get("NLua")
+
+        if current_nova is None or baseline_nova is None:
+            continue
+
+        allocation_failure = allocation_gate_failure(
+            current_nova.metrics.allocated_bytes,
+            baseline_nova.metrics.allocated_bytes,
+        )
+        if allocation_failure:
+            failures.append(PhaseGateFailure(key, "NovaSharp B/op", allocation_failure))
+
+        if current_nlua is None:
+            failures.append(
+                PhaseGateFailure(
+                    key,
+                    "NLua ratio",
+                    "Current comparison row is missing NLua, so NovaSharp/NLua ratios cannot be checked.",
+                )
+            )
+            continue
+        if baseline_nlua is None:
+            failures.append(
+                PhaseGateFailure(
+                    key,
+                    "NLua ratio",
+                    "Phase baseline row is missing NLua, so NovaSharp/NLua ratios cannot be checked.",
+                )
+            )
+            continue
+
+        append_ratio_gate_failure(
+            failures,
+            key,
+            "mean",
+            current_nova.metrics.mean_ns,
+            current_nlua.metrics.mean_ns,
+            baseline_nova.metrics.mean_ns,
+            baseline_nlua.metrics.mean_ns,
+            nlua_ratio_threshold,
+        )
+        append_ratio_gate_failure(
+            failures,
+            key,
+            "P95",
+            current_nova.metrics.p95_ns,
+            current_nlua.metrics.p95_ns,
+            baseline_nova.metrics.p95_ns,
+            baseline_nlua.metrics.p95_ns,
+            nlua_ratio_threshold,
+        )
+
+    return failures
+
+
+def allocation_gate_failure(current: float, baseline: float) -> str:
+    if not math.isfinite(current):
+        return "Current NovaSharp allocation measurement is missing."
+    if not math.isfinite(baseline):
+        return "Phase baseline NovaSharp allocation measurement is missing."
+    if current == baseline:
+        return ""
+
+    return (
+        "NovaSharp allocation changed from "
+        f"{format_bytes(baseline)} to {format_bytes(current)} "
+        f"({format_bytes_delta(current - baseline)})."
+    )
+
+
+def append_ratio_gate_failure(
+    failures: list[PhaseGateFailure],
+    key: ComparisonKey,
+    metric_name: str,
+    current_nova: float,
+    current_nlua: float,
+    baseline_nova: float,
+    baseline_nlua: float,
+    threshold: float,
+) -> None:
+    current_ratio = ratio_or_nan(current_nova, current_nlua)
+    baseline_ratio = ratio_or_nan(baseline_nova, baseline_nlua)
+    ratio_delta = fraction_delta(current_ratio, baseline_ratio)
+    if math.isfinite(ratio_delta) and abs(ratio_delta) <= threshold:
+        return
+
+    if not math.isfinite(current_ratio):
+        message = f"Current NovaSharp/NLua {metric_name} ratio is unavailable."
+    elif not math.isfinite(baseline_ratio):
+        message = f"Phase baseline NovaSharp/NLua {metric_name} ratio is unavailable."
+    else:
+        message = (
+            f"NovaSharp/NLua {metric_name} ratio changed from "
+            f"{baseline_ratio:.3f}x to {current_ratio:.3f}x "
+            f"({format_percent(percentage_delta(current_ratio, baseline_ratio))})."
+        )
+
+    failures.append(PhaseGateFailure(key, f"NLua {metric_name} ratio", message))
+
+
+def ratio_or_nan(numerator: float, denominator: float) -> float:
+    if not math.isfinite(numerator) or not math.isfinite(denominator) or denominator == 0:
+        return math.nan
+
+    return numerator / denominator
+
+
 def external_row_changed(row: ExternalDeltaRow, tolerance: float) -> bool:
     if not row.contributes_to_changed_signal:
         return False
@@ -561,6 +912,9 @@ def render_markdown(
     comparison_groups_without_nova: list[ComparisonKey],
     missing_expected_runtime_cells: list[MissingRuntimeCell],
     missing_lua_cli_rows: list[MissingRuntimeCell],
+    phase_baseline: dict[ComparisonKey, dict[str, MetricRecord]],
+    phase_baseline_path: Path,
+    phase_gate_failures: list[PhaseGateFailure],
     current_without_baseline: list[BenchmarkKey],
     baseline_without_current: list[BenchmarkKey],
 ) -> str:
@@ -583,6 +937,8 @@ def render_markdown(
         f"- Same-run external runtime cells: {len(external_rows)}",
         f"- Expected external runtime cells missing: {len(missing_expected_runtime_cells)}",
         f"- Expected reference lua CLI rows missing: {len(missing_lua_cli_rows)}",
+        f"- Phase A0 scoreboard baseline rows: {len(phase_baseline)}",
+        f"- Phase A0 gate failures: {len(phase_gate_failures)}",
         f"- Self baseline matches: {len(self_rows)} of {current_count} current rows and {self_baseline_count} baseline rows",
         "",
     ]
@@ -598,6 +954,13 @@ def render_markdown(
         missing_expected_runtime_cells,
     )
 
+    render_phase_scoreboard_section(
+        lines,
+        runtime_matrix_rows,
+        phase_baseline,
+        phase_baseline_path,
+        phase_gate_failures,
+    )
     render_external_section(lines, runtime_matrix_rows)
     render_self_section(
         lines,
@@ -608,6 +971,169 @@ def render_markdown(
     )
 
     return "\n".join(lines).rstrip() + "\n"
+
+
+def render_phase_scoreboard_section(
+    lines: list[str],
+    rows: list[RuntimeMatrixRow],
+    phase_baseline: dict[ComparisonKey, dict[str, MetricRecord]],
+    phase_baseline_path: Path,
+    phase_gate_failures: list[PhaseGateFailure],
+) -> None:
+    lines.extend(
+        [
+            "### Phase A0 Scoreboard",
+            "",
+            "This scoreboard is the compact Phase A0 view: rows are benchmark scenarios/operations, "
+            "and columns show NovaSharp current, NovaSharp baseline, MoonSharp, NLua, Lua-CSharp, "
+            "and reference `lua` CLI wall-time context when present.",
+            "The phase gate, when enabled, checks NovaSharp/NLua same-run timing ratios against the "
+            "checked-in phase baseline and checks NovaSharp allocated B/op exactly.",
+            "",
+            f"- Phase baseline JSON: `{repo_relative(phase_baseline_path)}`",
+            "",
+        ]
+    )
+
+    if not phase_baseline_path.exists():
+        lines.extend(
+            [
+                "No checked-in Phase A0 scoreboard baseline was found. Run the comparison suite "
+                "and pass `--write-phase-baseline` after a representative run to create one.",
+                "",
+            ]
+        )
+
+    append_phase_gate_failure_preview(lines, phase_gate_failures)
+
+    if not rows:
+        lines.extend(
+            [
+                "No current comparison rows were found for the Phase A0 scoreboard.",
+                "",
+            ]
+        )
+        return
+
+    render_phase_time_scoreboard(lines, rows, phase_baseline)
+    render_phase_memory_scoreboard(lines, rows, phase_baseline)
+
+
+def render_phase_time_scoreboard(
+    lines: list[str],
+    rows: list[RuntimeMatrixRow],
+    phase_baseline: dict[ComparisonKey, dict[str, MetricRecord]],
+) -> None:
+    headers = [
+        "Scenario",
+        "Operation",
+        f"{NOVA_RUNTIME} Current Mean / P95",
+        f"{NOVA_RUNTIME} Baseline Mean / P95",
+    ]
+    alignments = ["---", "---", "---:", "---:"]
+    for runtime in SCOREBOARD_RUNTIMES:
+        headers.append(f"{scoreboard_runtime_label(runtime)} Mean / P95")
+        alignments.append("---:")
+
+    lines.extend(["#### Scoreboard Time", "", render_markdown_row(headers), render_markdown_row(alignments)])
+    for row in rows:
+        cells = [
+            scenario_display(row),
+            row.key.operation,
+            format_time_pair(row.nova),
+            format_scoreboard_time_cell(phase_baseline_record(phase_baseline, row.key, NOVA_RUNTIME)),
+        ]
+        for runtime in SCOREBOARD_RUNTIMES:
+            cells.append(format_scoreboard_time_cell(current_record_for_runtime(row, runtime)))
+
+        lines.append(render_markdown_row(cells))
+    lines.append("")
+
+
+def render_phase_memory_scoreboard(
+    lines: list[str],
+    rows: list[RuntimeMatrixRow],
+    phase_baseline: dict[ComparisonKey, dict[str, MetricRecord]],
+) -> None:
+    headers = [
+        "Scenario",
+        "Operation",
+        f"{NOVA_RUNTIME} Current Alloc / GC0/1/2",
+        f"{NOVA_RUNTIME} Baseline Alloc / GC0/1/2",
+    ]
+    alignments = ["---", "---", "---:", "---:"]
+    for runtime in SCOREBOARD_RUNTIMES:
+        headers.append(f"{scoreboard_runtime_label(runtime)} Alloc / GC0/1/2")
+        alignments.append("---:")
+
+    lines.extend(
+        [
+            "#### Scoreboard Memory and GC",
+            "",
+            "GC columns are collections per 1,000 operations. Reference `lua` CLI rows are process wall-time context, so their memory cells are `-`.",
+            "",
+            render_markdown_row(headers),
+            render_markdown_row(alignments),
+        ]
+    )
+    for row in rows:
+        cells = [
+            scenario_display(row),
+            row.key.operation,
+            format_memory_gc_pair(row.nova),
+            format_scoreboard_memory_cell(
+                phase_baseline_record(phase_baseline, row.key, NOVA_RUNTIME)
+            ),
+        ]
+        for runtime in SCOREBOARD_RUNTIMES:
+            cells.append(format_scoreboard_memory_cell(current_record_for_runtime(row, runtime)))
+
+        lines.append(render_markdown_row(cells))
+    lines.append("")
+
+
+def current_record_for_runtime(row: RuntimeMatrixRow, runtime: str) -> MetricRecord | None:
+    if runtime == NOVA_RUNTIME:
+        return MetricRecord(row.nova, row.parameter_display)
+
+    for comparison in row.comparisons:
+        if comparison.runtime == runtime:
+            return MetricRecord(
+                comparison.metrics,
+                row.parameter_display,
+                runtime_display_name=comparison.display_name,
+                runtime_context=comparison.runtime_context,
+                runtime_kind=comparison.runtime_kind,
+                show_delta_percent=comparison.show_delta_percent,
+            )
+
+    return None
+
+
+def phase_baseline_record(
+    phase_baseline: dict[ComparisonKey, dict[str, MetricRecord]],
+    key: ComparisonKey,
+    runtime: str,
+) -> MetricRecord | None:
+    return phase_baseline.get(key, {}).get(runtime)
+
+
+def format_scoreboard_time_cell(record: MetricRecord | None) -> str:
+    return format_time_pair(record.metrics) if record is not None else "-"
+
+
+def format_scoreboard_memory_cell(record: MetricRecord | None) -> str:
+    if record is None or record.runtime_kind == "LuaCliWallTime":
+        return "-"
+
+    return format_memory_gc_pair(record.metrics)
+
+
+def scoreboard_runtime_label(runtime: str) -> str:
+    if runtime == "Lua":
+        return "Lua CLI"
+
+    return runtime
 
 
 def render_external_section(lines: list[str], rows: list[RuntimeMatrixRow]) -> None:
@@ -812,11 +1338,15 @@ def external_runtimes_for_matrix(rows: list[RuntimeMatrixRow]) -> list[RuntimeCo
 
 
 def scenario_display(row: RuntimeMatrixRow) -> str:
-    display = row.parameter_display or parameter_display_from_signature(row.key.parameters)
+    return scenario_display_from_key(row.key, row.parameter_display)
+
+
+def scenario_display_from_key(key: ComparisonKey, parameter_display: str = "") -> str:
+    display = parameter_display or parameter_display_from_signature(key.parameters)
     parameters = split_parameter_display(display)
     scenario = next((value for name, value in parameters if name == "Scenario"), "")
     if not scenario:
-        return display or "-"
+        return display or key.summary or "-"
 
     remaining = [(name, value) for name, value in parameters if name != "Scenario"]
     if not remaining:
@@ -1027,6 +1557,38 @@ def append_missing_runtime_cell_preview(
         )
     if len(cells) > 10:
         lines.append(f"- ... {len(cells) - 10} more")
+    lines.append("")
+
+
+def append_phase_gate_failure_preview(
+    lines: list[str],
+    failures: list[PhaseGateFailure],
+) -> None:
+    if not failures:
+        return
+
+    lines.extend(
+        [
+            "#### Phase A0 Gate Failures",
+            "",
+            render_markdown_row(["Scenario", "Operation", "Metric", "Failure"]),
+            render_markdown_row(["---", "---", "---", "---"]),
+        ]
+    )
+    for failure in failures[:20]:
+        lines.append(
+            render_markdown_row(
+                [
+                    scenario_display_from_key(failure.key),
+                    failure.key.operation,
+                    failure.metric,
+                    failure.message,
+                ]
+            )
+        )
+    if len(failures) > 20:
+        lines.append("")
+        lines.append(f"- ... {len(failures) - 20} more")
     lines.append("")
 
 
