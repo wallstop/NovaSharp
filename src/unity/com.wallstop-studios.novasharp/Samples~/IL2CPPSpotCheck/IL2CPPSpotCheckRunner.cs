@@ -125,9 +125,31 @@ end
             }
             catch (Exception ex)
             {
-                Debug.LogError(string.Concat(FailPrefix, " ", ex));
-                throw;
+                Debug.LogError(FormatFailure(ex));
             }
+        }
+
+        private static string FormatFailure(Exception exception)
+        {
+            string exceptionType = exception.GetType().FullName ?? exception.GetType().Name;
+            string message = ToSingleLogLine(exception.Message);
+            if (string.IsNullOrEmpty(message))
+            {
+                message = "<no-message>";
+            }
+
+            return string.Concat(
+                FailPrefix,
+                " errorType=",
+                exceptionType,
+                " message=",
+                message
+            );
+        }
+
+        private static string ToSingleLogLine(string value)
+        {
+            return value.Replace('\r', ' ').Replace('\n', ' ').Trim();
         }
 
         private void EnsureScript()

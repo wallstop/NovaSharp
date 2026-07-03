@@ -152,6 +152,6 @@ When using NovaSharp in IL2CPP builds:
 
 1. **Sandboxing**: The sandbox features (instruction limits, memory tracking) work in IL2CPP builds.
 
-1. **Spot-check scene**: Import the `IL2CPP Spot Check` sample, build it with IL2CPP, run the player, and inspect the player log for a line beginning with `NOVASHARP_IL2CPP_SPOTCHECK PASS`.
+1. **Spot-check scene**: Import the `IL2CPP Spot Check` sample, build it with IL2CPP, run the player, and inspect the player log for a line beginning with `NOVASHARP_IL2CPP_SPOTCHECK PASS`. Failures emit one line beginning with `NOVASHARP_IL2CPP_SPOTCHECK FAIL`.
 
 See `docs/UnityIntegration.md` for detailed Unity integration guidance.
