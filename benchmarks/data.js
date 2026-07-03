@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783023288803,
+  "lastUpdate": 1783049008715,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -286,6 +286,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 696.302,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "21b55bb3a441948689cf3b94b9ad32033e9f9c87",
+          "message": "Add Phase A0 interop and cached compile benchmarks (#47)\n\n## Summary\n\n- Add cached-compile comparison rows beside cold compile/execute rows\nfor NovaSharp and third-party managed comparison runtimes.\n- Add Lua-to-CLR and CLR-to-Lua interop benchmark rows with\ndeterministic result assertions.\n- Include interop rows in CI/local comparison benchmark runs, extend\nbenchmark job timeout, and keep reference lua CLI expectations scoped to\npure-Lua scenarios.\n- Update PLAN.md and add\nprogress/session-127-phase-a0-interop-cached-compile.md.\n\n## Validation\n\n- dotnet build\nsrc/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj\n-c Release -v:minimal\n- dotnet run --project\nsrc/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj\n-c Release --no-build -- --list flat\n- dotnet run --project\nsrc/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj\n-c Release --no-build -- --filter \"*LuaInteropBenchmarks*\" --launchCount\n1 --warmupCount 0 --iterationCount 1 --artifacts\nartifacts/benchmarkdotnet/interopsmoke-postassertions\n- dotnet run --project\nsrc/tooling/WallstopStudios.NovaSharp.Comparison/WallstopStudios.NovaSharp.Comparison.csproj\n-c Release --no-build -- --filter \"*CachedCompile\" --launchCount 1\n--warmupCount 0 --iterationCount 1 --artifacts\nartifacts/benchmarkdotnet/cachedcompile-smoke-all\n- python3 tools/test_render_benchmark_deltas.py\n- python3 tools/test_run_lua_cli_context.py\n- python3 -m py_compile scripts/benchmarks/render-benchmark-deltas.py\nscripts/benchmarks/run-lua-cli-context.py\ntools/test_render_benchmark_deltas.py tools/test_run_lua_cli_context.py\n- ./scripts/build/quick.sh\n- ./scripts/test/quick.sh\n- bash ./scripts/dev/pre-commit.sh\n- git push pre-push hook\n\n## Review Notes\n\n- Three read-only sub-agent review rounds completed. Final round found\nno issues.\n- CI/reviewer feedback still pending after PR creation.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Large workflow and benchmark-matrix changes can break CI artifact\npaths or reporting gates, but changes are confined to tooling and GitHub\nActions with no runtime interpreter behavior changes.\n> \n> **Overview**\n> Extends the Phase A0 comparison scoreboard with **cached-compile**\nrows (warmed script/state reload) for NovaSharp, MoonSharp, NLua, and\nLua-CSharp, and adds **`LuaInteropBenchmarks`** for 1M-call Lua↔CLR\n`add` workloads with deterministic totals so bad bindings fail before\ntiming is trusted. Reference `lua` CLI stays on pure-Lua scenarios only;\ndelta rendering gains a test that interop rows do not count as missing\n`lua` CLI when `--expect-lua-cli` is on.\n> \n> **Benchmark CI** is no longer one long job: separate **runtime**,\n**per-scenario comparison** (16 matrix legs + per-scenario `lua` CLI\ncontext), **interop** (LuaToClr / ClrToLua), and an aggregate\n**`benchmark-report`** job that downloads artifacts, verifies expected\nJSON, renders deltas/PR comments, and fails if any split leg failed. Leg\ntimeouts drop to **10 minutes**; **`JsonExporter.FullCompressed`** is\nwired into both benchmark configs so CI does not depend on `--exporters\njson`. Local `run-benchmarks` scripts run the full comparison assembly\nwith `--filter \"*\"`.\n> \n> `PLAN.md` marks interop and cached-compile complete and documents the\nsplit CI; session **127** and **128** progress notes capture validation.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n4d855d92becc063f7d96bba3ee4e8bb0eb5b072c. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\n---------\n\nCo-authored-by: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>",
+          "timestamp": "2026-07-02T20:18:00-07:00",
+          "tree_id": "0489d81c7e5eb6ed2c2439eb02e51580b107b7e5",
+          "url": "https://github.com/wallstop/NovaSharp/commit/21b55bb3a441948689cf3b94b9ad32033e9f9c87"
+        },
+        "date": 1783049008026,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 509.184,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 369.853,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 7.083,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 646.575,
             "unit": "ns",
             "extra": ""
           }
