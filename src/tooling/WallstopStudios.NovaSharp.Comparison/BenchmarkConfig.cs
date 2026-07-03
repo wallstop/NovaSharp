@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Comparison
     using BenchmarkDotNet.Columns;
     using BenchmarkDotNet.Configs;
     using BenchmarkDotNet.Diagnosers;
+    using BenchmarkDotNet.Exporters.Json;
     using BenchmarkDotNet.Jobs;
 
     /// <summary>
@@ -23,6 +24,7 @@ namespace WallstopStudios.NovaSharp.Comparison
                 .Create(DefaultConfig.Instance)
                 .AddJob(ComparisonJob)
                 .AddDiagnoser(MemoryDiagnoser.Default)
+                .AddExporter(JsonExporter.FullCompressed)
                 .AddColumnProvider(DefaultColumnProviders.Instance)
                 .AddColumn(StatisticColumn.P95, RankColumn.Arabic);
     }

@@ -101,8 +101,7 @@ if (-not $SkipComparison) {
         -c $Configuration `
         --no-build `
         -- `
-        --filter "*LuaPerformanceBenchmarks*" `
-        --exporters json `
+        --filter "*" `
         --artifacts $comparisonArtifacts
     if ($LASTEXITCODE -ne 0) {
         throw "dotnet run --project $ComparisonBenchmarkProject -c $Configuration failed. See output above."
