@@ -52,9 +52,17 @@ artifacts/unity/com.wallstop-studios.novasharp/
 │   ├── UnityIntegration.md
 │   └── ThirdPartyLicenses.md
 └── Samples~/
-    └── BasicUsage/
-        └── BasicUsage.cs
+    ├── BasicUsage/
+    │   └── NovaSharpBasicUsage.cs
+    └── IL2CPPSpotCheck/
+        ├── IL2CPPSpotCheck.unity
+        ├── IL2CPPSpotCheckRunner.cs
+        └── README.md
 ```
+
+Tracked Unity sample sources live under `src/unity/com.wallstop-studios.novasharp/Samples~`.
+Both package scripts copy that directory into the generated UPM package so Bash and
+PowerShell outputs stay aligned.
 
 ## NuGet Publishing
 
@@ -143,5 +151,7 @@ When using NovaSharp in IL2CPP builds:
    ```
 
 1. **Sandboxing**: The sandbox features (instruction limits, memory tracking) work in IL2CPP builds.
+
+1. **Spot-check scene**: Import the `IL2CPP Spot Check` sample, build it with IL2CPP, run the player, and inspect the player log for a line beginning with `NOVASHARP_IL2CPP_SPOTCHECK PASS`.
 
 See `docs/UnityIntegration.md` for detailed Unity integration guidance.

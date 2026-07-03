@@ -559,7 +559,7 @@ check_branding() {
   for file in $staged_output; do
     # Skip allowlisted files
     case "$file" in
-      docs/Performance.md|docs/Testing.md|docs/performance-history/README.md|progress/session-119-load-reader-and-ci-delta-reporting.md|progress/session-121-same-run-comparison-deltas.md|progress/session-129-phase-a0-scoreboard-gates.md|README.md|src/samples/Tutorial/Tutorials/readme.md|moonsharp_DescriptorHelpers.cs|AGENTS.md|PLAN.md) continue ;;
+      docs/Performance.md|docs/Testing.md|docs/performance-history/README.md|progress/session-119-load-reader-and-ci-delta-reporting.md|progress/session-121-same-run-comparison-deltas.md|progress/session-129-phase-a0-scoreboard-gates.md|progress/benchmarks/phase-a0-scoreboard-baseline.json|README.md|src/samples/Tutorial/Tutorials/readme.md|moonsharp_DescriptorHelpers.cs|AGENTS.md|PLAN.md) continue ;;
       .github/pull_request_template.md|.github/workflows/benchmarks.yml) continue ;;
       src/tooling/WallstopStudios.NovaSharp.Benchmarks/PerformanceReportWriter.cs) continue ;;
       scripts/README.md|scripts/benchmarks/README.md|scripts/benchmarks/render-benchmark-deltas.py) continue ;;

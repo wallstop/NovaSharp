@@ -54,8 +54,46 @@ echo "   Output: $OUTPUT_DIR"
 echo "   Configuration: $CONFIGURATION"
 echo ""
 
-# Create output directories
+path_is_within_or_equal() {
+    local candidate="$1"
+    local root="$2"
+    local candidate_full
+    local root_full
+
+    candidate_full="$(realpath -m "$candidate")"
+    root_full="$(realpath -m "$root")"
+
+    [[ "$candidate_full" == "$root_full" || "$candidate_full" == "$root_full"/* ]]
+}
+
+paths_overlap() {
+    local left="$1"
+    local right="$2"
+
+    path_is_within_or_equal "$left" "$right" || path_is_within_or_equal "$right" "$left"
+}
+
+PACKAGE_TEMPLATE_ROOT="$REPO_ROOT/src/unity/com.wallstop-studios.novasharp"
+SAMPLES_SOURCE="$PACKAGE_TEMPLATE_ROOT/Samples~"
 PACKAGE_ROOT="$OUTPUT_DIR/com.wallstop-studios.novasharp"
+SAMPLES_TARGET="$PACKAGE_ROOT/Samples~"
+
+if [[ ! -d "$SAMPLES_SOURCE" ]]; then
+    echo "Missing Unity package sample templates: $SAMPLES_SOURCE" >&2
+    exit 1
+fi
+
+if paths_overlap "$PACKAGE_ROOT" "$PACKAGE_TEMPLATE_ROOT"; then
+    echo "Unity package output must not overlap tracked package templates: $PACKAGE_ROOT" >&2
+    exit 1
+fi
+
+if paths_overlap "$SAMPLES_TARGET" "$SAMPLES_SOURCE"; then
+    echo "Unity package sample output must not overlap tracked sample templates: $SAMPLES_TARGET" >&2
+    exit 1
+fi
+
+# Create output directories
 mkdir -p "$PACKAGE_ROOT/Runtime"
 mkdir -p "$PACKAGE_ROOT/Runtime/Debuggers"
 mkdir -p "$PACKAGE_ROOT/Editor"
@@ -144,6 +182,11 @@ cat > "$PACKAGE_ROOT/package.json" << EOF
       "displayName": "Basic Usage",
       "description": "Basic examples of running Lua scripts from C#",
       "path": "Samples~/BasicUsage"
+    },
+    {
+      "displayName": "IL2CPP Spot Check",
+      "description": "Minimal stopwatch scene for smoke-testing NovaSharp in IL2CPP player builds",
+      "path": "Samples~/IL2CPPSpotCheck"
     }
   ]
 }
@@ -197,57 +240,9 @@ cat > "$PACKAGE_ROOT/Runtime/Debuggers/WallstopStudios.NovaSharp.Debuggers.asmde
 }
 EOF
 
-# Create basic sample
-mkdir -p "$PACKAGE_ROOT/Samples~/BasicUsage"
-cat > "$PACKAGE_ROOT/Samples~/BasicUsage/BasicUsage.cs" << 'EOF'
-// Basic NovaSharp usage example for Unity
-// Copy this file to your Assets folder to use
-
-using UnityEngine;
-using WallstopStudios.NovaSharp.Interpreter;
-
-public class NovaSharpBasicUsage : MonoBehaviour
-{
-    void Start()
-    {
-        // Create a new Lua script instance
-        Script script = new Script();
-
-        // Execute a simple Lua script
-        script.DoString(@"
-            print('Hello from Lua!')
-            
-            function greet(name)
-                return 'Hello, ' .. name .. '!'
-            end
-        ");
-
-        // Call a Lua function from C#
-        DynValue result = script.Call(script.Globals["greet"], "Unity");
-        Debug.Log(result.String); // Outputs: Hello, Unity!
-
-        // Set a global variable accessible from Lua
-        script.Globals["unityVersion"] = DynValue.NewString(Application.unityVersion);
-
-        // Execute more Lua code that uses the variable
-        script.DoString("print('Running on Unity ' .. unityVersion)");
-    }
-}
-EOF
-
-cat > "$PACKAGE_ROOT/Samples~/BasicUsage/BasicUsage.cs.meta" << 'EOF'
-fileFormatVersion: 2
-guid: a1b2c3d4e5f6789012345678abcdef01
-MonoImporter:
-  externalObjects: {}
-  serializedVersion: 2
-  defaultReferences: []
-  executionOrder: 0
-  icon: {instanceID: 0}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
-EOF
+# Copy package samples from tracked templates.
+rm -rf "$SAMPLES_TARGET"
+cp -R "$SAMPLES_SOURCE" "$PACKAGE_ROOT/"
 
 # Create CHANGELOG
 cat > "$PACKAGE_ROOT/CHANGELOG.md" << EOF

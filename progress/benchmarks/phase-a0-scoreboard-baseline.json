@@ -1,0 +1,3001 @@
+{
+  "generatedAt": "2026-07-03T17:59:28+00:00",
+  "rows": [
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=BinaryTrees",
+      "parameters": "Scenario:BinaryTrees",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 3072.0,
+          "gen0Per1K": 0.48828125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 11547.603967666626,
+          "p95Ns": 11832.815298461914,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 45000.0,
+          "gen0Per1K": 7.080078125,
+          "gen1Per1K": 1.8310546875,
+          "gen2Per1K": 0.0,
+          "meanNs": 63863.2601196289,
+          "p95Ns": 73464.74905395508,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 816.0,
+          "gen0Per1K": 0.1220703125,
+          "gen1Per1K": 0.06103515625,
+          "gen2Per1K": 0.0,
+          "meanNs": 21791.000402832033,
+          "p95Ns": 23226.918127441408,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 60.4509872396787,
+          "p95Ns": 60.83290425539016,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=BinaryTrees",
+      "parameters": "Scenario:BinaryTrees",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 25486.0,
+          "gen0Per1K": 4.058837890625,
+          "gen1Per1K": 0.274658203125,
+          "gen2Per1K": 0.0,
+          "meanNs": 18669.503960503473,
+          "p95Ns": 20642.64958496094,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2480942.0,
+          "gen0Per1K": 167.96875,
+          "gen1Per1K": 144.53125,
+          "gen2Per1K": 128.90625,
+          "meanNs": 1605988.183485243,
+          "p95Ns": 1880349.1064453125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7570.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 157051.85017089843,
+          "p95Ns": 168251.57971191406,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2455479.0,
+          "gen0Per1K": 150.390625,
+          "gen1Per1K": 128.90625,
+          "gen2Per1K": 115.234375,
+          "meanNs": 884758.134874132,
+          "p95Ns": 961165.1841796874,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=BinaryTrees",
+      "parameters": "Scenario:BinaryTrees",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 6365689.5,
+          "p95Ns": 6864170.95,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 10204048.0,
+          "gen0Per1K": 1625.0,
+          "gen1Per1K": 484.375,
+          "gen2Per1K": 0.0,
+          "meanNs": 10565825.0015625,
+          "p95Ns": 12064871.046875,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 77567720.0,
+          "gen0Per1K": 12343.75,
+          "gen1Per1K": 5062.5,
+          "gen2Per1K": 0.0,
+          "meanNs": 33572029.475,
+          "p95Ns": 36623257.159375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 9105070.0546875,
+          "p95Ns": 9874351.47265625,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 83863472.0,
+          "gen0Per1K": 13307.692307692309,
+          "gen1Per1K": 5230.7692307692305,
+          "gen2Per1K": 0.0,
+          "meanNs": 39952331.12500001,
+          "p95Ns": 40360642.13076923,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=CoroutinePingPong",
+      "parameters": "Scenario:CoroutinePingPong",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 3784.0,
+          "gen0Per1K": 0.5950927734375,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 13672.426246643066,
+          "p95Ns": 15762.459272003172,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 47960.0,
+          "gen0Per1K": 7.568359375,
+          "gen1Per1K": 1.953125,
+          "gen2Per1K": 0.0,
+          "meanNs": 72670.06745910645,
+          "p95Ns": 76080.77794799805,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 848.0,
+          "gen0Per1K": 0.1220703125,
+          "gen1Per1K": 0.06103515625,
+          "gen2Per1K": 0.0,
+          "meanNs": 27933.81575317383,
+          "p95Ns": 31833.056729125972,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 70.76036140918731,
+          "p95Ns": 76.68589498400688,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=CoroutinePingPong",
+      "parameters": "Scenario:CoroutinePingPong",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 26206.0,
+          "gen0Per1K": 4.150390625,
+          "gen1Per1K": 0.274658203125,
+          "gen2Per1K": 0.0,
+          "meanNs": 22566.963720703126,
+          "p95Ns": 23358.67847137451,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2482664.0,
+          "gen0Per1K": 158.203125,
+          "gen1Per1K": 132.8125,
+          "gen2Per1K": 117.1875,
+          "meanNs": 1271012.3884765625,
+          "p95Ns": 1478481.724609375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7610.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 165620.20568847656,
+          "p95Ns": 176021.24466552737,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2457605.0,
+          "gen0Per1K": 140.625,
+          "gen1Per1K": 119.140625,
+          "gen2Per1K": 105.46875,
+          "meanNs": 851193.3695746528,
+          "p95Ns": 885239.619921875,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=CoroutinePingPong",
+      "parameters": "Scenario:CoroutinePingPong",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 1258845.7,
+          "p95Ns": 1917219.4000000006,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 8680.0,
+          "gen0Per1K": 1.220703125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 191851.1563720703,
+          "p95Ns": 204914.3126098633,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2632124.0,
+          "gen0Per1K": 164.0625,
+          "gen1Per1K": 83.984375,
+          "gen2Per1K": 80.078125,
+          "meanNs": 1188701.0341796875,
+          "p95Ns": 1445623.470410156,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 24.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 68280.9015367296,
+          "p95Ns": 69054.71585693359,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2656712.0,
+          "gen0Per1K": 164.0625,
+          "gen1Per1K": 80.078125,
+          "gen2Per1K": 76.171875,
+          "meanNs": 1068331.3234375,
+          "p95Ns": 1263862.3674804687,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=EightQueens",
+      "parameters": "Scenario:EightQueens",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 3200.0,
+          "gen0Per1K": 0.48828125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 19261.090258789063,
+          "p95Ns": 19613.338311767577,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 70832.0,
+          "gen0Per1K": 11.23046875,
+          "gen1Per1K": 2.8076171875,
+          "gen2Per1K": 0.0,
+          "meanNs": 90731.74576416015,
+          "p95Ns": 97899.55480957031,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 1120.0,
+          "gen0Per1K": 0.1220703125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 29426.30355834961,
+          "p95Ns": 30447.108355712888,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 63.52246677213245,
+          "p95Ns": 65.29475988149643,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=EightQueens",
+      "parameters": "Scenario:EightQueens",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 25614.0,
+          "gen0Per1K": 4.058837890625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 25975.574847751195,
+          "p95Ns": 26886.591232299805,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2511598.0,
+          "gen0Per1K": 179.6875,
+          "gen1Per1K": 152.34375,
+          "gen2Per1K": 134.765625,
+          "meanNs": 1257487.0751953125,
+          "p95Ns": 1330831.2083984376,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7874.0,
+          "gen0Per1K": 1.220703125,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 163747.8939941406,
+          "p95Ns": 167026.5083251953,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2473345.0,
+          "gen0Per1K": 128.90625,
+          "gen1Per1K": 105.46875,
+          "gen2Per1K": 89.84375,
+          "meanNs": 880924.5197753906,
+          "p95Ns": 914930.0418945313,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=EightQueens",
+      "parameters": "Scenario:EightQueens",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 1346434.6,
+          "p95Ns": 1865350.7500000005,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 3320.0,
+          "gen0Per1K": 0.48828125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 416776.61962890625,
+          "p95Ns": 457453.87634277344,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 3496440.0,
+          "gen0Per1K": 556.640625,
+          "gen1Per1K": 39.0625,
+          "gen2Per1K": 0.0,
+          "meanNs": 1581527.762109375,
+          "p95Ns": 1621641.333203125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 24.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 257812.00947265624,
+          "p95Ns": 273473.44272460934,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 4304888.0,
+          "gen0Per1K": 683.59375,
+          "gen1Per1K": 35.15625,
+          "gen2Per1K": 0.0,
+          "meanNs": 2160538.13125,
+          "p95Ns": 2438648.71015625,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=FibonacciRecursive",
+      "parameters": "Scenario:FibonacciRecursive",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 1592.0,
+          "gen0Per1K": 0.25177001953125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 4910.869664001465,
+          "p95Ns": 5296.446419906616,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 18336.0,
+          "gen0Per1K": 2.899169921875,
+          "gen1Per1K": 0.732421875,
+          "gen2Per1K": 0.0,
+          "meanNs": 26305.24518585205,
+          "p95Ns": 28675.28791809082,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 416.0,
+          "gen0Per1K": 0.06103515625,
+          "gen1Per1K": 0.0457763671875,
+          "gen2Per1K": 0.0,
+          "meanNs": 11490.149018859864,
+          "p95Ns": 12480.120838928222,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 68.30333631038665,
+          "p95Ns": 77.52013545632363,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=FibonacciRecursive",
+      "parameters": "Scenario:FibonacciRecursive",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 24021.0,
+          "gen0Per1K": 3.814697265625,
+          "gen1Per1K": 0.2593994140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 10827.428315734864,
+          "p95Ns": 12089.968290710449,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2453023.0,
+          "gen0Per1K": 156.25,
+          "gen1Per1K": 132.8125,
+          "gen2Per1K": 121.09375,
+          "meanNs": 1284791.3969184028,
+          "p95Ns": 1464548.516796875,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7186.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 155407.86135253907,
+          "p95Ns": 165494.39903564454,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2438390.0,
+          "gen0Per1K": 121.09375,
+          "gen1Per1K": 100.5859375,
+          "gen2Per1K": 87.890625,
+          "meanNs": 828111.3373480903,
+          "p95Ns": 872008.943359375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=FibonacciRecursive",
+      "parameters": "Scenario:FibonacciRecursive",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 45298316.7,
+          "p95Ns": 53404467.95,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 8408.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 160573100.03333333,
+          "p95Ns": 172552168.35,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 1744789504.0,
+          "gen0Per1K": 278000.0,
+          "gen1Per1K": 4000.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 926880075.1,
+          "p95Ns": 1248803748.9499998,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 83118758.2857143,
+          "p95Ns": 84919214.57142857,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2132514592.0,
+          "gen0Per1K": 339000.0,
+          "gen1Per1K": 3000.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 1337438483.4,
+          "p95Ns": 1606420779.75,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=NBody",
+      "parameters": "Scenario:NBody",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 15216.0,
+          "gen0Per1K": 2.3193359375,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 84167.57763671875,
+          "p95Ns": 89793.50107421874,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 196256.0,
+          "gen0Per1K": 31.25,
+          "gen1Per1K": 7.8125,
+          "gen2Per1K": 0.0,
+          "meanNs": 258334.13487413194,
+          "p95Ns": 268343.32490234374,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 3088.0,
+          "gen0Per1K": 0.48828125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 87978.93052978515,
+          "p95Ns": 94200.0319580078,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 76.4895347237587,
+          "p95Ns": 86.3032530426979,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=NBody",
+      "parameters": "Scenario:NBody",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 37616.0,
+          "gen0Per1K": 5.9814453125,
+          "gen1Per1K": 0.48828125,
+          "gen2Per1K": 0.0,
+          "meanNs": 76938.1966430664,
+          "p95Ns": 77676.79099731446,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2643234.0,
+          "gen0Per1K": 156.25,
+          "gen1Per1K": 117.1875,
+          "gen2Per1K": 89.84375,
+          "meanNs": 1592730.566015625,
+          "p95Ns": 2033506.8740234375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 9827.0,
+          "gen0Per1K": 1.46484375,
+          "gen1Per1K": 0.48828125,
+          "gen2Per1K": 0.0,
+          "meanNs": 252855.42451171874,
+          "p95Ns": 264976.7731201172,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2554606.0,
+          "gen0Per1K": 144.53125,
+          "gen1Per1K": 119.140625,
+          "gen2Per1K": 93.75,
+          "meanNs": 1047955.5310546875,
+          "p95Ns": 1112860.3333984376,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=NBody",
+      "parameters": "Scenario:NBody",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 3326114.8,
+          "p95Ns": 5309119.100000001,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 3704.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 845508.721875,
+          "p95Ns": 905607.4314453125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 6546496.0,
+          "gen0Per1K": 1042.96875,
+          "gen1Per1K": 46.875,
+          "gen2Per1K": 0.0,
+          "meanNs": 3565726.90859375,
+          "p95Ns": 4575350.293359375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 595492.356640625,
+          "p95Ns": 636581.2120117188,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 7686576.0,
+          "gen0Per1K": 1218.75,
+          "gen1Per1K": 54.6875,
+          "gen2Per1K": 0.0,
+          "meanNs": 4047247.1513671875,
+          "p95Ns": 4283939.651953124,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=NumericLoops",
+      "parameters": "Scenario:NumericLoops",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 2832.0,
+          "gen0Per1K": 0.4425048828125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 7696.781466166179,
+          "p95Ns": 8671.233595275879,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 22448.0,
+          "gen0Per1K": 3.5400390625,
+          "gen1Per1K": 0.91552734375,
+          "gen2Per1K": 0.0,
+          "meanNs": 27854.26630859375,
+          "p95Ns": 28729.261434936525,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 464.0,
+          "gen0Per1K": 0.06103515625,
+          "gen1Per1K": 0.030517578125,
+          "gen2Per1K": 0.0,
+          "meanNs": 16550.23674621582,
+          "p95Ns": 19271.96032104492,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 65.36082057654858,
+          "p95Ns": 65.83898584842682,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=NumericLoops",
+      "parameters": "Scenario:NumericLoops",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 25246.0,
+          "gen0Per1K": 3.997802734375,
+          "gen1Per1K": 0.274658203125,
+          "gen2Per1K": 0.0,
+          "meanNs": 15462.51782836914,
+          "p95Ns": 16247.990264892578,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2456702.0,
+          "gen0Per1K": 154.296875,
+          "gen1Per1K": 132.8125,
+          "gen2Per1K": 119.140625,
+          "meanNs": 1193098.2136501735,
+          "p95Ns": 1303554.2755859373,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7218.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 200053.82919921874,
+          "p95Ns": 209439.22412109375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2446978.0,
+          "gen0Per1K": 132.8125,
+          "gen1Per1K": 113.28125,
+          "gen2Per1K": 89.84375,
+          "meanNs": 811007.970703125,
+          "p95Ns": 854898.3373046876,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=NumericLoops",
+      "parameters": "Scenario:NumericLoops",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 2736585.4,
+          "p95Ns": 4233219.75,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 1.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 675159.3288085938,
+          "p95Ns": 731915.0561035157,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2716104.0,
+          "gen0Per1K": 431.640625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 1285349.32890625,
+          "p95Ns": 1320005.5293945312,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 351660.4704589844,
+          "p95Ns": 357131.2370361328,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2844016.0,
+          "gen0Per1K": 453.125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 1511468.5716796876,
+          "p95Ns": 1630133.6307617188,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=SpectralNorm",
+      "parameters": "Scenario:SpectralNorm",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 4648.0,
+          "gen0Per1K": 0.732421875,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 31203.298333740233,
+          "p95Ns": 34302.99915161133,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 174344.0,
+          "gen0Per1K": 17.333984375,
+          "gen1Per1K": 4.39453125,
+          "gen2Per1K": 0.0,
+          "meanNs": 146827.8830871582,
+          "p95Ns": 152772.80050048826,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 1576.0,
+          "gen0Per1K": 0.244140625,
+          "gen1Per1K": 0.06103515625,
+          "gen2Per1K": 0.0,
+          "meanNs": 68962.93017578125,
+          "p95Ns": 89781.11213073731,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 69.12774161100387,
+          "p95Ns": 70.80865828990936,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=SpectralNorm",
+      "parameters": "Scenario:SpectralNorm",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 27062.0,
+          "gen0Per1K": 4.2724609375,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 66136.14183959962,
+          "p95Ns": 88136.91620483396,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2550307.0,
+          "gen0Per1K": 191.40625,
+          "gen1Per1K": 156.25,
+          "gen2Per1K": 140.625,
+          "meanNs": 1710262.481640625,
+          "p95Ns": 2112701.90625,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 8330.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 303546.24790039065,
+          "p95Ns": 414098.00205078116,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2499489.0,
+          "gen0Per1K": 166.015625,
+          "gen1Per1K": 140.625,
+          "gen2Per1K": 123.046875,
+          "meanNs": 972764.1119791666,
+          "p95Ns": 1082966.304296875,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=SpectralNorm",
+      "parameters": "Scenario:SpectralNorm",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 3790229.7,
+          "p95Ns": 5127855.550000001,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 4992.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 4365584.84296875,
+          "p95Ns": 4510720.0515625,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 64883072.0,
+          "gen0Per1K": 10312.5,
+          "gen1Per1K": 406.25,
+          "gen2Per1K": 0.0,
+          "meanNs": 31806955.35,
+          "p95Ns": 39998978.740624994,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 3147057.440234375,
+          "p95Ns": 3872298.278125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 77139715.0,
+          "gen0Per1K": 12266.666666666668,
+          "gen1Per1K": 266.6666666666667,
+          "gen2Per1K": 0.0,
+          "meanNs": 35898932.60740741,
+          "p95Ns": 43338833.493333325,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=StringConcatChains",
+      "parameters": "Scenario:StringConcatChains",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 1736.0,
+          "gen0Per1K": 0.274658203125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 4715.674282836914,
+          "p95Ns": 4855.0250415802,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 13904.0,
+          "gen0Per1K": 2.197265625,
+          "gen1Per1K": 0.54931640625,
+          "gen2Per1K": 0.0,
+          "meanNs": 29747.393896484376,
+          "p95Ns": 32945.07018737793,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 368.0,
+          "gen0Per1K": 0.0457763671875,
+          "gen1Per1K": 0.030517578125,
+          "gen2Per1K": 0.0,
+          "meanNs": 13906.484059143066,
+          "p95Ns": 16082.360900115968,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 76.26219024658204,
+          "p95Ns": 81.51382780075073,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=StringConcatChains",
+      "parameters": "Scenario:StringConcatChains",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 24165.0,
+          "gen0Per1K": 3.84521484375,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 11345.892872619628,
+          "p95Ns": 13673.954888153075,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2445183.0,
+          "gen0Per1K": 125.0,
+          "gen1Per1K": 105.46875,
+          "gen2Per1K": 93.75,
+          "meanNs": 1863001.168359375,
+          "p95Ns": 2312173.9134765626,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7138.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 213276.85505371093,
+          "p95Ns": 265772.32132568356,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2435805.0,
+          "gen0Per1K": 146.484375,
+          "gen1Per1K": 126.953125,
+          "gen2Per1K": 113.28125,
+          "meanNs": 880031.9453125,
+          "p95Ns": 954065.4827148437,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=StringConcatChains",
+      "parameters": "Scenario:StringConcatChains",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 1041309.2,
+          "p95Ns": 1310818.6,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 144384.0,
+          "gen0Per1K": 23.01025390625,
+          "gen1Per1K": 0.06103515625,
+          "gen2Per1K": 0.0,
+          "meanNs": 52672.09478081597,
+          "p95Ns": 55773.51173095703,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 227064.0,
+          "gen0Per1K": 36.1328125,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 110200.0212890625,
+          "p95Ns": 127098.96185302734,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 49551.26438598633,
+          "p95Ns": 50396.140957641604,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 257816.0,
+          "gen0Per1K": 41.015625,
+          "gen1Per1K": 0.3662109375,
+          "gen2Per1K": 0.0,
+          "meanNs": 90081.3312242296,
+          "p95Ns": 96624.63482666016,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=StringFormat",
+      "parameters": "Scenario:StringFormat",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 2824.0,
+          "gen0Per1K": 0.45013427734375,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 5912.7459716796875,
+          "p95Ns": 6903.1613540649405,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 17504.0,
+          "gen0Per1K": 2.777099609375,
+          "gen1Per1K": 0.701904296875,
+          "gen2Per1K": 0.0,
+          "meanNs": 27586.662399291992,
+          "p95Ns": 29305.043469238284,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 432.0,
+          "gen0Per1K": 0.06103515625,
+          "gen1Per1K": 0.0457763671875,
+          "gen2Per1K": 0.0,
+          "meanNs": 11826.086373901368,
+          "p95Ns": 12287.138527679443,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 94.85356500148774,
+          "p95Ns": 103.19595755338668,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=StringFormat",
+      "parameters": "Scenario:StringFormat",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 25238.0,
+          "gen0Per1K": 4.0130615234375,
+          "gen1Per1K": 0.2593994140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 11396.095693800184,
+          "p95Ns": 11680.519389343262,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2450707.0,
+          "gen0Per1K": 136.71875,
+          "gen1Per1K": 117.1875,
+          "gen2Per1K": 101.5625,
+          "meanNs": 2141942.313671875,
+          "p95Ns": 2696212.525976562,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7186.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 148001.67419433594,
+          "p95Ns": 155023.68878173828,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2437842.0,
+          "gen0Per1K": 126.953125,
+          "gen1Per1K": 107.421875,
+          "gen2Per1K": 93.75,
+          "meanNs": 1309609.2982421876,
+          "p95Ns": 1504290.5225585937,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=StringFormat",
+      "parameters": "Scenario:StringFormat",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 2016909.0,
+          "p95Ns": 3187960.5000000005,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 155744.0,
+          "gen0Per1K": 24.4140625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 258095.61572265625,
+          "p95Ns": 277195.3548095703,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 6183400.0,
+          "gen0Per1K": 984.375,
+          "gen1Per1K": 11.71875,
+          "gen2Per1K": 0.0,
+          "meanNs": 2080509.9526909722,
+          "p95Ns": 2153900.8484375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 293691.10390625,
+          "p95Ns": 319912.8833740234,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 3328476.0,
+          "gen0Per1K": 527.34375,
+          "gen1Per1K": 3.90625,
+          "gen2Per1K": 0.0,
+          "meanNs": 2173072.7485351562,
+          "p95Ns": 2272337.8388671875,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=StringPatternOps",
+      "parameters": "Scenario:StringPatternOps",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 3648.0,
+          "gen0Per1K": 0.579833984375,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 12337.546212768555,
+          "p95Ns": 13614.928424072265,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 37032.0,
+          "gen0Per1K": 5.859375,
+          "gen1Per1K": 1.46484375,
+          "gen2Per1K": 0.0,
+          "meanNs": 55372.54767456055,
+          "p95Ns": 67736.75127563477,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 672.0,
+          "gen0Per1K": 0.06103515625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 30939.426507568358,
+          "p95Ns": 49107.001696777326,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 66.73776978916592,
+          "p95Ns": 68.58947675228119,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=StringPatternOps",
+      "parameters": "Scenario:StringPatternOps",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 26079.0,
+          "gen0Per1K": 3.90625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 58637.5013671875,
+          "p95Ns": 124094.14663085932,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2472257.0,
+          "gen0Per1K": 164.0625,
+          "gen1Per1K": 138.671875,
+          "gen2Per1K": 125.0,
+          "meanNs": 1313570.0656467015,
+          "p95Ns": 1362411.3771484373,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7442.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 368726.00112304685,
+          "p95Ns": 562460.9432373046,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2450094.0,
+          "gen0Per1K": 132.8125,
+          "gen1Per1K": 115.234375,
+          "gen2Per1K": 97.65625,
+          "meanNs": 937670.226171875,
+          "p95Ns": 1026234.3299804688,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=StringPatternOps",
+      "parameters": "Scenario:StringPatternOps",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 2411206.7,
+          "p95Ns": 3951713.700000001,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 456568.0,
+          "gen0Per1K": 72.265625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 798742.4251953125,
+          "p95Ns": 836189.6844726562,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 5315104.0,
+          "gen0Per1K": 843.75,
+          "gen1Per1K": 15.625,
+          "gen2Per1K": 0.0,
+          "meanNs": 2831256.7984375,
+          "p95Ns": 4847247.2412109375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 395056.8615180121,
+          "p95Ns": 464659.0330566406,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 870272.0,
+          "gen0Per1K": 138.671875,
+          "gen1Per1K": 1.953125,
+          "gen2Per1K": 0.0,
+          "meanNs": 629947.0362304688,
+          "p95Ns": 686877.8595703124,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=TableInsertRemove",
+      "parameters": "Scenario:TableInsertRemove",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 3120.0,
+          "gen0Per1K": 0.48828125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 9938.701010131836,
+          "p95Ns": 10532.753252410888,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 33272.0,
+          "gen0Per1K": 5.2490234375,
+          "gen1Per1K": 1.3427734375,
+          "gen2Per1K": 0.0,
+          "meanNs": 45165.15905761719,
+          "p95Ns": 49448.93480224609,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 632.0,
+          "gen0Per1K": 0.091552734375,
+          "gen1Per1K": 0.030517578125,
+          "gen2Per1K": 0.0,
+          "meanNs": 16440.33443705241,
+          "p95Ns": 17570.656771850587,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 72.2435025215149,
+          "p95Ns": 85.56165109872818,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=TableInsertRemove",
+      "parameters": "Scenario:TableInsertRemove",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 25558.0,
+          "gen0Per1K": 4.058837890625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 17186.949642944335,
+          "p95Ns": 17535.19761505127,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2467922.0,
+          "gen0Per1K": 164.0625,
+          "gen1Per1K": 142.578125,
+          "gen2Per1K": 126.953125,
+          "meanNs": 1305473.5337890624,
+          "p95Ns": 1500593.2852539062,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7410.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 143338.61945258247,
+          "p95Ns": 149763.87028808595,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2447626.0,
+          "gen0Per1K": 125.0,
+          "gen1Per1K": 105.46875,
+          "gen2Per1K": 89.84375,
+          "meanNs": 880659.474609375,
+          "p95Ns": 1084477.9897460938,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=TableInsertRemove",
+      "parameters": "Scenario:TableInsertRemove",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 1584252.6,
+          "p95Ns": 2121751.2,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 12336.0,
+          "gen0Per1K": 1.953125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 107452.44789632161,
+          "p95Ns": 110443.45699462891,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 1164064.0,
+          "gen0Per1K": 185.546875,
+          "gen1Per1K": 22.4609375,
+          "gen2Per1K": 0.0,
+          "meanNs": 926481.163140191,
+          "p95Ns": 946778.4760742188,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 364768.78823242185,
+          "p95Ns": 397034.47053222655,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 269336.0,
+          "gen0Per1K": 41.9921875,
+          "gen1Per1K": 2.9296875,
+          "gen2Per1K": 0.0,
+          "meanNs": 703383.8219726563,
+          "p95Ns": 806891.6683105469,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=TableIntFillIter",
+      "parameters": "Scenario:TableIntFillIter",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 2008.0,
+          "gen0Per1K": 0.31280517578125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 5677.056453704834,
+          "p95Ns": 6023.887119674682,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 41368.0,
+          "gen0Per1K": 3.96728515625,
+          "gen1Per1K": 0.9765625,
+          "gen2Per1K": 0.0,
+          "meanNs": 31169.103637695312,
+          "p95Ns": 32346.782592773438,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 504.0,
+          "gen0Per1K": 0.0762939453125,
+          "gen1Per1K": 0.06103515625,
+          "gen2Per1K": 0.0,
+          "meanNs": 14745.837338256835,
+          "p95Ns": 17806.50124359131,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 58.91198514401913,
+          "p95Ns": 60.935189032554625,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=TableIntFillIter",
+      "parameters": "Scenario:TableIntFillIter",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 24445.0,
+          "gen0Per1K": 3.8909912109375,
+          "gen1Per1K": 0.2593994140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 12763.053926467896,
+          "p95Ns": 12876.152928924561,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2460201.0,
+          "gen0Per1K": 169.921875,
+          "gen1Per1K": 146.484375,
+          "gen2Per1K": 132.8125,
+          "meanNs": 1234765.7615234375,
+          "p95Ns": 1482249.0326171876,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7282.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 141414.85310058593,
+          "p95Ns": 145196.91552734375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2443121.0,
+          "gen0Per1K": 142.578125,
+          "gen1Per1K": 123.046875,
+          "gen2Per1K": 109.375,
+          "meanNs": 876284.52734375,
+          "p95Ns": 1079914.859375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=TableIntFillIter",
+      "parameters": "Scenario:TableIntFillIter",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 1460731.2,
+          "p95Ns": 1710035.25,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 24648.0,
+          "gen0Per1K": 3.90625,
+          "gen1Per1K": 0.1220703125,
+          "gen2Per1K": 0.0,
+          "meanNs": 116446.67796325684,
+          "p95Ns": 124007.62845458984,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 1997224.0,
+          "gen0Per1K": 318.359375,
+          "gen1Per1K": 77.1484375,
+          "gen2Per1K": 0.0,
+          "meanNs": 963221.1923828125,
+          "p95Ns": 993647.8931152343,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 98033.06945800781,
+          "p95Ns": 100444.98612060546,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2942960.0,
+          "gen0Per1K": 468.75,
+          "gen1Per1K": 115.234375,
+          "gen2Per1K": 0.0,
+          "meanNs": 1252294.6642578125,
+          "p95Ns": 1302448.2498046875,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=TableMutation",
+      "parameters": "Scenario:TableMutation",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 2096.0,
+          "gen0Per1K": 0.3204345703125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 8398.150987243653,
+          "p95Ns": 8808.61623764038,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 30072.0,
+          "gen0Per1K": 4.7607421875,
+          "gen1Per1K": 1.220703125,
+          "gen2Per1K": 0.0,
+          "meanNs": 38381.355944824216,
+          "p95Ns": 40620.84051513672,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 568.0,
+          "gen0Per1K": 0.0762939453125,
+          "gen1Per1K": 0.06103515625,
+          "gen2Per1K": 0.0,
+          "meanNs": 14968.298693847657,
+          "p95Ns": 16661.212529754637,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 63.26649268865585,
+          "p95Ns": 64.14927944540977,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=TableMutation",
+      "parameters": "Scenario:TableMutation",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 24509.0,
+          "gen0Per1K": 3.90625,
+          "gen1Per1K": 0.2593994140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 17732.969610595705,
+          "p95Ns": 18562.60663986206,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2463763.0,
+          "gen0Per1K": 146.484375,
+          "gen1Per1K": 125.0,
+          "gen2Per1K": 109.375,
+          "meanNs": 1290124.2802734375,
+          "p95Ns": 1621239.3123046875,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7322.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 142315.21444702148,
+          "p95Ns": 147949.8979003906,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2445691.0,
+          "gen0Per1K": 119.140625,
+          "gen1Per1K": 99.609375,
+          "gen2Per1K": 84.9609375,
+          "meanNs": 802224.5861545139,
+          "p95Ns": 833157.7908203125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=TableMutation",
+      "parameters": "Scenario:TableMutation",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 1508064.3,
+          "p95Ns": 1876295.5000000002,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 6168.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 12095.555338541666,
+          "p95Ns": 12381.069885253906,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 131672.0,
+          "gen0Per1K": 20.8740234375,
+          "gen1Per1K": 1.953125,
+          "gen2Per1K": 0.0,
+          "meanNs": 59903.71857367622,
+          "p95Ns": 61690.2560546875,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0152587890625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 10258.278300476075,
+          "p95Ns": 10598.545728302,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 162384.0,
+          "gen0Per1K": 25.87890625,
+          "gen1Per1K": 1.8310546875,
+          "gen2Per1K": 0.0,
+          "meanNs": 73388.51871744792,
+          "p95Ns": 76291.7998046875,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=TableNextTraversal",
+      "parameters": "Scenario:TableNextTraversal",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 2264.0,
+          "gen0Per1K": 0.3509521484375,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 9655.553277587891,
+          "p95Ns": 10933.979153442382,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 31536.0,
+          "gen0Per1K": 5.0048828125,
+          "gen1Per1K": 1.28173828125,
+          "gen2Per1K": 0.0,
+          "meanNs": 38963.9928894043,
+          "p95Ns": 41653.169998168945,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 648.0,
+          "gen0Per1K": 0.091552734375,
+          "gen1Per1K": 0.0457763671875,
+          "gen2Per1K": 0.0,
+          "meanNs": 14587.49181705051,
+          "p95Ns": 15010.405436706544,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 73.4980064895418,
+          "p95Ns": 78.48408880233765,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=TableNextTraversal",
+      "parameters": "Scenario:TableNextTraversal",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 24693.0,
+          "gen0Per1K": 3.936767578125,
+          "gen1Per1K": 0.2593994140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 16757.474601745605,
+          "p95Ns": 17408.908110809323,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2466591.0,
+          "gen0Per1K": 158.203125,
+          "gen1Per1K": 134.765625,
+          "gen2Per1K": 121.09375,
+          "meanNs": 1257699.9025390625,
+          "p95Ns": 1464709.3274414062,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7418.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 158206.6442328559,
+          "p95Ns": 162860.64262695314,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2446164.0,
+          "gen0Per1K": 117.1875,
+          "gen1Per1K": 97.65625,
+          "gen2Per1K": 83.0078125,
+          "meanNs": 846206.2965820313,
+          "p95Ns": 889361.4602539062,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=TableNextTraversal",
+      "parameters": "Scenario:TableNextTraversal",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 1456603.9,
+          "p95Ns": 1861421.6500000004,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 113448.0,
+          "gen0Per1K": 18.06640625,
+          "gen1Per1K": 2.9296875,
+          "gen2Per1K": 0.0,
+          "meanNs": 192644.7758300781,
+          "p95Ns": 201431.38134765625,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 884952.0,
+          "gen0Per1K": 140.625,
+          "gen1Per1K": 43.45703125,
+          "gen2Per1K": 0.0,
+          "meanNs": 464589.1159667969,
+          "p95Ns": 497389.5367919922,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 215805.51896972657,
+          "p95Ns": 222031.60592041016,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 968832.0,
+          "gen0Per1K": 154.296875,
+          "gen1Per1K": 45.8984375,
+          "gen2Per1K": 0.0,
+          "meanNs": 572570.7203613281,
+          "p95Ns": 677546.3861328125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=TableStringKeyLookup",
+      "parameters": "Scenario:TableStringKeyLookup",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 2080.0,
+          "gen0Per1K": 0.3204345703125,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 6555.324716186524,
+          "p95Ns": 6603.5293067932125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 42288.0,
+          "gen0Per1K": 4.08935546875,
+          "gen1Per1K": 1.03759765625,
+          "gen2Per1K": 0.0,
+          "meanNs": 33180.31810845269,
+          "p95Ns": 34785.8126586914,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 528.0,
+          "gen0Per1K": 0.0762939453125,
+          "gen1Per1K": 0.06103515625,
+          "gen2Per1K": 0.0,
+          "meanNs": 13777.536022949218,
+          "p95Ns": 15032.056605529786,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 62.40675684213638,
+          "p95Ns": 64.23685464262962,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=TableStringKeyLookup",
+      "parameters": "Scenario:TableStringKeyLookup",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 24509.0,
+          "gen0Per1K": 3.90625,
+          "gen1Per1K": 0.2593994140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 11866.125834994846,
+          "p95Ns": 11989.727168273927,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2460666.0,
+          "gen0Per1K": 160.15625,
+          "gen1Per1K": 138.671875,
+          "gen2Per1K": 123.046875,
+          "meanNs": 1271761.9353515625,
+          "p95Ns": 1551314.6895507812,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7298.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 143911.52823893228,
+          "p95Ns": 144812.8708984375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2443504.0,
+          "gen0Per1K": 125.0,
+          "gen1Per1K": 105.46875,
+          "gen2Per1K": 91.796875,
+          "meanNs": 857901.8171875,
+          "p95Ns": 924330.2760742187,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=TableStringKeyLookup",
+      "parameters": "Scenario:TableStringKeyLookup",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 2143323.7,
+          "p95Ns": 2451984.45,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 539688.0,
+          "gen0Per1K": 85.9375,
+          "gen1Per1K": 11.71875,
+          "gen2Per1K": 0.0,
+          "meanNs": 1159773.236111111,
+          "p95Ns": 1203973.6984375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2475520.0,
+          "gen0Per1K": 394.53125,
+          "gen1Per1K": 99.609375,
+          "gen2Per1K": 0.0,
+          "meanNs": 1711128.9685546875,
+          "p95Ns": 1837778.95859375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 1061939.605859375,
+          "p95Ns": 1109908.7418945313,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 3312088.0,
+          "gen0Per1K": 527.34375,
+          "gen1Per1K": 167.96875,
+          "gen2Per1K": 0.0,
+          "meanNs": 1762244.6046875,
+          "p95Ns": 1829991.256640625,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Cached Compile",
+      "parameterDisplay": "Scenario=TowerOfHanoi",
+      "parameters": "Scenario:TowerOfHanoi",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 2400.0,
+          "gen0Per1K": 0.3814697265625,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 8803.162315368652,
+          "p95Ns": 9183.392553329468,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 26168.0,
+          "gen0Per1K": 4.150390625,
+          "gen1Per1K": 1.03759765625,
+          "gen2Per1K": 0.0,
+          "meanNs": 37354.73911743164,
+          "p95Ns": 44471.33024597168,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 496.0,
+          "gen0Per1K": 0.0762939453125,
+          "gen1Per1K": 0.06103515625,
+          "gen2Per1K": 0.0,
+          "meanNs": 13266.17863922119,
+          "p95Ns": 13894.338553619385,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 208.0,
+          "gen0Per1K": 0.03314018249511719,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 69.15246833860874,
+          "p95Ns": 69.77272356748581,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Compile",
+      "parameterDisplay": "Scenario=TowerOfHanoi",
+      "parameters": "Scenario:TowerOfHanoi",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 24813.0,
+          "gen0Per1K": 3.9520263671875,
+          "gen1Per1K": 0.274658203125,
+          "gen2Per1K": 0.0,
+          "meanNs": 13002.785508728028,
+          "p95Ns": 13450.856684875489,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 2461016.0,
+          "gen0Per1K": 162.109375,
+          "gen1Per1K": 138.671875,
+          "gen2Per1K": 125.0,
+          "meanNs": 1247062.71484375,
+          "p95Ns": 1403902.4737304687,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 7250.0,
+          "gen0Per1K": 0.9765625,
+          "gen1Per1K": 0.244140625,
+          "gen2Per1K": 0.0,
+          "meanNs": 136649.50693359374,
+          "p95Ns": 138107.5939453125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 2442712.0,
+          "gen0Per1K": 121.09375,
+          "gen1Per1K": 100.5859375,
+          "gen2Per1K": 86.9140625,
+          "meanNs": 861735.7825195312,
+          "p95Ns": 949085.6564453125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "Execute",
+      "parameterDisplay": "Scenario=TowerOfHanoi",
+      "parameters": "Scenario:TowerOfHanoi",
+      "runtimes": {
+        "Lua": {
+          "allocatedBytes": null,
+          "gen0Per1K": null,
+          "gen1Per1K": null,
+          "gen2Per1K": null,
+          "meanNs": 1951956.2,
+          "p95Ns": 2159894.65,
+          "runtimeContext": "/usr/bin/lua5.4: Lua 5.4.4 Copyright (C) 1994-2022 Lua.org, PUC-Rio",
+          "runtimeDisplayName": "Lua CLI wall-time",
+          "runtimeKind": "LuaCliWallTime",
+          "showDeltaPercent": false
+        },
+        "LuaCSharp": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 2801661.332421875,
+          "p95Ns": 2986725.755078125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 35521176.0,
+          "gen0Per1K": 5656.25,
+          "gen1Per1K": 46.875,
+          "gen2Per1K": 0.0,
+          "meanNs": 11369904.673611112,
+          "p95Ns": 11397962.303125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 24.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 1160716.305078125,
+          "p95Ns": 1191915.768359375,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 40297016.0,
+          "gen0Per1K": 6406.25,
+          "gen1Per1K": 31.25,
+          "gen2Per1K": 0.0,
+          "meanNs": 16851466.675,
+          "p95Ns": 18018325.975,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaPerformanceBenchmarks"
+    },
+    {
+      "operation": "ClrToLuaInterop",
+      "parameterDisplay": "Scenario=TwoArgAdd",
+      "parameters": "Scenario:TwoArgAdd",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 0.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 87.42784103333335,
+          "p95Ns": 91.828215125,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 640.0,
+          "gen0Per1K": 0.102,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 190.23119129166665,
+          "p95Ns": 194.50838448333332,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 144.0,
+          "gen0Per1K": 0.02275,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 144.74475425,
+          "p95Ns": 145.21296075,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 624.0,
+          "gen0Per1K": 0.09899999999999999,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 308.9803977222222,
+          "p95Ns": 340.50195610000003,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaInteropBenchmarks"
+    },
+    {
+      "operation": "LuaToClrInterop",
+      "parameterDisplay": "Scenario=TwoArgAdd",
+      "parameters": "Scenario:TwoArgAdd",
+      "runtimes": {
+        "LuaCSharp": {
+          "allocatedBytes": 0.0,
+          "gen0Per1K": 0.0,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 79.29612235714286,
+          "p95Ns": 83.14083752857142,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "MoonSharp": {
+          "allocatedBytes": 552.0,
+          "gen0Per1K": 0.08766666666666667,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 201.023676,
+          "p95Ns": 206.01344815,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NLua": {
+          "allocatedBytes": 504.0,
+          "gen0Per1K": 0.08,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 616.6723378749999,
+          "p95Ns": 650.30866305,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        },
+        "NovaSharp": {
+          "allocatedBytes": 488.0,
+          "gen0Per1K": 0.0775,
+          "gen1Per1K": 0.0,
+          "gen2Per1K": 0.0,
+          "meanNs": 317.89839935,
+          "p95Ns": 332.786668825,
+          "runtimeContext": "",
+          "runtimeDisplayName": "",
+          "runtimeKind": "",
+          "showDeltaPercent": true
+        }
+      },
+      "summary": "NovaSharp.Comparison.LuaInteropBenchmarks"
+    }
+  ],
+  "schema": "novasharp.phase-benchmark-baseline.v1",
+  "source": {
+    "comparisonRoot": "artifacts/benchmarkdotnet/phase-a0-comparison"
+  }
+}
