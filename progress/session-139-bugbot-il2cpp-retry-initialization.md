@@ -12,7 +12,9 @@ Date: 2026-07-03
 ## Validation
 
 - `bash ./scripts/dev/pre-commit.sh` exited 0 after the fix.
-- Pending: push the follow-up commit and re-run PR CI plus Copilot/Bugbot review on the new head.
+- The follow-up commit was pushed as `61cd2143`.
+- PR #49 CI completed successfully for `61cd2143`, including benchmark aggregate report, runtime benchmark, all comparison shards, platform tests, Lua comparison report, code coverage, format, lint, and Cursor Bugbot.
+- Copilot reviewed `61cd2143` and generated no new comments.
 
 ## Residual Risk
 
