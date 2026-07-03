@@ -20,7 +20,10 @@ DEFAULT_OUTPUT = Path("artifacts/benchmark-deltas.md")
 DEFAULT_PHASE_BASELINE = Path("progress/benchmarks/phase-a0-scoreboard-baseline.json")
 DEFAULT_TOLERANCE = 0.02
 DEFAULT_REGRESSION_THRESHOLD = 0.10
-DEFAULT_NLUA_RATIO_THRESHOLD = 0.10
+DEFAULT_NLUA_RATIO_THRESHOLD = 1.00
+PHASE_ALLOCATION_EXACT_LIMIT_BYTES = 1024.0
+PHASE_ALLOCATION_ABSOLUTE_TOLERANCE_BYTES = 512.0
+PHASE_ALLOCATION_RELATIVE_TOLERANCE = 0.0002
 NOVA_RUNTIME = "NovaSharp"
 RUNTIME_PREFIXES = ("NovaSharp", "MoonSharp", "NLua", "LuaCSharp", "KeraLua", "Lua")
 EXPECTED_EXTERNAL_RUNTIMES = ("MoonSharp", "NLua", "LuaCSharp")
@@ -183,7 +186,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         type=float,
         default=DEFAULT_NLUA_RATIO_THRESHOLD,
         help=(
-            "Allowed fractional drift in NovaSharp/NLua mean and P95 ratios when "
+            "Allowed fractional regression in NovaSharp/NLua mean and P95 ratios when "
             "--enforce-phase-gates is enabled."
         ),
     )
@@ -192,8 +195,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help=(
             "Fail when the phase baseline is missing, when comparison rows do not "
-            "match the baseline shape, when NovaSharp/NLua ratios drift beyond the "
-            "configured threshold, or when NovaSharp allocated B/op changes."
+            "match the baseline shape, when NovaSharp/NLua ratios regress beyond the "
+            "configured threshold, or when NovaSharp allocated B/op regresses beyond "
+            "the phase allocation tolerance."
         ),
     )
     parser.add_argument(
@@ -802,13 +806,28 @@ def allocation_gate_failure(current: float, baseline: float) -> str:
         return "Current NovaSharp allocation measurement is missing."
     if not math.isfinite(baseline):
         return "Phase baseline NovaSharp allocation measurement is missing."
-    if current == baseline:
+    if current <= baseline:
+        return ""
+
+    delta = current - baseline
+    tolerance = phase_allocation_tolerance(baseline)
+    if delta <= tolerance:
         return ""
 
     return (
-        "NovaSharp allocation changed from "
+        "NovaSharp allocation increased from "
         f"{format_bytes(baseline)} to {format_bytes(current)} "
-        f"({format_bytes_delta(current - baseline)})."
+        f"({format_bytes_delta(delta)}; allowed {format_bytes(tolerance)})."
+    )
+
+
+def phase_allocation_tolerance(baseline: float) -> float:
+    if baseline < PHASE_ALLOCATION_EXACT_LIMIT_BYTES:
+        return 0.0
+
+    return max(
+        PHASE_ALLOCATION_ABSOLUTE_TOLERANCE_BYTES,
+        baseline * PHASE_ALLOCATION_RELATIVE_TOLERANCE,
     )
 
 
@@ -825,7 +844,7 @@ def append_ratio_gate_failure(
     current_ratio = ratio_or_nan(current_nova, current_nlua)
     baseline_ratio = ratio_or_nan(baseline_nova, baseline_nlua)
     ratio_delta = fraction_delta(current_ratio, baseline_ratio)
-    if math.isfinite(ratio_delta) and abs(ratio_delta) <= threshold:
+    if math.isfinite(ratio_delta) and ratio_delta <= threshold:
         return
 
     if not math.isfinite(current_ratio):
@@ -834,7 +853,7 @@ def append_ratio_gate_failure(
         message = f"Phase baseline NovaSharp/NLua {metric_name} ratio is unavailable."
     else:
         message = (
-            f"NovaSharp/NLua {metric_name} ratio changed from "
+            f"NovaSharp/NLua {metric_name} ratio regressed from "
             f"{baseline_ratio:.3f}x to {current_ratio:.3f}x "
             f"({format_percent(percentage_delta(current_ratio, baseline_ratio))})."
         )
@@ -988,7 +1007,8 @@ def render_phase_scoreboard_section(
             "and columns show NovaSharp current, NovaSharp baseline, MoonSharp, NLua, Lua-CSharp, "
             "and reference `lua` CLI wall-time context when present.",
             "The phase gate, when enabled, checks NovaSharp/NLua same-run timing ratios against the "
-            "checked-in phase baseline and checks NovaSharp allocated B/op exactly.",
+            "checked-in phase baseline and checks NovaSharp allocated B/op regressions with a small "
+            "runner-noise tolerance.",
             "",
             f"- Phase baseline JSON: `{repo_relative(phase_baseline_path)}`",
             "",

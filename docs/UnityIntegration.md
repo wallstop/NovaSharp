@@ -135,6 +135,8 @@ nuget install unity-nuget -OutputDirectory tools # optional helper
 
 Document the NovaSharp version/hash alongside the package so consumers know which runtime they are using.
 
+The generated package includes an `IL2CPP Spot Check` sample. Import that sample, build the `IL2CPPSpotCheck` scene with IL2CPP, run the player, and inspect the player log for a line beginning with `NOVASHARP_IL2CPP_SPOTCHECK PASS`. A failure emits one line beginning with `NOVASHARP_IL2CPP_SPOTCHECK FAIL` and includes single-line exception type and message fields. This is a stopwatch smoke test for the Unity player path, not a replacement for the BenchmarkDotNet comparison suite.
+
 ## 5. Keep Tests in .NET, Not Unity
 
 Interpreter tests now run exclusively via the TUnit host (`src/tests/NovaSharp.Interpreter.Tests.TUnit`). Keep Unity projects focused on runtime consumption; run the TUnit suite from the command line (CI already does this) instead of pulling the full test harness into Unity. Shared Lua fixtures remain under `src/tests/NovaSharp.Interpreter.Tests`.

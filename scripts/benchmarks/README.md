@@ -8,17 +8,17 @@ The `.github/workflows/benchmarks.yml` workflow runs benchmarks automatically:
 
 - **On push to main**: Full benchmark run with results stored in `gh-pages` branch
 - **On PRs**: Benchmark run plus same-run external comparisons; comments on PRs with a GC-aware delta table
-- **Manual dispatch**: Configurable threshold and fail-on-alert settings
+- **Manual dispatch**: Configurable threshold (for example `115` or `115%`) and fail-on-alert settings
 
 ### Regression Detection
 
-The workflow uses `benchmark-action/github-action-benchmark` to track performance over time:
+The workflow uses `benchmark-action/github-action-benchmark` to store historical performance results over time:
 
-- **Alert threshold**: 115% by default (15% regression triggers alert)
-- **Fail on alert**: Enabled for manual benchmark gates; PR alerts are advisory because hosted-runner microbenchmarks are noisy
-- **PR comments**: Automatic comments when regressions are detected
+- **Alert threshold**: 115% by default for historical benchmark tracking; manual inputs accept either numeric or percent-suffixed values
+- **Fail on alert**: Enabled only when requested for manual benchmark gates; historical PR alerts do not fail because hosted-runner microbenchmarks are noisy
+- **PR comments**: Historical-action regression comments are disabled on pull requests; PR feedback comes from the aggregate delta comment and Phase A0 gates below
 - **External runtime deltas**: `scripts/benchmarks/render-benchmark-deltas.py` renders a sticky PR comment and `artifacts/benchmark-deltas.md`; each scenario/operation is shown as a matrix row with NovaSharp raw results first, then same-run external runtime results and NovaSharp-vs-runtime deltas. Positive deltas mean NovaSharp is slower, collects more GC, or allocates more than the same-run comparison runtime row. Reference `lua` CLI rows are out-of-process wall-time context only, so memory and GC cells are shown as unknown. These cells are report-only and do not set `regressed=true`.
-- **Phase A0 scoreboard**: the same renderer emits a compact scoreboard section with NovaSharp current, NovaSharp baseline, MoonSharp, NLua, Lua-CSharp, and reference `lua` CLI columns. Once `progress/benchmarks/phase-a0-scoreboard-baseline.json` is committed, CI enforces NovaSharp/NLua ratio drift and exact NovaSharp allocated B/op gates from that baseline.
+- **Phase A0 scoreboard**: the same renderer emits a compact scoreboard section with NovaSharp current, NovaSharp baseline, MoonSharp, NLua, Lua-CSharp, and reference `lua` CLI columns. Once `progress/benchmarks/phase-a0-scoreboard-baseline.json` is committed, CI enforces NovaSharp/NLua ratio regressions and NovaSharp allocated B/op regressions from that baseline.
 - **Self deltas**: the same renderer can compare current NovaSharp results to checked-in BenchmarkDotNet JSON artifacts under `docs/performance-history/current-baseline` once that baseline exists. Self deltas drive the `regressed=true` signal.
 - **Historical tracking**: Results stored in `gh-pages` branch under `/benchmarks`
 
@@ -129,7 +129,7 @@ python3 scripts/benchmarks/render-benchmark-deltas.py \
   --output artifacts/phase-a0-scoreboard.md
 ```
 
-Use `--enforce-phase-gates` only after the baseline was produced from a representative run and reviewed. The gate checks same-run NovaSharp/NLua mean and P95 ratios with a 10% default tolerance and exact NovaSharp allocated B/op against the checked-in phase baseline. Reference `lua` CLI rows remain wall-time-only context and are excluded from allocation gates.
+Use `--enforce-phase-gates` only after the baseline was produced from a representative run and reviewed. The checked-in Phase A0 baseline should come from GitHub Actions benchmark artifacts, or a runner that intentionally matches the CI environment, because the hard gate checks same-run NovaSharp/NLua mean and P95 catastrophic regression with a 100% default tolerance and NovaSharp allocated B/op regression with a small runner-noise tolerance against the checked-in phase baseline. Precise ratio changes remain visible in the scoreboard for review. Reference `lua` CLI rows remain wall-time-only context and are excluded from allocation gates.
 
 The comparison suite's `Compile` rows create a fresh runtime state for each engine before loading the scenario. `Execute` rows use each engine's prepared public execution surface to reflect the host API NovaSharp is trying to compete with; add a separate normalized-result-read suite before treating return-materialization cost as isolated interpreter cost.
 

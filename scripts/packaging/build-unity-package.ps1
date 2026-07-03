@@ -44,19 +44,66 @@ Write-Host "   Output: $OutputPath"
 Write-Host "   Configuration: $Configuration"
 Write-Host ""
 
-# Create output directories
+$PackageTemplateRoot = Join-Path $RepoRoot "src/unity/com.wallstop-studios.novasharp"
+$SamplesSource = Join-Path $PackageTemplateRoot "Samples~"
 $PackageRoot = Join-Path $OutputPath "com.wallstop-studios.novasharp"
 $RuntimeDir = Join-Path $PackageRoot "Runtime"
 $DebuggersDir = Join-Path $RuntimeDir "Debuggers"
 $EditorDir = Join-Path $PackageRoot "Editor"
 $DocsDir = Join-Path $PackageRoot "Documentation~"
-$SamplesDir = Join-Path $PackageRoot "Samples~/BasicUsage"
+$SamplesRoot = Join-Path $PackageRoot "Samples~"
+$PathTrimChars = [char[]]@([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
 
+function Test-PathWithinOrEqual {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Candidate,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Root
+    )
+
+    $candidateFullPath = [System.IO.Path]::GetFullPath($Candidate).TrimEnd($PathTrimChars)
+    $rootFullPath = [System.IO.Path]::GetFullPath($Root).TrimEnd($PathTrimChars)
+
+    if ([string]::Equals($candidateFullPath, $rootFullPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $true
+    }
+
+    return $candidateFullPath.StartsWith(
+        $rootFullPath + [System.IO.Path]::DirectorySeparatorChar,
+        [System.StringComparison]::OrdinalIgnoreCase)
+}
+
+function Test-PathOverlap {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Left,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Right
+    )
+
+    return (Test-PathWithinOrEqual -Candidate $Left -Root $Right) -or (Test-PathWithinOrEqual -Candidate $Right -Root $Left)
+}
+
+if (-not (Test-Path $SamplesSource)) {
+    throw "Missing Unity package sample templates: $SamplesSource"
+}
+
+if (Test-PathOverlap -Left $PackageRoot -Right $PackageTemplateRoot) {
+    throw "Unity package output must not overlap tracked package templates: $PackageRoot"
+}
+
+if (Test-PathOverlap -Left $SamplesRoot -Right $SamplesSource) {
+    throw "Unity package sample output must not overlap tracked sample templates: $SamplesRoot"
+}
+
+# Create output directories
 New-Item -ItemType Directory -Path $RuntimeDir -Force | Out-Null
 New-Item -ItemType Directory -Path $DebuggersDir -Force | Out-Null
 New-Item -ItemType Directory -Path $EditorDir -Force | Out-Null
 New-Item -ItemType Directory -Path $DocsDir -Force | Out-Null
-New-Item -ItemType Directory -Path $SamplesDir -Force | Out-Null
 
 # Build and publish assemblies
 Write-Host "📦 Building assemblies..." -ForegroundColor Yellow
@@ -132,6 +179,11 @@ $PackageJson = @{
             displayName = "Basic Usage"
             description = "Basic examples of running Lua scripts from C#"
             path = "Samples~/BasicUsage"
+        },
+        @{
+            displayName = "IL2CPP Spot Check"
+            description = "Minimal stopwatch scene for smoke-testing NovaSharp in IL2CPP player builds"
+            path = "Samples~/IL2CPPSpotCheck"
         }
     )
 }
@@ -180,58 +232,12 @@ $DebuggersAsmdef = @{
 }
 $DebuggersAsmdef | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $DebuggersDir "WallstopStudios.NovaSharp.Debuggers.asmdef") -Encoding UTF8
 
-# Create basic sample
-$SampleCode = @'
-// Basic NovaSharp usage example for Unity
-// Copy this file to your Assets folder to use
-
-using UnityEngine;
-using WallstopStudios.NovaSharp.Interpreter;
-
-public class NovaSharpBasicUsage : MonoBehaviour
-{
-    void Start()
-    {
-        // Create a new Lua script instance
-        Script script = new Script();
-
-        // Execute a simple Lua script
-        script.DoString(@"
-            print('Hello from Lua!')
-            
-            function greet(name)
-                return 'Hello, ' .. name .. '!'
-            end
-        ");
-
-        // Call a Lua function from C#
-        DynValue result = script.Call(script.Globals["greet"], "Unity");
-        Debug.Log(result.String); // Outputs: Hello, Unity!
-
-        // Set a global variable accessible from Lua
-        script.Globals["unityVersion"] = DynValue.NewString(Application.unityVersion);
-
-        // Execute more Lua code that uses the variable
-        script.DoString("print('Running on Unity ' .. unityVersion)");
-    }
+# Copy package samples from tracked templates.
+if (Test-Path $SamplesRoot) {
+    Remove-Item -LiteralPath $SamplesRoot -Recurse -Force
 }
-'@
-Set-Content (Join-Path $SamplesDir "BasicUsage.cs") $SampleCode -Encoding UTF8
-
-$SampleMeta = @'
-fileFormatVersion: 2
-guid: a1b2c3d4e5f6789012345678abcdef01
-MonoImporter:
-  externalObjects: {}
-  serializedVersion: 2
-  defaultReferences: []
-  executionOrder: 0
-  icon: {instanceID: 0}
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
-'@
-Set-Content (Join-Path $SamplesDir "BasicUsage.cs.meta") $SampleMeta -Encoding UTF8
+New-Item -ItemType Directory -Path $SamplesRoot -Force | Out-Null
+Copy-Item -Path (Join-Path $SamplesSource "*") -Destination $SamplesRoot -Recurse -Force
 
 # Create CHANGELOG
 $Changelog = @"

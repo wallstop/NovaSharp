@@ -64,6 +64,11 @@ def expected_namespace(path: Path) -> str | None:
         # Legacy assets are quarantined and not expected to align with current namespaces.
         return None
 
+    if rel.parts[0] == "unity" and "Samples~" in rel.parts:
+        # UPM sample templates live under package folders such as
+        # com.wallstop-studios.novasharp/Samples~, which cannot map to a C# namespace.
+        return None
+
     # Drop the filename
     parts = list(rel.parts[:-1])
     if not parts:
