@@ -63,13 +63,21 @@ echo ""
 path_is_within_or_equal() {
     local candidate="$1"
     local root="$2"
-    local candidate_full
-    local root_full
 
-    candidate_full="$(canonical_path "$candidate")"
-    root_full="$(canonical_path "$root")"
+    python3 - "$candidate" "$root" <<'PY'
+import pathlib
+import sys
 
-    [[ "$candidate_full" == "$root_full" || "$candidate_full" == "$root_full"/* ]]
+candidate = pathlib.Path(sys.argv[1]).resolve(strict=False)
+root = pathlib.Path(sys.argv[2]).resolve(strict=False)
+
+try:
+    candidate.relative_to(root)
+except ValueError:
+    sys.exit(1)
+
+sys.exit(0)
+PY
 }
 
 canonical_path() {

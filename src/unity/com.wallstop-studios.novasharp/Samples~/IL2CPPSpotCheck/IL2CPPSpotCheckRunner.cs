@@ -125,7 +125,7 @@ end
             }
             catch (Exception ex)
             {
-                Debug.LogError(FormatFailure(ex));
+                Debug.Log(FormatFailure(ex));
             }
         }
 
