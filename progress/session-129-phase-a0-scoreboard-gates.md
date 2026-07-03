@@ -46,6 +46,7 @@ Date: 2026-07-03
 - The failure preview now uses the scoreboard scenario formatter and falls back to the comparison summary when no scenario parameter exists.
 - GitHub Copilot reported that local Phase A0 runners could read stale `BenchmarkDotNet.Artifacts` rows through `--current-root`; both Bash and PowerShell runners now point current and comparison roots at the freshly cleaned Phase A0 artifact directory.
 - GitHub Copilot also reported that benchmark CI always emitted `has_report=true`; the workflow now bases `has_report` on whether `artifacts/benchmark-deltas.md` exists while still failing on any non-zero renderer status.
+- Cursor Bugbot reported that a missing `phase_baseline_rows` counter could be mislabeled as an empty baseline. The workflow now emits `phase_baseline_rows_available` and only uses the empty-baseline warning when the renderer actually produced the row count.
 
 ## Remaining Work
 
