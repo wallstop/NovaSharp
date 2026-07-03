@@ -164,12 +164,18 @@ end
                 return;
             }
 
-            _script = new Script(CoreModulePresets.Complete);
-            _script.Globals.Set("host_add", DynValue.NewCallback(HostAdd, "host_add"));
-            _script.DoString(BenchmarkScript, null, "NovaSharpIL2CPPSpotCheck");
-            _tickFunction = _script.Globals.Get("nova_tick");
-            _tableFunction = _script.Globals.Get("nova_table");
-            _callbackFunction = _script.Globals.Get("nova_callback");
+            Script script = new Script(CoreModulePresets.Complete);
+            script.Globals.Set("host_add", DynValue.NewCallback(HostAdd, "host_add"));
+            script.DoString(BenchmarkScript, null, "NovaSharpIL2CPPSpotCheck");
+
+            DynValue tickFunction = script.Globals.Get("nova_tick");
+            DynValue tableFunction = script.Globals.Get("nova_table");
+            DynValue callbackFunction = script.Globals.Get("nova_callback");
+
+            _tickFunction = tickFunction;
+            _tableFunction = tableFunction;
+            _callbackFunction = callbackFunction;
+            _script = script;
         }
 
         private double RunOneIteration()
