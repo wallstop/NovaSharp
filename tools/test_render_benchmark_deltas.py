@@ -351,6 +351,10 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
             "| NumericLoops | Execute | 90 ns / 110 ns | 50 ns / 70 ns | +40 ns / +40 ns |",
             output,
         )
+        self.assertIn(
+            "| NumericLoops | Execute | 80 B / 1 / 0 / 0 | - | - | - | - | - |",
+            output,
+        )
         self.assertIn("A `-` cell means that runtime did not report memory", output)
         self.assertIn(
             "| NumericLoops | Execute | 80 B / 1 / 0 / 0 | - / - / - / - | - / - / - / - |",

@@ -40,6 +40,8 @@ Date: 2026-07-03
   - `python3 scripts/lint/check-shell-python-invocation.py`;
   - `bash -n scripts/benchmarks/run-phase-a0-scoreboard.sh scripts/benchmarks/run-benchmarks.sh`;
   - `git diff --check`.
+- GitHub Copilot reported that the Phase A0 scoreboard text promised a single `-` for reference `lua` CLI memory cells while the formatter rendered `- / - / - / -`.
+- The renderer now preserves runtime kind through the Phase A0 matrix helpers and collapses `LuaCliWallTime` memory cells to a single `-`; `tools/test_render_benchmark_deltas.py` covers the documented row shape.
 
 ## Remaining Work
 

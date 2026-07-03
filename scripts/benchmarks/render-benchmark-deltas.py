@@ -68,6 +68,7 @@ class RuntimeComparison:
     display_name: str
     metrics: Metrics
     runtime_context: str
+    runtime_kind: str
     show_delta_percent: bool
 
 
@@ -643,6 +644,7 @@ def build_runtime_matrix_rows(
                     record.runtime_display_name or runtime,
                     record.metrics,
                     record.runtime_context,
+                    record.runtime_kind,
                     record.show_delta_percent,
                 )
             )
@@ -1101,6 +1103,7 @@ def current_record_for_runtime(row: RuntimeMatrixRow, runtime: str) -> MetricRec
                 row.parameter_display,
                 runtime_display_name=comparison.display_name,
                 runtime_context=comparison.runtime_context,
+                runtime_kind=comparison.runtime_kind,
                 show_delta_percent=comparison.show_delta_percent,
             )
 
@@ -1120,7 +1123,10 @@ def format_scoreboard_time_cell(record: MetricRecord | None) -> str:
 
 
 def format_scoreboard_memory_cell(record: MetricRecord | None) -> str:
-    return format_memory_gc_pair(record.metrics) if record is not None else "-"
+    if record is None or record.runtime_kind == "LuaCliWallTime":
+        return "-"
+
+    return format_memory_gc_pair(record.metrics)
 
 
 def scoreboard_runtime_label(runtime: str) -> str:
