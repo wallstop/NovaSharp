@@ -1049,6 +1049,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveStringKeyClearsConstructorLengthHint(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue tableValue = script.DoString("return { nil, 1, x = 1 }");
+            Table table = tableValue.Table;
+            int expectedInitialLength = version == LuaCompatibilityVersion.Lua55 ? 0 : 2;
+            await Assert.That(table.Length).IsEqualTo(expectedInitialLength).ConfigureAwait(false);
+
+            bool removed = table.Remove("x");
+
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveDeallocatesTrackedEntry(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                Sandbox = new SandboxOptions { MaxMemoryBytes = 1024 * 1024 },
+            };
+            Script script = new(options);
+            Table table = new(script);
+            long afterTableCreation = script.AllocationTracker.CurrentBytes;
+
+            table.Set("key", DynValue.NewNumber(12));
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsGreaterThan(afterTableCreation)
+                .ConfigureAwait(false);
+
+            bool removed = table.Remove("key");
+
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
+
+            bool removedAgain = table.Remove("key");
+
+            await Assert.That(removedAgain).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task RemoveDynValueNumberUsesIntegralPath(LuaCompatibilityVersion version)
         {
             Table table = new(new Script());

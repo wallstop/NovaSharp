@@ -821,14 +821,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             bool isNumber
         )
         {
-            bool removed = listIndex.Remove(key);
+            LinkedListNode<TablePair> node = listIndex.Find(key);
+            if (node == null)
+            {
+                return false;
+            }
 
-            if (removed && isNumber)
+            bool removedNonNil = node.Value.Value != null && node.Value.Value.IsNotNil();
+            bool removed = listIndex.Remove(key);
+            if (!removed)
+            {
+                return false;
+            }
+
+            if (_constructorArrayLength > 0)
+            {
+                _constructorArrayLength = 0;
+                _cachedLength = -1;
+            }
+            else if (isNumber)
             {
                 _cachedLength = -1;
             }
 
-            return removed;
+            AllocationTracker tracker = _owner?.AllocationTracker;
+            if (tracker != null && removedNonNil)
+            {
+                tracker.RecordDeallocation(PerEntryOverhead);
+                _trackedEntryCount--;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -848,7 +871,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(int key)
         {
-            _constructorArrayLength = 0;
             return PerformTableRemove(_arrayMap, key, true);
         }
 
