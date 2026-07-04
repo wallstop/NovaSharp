@@ -43,7 +43,7 @@ Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author
 
 ### Root Causes (confirmed in source)
 
-1. **`DynValue` is a sealed heap class** (`src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/DynValue.cs`) — every Lua value is a GC allocation with `_refId`, `_hashCode`, `_readOnly` baggage. Native Lua's TValue is 16 inline bytes.
+1. **`DynValue` is a sealed heap class** (`src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/DynValue.cs`) — every Lua value is a GC allocation with mutable wrapper/read-only baggage that still needs the A1 slot/value split. Native Lua's TValue is 16 inline bytes.
 1. **`Instruction` is a heap class with 8 fields** (`Execution/VM/Instruction.cs`): `SymbolRef[]`, `string`, `DynValue`, `SourceRef` — cache-hostile pointer chasing per dispatch.
 1. **Per-instruction overhead in the hot loop** (`Execution/VM/Processor/ProcessorInstructionLoop.cs`): debugger check, auto-yield check, sandbox instruction check, sandbox memory check, and `shouldYieldToCaller` recomputed after most arithmetic opcodes — paid regardless of configuration.
 1. **`Table` = `LinkedList<TablePair>` + three Dictionary indexes** (`DataTypes/Table.cs`): one `LinkedListNode` heap allocation per entry, ~64 B/entry overhead. Native Lua uses an array part + open-addressed hash part.
@@ -107,10 +107,12 @@ public readonly struct LuaValue : IEquatable<LuaValue>
 
 Sub-steps, each landing green:
 
-- [ ] **A1a (prep)**: remove `_readOnly`/clone-as-writable machinery; audit and remove `DynValue.ReferenceId` consumers (only `CoreLib/DebugModule.cs` and `ProcessorDebugger.cs` — derive identity from the referenced object, which matches Lua `tostring(t)` semantics; `Table`/`Closure`/`Coroutine` remain classes so identity survives). Kill the `_hashCode` cache.
+- [ ] **A1a (prep)**: remove `_readOnly`/clone-as-writable machinery after a slot/value split; audit and remove `DynValue.ReferenceId` consumers by deriving identity from referenced objects where possible (`Table`/`Closure`/`Coroutine`/`UserData` remain classes so identity survives); kill the `_hashCode` cache.
 - [ ] **A1b (targeted fixtures FIRST)**: `select('#', ...)`, `table.pack(...).n`, nil-in-middle tuples, function-call-in-expression vs statement position — the `null` vs `Nil` vs `Void` drift hazards.
 - [ ] **A1c (the conversion)**: class→struct, compiler-error-driven across interpreter + CoreLib + tests. `default(LuaValue)` = Nil; `Void` stays an explicit tag; every `== null` / `?? DynValue.Nil` site audited manually (not regex).
 - [ ] **A1d (tuning)**: aggressive-inline accessors; `in`/`ref readonly` passing on hot helpers. Struct copy semantics delete the shared-readonly-literal concern entirely.
+
+**Progress**: A1a prep started on 2026-07-04 by removing the per-instance `DynValue.ReferenceId` backing field, moving internal/debug identity consumers off that field, and deleting the mutable `_hashCode` cache. A no-field `ReferenceId` compatibility getter remains until the struct conversion removes wrapper identity entirely. `debug.upvalueid` now keeps its own stable debug handle identity. The `_readOnly`/`AsReadOnly`/`CloneAsWritable` machinery remains intentionally open because it still protects mutable local/upvalue slots, cached singleton values, vararg copies, and table-key hash stability until the slot/value split lands. See [progress/session-147-a1a-dynvalue-identity-hash-prep.md](progress/session-147-a1a-dynvalue-identity-hash-prep.md).
 
 **Exit criteria**: fixtures green on 5.1-5.5; NumericLoops **0 B/op steady-state**; compute suite ≥1.5-2x vs A0 baseline; no test relies on value reference identity.
 

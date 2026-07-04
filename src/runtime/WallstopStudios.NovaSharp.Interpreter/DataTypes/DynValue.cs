@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using Compatibility;
     using Cysharp.Text;
@@ -16,22 +17,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// </summary>
     public sealed class DynValue
     {
-        private static int RefIdCounter;
-
-        private readonly int _refId = ++RefIdCounter;
-        private int _hashCode = -1;
-
         private bool _readOnly;
         private LuaNumber _number;
         private object _object;
         private DataType _type;
 
         /// <summary>
-        /// Gets a unique reference identifier. This is guaranteed to be unique only for dynvalues created in a single thread as it's not thread-safe.
+        /// Gets a transitional wrapper identity. Reference-backed Lua values should use their
+        /// underlying object identity instead; this member remains only to avoid a source break
+        /// before the A1 struct conversion removes wrapper identity altogether.
         /// </summary>
         public int ReferenceId
         {
-            get { return _refId; }
+            get { return RuntimeHelpers.GetHashCode(this); }
         }
 
         /// <summary>
@@ -295,12 +293,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewNumber(double num)
         {
-            return new DynValue()
-            {
-                _number = LuaNumber.FromDouble(num),
-                _type = DataType.Number,
-                _hashCode = -1,
-            };
+            return new DynValue() { _number = LuaNumber.FromDouble(num), _type = DataType.Number };
         }
 
         /// <summary>
@@ -310,12 +303,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewFloat(double num)
         {
-            return new DynValue()
-            {
-                _number = LuaNumber.FromFloat(num),
-                _type = DataType.Number,
-                _hashCode = -1,
-            };
+            return new DynValue() { _number = LuaNumber.FromFloat(num), _type = DataType.Number };
         }
 
         /// <summary>
@@ -324,12 +312,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewInteger(long num)
         {
-            return new DynValue()
-            {
-                _number = LuaNumber.FromInteger(num),
-                _type = DataType.Number,
-                _hashCode = -1,
-            };
+            return new DynValue() { _number = LuaNumber.FromInteger(num), _type = DataType.Number };
         }
 
         /// <summary>
@@ -337,12 +320,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public static DynValue NewNumber(LuaNumber num)
         {
-            return new DynValue()
-            {
-                _number = num,
-                _type = DataType.Number,
-                _hashCode = -1,
-            };
+            return new DynValue() { _number = num, _type = DataType.Number };
         }
 
         /// <summary>
@@ -1193,7 +1171,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 _object = _object,
                 _number = _number,
-                _hashCode = _hashCode,
                 _type = _type,
                 _readOnly = readOnly,
             };
@@ -1433,11 +1410,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </returns>
         public override int GetHashCode()
         {
-            if (_hashCode != -1)
-            {
-                return _hashCode;
-            }
-
             DeterministicHashBuilder hash = default;
             hash.AddInt((int)Type);
 
@@ -1445,62 +1417,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 case DataType.Void:
                 case DataType.Nil:
-                    _hashCode = 0;
-                    break;
+                    return 0;
                 case DataType.Boolean:
                     hash.AddInt(Boolean ? 1 : 0);
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
                 case DataType.Number:
                     // Use LuaNumber's hash code to ensure equal numbers have equal hashes
                     hash.AddInt(LuaNumber.GetHashCode());
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
                 case DataType.String:
                     hash.Add(String);
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
                 case DataType.Function:
                     hash.Add(Function);
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
                 case DataType.ClrFunction:
                     hash.Add(Callback);
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
                 case DataType.Table:
                     hash.Add(Table);
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
                 case DataType.Tuple:
                 case DataType.TailCallRequest:
                     hash.Add(Tuple);
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
                 case DataType.UserData:
-                    if (UserData?.Object != null)
+                    if (UserData != null)
                     {
-                        hash.AddInt(UserData.Object.GetHashCode());
+                        hash.AddInt(UserData.StableHashCode);
                     }
-                    else if (UserData != null)
-                    {
-                        hash.AddInt(UserData.ReferenceId);
-                    }
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
                 case DataType.Thread:
                     if (Coroutine != null)
                     {
                         hash.AddInt(Coroutine.ReferenceId);
                     }
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
                 default:
-                    _hashCode = hash.ToHashCode();
-                    break;
+                    return hash.ToHashCode();
             }
-
-            return _hashCode;
         }
 
         /// <summary>
@@ -1738,7 +1693,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _number = value._number;
             _object = value._object;
             _type = value.Type;
-            _hashCode = -1;
         }
 
         /// <summary>

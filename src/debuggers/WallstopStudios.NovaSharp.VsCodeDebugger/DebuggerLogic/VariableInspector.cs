@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
 
     using System.Collections.Generic;
     using System.Globalization;
+    using System.Runtime.CompilerServices;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using SDK;
@@ -20,10 +21,21 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
         /// <param name="variables">Collection receiving formatted entries.</param>
         internal static void InspectVariable(DynValue v, List<Variable> variables)
         {
+            if (v == null)
+            {
+                variables.Add(new Variable("(value)", "(null)"));
+                variables.Add(new Variable("(type)", "(null)"));
+                variables.Add(new Variable("(val #id)", "0"));
+                return;
+            }
+
             variables.Add(new Variable("(value)", v.ToPrintString()));
             variables.Add(new Variable("(type)", v.Type.ToLuaDebuggerString()));
             variables.Add(
-                new Variable("(val #id)", v.ReferenceId.ToString(CultureInfo.InvariantCulture))
+                new Variable(
+                    "(val #id)",
+                    GetValueIdentity(v).ToString(CultureInfo.InvariantCulture)
+                )
             );
 
             switch (v.Type)
@@ -154,6 +166,11 @@ namespace WallstopStudios.NovaSharp.VsCodeDebugger.DebuggerLogic
                 default:
                     break;
             }
+        }
+
+        private static int GetValueIdentity(DynValue value)
+        {
+            return value == null ? 0 : RuntimeHelpers.GetHashCode(value);
         }
     }
 }

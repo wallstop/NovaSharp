@@ -11,16 +11,16 @@ Found 74 undocumented public/internal type declarations.
   - line 1383: missing XML docs for `Function`
   - line 1384: missing XML docs for `Mask`
   - line 1385: missing XML docs for `Count`
-  - line 1396: missing XML docs for `Upvalue`
-  - line 1398: missing XML docs for `ReferenceId`
-  - line 1400: missing XML docs for `ToString()`
-  - line 1411: missing XML docs for `Name`
-  - line 1413: missing XML docs for `Type`
-  - line 1415: missing XML docs for `Index()`
-  - line 1420: missing XML docs for `SetIndex()`
-  - line 1431: missing XML docs for `AsString()`
-  - line 1441: missing XML docs for `MetaIndex()`
-  - line 1446: missing XML docs for `IsTypeCompatible()`
+  - line 1398: missing XML docs for `Upvalue`
+  - line 1400: missing XML docs for `ReferenceId`
+  - line 1402: missing XML docs for `ToString()`
+  - line 1413: missing XML docs for `Name`
+  - line 1415: missing XML docs for `Type`
+  - line 1417: missing XML docs for `Index()`
+  - line 1422: missing XML docs for `SetIndex()`
+  - line 1433: missing XML docs for `AsString()`
+  - line 1443: missing XML docs for `MetaIndex()`
+  - line 1448: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
   - line 20: missing XML docs for `Name`
   - line 22: missing XML docs for `Type`
@@ -32,7 +32,7 @@ Found 74 undocumented public/internal type declarations.
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/TableModule.cs
   - line 35: missing XML docs for `Compare()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/UserData.cs
-  - line 539: missing XML docs for `Dispose()`
+  - line 582: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/UserDataRegistries/ExtensionMethodsRegistry.cs
   - line 40: missing XML docs for `SyncRoot`
   - line 42: missing XML docs for `Registry`

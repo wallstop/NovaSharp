@@ -1387,10 +1387,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private sealed class UpvalueIdentifier
         {
+            private static int ReferenceIdCounter;
+
             public UpvalueIdentifier(DynValue slot)
             {
                 Upvalue = slot ?? throw new ArgumentNullException(nameof(slot));
-                ReferenceId = slot.ReferenceId;
+                ReferenceId = ++ReferenceIdCounter;
             }
 
             public DynValue Upvalue { get; }

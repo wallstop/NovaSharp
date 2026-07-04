@@ -372,6 +372,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         }
 
         [global::TUnit.Core.Test]
+        public async Task EqualUserDataValuesHaveEqualHashCodes()
+        {
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<EqualityHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
+
+            DynValue left = UserData.Create(new EqualityHost("value"));
+            DynValue right = UserData.Create(new EqualityHost("value"));
+
+            await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(left.GetHashCode())
+                .IsEqualTo(right.GetHashCode())
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task UserDataHashCodeCapturesHostHashLazily()
+        {
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<CountingHashHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<CountingHashHost>(InteropAccessMode.Reflection);
+
+            CountingHashHost host = new();
+            DynValue value = UserData.Create(host);
+
+            await Assert.That(host.GetHashCodeCalls).IsEqualTo(0).ConfigureAwait(false);
+
+            _ = value.GetHashCode();
+            await Assert.That(host.GetHashCodeCalls).IsEqualTo(1).ConfigureAwait(false);
+
+            _ = value.GetHashCode();
+            await Assert.That(host.GetHashCodeCalls).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task UserDataEqualityRequiresMatchingDescriptors()
         {
             CustomWireableDescriptor descriptorA = new();
@@ -395,6 +431,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
             DynValue right = UserData.CreateStatic<EqualityHost>();
 
             await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task EqualStaticUserDataValuesHaveEqualHashCodes()
+        {
+            using UserDataRegistrationScope registrationScope =
+                UserDataRegistrationScope.Track<EqualityHost>(ensureUnregistered: true);
+            registrationScope.RegisterType<EqualityHost>(InteropAccessMode.Reflection);
+
+            DynValue left = UserData.CreateStatic<EqualityHost>();
+            DynValue right = UserData.CreateStatic<EqualityHost>();
+
+            await Assert.That(left.Equals(right)).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(left.GetHashCode())
+                .IsEqualTo(right.GetHashCode())
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -636,6 +689,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
         public override int GetHashCode()
         {
             return Label?.GetHashCode(StringComparison.Ordinal) ?? 0;
+        }
+    }
+
+    internal sealed class CountingHashHost
+    {
+        public int GetHashCodeCalls { get; private set; }
+
+        public override int GetHashCode()
+        {
+            ++GetHashCodeCalls;
+            return 137;
         }
     }
 
