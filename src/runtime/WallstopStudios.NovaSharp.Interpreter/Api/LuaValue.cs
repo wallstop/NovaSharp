@@ -204,7 +204,14 @@ namespace NovaSharp
         /// </summary>
         public T Read<T>()
         {
-            return GetValueOrNil().ToObject<T>();
+            try
+            {
+                return GetValueOrNil().ToObject<T>();
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -222,7 +229,7 @@ namespace NovaSharp
                 value = default(T);
                 return false;
             }
-            catch (ScriptRuntimeException)
+            catch (LuaException)
             {
                 value = default(T);
                 return false;

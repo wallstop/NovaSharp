@@ -85,6 +85,13 @@ NovaSharp.LuaEngineOptions.Sandbox -> NovaSharp.LuaSandboxOptions
 NovaSharp.LuaEngineOptions.ScriptCacheMaxEntries -> System.Int32
 NovaSharp.LuaEngineOptions.Time -> NovaSharp.ILuaTimeProvider
 NovaSharp.LuaEngineOptions.Version -> NovaSharp.LuaVersion
+NovaSharp.LuaException
+NovaSharp.LuaException..ctor()
+NovaSharp.LuaException..ctor(System.String message)
+NovaSharp.LuaException..ctor(System.String message, System.Exception innerException)
+NovaSharp.LuaException.CallStack -> System.Collections.Generic.IReadOnlyList<System.String>
+NovaSharp.LuaException.DecoratedMessage -> System.String
+NovaSharp.LuaException.InstructionPointer -> System.Int32
 NovaSharp.LuaFunction
 NovaSharp.LuaFunction.Call() -> NovaSharp.LuaValue
 NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0) -> NovaSharp.LuaValue
@@ -102,6 +109,20 @@ NovaSharp.LuaKind.Table
 NovaSharp.LuaKind.Thread
 NovaSharp.LuaKind.Tuple
 NovaSharp.LuaKind.UserData
+NovaSharp.LuaRuntimeException
+NovaSharp.LuaRuntimeException..ctor()
+NovaSharp.LuaRuntimeException..ctor(System.String message)
+NovaSharp.LuaRuntimeException..ctor(System.String message, System.Exception innerException)
+NovaSharp.LuaSandboxException
+NovaSharp.LuaSandboxException..ctor()
+NovaSharp.LuaSandboxException..ctor(System.String message)
+NovaSharp.LuaSandboxException..ctor(System.String message, System.Exception innerException)
+NovaSharp.LuaSandboxException.ActualValue -> System.Int64
+NovaSharp.LuaSandboxException.ConfiguredLimit -> System.Int64
+NovaSharp.LuaSandboxException.DeniedAccessName -> System.String
+NovaSharp.LuaSandboxException.IsAccessDenied -> System.Boolean
+NovaSharp.LuaSandboxException.IsLimitViolation -> System.Boolean
+NovaSharp.LuaSandboxException.ViolationKind -> NovaSharp.LuaSandboxViolationKind
 NovaSharp.LuaSandboxOptions
 NovaSharp.LuaSandboxOptions..ctor()
 NovaSharp.LuaSandboxOptions..ctor(NovaSharp.LuaSandboxOptions defaults)
@@ -128,6 +149,19 @@ NovaSharp.LuaSandboxOptions.RestrictModules(System.String[] moduleNames) -> Nova
 NovaSharp.LuaSandboxOptions.RestrictedFunctions -> System.Collections.Generic.IReadOnlyCollection<System.String>
 NovaSharp.LuaSandboxOptions.RestrictedModules -> System.Collections.Generic.IReadOnlyCollection<System.String>
 NovaSharp.LuaSandboxOptions.Unrestricted -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxViolationKind
+NovaSharp.LuaSandboxViolationKind.CoroutineLimitExceeded
+NovaSharp.LuaSandboxViolationKind.FunctionAccessDenied
+NovaSharp.LuaSandboxViolationKind.InstructionLimitExceeded
+NovaSharp.LuaSandboxViolationKind.MemoryLimitExceeded
+NovaSharp.LuaSandboxViolationKind.ModuleAccessDenied
+NovaSharp.LuaSandboxViolationKind.RecursionLimitExceeded
+NovaSharp.LuaSandboxViolationKind.Unknown
+NovaSharp.LuaSyntaxException
+NovaSharp.LuaSyntaxException..ctor()
+NovaSharp.LuaSyntaxException..ctor(System.String message)
+NovaSharp.LuaSyntaxException..ctor(System.String message, System.Exception innerException)
+NovaSharp.LuaSyntaxException.IsIncompleteInput -> System.Boolean
 NovaSharp.LuaTable
 NovaSharp.LuaTable.Get(System.Int32 key) -> NovaSharp.LuaValue
 NovaSharp.LuaTable.Get(System.String key) -> NovaSharp.LuaValue

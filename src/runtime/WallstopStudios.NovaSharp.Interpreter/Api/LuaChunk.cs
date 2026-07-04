@@ -4,6 +4,7 @@ namespace NovaSharp
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
     /// Compiled Lua chunk wrapper.
@@ -25,7 +26,14 @@ namespace NovaSharp
         public LuaValue Run()
         {
             _owner.ThrowIfDisposed();
-            return _owner.WrapResult(_compiled.Execute());
+            try
+            {
+                return _owner.WrapResult(_compiled.Execute());
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -34,7 +42,14 @@ namespace NovaSharp
         public LuaValue Run(LuaValue arg0)
         {
             _owner.ThrowIfDisposed();
-            return _owner.WrapResult(_compiled.Execute(arg0.ToDynValue(_owner)));
+            try
+            {
+                return _owner.WrapResult(_compiled.Execute(arg0.ToDynValue(_owner)));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -43,9 +58,16 @@ namespace NovaSharp
         public LuaValue Run(LuaValue arg0, LuaValue arg1)
         {
             _owner.ThrowIfDisposed();
-            return _owner.WrapResult(
-                _compiled.Execute(arg0.ToDynValue(_owner), arg1.ToDynValue(_owner))
-            );
+            try
+            {
+                return _owner.WrapResult(
+                    _compiled.Execute(arg0.ToDynValue(_owner), arg1.ToDynValue(_owner))
+                );
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -54,13 +76,20 @@ namespace NovaSharp
         public LuaValue Run(LuaValue arg0, LuaValue arg1, LuaValue arg2)
         {
             _owner.ThrowIfDisposed();
-            return _owner.WrapResult(
-                _compiled.Execute(
-                    arg0.ToDynValue(_owner),
-                    arg1.ToDynValue(_owner),
-                    arg2.ToDynValue(_owner)
-                )
-            );
+            try
+            {
+                return _owner.WrapResult(
+                    _compiled.Execute(
+                        arg0.ToDynValue(_owner),
+                        arg1.ToDynValue(_owner),
+                        arg2.ToDynValue(_owner)
+                    )
+                );
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -69,21 +98,28 @@ namespace NovaSharp
         public LuaValue Run(ReadOnlySpan<LuaValue> args)
         {
             _owner.ThrowIfDisposed();
-            if (args.Length == 0)
+            try
             {
-                return _owner.WrapResult(_compiled.Execute());
-            }
+                if (args.Length == 0)
+                {
+                    return _owner.WrapResult(_compiled.Execute());
+                }
 
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
-                args.Length,
-                out DynValue[] converted
-            );
-            for (int i = 0; i < args.Length; i++)
+                using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                    args.Length,
+                    out DynValue[] converted
+                );
+                for (int i = 0; i < args.Length; i++)
+                {
+                    converted[i] = args[i].ToDynValue(_owner);
+                }
+
+                return _owner.WrapResult(_compiled.Execute(converted.AsSpan(0, args.Length)));
+            }
+            catch (InterpreterException exception)
             {
-                converted[i] = args[i].ToDynValue(_owner);
+                throw LuaException.Wrap(exception);
             }
-
-            return _owner.WrapResult(_compiled.Execute(converted.AsSpan(0, args.Length)));
         }
     }
 }

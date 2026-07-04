@@ -3,6 +3,7 @@ namespace NovaSharp
     using System;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
 
     /// <summary>
@@ -38,7 +39,14 @@ namespace NovaSharp
         public LuaValue Resume()
         {
             _owner.ThrowIfDisposed();
-            return _owner.WrapResult(_coroutineValue.Coroutine.Resume());
+            try
+            {
+                return _owner.WrapResult(_coroutineValue.Coroutine.Resume());
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -47,7 +55,14 @@ namespace NovaSharp
         public LuaValue Resume(LuaValue arg0)
         {
             _owner.ThrowIfDisposed();
-            return _owner.WrapResult(_coroutineValue.Coroutine.Resume(arg0.ToDynValue(_owner)));
+            try
+            {
+                return _owner.WrapResult(_coroutineValue.Coroutine.Resume(arg0.ToDynValue(_owner)));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -56,9 +71,19 @@ namespace NovaSharp
         public LuaValue Resume(LuaValue arg0, LuaValue arg1)
         {
             _owner.ThrowIfDisposed();
-            return _owner.WrapResult(
-                _coroutineValue.Coroutine.Resume(arg0.ToDynValue(_owner), arg1.ToDynValue(_owner))
-            );
+            try
+            {
+                return _owner.WrapResult(
+                    _coroutineValue.Coroutine.Resume(
+                        arg0.ToDynValue(_owner),
+                        arg1.ToDynValue(_owner)
+                    )
+                );
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -67,23 +92,30 @@ namespace NovaSharp
         public LuaValue Resume(ReadOnlySpan<LuaValue> args)
         {
             _owner.ThrowIfDisposed();
-            if (args.Length == 0)
+            try
             {
-                return _owner.WrapResult(_coroutineValue.Coroutine.Resume());
-            }
+                if (args.Length == 0)
+                {
+                    return _owner.WrapResult(_coroutineValue.Coroutine.Resume());
+                }
 
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
-                args.Length,
-                out DynValue[] converted
-            );
-            for (int i = 0; i < args.Length; i++)
+                using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                    args.Length,
+                    out DynValue[] converted
+                );
+                for (int i = 0; i < args.Length; i++)
+                {
+                    converted[i] = args[i].ToDynValue(_owner);
+                }
+
+                return _owner.WrapResult(
+                    _coroutineValue.Coroutine.Resume(converted.AsSpan(0, args.Length))
+                );
+            }
+            catch (InterpreterException exception)
             {
-                converted[i] = args[i].ToDynValue(_owner);
+                throw LuaException.Wrap(exception);
             }
-
-            return _owner.WrapResult(
-                _coroutineValue.Coroutine.Resume(converted.AsSpan(0, args.Length))
-            );
         }
 
         /// <summary>
@@ -92,7 +124,14 @@ namespace NovaSharp
         public LuaValue Close()
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(_coroutineValue.Coroutine.Close());
+            try
+            {
+                return _owner.Wrap(_coroutineValue.Coroutine.Close());
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         private static LuaCoroutineState ToFacadeState(CoroutineState state)

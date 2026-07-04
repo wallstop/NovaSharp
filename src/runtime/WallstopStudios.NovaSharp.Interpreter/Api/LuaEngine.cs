@@ -8,6 +8,7 @@ namespace NovaSharp
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
@@ -66,7 +67,14 @@ namespace NovaSharp
         public LuaValue Run(string code, string chunkName = null)
         {
             ThrowIfDisposed();
-            return WrapResult(_script.DoString(code, null, chunkName));
+            try
+            {
+                return WrapResult(_script.DoString(code, null, chunkName));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -88,7 +96,14 @@ namespace NovaSharp
         public LuaChunk Compile(string code, string chunkName = null)
         {
             ThrowIfDisposed();
-            return new LuaChunk(this, _script.CompileString(code, null, chunkName));
+            try
+            {
+                return new LuaChunk(this, _script.CompileString(code, null, chunkName));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -102,7 +117,14 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            return WrapResult(_script.Call(function.ToDynValue(this)));
+            try
+            {
+                return WrapResult(_script.Call(function.ToDynValue(this)));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -116,7 +138,14 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            return WrapResult(_script.Call(function.ToDynValue(this), arg0.ToDynValue(this)));
+            try
+            {
+                return WrapResult(_script.Call(function.ToDynValue(this), arg0.ToDynValue(this)));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -130,13 +159,20 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            return WrapResult(
-                _script.Call(
-                    function.ToDynValue(this),
-                    arg0.ToDynValue(this),
-                    arg1.ToDynValue(this)
-                )
-            );
+            try
+            {
+                return WrapResult(
+                    _script.Call(
+                        function.ToDynValue(this),
+                        arg0.ToDynValue(this),
+                        arg1.ToDynValue(this)
+                    )
+                );
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -150,14 +186,21 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            return WrapResult(
-                _script.Call(
-                    function.ToDynValue(this),
-                    arg0.ToDynValue(this),
-                    arg1.ToDynValue(this),
-                    arg2.ToDynValue(this)
-                )
-            );
+            try
+            {
+                return WrapResult(
+                    _script.Call(
+                        function.ToDynValue(this),
+                        arg0.ToDynValue(this),
+                        arg1.ToDynValue(this),
+                        arg2.ToDynValue(this)
+                    )
+                );
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -171,42 +214,49 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            DynValue functionValue = function.ToDynValue(this);
-            switch (args.Length)
+            try
             {
-                case 0:
-                    return WrapResult(_script.Call(functionValue));
-                case 1:
-                    return WrapResult(_script.Call(functionValue, args[0].ToDynValue(this)));
-                case 2:
-                    return WrapResult(
-                        _script.Call(
-                            functionValue,
-                            args[0].ToDynValue(this),
-                            args[1].ToDynValue(this)
-                        )
-                    );
-                case 3:
-                    return WrapResult(
-                        _script.Call(
-                            functionValue,
-                            args[0].ToDynValue(this),
-                            args[1].ToDynValue(this),
-                            args[2].ToDynValue(this)
-                        )
-                    );
-            }
+                DynValue functionValue = function.ToDynValue(this);
+                switch (args.Length)
+                {
+                    case 0:
+                        return WrapResult(_script.Call(functionValue));
+                    case 1:
+                        return WrapResult(_script.Call(functionValue, args[0].ToDynValue(this)));
+                    case 2:
+                        return WrapResult(
+                            _script.Call(
+                                functionValue,
+                                args[0].ToDynValue(this),
+                                args[1].ToDynValue(this)
+                            )
+                        );
+                    case 3:
+                        return WrapResult(
+                            _script.Call(
+                                functionValue,
+                                args[0].ToDynValue(this),
+                                args[1].ToDynValue(this),
+                                args[2].ToDynValue(this)
+                            )
+                        );
+                }
 
-            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
-                args.Length,
-                out DynValue[] converted
-            );
-            for (int i = 0; i < args.Length; i++)
+                using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                    args.Length,
+                    out DynValue[] converted
+                );
+                for (int i = 0; i < args.Length; i++)
+                {
+                    converted[i] = args[i].ToDynValue(this);
+                }
+
+                return WrapResult(_script.Call(functionValue, converted.AsSpan(0, args.Length)));
+            }
+            catch (InterpreterException exception)
             {
-                converted[i] = args[i].ToDynValue(this);
+                throw LuaException.Wrap(exception);
             }
-
-            return WrapResult(_script.Call(functionValue, converted.AsSpan(0, args.Length)));
         }
 
         /// <summary>
@@ -244,8 +294,15 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            DynValue value = _script.CreateCoroutine(function.ToDynValue(this));
-            return new LuaCoroutine(this, value);
+            try
+            {
+                DynValue value = _script.CreateCoroutine(function.ToDynValue(this));
+                return new LuaCoroutine(this, value);
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>

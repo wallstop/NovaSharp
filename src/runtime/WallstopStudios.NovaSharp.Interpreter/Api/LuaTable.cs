@@ -2,6 +2,7 @@ namespace NovaSharp
 {
     using System;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
     /// Public Lua table wrapper.
@@ -53,7 +54,14 @@ namespace NovaSharp
         public LuaValue Get(string key)
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(_table.Get(key));
+            try
+            {
+                return _owner.Wrap(_table.Get(key));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -62,7 +70,14 @@ namespace NovaSharp
         public LuaValue Get(int key)
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(_table.Get(key));
+            try
+            {
+                return _owner.Wrap(_table.Get(key));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -71,7 +86,14 @@ namespace NovaSharp
         public void Set(string key, LuaValue value)
         {
             _owner.ThrowIfDisposed();
-            _table.Set(key, value.ToDynValue(_owner));
+            try
+            {
+                _table.Set(key, value.ToDynValue(_owner));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -80,7 +102,14 @@ namespace NovaSharp
         public void Set(int key, LuaValue value)
         {
             _owner.ThrowIfDisposed();
-            _table.Set(key, value.ToDynValue(_owner));
+            try
+            {
+                _table.Set(key, value.ToDynValue(_owner));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -89,7 +118,14 @@ namespace NovaSharp
         public bool Remove(string key)
         {
             _owner.ThrowIfDisposed();
-            return _table.Remove(key);
+            try
+            {
+                return _table.Remove(key);
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -98,7 +134,14 @@ namespace NovaSharp
         public bool Remove(int key)
         {
             _owner.ThrowIfDisposed();
-            return _table.Remove(key);
+            try
+            {
+                return _table.Remove(key);
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
@@ -106,7 +149,14 @@ namespace NovaSharp
         /// </summary>
         public LuaValue ToValue()
         {
-            return _owner.Wrap(DynValue.NewTable(_table));
+            try
+            {
+                return _owner.Wrap(DynValue.NewTable(_table));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>
