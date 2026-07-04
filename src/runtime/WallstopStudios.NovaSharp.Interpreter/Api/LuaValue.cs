@@ -110,7 +110,12 @@ namespace NovaSharp
         /// </summary>
         public double AsNumber()
         {
-            DynValue value = RequireType(DataType.Number, nameof(AsNumber));
+            DynValue value = GetValueOrNil();
+            if (value.Type != DataType.Number)
+            {
+                throw NewKindException(nameof(AsNumber), "Number", Kind);
+            }
+
             return value.Number;
         }
 
@@ -340,7 +345,7 @@ namespace NovaSharp
         }
 
         /// <summary>
-        /// Determines whether two Lua values wrap the same engine-owned value.
+        /// Determines whether two Lua values are equal under Lua value semantics.
         /// </summary>
         public static bool operator ==(LuaValue left, LuaValue right)
         {
@@ -348,7 +353,7 @@ namespace NovaSharp
         }
 
         /// <summary>
-        /// Determines whether two Lua values wrap different engine-owned values.
+        /// Determines whether two Lua values differ under Lua value semantics.
         /// </summary>
         public static bool operator !=(LuaValue left, LuaValue right)
         {
@@ -415,6 +420,15 @@ namespace NovaSharp
         private static InvalidOperationException NewKindException(
             string methodName,
             LuaKind expected,
+            LuaKind actual
+        )
+        {
+            return NewKindException(methodName, expected.ToString(), actual);
+        }
+
+        private static InvalidOperationException NewKindException(
+            string methodName,
+            string expected,
             LuaKind actual
         )
         {

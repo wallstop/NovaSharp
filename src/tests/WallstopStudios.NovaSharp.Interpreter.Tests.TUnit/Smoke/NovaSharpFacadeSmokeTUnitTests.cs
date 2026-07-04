@@ -199,6 +199,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
                 LuaValue.FromString("not an integer").AsInteger()
             );
+            InvalidOperationException numberException = Assert.Throws<InvalidOperationException>(
+                () =>
+                    LuaValue.FromString("not a number").AsNumber()
+            );
 
             await Assert.That(value.Kind).IsEqualTo(LuaKind.Float).ConfigureAwait(false);
             await Assert
@@ -206,6 +210,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 .Throws<InvalidOperationException>()
                 .ConfigureAwait(false);
             await Assert.That(exception.Message).Contains("requires Integer").ConfigureAwait(false);
+            await Assert
+                .That(numberException.Message)
+                .Contains("requires Number")
+                .ConfigureAwait(false);
         }
 
         [Test]
