@@ -2415,7 +2415,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 throw new InternalErrorException("Unexpected type in table ctor : {0}", tbl);
             }
 
-            tbl.Table.Set(key, val.ToScalar());
+            tbl.Table.InitNextKey(key, val);
         }
 
         private int ExecIndexSet(Instruction i, int instructionPtr)

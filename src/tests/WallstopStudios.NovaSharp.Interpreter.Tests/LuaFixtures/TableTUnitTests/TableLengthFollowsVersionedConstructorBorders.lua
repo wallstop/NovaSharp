@@ -1,7 +1,7 @@
 -- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableTUnitTests.cs:183
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableTUnitTests.cs:193
 -- @test: TableTUnitTests.TableLengthFollowsVersionedConstructorBorders
 local function expect(label, actual, lua51to53, lua54, lua55)
     local expected = lua51to53
@@ -80,16 +80,20 @@ local absentValueNil = { nil, 1 }
 absentValueNil[false] = nil
 expect('absent value nil write', #absentValueNil, 0, 2, 0)
 
-local absentNumericNil = { nil, 1 }
-absentNumericNil[3] = nil
-expect('absent numeric nil write', #absentNumericNil, 0, 2, 0)
-
 local cachedThenAbsentStringNil = { nil, 1 }
 _ = #cachedThenAbsentStringNil
 cachedThenAbsentStringNil.x = nil
 expect('cached absent string nil write', #cachedThenAbsentStringNil, 0, 2, 0)
 
-local cachedThenAbsentNumericNil = { nil, 1 }
-_ = #cachedThenAbsentNumericNil
-cachedThenAbsentNumericNil[3] = nil
-expect('cached absent numeric nil write', #cachedThenAbsentNumericNil, 0, 2, 0)
+expect('mixed constructor string field', #({ nil, 1, x = 1 }), 2, 2, 0)
+expect('mixed constructor value field', #({ nil, 1, [false] = 1 }), 2, 2, 0)
+expect('mixed constructor nil string field', #({ nil, 1, x = nil }), 2, 2, 0)
+expect('mixed constructor string field before array fields', #({ x = 1, nil, 1 }), 2, 2, 0)
+expect('numeric constructor field extends border', #({ nil, 1, [3] = 1 }), 3, 3, 0)
+expect('nil numeric constructor field does not extend border', #({ nil, 1, [3] = nil }), 2, 2, 0)
+expect('sparse numeric constructor field does not extend border', #({ nil, 1, [4] = 1 }), 2, 2, 0)
+expect('contiguous numeric constructor fields extend border', #({ nil, 1, [3] = 1, [4] = 1 }), 4, 4, 0)
+expect('out-of-order contiguous numeric constructor fields extend border', #({ nil, 1, [4] = 1, [3] = 1 }), 4, 4, 0)
+expect('numeric-only constructor first index', #({ [1] = 1 }), 1, 1, 1)
+expect('numeric-only constructor sparse index', #({ [2] = 1 }), 0, 0, 0)
+expect('numeric-only constructor contiguous indices', #({ [1] = 1, [2] = 1 }), 2, 2, 2)

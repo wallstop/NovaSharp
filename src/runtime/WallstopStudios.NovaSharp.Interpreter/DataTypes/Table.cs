@@ -270,29 +270,42 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue value,
             bool isNumber,
             int appendKey,
-            bool isConstructorArrayField = false
+            bool isConstructorField = false
         )
         {
+            bool hadExistingKey = listIndex.TryGetValue(key, out _);
             TablePair prev = listIndex.Set(key, new TablePair(keyDynValue, value));
             bool targetsConstructorArrayField =
-                !isConstructorArrayField
+                !isConstructorField
                 && _constructorArrayLength > 0
                 && isNumber
                 && key is int arrayIndex
                 && arrayIndex > 0
                 && arrayIndex <= _constructorArrayLength
-                && prev.Value != null;
+                && hadExistingKey;
             bool preservesLua54AbsentNilWrite =
-                !isConstructorArrayField
+                !isConstructorField
                 && _constructorArrayLength > 0
                 && value.IsNil()
-                && prev.Value == null
+                && !hadExistingKey
                 && ResolveCompatibilityVersion() == LuaCompatibilityVersion.Lua54;
+            bool clearsAbsentNumericNilWrite =
+                !isConstructorField
+                && _constructorArrayLength > 0
+                && isNumber
+                && value.IsNil()
+                && !hadExistingKey
+                && ResolveCompatibilityVersion() != LuaCompatibilityVersion.Lua54;
             bool preservesConstructorArrayLength =
-                targetsConstructorArrayField || preservesLua54AbsentNilWrite;
+                !clearsAbsentNumericNilWrite
+                && (
+                    isConstructorField
+                    || targetsConstructorArrayField
+                    || preservesLua54AbsentNilWrite
+                );
 
             if (
-                !isConstructorArrayField
+                !isConstructorField
                 && !preservesConstructorArrayLength
                 && _constructorArrayLength > 0
             )
@@ -324,7 +337,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             // If this is an insert, we can invalidate all iterators and collect dead keys
             if (
-                !isConstructorArrayField
+                !isConstructorField
                 && !preservesConstructorArrayLength
                 && _containsNilEntries
                 && value.IsNotNil()
@@ -1118,6 +1131,84 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Initializes a keyed field while a table constructor is still being evaluated.
+        /// </summary>
+        internal void InitNextKey(DynValue key, DynValue value)
+        {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            if (key.IsNilOrNan())
+            {
+                if (key.IsNil())
+                {
+                    throw ScriptRuntimeException.TableIndexIsNil();
+                }
+
+                throw ScriptRuntimeException.TableIndexIsNaN();
+            }
+
+            value = value.ToScalar();
+
+            if (key.Type == DataType.String)
+            {
+                this.CheckScriptOwnership(value);
+                PerformTableSet(
+                    _stringMap,
+                    key.String,
+                    DynValue.NewString(key.String),
+                    value,
+                    false,
+                    -1,
+                    isConstructorField: true
+                );
+                return;
+            }
+
+            if (key.Type == DataType.Number)
+            {
+                int idx = GetIntegralKey(key.Number);
+
+                if (idx > 0)
+                {
+                    this.CheckScriptOwnership(value);
+                    PerformTableSet(
+                        _arrayMap,
+                        idx,
+                        DynValue.FromNumber(idx),
+                        value,
+                        true,
+                        -1,
+                        isConstructorField: true
+                    );
+                    ExtendConstructorArrayLengthThroughContiguousFields();
+                    return;
+                }
+            }
+
+            this.CheckScriptOwnership(key);
+            this.CheckScriptOwnership(value);
+
+            DynValue stableKey = key.ReadOnly ? key : key.AsReadOnly();
+            PerformTableSet(
+                _valueMap,
+                stableKey,
+                stableKey,
+                value,
+                false,
+                -1,
+                isConstructorField: true
+            );
+        }
+
+        /// <summary>
         /// Initializes the hidden array iteration keys used by `next`/`ipairs` while inserting complex values (tables/functions).
         /// </summary>
         internal void InitNextArrayKeys(DynValue val, bool lastPosition)
@@ -1141,9 +1232,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     value,
                     true,
                     -1,
-                    isConstructorArrayField: true
+                    isConstructorField: true
                 );
                 _constructorArrayLength = _initArray;
+                ExtendConstructorArrayLengthThroughContiguousFields();
+            }
+        }
+
+        private void ExtendConstructorArrayLengthThroughContiguousFields()
+        {
+            if (_constructorArrayLength > 0 && !IsArrayValueNotNil(_constructorArrayLength))
+            {
+                return;
+            }
+
+            while (IsArrayValueNotNil(_constructorArrayLength + 1))
+            {
+                _constructorArrayLength++;
             }
         }
 

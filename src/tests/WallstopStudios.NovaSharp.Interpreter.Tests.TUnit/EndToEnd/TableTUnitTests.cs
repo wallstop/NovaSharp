@@ -176,9 +176,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             new object[] { "local t = { nil, 1 }; local _ = #t; t.x = 1", 0, 0, 0 },
             new object[] { "local t = { nil, 1 }; t.x = nil", 0, 2, 0 },
             new object[] { "local t = { nil, 1 }; t[false] = nil", 0, 2, 0 },
-            new object[] { "local t = { nil, 1 }; t[3] = nil", 0, 2, 0 },
             new object[] { "local t = { nil, 1 }; local _ = #t; t.x = nil", 0, 2, 0 },
-            new object[] { "local t = { nil, 1 }; local _ = #t; t[3] = nil", 0, 2, 0 }
+            new object[] { "local t = { nil, 1, x = 1 }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, [false] = 1 }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, x = nil }", 2, 2, 0 },
+            new object[] { "local t = { x = 1, nil, 1 }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, [3] = 1 }", 3, 3, 0 },
+            new object[] { "local t = { nil, 1, [3] = nil }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, [4] = 1 }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, [3] = 1, [4] = 1 }", 4, 4, 0 },
+            new object[] { "local t = { nil, 1, [4] = 1, [3] = 1 }", 4, 4, 0 },
+            new object[] { "local t = { [1] = 1 }", 1, 1, 1 },
+            new object[] { "local t = { [2] = 1 }", 0, 0, 0 },
+            new object[] { "local t = { [1] = 1, [2] = 1 }", 2, 2, 2 }
         )]
         public async Task TableLengthFollowsVersionedConstructorBorders(
             LuaCompatibilityVersion version,
