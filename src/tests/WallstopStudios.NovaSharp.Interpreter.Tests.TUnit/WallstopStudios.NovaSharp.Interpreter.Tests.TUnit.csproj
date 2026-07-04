@@ -89,5 +89,10 @@
             Link="LuaFixtures\%(RecursiveDir)%(Filename)%(Extension)"
             CopyToOutputDirectory="PreserveNewest"
         />
+        <None
+            Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/PublicAPI.Shipped.txt"
+            Link="PublicAPI.Shipped.txt"
+            CopyToOutputDirectory="PreserveNewest"
+        />
     </ItemGroup>
 </Project>

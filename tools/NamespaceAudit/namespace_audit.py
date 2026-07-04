@@ -30,6 +30,7 @@ PATH_ALLOWLIST = {
     Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs"),
     Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Stopwatch.cs"),
 }
+FACADE_API_ROOT = Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/Api")
 NAMESPACE_PATTERN = re.compile(r"^\s*namespace\s+([A-Za-z0-9_.]+)")
 
 
@@ -108,6 +109,9 @@ def audit() -> int:
             continue
 
         actual = extract_namespace(cs_file)
+        if actual == "NovaSharp" and FACADE_API_ROOT in rel_path.parents:
+            continue
+
         expected = expected_namespace(cs_file)
         if actual is None or expected is None:
             continue

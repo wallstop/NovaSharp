@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     using System.Collections.Generic;
     using System.Globalization;
     using System.Runtime.CompilerServices;
+    using System.Threading;
     using Cysharp.Text;
     using Debugging;
     using Execution.Scopes;
@@ -1387,10 +1388,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
         private sealed class UpvalueIdentifier
         {
+            private static int ReferenceIdCounter;
+
             public UpvalueIdentifier(DynValue slot)
             {
                 Upvalue = slot ?? throw new ArgumentNullException(nameof(slot));
-                ReferenceId = slot.ReferenceId;
+                ReferenceId = Interlocked.Increment(ref ReferenceIdCounter);
             }
 
             public DynValue Upvalue { get; }

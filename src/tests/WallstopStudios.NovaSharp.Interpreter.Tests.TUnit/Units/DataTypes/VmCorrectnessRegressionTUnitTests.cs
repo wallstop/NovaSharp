@@ -179,6 +179,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         /// <summary>
+        /// Verifies that value-map keys snapshot mutable numeric keys before insertion.
+        /// </summary>
+        [Test]
+        public async Task TableKeySafetySnapshotsMutableNumericKeys()
+        {
+            Script script = new();
+            Table table = new(script);
+            DynValue key = DynValue.NewNumber(1.5d);
+
+            table.Set(key, DynValue.NewString("original"));
+            key.AssignNumber(2.5d);
+
+            DynValue originalLookup = table.Get(DynValue.NewNumber(1.5d));
+            DynValue mutatedLookup = table.Get(key);
+
+            await Assert.That(originalLookup.String).IsEqualTo("original").ConfigureAwait(false);
+            await Assert.That(mutatedLookup.IsNil()).IsTrue().ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Verifies that userdata keys snapshot CLR object hashes before insertion.
+        /// </summary>
+        [Test]
+        [UserDataIsolation]
+        public async Task TableKeySafetySnapshotsMutableUserDataHashes()
+        {
+            UserData.RegisterType<MutableHashUserDataKey>();
+
+            Script script = new();
+            Table table = new(script);
+            MutableHashUserDataKey hostKey = new(11);
+            DynValue key = UserData.Create(hostKey);
+
+            table.Set(key, DynValue.NewString("userdata"));
+            hostKey.Hash = 23;
+
+            DynValue retrieved = table.Get(key);
+
+            await Assert.That(retrieved.String).IsEqualTo("userdata").ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Verifies that UserData hash codes don't all collide.
         /// </summary>
         [Test]
@@ -219,6 +261,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         /// Test class for UserData hash code testing.
         /// </summary>
         private sealed class TestUserDataObject2 { }
+
+        private sealed class MutableHashUserDataKey
+        {
+            public MutableHashUserDataKey(int hash)
+            {
+                Hash = hash;
+            }
+
+            public int Hash { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                return ReferenceEquals(this, obj);
+            }
+
+            public override int GetHashCode()
+            {
+                return Hash;
+            }
+        }
 
         /// <summary>
         /// Verifies that Thread (coroutine) hash codes don't all collide.

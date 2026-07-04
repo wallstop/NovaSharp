@@ -4,6 +4,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
+    using System.Runtime.CompilerServices;
+    using DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.Interop;
     using WallstopStudios.NovaSharp.Interpreter.Interop.BasicDescriptors;
     using WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData;
@@ -19,6 +21,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// </summary>
     public class UserData : RefIdObject
     {
+        private int _stableHashCode;
+        private bool _stableHashCodeInitialized;
+
         private UserData()
         {
             // This type can only be instantiated using one of the Create methods
@@ -44,6 +49,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Gets the type descriptor of this userdata
         /// </summary>
         public IUserDataDescriptor Descriptor { get; private set; }
+
+        /// <summary>
+        /// Gets a stable hash code captured on first access.
+        /// </summary>
+        internal int StableHashCode
+        {
+            get
+            {
+                if (!_stableHashCodeInitialized)
+                {
+                    _stableHashCode = CalculateStableHashCode(Object, Descriptor);
+                    _stableHashCodeInitialized = true;
+                }
+
+                return _stableHashCode;
+            }
+        }
 
         static UserData()
         {
@@ -289,7 +311,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns></returns>
         public static DynValue Create(object o, IUserDataDescriptor descr)
         {
-            return DynValue.NewUserData(new UserData() { Descriptor = descr, Object = o });
+            return DynValue.NewUserData(CreateCore(o, descr));
         }
 
         /// <summary>
@@ -325,7 +347,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 return null;
             }
 
-            return DynValue.NewUserData(new UserData() { Descriptor = descr, Object = null });
+            return DynValue.NewUserData(CreateCore(null, descr));
+        }
+
+        private static UserData CreateCore(object obj, IUserDataDescriptor descriptor)
+        {
+            return new UserData() { Descriptor = descriptor, Object = obj };
+        }
+
+        private static int CalculateStableHashCode(object obj, IUserDataDescriptor descriptor)
+        {
+            DeterministicHashBuilder hash = default;
+            if (descriptor != null)
+            {
+                hash.AddInt(RuntimeHelpers.GetHashCode(descriptor));
+            }
+
+            if (obj != null)
+            {
+                hash.AddInt(obj.GetHashCode());
+            }
+
+            return hash.ToHashCode();
         }
 
         /// <summary>

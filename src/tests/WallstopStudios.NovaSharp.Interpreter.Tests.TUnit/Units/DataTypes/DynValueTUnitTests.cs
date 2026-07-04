@@ -247,10 +247,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignCopiesWritableValuesAndResetsHashcode()
+        public async Task AssignCopiesWritableValuesAndRecomputesHash()
         {
             DynValue destination = DynValue.NewNumber(1);
-            _ = destination.GetHashCode(); // populate cached hash
+            int oldHash = destination.GetHashCode();
 
             DynValue source = DynValue.NewString("hello");
             destination.Assign(source);
@@ -262,6 +262,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert
                 .That(destination.GetHashCode())
                 .IsEqualTo(source.GetHashCode())
+                .ConfigureAwait(false);
+            await Assert
+                .That(destination.GetHashCode())
+                .IsNotEqualTo(oldHash)
                 .ConfigureAwait(false);
         }
 
@@ -479,6 +483,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        public async Task AssignNumberRecomputesHashFromCurrentNumber()
+        {
+            DynValue destination = DynValue.NewNumber(1);
+            int oldHash = destination.GetHashCode();
+
+            destination.AssignNumber(2);
+
+            int expectedHash = DynValue.NewNumber(2).GetHashCode();
+            await Assert.That(destination.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(destination.GetHashCode())
+                .IsEqualTo(expectedHash)
+                .ConfigureAwait(false);
+            await Assert
+                .That(destination.GetHashCode())
+                .IsNotEqualTo(oldHash)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task GetAsPrivateResourceReturnsNullWhenNotPrivate()
         {
             DynValue number = DynValue.NewNumber(5);
@@ -663,7 +687,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignUpdatesTargetAndResetsHashCode()
+        public async Task AssignUpdatesTargetAndRecomputesHash()
         {
             DynValue target = DynValue.NewNumber(1);
             int oldHash = target.GetHashCode();
@@ -865,7 +889,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task GetHashCodeCachesPerInstance()
+        public async Task GetHashCodeIsStableForUnchangedValue()
         {
             DynValue str = DynValue.NewString("hash-me");
 
