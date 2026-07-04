@@ -264,6 +264,8 @@ Pit-of-success targets: a sandboxed mod host in **<15 lines**; a bound game API 
 
 **Exit criteria**: facade `Run`/`Call` within 5% of `Script.DoString`/`Call` on the A0 scoreboard.
 
+**Progress**: The first B0 facade slice landed on 2026-07-03 with root `NovaSharp` wrappers over the current VM for `LuaEngine`, `LuaValue`, `LuaTable`, `LuaFunction`, `LuaCoroutine`, `LuaChunk`, `LuaKind`, `LuaCoroutineState`, `LuaEngineOptions`, `LuaVersion`, `LuaCoreModules`, `LuaSandboxOptions`, and provider/loader interfaces. The slice supports sync `Run`/`Compile`/`Call`, table/global access, Lua function coroutine creation/resume, root-only option contracts adapted to the current VM internally, `RunAsync` as a non-suspending placeholder, a checked-in `PublicAPI.Shipped.txt` baseline enforced by TUnit reflection, and focused facade smoke tests across Lua 5.1-5.5. Exception type design, samples, performance measurement, and full B0 exit criteria remain open. See [progress/session-143-b0-facade-first-slice.md](progress/session-143-b0-facade-first-slice.md).
+
 #### Phase B1 — Source generator MVP
 
 - [ ] Attributes in core: `[LuaObject(name)]` on partial class/struct, `[LuaMember(name)]`, `[LuaMetamethod(...)]`, `[LuaIgnore]`. Enums referenced by members auto-exposed as string-keyed tables.

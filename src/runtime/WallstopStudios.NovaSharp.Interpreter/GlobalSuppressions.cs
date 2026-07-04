@@ -7,3 +7,10 @@ using System.Diagnostics.CodeAnalysis;
     Justification = "SymbolRefAttributes is a long-lived public enum consumed by host integrations; renaming it would be a breaking API change, so the historic suffix is retained.",
     Scope = "type",
     Target = "NovaSharp.Interpreter.DataTypes.SymbolRefAttributes")]
+
+[assembly: SuppressMessage(
+    "Naming",
+    "IDE0130:Namespace does not match folder structure",
+    Justification = "Phase B0 intentionally exposes the future root NovaSharp facade from the current runtime assembly.",
+    Scope = "namespaceanddescendants",
+    Target = "~N:NovaSharp")]

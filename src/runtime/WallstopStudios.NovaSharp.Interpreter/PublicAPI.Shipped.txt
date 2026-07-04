@@ -1,0 +1,180 @@
+NovaSharp.ILuaRandomProvider
+NovaSharp.ILuaRandomProvider.NextDouble() -> System.Double
+NovaSharp.ILuaRandomProvider.NextInt64() -> System.Int64
+NovaSharp.ILuaRandomProvider.NextInteger() -> System.Int32
+NovaSharp.ILuaRandomProvider.NextInteger(System.Int32 maxValue) -> System.Int32
+NovaSharp.ILuaRandomProvider.NextInteger(System.Int32 minValue, System.Int32 maxValue) -> System.Int32
+NovaSharp.ILuaRandomProvider.NextLong(System.Int64 minValue, System.Int64 maxValue) -> System.Int64
+NovaSharp.ILuaRandomProvider.SeedX -> System.Int64
+NovaSharp.ILuaRandomProvider.SeedY -> System.Int64
+NovaSharp.ILuaRandomProvider.SetSeed(System.Int32 seed) -> System.ValueTuple<System.Int64, System.Int64>
+NovaSharp.ILuaRandomProvider.SetSeed(System.Int64 x, System.Int64 y) -> System.ValueTuple<System.Int64, System.Int64>
+NovaSharp.ILuaRandomProvider.SetSeedFromSystemRandom() -> System.ValueTuple<System.Int64, System.Int64>
+NovaSharp.ILuaScriptLoader
+NovaSharp.ILuaScriptLoader.LoadFile(System.String file, NovaSharp.LuaTable globals) -> System.Object
+NovaSharp.ILuaScriptLoader.ResolveFileName(System.String filename, NovaSharp.LuaTable globals) -> System.String
+NovaSharp.ILuaScriptLoader.ResolveModuleName(System.String moduleName, NovaSharp.LuaTable globals) -> System.String
+NovaSharp.ILuaTimeProvider
+NovaSharp.ILuaTimeProvider.GetUtcNow() -> System.DateTimeOffset
+NovaSharp.LuaChunk
+NovaSharp.LuaChunk.Run() -> NovaSharp.LuaValue
+NovaSharp.LuaChunk.Run(NovaSharp.LuaValue arg0) -> NovaSharp.LuaValue
+NovaSharp.LuaChunk.Run(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1) -> NovaSharp.LuaValue
+NovaSharp.LuaChunk.Run(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1, NovaSharp.LuaValue arg2) -> NovaSharp.LuaValue
+NovaSharp.LuaChunk.Run(System.ReadOnlySpan<NovaSharp.LuaValue> args) -> NovaSharp.LuaValue
+NovaSharp.LuaCoreModules
+NovaSharp.LuaCoreModules.Basic
+NovaSharp.LuaCoreModules.Bit32
+NovaSharp.LuaCoreModules.Coroutine
+NovaSharp.LuaCoreModules.Debug
+NovaSharp.LuaCoreModules.Dynamic
+NovaSharp.LuaCoreModules.ErrorHandling
+NovaSharp.LuaCoreModules.GlobalConsts
+NovaSharp.LuaCoreModules.Io
+NovaSharp.LuaCoreModules.Json
+NovaSharp.LuaCoreModules.LoadMethods
+NovaSharp.LuaCoreModules.Math
+NovaSharp.LuaCoreModules.Metatables
+NovaSharp.LuaCoreModules.None
+NovaSharp.LuaCoreModules.OsSystem
+NovaSharp.LuaCoreModules.OsTime
+NovaSharp.LuaCoreModules.StringLib
+NovaSharp.LuaCoreModules.Table
+NovaSharp.LuaCoreModules.TableIterators
+NovaSharp.LuaCoroutine
+NovaSharp.LuaCoroutine.Close() -> NovaSharp.LuaValue
+NovaSharp.LuaCoroutine.Resume() -> NovaSharp.LuaValue
+NovaSharp.LuaCoroutine.Resume(NovaSharp.LuaValue arg0) -> NovaSharp.LuaValue
+NovaSharp.LuaCoroutine.Resume(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1) -> NovaSharp.LuaValue
+NovaSharp.LuaCoroutine.Resume(System.ReadOnlySpan<NovaSharp.LuaValue> args) -> NovaSharp.LuaValue
+NovaSharp.LuaCoroutine.State -> NovaSharp.LuaCoroutineState
+NovaSharp.LuaCoroutineState
+NovaSharp.LuaCoroutineState.Dead
+NovaSharp.LuaCoroutineState.ForceSuspended
+NovaSharp.LuaCoroutineState.Main
+NovaSharp.LuaCoroutineState.NotStarted
+NovaSharp.LuaCoroutineState.Running
+NovaSharp.LuaCoroutineState.Suspended
+NovaSharp.LuaCoroutineState.Unknown
+NovaSharp.LuaEngine
+NovaSharp.LuaEngine.Call(NovaSharp.LuaFunction function) -> NovaSharp.LuaValue
+NovaSharp.LuaEngine.Call(NovaSharp.LuaFunction function, NovaSharp.LuaValue arg0) -> NovaSharp.LuaValue
+NovaSharp.LuaEngine.Call(NovaSharp.LuaFunction function, NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1) -> NovaSharp.LuaValue
+NovaSharp.LuaEngine.Call(NovaSharp.LuaFunction function, NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1, NovaSharp.LuaValue arg2) -> NovaSharp.LuaValue
+NovaSharp.LuaEngine.Call(NovaSharp.LuaFunction function, System.ReadOnlySpan<NovaSharp.LuaValue> args) -> NovaSharp.LuaValue
+NovaSharp.LuaEngine.Compile(System.String code, System.String chunkName = null) -> NovaSharp.LuaChunk
+NovaSharp.LuaEngine.Create() -> NovaSharp.LuaEngine
+NovaSharp.LuaEngine.Create(NovaSharp.LuaEngineOptions options) -> NovaSharp.LuaEngine
+NovaSharp.LuaEngine.CreateCoroutine(NovaSharp.LuaFunction function) -> NovaSharp.LuaCoroutine
+NovaSharp.LuaEngine.CreateTable(System.Int32 arrayCapacity = 0, System.Int32 hashCapacity = 0) -> NovaSharp.LuaTable
+NovaSharp.LuaEngine.Dispose() -> System.Void
+NovaSharp.LuaEngine.Globals -> NovaSharp.LuaTable
+NovaSharp.LuaEngine.Run(System.String code, System.String chunkName = null) -> NovaSharp.LuaValue
+NovaSharp.LuaEngine.RunAsync(System.String code, System.String chunkName = null, System.Threading.CancellationToken cancellationToken = default) -> System.Threading.Tasks.ValueTask<NovaSharp.LuaValue>
+NovaSharp.LuaEngineOptions
+NovaSharp.LuaEngineOptions..ctor()
+NovaSharp.LuaEngineOptions..ctor(NovaSharp.LuaEngineOptions defaults)
+NovaSharp.LuaEngineOptions.Default -> NovaSharp.LuaEngineOptions
+NovaSharp.LuaEngineOptions.EnableScriptCaching -> System.Boolean
+NovaSharp.LuaEngineOptions.HardSandbox -> NovaSharp.LuaEngineOptions
+NovaSharp.LuaEngineOptions.Loader -> NovaSharp.ILuaScriptLoader
+NovaSharp.LuaEngineOptions.Modules -> NovaSharp.LuaCoreModules
+NovaSharp.LuaEngineOptions.Print -> System.Action<System.String>
+NovaSharp.LuaEngineOptions.Random -> NovaSharp.ILuaRandomProvider
+NovaSharp.LuaEngineOptions.Sandbox -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaEngineOptions.ScriptCacheMaxEntries -> System.Int32
+NovaSharp.LuaEngineOptions.Time -> NovaSharp.ILuaTimeProvider
+NovaSharp.LuaEngineOptions.Version -> NovaSharp.LuaVersion
+NovaSharp.LuaFunction
+NovaSharp.LuaFunction.Call() -> NovaSharp.LuaValue
+NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0) -> NovaSharp.LuaValue
+NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1) -> NovaSharp.LuaValue
+NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1, NovaSharp.LuaValue arg2) -> NovaSharp.LuaValue
+NovaSharp.LuaFunction.Call(System.ReadOnlySpan<NovaSharp.LuaValue> args) -> NovaSharp.LuaValue
+NovaSharp.LuaKind
+NovaSharp.LuaKind.Boolean
+NovaSharp.LuaKind.Float
+NovaSharp.LuaKind.Function
+NovaSharp.LuaKind.Integer
+NovaSharp.LuaKind.Nil
+NovaSharp.LuaKind.String
+NovaSharp.LuaKind.Table
+NovaSharp.LuaKind.Thread
+NovaSharp.LuaKind.Tuple
+NovaSharp.LuaKind.UserData
+NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxOptions..ctor()
+NovaSharp.LuaSandboxOptions..ctor(NovaSharp.LuaSandboxOptions defaults)
+NovaSharp.LuaSandboxOptions.AllowFunction(System.String functionName) -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxOptions.AllowModule(System.String moduleName) -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxOptions.CreateModerate(System.Int64 maxInstructions = 10000000, System.Int32 maxCallStackDepth = 512) -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxOptions.CreateRestrictive(System.Int64 maxInstructions = 1000000, System.Int32 maxCallStackDepth = 256) -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxOptions.HasCallStackDepthLimit -> System.Boolean
+NovaSharp.LuaSandboxOptions.HasCoroutineLimit -> System.Boolean
+NovaSharp.LuaSandboxOptions.HasFunctionRestrictions -> System.Boolean
+NovaSharp.LuaSandboxOptions.HasInstructionLimit -> System.Boolean
+NovaSharp.LuaSandboxOptions.HasMemoryLimit -> System.Boolean
+NovaSharp.LuaSandboxOptions.HasModuleRestrictions -> System.Boolean
+NovaSharp.LuaSandboxOptions.IsFunctionRestricted(System.String functionName) -> System.Boolean
+NovaSharp.LuaSandboxOptions.IsModuleRestricted(System.String moduleName) -> System.Boolean
+NovaSharp.LuaSandboxOptions.MaxCallStackDepth -> System.Int32
+NovaSharp.LuaSandboxOptions.MaxCoroutines -> System.Int32
+NovaSharp.LuaSandboxOptions.MaxInstructions -> System.Int64
+NovaSharp.LuaSandboxOptions.MaxMemoryBytes -> System.Int64
+NovaSharp.LuaSandboxOptions.RestrictFunction(System.String functionName) -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxOptions.RestrictFunctions(System.String[] functionNames) -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxOptions.RestrictModule(System.String moduleName) -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxOptions.RestrictModules(System.String[] moduleNames) -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaSandboxOptions.RestrictedFunctions -> System.Collections.Generic.IReadOnlyCollection<System.String>
+NovaSharp.LuaSandboxOptions.RestrictedModules -> System.Collections.Generic.IReadOnlyCollection<System.String>
+NovaSharp.LuaSandboxOptions.Unrestricted -> NovaSharp.LuaSandboxOptions
+NovaSharp.LuaTable
+NovaSharp.LuaTable.Get(System.Int32 key) -> NovaSharp.LuaValue
+NovaSharp.LuaTable.Get(System.String key) -> NovaSharp.LuaValue
+NovaSharp.LuaTable.Item[System.Int32] -> NovaSharp.LuaValue
+NovaSharp.LuaTable.Item[System.String] -> NovaSharp.LuaValue
+NovaSharp.LuaTable.Length -> System.Int32
+NovaSharp.LuaTable.Remove(System.Int32 key) -> System.Boolean
+NovaSharp.LuaTable.Remove(System.String key) -> System.Boolean
+NovaSharp.LuaTable.Set(System.Int32 key, NovaSharp.LuaValue value) -> System.Void
+NovaSharp.LuaTable.Set(System.String key, NovaSharp.LuaValue value) -> System.Void
+NovaSharp.LuaTable.ToValue() -> NovaSharp.LuaValue
+NovaSharp.LuaValue
+NovaSharp.LuaValue.AsBoolean() -> System.Boolean
+NovaSharp.LuaValue.AsCoroutine() -> NovaSharp.LuaCoroutine
+NovaSharp.LuaValue.AsFunction() -> NovaSharp.LuaFunction
+NovaSharp.LuaValue.AsInteger() -> System.Int64
+NovaSharp.LuaValue.AsNumber() -> System.Double
+NovaSharp.LuaValue.AsString() -> System.String
+NovaSharp.LuaValue.AsTable() -> NovaSharp.LuaTable
+NovaSharp.LuaValue.Equals(NovaSharp.LuaValue other) -> System.Boolean
+NovaSharp.LuaValue.Equals(System.Object obj) -> System.Boolean
+NovaSharp.LuaValue.FromBoolean(System.Boolean value) -> NovaSharp.LuaValue
+NovaSharp.LuaValue.FromInteger(System.Int64 value) -> NovaSharp.LuaValue
+NovaSharp.LuaValue.FromNumber(System.Double value) -> NovaSharp.LuaValue
+NovaSharp.LuaValue.FromString(System.String value) -> NovaSharp.LuaValue
+NovaSharp.LuaValue.GetHashCode() -> System.Int32
+NovaSharp.LuaValue.IsFunction -> System.Boolean
+NovaSharp.LuaValue.IsNil -> System.Boolean
+NovaSharp.LuaValue.IsNumber -> System.Boolean
+NovaSharp.LuaValue.IsString -> System.Boolean
+NovaSharp.LuaValue.IsTable -> System.Boolean
+NovaSharp.LuaValue.Kind -> NovaSharp.LuaKind
+NovaSharp.LuaValue.Nil -> NovaSharp.LuaValue
+NovaSharp.LuaValue.Read<T>() -> T
+NovaSharp.LuaValue.ToString() -> System.String
+NovaSharp.LuaValue.TryRead<T>(out T value) -> System.Boolean
+NovaSharp.LuaValue.op_Equality(NovaSharp.LuaValue left, NovaSharp.LuaValue right) -> System.Boolean
+NovaSharp.LuaValue.op_Implicit(System.Boolean value) -> NovaSharp.LuaValue
+NovaSharp.LuaValue.op_Implicit(System.Double value) -> NovaSharp.LuaValue
+NovaSharp.LuaValue.op_Implicit(System.Int32 value) -> NovaSharp.LuaValue
+NovaSharp.LuaValue.op_Implicit(System.Int64 value) -> NovaSharp.LuaValue
+NovaSharp.LuaValue.op_Implicit(System.String value) -> NovaSharp.LuaValue
+NovaSharp.LuaValue.op_Inequality(NovaSharp.LuaValue left, NovaSharp.LuaValue right) -> System.Boolean
+NovaSharp.LuaVersion
+NovaSharp.LuaVersion.Latest
+NovaSharp.LuaVersion.Lua51
+NovaSharp.LuaVersion.Lua52
+NovaSharp.LuaVersion.Lua53
+NovaSharp.LuaVersion.Lua54
+NovaSharp.LuaVersion.Lua55

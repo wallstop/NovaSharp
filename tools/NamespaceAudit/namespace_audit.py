@@ -108,6 +108,13 @@ def audit() -> int:
             continue
 
         actual = extract_namespace(cs_file)
+        if (
+            actual == "NovaSharp"
+            and rel_path.parent
+            == Path("src/runtime/WallstopStudios.NovaSharp.Interpreter/Api")
+        ):
+            continue
+
         expected = expected_namespace(cs_file)
         if actual is None or expected is None:
             continue
