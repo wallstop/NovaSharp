@@ -257,6 +257,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         }
 
         [Test]
+        public async Task DisposedEngineRejectsResourceValueReads()
+        {
+            LuaEngine lua = LuaEngine.Create();
+            LuaValue scalar = lua.Run("return 42");
+            LuaValue table = lua.Run("return { value = 42 }");
+
+            lua.Dispose();
+
+            await Assert.That(scalar.Read<int>()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert
+                .That(() => table.Read<object>())
+                .Throws<ObjectDisposedException>()
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => table.TryRead<object>(out _))
+                .Throws<ObjectDisposedException>()
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task DisposedEngineRejectsFacadeHandles()
         {
             LuaEngine lua = LuaEngine.Create();

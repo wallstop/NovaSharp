@@ -208,7 +208,13 @@ namespace NovaSharp
         {
             try
             {
-                return GetValueOrNil().ToObject<T>();
+                DynValue value = GetValueOrNil();
+                if (RequiresOwner(value))
+                {
+                    GetOwnerOrThrow();
+                }
+
+                return value.ToObject<T>();
             }
             catch (InterpreterException exception)
             {
