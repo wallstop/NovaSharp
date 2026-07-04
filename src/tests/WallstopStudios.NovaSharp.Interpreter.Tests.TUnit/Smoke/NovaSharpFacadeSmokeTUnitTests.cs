@@ -173,6 +173,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 .That(closeValues[1].AsString())
                 .Contains("close failure")
                 .ConfigureAwait(false);
+            await Assert.That(closeResult.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
+            await Assert.That(closeValues[0].Owner).IsNull().ConfigureAwait(false);
+            await Assert.That(closeValues[1].Owner).IsNull().ConfigureAwait(false);
         }
 
         [Test]
@@ -190,6 +193,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 .That(LuaValue.FromInteger(42) == LuaValue.FromNumber(42.0))
                 .IsTrue()
                 .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ScalarResultsDoNotCaptureEngineOwner()
+        {
+            using LuaEngine lua = LuaEngine.Create();
+            LuaValue integer = lua.Run("return 42");
+            LuaValue boolean = lua.Run("return true");
+            LuaValue text = lua.Run("return 'scalar'");
+            LuaTable table = lua.Run("return { value = 42 }").AsTable();
+            LuaValue tableScalar = table["value"];
+            LuaValue function = lua.Run("return function() return 42 end");
+            LuaValue tableValue = table.ToValue();
+
+            await Assert.That(integer.Owner).IsNull().ConfigureAwait(false);
+            await Assert.That(boolean.Owner).IsNull().ConfigureAwait(false);
+            await Assert.That(text.Owner).IsNull().ConfigureAwait(false);
+            await Assert.That(tableScalar.Owner).IsNull().ConfigureAwait(false);
+            await Assert.That(function.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
+            await Assert.That(tableValue.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
         }
 
         [Test]

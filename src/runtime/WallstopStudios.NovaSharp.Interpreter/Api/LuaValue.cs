@@ -193,7 +193,8 @@ namespace NovaSharp
             LuaValue[] values = new LuaValue[tuple.Length];
             for (int i = 0; i < tuple.Length; i++)
             {
-                values[i] = new LuaValue(_owner, tuple[i]);
+                LuaEngine owner = RequiresOwner(tuple[i]) ? _owner : null;
+                values[i] = new LuaValue(owner, tuple[i]);
             }
 
             return values;
@@ -377,6 +378,30 @@ namespace NovaSharp
         /// Gets the engine that owns this value, or null for scalar literals not yet bound to an engine.
         /// </summary>
         internal LuaEngine Owner => _owner;
+
+        /// <summary>
+        /// Gets whether a VM value must stay bound to the engine that produced it.
+        /// </summary>
+        internal static bool RequiresOwner(DynValue value)
+        {
+            if (value == null)
+            {
+                return false;
+            }
+
+            switch (value.Type)
+            {
+                case DataType.ClrFunction:
+                case DataType.Function:
+                case DataType.Table:
+                case DataType.Thread:
+                case DataType.Tuple:
+                case DataType.UserData:
+                    return true;
+                default:
+                    return false;
+            }
+        }
 
         /// <summary>
         /// Returns the underlying VM value after validating engine ownership.
