@@ -280,12 +280,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         public async Task DisposedEngineRejectsFacadeHandles()
         {
             LuaEngine lua = LuaEngine.Create();
+            LuaTable table = lua.CreateTable();
             LuaFunction function = lua.Run("return function() return 1 end").AsFunction();
 
             lua.Dispose();
 
             await Assert
                 .That(() => function.Call())
+                .Throws<ObjectDisposedException>()
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => table.ToValue())
                 .Throws<ObjectDisposedException>()
                 .ConfigureAwait(false);
         }

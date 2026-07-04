@@ -39,3 +39,4 @@ Date: 2026-07-04
 - Addressed Copilot feedback on 2026-07-04 by making scalar `LuaValue` wrappers ownerless while preserving owner binding for tables, functions, threads, userdata, and tuples; tuple decomposition now also drops owners from scalar tuple elements.
 - Addressed Copilot feedback on 2026-07-04 by making `LuaValue.AsTuple()` validate its owning engine before materializing tuple elements, matching table/function/coroutine facade handle disposal behavior.
 - Addressed Copilot feedback on 2026-07-04 by making `LuaValue.Read<T>()` and `TryRead<T>()` validate disposal for owner-required resource values without changing scalar literal reads.
+- Addressed Copilot feedback on 2026-07-04 by making `LuaTable.ToValue()` validate disposal up front and by making B0 facade benchmark invalid-arity exception messages benchmark-generic.

@@ -151,7 +151,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 case 3:
                     return _script.Call(_scriptFunction, _first, _second, _third);
                 default:
-                    throw new InvalidOperationException("Unsupported facade benchmark arity.");
+                    throw new InvalidOperationException("Unsupported benchmark arity.");
             }
         }
 
@@ -172,7 +172,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 case 3:
                     return _engine.Call(_facadeFunction, _facadeFirst, _facadeSecond, _facadeThird);
                 default:
-                    throw new InvalidOperationException("Unsupported facade benchmark arity.");
+                    throw new InvalidOperationException("Unsupported benchmark arity.");
             }
         }
 
@@ -193,7 +193,7 @@ namespace WallstopStudios.NovaSharp.Benchmarks
                 case 3:
                     return _facadeFunction.Call(_facadeFirst, _facadeSecond, _facadeThird);
                 default:
-                    throw new InvalidOperationException("Unsupported facade benchmark arity.");
+                    throw new InvalidOperationException("Unsupported benchmark arity.");
             }
         }
 

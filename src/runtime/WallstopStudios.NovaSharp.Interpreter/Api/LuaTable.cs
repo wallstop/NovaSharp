@@ -149,6 +149,7 @@ namespace NovaSharp
         /// </summary>
         public LuaValue ToValue()
         {
+            _owner.ThrowIfDisposed();
             try
             {
                 return _owner.Wrap(DynValue.NewTable(_table));
