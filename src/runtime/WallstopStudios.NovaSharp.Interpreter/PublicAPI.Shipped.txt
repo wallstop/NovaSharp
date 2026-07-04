@@ -147,6 +147,7 @@ NovaSharp.LuaValue.AsInteger() -> System.Int64
 NovaSharp.LuaValue.AsNumber() -> System.Double
 NovaSharp.LuaValue.AsString() -> System.String
 NovaSharp.LuaValue.AsTable() -> NovaSharp.LuaTable
+NovaSharp.LuaValue.AsTuple() -> NovaSharp.LuaValue[]
 NovaSharp.LuaValue.Equals(NovaSharp.LuaValue other) -> System.Boolean
 NovaSharp.LuaValue.Equals(System.Object obj) -> System.Boolean
 NovaSharp.LuaValue.FromBoolean(System.Boolean value) -> NovaSharp.LuaValue

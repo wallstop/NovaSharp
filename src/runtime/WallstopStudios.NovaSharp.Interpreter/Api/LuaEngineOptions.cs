@@ -42,7 +42,7 @@ namespace NovaSharp
         }
 
         /// <summary>
-        /// Gets a reusable default options instance.
+        /// Gets a new default options instance.
         /// </summary>
         public static LuaEngineOptions Default => new LuaEngineOptions();
 

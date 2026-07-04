@@ -92,7 +92,7 @@ namespace NovaSharp
         public LuaValue Close()
         {
             _owner.ThrowIfDisposed();
-            return _owner.WrapResult(_coroutineValue.Coroutine.Close());
+            return _owner.Wrap(_coroutineValue.Coroutine.Close());
         }
 
         private static LuaCoroutineState ToFacadeState(CoroutineState state)

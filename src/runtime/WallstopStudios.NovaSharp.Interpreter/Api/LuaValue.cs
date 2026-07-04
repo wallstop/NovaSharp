@@ -179,6 +179,22 @@ namespace NovaSharp
         }
 
         /// <summary>
+        /// Gets the Lua tuple values.
+        /// </summary>
+        public LuaValue[] AsTuple()
+        {
+            DynValue value = RequireType(DataType.Tuple, nameof(AsTuple));
+            DynValue[] tuple = value.Tuple;
+            LuaValue[] values = new LuaValue[tuple.Length];
+            for (int i = 0; i < tuple.Length; i++)
+            {
+                values[i] = new LuaValue(_owner, tuple[i]);
+            }
+
+            return values;
+        }
+
+        /// <summary>
         /// Reads the value as a CLR type through the existing converter pipeline.
         /// </summary>
         public T Read<T>()

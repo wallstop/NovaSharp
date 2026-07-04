@@ -14,13 +14,14 @@ Date: 2026-07-03
 - Addressed Cursor Bugbot feedback by normalizing execution results to the first scalar value for `Run`, `Call`, compiled chunk execution, and coroutine resume/close paths.
 - Addressed Copilot feedback by making `AsInteger` report `Integer` for all invalid kinds and using `DynValueArrayPool` for span-based call/chunk/coroutine argument conversion.
 - Addressed follow-up review feedback by normalizing empty facade results to `nil`, handling runtime conversion failures in `TryRead`, broadening the root-namespace audit allowlist to the full `Api` subtree, and teaching the API baseline formatter to distinguish `ref` from `out` parameters.
+- Addressed coroutine close review feedback by preserving VM close result tuples through `LuaCoroutine.Close()` and adding `LuaValue.AsTuple()` for tuple diagnostics.
 
 ## Validation
 
 - `./scripts/build/quick.sh` exited 0 after the runtime facade changes.
-- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` exited 0 with 37 tests passing after the follow-up review fixes.
+- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` exited 0 with 39 tests passing after the follow-up review fixes.
 - `bash ./scripts/dev/pre-commit.sh` exited 0; only the repo's existing LLM skill metadata warnings remain.
-- `./scripts/test/quick.sh` exited 0 with 14,566 tests passing after the follow-up review fixes.
+- `./scripts/test/quick.sh` exited 0 with 14,568 tests passing after the follow-up review fixes.
 
 ## Open Work
 

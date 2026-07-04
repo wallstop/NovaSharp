@@ -136,6 +136,45 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         }
 
         [Test]
+        [Arguments(LuaCompatibilityVersion.Lua54)]
+        [Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task CoroutineClosePreservesErrorTuple(LuaCompatibilityVersion version)
+        {
+            LuaEngineOptions options = new LuaEngineOptions { Version = ToLuaVersion(version) };
+            using LuaEngine lua = LuaEngine.Create(options);
+            LuaFunction function = lua.Run(
+                    @"
+                    local function new_closable()
+                        local resource = {}
+                        return setmetatable(resource, {
+                            __close = function(_, err)
+                                error('close failure', 0)
+                            end
+                        })
+                    end
+
+                    return function()
+                        local resource <close> = new_closable()
+                        coroutine.yield('pause')
+                    end
+                "
+                )
+                .AsFunction();
+            LuaCoroutine coroutine = lua.CreateCoroutine(function);
+
+            LuaValue yielded = coroutine.Resume();
+            LuaValue closeResult = coroutine.Close();
+            LuaValue[] closeValues = closeResult.AsTuple();
+
+            await Assert.That(yielded.AsString()).IsEqualTo("pause").ConfigureAwait(false);
+            await Assert.That(closeValues[0].AsBoolean()).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(closeValues[1].AsString())
+                .Contains("close failure")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task ScalarEqualityUsesLuaValueSemantics()
         {
             await Assert
