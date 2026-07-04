@@ -40,6 +40,17 @@ Date: 2026-07-04
 
 - Two earlier debug-module-targeted commands were started in parallel and hit build output file locks in `obj/`/`bin/`. The same targeted classes were then rerun serially and passed, so the failure was a local command scheduling artifact rather than a product failure.
 
+## PR Follow-Up
+
+- Copilot added facade validation for negative `ScriptCacheMaxEntries` when script caching is enabled, plus smoke coverage for the enabled and disabled caching cases.
+- Reviewed and fast-forwarded Copilot's `ae5caf5f` commit before closing the PR state.
+- Local validation on the combined head:
+  - `./scripts/test/quick.sh --full -c NovaSharpFacadeExceptionTUnitTests` passed: 14 tests, 0 failures.
+  - `./scripts/build/quick.sh --all` passed.
+  - `./scripts/test/quick.sh` passed: 14,591 tests, 0 failures.
+  - `bash ./scripts/dev/pre-commit.sh` passed.
+
 ## Next Checks
 
-- Push the scoped commit and wait for PR CI plus Copilot/Cursor feedback.
+- Wait for PR CI plus Copilot/Cursor feedback on the human-authored follow-up commit.
+- Continue A1a with the read-only slot/value split needed to remove `_readOnly`, `ReadOnly`, `AsReadOnly()`, and `CloneAsWritable()` safely.
