@@ -84,6 +84,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public void Clear()
         {
+            AllocationTracker tracker = _owner?.AllocationTracker;
+            if (tracker != null && _trackedEntryCount > 0)
+            {
+                tracker.RecordDeallocation((long)_trackedEntryCount * PerEntryOverhead);
+            }
+
             _values.Clear();
             _stringMap.Clear();
             _arrayMap.Clear();
@@ -91,6 +97,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _initArray = 0;
             _constructorArrayLength = 0;
             _cachedLength = -1;
+            _containsNilEntries = false;
+            _trackedEntryCount = 0;
         }
 
         /// <summary>

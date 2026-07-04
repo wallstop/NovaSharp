@@ -11,6 +11,7 @@ Date: 2026-07-04
 - Matched Lua 5.1-5.3 constructor-array binary-search borders, Lua 5.4 highest constructor border behavior, and Lua 5.5 prefix behavior for the covered constructor cases.
 - Addressed adversarial review findings by preserving constructor-border hints for original-slot writes and mixed keyed/numeric constructor fields, matching Lua 5.4 absent string/value-key nil no-op behavior, clearing and invalidating cached length for real string/value-key mutations, restoring script ownership validation for constructor array fields, adding Lua-side assertions to the inline TUnit snippets, adding non-final function-call scalarization coverage, and anchoring fixture metadata to source lines.
 - Final self-review kept constructor-specific numeric keyed writes inside table-constructor initialization while leaving ordinary post-construction numeric writes on the normal invalidation path.
+- Addressed Copilot PR feedback by resetting `Table.Clear()` nil-entry and allocation-tracking state, deallocating tracked table-entry overhead, and covering reuse-after-clear accounting.
 
 ## Validation
 
@@ -23,8 +24,9 @@ Date: 2026-07-04
 - `./scripts/test/quick.sh ArrayConstructorRejectsForeignScriptResource` passed: 5 tests, 0 failures.
 - Scoped comparison harness over the four new fixtures passed with `--enforce --skip-error-ratchet` for Lua 5.1, 5.2, 5.3, 5.4, and 5.5.
 - `./scripts/build/quick.sh` passed.
-- Targeted class suites passed: `./scripts/test/quick.sh -c TableTUnitTests` (605 tests), `./scripts/test/quick.sh -c TableModuleTUnitTests` (211 tests), and `./scripts/test/quick.sh -c SimpleTUnitTests` (417 tests).
-- Full TUnit suite passed: `./scripts/test/quick.sh` (14,775 tests, 0 failures).
+- Targeted class suites passed: `./scripts/test/quick.sh -c TableTUnitTests` (610 tests), `./scripts/test/quick.sh -c TableModuleTUnitTests` (211 tests), and `./scripts/test/quick.sh -c SimpleTUnitTests` (417 tests).
+- Reviewer-fix validation passed: `./scripts/test/quick.sh --full ClearResetsTrackedStateForReuse` (5 tests), `./scripts/test/quick.sh -c TableTUnitTests` (610 tests), and `./scripts/test/quick.sh -c SandboxMemoryLimitTUnitTests` (370 tests).
+- Full TUnit suite passed: `./scripts/test/quick.sh` (14,780 tests, 0 failures).
 - Full Lua fixture comparison passed with `--enforce` for Lua 5.1, 5.2, 5.3, 5.4, and 5.5 with 0 mismatches and 0 missing outputs.
 - `bash ./scripts/dev/pre-commit.sh` completed successfully; it reported existing documentation and skill metadata warnings only.
 

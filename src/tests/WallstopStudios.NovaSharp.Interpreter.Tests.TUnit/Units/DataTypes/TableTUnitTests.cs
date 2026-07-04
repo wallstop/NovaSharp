@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
     public sealed class TableTUnitTests
     {
@@ -48,6 +49,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);
             await Assert.That(table.RawGet(1)).IsNull().ConfigureAwait(false);
             await Assert.That(table.RawGet("name")).IsNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClearResetsTrackedStateForReuse(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                Sandbox = new SandboxOptions { MaxMemoryBytes = 1024 * 1024 },
+            };
+            Script script = new(options);
+            Table table = new(script);
+            long afterTableCreation = script.AllocationTracker.CurrentBytes;
+
+            table.Set(1, DynValue.NewNumber(1));
+            table.Set(2, DynValue.NewNumber(2));
+            table.Set(3, DynValue.Nil);
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsGreaterThan(afterTableCreation)
+                .ConfigureAwait(false);
+
+            table.Clear();
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
+
+            table.Set(1, DynValue.NewNumber(3));
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsGreaterThan(afterTableCreation)
+                .ConfigureAwait(false);
+
+            table.Clear();
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
+
+            table.Clear();
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
