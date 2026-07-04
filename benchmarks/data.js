@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783183352371,
+  "lastUpdate": 1783205945310,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -526,6 +526,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 374.206,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "94547c0bbb1835a4da633dfd15701eaf041c17bc",
+          "message": "Harden tuple fixtures and table constructor borders (#51)\n\n## Summary\n\n- Complete PLAN.md A1b fixture hardening for nil/tuple arity drift\nhazards before the LuaValue struct conversion.\n- Add standalone Lua fixtures with assertions for `select('#', ...)`,\nnon-final/scalarized function calls, expanded nil tuples, and\n`table.pack(...).n`.\n- Fix and cover version-specific constructor-created holey table `#`\nbehavior, including cached/same-slot writes and Lua 5.4 absent-key nil\nno-op behavior.\n- Restore script ownership validation for array table constructor\nfields.\n\n## Validation\n\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh --full\nSelectHashCountsExpandedNilReturnValues`\n- `./scripts/test/quick.sh\nFunctionCallExpressionPositionsAdjustReturnArity`\n- `./scripts/test/quick.sh PackPreservesExpandedNilAndReportsCount`\n- `./scripts/test/quick.sh --full\nTableLengthFollowsVersionedConstructorBorders`\n- `./scripts/test/quick.sh ArrayConstructorRejectsForeignScriptResource`\n- `./scripts/test/quick.sh -c TableTUnitTests`\n- `./scripts/test/quick.sh -c TableModuleTUnitTests`\n- `./scripts/test/quick.sh -c SimpleTUnitTests`\n- `./scripts/test/quick.sh` (14,725 tests, 0 failures)\n- Full Lua fixture comparison with `--enforce` for Lua 5.1, 5.2, 5.3,\n5.4, and 5.5: 0 mismatches, 0 missing outputs\n- `bash ./scripts/dev/pre-commit.sh`\n\nPre-commit reported existing documentation and skill metadata warnings\nonly.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Touches core table length semantics and hot `PerformTableSet` paths\nused by every table write; broad matrix tests and full fixture\ncomparison mitigate but constructor-border edge cases remain until the\nplanned A4 table rewrite.\n> \n> **Overview**\n> Completes **PLAN A1b** pre-`LuaValue` struct regression coverage for\nnil/tuple arity (`select('#', ...)`, expanded nil returns, expression vs\nstatement call sites, `table.pack(...).n`) via TUnit tests and\nstandalone Lua fixtures checked against reference Lua 5.1–5.5.\n> \n> **Table runtime:** Adds constructor-time tracking\n(`_constructorArrayLength`, `InitNextKey` / `InitNextArrayKeys`) so `#`\non holey tables built with `{ ... }` matches Lua 5.1–5.3 binary-search\nborders, 5.4 highest-set-index behavior, and 5.5 prefix length; table\nctor bytecode now uses `InitNextKey` instead of generic `Set`.\n**PerformTableSet** gains constructor vs post-construction mutation\nrules (same-slot overwrites, Lua 5.4 absent-key nil no-ops). **Clear**,\n**Remove**, and **CollectDeadKeys** reset constructor hints and fix\nallocation tracking / safe iteration over nil tombstones.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n57b86719e6f34c2beae8cf45b234cb4d712fb054. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-04T15:52:28-07:00",
+          "tree_id": "ad72d888a9a30fb61357e2eb9926b8988cabac76",
+          "url": "https://github.com/wallstop/NovaSharp/commit/94547c0bbb1835a4da633dfd15701eaf041c17bc"
+        },
+        "date": 1783205944673,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 161.208,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 171.606,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 173.255,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 282.836,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 286.415,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 284.017,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 316.239,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 332.061,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 328.574,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 354.623,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 389.605,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 362.671,
             "unit": "ns",
             "extra": ""
           }
