@@ -1304,6 +1304,103 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task SelectHashCountsExpandedNilReturnValues(LuaCompatibilityVersion version)
+        {
+            string script =
+                @"
+                    local function values()
+                        return 'a', nil, 'c'
+                    end
+
+                    local count, first, second, third = select('#', values()), values()
+
+                    assert(count == 3, 'expanded count')
+                    assert(first == 'a', 'first value')
+                    assert(second == nil, 'second value')
+                    assert(third == 'c', 'third value')
+
+                    return count, first, second, third
+                                ";
+
+            Script s = new(version);
+            DynValue res = s.DoString(script);
+
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].String).IsEqualTo("a").ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].String).IsEqualTo("c").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task FunctionCallExpressionPositionsAdjustReturnArity(
+            LuaCompatibilityVersion version
+        )
+        {
+            string script =
+                @"
+                    local statementCount = 0
+
+                    local function values()
+                        return 'a', nil, 'c'
+                    end
+
+                    local function observe(...)
+                        statementCount = statementCount + select('#', ...)
+                        return 'ignored', nil, 'ignored-again'
+                    end
+
+                    observe(values())
+                    observe(values(), 'tail')
+
+                    local prefixOnly, tail, missing1, missing2 = values(), 'tail'
+                    local head, expandedFirst, expandedSecond, expandedThird = 'head', values()
+                    local grouped = (values())
+
+                    assert(prefixOnly == 'a', 'non-final function call scalarized')
+                    assert(tail == 'tail', 'literal after scalarized call')
+                    assert(missing1 == nil, 'missing assignment target one')
+                    assert(missing2 == nil, 'missing assignment target two')
+                    assert(head == 'head', 'literal before expanded call')
+                    assert(expandedFirst == 'a', 'expanded first')
+                    assert(expandedSecond == nil, 'expanded nil')
+                    assert(expandedThird == 'c', 'expanded third')
+                    assert(grouped == 'a', 'parenthesized call scalarized')
+                    assert(statementCount == 5, 'statement calls adjusted argument arity')
+
+                    return prefixOnly,
+                        tail,
+                        missing1,
+                        missing2,
+                        head,
+                        expandedFirst,
+                        expandedSecond,
+                        expandedThird,
+                        grouped,
+                        statementCount
+                                ";
+
+            Script s = new(version);
+            DynValue res = s.DoString(script);
+
+            await Assert.That(res.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(res.Tuple.Length).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(res.Tuple[0].String).IsEqualTo("a").ConfigureAwait(false);
+            await Assert.That(res.Tuple[1].String).IsEqualTo("tail").ConfigureAwait(false);
+            await Assert.That(res.Tuple[2].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(res.Tuple[3].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(res.Tuple[4].String).IsEqualTo("head").ConfigureAwait(false);
+            await Assert.That(res.Tuple[5].String).IsEqualTo("a").ConfigureAwait(false);
+            await Assert.That(res.Tuple[6].IsNil()).IsTrue().ConfigureAwait(false);
+            await Assert.That(res.Tuple[7].String).IsEqualTo("c").ConfigureAwait(false);
+            await Assert.That(res.Tuple[8].String).IsEqualTo("a").ConfigureAwait(false);
+            await Assert.That(res.Tuple[9].Number).IsEqualTo(5).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task ArgsDoNotChange(LuaCompatibilityVersion version)
         {
             string script =

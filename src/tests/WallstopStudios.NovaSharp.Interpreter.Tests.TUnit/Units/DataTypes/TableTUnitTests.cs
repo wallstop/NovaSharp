@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
+    using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
     public sealed class TableTUnitTests
     {
@@ -48,6 +49,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);
             await Assert.That(table.RawGet(1)).IsNull().ConfigureAwait(false);
             await Assert.That(table.RawGet("name")).IsNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task ClearResetsTrackedStateForReuse(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                Sandbox = new SandboxOptions { MaxMemoryBytes = 1024 * 1024 },
+            };
+            Script script = new(options);
+            Table table = new(script);
+            long afterTableCreation = script.AllocationTracker.CurrentBytes;
+
+            table.Set(1, DynValue.NewNumber(1));
+            table.Set(2, DynValue.NewNumber(2));
+            table.Set(3, DynValue.Nil);
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsGreaterThan(afterTableCreation)
+                .ConfigureAwait(false);
+
+            table.Clear();
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
+
+            table.Set(1, DynValue.NewNumber(3));
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsGreaterThan(afterTableCreation)
+                .ConfigureAwait(false);
+
+            table.Clear();
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
+
+            table.Clear();
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -149,15 +200,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CollectDeadKeysRemovesNilEntries(LuaCompatibilityVersion version)
         {
-            Table table = new(new Script());
+            Table table = new(new Script(version));
+            DynValue valueKey = DynValue.False;
             table.Set(1, DynValue.NewNumber(10));
-            table.Set(2, DynValue.NewNumber(20));
-            await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
-
+            table.Set(3, DynValue.NewNumber(30));
             table.Set(2, DynValue.Nil);
+            table.Set("dead", DynValue.Nil);
+            table.Set(valueKey, DynValue.Nil);
+            await Assert.That(table.Count).IsEqualTo(5).ConfigureAwait(false);
             table.CollectDeadKeys();
 
             await Assert.That(table.RawGet(2)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet("dead")).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(valueKey)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.Count).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(table.Length).IsEqualTo(1).ConfigureAwait(false);
         }
 
@@ -990,6 +1046,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(removed).IsTrue().ConfigureAwait(false);
             await Assert.That(table.RawGet("key")).IsNull().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveStringKeyClearsConstructorLengthHint(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue tableValue = script.DoString("return { nil, 1, x = 1 }");
+            Table table = tableValue.Table;
+            int expectedInitialLength = version == LuaCompatibilityVersion.Lua55 ? 0 : 2;
+            await Assert.That(table.Length).IsEqualTo(expectedInitialLength).ConfigureAwait(false);
+
+            bool removed = table.Remove("x");
+
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task RemoveDeallocatesTrackedEntry(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new()
+            {
+                CompatibilityVersion = version,
+                Sandbox = new SandboxOptions { MaxMemoryBytes = 1024 * 1024 },
+            };
+            Script script = new(options);
+            Table table = new(script);
+            long afterTableCreation = script.AllocationTracker.CurrentBytes;
+
+            table.Set("key", DynValue.NewNumber(12));
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsGreaterThan(afterTableCreation)
+                .ConfigureAwait(false);
+
+            bool removed = table.Remove("key");
+
+            await Assert.That(removed).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
+
+            bool removedAgain = table.Remove("key");
+
+            await Assert.That(removedAgain).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(afterTableCreation)
+                .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

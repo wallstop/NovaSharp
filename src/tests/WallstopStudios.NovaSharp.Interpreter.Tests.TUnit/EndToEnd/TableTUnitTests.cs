@@ -155,6 +155,83 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
         }
 
         [global::TUnit.Core.Test]
+        [LuaTestMatrix(
+            new object[] { "local t = { nil, 1 }", 2, 2, 0 },
+            new object[] { "local t = { 1, nil, 3 }", 3, 3, 1 },
+            new object[] { "local t = { 1, nil }", 1, 1, 1 },
+            new object[] { "local t = { nil, 1, nil }", 0, 2, 0 },
+            new object[] { "local t = { 1, 2, nil, 4 }", 4, 4, 2 },
+            new object[] { "local t = { 1, nil, 3, nil, 5 }", 5, 5, 1 },
+            new object[] { "local t = {}; t[2] = 1", 0, 0, 0 },
+            new object[] { "local t = { nil, 1 }; t.x = 1", 0, 0, 0 },
+            new object[] { "local t = { nil, 1 }; t[false] = 1", 0, 0, 0 },
+            new object[] { "local t = { nil, 1 }; t[2] = 1", 2, 2, 0 },
+            new object[] { "local t = { nil, 1 }; local _ = #t; t[2] = 1", 2, 2, 0 },
+            new object[] { "local t = { nil, 1 }; t[1] = nil", 2, 2, 0 },
+            new object[] { "local t = { nil, 1 }; t[1] = 1", 2, 2, 2 },
+            new object[] { "local t = { 1, nil, 3 }; t[3] = 4", 3, 3, 1 },
+            new object[] { "local t = { 1, nil, 3 }; local _ = #t; t[3] = 4", 3, 3, 1 },
+            new object[] { "local t = { 1, nil, 3, nil, 5 }; t[4] = 4", 5, 5, 1 },
+            new object[] { "local t = { 1, nil, 3, nil, 5 }; t[1] = nil", 5, 5, 0 },
+            new object[] { "local t = { nil, 1 }; local _ = #t; t.x = 1", 0, 0, 0 },
+            new object[] { "local t = { nil, 1 }; t.x = nil", 0, 2, 0 },
+            new object[] { "local t = { nil, 1 }; t[false] = nil", 0, 2, 0 },
+            new object[] { "local t = { nil, 1 }; local _ = #t; t.x = nil", 0, 2, 0 },
+            new object[] { "local t = { nil, 1 }; t.x = nil; t.x = nil", 0, 2, 0 },
+            new object[] { "local t = { nil, 1 }; t[false] = nil; t[false] = nil", 0, 2, 0 },
+            new object[] { "local t = { nil, 1, x = 1 }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, [false] = 1 }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, x = nil }", 2, 2, 0 },
+            new object[] { "local t = { x = 1, nil, 1 }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, [3] = 1 }", 3, 3, 0 },
+            new object[] { "local t = { nil, 1, [3] = nil }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, [4] = 1 }", 2, 2, 0 },
+            new object[] { "local t = { nil, 1, [3] = 1, [4] = 1 }", 4, 4, 0 },
+            new object[] { "local t = { nil, 1, [4] = 1, [3] = 1 }", 4, 4, 0 },
+            new object[] { "local t = { [1] = 1 }", 1, 1, 1 },
+            new object[] { "local t = { [2] = 1 }", 0, 0, 0 },
+            new object[] { "local t = { [1] = 1, [2] = 1 }", 2, 2, 2 }
+        )]
+        public async Task TableLengthFollowsVersionedConstructorBorders(
+            LuaCompatibilityVersion version,
+            string setup,
+            int lua51To53Expected,
+            int lua54Expected,
+            int lua55Expected
+        )
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(setup + "\nreturn #t");
+            int expected =
+                version == LuaCompatibilityVersion.Lua55 ? lua55Expected
+                : version == LuaCompatibilityVersion.Lua54 ? lua54Expected
+                : lua51To53Expected;
+
+            await Assert.That(result.Number).IsEqualTo(expected).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task ArrayConstructorRejectsForeignScriptResource(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script scriptA = new Script(version, CoreModulePresets.Complete);
+            DynValue foreignTable = scriptA.DoString("return {}");
+
+            Script scriptB = new Script(version, CoreModulePresets.Complete);
+            scriptB.Globals["foreign"] = DynValue.NewCallback((_, _) => foreignTable);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                scriptB.DoString("return { foreign() }")
+            );
+            await Assert
+                .That(exception.Message)
+                .Contains("different scripts")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task TableIPairsStopsAfterBreak(LuaCompatibilityVersion version)
         {

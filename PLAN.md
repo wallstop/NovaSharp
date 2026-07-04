@@ -108,11 +108,11 @@ public readonly struct LuaValue : IEquatable<LuaValue>
 Sub-steps, each landing green:
 
 - [ ] **A1a (prep)**: remove `_readOnly`/clone-as-writable machinery after a slot/value split; audit and remove `DynValue.ReferenceId` consumers by deriving identity from referenced objects where possible (`Table`/`Closure`/`Coroutine`/`UserData` remain classes so identity survives); kill the `_hashCode` cache.
-- [ ] **A1b (targeted fixtures FIRST)**: `select('#', ...)`, `table.pack(...).n`, nil-in-middle tuples, function-call-in-expression vs statement position — the `null` vs `Nil` vs `Void` drift hazards.
+- [x] **A1b (targeted fixtures FIRST)**: `select('#', ...)`, `table.pack(...).n`, nil-in-middle tuples, function-call-in-expression vs statement position — the `null` vs `Nil` vs `Void` drift hazards.
 - [ ] **A1c (the conversion)**: class→struct, compiler-error-driven across interpreter + CoreLib + tests. `default(LuaValue)` = Nil; `Void` stays an explicit tag; every `== null` / `?? DynValue.Nil` site audited manually (not regex).
 - [ ] **A1d (tuning)**: aggressive-inline accessors; `in`/`ref readonly` passing on hot helpers. Struct copy semantics delete the shared-readonly-literal concern entirely.
 
-**Progress**: A1a prep started on 2026-07-04 by removing the per-instance `DynValue.ReferenceId` backing field, moving internal/debug identity consumers off that field, and deleting the mutable `_hashCode` cache. A no-field `ReferenceId` compatibility getter remains until the struct conversion removes wrapper identity entirely. `debug.upvalueid` now keeps its own stable debug handle identity. The `_readOnly`/`AsReadOnly`/`CloneAsWritable` machinery remains intentionally open because it still protects mutable local/upvalue slots, cached singleton values, vararg copies, and table-key hash stability until the slot/value split lands. See [progress/session-147-a1a-dynvalue-identity-hash-prep.md](progress/session-147-a1a-dynvalue-identity-hash-prep.md).
+**Progress**: A1a prep started on 2026-07-04 by removing the per-instance `DynValue.ReferenceId` backing field, moving internal/debug identity consumers off that field, and deleting the mutable `_hashCode` cache. A no-field `ReferenceId` compatibility getter remains until the struct conversion removes wrapper identity entirely. `debug.upvalueid` now keeps its own stable debug handle identity. The `_readOnly`/`AsReadOnly`/`CloneAsWritable` machinery remains intentionally open because it still protects mutable local/upvalue slots, cached singleton values, vararg copies, and table-key hash stability until the slot/value split lands. A1b fixture hardening was completed on 2026-07-04 with focused TUnit and standalone Lua coverage for `select('#', ...)`, expanded nil tuples, expression-list arity adjustment, statement-position expansion, and `table.pack(...).n`; the scoped comparison harness matched reference Lua 5.1-5.5 for the new fixtures. See [progress/session-147-a1a-dynvalue-identity-hash-prep.md](progress/session-147-a1a-dynvalue-identity-hash-prep.md) and [progress/session-148-a1b-tuples-table-borders.md](progress/session-148-a1b-tuples-table-borders.md).
 
 **Exit criteria**: fixtures green on 5.1-5.5; NumericLoops **0 B/op steady-state**; compute suite ≥1.5-2x vs A0 baseline; no test relies on value reference identity.
 
@@ -143,6 +143,8 @@ Sub-steps, each landing green:
 - [ ] Keep the public `Table` API shape; swap internals.
 
 **Exit criteria**: table-heavy suite ≥3-5x vs baseline; ~24-40 B/entry; binary-trees ≥2x; `next`-contract fixtures green.
+
+**Progress**: A4 pre-rewrite border coverage started on 2026-07-04 after reference Lua probes found constructor-created holey array tables diverged from NovaSharp's prefix-only `Table.Length`. NovaSharp now preserves original constructor array-field borders across same-slot writes while clearing them for unrelated mutations, and matches the covered Lua 5.1-5.3, 5.4, and 5.5 constructor-border cases. Broader table mutation border behavior remains part of the full A4 table rewrite. See [progress/session-148-a1b-tuples-table-borders.md](progress/session-148-a1b-tuples-table-borders.md).
 
 #### Phase A5 — Call path + interop signatures (~3-4 weeks)
 
