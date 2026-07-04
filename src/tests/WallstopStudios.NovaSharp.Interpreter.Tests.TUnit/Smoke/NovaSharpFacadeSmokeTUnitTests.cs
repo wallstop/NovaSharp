@@ -72,6 +72,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             using LuaEngine lua = LuaEngine.Create(options);
             LuaFunction function = lua.Run("return function() return 42, 99 end").AsFunction();
             LuaChunk chunk = lua.Compile("return 42, 99");
+            LuaFunction countArguments = lua.Run("return function(...) return select('#', ...) end")
+                .AsFunction();
+            LuaValue noResult = lua.Run("return");
 
             await Assert
                 .That(lua.Run("return 42, 99").AsInteger())
@@ -79,6 +82,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 .ConfigureAwait(false);
             await Assert.That(lua.Call(function).AsInteger()).IsEqualTo(42).ConfigureAwait(false);
             await Assert.That(chunk.Run().AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(noResult.IsNil).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(lua.Call(countArguments, noResult).AsInteger())
+                .IsEqualTo(1)
+                .ConfigureAwait(false);
         }
 
         [Test]
@@ -162,6 +170,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         }
 
         [Test]
+        public async Task TryReadReturnsFalseForConversionFailures()
+        {
+            bool converted = LuaValue.FromString("not an integer").TryRead(out int value);
+
+            await Assert.That(converted).IsFalse().ConfigureAwait(false);
+            await Assert.That(value).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task DisposedEngineRejectsFacadeHandles()
         {
             LuaEngine lua = LuaEngine.Create();
@@ -201,6 +218,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
 
             await Assert.That(actual).IsEqualTo(expected).ConfigureAwait(false);
             await Assert.That(facadeTypes.Length).IsLessThanOrEqualTo(40).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task PublicApiFormatterDistinguishesRefAndOutParameters()
+        {
+            MethodInfo method = typeof(RefOutProbe).GetMethod(nameof(RefOutProbe.Use));
+            ParameterInfo[] parameters = method.GetParameters();
+
+            await Assert
+                .That(FormatParameter(parameters[0]))
+                .IsEqualTo("ref System.Int32 input")
+                .ConfigureAwait(false);
+            await Assert
+                .That(FormatParameter(parameters[1]))
+                .IsEqualTo("out System.Int32 output")
+                .ConfigureAwait(false);
         }
 
         private static string[] EnumerateFacadeApi()
@@ -339,11 +372,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
 
         private static string FormatParameter(ParameterInfo parameter)
         {
-            string line = string.Concat(
-                FormatTypeName(parameter.ParameterType),
-                " ",
-                parameter.Name
-            );
+            string line = string.Concat(FormatParameterTypeName(parameter), " ", parameter.Name);
             if (parameter.HasDefaultValue)
             {
                 line = string.Concat(line, " = ", FormatDefaultValue(parameter));
@@ -354,7 +383,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
 
         private static string FormatParameterWithoutName(ParameterInfo parameter)
         {
-            return FormatTypeName(parameter.ParameterType);
+            return FormatParameterTypeName(parameter);
+        }
+
+        private static string FormatParameterTypeName(ParameterInfo parameter)
+        {
+            if (!parameter.ParameterType.IsByRef)
+            {
+                return FormatTypeName(parameter.ParameterType);
+            }
+
+            string prefix = parameter.IsOut ? "out " : "ref ";
+            return string.Concat(prefix, FormatTypeName(parameter.ParameterType.GetElementType()));
         }
 
         private static string FormatTypeName(Type type)
@@ -416,6 +456,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                     return LuaVersion.Lua51;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(version));
+            }
+        }
+
+        private static class RefOutProbe
+        {
+            public static void Use(ref int input, out int output)
+            {
+                output = input;
             }
         }
     }

@@ -271,7 +271,8 @@ namespace NovaSharp
         /// </summary>
         internal LuaValue WrapResult(DynValue value)
         {
-            return Wrap((value ?? DynValue.Nil).ToScalar());
+            DynValue scalar = (value ?? DynValue.Nil).ToScalar();
+            return Wrap(scalar.Type == DataType.Void ? DynValue.Nil : scalar);
         }
 
         /// <summary>

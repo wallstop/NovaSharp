@@ -5,6 +5,7 @@ namespace NovaSharp
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
     /// Public Lua value wrapper. This is a facade over <see cref="DynValue"/> until the VM-native
@@ -196,6 +197,11 @@ namespace NovaSharp
                 return true;
             }
             catch (InvalidCastException)
+            {
+                value = default(T);
+                return false;
+            }
+            catch (ScriptRuntimeException)
             {
                 value = default(T);
                 return false;

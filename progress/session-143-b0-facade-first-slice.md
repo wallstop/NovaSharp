@@ -13,13 +13,14 @@ Date: 2026-07-03
 - Added focused facade smoke coverage across Lua 5.1-5.5, including scalar equality, float/integer subtype handling, table round-trips, and disposed/foreign-engine handle checks.
 - Addressed Cursor Bugbot feedback by normalizing execution results to the first scalar value for `Run`, `Call`, compiled chunk execution, and coroutine resume/close paths.
 - Addressed Copilot feedback by making `AsInteger` report `Integer` for all invalid kinds and using `DynValueArrayPool` for span-based call/chunk/coroutine argument conversion.
+- Addressed follow-up review feedback by normalizing empty facade results to `nil`, handling runtime conversion failures in `TryRead`, broadening the root-namespace audit allowlist to the full `Api` subtree, and teaching the API baseline formatter to distinguish `ref` from `out` parameters.
 
 ## Validation
 
 - `./scripts/build/quick.sh` exited 0 after the runtime facade changes.
-- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` exited 0 with 35 tests passing after the review fix.
+- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` exited 0 with 37 tests passing after the follow-up review fixes.
 - `bash ./scripts/dev/pre-commit.sh` exited 0; only the repo's existing LLM skill metadata warnings remain.
-- `./scripts/test/quick.sh` exited 0 with 14,564 tests passing after the review fix.
+- `./scripts/test/quick.sh` exited 0 with 14,566 tests passing after the follow-up review fixes.
 
 ## Open Work
 
