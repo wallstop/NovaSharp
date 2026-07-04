@@ -140,7 +140,9 @@ namespace NovaSharp
 
             try
             {
-                return WrapResult(_script.Call(function.ToDynValue(this), arg0.ToDynValue(this)));
+                return WrapResult(
+                    _script.Call(function.ToDynValue(this), arg0.ToDynValueAfterOwnerChecked(this))
+                );
             }
             catch (InterpreterException exception)
             {
@@ -164,8 +166,8 @@ namespace NovaSharp
                 return WrapResult(
                     _script.Call(
                         function.ToDynValue(this),
-                        arg0.ToDynValue(this),
-                        arg1.ToDynValue(this)
+                        arg0.ToDynValueAfterOwnerChecked(this),
+                        arg1.ToDynValueAfterOwnerChecked(this)
                     )
                 );
             }
@@ -191,9 +193,9 @@ namespace NovaSharp
                 return WrapResult(
                     _script.Call(
                         function.ToDynValue(this),
-                        arg0.ToDynValue(this),
-                        arg1.ToDynValue(this),
-                        arg2.ToDynValue(this)
+                        arg0.ToDynValueAfterOwnerChecked(this),
+                        arg1.ToDynValueAfterOwnerChecked(this),
+                        arg2.ToDynValueAfterOwnerChecked(this)
                     )
                 );
             }
@@ -222,22 +224,24 @@ namespace NovaSharp
                     case 0:
                         return WrapResult(_script.Call(functionValue));
                     case 1:
-                        return WrapResult(_script.Call(functionValue, args[0].ToDynValue(this)));
+                        return WrapResult(
+                            _script.Call(functionValue, args[0].ToDynValueAfterOwnerChecked(this))
+                        );
                     case 2:
                         return WrapResult(
                             _script.Call(
                                 functionValue,
-                                args[0].ToDynValue(this),
-                                args[1].ToDynValue(this)
+                                args[0].ToDynValueAfterOwnerChecked(this),
+                                args[1].ToDynValueAfterOwnerChecked(this)
                             )
                         );
                     case 3:
                         return WrapResult(
                             _script.Call(
                                 functionValue,
-                                args[0].ToDynValue(this),
-                                args[1].ToDynValue(this),
-                                args[2].ToDynValue(this)
+                                args[0].ToDynValueAfterOwnerChecked(this),
+                                args[1].ToDynValueAfterOwnerChecked(this),
+                                args[2].ToDynValueAfterOwnerChecked(this)
                             )
                         );
                 }
@@ -248,7 +252,7 @@ namespace NovaSharp
                 );
                 for (int i = 0; i < args.Length; i++)
                 {
-                    converted[i] = args[i].ToDynValue(this);
+                    converted[i] = args[i].ToDynValueAfterOwnerChecked(this);
                 }
 
                 return WrapResult(_script.Call(functionValue, converted.AsSpan(0, args.Length)));
@@ -331,6 +335,135 @@ namespace NovaSharp
         {
             DynValue scalar = (value ?? DynValue.Nil).ToScalar();
             return Wrap(scalar.Type == DataType.Void ? DynValue.Nil : scalar);
+        }
+
+        /// <summary>
+        /// Calls an already owner-validated Lua function with no arguments.
+        /// </summary>
+        internal LuaValue CallOwned(DynValue function)
+        {
+            ThrowIfDisposed();
+            try
+            {
+                return WrapResult(_script.Call(function));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
+        }
+
+        /// <summary>
+        /// Calls an already owner-validated Lua function with one argument.
+        /// </summary>
+        internal LuaValue CallOwned(DynValue function, LuaValue arg0)
+        {
+            ThrowIfDisposed();
+            try
+            {
+                return WrapResult(_script.Call(function, arg0.ToDynValueAfterOwnerChecked(this)));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
+        }
+
+        /// <summary>
+        /// Calls an already owner-validated Lua function with two arguments.
+        /// </summary>
+        internal LuaValue CallOwned(DynValue function, LuaValue arg0, LuaValue arg1)
+        {
+            ThrowIfDisposed();
+            try
+            {
+                return WrapResult(
+                    _script.Call(
+                        function,
+                        arg0.ToDynValueAfterOwnerChecked(this),
+                        arg1.ToDynValueAfterOwnerChecked(this)
+                    )
+                );
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
+        }
+
+        /// <summary>
+        /// Calls an already owner-validated Lua function with three arguments.
+        /// </summary>
+        internal LuaValue CallOwned(DynValue function, LuaValue arg0, LuaValue arg1, LuaValue arg2)
+        {
+            ThrowIfDisposed();
+            try
+            {
+                return WrapResult(
+                    _script.Call(
+                        function,
+                        arg0.ToDynValueAfterOwnerChecked(this),
+                        arg1.ToDynValueAfterOwnerChecked(this),
+                        arg2.ToDynValueAfterOwnerChecked(this)
+                    )
+                );
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
+        }
+
+        /// <summary>
+        /// Calls an already owner-validated Lua function with caller-owned contiguous arguments.
+        /// </summary>
+        internal LuaValue CallOwned(DynValue function, ReadOnlySpan<LuaValue> args)
+        {
+            ThrowIfDisposed();
+            try
+            {
+                switch (args.Length)
+                {
+                    case 0:
+                        return WrapResult(_script.Call(function));
+                    case 1:
+                        return WrapResult(
+                            _script.Call(function, args[0].ToDynValueAfterOwnerChecked(this))
+                        );
+                    case 2:
+                        return WrapResult(
+                            _script.Call(
+                                function,
+                                args[0].ToDynValueAfterOwnerChecked(this),
+                                args[1].ToDynValueAfterOwnerChecked(this)
+                            )
+                        );
+                    case 3:
+                        return WrapResult(
+                            _script.Call(
+                                function,
+                                args[0].ToDynValueAfterOwnerChecked(this),
+                                args[1].ToDynValueAfterOwnerChecked(this),
+                                args[2].ToDynValueAfterOwnerChecked(this)
+                            )
+                        );
+                }
+
+                using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                    args.Length,
+                    out DynValue[] converted
+                );
+                for (int i = 0; i < args.Length; i++)
+                {
+                    converted[i] = args[i].ToDynValueAfterOwnerChecked(this);
+                }
+
+                return WrapResult(_script.Call(function, converted.AsSpan(0, args.Length)));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
         }
 
         /// <summary>

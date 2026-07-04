@@ -22,7 +22,7 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Call()
         {
-            return _owner.Call(this);
+            return _owner.CallOwned(_function);
         }
 
         /// <summary>
@@ -30,7 +30,7 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Call(LuaValue arg0)
         {
-            return _owner.Call(this, arg0);
+            return _owner.CallOwned(_function, arg0);
         }
 
         /// <summary>
@@ -38,7 +38,7 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Call(LuaValue arg0, LuaValue arg1)
         {
-            return _owner.Call(this, arg0, arg1);
+            return _owner.CallOwned(_function, arg0, arg1);
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Call(LuaValue arg0, LuaValue arg1, LuaValue arg2)
         {
-            return _owner.Call(this, arg0, arg1, arg2);
+            return _owner.CallOwned(_function, arg0, arg1, arg2);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace NovaSharp
         /// </summary>
         public LuaValue Call(ReadOnlySpan<LuaValue> args)
         {
-            return _owner.Call(this, args);
+            return _owner.CallOwned(_function, args);
         }
 
         /// <summary>

@@ -427,6 +427,29 @@ namespace NovaSharp
             return value;
         }
 
+        /// <summary>
+        /// Returns the VM value after validating resource ownership. The caller already checked the
+        /// target engine, so scalar literals avoid an extra disposed-engine branch on hot paths.
+        /// </summary>
+        internal DynValue ToDynValueAfterOwnerChecked(LuaEngine owner)
+        {
+            DynValue value = GetValueOrNil();
+            if (_owner == null)
+            {
+                return value;
+            }
+
+            if (!ReferenceEquals(_owner, owner))
+            {
+                throw new InvalidOperationException(
+                    "Lua value belongs to a different LuaEngine instance."
+                );
+            }
+
+            _owner.ThrowIfDisposed();
+            return value;
+        }
+
         private DynValue RequireType(DataType expected, string methodName)
         {
             DynValue value = GetValueOrNil();

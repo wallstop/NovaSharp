@@ -303,9 +303,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             LuaFunction function = first
                 .Run("return function(value) return value end")
                 .AsFunction();
+            LuaFunction secondFunction = second
+                .Run("return function(value) return value end")
+                .AsFunction();
+            LuaValue table = first.Run("return { value = 42 }");
 
             await Assert
                 .That(() => second.Call(function))
+                .Throws<InvalidOperationException>()
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => second.Call(secondFunction, table))
+                .Throws<InvalidOperationException>()
+                .ConfigureAwait(false);
+            await Assert
+                .That(() => secondFunction.Call(table))
                 .Throws<InvalidOperationException>()
                 .ConfigureAwait(false);
         }
