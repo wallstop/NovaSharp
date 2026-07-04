@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     using System;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using Compatibility;
     using DataStructs;
     using Errors;
     using Sandboxing;
@@ -26,6 +27,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private readonly Script _owner;
 
         private int _initArray;
+        private int _constructorArrayLength;
         private int _cachedLength = -1;
         private bool _containsNilEntries;
         private int _trackedEntryCount;
@@ -86,6 +88,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             _stringMap.Clear();
             _arrayMap.Clear();
             _valueMap.Clear();
+            _initArray = 0;
+            _constructorArrayLength = 0;
             _cachedLength = -1;
         }
 
@@ -265,10 +269,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             DynValue keyDynValue,
             DynValue value,
             bool isNumber,
-            int appendKey
+            int appendKey,
+            bool isConstructorArrayField = false
         )
         {
             TablePair prev = listIndex.Set(key, new TablePair(keyDynValue, value));
+            bool targetsConstructorArrayField =
+                !isConstructorArrayField
+                && _constructorArrayLength > 0
+                && isNumber
+                && key is int arrayIndex
+                && arrayIndex > 0
+                && arrayIndex <= _constructorArrayLength
+                && prev.Value != null;
+            bool preservesLua54AbsentNilWrite =
+                !isConstructorArrayField
+                && _constructorArrayLength > 0
+                && value.IsNil()
+                && prev.Value == null
+                && ResolveCompatibilityVersion() == LuaCompatibilityVersion.Lua54;
+            bool preservesConstructorArrayLength =
+                targetsConstructorArrayField || preservesLua54AbsentNilWrite;
+
+            if (
+                !isConstructorArrayField
+                && !preservesConstructorArrayLength
+                && _constructorArrayLength > 0
+            )
+            {
+                _constructorArrayLength = 0;
+                _cachedLength = -1;
+            }
 
             // Track entry additions/removals for memory accounting
             AllocationTracker tracker = _owner?.AllocationTracker;
@@ -293,7 +324,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             // If this is an insert, we can invalidate all iterators and collect dead keys
             if (
-                _containsNilEntries
+                !isConstructorArrayField
+                && !preservesConstructorArrayLength
+                && _containsNilEntries
                 && value.IsNotNil()
                 && (prev.Value == null || prev.Value.IsNil())
             )
@@ -305,7 +338,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 _containsNilEntries = true;
 
-                if (isNumber)
+                if (isNumber && !preservesLua54AbsentNilWrite)
                 {
                     _cachedLength = -1;
                 }
@@ -319,7 +352,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     if (appendKey >= 0)
                     {
                         LinkedListNode<TablePair> next = _arrayMap.Find(appendKey + 1);
-                        if (next == null || next.Value.Value == null || next.Value.Value.IsNil())
+                        if (
+                            _cachedLength >= 0
+                            && (
+                                next == null || next.Value.Value == null || next.Value.Value.IsNil()
+                            )
+                        )
                         {
                             _cachedLength += 1;
                         }
@@ -789,6 +827,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(int key)
         {
+            _constructorArrayLength = 0;
             return PerformTableRemove(_arrayMap, key, true);
         }
 
@@ -901,6 +940,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             _containsNilEntries = false;
+            _constructorArrayLength = 0;
             _cachedLength = -1;
         }
 
@@ -990,21 +1030,91 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     return _cachedLength;
                 }
 
-                _cachedLength = 0;
+                LuaCompatibilityVersion version = ResolveCompatibilityVersion();
 
-                for (
-                    int i = 1;
-                    _arrayMap.TryGetValue(i, out LinkedListNode<TablePair> node)
-                        && node?.Value.Value != null
-                        && node.Value.Value.IsNotNil();
-                    i++
-                )
+                if (_constructorArrayLength > 0 && version != LuaCompatibilityVersion.Lua55)
                 {
-                    _cachedLength = i;
+                    _cachedLength =
+                        version == LuaCompatibilityVersion.Lua54
+                            ? CalculateLua54ConstructorLength()
+                            : CalculatePreLua54ConstructorLength();
+                    return _cachedLength;
                 }
 
+                _cachedLength = CalculatePrefixLength();
                 return _cachedLength;
             }
+        }
+
+        private LuaCompatibilityVersion ResolveCompatibilityVersion()
+        {
+            return _owner == null
+                ? LuaVersionDefaults.CurrentDefault
+                : LuaVersionDefaults.Resolve(_owner.Options.CompatibilityVersion);
+        }
+
+        private int CalculatePrefixLength()
+        {
+            int length = 0;
+
+            for (
+                int i = 1;
+                _arrayMap.TryGetValue(i, out LinkedListNode<TablePair> node)
+                    && node?.Value.Value != null
+                    && node.Value.Value.IsNotNil();
+                i++
+            )
+            {
+                length = i;
+            }
+
+            return length;
+        }
+
+        private int CalculatePreLua54ConstructorLength()
+        {
+            if (IsArrayValueNotNil(_constructorArrayLength))
+            {
+                return _constructorArrayLength;
+            }
+
+            int low = 0;
+            int high = _constructorArrayLength;
+
+            while (high - low > 1)
+            {
+                int middle = (low + high) / 2;
+                if (IsArrayValueNotNil(middle))
+                {
+                    low = middle;
+                }
+                else
+                {
+                    high = middle;
+                }
+            }
+
+            return low;
+        }
+
+        private int CalculateLua54ConstructorLength()
+        {
+            for (int i = _constructorArrayLength; i > 0; i--)
+            {
+                if (IsArrayValueNotNil(i))
+                {
+                    return i;
+                }
+            }
+
+            return 0;
+        }
+
+        private bool IsArrayValueNotNil(int index)
+        {
+            return _arrayMap.TryGetValue(index, out LinkedListNode<TablePair> node)
+                && node?.Value.Value != null
+                && node.Value.Value.IsNotNil();
         }
 
         /// <summary>
@@ -1021,7 +1131,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
             else
             {
-                Set(++_initArray, val.ToScalar());
+                DynValue value = val.ToScalar();
+                this.CheckScriptOwnership(value);
+                _initArray++;
+                PerformTableSet(
+                    _arrayMap,
+                    _initArray,
+                    DynValue.FromNumber(_initArray),
+                    value,
+                    true,
+                    -1,
+                    isConstructorArrayField: true
+                );
+                _constructorArrayLength = _initArray;
             }
         }
 

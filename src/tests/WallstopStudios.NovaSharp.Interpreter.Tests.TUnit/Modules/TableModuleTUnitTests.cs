@@ -32,6 +32,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Modules
 
         [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task PackPreservesExpandedNilAndReportsCount(LuaCompatibilityVersion version)
+        {
+            Script script = new Script(version, CoreModulePresets.Complete);
+            DynValue result = script.DoString(
+                @"
+                local function values()
+                    return 'a', nil, 'c'
+                end
+
+                local packed = table.pack('head', values())
+                assert(packed.n == 4, 'packed count')
+                assert(packed[1] == 'head', 'packed head')
+                assert(packed[2] == 'a', 'packed expanded first')
+                assert(packed[3] == nil, 'packed expanded nil')
+                assert(packed[4] == 'c', 'packed expanded third')
+
+                return packed.n, packed[1], packed[2], packed[3], packed[4]
+                "
+            );
+
+            await Assert.That(result.Tuple.Length).IsEqualTo(5);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(4);
+            await Assert.That(result.Tuple[1].String).IsEqualTo("head");
+            await Assert.That(result.Tuple[2].String).IsEqualTo("a");
+            await Assert.That(result.Tuple[3].IsNil()).IsTrue();
+            await Assert.That(result.Tuple[4].String).IsEqualTo("c");
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
         public async Task UnpackHonorsExplicitBounds(LuaCompatibilityVersion version)
         {
             Script script = new Script(version, CoreModulePresets.Complete);
