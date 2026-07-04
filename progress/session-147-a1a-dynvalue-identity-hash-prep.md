@@ -44,8 +44,11 @@ Date: 2026-07-04
 
 - Copilot added facade validation for negative `ScriptCacheMaxEntries` when script caching is enabled, plus smoke coverage for the enabled and disabled caching cases.
 - Reviewed and fast-forwarded Copilot's `ae5caf5f` commit before closing the PR state.
+- Addressed Copilot's `UpvalueIdentifier` review thread by making the debug-only reference ID counter allocation atomic.
 - Local validation on the combined head:
   - `./scripts/test/quick.sh --full -c NovaSharpFacadeExceptionTUnitTests` passed: 14 tests, 0 failures.
+  - `./scripts/test/quick.sh --full -c DebugModuleTUnitTests` passed: 597 tests, 0 failures.
+  - `./scripts/test/quick.sh --full -c DebugModuleTapParityTUnitTests` passed: 85 tests, 0 failures.
   - `./scripts/build/quick.sh --all` passed.
   - `./scripts/test/quick.sh` passed: 14,591 tests, 0 failures.
   - `bash ./scripts/dev/pre-commit.sh` passed.
