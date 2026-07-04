@@ -28,6 +28,15 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(options));
             }
 
+            if (options.EnableScriptCaching && options.ScriptCacheMaxEntries < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(options),
+                    options.ScriptCacheMaxEntries,
+                    "LuaEngineOptions.ScriptCacheMaxEntries cannot be negative when script caching is enabled."
+                );
+            }
+
             ScriptOptions scriptOptions = CreateScriptOptions(options, this);
             _script = new Script(ToCoreModules(options.Modules), scriptOptions);
             _globals = new LuaTable(this, _script.Globals);

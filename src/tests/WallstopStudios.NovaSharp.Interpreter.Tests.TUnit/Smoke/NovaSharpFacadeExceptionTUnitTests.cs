@@ -253,5 +253,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 .Throws<ArgumentNullException>()
                 .ConfigureAwait(false);
         }
+
+        [Test]
+        public async Task NegativeScriptCacheMaxEntriesThrowsAtFacadeBoundary()
+        {
+            LuaEngineOptions options = new LuaEngineOptions
+            {
+                EnableScriptCaching = true,
+                ScriptCacheMaxEntries = -1,
+            };
+
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                LuaEngine.Create(options)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("options").ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("ScriptCacheMaxEntries")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task NegativeScriptCacheMaxEntriesWithCachingDisabledDoesNotThrow()
+        {
+            LuaEngineOptions options = new LuaEngineOptions
+            {
+                EnableScriptCaching = false,
+                ScriptCacheMaxEntries = -1,
+            };
+
+            using LuaEngine lua = LuaEngine.Create(options);
+
+            LuaValue result = lua.Run("return 42");
+
+            await Assert.That(result.AsNumber()).IsEqualTo(42).ConfigureAwait(false);
+        }
     }
 }
