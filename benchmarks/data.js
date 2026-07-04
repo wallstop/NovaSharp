@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783113294571,
+  "lastUpdate": 1783183352371,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -430,6 +430,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 673.474,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "43fa9538db309e67c590e96c5ebc338478608583",
+          "message": "[codex] Add B0 facade first slice (#50)\n\n## Summary\n- Add the first root `NovaSharp` B0 facade over the current VM:\nengine/value/table/function/chunk/coroutine wrappers plus root\noption/provider types.\n- Add a checked-in `PublicAPI.Shipped.txt` baseline with\nreflection-backed TUnit enforcement and focused facade smoke coverage.\n- Update PLAN/progress notes and namespace audit allowlist for the\nintentional root facade namespace.\n\n## Local validation\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` (30\npassed)\n- `./scripts/test/quick.sh` (14,559 passed)\n- `bash ./scripts/dev/pre-commit.sh` (existing LLM skill metadata\nwarnings only)\n- push hook pre-push checks (formatting, Markdown, branding, namespace,\ntooling, YAML/actions lint, build)\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> New public API and VM value identity/hash behavior change host-facing\nsemantics; changes are wrapper-heavy with broad test coverage and no\nsecurity-critical paths.\n> \n> **Overview**\n> Introduces the **Phase B0** root **`NovaSharp`** facade over the\nexisting VM: **`LuaEngine`**, **`LuaValue`**,\ntables/functions/chunks/coroutines, options/sandbox types, and a\n**`LuaException`** hierarchy that maps interpreter failures at public\nboundaries. A checked-in **`PublicAPI.Shipped.txt`** is enforced by\nTUnit (core type budget under 40). Runnable **B0 samples**,\n**BenchmarkDotNet** facade-vs-`Script` overhead cases, and\nsmoke/exception tests cover the new surface; call paths were tuned so\n**`Run`/`Call` stay within the planned ~5% overhead vs **`Script`**.\n> \n> **A1a prep** removes stored **`DynValue.ReferenceId`** and the mutable\nhash cache, adds **lazy stable userdata hashing** for table keys, gives\n**`debug.upvalueid`** its own debug handle IDs, and updates the VS Code\nvariable inspector to derive wrapper identity without the old field.\n**`PLAN.md`** is expanded with a 2026 research audit (A4.5, sandbox\nthreat model, calibrated A8 estimates), marks B0 complete, and documents\nsession progress.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n114c505a7f4352e4cf48c2a7e6c9802fcc172783. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\n---------\n\nCo-authored-by: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>",
+          "timestamp": "2026-07-04T09:37:03-07:00",
+          "tree_id": "db65410494575aa22ead31695a3378c6b7251fef",
+          "url": "https://github.com/wallstop/NovaSharp/commit/43fa9538db309e67c590e96c5ebc338478608583"
+        },
+        "date": 1783183351703,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 167.456,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 176.427,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 173.912,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 276.002,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 282.885,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 277.661,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 348.463,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 342.607,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 364.523,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 377.615,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 381.08,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 374.206,
             "unit": "ns",
             "extra": ""
           }
