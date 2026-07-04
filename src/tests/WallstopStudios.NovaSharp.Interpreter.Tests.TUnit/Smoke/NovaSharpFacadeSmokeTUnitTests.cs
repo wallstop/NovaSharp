@@ -259,9 +259,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         public async Task PublicFacadeExportsExpectedCoreSurface()
         {
             string path = Path.Combine(AppContext.BaseDirectory, "PublicAPI.Shipped.txt");
-            string expected = await File.ReadAllTextAsync(path).ConfigureAwait(false);
-            string actual =
-                string.Join(Environment.NewLine, EnumerateFacadeApi()) + Environment.NewLine;
+            string expected = NormalizeLineEndings(
+                await File.ReadAllTextAsync(path).ConfigureAwait(false)
+            );
+            string actual = string.Join("\n", EnumerateFacadeApi()) + "\n";
             Type[] facadeTypes = EnumerateFacadeTypes();
 
             await Assert.That(actual).IsEqualTo(expected).ConfigureAwait(false);
@@ -513,6 +514,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 parameter.DefaultValue,
                 System.Globalization.CultureInfo.InvariantCulture
             );
+        }
+
+        private static string NormalizeLineEndings(string value)
+        {
+            return value
+                .Replace("\r\n", "\n", StringComparison.Ordinal)
+                .Replace("\r", "\n", StringComparison.Ordinal);
         }
 
         private static LuaVersion ToLuaVersion(LuaCompatibilityVersion version)

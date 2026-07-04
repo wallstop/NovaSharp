@@ -37,3 +37,8 @@ Date: 2026-07-04
 ## Open Work
 
 - Investigate the fixed-arity call rows above 1.05x before marking the B0 5% overhead criterion complete.
+
+## Review Follow-up
+
+- Addressed Copilot feedback on 2026-07-04 by normalizing the public API baseline smoke test to fixed `\n` line endings before comparing generated facade API output with `PublicAPI.Shipped.txt`.
+- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` passed after the follow-up: 40 tests, 0 failures.
