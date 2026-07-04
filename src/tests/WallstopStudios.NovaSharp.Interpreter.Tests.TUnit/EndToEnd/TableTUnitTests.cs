@@ -177,6 +177,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
             new object[] { "local t = { nil, 1 }; t.x = nil", 0, 2, 0 },
             new object[] { "local t = { nil, 1 }; t[false] = nil", 0, 2, 0 },
             new object[] { "local t = { nil, 1 }; local _ = #t; t.x = nil", 0, 2, 0 },
+            new object[] { "local t = { nil, 1 }; t.x = nil; t.x = nil", 0, 2, 0 },
+            new object[] { "local t = { nil, 1 }; t[false] = nil; t[false] = nil", 0, 2, 0 },
             new object[] { "local t = { nil, 1, x = 1 }", 2, 2, 0 },
             new object[] { "local t = { nil, 1, [false] = 1 }", 2, 2, 0 },
             new object[] { "local t = { nil, 1, x = nil }", 2, 2, 0 },

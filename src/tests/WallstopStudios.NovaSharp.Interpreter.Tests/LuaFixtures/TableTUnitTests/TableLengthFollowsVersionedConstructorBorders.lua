@@ -1,7 +1,7 @@
 -- @lua-versions: all
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableTUnitTests.cs:193
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/TableTUnitTests.cs:195
 -- @test: TableTUnitTests.TableLengthFollowsVersionedConstructorBorders
 local function expect(label, actual, lua51to53, lua54, lua55)
     local expected = lua51to53
@@ -84,6 +84,16 @@ local cachedThenAbsentStringNil = { nil, 1 }
 _ = #cachedThenAbsentStringNil
 cachedThenAbsentStringNil.x = nil
 expect('cached absent string nil write', #cachedThenAbsentStringNil, 0, 2, 0)
+
+local repeatedAbsentStringNil = { nil, 1 }
+repeatedAbsentStringNil.x = nil
+repeatedAbsentStringNil.x = nil
+expect('repeated absent string nil write', #repeatedAbsentStringNil, 0, 2, 0)
+
+local repeatedAbsentValueNil = { nil, 1 }
+repeatedAbsentValueNil[false] = nil
+repeatedAbsentValueNil[false] = nil
+expect('repeated absent value nil write', #repeatedAbsentValueNil, 0, 2, 0)
 
 expect('mixed constructor string field', #({ nil, 1, x = 1 }), 2, 2, 0)
 expect('mixed constructor value field', #({ nil, 1, [false] = 1 }), 2, 2, 0)

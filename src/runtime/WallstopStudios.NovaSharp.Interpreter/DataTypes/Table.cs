@@ -282,6 +282,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )
         {
             TablePair prev = listIndex.Set(key, new TablePair(keyDynValue, value));
+            bool writesNilToMissingKey =
+                value.IsNil() && (prev.Value == null || prev.Value.IsNil());
             bool targetsConstructorArrayField =
                 !isConstructorField
                 && _constructorArrayLength > 0
@@ -293,8 +295,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             bool preservesLua54AbsentNilWrite =
                 !isConstructorField
                 && _constructorArrayLength > 0
-                && value.IsNil()
-                && prev.Value == null
+                && writesNilToMissingKey
                 && ResolveCompatibilityVersion() == LuaCompatibilityVersion.Lua54;
             bool clearsAbsentNumericNilWrite =
                 !isConstructorField
