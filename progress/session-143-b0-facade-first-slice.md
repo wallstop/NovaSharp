@@ -11,13 +11,14 @@ Date: 2026-07-03
 - Added `RunAsync` as a non-suspending placeholder over the sync path so the public shape exists before the real async/coroutine bridge.
 - Added `PublicAPI.Shipped.txt` plus a reflection-backed TUnit baseline check for the root facade surface, public constructors, and the `<40` core type budget.
 - Added focused facade smoke coverage across Lua 5.1-5.5, including scalar equality, float/integer subtype handling, table round-trips, and disposed/foreign-engine handle checks.
+- Addressed Cursor Bugbot feedback by normalizing execution results to the first scalar value for `Run`, `Call`, compiled chunk execution, and coroutine resume/close paths.
 
 ## Validation
 
 - `./scripts/build/quick.sh` exited 0 after the runtime facade changes.
-- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` exited 0 with 30 tests passing.
+- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` exited 0 with 35 tests passing after the review fix.
 - `bash ./scripts/dev/pre-commit.sh` exited 0; only the repo's existing LLM skill metadata warnings remain.
-- `./scripts/test/quick.sh` exited 0 with 14,559 tests passing.
+- `./scripts/test/quick.sh` exited 0 with 14,564 tests passing after the review fix.
 
 ## Open Work
 

@@ -65,7 +65,7 @@ namespace NovaSharp
         public LuaValue Run(string code, string chunkName = null)
         {
             ThrowIfDisposed();
-            return Wrap(_script.DoString(code, null, chunkName));
+            return WrapResult(_script.DoString(code, null, chunkName));
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            return Wrap(_script.Call(function.ToDynValue(this)));
+            return WrapResult(_script.Call(function.ToDynValue(this)));
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            return Wrap(_script.Call(function.ToDynValue(this), arg0.ToDynValue(this)));
+            return WrapResult(_script.Call(function.ToDynValue(this), arg0.ToDynValue(this)));
         }
 
         /// <summary>
@@ -129,7 +129,7 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            return Wrap(
+            return WrapResult(
                 _script.Call(
                     function.ToDynValue(this),
                     arg0.ToDynValue(this),
@@ -149,7 +149,7 @@ namespace NovaSharp
                 throw new ArgumentNullException(nameof(function));
             }
 
-            return Wrap(
+            return WrapResult(
                 _script.Call(
                     function.ToDynValue(this),
                     arg0.ToDynValue(this),
@@ -174,11 +174,11 @@ namespace NovaSharp
             switch (args.Length)
             {
                 case 0:
-                    return Wrap(_script.Call(functionValue));
+                    return WrapResult(_script.Call(functionValue));
                 case 1:
-                    return Wrap(_script.Call(functionValue, args[0].ToDynValue(this)));
+                    return WrapResult(_script.Call(functionValue, args[0].ToDynValue(this)));
                 case 2:
-                    return Wrap(
+                    return WrapResult(
                         _script.Call(
                             functionValue,
                             args[0].ToDynValue(this),
@@ -186,7 +186,7 @@ namespace NovaSharp
                         )
                     );
                 case 3:
-                    return Wrap(
+                    return WrapResult(
                         _script.Call(
                             functionValue,
                             args[0].ToDynValue(this),
@@ -202,7 +202,7 @@ namespace NovaSharp
                 converted[i] = args[i].ToDynValue(this);
             }
 
-            return Wrap(_script.Call(functionValue, converted.AsSpan()));
+            return WrapResult(_script.Call(functionValue, converted.AsSpan()));
         }
 
         /// <summary>
@@ -260,6 +260,14 @@ namespace NovaSharp
         {
             ThrowIfDisposed();
             return new LuaValue(this, value ?? DynValue.Nil);
+        }
+
+        /// <summary>
+        /// Wraps the first scalar VM result as an engine-owned facade value.
+        /// </summary>
+        internal LuaValue WrapResult(DynValue value)
+        {
+            return Wrap((value ?? DynValue.Nil).ToScalar());
         }
 
         /// <summary>

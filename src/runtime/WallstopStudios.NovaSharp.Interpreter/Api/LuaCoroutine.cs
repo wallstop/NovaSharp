@@ -37,7 +37,7 @@ namespace NovaSharp
         public LuaValue Resume()
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(_coroutineValue.Coroutine.Resume());
+            return _owner.WrapResult(_coroutineValue.Coroutine.Resume());
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace NovaSharp
         public LuaValue Resume(LuaValue arg0)
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(_coroutineValue.Coroutine.Resume(arg0.ToDynValue(_owner)));
+            return _owner.WrapResult(_coroutineValue.Coroutine.Resume(arg0.ToDynValue(_owner)));
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace NovaSharp
         public LuaValue Resume(LuaValue arg0, LuaValue arg1)
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(
+            return _owner.WrapResult(
                 _coroutineValue.Coroutine.Resume(arg0.ToDynValue(_owner), arg1.ToDynValue(_owner))
             );
         }
@@ -68,7 +68,7 @@ namespace NovaSharp
             _owner.ThrowIfDisposed();
             if (args.Length == 0)
             {
-                return _owner.Wrap(_coroutineValue.Coroutine.Resume());
+                return _owner.WrapResult(_coroutineValue.Coroutine.Resume());
             }
 
             DynValue[] converted = new DynValue[args.Length];
@@ -77,7 +77,7 @@ namespace NovaSharp
                 converted[i] = args[i].ToDynValue(_owner);
             }
 
-            return _owner.Wrap(_coroutineValue.Coroutine.Resume(converted.AsSpan()));
+            return _owner.WrapResult(_coroutineValue.Coroutine.Resume(converted.AsSpan()));
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace NovaSharp
         public LuaValue Close()
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(_coroutineValue.Coroutine.Close());
+            return _owner.WrapResult(_coroutineValue.Coroutine.Close());
         }
 
         private static LuaCoroutineState ToFacadeState(CoroutineState state)

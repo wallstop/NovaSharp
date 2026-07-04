@@ -64,6 +64,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
 
         [Test]
         [AllLuaVersions]
+        public async Task ExecutionReturnsFirstResultAcrossAllVersions(
+            LuaCompatibilityVersion version
+        )
+        {
+            LuaEngineOptions options = new LuaEngineOptions { Version = ToLuaVersion(version) };
+            using LuaEngine lua = LuaEngine.Create(options);
+            LuaFunction function = lua.Run("return function() return 42, 99 end").AsFunction();
+            LuaChunk chunk = lua.Compile("return 42, 99");
+
+            await Assert
+                .That(lua.Run("return 42, 99").AsInteger())
+                .IsEqualTo(42)
+                .ConfigureAwait(false);
+            await Assert.That(lua.Call(function).AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(chunk.Run().AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
         public async Task GlobalsAndCreatedTableRoundTripAcrossAllVersions(
             LuaCompatibilityVersion version
         )

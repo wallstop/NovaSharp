@@ -24,7 +24,7 @@ namespace NovaSharp
         public LuaValue Run()
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(_compiled.Execute());
+            return _owner.WrapResult(_compiled.Execute());
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace NovaSharp
         public LuaValue Run(LuaValue arg0)
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(_compiled.Execute(arg0.ToDynValue(_owner)));
+            return _owner.WrapResult(_compiled.Execute(arg0.ToDynValue(_owner)));
         }
 
         /// <summary>
@@ -42,7 +42,9 @@ namespace NovaSharp
         public LuaValue Run(LuaValue arg0, LuaValue arg1)
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(_compiled.Execute(arg0.ToDynValue(_owner), arg1.ToDynValue(_owner)));
+            return _owner.WrapResult(
+                _compiled.Execute(arg0.ToDynValue(_owner), arg1.ToDynValue(_owner))
+            );
         }
 
         /// <summary>
@@ -51,7 +53,7 @@ namespace NovaSharp
         public LuaValue Run(LuaValue arg0, LuaValue arg1, LuaValue arg2)
         {
             _owner.ThrowIfDisposed();
-            return _owner.Wrap(
+            return _owner.WrapResult(
                 _compiled.Execute(
                     arg0.ToDynValue(_owner),
                     arg1.ToDynValue(_owner),
@@ -68,7 +70,7 @@ namespace NovaSharp
             _owner.ThrowIfDisposed();
             if (args.Length == 0)
             {
-                return _owner.Wrap(_compiled.Execute());
+                return _owner.WrapResult(_compiled.Execute());
             }
 
             DynValue[] converted = new DynValue[args.Length];
@@ -77,7 +79,7 @@ namespace NovaSharp
                 converted[i] = args[i].ToDynValue(_owner);
             }
 
-            return _owner.Wrap(_compiled.Execute(converted.AsSpan()));
+            return _owner.WrapResult(_compiled.Execute(converted.AsSpan()));
         }
     }
 }
