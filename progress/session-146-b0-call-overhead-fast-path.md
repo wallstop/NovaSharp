@@ -34,6 +34,24 @@ Observed B0 facade ratios after the fast path:
 
 This local run puts the measured B0 `Run`/fixed-arity `Call` facade overhead within the 5% target. PR benchmark CI still needs to confirm the same threshold before B0 can be marked complete.
 
+## PR Benchmark Evidence
+
+PR benchmark run `28696439454` confirmed the same B0 exit criterion on the GitHub runner:
+
+| Scenario | Ratio | Allocations |
+| --- | ---: | ---: |
+| `LuaEngine.Run Cached` | 0.97x | 464 B, same as `Script.DoString` |
+| `LuaEngine.Call`, arity 0 | 1.03x | 192 B, same as `Script.Call` |
+| `LuaEngine.Call`, arity 1 | 1.01x | 400 B, same as `Script.Call` |
+| `LuaEngine.Call`, arity 2 | 1.04x | 512 B, same as `Script.Call` |
+| `LuaEngine.Call`, arity 3 | 0.93x | 624 B, same as `Script.Call` |
+| `LuaFunction.Call`, arity 0 | 1.01x | 192 B, same as `Script.Call` |
+| `LuaFunction.Call`, arity 1 | 1.03x | 400 B, same as `Script.Call` |
+| `LuaFunction.Call`, arity 2 | 1.02x | 512 B, same as `Script.Call` |
+| `LuaFunction.Call`, arity 3 | 0.93x | 624 B, same as `Script.Call` |
+
+This closes the Phase B0 facade `Run`/fixed-arity `Call` 5% overhead exit criterion for the current benchmark surface.
+
 ## Validation
 
 - `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` passed: 42 tests, 0 failures.
@@ -45,6 +63,5 @@ This local run puts the measured B0 `Run`/fixed-arity `Call` facade overhead wit
 
 ## Open Work
 
-- Push the fast path and wait for PR benchmark CI to confirm B0 facade `Run`/`Call` overhead stays within 5% on the CI runner.
 - The current benchmark still measures prewrapped `LuaValue` arguments; a follow-up B0 performance hardening slice should add explicit rows for implicit scalar conversion used by per-frame samples.
 - CI currently reports B0 facade overhead but does not enforce it as a dedicated B0 gate.
