@@ -200,15 +200,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task CollectDeadKeysRemovesNilEntries(LuaCompatibilityVersion version)
         {
-            Table table = new(new Script());
+            Table table = new(new Script(version));
+            DynValue valueKey = DynValue.False;
             table.Set(1, DynValue.NewNumber(10));
-            table.Set(2, DynValue.NewNumber(20));
-            await Assert.That(table.Length).IsEqualTo(2).ConfigureAwait(false);
-
+            table.Set(3, DynValue.NewNumber(30));
             table.Set(2, DynValue.Nil);
+            table.Set("dead", DynValue.Nil);
+            table.Set(valueKey, DynValue.Nil);
+            await Assert.That(table.Count).IsEqualTo(5).ConfigureAwait(false);
             table.CollectDeadKeys();
 
             await Assert.That(table.RawGet(2)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet("dead")).IsNull().ConfigureAwait(false);
+            await Assert.That(table.RawGet(valueKey)).IsNull().ConfigureAwait(false);
+            await Assert.That(table.Count).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(table.Length).IsEqualTo(1).ConfigureAwait(false);
         }
 

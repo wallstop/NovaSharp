@@ -974,12 +974,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public void CollectDeadKeys()
         {
-            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            for (LinkedListNode<TablePair> node = _values.First; node != null; )
             {
+                LinkedListNode<TablePair> next = node.Next;
                 if (node.Value.Value.IsNil())
                 {
                     Remove(node.Value.Key);
                 }
+
+                node = next;
             }
 
             _containsNilEntries = false;
