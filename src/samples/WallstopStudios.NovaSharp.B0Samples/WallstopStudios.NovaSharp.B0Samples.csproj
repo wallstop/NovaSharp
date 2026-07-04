@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <AssemblyName>WallstopStudios.NovaSharp.B0Samples</AssemblyName>
+        <TargetFramework>net8.0</TargetFramework>
+        <RootNamespace>WallstopStudios.NovaSharp.B0Samples</RootNamespace>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
+    </ItemGroup>
+</Project>
