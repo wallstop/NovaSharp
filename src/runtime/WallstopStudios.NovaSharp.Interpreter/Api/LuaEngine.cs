@@ -311,7 +311,6 @@ namespace NovaSharp
         public void Dispose()
         {
             _disposed = true;
-            GC.SuppressFinalize(this);
         }
 
         /// <summary>

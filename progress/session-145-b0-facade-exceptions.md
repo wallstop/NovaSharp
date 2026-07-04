@@ -35,3 +35,4 @@ Date: 2026-07-04
 
 - Addressed Cursor feedback on 2026-07-04 by making `LuaSandboxException` snapshot `SandboxViolationException.Details` once and tolerate message-only sandbox exceptions as `Unknown` violations with zero limits.
 - Added regression coverage for wrapping a message-only `SandboxViolationException` without losing the original message or raising a secondary CLR exception.
+- Addressed Copilot feedback on 2026-07-04 by removing the redundant `GC.SuppressFinalize(this)` call from `LuaEngine.Dispose()`, because `LuaEngine` has no finalizer.
