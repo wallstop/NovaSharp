@@ -281,7 +281,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             bool isConstructorField = false
         )
         {
-            bool hadExistingKey = listIndex.TryGetValue(key, out _);
             TablePair prev = listIndex.Set(key, new TablePair(keyDynValue, value));
             bool targetsConstructorArrayField =
                 !isConstructorField
@@ -290,19 +289,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 && key is int arrayIndex
                 && arrayIndex > 0
                 && arrayIndex <= _constructorArrayLength
-                && hadExistingKey;
+                && prev.Value != null;
             bool preservesLua54AbsentNilWrite =
                 !isConstructorField
                 && _constructorArrayLength > 0
                 && value.IsNil()
-                && !hadExistingKey
+                && prev.Value == null
                 && ResolveCompatibilityVersion() == LuaCompatibilityVersion.Lua54;
             bool clearsAbsentNumericNilWrite =
                 !isConstructorField
                 && _constructorArrayLength > 0
                 && isNumber
                 && value.IsNil()
-                && !hadExistingKey
+                && prev.Value == null
                 && ResolveCompatibilityVersion() != LuaCompatibilityVersion.Lua54;
             bool preservesConstructorArrayLength =
                 !clearsAbsentNumericNilWrite
