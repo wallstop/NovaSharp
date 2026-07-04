@@ -16,13 +16,14 @@ Date: 2026-07-03
 - Addressed follow-up review feedback by normalizing empty facade results to `nil`, handling runtime conversion failures in `TryRead`, broadening the root-namespace audit allowlist to the full `Api` subtree, and teaching the API baseline formatter to distinguish `ref` from `out` parameters.
 - Addressed coroutine close review feedback by preserving VM close result tuples through `LuaCoroutine.Close()` and adding `LuaValue.AsTuple()` for tuple diagnostics.
 - Addressed Copilot API clarity feedback by making `AsNumber` misuse report `Number` and aligning equality operator XML docs with Lua value semantics.
+- Addressed Copilot sandbox and formatter feedback by returning defensive snapshots for restricted sandbox collections and formatting ref-return baseline entries as `ref`.
 
 ## Validation
 
 - `./scripts/build/quick.sh` exited 0 after the runtime facade changes.
-- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` exited 0 with 39 tests passing after the follow-up review fixes.
+- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` exited 0 with 40 tests passing after the follow-up review fixes.
 - `bash ./scripts/dev/pre-commit.sh` exited 0; only the repo's existing LLM skill metadata warnings remain.
-- `./scripts/test/quick.sh` exited 0 with 14,568 tests passing after the follow-up review fixes.
+- `./scripts/test/quick.sh` exited 0 with 14,569 tests passing after the follow-up review fixes.
 
 ## Open Work
 

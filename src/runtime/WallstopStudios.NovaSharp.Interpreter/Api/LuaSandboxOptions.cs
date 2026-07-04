@@ -125,12 +125,12 @@ namespace NovaSharp
         /// <summary>
         /// Gets the denied module names.
         /// </summary>
-        public IReadOnlyCollection<string> RestrictedModules => _restrictedModules;
+        public IReadOnlyCollection<string> RestrictedModules => Snapshot(_restrictedModules);
 
         /// <summary>
         /// Gets the denied function names.
         /// </summary>
-        public IReadOnlyCollection<string> RestrictedFunctions => _restrictedFunctions;
+        public IReadOnlyCollection<string> RestrictedFunctions => Snapshot(_restrictedFunctions);
 
         /// <summary>
         /// Creates restrictive sandbox options for untrusted scripts.
@@ -302,6 +302,18 @@ namespace NovaSharp
             }
 
             return options;
+        }
+
+        private static string[] Snapshot(HashSet<string> values)
+        {
+            if (values.Count == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            string[] snapshot = new string[values.Count];
+            values.CopyTo(snapshot);
+            return snapshot;
         }
     }
 }

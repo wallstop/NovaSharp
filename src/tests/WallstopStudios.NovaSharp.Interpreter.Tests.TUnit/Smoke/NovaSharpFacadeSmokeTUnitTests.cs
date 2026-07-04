@@ -1,6 +1,7 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
@@ -271,6 +272,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         public async Task PublicApiFormatterDistinguishesRefAndOutParameters()
         {
             MethodInfo method = typeof(RefOutProbe).GetMethod(nameof(RefOutProbe.Use));
+            MethodInfo refReturnMethod = typeof(RefOutProbe).GetMethod(nameof(RefOutProbe.Return));
             ParameterInfo[] parameters = method.GetParameters();
 
             await Assert
@@ -280,6 +282,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             await Assert
                 .That(FormatParameter(parameters[1]))
                 .IsEqualTo("out System.Int32 output")
+                .ConfigureAwait(false);
+            await Assert
+                .That(FormatTypeName(refReturnMethod.ReturnType))
+                .IsEqualTo("ref System.Int32")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SandboxRestrictionCollectionsAreSnapshots()
+        {
+            LuaSandboxOptions options = new LuaSandboxOptions()
+                .RestrictModule("io")
+                .RestrictFunction("load");
+            IReadOnlyCollection<string> modules = options.RestrictedModules;
+            IReadOnlyCollection<string> functions = options.RestrictedFunctions;
+
+            await Assert.That(modules is HashSet<string>).IsFalse().ConfigureAwait(false);
+            await Assert.That(functions is HashSet<string>).IsFalse().ConfigureAwait(false);
+
+            ((string[])modules)[0] = "os";
+            ((string[])functions)[0] = "loadfile";
+
+            await Assert.That(options.IsModuleRestricted("io")).IsTrue().ConfigureAwait(false);
+            await Assert.That(options.IsModuleRestricted("os")).IsFalse().ConfigureAwait(false);
+            await Assert.That(options.IsFunctionRestricted("load")).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(options.IsFunctionRestricted("loadfile"))
+                .IsFalse()
                 .ConfigureAwait(false);
         }
 
@@ -448,7 +478,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         {
             if (type.IsByRef)
             {
-                return string.Concat("out ", FormatTypeName(type.GetElementType()));
+                return string.Concat("ref ", FormatTypeName(type.GetElementType()));
             }
 
             if (!type.IsGenericType)
@@ -511,6 +541,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             public static void Use(ref int input, out int output)
             {
                 output = input;
+            }
+
+            public static ref int Return(ref int input)
+            {
+                return ref input;
             }
         }
     }
