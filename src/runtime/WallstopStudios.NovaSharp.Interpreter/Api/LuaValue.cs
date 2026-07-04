@@ -189,11 +189,12 @@ namespace NovaSharp
         public LuaValue[] AsTuple()
         {
             DynValue value = RequireType(DataType.Tuple, nameof(AsTuple));
+            LuaEngine tupleOwner = GetOwnerOrThrow();
             DynValue[] tuple = value.Tuple;
             LuaValue[] values = new LuaValue[tuple.Length];
             for (int i = 0; i < tuple.Length; i++)
             {
-                LuaEngine owner = RequiresOwner(tuple[i]) ? _owner : null;
+                LuaEngine owner = RequiresOwner(tuple[i]) ? tupleOwner : null;
                 values[i] = new LuaValue(owner, tuple[i]);
             }
 

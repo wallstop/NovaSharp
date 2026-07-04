@@ -37,3 +37,4 @@ Date: 2026-07-04
 - Added regression coverage for wrapping a message-only `SandboxViolationException` without losing the original message or raising a secondary CLR exception.
 - Addressed Copilot feedback on 2026-07-04 by removing the redundant `GC.SuppressFinalize(this)` call from `LuaEngine.Dispose()`, because `LuaEngine` has no finalizer.
 - Addressed Copilot feedback on 2026-07-04 by making scalar `LuaValue` wrappers ownerless while preserving owner binding for tables, functions, threads, userdata, and tuples; tuple decomposition now also drops owners from scalar tuple elements.
+- Addressed Copilot feedback on 2026-07-04 by making `LuaValue.AsTuple()` validate its owning engine before materializing tuple elements, matching table/function/coroutine facade handle disposal behavior.

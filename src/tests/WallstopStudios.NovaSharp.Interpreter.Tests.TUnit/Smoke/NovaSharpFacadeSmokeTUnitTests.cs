@@ -176,6 +176,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             await Assert.That(closeResult.Owner).IsSameReferenceAs(lua).ConfigureAwait(false);
             await Assert.That(closeValues[0].Owner).IsNull().ConfigureAwait(false);
             await Assert.That(closeValues[1].Owner).IsNull().ConfigureAwait(false);
+
+            lua.Dispose();
+
+            await Assert
+                .That(() => closeResult.AsTuple())
+                .Throws<ObjectDisposedException>()
+                .ConfigureAwait(false);
         }
 
         [Test]
