@@ -34,10 +34,12 @@ namespace NovaSharp
         internal LuaSandboxException(SandboxViolationException innerException)
             : base(innerException)
         {
-            ViolationKind = ToFacadeKind(innerException?.ViolationType);
-            ConfiguredLimit = innerException?.ConfiguredLimit ?? 0;
-            ActualValue = innerException?.ActualValue ?? 0;
-            DeniedAccessName = innerException?.DeniedAccessName;
+            SandboxViolationDetails details =
+                innerException == null ? default : innerException.Details;
+            ViolationKind = ToFacadeKind(details.Kind);
+            ConfiguredLimit = details.LimitValue;
+            ActualValue = details.ActualValue;
+            DeniedAccessName = details.AccessName;
         }
 
 #if !(PCL || ((!UNITY_EDITOR) && (ENABLE_DOTNET)) || NETFX_CORE)

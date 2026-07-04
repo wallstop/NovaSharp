@@ -158,6 +158,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         }
 
         [Test]
+        public async Task SandboxViolationWithoutDetailsTranslatesToUnknownViolation()
+        {
+            SandboxViolationException innerException = new SandboxViolationException(
+                "legacy sandbox failure"
+            );
+
+            LuaSandboxException exception = (LuaSandboxException)LuaException.Wrap(innerException);
+
+            await Assert
+                .That(exception.InnerException)
+                .IsEqualTo(innerException)
+                .ConfigureAwait(false);
+            await Assert
+                .That(exception.ViolationKind)
+                .IsEqualTo(LuaSandboxViolationKind.Unknown)
+                .ConfigureAwait(false);
+            await Assert.That(exception.IsAccessDenied).IsFalse().ConfigureAwait(false);
+            await Assert.That(exception.IsLimitViolation).IsFalse().ConfigureAwait(false);
+            await Assert.That(exception.ConfiguredLimit).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(exception.ActualValue).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(exception.DeniedAccessName).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(exception.Message)
+                .Contains("legacy sandbox failure")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task InstructionLimitTranslatesSandboxViolationDetails()
         {
             LuaEngineOptions options = LuaEngineOptions.Default;

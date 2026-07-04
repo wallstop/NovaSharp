@@ -20,13 +20,18 @@ Date: 2026-07-04
 ## Validation
 
 - `dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj -c Release` passed with 0 warnings and 0 errors.
-- `./scripts/test/quick.sh --full -c NovaSharpFacadeExceptionTUnitTests` passed: 11 tests, 0 failures.
+- `./scripts/test/quick.sh --full -c NovaSharpFacadeExceptionTUnitTests` passed: 12 tests, 0 failures after the Cursor follow-up.
 - `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` passed: 40 tests, 0 failures.
 - `./scripts/test/quick.sh --full -c SandboxInstructionLimitTUnitTests` passed: 28 tests, 0 failures. The parallel build emitted one transient MSB3026 copy retry warning and then succeeded.
 - `./scripts/test/quick.sh --full -c SandboxAccessRestrictionTUnitTests` passed: 37 tests, 0 failures.
 - `./scripts/build/quick.sh --all` passed.
-- `./scripts/test/quick.sh` passed: 14,580 tests, 0 failures.
+- `./scripts/test/quick.sh` passed: 14,581 tests, 0 failures after the Cursor follow-up.
 
 ## Open Work
 
 - Phase B0 still needs the full 5% facade `Run`/`Call` overhead exit criterion closed against the A0 scoreboard before the phase can be marked complete.
+
+## Review Follow-up
+
+- Addressed Cursor feedback on 2026-07-04 by making `LuaSandboxException` snapshot `SandboxViolationException.Details` once and tolerate message-only sandbox exceptions as `Unknown` violations with zero limits.
+- Added regression coverage for wrapping a message-only `SandboxViolationException` without losing the original message or raising a secondary CLR exception.
