@@ -2,6 +2,7 @@ namespace NovaSharp
 {
     using System;
     using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -73,13 +74,16 @@ namespace NovaSharp
                 return _owner.WrapResult(_compiled.Execute());
             }
 
-            DynValue[] converted = new DynValue[args.Length];
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                args.Length,
+                out DynValue[] converted
+            );
             for (int i = 0; i < args.Length; i++)
             {
                 converted[i] = args[i].ToDynValue(_owner);
             }
 
-            return _owner.WrapResult(_compiled.Execute(converted.AsSpan()));
+            return _owner.WrapResult(_compiled.Execute(converted.AsSpan(0, args.Length)));
         }
     }
 }

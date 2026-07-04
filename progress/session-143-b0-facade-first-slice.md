@@ -12,6 +12,7 @@ Date: 2026-07-03
 - Added `PublicAPI.Shipped.txt` plus a reflection-backed TUnit baseline check for the root facade surface, public constructors, and the `<40` core type budget.
 - Added focused facade smoke coverage across Lua 5.1-5.5, including scalar equality, float/integer subtype handling, table round-trips, and disposed/foreign-engine handle checks.
 - Addressed Cursor Bugbot feedback by normalizing execution results to the first scalar value for `Run`, `Call`, compiled chunk execution, and coroutine resume/close paths.
+- Addressed Copilot feedback by making `AsInteger` report `Integer` for all invalid kinds and using `DynValueArrayPool` for span-based call/chunk/coroutine argument conversion.
 
 ## Validation
 

@@ -6,6 +6,7 @@ namespace NovaSharp
     using System.Threading.Tasks;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Modules;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
@@ -196,13 +197,16 @@ namespace NovaSharp
                     );
             }
 
-            DynValue[] converted = new DynValue[args.Length];
+            using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                args.Length,
+                out DynValue[] converted
+            );
             for (int i = 0; i < args.Length; i++)
             {
                 converted[i] = args[i].ToDynValue(this);
             }
 
-            return WrapResult(_script.Call(functionValue, converted.AsSpan()));
+            return WrapResult(_script.Call(functionValue, converted.AsSpan(0, args.Length)));
         }
 
         /// <summary>

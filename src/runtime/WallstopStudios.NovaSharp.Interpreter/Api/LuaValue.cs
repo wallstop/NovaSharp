@@ -118,10 +118,10 @@ namespace NovaSharp
         /// </summary>
         public long AsInteger()
         {
-            DynValue value = RequireType(DataType.Number, nameof(AsInteger));
-            if (!value.IsInteger)
+            DynValue value = GetValueOrNil();
+            if (value.Type != DataType.Number || !value.IsInteger)
             {
-                throw NewKindException(nameof(AsInteger), LuaKind.Integer, LuaKind.Float);
+                throw NewKindException(nameof(AsInteger), LuaKind.Integer, Kind);
             }
 
             return value.LuaNumber.AsInteger;

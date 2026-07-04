@@ -149,12 +149,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         {
             using LuaEngine lua = LuaEngine.Create();
             LuaValue value = lua.Run("return 1.5");
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                LuaValue.FromString("not an integer").AsInteger()
+            );
 
             await Assert.That(value.Kind).IsEqualTo(LuaKind.Float).ConfigureAwait(false);
             await Assert
                 .That(() => value.AsInteger())
                 .Throws<InvalidOperationException>()
                 .ConfigureAwait(false);
+            await Assert.That(exception.Message).Contains("requires Integer").ConfigureAwait(false);
         }
 
         [Test]
