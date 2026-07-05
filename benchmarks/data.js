@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783282137844,
+  "lastUpdate": 1783284741707,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1102,6 +1102,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 356.018,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9c26297142a5bf8136c816fd3cb7b10ae971775c",
+          "message": "Bump codespell from 2.4.1 to 2.4.2 (#42)\n\nBumps [codespell](https://github.com/codespell-project/codespell) from\n2.4.1 to 2.4.2.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/codespell-project/codespell/releases\">codespell's\nreleases</a>.</em></p>\n<blockquote>\n<h2>v2.4.2</h2>\n<!-- raw HTML omitted -->\n<h2>Highlights</h2>\n<ul>\n<li>Fixed compatibility with chardet 7+</li>\n</ul>\n<h2>What's Changed</h2>\n<ul>\n<li>Fix and clarify cases in ignore patterns by <a\nhref=\"https://github.com/DanielYang59\"><code>@​DanielYang59</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3583\">codespell-project/codespell#3583</a></li>\n<li>codespell-private.yml: Do not codespell digital signature files by\n<a href=\"https://github.com/cclauss\"><code>@​cclauss</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3623\">codespell-project/codespell#3623</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3634\">codespell-project/codespell#3634</a></li>\n<li>numbes-&gt;numbers and numbesr-&gt;numbers by <a\nhref=\"https://github.com/skshetry\"><code>@​skshetry</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3635\">codespell-project/codespell#3635</a></li>\n<li>Add spelling corrections for disclose and variables. by <a\nhref=\"https://github.com/cfi-gb\"><code>@​cfi-gb</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3622\">codespell-project/codespell#3622</a></li>\n<li>Add spelling correction for Vulnererability and variants. by <a\nhref=\"https://github.com/cfi-gb\"><code>@​cfi-gb</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3625\">codespell-project/codespell#3625</a></li>\n<li>Remove lets-&gt;let's by <a\nhref=\"https://github.com/Piedone\"><code>@​Piedone</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3633\">codespell-project/codespell#3633</a></li>\n<li>Add corrections for &quot;dictate&quot; by <a\nhref=\"https://github.com/jdufresne\"><code>@​jdufresne</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3636\">codespell-project/codespell#3636</a></li>\n<li>Add specicification (and pl) typo by <a\nhref=\"https://github.com/yarikoptic\"><code>@​yarikoptic</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3639\">codespell-project/codespell#3639</a></li>\n<li>Remove &quot;blueish&quot; correction by <a\nhref=\"https://github.com/hadess\"><code>@​hadess</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3510\">codespell-project/codespell#3510</a></li>\n<li>Add &quot;lighting&quot; as an option to fix &quot;lighning&quot; by\n<a href=\"https://github.com/yarikoptic\"><code>@​yarikoptic</code></a> in\n<a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3648\">codespell-project/codespell#3648</a></li>\n<li>Revert adding <code>lien</code> to the rare dictionary by <a\nhref=\"https://github.com/nikolaik\"><code>@​nikolaik</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3631\">codespell-project/codespell#3631</a></li>\n<li>&quot;ane&quot; could have been &quot;one&quot; by <a\nhref=\"https://github.com/yarikoptic\"><code>@​yarikoptic</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3645\">codespell-project/codespell#3645</a></li>\n<li>Add spelling correction for &quot;priort&quot; by <a\nhref=\"https://github.com/cfi-gb\"><code>@​cfi-gb</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3647\">codespell-project/codespell#3647</a></li>\n<li>Remove &quot;fix&quot; of &quot;deques&quot; - it is quite legit by\n<a href=\"https://github.com/yarikoptic\"><code>@​yarikoptic</code></a> in\n<a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3649\">codespell-project/codespell#3649</a></li>\n<li>Several new suggestions by <a\nhref=\"https://github.com/mdeweerd\"><code>@​mdeweerd</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3621\">codespell-project/codespell#3621</a></li>\n<li>Add proposal constraints to containts by <a\nhref=\"https://github.com/mdeweerd\"><code>@​mdeweerd</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3652\">codespell-project/codespell#3652</a></li>\n<li>Additions dleay,infp,practive,utiliy by <a\nhref=\"https://github.com/mdeweerd\"><code>@​mdeweerd</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3643\">codespell-project/codespell#3643</a></li>\n<li>Add calncelled and its variations by <a\nhref=\"https://github.com/mdeweerd\"><code>@​mdeweerd</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3650\">codespell-project/codespell#3650</a></li>\n<li>Use raw strings for regex by <a\nhref=\"https://github.com/DimitriPapadopoulos\"><code>@​DimitriPapadopoulos</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3654\">codespell-project/codespell#3654</a></li>\n<li>Allow multiple spaces before codespell:ignore by <a\nhref=\"https://github.com/DimitriPapadopoulos\"><code>@​DimitriPapadopoulos</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3653\">codespell-project/codespell#3653</a></li>\n<li>Added correction from <code>timeour</code> to <code>timeout</code>\nby <a href=\"https://github.com/jamesbraza\"><code>@​jamesbraza</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3656\">codespell-project/codespell#3656</a></li>\n<li>Add typos found in various software projects by <a\nhref=\"https://github.com/luzpaz\"><code>@​luzpaz</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3640\">codespell-project/codespell#3640</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3659\">codespell-project/codespell#3659</a></li>\n<li>Add codespell suggestions for enabke and friends by <a\nhref=\"https://github.com/mdeweerd\"><code>@​mdeweerd</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3657\">codespell-project/codespell#3657</a></li>\n<li>END: add &quot;queues&quot; (plural from queue) as possible fix for\nques by <a\nhref=\"https://github.com/yarikoptic\"><code>@​yarikoptic</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3591\">codespell-project/codespell#3591</a></li>\n<li>agreegate, lesda, realod, colouer by <a\nhref=\"https://github.com/mdeweerd\"><code>@​mdeweerd</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3665\">codespell-project/codespell#3665</a></li>\n<li>Update pre-commit version in documentation by <a\nhref=\"https://github.com/prchoward\"><code>@​prchoward</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3666\">codespell-project/codespell#3666</a></li>\n<li>MAINT: Rename CI file and run name by <a\nhref=\"https://github.com/larsoner\"><code>@​larsoner</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3667\">codespell-project/codespell#3667</a></li>\n<li>preoccuption-&gt;preoccupation; occuption-&gt;occupation by <a\nhref=\"https://github.com/TheGiraffe3\"><code>@​TheGiraffe3</code></a> in\n<a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3668\">codespell-project/codespell#3668</a></li>\n<li>Suggestions for: checkto, diminsion, waitfor by <a\nhref=\"https://github.com/mdeweerd\"><code>@​mdeweerd</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3670\">codespell-project/codespell#3670</a></li>\n<li>Typos found in sigstore-python by <a\nhref=\"https://github.com/DimitriPapadopoulos\"><code>@​DimitriPapadopoulos</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3664\">codespell-project/codespell#3664</a></li>\n<li>usgin-&gt;using by <a\nhref=\"https://github.com/ydah\"><code>@​ydah</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3672\">codespell-project/codespell#3672</a></li>\n<li>Add typos found in various software projects by <a\nhref=\"https://github.com/luzpaz\"><code>@​luzpaz</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3669\">codespell-project/codespell#3669</a></li>\n<li>Add coered -&gt; coerced by <a\nhref=\"https://github.com/effigies\"><code>@​effigies</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3680\">codespell-project/codespell#3680</a></li>\n<li>backwward(s)-&gt;backward(s), onwward(s)-&gt;onward(s) by <a\nhref=\"https://github.com/cjwatson\"><code>@​cjwatson</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3682\">codespell-project/codespell#3682</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3685\">codespell-project/codespell#3685</a></li>\n<li>telemetery-&gt;telemetry by <a\nhref=\"https://github.com/august-soderberg\"><code>@​august-soderberg</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3686\">codespell-project/codespell#3686</a></li>\n<li>Add hexedacimal and similar typos by <a\nhref=\"https://github.com/Akuli\"><code>@​Akuli</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3692\">codespell-project/codespell#3692</a></li>\n<li>Add rounted-&gt;routed, rounded and friends by <a\nhref=\"https://github.com/peternewman\"><code>@​peternewman</code></a> in\n<a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3693\">codespell-project/codespell#3693</a></li>\n<li>Add symmectric and similar typos by <a\nhref=\"https://github.com/Akuli\"><code>@​Akuli</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3694\">codespell-project/codespell#3694</a></li>\n<li>Fix CI on Windows: pip upgrade pip by <a\nhref=\"https://github.com/DimitriPapadopoulos\"><code>@​DimitriPapadopoulos</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3698\">codespell-project/codespell#3698</a></li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/2ccb47ff45ad361a21071a7eedda4c37e6ae8c5a\"><code>2ccb47f</code></a>\nCompat with chardet 7 (<a\nhref=\"https://redirect.github.com/codespell-project/codespell/issues/3886\">#3886</a>)</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/4ec53bf6a3e510c64900d5ee838abd99d49b2910\"><code>4ec53bf</code></a>\n[pre-commit.ci] pre-commit autoupdate</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/2a4acba3f282f1b5ccb7ad8b57bc991810663a44\"><code>2a4acba</code></a>\nBump actions/download-artifact from 7 to 8</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/be17cacc96a5ee3f014e048f5962cfdb7145e096\"><code>be17cac</code></a>\nBump actions/upload-artifact from 6 to 7</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/04a071280d56148cab14249ccc8d4181c0066b3c\"><code>04a0712</code></a>\nBump ruff (<a\nhref=\"https://redirect.github.com/codespell-project/codespell/issues/3879\">#3879</a>)</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/583d8796d92eb58e15072db03e5b756be45f638a\"><code>583d879</code></a>\navoide-&gt;avoid, avoided, avoids,</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/1f59f34d7c6d1642fdb325d9dfa49cf9eb5f692a\"><code>1f59f34</code></a>\nAdd correction for 'foudation' to 'foundation'</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/e047fdafb8620b08a86349014487886bcd9c2205\"><code>e047fda</code></a>\nAdd spelling correction for gather and variants.</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/b5cd66de14b8f65b0f45fabbe1c89bd69ea60939\"><code>b5cd66d</code></a>\nrespondant-&gt;respondent</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/92125a3814fa6e86cd2055385916ce5186d3e5df\"><code>92125a3</code></a>\nAdd detection of ivoice and variants.</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/codespell-project/codespell/compare/v2.4.1...v2.4.2\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Single dev-dependency version bump with no application runtime impact.\n> \n> **Overview**\n> Updates the pinned **codespell** version in `requirements.tooling.txt`\nfrom **2.4.1** to **2.4.2** for dev/tooling spell-check usage.\n> \n> Upstream **2.4.2** includes chardet 7+ compatibility fixes, dictionary\nand ignore-pattern tweaks, and minor CLI behavior improvements; this\nrepo change is the dependency pin only.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n294d96021093a573d50092efecfd6895653658f0. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-07-05T13:46:43-07:00",
+          "tree_id": "1b091d75c27ba59dc34795ea912473d6faa21e86",
+          "url": "https://github.com/wallstop/NovaSharp/commit/9c26297142a5bf8136c816fd3cb7b10ae971775c"
+        },
+        "date": 1783284741425,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 163.635,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 184.443,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 176.455,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 260.054,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 271.462,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 281.001,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 309.192,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 333.143,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 324.864,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 330.875,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 347.018,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 343.874,
             "unit": "ns",
             "extra": ""
           }
