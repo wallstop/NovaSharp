@@ -335,12 +335,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     if (numSubtype == 0)
                     {
                         // Integer subtype - read as Int64 to preserve full precision
-                        return DynValue.NewInteger(rd.ReadInt64()).AsReadOnly();
+                        return DynValue.FromInteger(rd.ReadInt64()).AsReadOnly();
                     }
                     else
                     {
                         // Float subtype - read as double
-                        return DynValue.NewFloat(rd.ReadDouble()).AsReadOnly();
+                        return DynValue.FromFloat(rd.ReadDouble()).AsReadOnly();
                     }
                 case DataType.String:
                     return DynValue.NewString(rd.ReadString()).AsReadOnly();

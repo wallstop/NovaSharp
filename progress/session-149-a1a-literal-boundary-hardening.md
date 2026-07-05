@@ -10,6 +10,7 @@ Date: 2026-07-04
 - Made binary chunk deserialization return read-only literal values for nil, booleans, numbers, strings, and table environment values.
 - Added focused TUnit coverage for direct literal construction, bytecode literal/index/index-set/meta/global operands, and dumped-chunk literals.
 - Added a standalone all-version Lua fixture covering repeated numeric literal and literal table-index reuse.
+- Addressed Copilot review feedback by making `EmitLiteral` reject null explicitly and routing dumped numeric literals through the cached `DynValue.FromInteger`/`DynValue.FromFloat` factory paths before enforcing read-only storage.
 
 ## Adversarial Review
 

@@ -239,11 +239,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public Instruction EmitLiteral(DynValue value)
         {
+            if (value is null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             return AppendInstruction(
                 new Instruction(_currentSourceRef)
                 {
                     OpCode = OpCode.Literal,
-                    Value = value?.AsReadOnly(),
+                    Value = value.AsReadOnly(),
                 }
             );
         }

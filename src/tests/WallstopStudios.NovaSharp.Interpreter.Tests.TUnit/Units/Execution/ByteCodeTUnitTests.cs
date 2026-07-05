@@ -229,6 +229,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        public async Task EmitLiteralThrowsWhenValueIsNull()
+        {
+            ByteCode byteCode = new(new Script());
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                byteCode.EmitLiteral(null!)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("value").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
