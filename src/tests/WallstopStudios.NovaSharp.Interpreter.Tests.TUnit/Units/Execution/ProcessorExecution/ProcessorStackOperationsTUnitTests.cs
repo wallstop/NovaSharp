@@ -43,6 +43,28 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         }
 
         [global::TUnit.Core.Test]
+        public async Task ExecIncrRejectsReadOnlyNonNumericTop()
+        {
+            Script script = new();
+            Processor processor = script.GetMainProcessorForTests();
+            FastStack<DynValue> valueStack = processor.GetValueStackForTests();
+            valueStack.Clear();
+            valueStack.Push(DynValue.NewNumber(1));
+            DynValue readOnlyValue = DynValue.NewString("not-number").AsReadOnly();
+            valueStack.Push(readOnlyValue);
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { NumVal = 1 };
+            InternalErrorException exception = ExpectException<InternalErrorException>(() =>
+                processor.ExecIncrForTests(instruction)
+            );
+
+            await Assert.That(exception.Message).Contains("Can't assign number to type String");
+            await Assert.That(valueStack.Peek()).IsSameReferenceAs(readOnlyValue);
+            await Assert.That(readOnlyValue.ReadOnly).IsTrue();
+            await Assert.That(readOnlyValue.String).IsEqualTo("not-number");
+        }
+
+        [global::TUnit.Core.Test]
         public async Task ExecCNotThrowsWhenConditionIsNotBoolean()
         {
             Script script = new();

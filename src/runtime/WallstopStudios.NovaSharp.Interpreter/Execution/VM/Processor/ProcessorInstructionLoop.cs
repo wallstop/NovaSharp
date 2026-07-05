@@ -1047,6 +1047,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (top.ReadOnly)
             {
+                if (top.Type != DataType.Number)
+                {
+                    throw new InternalErrorException("Can't assign number to type {0}", top.Type);
+                }
+
                 top = DynValue.NewNumber(top.LuaNumber);
                 _valueStack.Set(0, top);
             }
