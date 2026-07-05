@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Globalization;
     using System.IO;
     using System.Threading.Tasks;
     using global::NovaSharp;
@@ -142,7 +143,7 @@ namespace Fixtures
     [LuaObject]
     public partial class PlayerApi
     {
-        [LuaMember]
+        [LuaMember(""timestamp"")]
         public DateTime Timestamp { get; set; }
     }
 }
@@ -151,6 +152,10 @@ namespace Fixtures
                 .ConfigureAwait(false);
 
             await AssertSingleDiagnosticAsync(diagnostics, "NS0002").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua binding 'timestamp'")
+                .ConfigureAwait(false);
         }
 
         [Test]
@@ -165,7 +170,7 @@ namespace Fixtures
     [LuaObject]
     public partial class PlayerApi
     {
-        [LuaMember]
+        [LuaMember(""update"")]
         public void Update(ref int value) { }
     }
 }
@@ -174,6 +179,10 @@ namespace Fixtures
                 .ConfigureAwait(false);
 
             await AssertSingleDiagnosticAsync(diagnostics, "NS0003").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua binding 'update'")
+                .ConfigureAwait(false);
         }
 
         [Test]
@@ -235,7 +244,7 @@ namespace Fixtures
     [LuaObject]
     public partial class PlayerApi
     {
-        [LuaMember]
+        [LuaMetamethod(LuaMetamethodKind.ToString)]
         public Task<int> LoadAsync()
         {
             return Task.FromResult(42);
@@ -247,6 +256,10 @@ namespace Fixtures
                 .ConfigureAwait(false);
 
             await AssertSingleDiagnosticAsync(diagnostics, "NS0005").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua member '__tostring'")
+                .ConfigureAwait(false);
         }
 
         private static async Task<Diagnostic[]> AnalyzeAsync(string source)

@@ -41,11 +41,13 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
             context.EnableConcurrentExecution();
             context.RegisterSymbolAction(AnalyzeNamedType, SymbolKind.NamedType);
-            context.RegisterSymbolAction(
-                AnalyzeMember,
-                SymbolKind.Method,
-                SymbolKind.Property,
-                SymbolKind.Field
+            context.RegisterSyntaxNodeAction(
+                AnalyzeAttributedMemberDeclaration,
+                SyntaxKind.ConstructorDeclaration,
+                SyntaxKind.FieldDeclaration,
+                SyntaxKind.IndexerDeclaration,
+                SyntaxKind.MethodDeclaration,
+                SyntaxKind.PropertyDeclaration
             );
         }
 
@@ -81,11 +83,92 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             }
 
             AnalyzeNameCollisions(context, type);
+            AnalyzeLuaObjectMembers(context, type);
         }
 
-        private static void AnalyzeMember(SymbolAnalysisContext context)
+        private static void AnalyzeAttributedMemberDeclaration(SyntaxNodeAnalysisContext context)
         {
-            ISymbol member = context.Symbol;
+            MemberDeclarationSyntax declaration = (MemberDeclarationSyntax)context.Node;
+            if (declaration.AttributeLists.Count == 0)
+            {
+                return;
+            }
+
+            FieldDeclarationSyntax fieldDeclaration = declaration as FieldDeclarationSyntax;
+            if (fieldDeclaration != null)
+            {
+                foreach (
+                    VariableDeclaratorSyntax variable in fieldDeclaration.Declaration.Variables
+                )
+                {
+                    AnalyzeMemberRequiresLuaObject(
+                        context,
+                        context.SemanticModel.GetDeclaredSymbol(variable, context.CancellationToken)
+                    );
+                }
+
+                return;
+            }
+
+            AnalyzeMemberRequiresLuaObject(context, GetDeclaredMemberSymbol(context, declaration));
+        }
+
+        private static ISymbol GetDeclaredMemberSymbol(
+            SyntaxNodeAnalysisContext context,
+            MemberDeclarationSyntax declaration
+        )
+        {
+            MethodDeclarationSyntax methodDeclaration = declaration as MethodDeclarationSyntax;
+            if (methodDeclaration != null)
+            {
+                return context.SemanticModel.GetDeclaredSymbol(
+                    methodDeclaration,
+                    context.CancellationToken
+                );
+            }
+
+            PropertyDeclarationSyntax propertyDeclaration =
+                declaration as PropertyDeclarationSyntax;
+            if (propertyDeclaration != null)
+            {
+                return context.SemanticModel.GetDeclaredSymbol(
+                    propertyDeclaration,
+                    context.CancellationToken
+                );
+            }
+
+            IndexerDeclarationSyntax indexerDeclaration = declaration as IndexerDeclarationSyntax;
+            if (indexerDeclaration != null)
+            {
+                return context.SemanticModel.GetDeclaredSymbol(
+                    indexerDeclaration,
+                    context.CancellationToken
+                );
+            }
+
+            ConstructorDeclarationSyntax constructorDeclaration =
+                declaration as ConstructorDeclarationSyntax;
+            if (constructorDeclaration != null)
+            {
+                return context.SemanticModel.GetDeclaredSymbol(
+                    constructorDeclaration,
+                    context.CancellationToken
+                );
+            }
+
+            return null;
+        }
+
+        private static void AnalyzeMemberRequiresLuaObject(
+            SyntaxNodeAnalysisContext context,
+            ISymbol member
+        )
+        {
+            if (member == null)
+            {
+                return;
+            }
+
             AttributeSet attributes = AttributeSet.Create(member);
             if (!attributes.HasLuaInteropAttribute)
             {
@@ -106,13 +189,37 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 );
                 return;
             }
+        }
 
-            if (attributes.HasLuaIgnore && !attributes.HasLuaMember && !attributes.HasLuaMetamethod)
+        private static void AnalyzeLuaObjectMembers(
+            SymbolAnalysisContext context,
+            INamedTypeSymbol type
+        )
+        {
+            foreach (ISymbol member in type.GetMembers())
             {
-                return;
-            }
+                if (member.IsImplicitlyDeclared)
+                {
+                    continue;
+                }
 
-            AnalyzeMemberSignature(context, member);
+                AttributeSet attributes = AttributeSet.Create(member);
+                if (!attributes.HasLuaInteropAttribute)
+                {
+                    continue;
+                }
+
+                if (
+                    attributes.HasLuaIgnore
+                    && !attributes.HasLuaMember
+                    && !attributes.HasLuaMetamethod
+                )
+                {
+                    continue;
+                }
+
+                AnalyzeMemberSignature(context, member, GetLuaBindingName(member, attributes));
+            }
         }
 
         private static void AnalyzeNameCollisions(
@@ -174,32 +281,51 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 : null;
         }
 
-        private static void AnalyzeMemberSignature(SymbolAnalysisContext context, ISymbol member)
+        private static string GetLuaBindingName(ISymbol member, AttributeSet attributes)
+        {
+            foreach (AttributeData attribute in attributes.Attributes)
+            {
+                string luaName = GetLuaName(member, attribute);
+                if (luaName != null)
+                {
+                    return luaName;
+                }
+            }
+
+            return member.Name;
+        }
+
+        private static void AnalyzeMemberSignature(
+            SymbolAnalysisContext context,
+            ISymbol member,
+            string bindingName
+        )
         {
             IMethodSymbol method = member as IMethodSymbol;
             if (method != null)
             {
-                AnalyzeMethodSignature(context, method);
+                AnalyzeMethodSignature(context, method, bindingName);
                 return;
             }
 
             IPropertySymbol property = member as IPropertySymbol;
             if (property != null)
             {
-                AnalyzeType(context, property, property.Type, property.Name);
+                AnalyzeType(context, property, property.Type, bindingName);
                 return;
             }
 
             IFieldSymbol field = member as IFieldSymbol;
             if (field != null)
             {
-                AnalyzeType(context, field, field.Type, field.Name);
+                AnalyzeType(context, field, field.Type, bindingName);
             }
         }
 
         private static void AnalyzeMethodSignature(
             SymbolAnalysisContext context,
-            IMethodSymbol method
+            IMethodSymbol method,
+            string bindingName
         )
         {
             if (method.MethodKind == MethodKind.Constructor)
@@ -213,7 +339,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     Diagnostic.Create(
                         LuaInteropDiagnostics.UnsupportedSignatureShape,
                         GetLocation(method),
-                        method.Name,
+                        bindingName,
                         "an open generic method"
                     )
                 );
@@ -225,7 +351,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     Diagnostic.Create(
                         LuaInteropDiagnostics.AsyncReturnRequiresAdapter,
                         GetLocation(method),
-                        method.Name,
+                        bindingName,
                         method.ReturnType.ToDisplayString()
                     )
                 );
@@ -236,7 +362,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             }
             else
             {
-                AnalyzeType(context, method, method.ReturnType, method.Name);
+                AnalyzeType(context, method, method.ReturnType, bindingName);
             }
 
             foreach (IParameterSymbol parameter in method.Parameters)
@@ -247,14 +373,14 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                         Diagnostic.Create(
                             LuaInteropDiagnostics.UnsupportedSignatureShape,
                             GetLocation(parameter),
-                            method.Name,
+                            bindingName,
                             "a ref, out, or in parameter"
                         )
                     );
                     continue;
                 }
 
-                AnalyzeType(context, parameter, parameter.Type, method.Name);
+                AnalyzeType(context, parameter, parameter.Type, bindingName);
             }
         }
 
