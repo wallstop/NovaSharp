@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783284741707,
+  "lastUpdate": 1783290867458,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1198,6 +1198,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 343.874,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "52ba6cc4b7bcf3a8e6aad867100854e0ebb45b5c",
+          "message": "[codex] Add generated enum table helpers (#58)\n\n## Summary\n\n- Add generated enum table registration helpers for `[LuaObject]`\ncompanion partials when exposed members reference enum types.\n- Emit facade `LuaTable` constants for signed and unsigned enum values,\nwhile skipping `[LuaIgnore]` enum types and enum members.\n- Disambiguate enum table keys when simple enum names collide with each\nother or with exposed member names.\n- Extend generator tests to compile and invoke generated helpers,\nincluding adversarial collision and ignore cases.\n\n## Validation\n\n- `dotnet build\nsrc/interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj\n--no-restore`\n- `./scripts/test/quick.sh --full -c LuaInteropGeneratorTUnitTests` (10\npassed)\n- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests` (30\npassed)\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh` (14,887 passed)\n- `git diff --cached --check`\n- `bash ./scripts/dev/pre-commit.sh` (completed with existing LLM skill\nmetadata warnings)\n- pre-push checks completed successfully\n\n## Residual Risk\n\n- The enum-table helper is generated and tested, but no runtime adapter\ncalls it yet; B1 enum auto-exposure remains open until binding\nregistration is wired.\n- Lua fixture comparison was not run because this changes C# source\ngeneration rather than Lua runtime behavior.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Changes are confined to source generation and generator tests; runtime\nbinding still does not call the helper, so production Lua exposure\nbehavior is unchanged until a follow-up wires registration.\n> \n> **Overview**\n> Extends the B1 **LuaInterop** source generator so `[LuaObject]`\ncompanion partials emit a private\n**`__NovaSharpGeneratedRegisterEnumTables`** helper when exposed members\nreference enums, instead of only listing enum names in the manifest.\n> \n> The generator now collects enum members and constants, honors\n**`[LuaIgnore]`** on types and fields, maps signed/unsigned values to\n**`LuaValue.FromInteger`** / **`FromNumber`**, and picks collision-safe\ndestination keys (simple name vs qualified display name vs `enum:`\nsuffix). Golden output for **`PlayerApi`** includes the new helper;\n**PLAN** and session **161** document the slice.\n> \n> Generator tests compile emitted code and invoke the helper via\nreflection, covering basic tables, large unsigned constants, duplicate\nenum simple names, member-name collisions (no overwrite), and ignored\nenums/members.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nf45941cbfc0ed24d5fa66913e4dd716878e5207b. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-05T15:27:35-07:00",
+          "tree_id": "0082fd992a4e92224d373889e82fb8c06acb6d10",
+          "url": "https://github.com/wallstop/NovaSharp/commit/52ba6cc4b7bcf3a8e6aad867100854e0ebb45b5c"
+        },
+        "date": 1783290866787,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 153.113,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 166.931,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 163.438,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 255.14,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 266.418,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 281.115,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 303.887,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 353.446,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 294.916,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 316.302,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 350.092,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 340.821,
             "unit": "ns",
             "extra": ""
           }
