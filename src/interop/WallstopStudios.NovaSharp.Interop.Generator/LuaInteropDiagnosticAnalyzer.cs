@@ -327,10 +327,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     continue;
                 }
 
-                if (AnalyzeMemberAttributeContracts(context, member, attributes))
-                {
-                    continue;
-                }
+                AnalyzeMemberAttributeContracts(context, member, attributes);
 
                 AnalyzeMemberSignature(context, member, GetLuaBindingName(member, attributes));
             }

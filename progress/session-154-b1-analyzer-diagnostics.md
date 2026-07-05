@@ -27,6 +27,7 @@ Date: 2026-07-05
 - Addressed follow-up Bugbot feedback by detecting aliased Lua interop attributes and operator declarations for `NS0006`.
 - Addressed follow-up Copilot feedback by using readable symbol display names in `NS0006` and reporting all Lua names for multi-metamethod member diagnostics.
 - Addressed follow-up Bugbot feedback by making `[LuaIgnore]` skip member attribute-contract validation completely.
+- Addressed follow-up Bugbot feedback by continuing signature validation after `NS0007` when a member is still exposed.
 
 ## Rationale
 

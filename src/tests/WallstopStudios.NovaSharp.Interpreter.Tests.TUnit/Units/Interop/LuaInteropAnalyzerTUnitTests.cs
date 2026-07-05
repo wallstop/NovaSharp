@@ -252,6 +252,43 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerReportsSignatureDiagnosticsWhenLuaNameIsInvalid()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using System;
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember("""")]
+        public DateTime Timestamp { get; set; }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertDiagnosticIdsAsync(diagnostics, "NS0007", "NS0002").ConfigureAwait(false);
+            string unsupportedTypeMessage = null;
+            foreach (Diagnostic diagnostic in diagnostics)
+            {
+                if (diagnostic.Id == "NS0002")
+                {
+                    unsupportedTypeMessage = diagnostic.GetMessage(CultureInfo.InvariantCulture);
+                }
+            }
+
+            await Assert
+                .That(unsupportedTypeMessage)
+                .Contains("Lua binding 'Timestamp'")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsInvalidLuaMetamethodNames()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(
@@ -825,6 +862,30 @@ namespace Fixtures
             foreach (Diagnostic diagnostic in diagnostics)
             {
                 await Assert.That(diagnostic.Id).IsEqualTo(expectedId).ConfigureAwait(false);
+            }
+        }
+
+        private static async Task AssertDiagnosticIdsAsync(
+            Diagnostic[] diagnostics,
+            params string[] expectedIds
+        )
+        {
+            await Assert
+                .That(diagnostics.Length)
+                .IsEqualTo(expectedIds.Length)
+                .ConfigureAwait(false);
+            foreach (string expectedId in expectedIds)
+            {
+                int count = 0;
+                foreach (Diagnostic diagnostic in diagnostics)
+                {
+                    if (diagnostic.Id == expectedId)
+                    {
+                        count++;
+                    }
+                }
+
+                await Assert.That(count).IsEqualTo(1).ConfigureAwait(false);
             }
         }
     }
