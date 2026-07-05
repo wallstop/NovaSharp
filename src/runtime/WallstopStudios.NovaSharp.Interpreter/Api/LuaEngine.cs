@@ -297,6 +297,24 @@ namespace NovaSharp
         }
 
         /// <summary>
+        /// Creates a Lua-callable function from a host callback.
+        /// </summary>
+        public LuaValue CreateCallback(LuaCallback callback, string name = null)
+        {
+            ThrowIfDisposed();
+            if (callback == null)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
+            CallbackFunction function = CallbackFunction.FromArgumentView(
+                args => InvokeCallback(callback, args),
+                name
+            );
+            return Wrap(DynValue.FromCallback(function));
+        }
+
+        /// <summary>
         /// Creates a coroutine from a Lua function.
         /// </summary>
         public LuaCoroutine CreateCoroutine(LuaFunction function)
@@ -472,6 +490,45 @@ namespace NovaSharp
             catch (InterpreterException exception)
             {
                 throw LuaException.Wrap(exception);
+            }
+        }
+
+        private DynValue InvokeCallback(LuaCallback callback, CallbackArgumentsView args)
+        {
+            try
+            {
+                int count = args.Count;
+                if (count == 0)
+                {
+                    return callback(new LuaContext(this), ReadOnlySpan<LuaValue>.Empty)
+                        .ToDynValue(this);
+                }
+
+                using PooledResource<LuaValue[]> pooled = SystemArrayPool<LuaValue>.Get(
+                    count,
+                    out LuaValue[] values
+                );
+                for (int i = 0; i < count; i++)
+                {
+                    values[i] = Wrap(args[i]);
+                }
+
+                return callback(new LuaContext(this), new ReadOnlySpan<LuaValue>(values, 0, count))
+                    .ToDynValue(this);
+            }
+            catch (InterpreterException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+                when (exception is ArgumentException
+                    || exception is InvalidOperationException
+                    || exception is ArithmeticException
+                    || exception is FormatException
+                    || exception is NotSupportedException
+                )
+            {
+                throw new ScriptRuntimeException(exception);
             }
         }
 

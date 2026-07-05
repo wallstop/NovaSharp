@@ -276,6 +276,161 @@ using NovaSharp;
             await Assert.That(visibleModeTable.Get("Hidden").IsNil).IsTrue().ConfigureAwait(false);
         }
 
+        [Test]
+        public async Task GeneratedRegistrationExposesEnumTablesAndMethodCallbacks()
+        {
+            GeneratorOutput output = RunGeneratorWithCompilation(PlayerApiSource);
+            Assembly assembly = EmitAssembly(output.Compilation);
+            Type playerApiType = assembly.GetType("Fixtures.PlayerApi", throwOnError: true);
+            object player = Activator.CreateInstance(playerApiType);
+            MethodInfo registerMethod = playerApiType.GetMethod(
+                "__NovaSharpGeneratedRegister",
+                BindingFlags.Public | BindingFlags.Static
+            );
+            PropertyInfo healthProperty = playerApiType.GetProperty("Health");
+
+            await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
+            await Assert.That(healthProperty).IsNotNull().ConfigureAwait(false);
+
+            using LuaEngine engine = LuaEngine.Create();
+            registerMethod.Invoke(null, new object[] { engine, engine.Globals, player });
+
+            LuaValue enumResult = await engine
+                .RunAsync("return player['Fixtures.Team'].Red")
+                .ConfigureAwait(false);
+            LuaValue moveResult = await engine
+                .RunAsync("return player.move(20, 22)")
+                .ConfigureAwait(false);
+            LuaValue tostringResult = await engine
+                .RunAsync("return player.__tostring()")
+                .ConfigureAwait(false);
+            LuaValue arityErrorCaught = await engine
+                .RunAsync("return pcall(function() player.move(1) end)")
+                .ConfigureAwait(false);
+            LuaValue typeErrorCaught = await engine
+                .RunAsync("return pcall(function() player.move('x', 1) end)")
+                .ConfigureAwait(false);
+
+            await Assert.That(enumResult.AsInteger()).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(moveResult.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(tostringResult.AsString()).IsEqualTo("player").ConfigureAwait(false);
+            await Assert.That(arityErrorCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
+            await Assert.That(typeErrorCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That((int)healthProperty.GetValue(player))
+                .IsEqualTo(42)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task GeneratedRegistrationEscapesCSharpKeywordMemberNames()
+        {
+            GeneratorOutput output = RunGeneratorWithCompilation(KeywordMemberApiSource);
+            Assembly assembly = EmitAssembly(output.Compilation);
+            Type keywordApiType = assembly.GetType("Fixtures.KeywordApi", throwOnError: true);
+            object keywordApi = Activator.CreateInstance(keywordApiType);
+            MethodInfo registerMethod = keywordApiType.GetMethod(
+                "__NovaSharpGeneratedRegister",
+                BindingFlags.Public | BindingFlags.Static
+            );
+
+            await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
+
+            using LuaEngine engine = LuaEngine.Create();
+            registerMethod.Invoke(null, new object[] { engine, engine.Globals, keywordApi });
+
+            LuaValue result = await engine.RunAsync("return keyword.event()").ConfigureAwait(false);
+
+            await Assert.That(result.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task GeneratedRegistrationPreservesUnsignedIntegerReturnsWhenPossible()
+        {
+            GeneratorOutput output = RunGeneratorWithCompilation(UnsignedReturnApiSource);
+            Assembly assembly = EmitAssembly(output.Compilation);
+            Type numberApiType = assembly.GetType("Fixtures.NumberApi", throwOnError: true);
+            object numberApi = Activator.CreateInstance(numberApiType);
+            MethodInfo registerMethod = numberApiType.GetMethod(
+                "__NovaSharpGeneratedRegister",
+                BindingFlags.Public | BindingFlags.Static
+            );
+
+            await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
+
+            using LuaEngine engine = LuaEngine.Create();
+            registerMethod.Invoke(null, new object[] { engine, engine.Globals, numberApi });
+
+            LuaValue u32 = await engine.RunAsync("return numbers.u32()").ConfigureAwait(false);
+            LuaValue u64Low = await engine
+                .RunAsync("return numbers.u64low()")
+                .ConfigureAwait(false);
+            LuaValue u64High = await engine
+                .RunAsync("return numbers.u64high()")
+                .ConfigureAwait(false);
+
+            await Assert.That(u32.AsInteger()).IsEqualTo(4000000000L).ConfigureAwait(false);
+            await Assert.That(u64Low.AsInteger()).IsEqualTo(42L).ConfigureAwait(false);
+            await Assert
+                .That(u64High.AsNumber())
+                .IsEqualTo(9223372036854775808d)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task GeneratedRegistrationPassesAndReturnsFacadeValues()
+        {
+            GeneratorOutput output = RunGeneratorWithCompilation(FacadeValueApiSource);
+            Assembly assembly = EmitAssembly(output.Compilation);
+            Type callableApiType = assembly.GetType("Fixtures.CallableApi", throwOnError: true);
+            object callableApi = Activator.CreateInstance(callableApiType);
+            MethodInfo registerMethod = callableApiType.GetMethod(
+                "__NovaSharpGeneratedRegister",
+                BindingFlags.Public | BindingFlags.Static
+            );
+
+            await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
+
+            using LuaEngine engine = LuaEngine.Create();
+            registerMethod.Invoke(null, new object[] { engine, engine.Globals, callableApi });
+
+            LuaValue invokeResult = await engine
+                .RunAsync("return callable.invoke(function() return 42 end)")
+                .ConfigureAwait(false);
+            LuaValue echoFunctionResult = await engine
+                .RunAsync("return callable.echoFunction(function() return 42 end)()")
+                .ConfigureAwait(false);
+            LuaValue echoTableResult = await engine
+                .RunAsync("local t = { x = 42 }; return callable.echoTable(t).x")
+                .ConfigureAwait(false);
+            LuaValue echoCoroutineResult = await engine
+                .RunAsync(
+                    "local co = coroutine.create(function() return 42 end); return type(callable.echoCoroutine(co))"
+                )
+                .ConfigureAwait(false);
+
+            await Assert.That(invokeResult.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(echoFunctionResult.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(echoTableResult.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert
+                .That(echoCoroutineResult.AsString())
+                .IsEqualTo("thread")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task GeneratedSourceUsesDirectDispatchWithoutReflection()
+        {
+            GeneratedSourceResult[] generatedSources = RunGenerator(PlayerApiSource);
+
+            await Assert.That(generatedSources.Length).IsEqualTo(1).ConfigureAwait(false);
+
+            string generated = generatedSources[0].SourceText.ToString();
+            await Assert.That(generated).DoesNotContain("Dictionary").ConfigureAwait(false);
+            await Assert.That(generated).DoesNotContain("MethodInfo").ConfigureAwait(false);
+            await Assert.That(generated).DoesNotContain(".Invoke(").ConfigureAwait(false);
+        }
+
         private static async Task AssertGeneratedSourceMatchesGolden(
             string source,
             string expectedHintName,
@@ -452,7 +607,11 @@ using NovaSharp;
         public int Health { get; set; }
 
         [LuaMember(""move"")]
-        public void Move(float x, float y) { }
+        public int Move(int x, int y)
+        {
+            Health += x + y;
+            return Health;
+        }
 
         [LuaMember]
         public Team Team { get; set; }
@@ -591,6 +750,90 @@ using NovaSharp;
 
         [LuaIgnore]
         Hidden = 2,
+    }
+}
+";
+
+        private const string KeywordMemberApiSource =
+            @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject(""keyword"")]
+    public partial class KeywordApi
+    {
+        [LuaMember(""event"")]
+        public int @event()
+        {
+            return 42;
+        }
+    }
+}
+";
+
+        private const string UnsignedReturnApiSource =
+            @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject(""numbers"")]
+    public partial class NumberApi
+    {
+        [LuaMember(""u32"")]
+        public uint U32()
+        {
+            return 4000000000U;
+        }
+
+        [LuaMember(""u64low"")]
+        public ulong U64Low()
+        {
+            return 42UL;
+        }
+
+        [LuaMember(""u64high"")]
+        public ulong U64High()
+        {
+            return 9223372036854775808UL;
+        }
+    }
+}
+";
+
+        private const string FacadeValueApiSource =
+            @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject(""callable"")]
+    public partial class CallableApi
+    {
+        [LuaMember(""invoke"")]
+        public LuaValue Invoke(LuaFunction function)
+        {
+            return function.Call();
+        }
+
+        [LuaMember(""echoFunction"")]
+        public LuaFunction EchoFunction(LuaFunction function)
+        {
+            return function;
+        }
+
+        [LuaMember(""echoTable"")]
+        public LuaTable EchoTable(LuaTable table)
+        {
+            return table;
+        }
+
+        [LuaMember(""echoCoroutine"")]
+        public LuaCoroutine EchoCoroutine(LuaCoroutine coroutine)
+        {
+            return coroutine;
+        }
     }
 }
 ";

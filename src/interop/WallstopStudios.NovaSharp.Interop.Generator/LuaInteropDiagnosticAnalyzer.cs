@@ -905,11 +905,6 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 return false;
             }
 
-            if (HasAttribute(namedType, AttributeNames.LuaObject))
-            {
-                return true;
-            }
-
             return IsNamedType(namedType, "NovaSharp", "LuaValue")
                 || IsNamedType(namedType, "NovaSharp", "LuaTable")
                 || IsNamedType(namedType, "NovaSharp", "LuaFunction")

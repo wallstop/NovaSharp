@@ -6,7 +6,7 @@ All inspected files/types follow naming expectations (PascalCase for types/metho
 
 ## Namespace Prefix Summary
 
-- WallstopStudios.NovaSharp: 755 (96.79% of 780)
-- NovaSharp: 22 (2.82% of 780)
-- <other>: 3 (0.38% of 780)
-- <total>: 780
+- WallstopStudios.NovaSharp: 755 (96.55% of 782)
+- NovaSharp: 24 (3.07% of 782)
+- <other>: 3 (0.38% of 782)
+- <total>: 782

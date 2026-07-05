@@ -48,6 +48,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
 
         [Test]
         [AllLuaVersions]
+        public async Task CreateCallbackExposesHostFunctionAcrossAllVersions(
+            LuaCompatibilityVersion version
+        )
+        {
+            LuaEngineOptions options = new LuaEngineOptions { Version = ToLuaVersion(version) };
+            using LuaEngine lua = LuaEngine.Create(options);
+            bool sawExpectedEngine = false;
+            lua.Globals["add"] = lua.CreateCallback(
+                (context, args) =>
+                {
+                    sawExpectedEngine = ReferenceEquals(context.Engine, lua);
+                    return LuaValue.FromInteger(args[0].AsInteger() + args[1].AsInteger());
+                },
+                "add"
+            );
+
+            LuaValue result = lua.Run("return add(20, 22)");
+
+            await Assert.That(result.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(sawExpectedEngine).IsTrue().ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
         public async Task CompileReturnsReusableChunkAcrossAllVersions(
             LuaCompatibilityVersion version
         )

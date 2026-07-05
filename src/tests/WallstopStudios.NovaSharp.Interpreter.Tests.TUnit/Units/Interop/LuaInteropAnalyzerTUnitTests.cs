@@ -529,6 +529,40 @@ using NovaSharp;
         }
 
         [Test]
+        public async Task AnalyzerReportsLuaObjectTypedMembersUntilAdapterExists()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember(""attach"")]
+        public void Attach(ChildApi child) { }
+    }
+
+    [LuaObject]
+    public partial class ChildApi
+    {
+        [LuaMember]
+        public int Value { get; set; }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0002").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua binding 'attach'")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsAllMetamethodNamesForSharedMemberDiagnostics()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(
