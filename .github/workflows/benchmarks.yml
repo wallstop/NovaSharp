@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload runtime benchmark artifacts
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: runtime-benchmark-artifacts
           path: BenchmarkDotNet.Artifacts/
@@ -180,7 +180,7 @@ jobs:
 
       - name: Upload scenario comparison artifacts
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: comparison-scenario-${{ matrix.scenario }}
           path: artifacts/benchmarkdotnet/comparison/${{ matrix.scenario }}/
@@ -239,7 +239,7 @@ jobs:
 
       - name: Upload interop comparison artifacts
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: comparison-interop-${{ matrix.name }}
           path: artifacts/benchmarkdotnet/comparison/interop-${{ matrix.name }}/
@@ -821,7 +821,7 @@ jobs:
           exit 1
 
       - name: Upload benchmark artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: benchmark-results
