@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783211486671,
+  "lastUpdate": 1783218197442,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -718,6 +718,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 295.78,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "25cdc8316528d76ea2e786ff4826ed4307c2806c",
+          "message": "[codex] Add source generator interop attributes (#53)\n\n## Summary\n\n- Add the public B1 source-generator attribute contract in the root\n`NovaSharp` API: `LuaObjectAttribute`, `LuaMemberAttribute`,\n`LuaMetamethodAttribute`, `LuaMetamethodKind`, and `LuaIgnoreAttribute`.\n- Pin the new surface in `PublicAPI.Shipped.txt` and add reflection\nsmoke coverage for metadata, attribute targets, invalid names, and\nmultiple metamethod annotations.\n- Update `PLAN.md`, the session progress log, and the naming audit\nnamespace count.\n\n## Validation\n\n- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests`\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh`\n- `bash ./scripts/dev/pre-commit.sh`\n- `git push` pre-push checks: CSharpier, Markdown format, branding,\nnamespace alignment, tooling setup, YAML/actionlint, interpreter build\n\n## Notes\n\nThis is intentionally limited to public metadata. Generator output,\nanalyzer diagnostics, enum table exposure, and stub emission remain open\nB1 work.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Touches many internal VM slot-mutation call sites (intended no Lua\nbehavior change) and expands the stable public facade API;\ngenerator/analyzer behavior is still unimplemented.\n> \n> **Overview**\n> Adds the **Phase B1** public source-generator contract on the root\n`NovaSharp` API: `LuaObjectAttribute`, `LuaMemberAttribute`,\n`LuaMetamethodAttribute`, `LuaMetamethodKind` (explicit numeric values),\nand `LuaIgnoreAttribute`, with entries in `PublicAPI.Shipped.txt` and\nfacade smoke tests for metadata, targets, invalid names, and enum\nstability. Review follow-ups harden those tests (`AttributeUsage`\nchecks, sorted metamethod assertions).\n> \n> In parallel, **A1a prep** renames internal whole-slot `DynValue`\nmutation from `Assign(...)` to **`AssignSlot(...)`** and updates VM,\nCoreLib (`debug`, `setfenv`), and closure upvalue paths so mutable\nlocal/upvalue slots are clearly separated from read-only literals and\ntable keys; docs and session logs reflect the boundary. **No generator\nor analyzer implementation yet**—metadata and slot API only.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n1578f1d6e7109d7e2e7f579c958bc54dd7b22fce. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-04T19:17:46-07:00",
+          "tree_id": "db7343560faa54822b81fb21e889395aaf4befaf",
+          "url": "https://github.com/wallstop/NovaSharp/commit/25cdc8316528d76ea2e786ff4826ed4307c2806c"
+        },
+        "date": 1783218197057,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 220.372,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 169.646,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 172.773,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 275.108,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 278.02,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 275.146,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 324.271,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 331.516,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 332.374,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 364.913,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 369.613,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 406.542,
             "unit": "ns",
             "extra": ""
           }
