@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783275543845,
+  "lastUpdate": 1783282137844,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1006,6 +1006,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 366.698,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "77f0a1f86b0d90ebac35a5316821d12e0beeb937",
+          "message": "[codex] Add generator golden tests (#57)\n\n## Summary\n\n- adds the first `LuaInteropSourceGenerator` incremental generator entry\npoint\n- emits deterministic private companion partial output for valid\ntop-level `[LuaObject]` class and struct inputs\n- adds golden-source generator tests for class and struct output plus a\nnon-partial invalid-shape skip case\n- updates B1 progress tracking and the naming audit snapshot\n\n## Validation\n\n- `dotnet build\nsrc/interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj\n--no-restore`\n- `./scripts/test/quick.sh --full -c LuaInteropGeneratorTUnitTests`\n- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests`\n- `./scripts/build/quick.sh`\n- `dotnet pack\nsrc/interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj\n-c Release --no-restore`\n- `git diff --check`\n- `./scripts/test/quick.sh`\n- `bash ./scripts/dev/pre-commit.sh`\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Build-time generator and test-only harness; generated dispatch is\nprivate and returns Nil with no runtime wiring yet.\n> \n> **Overview**\n> Introduces the first **B1 source generator** slice:\n`LuaInteropSourceGenerator` emits a deterministic companion partial for\ntop-level, partial `[LuaObject]` types (class, struct, record, record\nstruct).\n> \n> Generated output is intentionally **inert** until runtime binding\nlands: a private `ReadOnlySpan<LuaValue>` string-switch dispatch stub, a\nprivate manifest string (Lua name, CLR type, sorted member names,\nreferenced enums), and **`[LuaIgnore]`** filtering. Non-partial or\nnested/generic types produce no output (aligned with analyzer\n**NS0001**).\n> \n> **Golden-file tests** drive the generator via `CSharpGeneratorDriver`,\ncompile the result, and compare against checked-in `.g.cs.txt` fixtures;\na negative test asserts no output for non-partial types. The test\nproject copies `GoldenSources` to output and references the generator\nproject.\n> \n> Also updates **PLAN.md** B1 progress (golden tests checked off),\npackage description (analyzer + generator), **naming/documentation\naudit** regex for `record struct`, and adds session **160** progress\nnotes.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n94a2d1d07426ea4fd8ef131b13ab5f0258b2f86b. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-05T13:02:25-07:00",
+          "tree_id": "8d276ccd4d93b07490766f3b2067e98283ec7e77",
+          "url": "https://github.com/wallstop/NovaSharp/commit/77f0a1f86b0d90ebac35a5316821d12e0beeb937"
+        },
+        "date": 1783282137558,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 162.445,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 171.685,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 168.832,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 270.551,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 276.577,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 286.372,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 306.699,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 325.254,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 376.376,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 343.715,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 420.635,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 356.018,
             "unit": "ns",
             "extra": ""
           }
