@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783205945310,
+  "lastUpdate": 1783211486671,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -622,6 +622,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 362.671,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d0d75f49eecf1db653dd4544243b9082c263359d",
+          "message": "[codex] Harden bytecode literal operands (#52)\n\n## Summary\n\n- Harden A1a bytecode literal boundaries so instruction `DynValue`\noperands are stored as read-only snapshots.\n- Cover direct literal construction, bytecode\nliteral/index/index-set/meta/global operands, and binary chunk\ndeserialized literals.\n- Add a standalone all-version Lua fixture for repeated literal and\nliteral-index reuse, and update `PLAN.md` plus the session log.\n\n## Validation\n\n- Reference Lua: new fixture passed on Lua 5.1, 5.2, 5.3, 5.4, and 5.5.\n- `./scripts/test/quick.sh --full -c ByteCodeTUnitTests` passed: 115\ntests, 0 failures.\n- `./scripts/test/quick.sh -c LiteralExpressionTUnitTests` passed: 6\ntests, 0 failures.\n- `./scripts/test/quick.sh -c ProcessorBinaryDumpTUnitTests` passed: 55\ntests, 0 failures.\n- `./scripts/build/quick.sh` passed.\n- `./scripts/test/quick.sh` passed: 14,826 tests, 0 failures.\n- `bash ./scripts/dev/pre-commit.sh` completed successfully; existing\ndocumentation and skill metadata warnings remain.\n- Pre-push hook passed, including CSharpier, Markdown, branding,\nnamespace, tooling, YAML/Actions lint, and quick build.\n\n## Notes\n\nScoped comparison runner execution passed the new fixture on both\nreference Lua and NovaSharp for Lua 5.1-5.5, but `compare-lua-outputs.py\n--enforce` reported one-sided artifact keys for the manual scoped\nfixture runs. I am not counting that as a green comparison check.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Defensive immutability at bytecode boundaries with broad test\ncoverage; no change to Lua semantics or hot-path execution logic.\n> \n> **Overview**\n> Advances **Phase A1a** by stopping mutable `DynValue` wrappers from\nbeing aliased inside the instruction stream—constants are frozen at\ncompile, emit, and load boundaries before the planned `LuaValue` struct\nconversion.\n> \n> **Bytecode emission** now stores `Instruction.Value` via\n`AsReadOnly()` for literals, meta payloads, global name strings, and\nindex/index-set operands; `EmitLiteral` rejects null.\n> \n> **AST and binary chunks**: `LiteralExpression` snapshots caller-owned\nvalues as read-only; chunk deserialization returns read-only\nnil/boolean/number/string/table literals (numeric dumps use cached\nfactory paths first).\n> \n> **Tests**: TUnit mutation-after-emission checks, undump read-only\nliteral coverage (including nil), and an all-version Lua fixture for\nrepeated literal reuse. `PLAN.md` and session 149 notes document the\nwork.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n4d2ec37cdfff10366aee3dcd30e748d62334edb7. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-04T17:25:57-07:00",
+          "tree_id": "3d56d9e53af271e2e706947c1f8f13974a664f48",
+          "url": "https://github.com/wallstop/NovaSharp/commit/d0d75f49eecf1db653dd4544243b9082c263359d"
+        },
+        "date": 1783211486329,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 132.572,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 132.984,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 134.512,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 213.388,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 213.368,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 220.103,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 258.708,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 260.351,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 257.494,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 280.584,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 288.868,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 295.78,
             "unit": "ns",
             "extra": ""
           }
