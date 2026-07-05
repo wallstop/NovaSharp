@@ -38,9 +38,9 @@
 
     <ItemGroup>
         <None
-            Include="$(OutputPath)$(AssemblyName).dll"
+            Include="$(TargetPath)"
             Pack="true"
-            PackagePath="analyzers/dotnet/cs"
+            PackagePath="analyzers/dotnet/cs/$(TargetFileName)"
             Visible="false"
         />
     </ItemGroup>
