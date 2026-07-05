@@ -15,6 +15,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
 
     public sealed class LuaInteropAnalyzerTUnitTests
     {
+        private static readonly Lazy<MetadataReference[]> CachedMetadataReferences =
+            new Lazy<MetadataReference[]>(CreateMetadataReferences);
+
         [Test]
         public async Task AnalyzerAcceptsValidPartialLuaObjectContract()
         {
@@ -956,6 +959,11 @@ namespace Fixtures
         }
 
         private static MetadataReference[] GetMetadataReferences()
+        {
+            return CachedMetadataReferences.Value;
+        }
+
+        private static MetadataReference[] CreateMetadataReferences()
         {
             List<MetadataReference> references = new List<MetadataReference>();
             string trustedPlatformAssemblies = GetTrustedPlatformAssemblies();
