@@ -29,6 +29,7 @@
         <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.0.2">
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" />
         <PackageReference Include="TUnit" Version="1.5.70" />
         <PackageReference Include="TUnit.Assertions" Version="1.5.70" />
     </ItemGroup>
@@ -36,6 +37,7 @@
     <ItemGroup>
         <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj" />
         <ProjectReference Include="$(RuntimeRoot)WallstopStudios.NovaSharp.Interpreter.Infrastructure/WallstopStudios.NovaSharp.Interpreter.Infrastructure.csproj" />
+        <ProjectReference Include="$(SrcRoot)interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj" />
         <ProjectReference Include="$(ToolingRoot)WallstopStudios.NovaSharp.Cli/WallstopStudios.NovaSharp.Cli.csproj" />
         <ProjectReference Include="$(ToolingRoot)WallstopStudios.NovaSharp.Hardwire/WallstopStudios.NovaSharp.Hardwire.csproj" />
         <ProjectReference Include="$(DebuggersRoot)WallstopStudios.NovaSharp.RemoteDebugger/WallstopStudios.NovaSharp.RemoteDebugger.csproj" />
