@@ -45,7 +45,6 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             context.RegisterSymbolAction(AnalyzeNamedType, SymbolKind.NamedType);
             context.RegisterSyntaxNodeAction(
                 AnalyzeAttributedMemberDeclaration,
-                SyntaxKind.ConstructorDeclaration,
                 SyntaxKind.ConversionOperatorDeclaration,
                 SyntaxKind.FieldDeclaration,
                 SyntaxKind.IndexerDeclaration,
@@ -69,7 +68,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     Diagnostic.Create(
                         LuaInteropDiagnostics.LuaObjectMustBePartial,
                         GetLocation(type),
-                        type.Name
+                        GetTypeDisplayName(type)
                     )
                 );
             }
@@ -80,7 +79,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     Diagnostic.Create(
                         LuaInteropDiagnostics.UnsupportedSignatureShape,
                         GetLocation(type),
-                        type.Name,
+                        GetTypeDisplayName(type),
                         "an open generic LuaObject type"
                     )
                 );
@@ -381,7 +380,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                             Diagnostic.Create(
                                 LuaInteropDiagnostics.NameCollision,
                                 GetLocation(member),
-                                type.Name,
+                                GetTypeDisplayName(type),
                                 luaName
                             )
                         );
@@ -400,7 +399,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                             Diagnostic.Create(
                                 LuaInteropDiagnostics.NameCollision,
                                 GetLocation(member),
-                                type.Name,
+                                GetTypeDisplayName(type),
                                 luaName
                             )
                         );

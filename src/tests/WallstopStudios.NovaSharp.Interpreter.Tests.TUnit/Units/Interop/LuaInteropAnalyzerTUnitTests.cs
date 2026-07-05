@@ -772,6 +772,10 @@ namespace Fixtures
                 .ConfigureAwait(false);
 
             await AssertSingleDiagnosticAsync(diagnostics, "NS0003").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("PlayerApi<T>")
+                .ConfigureAwait(false);
         }
 
         [Test]
