@@ -22,8 +22,8 @@ SRC_ROOT = ROOT / "src"
 DOC_PATTERN = re.compile(r"^\s*///")
 TYPE_PATTERN = re.compile(
     r"^\s*(?:public|internal)\s+"
-    r"(?:static\s+|sealed\s+|abstract\s+|partial\s+|unsafe\s+)*"
-    r"(class|struct|interface|enum|record)\s+([A-Za-z_][A-Za-z0-9_<>]*)"
+    r"(?:static\s+|sealed\s+|abstract\s+|partial\s+|unsafe\s+|readonly\s+)*"
+    r"(?:record\s+)?(class|struct|interface|enum|record)\s+([A-Za-z_][A-Za-z0-9_<>]*)"
 )
 METHOD_PATTERN = re.compile(
     r"^\s*(?:public|internal)\s+"

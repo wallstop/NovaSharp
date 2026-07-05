@@ -74,6 +74,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Compile Remove="GoldenSources/**/*.cs" />
+        <Content Include="GoldenSources/**/*" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
         <EmbeddedResource
             Include="$(TestsRoot)WallstopStudios.NovaSharp.Interpreter.Tests/Resources/embedded.lua"
             Link="Resources/embedded.lua"

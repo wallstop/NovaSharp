@@ -224,8 +224,8 @@ C_SHARP_KEYWORDS = {
 }
 
 TYPE_PATTERN = re.compile(
-    r"^\s*(?:public|internal|protected|private)?\s*(?:static\s+|sealed\s+|abstract\s+|partial\s+)*"
-    r"(class|struct|interface|enum|record)\s+([A-Za-z0-9_<>]+)"
+    r"^\s*(?:public|internal|protected|private)?\s*(?:static\s+|sealed\s+|abstract\s+|partial\s+|readonly\s+)*"
+    r"(?:record\s+)?(class|struct|interface|enum|record)\s+([A-Za-z0-9_<>]+)"
 )
 TYPE_TOKEN_CHAR_CLASS = r"A-Za-z0-9_<>,\[\].?:@*\(\)"
 TYPE_NAME_PATTERN = rf"[{TYPE_TOKEN_CHAR_CLASS}]+"
