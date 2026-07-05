@@ -17,6 +17,7 @@ Date: 2026-07-05
 - Addressed Copilot review feedback by clarifying `NS0006` wording for all Lua interop attributes, narrowing the package description to the analyzer currently shipped, making trusted-platform-assembly discovery fail with a direct diagnostic in analyzer tests, and rejecting analyzer test fixtures that do not compile cleanly.
 - Addressed follow-up Copilot feedback by avoiding per-symbol analyzer callbacks for every method/property/field and reporting Lua-visible binding names in `NS0002`, `NS0003`, and `NS0005`.
 - Addressed Cursor Bugbot feedback by rejecting ref/ref-readonly method returns with `NS0003` and reporting async Lua properties as `NS0005`.
+- Addressed additional review feedback by validating indexer parameter types and treating any `[LuaIgnore]` marker as a full validation skip for that member.
 
 ## Rationale
 

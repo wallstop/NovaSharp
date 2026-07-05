@@ -209,11 +209,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     continue;
                 }
 
-                if (
-                    attributes.HasLuaIgnore
-                    && !attributes.HasLuaMember
-                    && !attributes.HasLuaMetamethod
-                )
+                if (attributes.HasLuaIgnore)
                 {
                     continue;
                 }
@@ -311,7 +307,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             IPropertySymbol property = member as IPropertySymbol;
             if (property != null)
             {
-                AnalyzeReturnType(context, property, property.Type, bindingName);
+                AnalyzePropertySignature(context, property, bindingName);
                 return;
             }
 
@@ -319,6 +315,33 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             if (field != null)
             {
                 AnalyzeType(context, field, field.Type, bindingName);
+            }
+        }
+
+        private static void AnalyzePropertySignature(
+            SymbolAnalysisContext context,
+            IPropertySymbol property,
+            string bindingName
+        )
+        {
+            AnalyzeReturnType(context, property, property.Type, bindingName);
+
+            foreach (IParameterSymbol parameter in property.Parameters)
+            {
+                if (parameter.RefKind != RefKind.None)
+                {
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            LuaInteropDiagnostics.UnsupportedSignatureShape,
+                            GetLocation(parameter),
+                            bindingName,
+                            "a ref, out, or in parameter"
+                        )
+                    );
+                    continue;
+                }
+
+                AnalyzeType(context, parameter, parameter.Type, bindingName);
             }
         }
 

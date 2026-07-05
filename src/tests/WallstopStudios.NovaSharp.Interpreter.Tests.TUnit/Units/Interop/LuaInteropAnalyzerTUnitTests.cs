@@ -131,6 +131,31 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerIgnoresMembersMarkedLuaIgnoreEvenWithLuaMember()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using System;
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaIgnore]
+        [LuaMember(""timestamp"")]
+        public DateTime Timestamp { get; set; }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await Assert.That(diagnostics.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsUnsupportedExposedTypes()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(
@@ -155,6 +180,40 @@ namespace Fixtures
             await Assert
                 .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
                 .Contains("Lua binding 'timestamp'")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsUnsupportedIndexerParameterTypes()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using System;
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember(""byDate"")]
+        public int this[DateTime timestamp]
+        {
+            get
+            {
+                return 0;
+            }
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0002").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua binding 'byDate'")
                 .ConfigureAwait(false);
         }
 
