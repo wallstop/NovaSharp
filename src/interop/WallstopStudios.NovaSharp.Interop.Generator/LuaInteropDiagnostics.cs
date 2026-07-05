@@ -63,8 +63,8 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
         public static readonly DiagnosticDescriptor MemberRequiresLuaObject =
             new DiagnosticDescriptor(
                 "NS0006",
-                "Lua member attribute requires LuaObject type",
-                "Lua member '{0}' is declared on '{1}', which is not marked with LuaObjectAttribute",
+                "Lua interop attribute requires LuaObject type",
+                "Lua interop attribute on '{0}' is declared on '{1}', which is not marked with LuaObjectAttribute",
                 Category,
                 DiagnosticSeverity.Error,
                 true,

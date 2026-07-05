@@ -287,8 +287,7 @@ namespace Fixtures
         private static MetadataReference[] GetMetadataReferences()
         {
             List<MetadataReference> references = new List<MetadataReference>();
-            string trustedPlatformAssemblies = (string)
-                AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES");
+            string trustedPlatformAssemblies = GetTrustedPlatformAssemblies();
             foreach (string path in trustedPlatformAssemblies.Split(Path.PathSeparator))
             {
                 references.Add(MetadataReference.CreateFromFile(path));
@@ -298,6 +297,20 @@ namespace Fixtures
                 MetadataReference.CreateFromFile(typeof(LuaObjectAttribute).Assembly.Location)
             );
             return references.ToArray();
+        }
+
+        private static string GetTrustedPlatformAssemblies()
+        {
+            string trustedPlatformAssemblies =
+                AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
+            if (string.IsNullOrEmpty(trustedPlatformAssemblies))
+            {
+                throw new InvalidOperationException(
+                    "Analyzer tests require a .NET test host that exposes TRUSTED_PLATFORM_ASSEMBLIES."
+                );
+            }
+
+            return trustedPlatformAssemblies;
         }
 
         private static async Task AssertSingleDiagnosticAsync(
