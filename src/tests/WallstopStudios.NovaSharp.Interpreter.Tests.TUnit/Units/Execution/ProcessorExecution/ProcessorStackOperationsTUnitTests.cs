@@ -21,7 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         private static readonly double[] AscendingTriple = { 2d, 3d, 4d };
 
         [global::TUnit.Core.Test]
-        public async Task ExecIncrClonesReadOnlyValueBeforeIncrement()
+        public async Task ExecIncrReplacesReadOnlyNumericSlotBeforeIncrement()
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
@@ -38,6 +38,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             await Assert.That(result.Number).IsEqualTo(3d);
             await Assert.That(result.ReadOnly).IsFalse();
+            await Assert.That(result).IsNotSameReferenceAs(readOnlyValue);
+            await Assert.That(readOnlyValue.ReadOnly).IsTrue();
         }
 
         [global::TUnit.Core.Test]

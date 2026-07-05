@@ -1047,14 +1047,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             if (top.ReadOnly)
             {
-                _valueStack.Pop();
-
-                if (top.ReadOnly)
-                {
-                    top = top.CloneAsWritable();
-                }
-
-                _valueStack.Push(top);
+                top = DynValue.NewNumber(top.LuaNumber);
+                _valueStack.Set(0, top);
             }
 
             // Use LuaNumber.Add to preserve integer precision for large values.
@@ -1314,7 +1308,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                         for (int ii = 0; ii < len; ii++, i++)
                         {
-                            pooledVarargs[ii] = argsList[i].ToScalar().CloneAsWritable();
+                            DynValue scalar = argsList[i].ToScalar();
+                            pooledVarargs[ii] = scalar.ReadOnly ? scalar : scalar.CloneAsWritable();
                         }
 
                         DynValue[] varargs = DynValueArrayPool.ToArrayAndReturn(pooledVarargs, len);
