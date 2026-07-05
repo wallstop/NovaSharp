@@ -130,6 +130,38 @@ using LuaExpose = NovaSharp.LuaMemberAttribute;
         }
 
         [Test]
+        public async Task AnalyzerReportsLuaMemberAccessorAttributesOutsideLuaObjectTypes()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+using LuaExpose = NovaSharp.LuaMemberAttribute;
+
+/*fixture*/ namespace Fixtures
+{
+    public class PlayerApi
+    {
+        public int Health
+        {
+            [LuaMember]
+            get { return 0; }
+        }
+
+        public int Score
+        {
+            [LuaExpose]
+            get { return 0; }
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertDiagnosticCountAsync(diagnostics, "NS0006", 2).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerDoesNotReportStandaloneLuaIgnoreOutsideLuaObjectTypes()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(

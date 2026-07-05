@@ -52,6 +52,12 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 SyntaxKind.OperatorDeclaration,
                 SyntaxKind.PropertyDeclaration
             );
+            context.RegisterSyntaxNodeAction(
+                AnalyzeAttributedAccessorDeclaration,
+                SyntaxKind.GetAccessorDeclaration,
+                SyntaxKind.InitAccessorDeclaration,
+                SyntaxKind.SetAccessorDeclaration
+            );
         }
 
         private static void AnalyzeNamedType(SymbolAnalysisContext context)
@@ -98,7 +104,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 return;
             }
 
-            if (!HasLuaInteropAttributeSyntax(context, declaration))
+            if (!HasLuaInteropAttributeSyntax(context, declaration.AttributeLists))
             {
                 return;
             }
@@ -122,12 +128,31 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             AnalyzeMemberRequiresLuaObject(context, GetDeclaredMemberSymbol(context, declaration));
         }
 
+        private static void AnalyzeAttributedAccessorDeclaration(SyntaxNodeAnalysisContext context)
+        {
+            AccessorDeclarationSyntax accessor = (AccessorDeclarationSyntax)context.Node;
+            if (accessor.AttributeLists.Count == 0)
+            {
+                return;
+            }
+
+            if (!HasLuaInteropAttributeSyntax(context, accessor.AttributeLists))
+            {
+                return;
+            }
+
+            AnalyzeMemberRequiresLuaObject(
+                context,
+                context.SemanticModel.GetDeclaredSymbol(accessor, context.CancellationToken)
+            );
+        }
+
         private static bool HasLuaInteropAttributeSyntax(
             SyntaxNodeAnalysisContext context,
-            MemberDeclarationSyntax declaration
+            SyntaxList<AttributeListSyntax> attributeLists
         )
         {
-            foreach (AttributeListSyntax attributeList in declaration.AttributeLists)
+            foreach (AttributeListSyntax attributeList in attributeLists)
             {
                 foreach (AttributeSyntax attribute in attributeList.Attributes)
                 {
