@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783218197442,
+  "lastUpdate": 1783270410290,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -814,6 +814,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 406.542,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "63a6ba8024e2a5274d57bdcfca3f09f63079ef9e",
+          "message": "[codex] Add interop analyzer diagnostics (#54)\n\n## Summary\n\n- Add the `WallstopStudios.NovaSharp.Interop.Generator` analyzer package\nunder `src/interop`.\n- Implement B1 analyzer diagnostics `NS0001` through `NS0007` for the\ngenerated interop attribute contract.\n- Add focused Roslyn/TUnit coverage for valid bindings and each\ndiagnostic, and keep `PLAN.md`/progress tracking current.\n\n## Validation\n\n- `dotnet build\nsrc/interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj\n--no-restore`\n- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests`\n- `dotnet pack\nsrc/interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj\n-c Release --no-restore`\n- `unzip -l\nsrc/interop/WallstopStudios.NovaSharp.Interop.Generator/bin/Release/WallstopStudios.NovaSharp.Interop.Generator.3.0.0.nupkg`\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh --full`\n- `bash ./scripts/dev/pre-commit.sh`\n- pre-push hook during `git push -u origin dev/wallstop/plan-12`\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> New analyzer-only package with broad TUnit coverage; it is not yet\nwired as a live analyzer on runtime projects, so consumer-facing compile\nbehavior is unchanged until integration.\n> \n> **Overview**\n> Introduces **`WallstopStudios.NovaSharp.Interop.Generator`**, a\npackable Roslyn analyzer under `src/interop/` that validates the planned\ngenerated Lua interop contract **before** source generation exists.\n**`LuaInteropDiagnosticAnalyzer`** emits **`NS0001`–`NS0007`**: partial\n`[LuaObject]`, unsupported types/signatures, duplicate Lua names, async\nreturns needing a future adapter, interop attributes outside a LuaObject\ntype, and invalid attribute arguments. Behavior covers aliased\nattributes, accessor-level attributes, `[LuaIgnore]` opt-out, and\ncontinued validation after partial failures.\n> \n> The analyzer is added to **`NovaSharp.sln`**, referenced from\ninterpreter TUnit tests via **Microsoft.CodeAnalysis.CSharp 4.12**, and\nshipped in a NuGet layout under `analyzers/dotnet/cs`. **`PLAN.md`**\nmarks analyzer diagnostics done and splits remaining B1 work (generator\noutput, golden tests, code fixes). Tooling updates include **`interop`**\nin the namespace audit and session progress notes.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nb8a09b48ce6ec0fa560e0cbbb1cc5327e96bcceb. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-05T09:48:14-07:00",
+          "tree_id": "ff88d1daa9f6ee606f5d9182fb4850aa21c1ec01",
+          "url": "https://github.com/wallstop/NovaSharp/commit/63a6ba8024e2a5274d57bdcfca3f09f63079ef9e"
+        },
+        "date": 1783270409678,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 169.412,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 173.479,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 171.426,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 310.658,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 281.039,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 283.522,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 321.368,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 326.861,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 332.418,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 376.04,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 388.758,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 363.368,
             "unit": "ns",
             "extra": ""
           }
