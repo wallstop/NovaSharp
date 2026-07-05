@@ -419,6 +419,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             AttributeUsageAttribute ignoreUsage =
                 typeof(LuaIgnoreAttribute).GetCustomAttribute<AttributeUsageAttribute>();
 
+            await Assert.That(objectUsage).IsNotNull().ConfigureAwait(false);
+            await Assert.That(memberUsage).IsNotNull().ConfigureAwait(false);
+            await Assert.That(metamethodUsage).IsNotNull().ConfigureAwait(false);
+            await Assert.That(ignoreUsage).IsNotNull().ConfigureAwait(false);
+
             await Assert
                 .That(objectUsage.ValidOn)
                 .IsEqualTo(AttributeTargets.Class | AttributeTargets.Struct)
