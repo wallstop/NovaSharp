@@ -15,19 +15,19 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public sealed class LuaInteropDiagnosticAnalyzer : DiagnosticAnalyzer
     {
+        private static readonly ImmutableArray<DiagnosticDescriptor> SupportedDiagnosticDescriptors =
+            ImmutableArray.Create(
+                LuaInteropDiagnostics.LuaObjectMustBePartial,
+                LuaInteropDiagnostics.UnsupportedType,
+                LuaInteropDiagnostics.UnsupportedSignatureShape,
+                LuaInteropDiagnostics.NameCollision,
+                LuaInteropDiagnostics.AsyncReturnRequiresAdapter,
+                LuaInteropDiagnostics.MemberRequiresLuaObject
+            );
+
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
         {
-            get
-            {
-                return ImmutableArray.Create(
-                    LuaInteropDiagnostics.LuaObjectMustBePartial,
-                    LuaInteropDiagnostics.UnsupportedType,
-                    LuaInteropDiagnostics.UnsupportedSignatureShape,
-                    LuaInteropDiagnostics.NameCollision,
-                    LuaInteropDiagnostics.AsyncReturnRequiresAdapter,
-                    LuaInteropDiagnostics.MemberRequiresLuaObject
-                );
-            }
+            get { return SupportedDiagnosticDescriptors; }
         }
 
         /// <inheritdoc />
@@ -94,6 +94,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 return;
             }
 
+            if (!HasLuaInteropAttributeSyntax(declaration))
+            {
+                return;
+            }
+
             FieldDeclarationSyntax fieldDeclaration = declaration as FieldDeclarationSyntax;
             if (fieldDeclaration != null)
             {
@@ -111,6 +116,62 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             }
 
             AnalyzeMemberRequiresLuaObject(context, GetDeclaredMemberSymbol(context, declaration));
+        }
+
+        private static bool HasLuaInteropAttributeSyntax(MemberDeclarationSyntax declaration)
+        {
+            foreach (AttributeListSyntax attributeList in declaration.AttributeLists)
+            {
+                foreach (AttributeSyntax attribute in attributeList.Attributes)
+                {
+                    if (IsLuaInteropAttributeSyntaxName(attribute.Name))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsLuaInteropAttributeSyntaxName(NameSyntax name)
+        {
+            string unqualifiedName = GetUnqualifiedAttributeSyntaxName(name);
+            switch (unqualifiedName)
+            {
+                case "LuaMember":
+                case "LuaMemberAttribute":
+                case "LuaMetamethod":
+                case "LuaMetamethodAttribute":
+                case "LuaIgnore":
+                case "LuaIgnoreAttribute":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static string GetUnqualifiedAttributeSyntaxName(NameSyntax name)
+        {
+            SimpleNameSyntax simpleName = name as SimpleNameSyntax;
+            if (simpleName != null)
+            {
+                return simpleName.Identifier.ValueText;
+            }
+
+            QualifiedNameSyntax qualifiedName = name as QualifiedNameSyntax;
+            if (qualifiedName != null)
+            {
+                return qualifiedName.Right.Identifier.ValueText;
+            }
+
+            AliasQualifiedNameSyntax aliasQualifiedName = name as AliasQualifiedNameSyntax;
+            if (aliasQualifiedName != null)
+            {
+                return aliasQualifiedName.Name.Identifier.ValueText;
+            }
+
+            return null;
         }
 
         private static ISymbol GetDeclaredMemberSymbol(

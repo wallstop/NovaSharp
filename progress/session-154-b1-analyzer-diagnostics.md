@@ -20,6 +20,7 @@ Date: 2026-07-05
 - Addressed additional review feedback by validating indexer parameter types and treating any `[LuaIgnore]` marker as a full validation skip for that member.
 - Addressed follow-up Bugbot feedback by rejecting ref/ref-readonly property and indexer returns with `NS0003`.
 - Addressed late Copilot feedback by reporting async Lua fields as `NS0005`.
+- Addressed late Copilot performance feedback by caching supported diagnostics and filtering attributed member syntax before requesting semantic symbols.
 
 ## Rationale
 
