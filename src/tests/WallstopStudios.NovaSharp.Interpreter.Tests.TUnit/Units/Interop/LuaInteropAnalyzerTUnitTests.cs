@@ -397,6 +397,37 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerReportsAsyncVoidUntilAdapterPackageExists()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using System.Threading.Tasks;
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember(""tick"")]
+        public async void Tick()
+        {
+            await Task.CompletedTask;
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0005").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua member 'tick'")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsAsyncPropertiesUntilAdapterPackageExists()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(

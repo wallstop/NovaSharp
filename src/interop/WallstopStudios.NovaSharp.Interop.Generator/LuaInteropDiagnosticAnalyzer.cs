@@ -459,7 +459,18 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 return;
             }
 
-            if (method.ReturnsVoid)
+            if (method.IsAsync && method.ReturnsVoid)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        LuaInteropDiagnostics.AsyncReturnRequiresAdapter,
+                        GetLocation(method),
+                        bindingName,
+                        "void"
+                    )
+                );
+            }
+            else if (method.ReturnsVoid)
             {
                 // Void is a valid Lua nil return.
             }

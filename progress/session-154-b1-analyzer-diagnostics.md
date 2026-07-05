@@ -21,6 +21,7 @@ Date: 2026-07-05
 - Addressed follow-up Bugbot feedback by rejecting ref/ref-readonly property and indexer returns with `NS0003`.
 - Addressed late Copilot feedback by reporting async Lua fields as `NS0005`.
 - Addressed late Copilot performance feedback by caching supported diagnostics and filtering attributed member syntax before requesting semantic symbols.
+- Addressed follow-up Bugbot feedback by reporting `async void` Lua methods as `NS0005`.
 
 ## Rationale
 
