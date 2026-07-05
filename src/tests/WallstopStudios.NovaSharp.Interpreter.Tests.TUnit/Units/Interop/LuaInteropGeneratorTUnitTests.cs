@@ -428,7 +428,7 @@ using NovaSharp;
             string generated = generatedSources[0].SourceText.ToString();
             await Assert.That(generated).DoesNotContain("Dictionary").ConfigureAwait(false);
             await Assert.That(generated).DoesNotContain("MethodInfo").ConfigureAwait(false);
-            await Assert.That(generated).DoesNotContain(".Invoke(").ConfigureAwait(false);
+            await Assert.That(generated).DoesNotContain("GetMethod(").ConfigureAwait(false);
         }
 
         private static async Task AssertGeneratedSourceMatchesGolden(

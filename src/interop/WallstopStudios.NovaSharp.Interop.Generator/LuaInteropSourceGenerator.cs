@@ -93,9 +93,14 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     }
 
                     exposed = true;
-                    if (!members.ContainsKey(luaName))
+                    MemberModel newModel = CreateMemberModel(member, luaName);
+                    if (!members.TryGetValue(luaName, out MemberModel existingModel))
                     {
-                        members.Add(luaName, CreateMemberModel(member, luaName));
+                        members.Add(luaName, newModel);
+                    }
+                    else if (!existingModel.IsDispatchable && newModel.IsDispatchable)
+                    {
+                        members[luaName] = newModel;
                     }
                 }
 
@@ -323,6 +328,13 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 {
                     return false;
                 }
+            }
+
+            // Struct instances are captured by value, so non-readonly methods would mutate
+            // a copy and changes would not persist across calls. Only dispatch readonly methods.
+            if (method.ContainingType?.TypeKind == TypeKind.Struct && !method.IsReadOnly)
+            {
+                return false;
             }
 
             return true;
