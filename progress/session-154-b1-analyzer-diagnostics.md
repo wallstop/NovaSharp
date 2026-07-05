@@ -18,6 +18,7 @@ Date: 2026-07-05
 - Addressed follow-up Copilot feedback by avoiding per-symbol analyzer callbacks for every method/property/field and reporting Lua-visible binding names in `NS0002`, `NS0003`, and `NS0005`.
 - Addressed Cursor Bugbot feedback by rejecting ref/ref-readonly method returns with `NS0003` and reporting async Lua properties as `NS0005`.
 - Addressed additional review feedback by validating indexer parameter types and treating any `[LuaIgnore]` marker as a full validation skip for that member.
+- Addressed follow-up Bugbot feedback by rejecting ref/ref-readonly property and indexer returns with `NS0003`.
 
 ## Rationale
 

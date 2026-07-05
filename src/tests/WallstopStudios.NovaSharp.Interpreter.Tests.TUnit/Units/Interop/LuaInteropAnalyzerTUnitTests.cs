@@ -281,6 +281,45 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerReportsRefProperties()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        private static int Value;
+
+        [LuaMember(""current"")]
+        public ref int Current
+        {
+            get
+            {
+                return ref Value;
+            }
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0003").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua binding 'current'")
+                .ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("a ref return")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsPointerParameters()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(

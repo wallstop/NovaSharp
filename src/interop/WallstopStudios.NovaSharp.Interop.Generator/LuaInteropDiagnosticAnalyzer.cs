@@ -324,6 +324,21 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             string bindingName
         )
         {
+            if (property.RefKind != RefKind.None)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        LuaInteropDiagnostics.UnsupportedSignatureShape,
+                        GetLocation(property),
+                        bindingName,
+                        property.RefKind == RefKind.RefReadOnly
+                            ? "a ref readonly return"
+                            : "a ref return"
+                    )
+                );
+                return;
+            }
+
             AnalyzeReturnType(context, property, property.Type, bindingName);
 
             foreach (IParameterSymbol parameter in property.Parameters)
