@@ -25,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -69,7 +69,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public class PlayerApi
@@ -92,7 +92,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     public class PlayerApi
     {
@@ -114,7 +114,7 @@ namespace Fixtures
                     @"
 using LuaExpose = NovaSharp.LuaMemberAttribute;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     public class PlayerApi
     {
@@ -137,7 +137,7 @@ namespace Fixtures
 using NovaSharp;
 using LuaSkip = NovaSharp.LuaIgnoreAttribute;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     public class PlayerApi
     {
@@ -164,7 +164,7 @@ using NovaSharp;
 using LuaExpose = NovaSharp.LuaMemberAttribute;
 using LuaSkip = NovaSharp.LuaIgnoreAttribute;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     public class PlayerApi
     {
@@ -191,7 +191,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     public sealed class NumberBox
     {
@@ -236,7 +236,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -262,7 +262,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject("""")]
     public partial class PlayerApi
@@ -289,7 +289,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -316,7 +316,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -343,7 +343,7 @@ namespace Fixtures
 using System;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -379,7 +379,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -409,7 +409,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -440,7 +440,7 @@ namespace Fixtures
 using System;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -476,7 +476,7 @@ namespace Fixtures
 using System;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -504,7 +504,7 @@ namespace Fixtures
 using System;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -540,7 +540,7 @@ namespace Fixtures
 using System;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -573,7 +573,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -600,7 +600,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -636,7 +636,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -664,7 +664,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -704,7 +704,7 @@ namespace Fixtures
 using System;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -735,7 +735,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -758,7 +758,7 @@ namespace Fixtures
                     @"
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi<T>
@@ -786,7 +786,7 @@ namespace Fixtures
 using System.Threading.Tasks;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -817,7 +817,7 @@ namespace Fixtures
 using System.Threading.Tasks;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -848,7 +848,7 @@ namespace Fixtures
 using System.Threading.Tasks;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
@@ -882,7 +882,7 @@ namespace Fixtures
 using System.Threading.Tasks;
 using NovaSharp;
 
-namespace Fixtures
+/*fixture*/ namespace Fixtures
 {
     [LuaObject]
     public partial class PlayerApi
