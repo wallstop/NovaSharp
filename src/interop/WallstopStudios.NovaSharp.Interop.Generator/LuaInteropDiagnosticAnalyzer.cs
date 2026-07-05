@@ -259,16 +259,6 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 );
             }
 
-            ConstructorDeclarationSyntax constructorDeclaration =
-                declaration as ConstructorDeclarationSyntax;
-            if (constructorDeclaration != null)
-            {
-                return context.SemanticModel.GetDeclaredSymbol(
-                    constructorDeclaration,
-                    context.CancellationToken
-                );
-            }
-
             OperatorDeclarationSyntax operatorDeclaration =
                 declaration as OperatorDeclarationSyntax;
             if (operatorDeclaration != null)
@@ -990,6 +980,18 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             if (arrayType != null)
             {
                 return IsPointerType(arrayType.ElementType);
+            }
+
+            INamedTypeSymbol namedType = type as INamedTypeSymbol;
+            if (namedType != null)
+            {
+                foreach (ITypeSymbol typeArgument in namedType.TypeArguments)
+                {
+                    if (IsPointerType(typeArgument))
+                    {
+                        return true;
+                    }
+                }
             }
 
             return false;

@@ -15,6 +15,7 @@ Date: 2026-07-05
 - Cached analyzer-test metadata references once per test process to avoid rebuilding trusted-platform reference arrays for every fixture.
 - Hid embedded analyzer C# fixtures from the line-based namespace audit by prefixing fixture `namespace Fixtures` declarations with a block comment, reducing the naming audit `<other>` count back to the intended single namespace.
 - Improved analyzer diagnostic type names for generic `[LuaObject]` types and duplicate-name diagnostics.
+- Made pointer-shape detection recurse through named type arguments and removed an unreachable constructor symbol branch from the syntax analyzer path.
 
 ## Rationale
 
