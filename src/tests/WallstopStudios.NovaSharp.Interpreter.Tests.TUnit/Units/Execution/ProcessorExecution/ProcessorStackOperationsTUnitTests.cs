@@ -21,7 +21,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         private static readonly double[] AscendingTriple = { 2d, 3d, 4d };
 
         [global::TUnit.Core.Test]
-        public async Task ExecIncrClonesReadOnlyValueBeforeIncrement()
+        public async Task ExecIncrReplacesReadOnlyNumericSlotBeforeIncrement()
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
@@ -38,6 +38,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             await Assert.That(result.Number).IsEqualTo(3d);
             await Assert.That(result.ReadOnly).IsFalse();
+            await Assert.That(result).IsNotSameReferenceAs(readOnlyValue);
+            await Assert.That(readOnlyValue.ReadOnly).IsTrue();
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ExecIncrRejectsReadOnlyNonNumericTop()
+        {
+            Script script = new();
+            Processor processor = script.GetMainProcessorForTests();
+            FastStack<DynValue> valueStack = processor.GetValueStackForTests();
+            valueStack.Clear();
+            valueStack.Push(DynValue.NewNumber(1));
+            DynValue readOnlyValue = DynValue.NewString("not-number").AsReadOnly();
+            valueStack.Push(readOnlyValue);
+
+            Instruction instruction = new(SourceRef.GetClrLocation()) { NumVal = 1 };
+            InternalErrorException exception = ExpectException<InternalErrorException>(() =>
+                processor.ExecIncrForTests(instruction)
+            );
+
+            await Assert.That(exception.Message).Contains("Can't assign number to type String");
+            await Assert.That(valueStack.Peek()).IsSameReferenceAs(readOnlyValue);
+            await Assert.That(readOnlyValue.ReadOnly).IsTrue();
+            await Assert.That(readOnlyValue.String).IsEqualTo("not-number");
         }
 
         [global::TUnit.Core.Test]
