@@ -1330,10 +1330,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else
                 {
-                    AssignLocal(
-                        instruction.SymbolList[i],
-                        argsList[i].ToScalar().CloneAsWritable()
-                    );
+                    AssignLocal(instruction.SymbolList[i], argsList[i].ToScalar());
                 }
             }
         }

@@ -273,6 +273,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
+        public async Task AssignSlotCopiesReadOnlySourceWithoutLockingDestination()
+        {
+            DynValue destinationSlot = CreateWritableLocalSlot(DynValue.Nil);
+            DynValue sourceValue = DynValue.FromInteger(7);
+
+            ReplaceWritableLocalSlot(destinationSlot, sourceValue);
+            ReplaceWritableLocalSlot(destinationSlot, DynValue.NewString("updated"));
+
+            await Assert.That(sourceValue.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(sourceValue.Number).IsEqualTo(7d).ConfigureAwait(false);
+            await Assert.That(destinationSlot.ReadOnly).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(destinationSlot.Type)
+                .IsEqualTo(DataType.String)
+                .ConfigureAwait(false);
+            await Assert.That(destinationSlot.String).IsEqualTo("updated").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task AssignSlotThrowsWhenSlotIsReadOnly()
         {
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
