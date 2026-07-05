@@ -11,10 +11,10 @@ Date: 2026-07-05
   - `NS0003`: exposed signature uses ref/out/in, pointer, or open generic shapes.
   - `NS0004`: duplicate Lua-visible member names.
   - `NS0005`: async return type requires the future adapter package.
-  - `NS0006`: source-generator member attribute appears outside a `[LuaObject]` type.
+  - `NS0006`: Lua interop attribute appears outside a `[LuaObject]` type.
 - Added focused Roslyn/TUnit analyzer coverage for the valid contract and each diagnostic.
 - Added the analyzer project to `src/NovaSharp.sln` and locked its Roslyn package graph.
-- Addressed Copilot review feedback by clarifying `NS0006` wording for all Lua interop attributes, narrowing the package description to the analyzer currently shipped, and making trusted-platform-assembly discovery fail with a direct diagnostic in analyzer tests.
+- Addressed Copilot review feedback by clarifying `NS0006` wording for all Lua interop attributes, narrowing the package description to the analyzer currently shipped, making trusted-platform-assembly discovery fail with a direct diagnostic in analyzer tests, and rejecting analyzer test fixtures that do not compile cleanly.
 
 ## Rationale
 

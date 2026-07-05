@@ -264,6 +264,8 @@ namespace Fixtures
                 GetMetadataReferences(),
                 compilationOptions
             );
+            ThrowIfCompilationHasErrors(compilation.GetDiagnostics());
+
             ImmutableArray<DiagnosticAnalyzer> analyzers =
                 ImmutableArray.Create<DiagnosticAnalyzer>(new LuaInteropDiagnosticAnalyzer());
             CompilationWithAnalyzers compilationWithAnalyzers = compilation.WithAnalyzers(
@@ -282,6 +284,29 @@ namespace Fixtures
             }
 
             return novaSharpDiagnostics.ToArray();
+        }
+
+        private static void ThrowIfCompilationHasErrors(ImmutableArray<Diagnostic> diagnostics)
+        {
+            List<Diagnostic> compilerErrors = new List<Diagnostic>();
+            foreach (Diagnostic diagnostic in diagnostics)
+            {
+                if (diagnostic.Severity == DiagnosticSeverity.Error)
+                {
+                    compilerErrors.Add(diagnostic);
+                }
+            }
+
+            if (compilerErrors.Count == 0)
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(
+                "Analyzer fixture failed to compile:"
+                    + Environment.NewLine
+                    + string.Join(Environment.NewLine, compilerErrors)
+            );
         }
 
         private static MetadataReference[] GetMetadataReferences()
