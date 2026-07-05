@@ -272,13 +272,16 @@ Pit-of-success targets: a sandboxed mod host in **<15 lines**; a bound game API 
 
 #### Phase B1 — Source generator MVP
 
-- [ ] Attributes in core: `[LuaObject(name)]` on partial class/struct, `[LuaMember(name)]`, `[LuaMetamethod(...)]`, `[LuaIgnore]`. Enums referenced by members auto-exposed as string-keyed tables.
+- [x] Attributes in core: `[LuaObject(name)]` on partial class/struct, `[LuaMember(name)]`, `[LuaMetamethod(...)]`, `[LuaIgnore]`.
+- [ ] Enums referenced by members auto-exposed as string-keyed tables.
 - [ ] Generated shape targets the new span convention directly: string-switch member dispatch (no dictionary), typed arg unpack (no MethodInfo, no boxing), async members generate suspension markers.
 - [ ] Analyzer diagnostics: NS0001 not-partial; NS0002 unsupported parameter type (+fix); NS0003 ref/out/pointer/open-generic; NS0004 name collision; NS0005 async return type needs adapter package; NS0006 member on non-LuaObject type. Golden-file generator tests.
 - [ ] Deprecate the CodeDom Hardwire CLI; delete at generator parity (supersedes `docs/proposals/roslyn-hardwire-generator.md`'s keep-surface goal — the generator emits the NEW shape).
 - [ ] Bonus output: EmmyLua/LuaLS `.lua` stubs per `[LuaObject]` → modder autocomplete in the VS Code extension.
 
 **Exit criteria**: bound GameApi sample <30 lines; trimmed publish emits zero NovaSharp trim warnings; generated path verified reflection-free.
+
+**Progress**: B1 started on 2026-07-05 with the public attribute contract in core: `LuaObjectAttribute`, `LuaMemberAttribute`, `LuaMetamethodAttribute`, `LuaMetamethodKind`, and `LuaIgnoreAttribute`, with public API baseline coverage and reflection smoke tests for metadata, target scopes, and invalid names. Generator/analyzer behavior is not implemented yet. See [progress/session-150-b1-source-generator-attributes.md](progress/session-150-b1-source-generator-attributes.md).
 
 #### Phase B2 — Unity package
 

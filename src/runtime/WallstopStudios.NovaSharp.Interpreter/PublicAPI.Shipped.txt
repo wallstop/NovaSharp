@@ -98,6 +98,8 @@ NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0) -> NovaSharp.LuaValue
 NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1) -> NovaSharp.LuaValue
 NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1, NovaSharp.LuaValue arg2) -> NovaSharp.LuaValue
 NovaSharp.LuaFunction.Call(System.ReadOnlySpan<NovaSharp.LuaValue> args) -> NovaSharp.LuaValue
+NovaSharp.LuaIgnoreAttribute
+NovaSharp.LuaIgnoreAttribute..ctor()
 NovaSharp.LuaKind
 NovaSharp.LuaKind.Boolean
 NovaSharp.LuaKind.Float
@@ -109,6 +111,49 @@ NovaSharp.LuaKind.Table
 NovaSharp.LuaKind.Thread
 NovaSharp.LuaKind.Tuple
 NovaSharp.LuaKind.UserData
+NovaSharp.LuaMemberAttribute
+NovaSharp.LuaMemberAttribute..ctor()
+NovaSharp.LuaMemberAttribute..ctor(System.String name)
+NovaSharp.LuaMemberAttribute.Name -> System.String
+NovaSharp.LuaMetamethodAttribute
+NovaSharp.LuaMetamethodAttribute..ctor(NovaSharp.LuaMetamethodKind kind)
+NovaSharp.LuaMetamethodAttribute..ctor(System.String name)
+NovaSharp.LuaMetamethodAttribute.Kind -> NovaSharp.LuaMetamethodKind
+NovaSharp.LuaMetamethodAttribute.Name -> System.String
+NovaSharp.LuaMetamethodKind
+NovaSharp.LuaMetamethodKind.Add
+NovaSharp.LuaMetamethodKind.BitwiseAnd
+NovaSharp.LuaMetamethodKind.BitwiseNot
+NovaSharp.LuaMetamethodKind.BitwiseOr
+NovaSharp.LuaMetamethodKind.BitwiseXor
+NovaSharp.LuaMetamethodKind.Call
+NovaSharp.LuaMetamethodKind.Close
+NovaSharp.LuaMetamethodKind.Concat
+NovaSharp.LuaMetamethodKind.Custom
+NovaSharp.LuaMetamethodKind.Divide
+NovaSharp.LuaMetamethodKind.Equal
+NovaSharp.LuaMetamethodKind.FloorDivide
+NovaSharp.LuaMetamethodKind.GarbageCollect
+NovaSharp.LuaMetamethodKind.Index
+NovaSharp.LuaMetamethodKind.Length
+NovaSharp.LuaMetamethodKind.LessThan
+NovaSharp.LuaMetamethodKind.LessThanOrEqual
+NovaSharp.LuaMetamethodKind.Mode
+NovaSharp.LuaMetamethodKind.Modulo
+NovaSharp.LuaMetamethodKind.Multiply
+NovaSharp.LuaMetamethodKind.Name
+NovaSharp.LuaMetamethodKind.NewIndex
+NovaSharp.LuaMetamethodKind.Pairs
+NovaSharp.LuaMetamethodKind.Power
+NovaSharp.LuaMetamethodKind.ShiftLeft
+NovaSharp.LuaMetamethodKind.ShiftRight
+NovaSharp.LuaMetamethodKind.Subtract
+NovaSharp.LuaMetamethodKind.ToString
+NovaSharp.LuaMetamethodKind.UnaryMinus
+NovaSharp.LuaObjectAttribute
+NovaSharp.LuaObjectAttribute..ctor()
+NovaSharp.LuaObjectAttribute..ctor(System.String name)
+NovaSharp.LuaObjectAttribute.Name -> System.String
 NovaSharp.LuaRuntimeException
 NovaSharp.LuaRuntimeException..ctor()
 NovaSharp.LuaRuntimeException..ctor(System.String message)

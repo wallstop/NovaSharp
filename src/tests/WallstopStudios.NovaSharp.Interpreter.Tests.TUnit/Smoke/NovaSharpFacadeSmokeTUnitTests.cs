@@ -323,6 +323,136 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         }
 
         [Test]
+        public async Task SourceGeneratorAttributesExposeStableMetadata()
+        {
+            SourceGeneratorAttributeProbe probe = new SourceGeneratorAttributeProbe { Value = 42 };
+            Type objectType = typeof(SourceGeneratorAttributeProbe);
+            LuaObjectAttribute objectAttribute =
+                objectType.GetCustomAttribute<LuaObjectAttribute>();
+            PropertyInfo valueProperty = objectType.GetProperty(
+                nameof(SourceGeneratorAttributeProbe.Value)
+            );
+            MethodInfo renamedMethod = objectType.GetMethod(
+                nameof(SourceGeneratorAttributeProbe.Renamed)
+            );
+            MethodInfo addMethod = objectType.GetMethod(nameof(SourceGeneratorAttributeProbe.Add));
+            MethodInfo indexedMethod = objectType.GetMethod(
+                nameof(SourceGeneratorAttributeProbe.Indexed)
+            );
+            MethodInfo ignoredMethod = objectType.GetMethod(
+                nameof(SourceGeneratorAttributeProbe.Ignored)
+            );
+
+            await Assert.That(objectAttribute).IsNotNull().ConfigureAwait(false);
+            await Assert.That(valueProperty).IsNotNull().ConfigureAwait(false);
+            await Assert.That(renamedMethod).IsNotNull().ConfigureAwait(false);
+            await Assert.That(addMethod).IsNotNull().ConfigureAwait(false);
+            await Assert.That(indexedMethod).IsNotNull().ConfigureAwait(false);
+            await Assert.That(ignoredMethod).IsNotNull().ConfigureAwait(false);
+
+            LuaMemberAttribute memberAttribute =
+                valueProperty.GetCustomAttribute<LuaMemberAttribute>();
+            LuaMemberAttribute renamedAttribute =
+                renamedMethod.GetCustomAttribute<LuaMemberAttribute>();
+            LuaMetamethodAttribute addAttribute =
+                addMethod.GetCustomAttribute<LuaMetamethodAttribute>();
+            string[] indexedMetamethodNames = indexedMethod
+                .GetCustomAttributes<LuaMetamethodAttribute>()
+                .Select(static attribute => attribute.Name)
+                .OrderBy(static name => name, StringComparer.Ordinal)
+                .ToArray();
+
+            await Assert.That(memberAttribute).IsNotNull().ConfigureAwait(false);
+            await Assert.That(renamedAttribute).IsNotNull().ConfigureAwait(false);
+            await Assert.That(addAttribute).IsNotNull().ConfigureAwait(false);
+            await Assert.That(memberAttribute.Name).IsNull().ConfigureAwait(false);
+            await Assert.That(objectAttribute.Name).IsEqualTo("GameApi").ConfigureAwait(false);
+            await Assert.That(renamedAttribute.Name).IsEqualTo("renamed").ConfigureAwait(false);
+            await Assert
+                .That(addAttribute.Kind)
+                .IsEqualTo(LuaMetamethodKind.Add)
+                .ConfigureAwait(false);
+            await Assert.That(addAttribute.Name).IsEqualTo("__add").ConfigureAwait(false);
+            await Assert.That(indexedMetamethodNames.Length).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(indexedMetamethodNames[0])
+                .IsEqualTo("__custom")
+                .ConfigureAwait(false);
+            await Assert.That(indexedMetamethodNames[1]).IsEqualTo("__index").ConfigureAwait(false);
+            await Assert
+                .That(ignoredMethod.IsDefined(typeof(LuaIgnoreAttribute), false))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert.That(probe.Renamed()).IsEqualTo(42).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SourceGeneratorAttributesRejectEmptyNames()
+        {
+            ArgumentException objectException = Assert.Throws<ArgumentException>(() =>
+                GC.KeepAlive(new LuaObjectAttribute(" "))
+            );
+            ArgumentException memberException = Assert.Throws<ArgumentException>(() =>
+                GC.KeepAlive(new LuaMemberAttribute(string.Empty))
+            );
+            ArgumentException metamethodException = Assert.Throws<ArgumentException>(() =>
+                GC.KeepAlive(new LuaMetamethodAttribute(LuaMetamethodKind.Custom))
+            );
+
+            await Assert.That(objectException.ParamName).IsEqualTo("name").ConfigureAwait(false);
+            await Assert.That(memberException.ParamName).IsEqualTo("name").ConfigureAwait(false);
+            await Assert
+                .That(metamethodException.ParamName)
+                .IsEqualTo("kind")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SourceGeneratorAttributeTargetsMatchPublicContract()
+        {
+            AttributeUsageAttribute objectUsage =
+                typeof(LuaObjectAttribute).GetCustomAttribute<AttributeUsageAttribute>();
+            AttributeUsageAttribute memberUsage =
+                typeof(LuaMemberAttribute).GetCustomAttribute<AttributeUsageAttribute>();
+            AttributeUsageAttribute metamethodUsage =
+                typeof(LuaMetamethodAttribute).GetCustomAttribute<AttributeUsageAttribute>();
+            AttributeUsageAttribute ignoreUsage =
+                typeof(LuaIgnoreAttribute).GetCustomAttribute<AttributeUsageAttribute>();
+
+            await Assert
+                .That(objectUsage.ValidOn)
+                .IsEqualTo(AttributeTargets.Class | AttributeTargets.Struct)
+                .ConfigureAwait(false);
+            await Assert.That(objectUsage.Inherited).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(memberUsage.ValidOn)
+                .IsEqualTo(
+                    AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Field
+                )
+                .ConfigureAwait(false);
+            await Assert.That(memberUsage.Inherited).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(metamethodUsage.ValidOn)
+                .IsEqualTo(AttributeTargets.Method)
+                .ConfigureAwait(false);
+            await Assert.That(metamethodUsage.AllowMultiple).IsTrue().ConfigureAwait(false);
+            await Assert.That(metamethodUsage.Inherited).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(ignoreUsage.ValidOn)
+                .IsEqualTo(
+                    AttributeTargets.Class
+                        | AttributeTargets.Struct
+                        | AttributeTargets.Enum
+                        | AttributeTargets.Constructor
+                        | AttributeTargets.Method
+                        | AttributeTargets.Property
+                        | AttributeTargets.Field
+                )
+                .ConfigureAwait(false);
+            await Assert.That(ignoreUsage.Inherited).IsFalse().ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task PublicFacadeExportsExpectedCoreSurface()
         {
             string path = Path.Combine(AppContext.BaseDirectory, "PublicAPI.Shipped.txt");
@@ -621,6 +751,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             public static ref int Return(ref int input)
             {
                 return ref input;
+            }
+        }
+
+        [LuaObject("GameApi")]
+        private sealed class SourceGeneratorAttributeProbe
+        {
+            [LuaMember]
+            public int Value { get; set; }
+
+            [LuaMember("renamed")]
+            public int Renamed()
+            {
+                return Value;
+            }
+
+            [LuaMetamethod(LuaMetamethodKind.Add)]
+            public int Add(SourceGeneratorAttributeProbe other)
+            {
+                if (other == null)
+                {
+                    return Value;
+                }
+
+                return Value + other.Value;
+            }
+
+            [LuaMetamethod(LuaMetamethodKind.Index)]
+            [LuaMetamethod("__custom")]
+            public int Indexed(string key)
+            {
+                if (key == null)
+                {
+                    return Value;
+                }
+
+                return Value + key.Length;
+            }
+
+            [LuaIgnore]
+            public void Ignored()
+            {
+                Value++;
             }
         }
     }
