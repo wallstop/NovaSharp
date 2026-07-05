@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Globalization;
     using System.Threading;
     using Microsoft.CodeAnalysis;
     using Microsoft.CodeAnalysis.CSharp;
@@ -22,7 +23,8 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 LuaInteropDiagnostics.UnsupportedSignatureShape,
                 LuaInteropDiagnostics.NameCollision,
                 LuaInteropDiagnostics.AsyncReturnRequiresAdapter,
-                LuaInteropDiagnostics.MemberRequiresLuaObject
+                LuaInteropDiagnostics.MemberRequiresLuaObject,
+                LuaInteropDiagnostics.InvalidAttributeArgument
             );
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
@@ -82,6 +84,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 );
             }
 
+            AnalyzeLuaObjectAttributeContracts(context, type);
             AnalyzeNameCollisions(context, type);
             AnalyzeLuaObjectMembers(context, type);
         }
@@ -270,6 +273,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     continue;
                 }
 
+                if (AnalyzeMemberAttributeContracts(context, member, attributes))
+                {
+                    continue;
+                }
+
                 if (attributes.HasLuaIgnore)
                 {
                     continue;
@@ -324,6 +332,168 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     exposedNames.Add(luaName, member);
                 }
             }
+        }
+
+        private static bool AnalyzeLuaObjectAttributeContracts(
+            SymbolAnalysisContext context,
+            INamedTypeSymbol type
+        )
+        {
+            bool hasInvalidAttribute = false;
+            foreach (AttributeData attribute in type.GetAttributes())
+            {
+                if (!IsAttribute(attribute, AttributeNames.LuaObject))
+                {
+                    continue;
+                }
+
+                if (
+                    TryGetStringConstructorArgument(attribute, out string name)
+                    && !IsValidLuaName(name)
+                )
+                {
+                    ReportInvalidAttributeArgument(
+                        context,
+                        type,
+                        attribute,
+                        "name",
+                        FormatInvalidName(name)
+                    );
+                    hasInvalidAttribute = true;
+                }
+            }
+
+            return hasInvalidAttribute;
+        }
+
+        private static bool AnalyzeMemberAttributeContracts(
+            SymbolAnalysisContext context,
+            ISymbol member,
+            AttributeSet attributes
+        )
+        {
+            bool hasInvalidAttribute = false;
+            foreach (AttributeData attribute in attributes.Attributes)
+            {
+                if (IsAttribute(attribute, AttributeNames.LuaMember))
+                {
+                    if (
+                        TryGetStringConstructorArgument(attribute, out string name)
+                        && !IsValidLuaName(name)
+                    )
+                    {
+                        ReportInvalidAttributeArgument(
+                            context,
+                            member,
+                            attribute,
+                            "name",
+                            FormatInvalidName(name)
+                        );
+                        hasInvalidAttribute = true;
+                    }
+                }
+                else if (IsAttribute(attribute, AttributeNames.LuaMetamethod))
+                {
+                    hasInvalidAttribute |= AnalyzeMetamethodAttributeContract(
+                        context,
+                        member,
+                        attribute
+                    );
+                }
+            }
+
+            return hasInvalidAttribute;
+        }
+
+        private static bool AnalyzeMetamethodAttributeContract(
+            SymbolAnalysisContext context,
+            ISymbol member,
+            AttributeData attribute
+        )
+        {
+            if (attribute.ConstructorArguments.Length != 1)
+            {
+                return false;
+            }
+
+            object value = attribute.ConstructorArguments[0].Value;
+            string customName = value as string;
+            if (customName != null || value == null)
+            {
+                if (IsValidLuaName(customName))
+                {
+                    return false;
+                }
+
+                ReportInvalidAttributeArgument(
+                    context,
+                    member,
+                    attribute,
+                    "name",
+                    FormatInvalidName(customName)
+                );
+                return true;
+            }
+
+            if (!(value is int))
+            {
+                return false;
+            }
+
+            int kind = (int)value;
+            if (IsValidStandardMetamethodKind(kind))
+            {
+                return false;
+            }
+
+            ReportInvalidAttributeArgument(
+                context,
+                member,
+                attribute,
+                "kind",
+                FormatInvalidMetamethodKind(kind)
+            );
+            return true;
+        }
+
+        private static void ReportInvalidAttributeArgument(
+            SymbolAnalysisContext context,
+            ISymbol symbol,
+            AttributeData attribute,
+            string argumentName,
+            string value
+        )
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    LuaInteropDiagnostics.InvalidAttributeArgument,
+                    GetAttributeLocation(attribute, symbol, context.CancellationToken),
+                    GetAttributeDisplayName(attribute),
+                    argumentName,
+                    value
+                )
+            );
+        }
+
+        private static Location GetAttributeLocation(
+            AttributeData attribute,
+            ISymbol fallbackSymbol,
+            CancellationToken cancellationToken
+        )
+        {
+            SyntaxReference syntaxReference = attribute.ApplicationSyntaxReference;
+            if (syntaxReference == null)
+            {
+                return GetLocation(fallbackSymbol);
+            }
+
+            return syntaxReference.GetSyntax(cancellationToken).GetLocation();
+        }
+
+        private static string GetAttributeDisplayName(AttributeData attribute)
+        {
+            INamedTypeSymbol attributeClass = attribute.AttributeClass;
+            return attributeClass == null ? "<unknown>" : attributeClass.Name;
         }
 
         private static string GetLuaName(ISymbol member, AttributeData attribute)
@@ -731,10 +901,10 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             if (attribute.ConstructorArguments.Length == 1)
             {
                 object value = attribute.ConstructorArguments[0].Value;
-                string name = value as string;
-                if (!string.IsNullOrEmpty(name))
+                if (value == null || value is string)
                 {
-                    return name;
+                    string name = value as string;
+                    return IsValidLuaName(name) ? name : null;
                 }
             }
 
@@ -750,9 +920,9 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
 
             object value = attribute.ConstructorArguments[0].Value;
             string customName = value as string;
-            if (customName != null)
+            if (customName != null || value == null)
             {
-                return customName;
+                return IsValidLuaName(customName) ? customName : null;
             }
 
             if (!(value is int))
@@ -822,6 +992,57 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 default:
                     return null;
             }
+        }
+
+        private static bool TryGetStringConstructorArgument(
+            AttributeData attribute,
+            out string value
+        )
+        {
+            value = null;
+            if (attribute.ConstructorArguments.Length != 1)
+            {
+                return false;
+            }
+
+            object argumentValue = attribute.ConstructorArguments[0].Value;
+            if (argumentValue != null && !(argumentValue is string))
+            {
+                return false;
+            }
+
+            value = argumentValue as string;
+            return true;
+        }
+
+        private static bool IsValidLuaName(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        private static bool IsValidStandardMetamethodKind(int kind)
+        {
+            return kind >= 1 && kind <= 28;
+        }
+
+        private static string FormatInvalidName(string value)
+        {
+            if (value == null)
+            {
+                return "<null>";
+            }
+
+            if (value.Length == 0)
+            {
+                return "<empty>";
+            }
+
+            return string.IsNullOrWhiteSpace(value) ? "<whitespace>" : value;
+        }
+
+        private static string FormatInvalidMetamethodKind(int kind)
+        {
+            return kind == 0 ? "Custom" : kind.ToString(CultureInfo.InvariantCulture);
         }
 
         private static bool IsNamedType(

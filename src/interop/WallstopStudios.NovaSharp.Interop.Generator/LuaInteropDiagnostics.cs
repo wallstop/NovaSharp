@@ -71,6 +71,17 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 "Generated interop only scans members declared inside a LuaObject type."
             );
 
+        public static readonly DiagnosticDescriptor InvalidAttributeArgument =
+            new DiagnosticDescriptor(
+                "NS0007",
+                "Invalid Lua interop attribute argument",
+                "Lua interop attribute '{0}' uses invalid {1} '{2}'",
+                Category,
+                DiagnosticSeverity.Error,
+                true,
+                "Generated interop mirrors runtime attribute constructor validation for Lua names and metamethod kinds."
+            );
+
         private const string Category = "NovaSharp.Interop.Generator";
     }
 }

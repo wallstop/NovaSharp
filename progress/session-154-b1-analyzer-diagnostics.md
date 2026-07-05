@@ -12,6 +12,7 @@ Date: 2026-07-05
   - `NS0004`: duplicate Lua-visible member names.
   - `NS0005`: async return type requires the future adapter package.
   - `NS0006`: Lua interop attribute appears outside a `[LuaObject]` type.
+  - `NS0007`: Lua interop attribute uses an invalid constructor argument.
 - Added focused Roslyn/TUnit analyzer coverage for the valid contract and each diagnostic.
 - Added the analyzer project to `src/NovaSharp.sln` and locked its Roslyn package graph.
 - Addressed Copilot review feedback by clarifying `NS0006` wording for all Lua interop attributes, narrowing the package description to the analyzer currently shipped, making trusted-platform-assembly discovery fail with a direct diagnostic in analyzer tests, and rejecting analyzer test fixtures that do not compile cleanly.
@@ -22,6 +23,7 @@ Date: 2026-07-05
 - Addressed late Copilot feedback by reporting async Lua fields as `NS0005`.
 - Addressed late Copilot performance feedback by caching supported diagnostics and filtering attributed member syntax before requesting semantic symbols.
 - Addressed follow-up Bugbot feedback by reporting `async void` Lua methods as `NS0005`.
+- Addressed follow-up Copilot feedback by reporting invalid `[LuaObject]`, `[LuaMember]`, and `[LuaMetamethod]` constructor arguments as `NS0007`.
 
 ## Rationale
 

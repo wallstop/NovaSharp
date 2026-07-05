@@ -131,6 +131,120 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerReportsInvalidLuaObjectNames()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject("""")]
+    public partial class PlayerApi
+    {
+        [LuaMember]
+        public int Health { get; set; }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0007").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("LuaObjectAttribute")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsInvalidLuaMemberNames()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember(""   "")]
+        public int Health { get; set; }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0007").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("LuaMemberAttribute")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsInvalidLuaMetamethodNames()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMetamethod("""")]
+        public string Describe()
+        {
+            return ""player"";
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0007").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("LuaMetamethodAttribute")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsInvalidLuaMetamethodKinds()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMetamethod(LuaMetamethodKind.Custom)]
+        public string Describe()
+        {
+            return ""player"";
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0007").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Custom")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerIgnoresMembersMarkedLuaIgnoreEvenWithLuaMember()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(
