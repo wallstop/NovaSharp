@@ -157,6 +157,44 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task UndumpStoresLiteralValuesAsReadOnly(LuaCompatibilityVersion version)
+        {
+            await AssertUndumpedLiteralIsReadOnly("return 42", DataType.Number, version)
+                .ConfigureAwait(false);
+            await AssertUndumpedLiteralIsReadOnly("return nil", DataType.Nil, version)
+                .ConfigureAwait(false);
+            await AssertUndumpedLiteralIsReadOnly("return true", DataType.Boolean, version)
+                .ConfigureAwait(false);
+            await AssertUndumpedLiteralIsReadOnly("return 'constant'", DataType.String, version)
+                .ConfigureAwait(false);
+        }
+
+        private static async Task AssertUndumpedLiteralIsReadOnly(
+            string code,
+            DataType expectedType,
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            DynValue chunk = script.LoadString(code);
+            using MemoryStream stream = new();
+            script.Dump(chunk, stream);
+
+            stream.Position = 0;
+            Script loadedScript = new(version);
+            DynValue loadedChunk = loadedScript.LoadStream(stream);
+            ByteCode byteCode = loadedScript.GetByteCodeForTests();
+            DynValue literal = FindLiteralValue(
+                byteCode,
+                loadedChunk.Function.EntryPointByteCodeLocation,
+                expectedType
+            );
+
+            await Assert.That(literal.ReadOnly).IsTrue().ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task DumpLoadRoundTripPreservesNegativeZeroAsFloat(
             LuaCompatibilityVersion version
         )
@@ -220,6 +258,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .That(result2.LuaNumber.AsInteger)
                 .IsEqualTo(long.MaxValue)
                 .ConfigureAwait(false);
+        }
+
+        private static DynValue FindLiteralValue(
+            ByteCode byteCode,
+            int startInstruction,
+            DataType expectedType
+        )
+        {
+            for (int i = startInstruction; i < byteCode.Code.Count; i++)
+            {
+                Instruction instruction = byteCode.Code[i];
+                if (
+                    instruction.OpCode == OpCode.Literal
+                    && instruction.Value != null
+                    && instruction.Value.Type == expectedType
+                )
+                {
+                    return instruction.Value;
+                }
+            }
+
+            throw new InvalidOperationException(
+                "Expected literal value was not found in the loaded chunk."
+            );
         }
     }
 }

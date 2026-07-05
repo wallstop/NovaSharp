@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
 {
+    using System;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
@@ -23,7 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         public LiteralExpression(ScriptLoadingContext lcontext, DynValue value)
             : base(lcontext)
         {
-            _value = value;
+            _value = value?.AsReadOnly() ?? throw new ArgumentNullException(nameof(value));
         }
 
         public LiteralExpression(ScriptLoadingContext lcontext, Token t)

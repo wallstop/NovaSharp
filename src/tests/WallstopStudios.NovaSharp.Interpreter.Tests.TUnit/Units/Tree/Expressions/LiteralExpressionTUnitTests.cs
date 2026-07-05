@@ -57,6 +57,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Tree.Expressio
             await Assert.That(exception).IsNotNull().ConfigureAwait(false);
         }
 
+        [global::TUnit.Core.Test]
+        public async Task LiteralExpressionFreezesProvidedValue()
+        {
+            ScriptLoadingContext context = CreateContext("1");
+            DynValue source = DynValue.NewNumber(7);
+            LiteralExpression expression = new(context, source);
+
+            source.AssignNumber(9);
+
+            await Assert.That(expression.Value.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(expression.Value).IsNotSameReferenceAs(source).ConfigureAwait(false);
+            await Assert.That(expression.Value.Number).IsEqualTo(7d).ConfigureAwait(false);
+        }
+
         private static async Task AssertLiteral(string code, DataType expectedType, object expected)
         {
             LiteralExpression expression = ParseLiteral(code);

@@ -212,6 +212,105 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitLiteralFreezesWritableValues(LuaCompatibilityVersion version)
+        {
+            ByteCode byteCode = new(new Script(version));
+            DynValue source = DynValue.NewInteger(7);
+
+            Instruction instruction = byteCode.EmitLiteral(source);
+            source.AssignNumber(LuaNumber.FromInteger(9));
+
+            await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(instruction.Value).IsNotSameReferenceAs(source).ConfigureAwait(false);
+            await Assert
+                .That(instruction.Value.LuaNumber.AsInteger)
+                .IsEqualTo(7L)
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task EmitLiteralThrowsWhenValueIsNull()
+        {
+            ByteCode byteCode = new(new Script());
+
+            ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
+                byteCode.EmitLiteral(null!)
+            );
+
+            await Assert.That(exception.ParamName).IsEqualTo("value").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitIndexFreezesWritableIndexValues(LuaCompatibilityVersion version)
+        {
+            ByteCode byteCode = new(new Script(version));
+            DynValue source = DynValue.NewString("before");
+
+            Instruction instruction = byteCode.EmitIndex(source);
+            source.Assign(DynValue.NewString("after"));
+
+            await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(instruction.Value).IsNotSameReferenceAs(source).ConfigureAwait(false);
+            await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitIndexSetFreezesWritableIndexValues(LuaCompatibilityVersion version)
+        {
+            ByteCode byteCode = new(new Script(version));
+            DynValue source = DynValue.NewString("before");
+
+            Instruction instruction = byteCode.EmitIndexSet(
+                stackofs: 0,
+                tupleidx: 0,
+                index: source
+            );
+            source.Assign(DynValue.NewString("after"));
+
+            await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(instruction.Value).IsNotSameReferenceAs(source).ConfigureAwait(false);
+            await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
+        public async Task EmitMetaFreezesWritablePayloadValues(LuaCompatibilityVersion version)
+        {
+            ByteCode byteCode = new(new Script(version));
+            DynValue source = DynValue.NewString("before");
+
+            Instruction instruction = byteCode.EmitMeta(
+                "chunk",
+                OpCodeMetadataType.ChunkEntrypoint,
+                source
+            );
+            source.Assign(DynValue.NewString("after"));
+
+            await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(instruction.Value).IsNotSameReferenceAs(source).ConfigureAwait(false);
+            await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
         public async Task EmitLoadHandlesGlobalSymbols(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script());
@@ -233,6 +332,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .That(byteCode.Code[^1].Value.String)
                 .IsEqualTo("globalValue")
                 .ConfigureAwait(false);
+            await Assert.That(byteCode.Code[^1].Value.ReadOnly).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -307,6 +407,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(setter.NumVal).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(setter.NumVal2).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(setter.Value.String).IsEqualTo("globalValue").ConfigureAwait(false);
+            await Assert.That(setter.Value.ReadOnly).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
