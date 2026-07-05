@@ -322,12 +322,12 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     continue;
                 }
 
-                if (AnalyzeMemberAttributeContracts(context, member, attributes))
+                if (attributes.HasLuaIgnore)
                 {
                     continue;
                 }
 
-                if (attributes.HasLuaIgnore)
+                if (AnalyzeMemberAttributeContracts(context, member, attributes))
                 {
                     continue;
                 }

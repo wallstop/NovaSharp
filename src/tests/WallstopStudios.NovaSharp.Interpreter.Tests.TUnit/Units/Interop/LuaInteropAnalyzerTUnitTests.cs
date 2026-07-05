@@ -327,6 +327,17 @@ namespace Fixtures
         [LuaIgnore]
         [LuaMember(""timestamp"")]
         public DateTime Timestamp { get; set; }
+
+        [LuaIgnore]
+        [LuaMember("""")]
+        public DateTime IgnoredInvalidName { get; set; }
+
+        [LuaIgnore]
+        [LuaMetamethod("""")]
+        public DateTime IgnoredInvalidMetamethod()
+        {
+            return DateTime.UtcNow;
+        }
     }
 }
 "

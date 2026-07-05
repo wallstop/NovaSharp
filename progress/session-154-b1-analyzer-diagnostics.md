@@ -26,6 +26,7 @@ Date: 2026-07-05
 - Addressed follow-up Copilot feedback by reporting invalid `[LuaObject]`, `[LuaMember]`, and `[LuaMetamethod]` constructor arguments as `NS0007`.
 - Addressed follow-up Bugbot feedback by detecting aliased Lua interop attributes and operator declarations for `NS0006`.
 - Addressed follow-up Copilot feedback by using readable symbol display names in `NS0006` and reporting all Lua names for multi-metamethod member diagnostics.
+- Addressed follow-up Bugbot feedback by making `[LuaIgnore]` skip member attribute-contract validation completely.
 
 ## Rationale
 
