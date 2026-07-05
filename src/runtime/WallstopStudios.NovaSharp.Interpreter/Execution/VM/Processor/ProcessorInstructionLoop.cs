@@ -594,7 +594,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
             }
 
-            slot.Assign(value);
+            slot.AssignSlot(value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -731,7 +731,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 {
                     DynValue previous = slot.Clone();
                     CloseValue(sym, previous, error);
-                    slot.Assign(DynValue.Nil);
+                    slot.AssignSlot(DynValue.Nil);
                 }
             }
 
@@ -773,7 +773,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     {
                         DynValue previous = slot.Clone();
                         CloseValue(sym, previous, error);
-                        slot.Assign(DynValue.Nil);
+                        slot.AssignSlot(DynValue.Nil);
                     }
                 }
 
@@ -804,7 +804,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 stackframe.ClosureScope[symref.IndexValue] = v = DynValue.NewNil();
             }
 
-            v.Assign(value);
+            v.AssignSlot(value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

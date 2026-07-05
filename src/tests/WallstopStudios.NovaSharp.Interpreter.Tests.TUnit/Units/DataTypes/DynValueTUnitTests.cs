@@ -247,33 +247,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignCopiesWritableValuesAndRecomputesHash()
+        public async Task AssignSlotCopiesWritableSlotValuesAndUpdatesHashCode()
         {
-            DynValue destination = DynValue.NewNumber(1);
-            int oldHash = destination.GetHashCode();
+            DynValue destinationSlot = CreateWritableLocalSlot(DynValue.NewNumber(1));
+            int oldHash = destinationSlot.GetHashCode();
 
-            DynValue source = DynValue.NewString("hello");
-            destination.Assign(source);
-
-            await Assert.That(destination.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
-
-            await Assert.That(destination.String).IsEqualTo("hello").ConfigureAwait(false);
+            DynValue sourceValue = DynValue.NewString("hello");
+            ReplaceWritableLocalSlot(destinationSlot, sourceValue);
 
             await Assert
-                .That(destination.GetHashCode())
-                .IsEqualTo(source.GetHashCode())
+                .That(destinationSlot.Type)
+                .IsEqualTo(DataType.String)
+                .ConfigureAwait(false);
+
+            await Assert.That(destinationSlot.String).IsEqualTo("hello").ConfigureAwait(false);
+
+            await Assert
+                .That(destinationSlot.GetHashCode())
+                .IsEqualTo(sourceValue.GetHashCode())
                 .ConfigureAwait(false);
             await Assert
-                .That(destination.GetHashCode())
+                .That(destinationSlot.GetHashCode())
                 .IsNotEqualTo(oldHash)
                 .ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignThrowsWhenValueIsReadOnly()
+        public async Task AssignSlotThrowsWhenSlotIsReadOnly()
         {
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                DynValue.True.Assign(DynValue.False)
+                DynValue.True.AssignSlot(DynValue.False)
             );
 
             await Assert
@@ -436,26 +439,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignCopiesObjectReferencesForTables()
+        public async Task AssignSlotCopiesObjectReferencesForTables()
         {
             Script script = new();
             Table table = new(script);
-            DynValue destination = DynValue.NewNil();
+            DynValue destinationSlot = CreateWritableLocalSlot(DynValue.Nil);
 
-            destination.Assign(DynValue.NewTable(table));
+            ReplaceWritableLocalSlot(destinationSlot, DynValue.NewTable(table));
 
-            await Assert.That(destination.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
+            await Assert.That(destinationSlot.Type).IsEqualTo(DataType.Table).ConfigureAwait(false);
 
-            await Assert.That(destination.Table).IsSameReferenceAs(table).ConfigureAwait(false);
+            await Assert.That(destinationSlot.Table).IsSameReferenceAs(table).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignPreservesReadOnlyForDestination()
+        public async Task AssignSlotThrowsWhenDestinationIsReadOnly()
         {
-            DynValue destination = DynValue.NewNumber(1).AsReadOnly();
+            DynValue readOnlySlot = DynValue.NewNumber(1).AsReadOnly();
 
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                destination.Assign(DynValue.NewNumber(2))
+                readOnlySlot.AssignSlot(DynValue.NewNumber(2))
             );
 
             await Assert
@@ -483,7 +486,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignNumberRecomputesHashFromCurrentNumber()
+        public async Task AssignNumberUpdatesHashCodeFromCurrentNumber()
         {
             DynValue destination = DynValue.NewNumber(1);
             int oldHash = destination.GetHashCode();
@@ -679,7 +682,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue readOnly = DynValue.NewString("locked").AsReadOnly();
             DynValue clone = readOnly.CloneAsWritable();
 
-            clone.Assign(DynValue.NewString("unlocked"));
+            ReplaceWritableLocalSlot(clone, DynValue.NewString("unlocked"));
 
             await Assert.That(clone.String).IsEqualTo("unlocked").ConfigureAwait(false);
 
@@ -687,25 +690,25 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignUpdatesTargetAndRecomputesHash()
+        public async Task AssignSlotUpdatesTargetAndHashCode()
         {
-            DynValue target = DynValue.NewNumber(1);
-            int oldHash = target.GetHashCode();
+            DynValue targetSlot = CreateWritableLocalSlot(DynValue.NewNumber(1));
+            int oldHash = targetSlot.GetHashCode();
 
-            target.Assign(DynValue.NewString("assigned"));
+            ReplaceWritableLocalSlot(targetSlot, DynValue.NewString("assigned"));
 
-            await Assert.That(target.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
+            await Assert.That(targetSlot.Type).IsEqualTo(DataType.String).ConfigureAwait(false);
 
-            await Assert.That(target.String).IsEqualTo("assigned").ConfigureAwait(false);
+            await Assert.That(targetSlot.String).IsEqualTo("assigned").ConfigureAwait(false);
 
-            await Assert.That(target.GetHashCode()).IsNotEqualTo(oldHash).ConfigureAwait(false);
+            await Assert.That(targetSlot.GetHashCode()).IsNotEqualTo(oldHash).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
-        public async Task AssignThrowsWhenTargetIsReadOnly()
+        public async Task AssignSlotThrowsWhenTargetIsReadOnly()
         {
             ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
-                DynValue.True.Assign(DynValue.NewNumber(2))
+                DynValue.True.AssignSlot(DynValue.NewNumber(2))
             );
 
             await Assert
@@ -916,8 +919,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         {
             using UserDataRegistrationScope registrationScope = RegisterSampleUserData();
             DynValue tuple = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
-            DynValue alias = DynValue.NewNil();
-            alias.Assign(tuple);
+            DynValue alias = tuple.Clone();
             DynValue tupleCopy = DynValue.NewTuple(DynValue.NewNumber(1), DynValue.NewNumber(2));
             DynValue nullUserData = DynValue.NewUserData(null);
             DynValue userData = UserData.Create(new SampleUserData("value"));
@@ -1029,6 +1031,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             );
             scope.RegisterType<SampleUserData>();
             return scope;
+        }
+
+        private static DynValue CreateWritableLocalSlot(DynValue initialValue)
+        {
+            DynValue slot = DynValue.NewNil();
+            ReplaceWritableLocalSlot(slot, initialValue);
+            return slot;
+        }
+
+        private static void ReplaceWritableLocalSlot(DynValue slot, DynValue value)
+        {
+            slot.AssignSlot(value);
         }
 
         private sealed class SampleUserData
