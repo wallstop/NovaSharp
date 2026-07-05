@@ -419,6 +419,55 @@ using NovaSharp;
         }
 
         [Test]
+        public async Task GeneratedRegistrationEmitsReadonlyStructMethodCallbacks()
+        {
+            GeneratorOutput output = RunGeneratorWithCompilation(ReadonlyStructApiSource);
+            Assembly assembly = EmitAssembly(output.Compilation);
+            Type counterApiType = assembly.GetType(
+                "Fixtures.ReadonlyCounterApi",
+                throwOnError: true
+            );
+            object counterApi = Activator.CreateInstance(counterApiType, new object[] { 42 });
+            MethodInfo registerMethod = counterApiType.GetMethod(
+                "__NovaSharpGeneratedRegister",
+                BindingFlags.Public | BindingFlags.Static
+            );
+
+            await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
+
+            using LuaEngine engine = LuaEngine.Create();
+            registerMethod.Invoke(null, new object[] { engine, engine.Globals, counterApi });
+
+            LuaValue result = await engine.RunAsync("return counter.count()").ConfigureAwait(false);
+
+            await Assert.That(result.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task GeneratedRegistrationPrefersDispatchableDuplicateLuaMember()
+        {
+            GeneratorOutput output = RunGeneratorWithCompilation(DuplicateLuaNameApiSource);
+            Assembly assembly = EmitAssembly(output.Compilation);
+            Type duplicateApiType = assembly.GetType("Fixtures.DuplicateApi", throwOnError: true);
+            object duplicateApi = Activator.CreateInstance(duplicateApiType);
+            MethodInfo registerMethod = duplicateApiType.GetMethod(
+                "__NovaSharpGeneratedRegister",
+                BindingFlags.Public | BindingFlags.Static
+            );
+
+            await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
+
+            using LuaEngine engine = LuaEngine.Create();
+            registerMethod.Invoke(null, new object[] { engine, engine.Globals, duplicateApi });
+
+            LuaValue result = await engine
+                .RunAsync("return duplicates.value()")
+                .ConfigureAwait(false);
+
+            await Assert.That(result.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task GeneratedSourceUsesDirectDispatchWithoutReflection()
         {
             GeneratedSourceResult[] generatedSources = RunGenerator(PlayerApiSource);
@@ -428,7 +477,8 @@ using NovaSharp;
             string generated = generatedSources[0].SourceText.ToString();
             await Assert.That(generated).DoesNotContain("Dictionary").ConfigureAwait(false);
             await Assert.That(generated).DoesNotContain("MethodInfo").ConfigureAwait(false);
-            await Assert.That(generated).DoesNotContain("GetMethod(").ConfigureAwait(false);
+            await Assert.That(generated).DoesNotContain("System.Reflection").ConfigureAwait(false);
+            await Assert.That(generated).DoesNotContain("BindingFlags").ConfigureAwait(false);
         }
 
         private static async Task AssertGeneratedSourceMatchesGolden(
@@ -833,6 +883,52 @@ using NovaSharp;
         public LuaCoroutine EchoCoroutine(LuaCoroutine coroutine)
         {
             return coroutine;
+        }
+    }
+}
+";
+
+        private const string ReadonlyStructApiSource =
+            @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject(""counter"")]
+    public partial struct ReadonlyCounterApi
+    {
+        private int _count;
+
+        public ReadonlyCounterApi(int count)
+        {
+            _count = count;
+        }
+
+        [LuaMember(""count"")]
+        public readonly int Count()
+        {
+            return _count;
+        }
+    }
+}
+";
+
+        private const string DuplicateLuaNameApiSource =
+            @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject(""duplicates"")]
+    public partial class DuplicateApi
+    {
+        [LuaMember(""value"")]
+        public int Value { get; set; }
+
+        [LuaMember(""value"")]
+        public int GetValue()
+        {
+            return 42;
         }
     }
 }

@@ -18,19 +18,23 @@ Date: 2026-07-05
   - Function, table, and coroutine facade return values round-trip through generated callbacks.
   - The analyzer now reports `[LuaObject]`-typed member signatures as unsupported until object adapter conversion exists.
   - The generated manifest now lists only generated callback members, so properties/fields are not advertised as registered callbacks before property binding lands.
+- Addressed PR review feedback after PR #59 opened:
+  - Non-readonly methods on `[LuaObject]` structs/record structs now report `NS0003` and are not emitted as callbacks until a ref-safe adapter design lands.
+  - Duplicate Lua-visible member names deterministically prefer a dispatchable method candidate over a placeholder property/field when generation proceeds despite analyzer diagnostics.
+  - The reflection-free generator test now checks reflection-specific generated-source markers instead of banning any `.Invoke(...)` text.
 
 ## Validation
 
 - `dotnet build src/interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj --no-restore` completed with exit code 0.
 - `dotnet build src/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj --no-restore` completed with exit code 0.
-- `./scripts/test/quick.sh --full -c LuaInteropGeneratorTUnitTests` completed with exit code 0: 15 tests passed, 0 failed.
-- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests` completed with exit code 0: 31 tests passed, 0 failed.
+- `./scripts/test/quick.sh --full -c LuaInteropGeneratorTUnitTests` completed with exit code 0: 17 tests passed, 0 failed.
+- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests` completed with exit code 0: 32 tests passed, 0 failed.
 - `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` completed with exit code 0: 51 tests passed, 0 failed.
 - `./scripts/build/quick.sh` completed with exit code 0.
 - `dotnet tool restore` completed with exit code 0.
 - `dotnet tool run csharpier format .` completed with exit code 0.
 - `git diff --check` completed with exit code 0.
-- `./scripts/test/quick.sh` completed with exit code 0: 14,898 tests passed, 0 failed, 0 skipped.
+- `./scripts/test/quick.sh` completed with exit code 0: 14,901 tests passed, 0 failed, 0 skipped.
 - `bash ./scripts/dev/pre-commit.sh` completed with exit code 0.
 
 ## Residual Risk

@@ -563,6 +563,39 @@ using NovaSharp;
         }
 
         [Test]
+        public async Task AnalyzerReportsMutableStructMethodsUntilRefSafeAdapterExists()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject]
+    public partial struct CounterApi
+    {
+        private int _count;
+
+        [LuaMember(""increment"")]
+        public int Increment()
+        {
+            _count++;
+            return _count;
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0003").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("mutable value-type receiver")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsAllMetamethodNamesForSharedMemberDiagnostics()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(

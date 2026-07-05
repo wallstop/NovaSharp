@@ -76,6 +76,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             SortedDictionary<string, EnumModel> enums = new SortedDictionary<string, EnumModel>(
                 StringComparer.Ordinal
             );
+            bool isReferenceType = type.TypeKind == TypeKind.Class;
             foreach (ISymbol member in type.GetMembers())
             {
                 if (member.IsImplicitlyDeclared || HasAttribute(member, AttributeNames.LuaIgnore))
@@ -93,14 +94,14 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     }
 
                     exposed = true;
-                    MemberModel newModel = CreateMemberModel(member, luaName);
-                    if (!members.TryGetValue(luaName, out MemberModel existingModel))
+                    MemberModel candidate = CreateMemberModel(member, luaName, isReferenceType);
+                    MemberModel existing;
+                    if (
+                        !members.TryGetValue(luaName, out existing)
+                        || (!existing.IsDispatchable && candidate.IsDispatchable)
+                    )
                     {
-                        members.Add(luaName, newModel);
-                    }
-                    else if (!existingModel.IsDispatchable && newModel.IsDispatchable)
-                    {
-                        members[luaName] = newModel;
+                        members[luaName] = candidate;
                     }
                 }
 
@@ -119,7 +120,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 type.Name,
                 GetLuaObjectName(type),
                 type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
-                type.TypeKind == TypeKind.Class,
+                isReferenceType,
                 ToArray(members),
                 ToArray(enums, members.Keys)
             );
@@ -242,10 +243,14 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             enums.Add(displayName, new EnumModel(displayName, enumType.Name, members.ToArray()));
         }
 
-        private static MemberModel CreateMemberModel(ISymbol member, string luaName)
+        private static MemberModel CreateMemberModel(
+            ISymbol member,
+            string luaName,
+            bool isReferenceType
+        )
         {
             IMethodSymbol method = member as IMethodSymbol;
-            if (method == null || !CanEmitMethod(method))
+            if (method == null || !CanEmitMethod(method, isReferenceType))
             {
                 return new MemberModel(
                     luaName,
@@ -301,7 +306,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             );
         }
 
-        private static bool CanEmitMethod(IMethodSymbol method)
+        private static bool CanEmitMethod(IMethodSymbol method, bool isReferenceType)
         {
             if (
                 method.MethodKind != MethodKind.Ordinary
@@ -313,6 +318,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             }
 
             if (method.RefKind != RefKind.None)
+            {
+                return false;
+            }
+
+            if (!isReferenceType && !method.IsReadOnly)
             {
                 return false;
             }
