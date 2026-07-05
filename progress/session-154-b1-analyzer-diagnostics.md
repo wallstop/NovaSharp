@@ -1,0 +1,47 @@
+# Session 154: B1 Analyzer Diagnostics
+
+Date: 2026-07-05
+
+## Summary
+
+- Added the `WallstopStudios.NovaSharp.Interop.Generator` analyzer package under `src/interop/`.
+- Implemented B1 source-generator contract diagnostics:
+  - `NS0001`: `[LuaObject]` type is not partial.
+  - `NS0002`: exposed member uses an unsupported type.
+  - `NS0003`: exposed signature uses ref/out/in, pointer, or open generic shapes.
+  - `NS0004`: duplicate Lua-visible member names.
+  - `NS0005`: async return type requires the future adapter package.
+  - `NS0006`: Lua interop attribute appears outside a `[LuaObject]` type.
+  - `NS0007`: Lua interop attribute uses an invalid constructor argument.
+- Added focused Roslyn/TUnit analyzer coverage for the valid contract and each diagnostic.
+- Added the analyzer project to `src/NovaSharp.sln` and locked its Roslyn package graph.
+- Addressed Copilot review feedback by clarifying `NS0006` wording for all Lua interop attributes, narrowing the package description to the analyzer currently shipped, making trusted-platform-assembly discovery fail with a direct diagnostic in analyzer tests, and rejecting analyzer test fixtures that do not compile cleanly.
+- Addressed follow-up Copilot feedback by avoiding per-symbol analyzer callbacks for every method/property/field and reporting Lua-visible binding names in `NS0002`, `NS0003`, and `NS0005`.
+- Addressed Cursor Bugbot feedback by rejecting ref/ref-readonly method returns with `NS0003` and reporting async Lua properties as `NS0005`.
+- Addressed additional review feedback by validating indexer parameter types and treating any `[LuaIgnore]` marker as a full validation skip for that member.
+- Addressed follow-up Bugbot feedback by rejecting ref/ref-readonly property and indexer returns with `NS0003`.
+- Addressed late Copilot feedback by reporting async Lua fields as `NS0005`.
+- Addressed late Copilot performance feedback by caching supported diagnostics and filtering attributed member syntax before requesting semantic symbols.
+- Addressed follow-up Bugbot feedback by reporting `async void` Lua methods as `NS0005`.
+- Addressed follow-up Copilot feedback by reporting invalid `[LuaObject]`, `[LuaMember]`, and `[LuaMetamethod]` constructor arguments as `NS0007`.
+- Addressed follow-up Bugbot feedback by detecting aliased Lua interop attributes and operator declarations for `NS0006`.
+- Addressed follow-up Copilot feedback by using readable symbol display names in `NS0006` and reporting all Lua names for multi-metamethod member diagnostics.
+- Addressed follow-up Bugbot feedback by making `[LuaIgnore]` skip member attribute-contract validation completely.
+- Addressed follow-up Bugbot feedback by continuing signature validation after `NS0007` when a member is still exposed.
+- Addressed follow-up Copilot feedback by packing the analyzer DLL through `$(TargetPath)`/`$(TargetFileName)`.
+
+## Rationale
+
+- B1 had the public attribute contract but no analyzer behavior.
+- The analyzer package catches contract violations before generator output exists, keeping future generator work bounded to known-valid input shapes.
+- The package is tested directly instead of attached to runtime projects as a live analyzer, avoiding unrelated warning churn before generated bindings are consumed.
+
+## Validation
+
+- `dotnet build src/interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj --no-restore` passed.
+- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests` passed: 9 tests, 0 failures.
+- `dotnet pack src/interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj -c Release --no-restore` passed.
+- `unzip -l src/interop/WallstopStudios.NovaSharp.Interop.Generator/bin/Release/WallstopStudios.NovaSharp.Interop.Generator.3.0.0.nupkg` confirmed `analyzers/dotnet/cs/WallstopStudios.NovaSharp.Interop.Generator.dll` and `README.md` are present.
+- `./scripts/build/quick.sh` passed.
+- `./scripts/test/quick.sh --full` passed: 14,840 tests, 0 failures.
+- `bash ./scripts/dev/pre-commit.sh` completed successfully with existing documentation audit and skill metadata warnings.

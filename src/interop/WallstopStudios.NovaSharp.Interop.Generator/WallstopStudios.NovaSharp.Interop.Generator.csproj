@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Description>NovaSharp generated interop analyzer package.</Description>
+        <Copyright>Copyright (c) 2024-2025 Wallstop Studios.</Copyright>
+        <AssemblyTitle>WallstopStudios.NovaSharp.Interop.Generator</AssemblyTitle>
+        <VersionPrefix>3.0.0</VersionPrefix>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <AssemblyName>WallstopStudios.NovaSharp.Interop.Generator</AssemblyName>
+        <PackageId>WallstopStudios.NovaSharp.Interop.Generator</PackageId>
+        <RootNamespace>WallstopStudios.NovaSharp.Interop.Generator</RootNamespace>
+        <LangVersion>latest</LangVersion>
+        <IsPackable>true</IsPackable>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <IncludeSymbols>false</IncludeSymbols>
+        <EmbedUntrackedSources>false</EmbedUntrackedSources>
+        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <NoWarn>$(NoWarn);RS2008</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="$(RepoRoot)README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference
+            Include="Microsoft.CodeAnalysis.Analyzers"
+            Version="3.11.0"
+            PrivateAssets="all"
+        />
+        <PackageReference
+            Include="Microsoft.CodeAnalysis.CSharp"
+            Version="4.12.0"
+            PrivateAssets="all"
+        />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None
+            Include="$(TargetPath)"
+            Pack="true"
+            PackagePath="analyzers/dotnet/cs/$(TargetFileName)"
+            Visible="false"
+        />
+    </ItemGroup>
+</Project>

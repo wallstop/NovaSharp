@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]  # repo root
 SRC_ROOT = ROOT / "src"
 EXCLUDED_DIRS = {"bin", "obj", "packages", ".vs"}
-CATEGORY_ROOTS = {"runtime", "tooling", "tests", "debuggers", "samples"}
+CATEGORY_ROOTS = {"runtime", "tooling", "tests", "debuggers", "samples", "interop"}
 IGNORED_PARTS = {"properties", "tests", "testcases", "benchmarks", "tutorial", "processor"}
 PATH_ALLOWLIST = {
     Path("src/tests/WallstopStudios.NovaSharp.Interpreter.Tests/_Hardwired.cs"),
