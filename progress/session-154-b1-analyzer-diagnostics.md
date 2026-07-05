@@ -24,6 +24,7 @@ Date: 2026-07-05
 - Addressed late Copilot performance feedback by caching supported diagnostics and filtering attributed member syntax before requesting semantic symbols.
 - Addressed follow-up Bugbot feedback by reporting `async void` Lua methods as `NS0005`.
 - Addressed follow-up Copilot feedback by reporting invalid `[LuaObject]`, `[LuaMember]`, and `[LuaMetamethod]` constructor arguments as `NS0007`.
+- Addressed follow-up Bugbot feedback by detecting aliased Lua interop attributes and operator declarations for `NS0006`.
 
 ## Rationale
 

@@ -46,9 +46,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             context.RegisterSyntaxNodeAction(
                 AnalyzeAttributedMemberDeclaration,
                 SyntaxKind.ConstructorDeclaration,
+                SyntaxKind.ConversionOperatorDeclaration,
                 SyntaxKind.FieldDeclaration,
                 SyntaxKind.IndexerDeclaration,
                 SyntaxKind.MethodDeclaration,
+                SyntaxKind.OperatorDeclaration,
                 SyntaxKind.PropertyDeclaration
             );
         }
@@ -97,7 +99,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 return;
             }
 
-            if (!HasLuaInteropAttributeSyntax(declaration))
+            if (!HasLuaInteropAttributeSyntax(context, declaration))
             {
                 return;
             }
@@ -121,13 +123,19 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             AnalyzeMemberRequiresLuaObject(context, GetDeclaredMemberSymbol(context, declaration));
         }
 
-        private static bool HasLuaInteropAttributeSyntax(MemberDeclarationSyntax declaration)
+        private static bool HasLuaInteropAttributeSyntax(
+            SyntaxNodeAnalysisContext context,
+            MemberDeclarationSyntax declaration
+        )
         {
             foreach (AttributeListSyntax attributeList in declaration.AttributeLists)
             {
                 foreach (AttributeSyntax attribute in attributeList.Attributes)
                 {
-                    if (IsLuaInteropAttributeSyntaxName(attribute.Name))
+                    if (
+                        IsLuaInteropAttributeSyntaxName(attribute.Name)
+                        || IsLuaInteropAttributeAliasSyntaxName(context, attribute.Name)
+                    )
                     {
                         return true;
                     }
@@ -135,6 +143,26 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             }
 
             return false;
+        }
+
+        private static bool IsLuaInteropAttributeAliasSyntaxName(
+            SyntaxNodeAnalysisContext context,
+            NameSyntax name
+        )
+        {
+            IAliasSymbol alias = context.SemanticModel.GetAliasInfo(
+                name,
+                context.CancellationToken
+            );
+            INamedTypeSymbol target = alias == null ? null : alias.Target as INamedTypeSymbol;
+            if (target == null)
+            {
+                return false;
+            }
+
+            return IsAttributeType(target, AttributeNames.LuaMember)
+                || IsAttributeType(target, AttributeNames.LuaMetamethod)
+                || IsAttributeType(target, AttributeNames.LuaIgnore);
         }
 
         private static bool IsLuaInteropAttributeSyntaxName(NameSyntax name)
@@ -216,6 +244,26 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             {
                 return context.SemanticModel.GetDeclaredSymbol(
                     constructorDeclaration,
+                    context.CancellationToken
+                );
+            }
+
+            OperatorDeclarationSyntax operatorDeclaration =
+                declaration as OperatorDeclarationSyntax;
+            if (operatorDeclaration != null)
+            {
+                return context.SemanticModel.GetDeclaredSymbol(
+                    operatorDeclaration,
+                    context.CancellationToken
+                );
+            }
+
+            ConversionOperatorDeclarationSyntax conversionOperatorDeclaration =
+                declaration as ConversionOperatorDeclarationSyntax;
+            if (conversionOperatorDeclaration != null)
+            {
+                return context.SemanticModel.GetDeclaredSymbol(
+                    conversionOperatorDeclaration,
                     context.CancellationToken
                 );
             }
@@ -892,6 +940,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 return false;
             }
 
+            return IsAttributeType(attributeClass, name);
+        }
+
+        private static bool IsAttributeType(INamedTypeSymbol attributeClass, AttributeName name)
+        {
             return attributeClass.Name == name.TypeName
                 && attributeClass.ContainingNamespace.ToDisplayString() == name.Namespace;
         }

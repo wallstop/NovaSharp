@@ -105,6 +105,66 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerReportsAliasedLuaMemberAttributesOutsideLuaObjectTypes()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using LuaExpose = NovaSharp.LuaMemberAttribute;
+
+namespace Fixtures
+{
+    public class PlayerApi
+    {
+        [LuaExpose]
+        public int Health { get; set; }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0006").ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsLuaMemberOperatorsOutsideLuaObjectTypes()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+namespace Fixtures
+{
+    public sealed class NumberBox
+    {
+        public NumberBox(int value)
+        {
+            Value = value;
+        }
+
+        public int Value { get; }
+
+        [LuaMember]
+        public static NumberBox operator +(NumberBox left, NumberBox right)
+        {
+            return left;
+        }
+
+        [LuaMember]
+        public static explicit operator int(NumberBox value)
+        {
+            return value.Value;
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertDiagnosticCountAsync(diagnostics, "NS0006", 2).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsDuplicateLuaVisibleNames()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(
@@ -699,6 +759,19 @@ namespace Fixtures
         {
             await Assert.That(diagnostics.Length).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(diagnostics[0].Id).IsEqualTo(expectedId).ConfigureAwait(false);
+        }
+
+        private static async Task AssertDiagnosticCountAsync(
+            Diagnostic[] diagnostics,
+            string expectedId,
+            int expectedCount
+        )
+        {
+            await Assert.That(diagnostics.Length).IsEqualTo(expectedCount).ConfigureAwait(false);
+            foreach (Diagnostic diagnostic in diagnostics)
+            {
+                await Assert.That(diagnostic.Id).IsEqualTo(expectedId).ConfigureAwait(false);
+            }
         }
     }
 }
