@@ -311,7 +311,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             IPropertySymbol property = member as IPropertySymbol;
             if (property != null)
             {
-                AnalyzeType(context, property, property.Type, bindingName);
+                AnalyzeReturnType(context, property, property.Type, bindingName);
                 return;
             }
 
@@ -345,24 +345,28 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 );
             }
 
-            if (IsAsyncReturnType(method.ReturnType))
+            if (method.RefKind != RefKind.None)
             {
                 context.ReportDiagnostic(
                     Diagnostic.Create(
-                        LuaInteropDiagnostics.AsyncReturnRequiresAdapter,
+                        LuaInteropDiagnostics.UnsupportedSignatureShape,
                         GetLocation(method),
                         bindingName,
-                        method.ReturnType.ToDisplayString()
+                        method.RefKind == RefKind.RefReadOnly
+                            ? "a ref readonly return"
+                            : "a ref return"
                     )
                 );
+                return;
             }
-            else if (method.ReturnsVoid)
+
+            if (method.ReturnsVoid)
             {
                 // Void is a valid Lua nil return.
             }
             else
             {
-                AnalyzeType(context, method, method.ReturnType, bindingName);
+                AnalyzeReturnType(context, method, method.ReturnType, bindingName);
             }
 
             foreach (IParameterSymbol parameter in method.Parameters)
@@ -381,6 +385,30 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 }
 
                 AnalyzeType(context, parameter, parameter.Type, bindingName);
+            }
+        }
+
+        private static void AnalyzeReturnType(
+            SymbolAnalysisContext context,
+            ISymbol symbol,
+            ITypeSymbol type,
+            string bindingName
+        )
+        {
+            if (IsAsyncReturnType(type))
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        LuaInteropDiagnostics.AsyncReturnRequiresAdapter,
+                        GetLocation(symbol),
+                        bindingName,
+                        type.ToDisplayString()
+                    )
+                );
+            }
+            else
+            {
+                AnalyzeType(context, symbol, type, bindingName);
             }
         }
 

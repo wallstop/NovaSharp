@@ -186,6 +186,42 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerReportsRefReturns()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        private static int Value;
+
+        [LuaMember(""current"")]
+        public ref int Current()
+        {
+            return ref Value;
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0003").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua binding 'current'")
+                .ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("a ref return")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsPointerParameters()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(
@@ -259,6 +295,40 @@ namespace Fixtures
             await Assert
                 .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
                 .Contains("Lua member '__tostring'")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsAsyncPropertiesUntilAdapterPackageExists()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using System.Threading.Tasks;
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember(""load"")]
+        public Task<int> Load
+        {
+            get
+            {
+                return Task.FromResult(42);
+            }
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0005").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua member 'load'")
                 .ConfigureAwait(false);
         }
 
