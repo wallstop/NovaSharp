@@ -101,7 +101,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 : type.ContainingNamespace.ToDisplayString();
             return new LuaObjectModel(
                 namespaceName,
-                type.TypeKind == TypeKind.Struct ? "struct" : "class",
+                GetTypeKeyword(type),
                 type.Name,
                 GetLuaObjectName(type),
                 type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat),
@@ -123,6 +123,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             if (
                 !(declaration is ClassDeclarationSyntax)
                 && !(declaration is StructDeclarationSyntax)
+                && !(declaration is RecordDeclarationSyntax)
             )
             {
                 return false;
@@ -134,6 +135,16 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             }
 
             return declaration.Modifiers.Any(SyntaxKind.PartialKeyword);
+        }
+
+        private static string GetTypeKeyword(INamedTypeSymbol type)
+        {
+            if (type.IsRecord)
+            {
+                return type.TypeKind == TypeKind.Struct ? "record struct" : "record";
+            }
+
+            return type.TypeKind == TypeKind.Struct ? "struct" : "class";
         }
 
         private static void AddReferencedEnums(ISymbol member, SortedSet<string> enums)

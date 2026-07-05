@@ -85,6 +85,52 @@ using NovaSharp;
         }
 
         [Test]
+        public async Task GeneratorEmitsGoldenSourceForLuaObjectRecordShape()
+        {
+            await AssertGeneratedSourceMatchesGolden(
+                    @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject]
+    public partial record SaveApi
+    {
+        [LuaMember]
+        public string Name { get; init; }
+    }
+}
+",
+                    "Fixtures.SaveApi.NovaSharpLuaInterop.g.cs",
+                    "SaveApi.g.cs.txt"
+                )
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task GeneratorEmitsGoldenSourceForLuaObjectRecordStructShape()
+        {
+            await AssertGeneratedSourceMatchesGolden(
+                    @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject]
+    public partial record struct CounterRecordApi
+    {
+        [LuaMember]
+        public int Count { get; init; }
+    }
+}
+",
+                    "Fixtures.CounterRecordApi.NovaSharpLuaInterop.g.cs",
+                    "CounterRecordApi.g.cs.txt"
+                )
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task GeneratorSkipsInvalidNonPartialLuaObjectShapes()
         {
             GeneratedSourceResult[] generatedSources = RunGenerator(
@@ -128,7 +174,7 @@ using NovaSharp;
         private static GeneratedSourceResult[] RunGenerator(string source)
         {
             CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithLanguageVersion(
-                LanguageVersion.CSharp9
+                LanguageVersion.CSharp10
             );
             CSharpCompilation compilation = CreateCompilation(source, parseOptions);
             ThrowIfCompilationHasErrors(compilation.GetDiagnostics());
