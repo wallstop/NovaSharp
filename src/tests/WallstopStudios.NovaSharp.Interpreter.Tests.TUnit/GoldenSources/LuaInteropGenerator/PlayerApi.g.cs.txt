@@ -20,6 +20,24 @@ namespace Fixtures
         }
 
         [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
+        private static void __NovaSharpGeneratedRegisterEnumTables(global::NovaSharp.LuaEngine engine, global::NovaSharp.LuaTable destination)
+        {
+            if (engine == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(engine));
+            }
+            if (destination == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(destination));
+            }
+
+            global::NovaSharp.LuaTable enumTable0 = engine.CreateTable(0, 2);
+            enumTable0.Set(@"Red", global::NovaSharp.LuaValue.FromInteger(1L));
+            enumTable0.Set(@"Blue", global::NovaSharp.LuaValue.FromInteger(2L));
+            destination.Set(@"Fixtures.Team", enumTable0.ToValue());
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
         private static string __NovaSharpGeneratedManifest
         {
             get
