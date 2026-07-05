@@ -284,6 +284,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 return;
             }
 
+            if (attributes.HasLuaIgnore)
+            {
+                return;
+            }
+
             INamedTypeSymbol containingType = member.ContainingType;
             if (containingType == null || !HasAttribute(containingType, AttributeNames.LuaObject))
             {

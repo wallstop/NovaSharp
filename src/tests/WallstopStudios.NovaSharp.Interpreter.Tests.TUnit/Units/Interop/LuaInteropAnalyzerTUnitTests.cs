@@ -153,6 +153,35 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerDoesNotReportIgnoredLuaMembersOutsideLuaObjectTypes()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+using LuaExpose = NovaSharp.LuaMemberAttribute;
+using LuaSkip = NovaSharp.LuaIgnoreAttribute;
+
+namespace Fixtures
+{
+    public class PlayerApi
+    {
+        [LuaIgnore]
+        [LuaMember]
+        public int Hidden { get; set; }
+
+        [LuaSkip]
+        [LuaExpose]
+        public int AlsoHidden { get; set; }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await Assert.That(diagnostics.Length).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsLuaMemberOperatorsOutsideLuaObjectTypes()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(

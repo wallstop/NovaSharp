@@ -29,7 +29,9 @@
         <PackageReference Include="Microsoft.Testing.Platform.MSBuild" Version="2.0.2">
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
         <PackageReference Include="TUnit" Version="1.5.70" />
         <PackageReference Include="TUnit.Assertions" Version="1.5.70" />
     </ItemGroup>
