@@ -203,7 +203,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 end
                 """
             );
-            DynValue first = DynValue.NewInteger(1);
+            DynValue first = DynValue.FromInteger(1);
             DynValue second = DynValue.NewInteger(2);
             DynValue third = DynValue.FromInteger(3);
 
@@ -213,7 +213,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(result.Tuple[1].Number).IsEqualTo(22d).ConfigureAwait(false);
             await Assert.That(result.Tuple[2].Number).IsEqualTo(33d).ConfigureAwait(false);
             await Assert.That(result.Tuple[3].Number).IsEqualTo(2d).ConfigureAwait(false);
-            await Assert.That(first.ReadOnly).IsFalse().ConfigureAwait(false);
+            await Assert.That(first.ReadOnly).IsTrue().ConfigureAwait(false);
             await Assert.That(second.ReadOnly).IsFalse().ConfigureAwait(false);
             await Assert.That(third.ReadOnly).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
