@@ -249,13 +249,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task EmitIndexFreezesWritableIndexValues(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script(version));
-            DynValue source = DynValue.NewString("before");
+            DynValue sourceSlot = CreateWritableStringLocalSlot("before");
 
-            Instruction instruction = byteCode.EmitIndex(source);
-            source.Assign(DynValue.NewString("after"));
+            Instruction instruction = byteCode.EmitIndex(sourceSlot);
+            ReplaceWritableLocalSlot(sourceSlot, "after");
 
             await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
-            await Assert.That(instruction.Value).IsNotSameReferenceAs(source).ConfigureAwait(false);
+            await Assert
+                .That(instruction.Value)
+                .IsNotSameReferenceAs(sourceSlot)
+                .ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
         }
 
@@ -268,17 +271,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task EmitIndexSetFreezesWritableIndexValues(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script(version));
-            DynValue source = DynValue.NewString("before");
+            DynValue sourceSlot = CreateWritableStringLocalSlot("before");
 
             Instruction instruction = byteCode.EmitIndexSet(
                 stackofs: 0,
                 tupleidx: 0,
-                index: source
+                index: sourceSlot
             );
-            source.Assign(DynValue.NewString("after"));
+            ReplaceWritableLocalSlot(sourceSlot, "after");
 
             await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
-            await Assert.That(instruction.Value).IsNotSameReferenceAs(source).ConfigureAwait(false);
+            await Assert
+                .That(instruction.Value)
+                .IsNotSameReferenceAs(sourceSlot)
+                .ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
         }
 
@@ -291,17 +297,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         public async Task EmitMetaFreezesWritablePayloadValues(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script(version));
-            DynValue source = DynValue.NewString("before");
+            DynValue sourceSlot = CreateWritableStringLocalSlot("before");
 
             Instruction instruction = byteCode.EmitMeta(
                 "chunk",
                 OpCodeMetadataType.ChunkEntrypoint,
-                source
+                sourceSlot
             );
-            source.Assign(DynValue.NewString("after"));
+            ReplaceWritableLocalSlot(sourceSlot, "after");
 
             await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
-            await Assert.That(instruction.Value).IsNotSameReferenceAs(source).ConfigureAwait(false);
+            await Assert
+                .That(instruction.Value)
+                .IsNotSameReferenceAs(sourceSlot)
+                .ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
         }
 
@@ -641,6 +650,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(instruction.NumVal).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(instruction.NumVal2).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("idx").ConfigureAwait(false);
+        }
+
+        private static DynValue CreateWritableStringLocalSlot(string value)
+        {
+            return DynValue.NewString(value);
+        }
+
+        private static void ReplaceWritableLocalSlot(DynValue slot, string value)
+        {
+            slot.AssignSlot(DynValue.NewString(value));
         }
     }
 }

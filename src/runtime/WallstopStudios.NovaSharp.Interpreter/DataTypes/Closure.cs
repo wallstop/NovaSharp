@@ -617,13 +617,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
             else
             {
-                slot.Assign(value ?? DynValue.Nil);
+                slot.AssignSlot(value ?? DynValue.Nil);
             }
         }
 
         /// <summary>
         /// Gets the mutable internal reference to an upvalue.
-        /// Internal use only - allows direct mutation via <see cref="DynValue.Assign(DynValue)"/>.
+        /// Internal use only - allows direct slot mutation via <see cref="DynValue.AssignSlot(DynValue)"/>.
         /// </summary>
         /// <param name="idx">The index of the upvalue.</param>
         /// <returns>The mutable internal DynValue reference.</returns>

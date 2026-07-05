@@ -1369,7 +1369,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                     && closureScope.Symbols[0] == WellKnownSymbols.ENV
                 )
                 {
-                    closureScope[0].Assign(DynValue.NewTable(newEnv));
+                    closureScope[0].AssignSlot(DynValue.NewTable(newEnv));
                     // Return nil for stack-level setfenv (matches Lua 5.1 behavior for level > 0)
                     // Actually, Lua 5.1 returns the function for level > 0, but we don't have easy access to it
                     return DynValue.Nil;
@@ -1486,7 +1486,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (closure.UpValuesCount > 0 && closure.GetUpValueName(0) == WellKnownSymbols.ENV)
             {
                 DynValue upvalue = closure.GetUpValueMutable(0);
-                upvalue.Assign(DynValue.NewTable(newEnv));
+                upvalue.AssignSlot(DynValue.NewTable(newEnv));
             }
             else
             {

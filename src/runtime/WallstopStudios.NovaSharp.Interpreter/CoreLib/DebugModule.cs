@@ -598,7 +598,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return DynValue.Nil;
             }
 
-            closure[index].Assign(args[2]);
+            closure[index].AssignSlot(args[2]);
 
             return DynValue.NewString(closure.Symbols[index]);
         }
@@ -1239,7 +1239,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 frame.LocalScope[zeroBased] = slot;
             }
 
-            slot.Assign(newValue);
+            slot.AssignSlot(newValue);
 
             string name = symbol?.Name ?? string.Empty;
             return DynValue.NewString(name);

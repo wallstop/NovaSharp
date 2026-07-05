@@ -306,30 +306,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         /// <summary>
-        /// Verifies that DynValue.Assign is internal and not accessible for external modification.
-        /// This is verified by the fact that this test file compiles (Assign is internal but accessible
+        /// Verifies that DynValue.AssignSlot is internal and not accessible for external modification.
+        /// This is verified by the fact that this test file compiles (AssignSlot is internal but accessible
         /// due to InternalsVisibleTo) and we can use it, but external code cannot.
         /// </summary>
         [Test]
-        public async Task AssignIsInternalButAccessibleToTests()
+        public async Task AssignSlotIsInternalButAccessibleToTests()
         {
-            // This test verifies that Assign() still works for internal use
-            DynValue target = DynValue.NewNumber(1);
-            target.Assign(DynValue.NewNumber(2));
+            // This test verifies that slot assignment still works for internal use
+            DynValue targetSlot = CreateWritableLocalSlot(DynValue.NewNumber(1));
+            ReplaceWritableLocalSlot(targetSlot, DynValue.NewNumber(2));
 
-            await Assert.That(target.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(targetSlot.Number).IsEqualTo(2d).ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Verifies that DynValue.Assign throws on readonly values.
+        /// Verifies that DynValue.AssignSlot throws on readonly values.
         /// </summary>
         [Test]
-        public async Task AssignThrowsOnReadonlyValues()
+        public async Task AssignSlotThrowsOnReadonlyValues()
         {
             DynValue readonlyValue = DynValue.True;
 
             await Assert
-                .That(() => readonlyValue.Assign(DynValue.False))
+                .That(() => readonlyValue.AssignSlot(DynValue.False))
                 .Throws<ScriptRuntimeException>()
                 .ConfigureAwait(false);
         }
@@ -370,6 +370,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue result = script.DoString("return type(debug.upvaluejoin)");
 
             await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
+        }
+
+        private static DynValue CreateWritableLocalSlot(DynValue initialValue)
+        {
+            DynValue slot = DynValue.NewNil();
+            ReplaceWritableLocalSlot(slot, initialValue);
+            return slot;
+        }
+
+        private static void ReplaceWritableLocalSlot(DynValue slot, DynValue value)
+        {
+            slot.AssignSlot(value);
         }
     }
 }

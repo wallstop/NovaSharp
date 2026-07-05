@@ -1672,13 +1672,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Performs an assignment, overwriting the value with the specified one.
-        /// This method is internal to prevent external code from corrupting VM state.
+        /// Overwrites this mutable local/upvalue slot with the specified value.
+        /// This method is internal to prevent external code from corrupting VM state and must not be used
+        /// for table keys, instruction literals, or other immutable value snapshots.
         /// External code should use <see cref="Clone"/> and variable assignment instead.
         /// </summary>
         /// <param name="value">The value.</param>
-        /// <exception cref="ScriptRuntimeException">If the value is readonly.</exception>
-        internal void Assign(DynValue value)
+        /// <exception cref="ScriptRuntimeException">If this instance is readonly.</exception>
+        internal void AssignSlot(DynValue value)
         {
             if (value == null)
             {
