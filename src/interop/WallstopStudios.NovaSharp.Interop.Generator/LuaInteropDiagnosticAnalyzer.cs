@@ -161,8 +161,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             }
 
             return IsAttributeType(target, AttributeNames.LuaMember)
-                || IsAttributeType(target, AttributeNames.LuaMetamethod)
-                || IsAttributeType(target, AttributeNames.LuaIgnore);
+                || IsAttributeType(target, AttributeNames.LuaMetamethod);
         }
 
         private static bool IsLuaInteropAttributeSyntaxName(NameSyntax name)
@@ -174,8 +173,6 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 case "LuaMemberAttribute":
                 case "LuaMetamethod":
                 case "LuaMetamethodAttribute":
-                case "LuaIgnore":
-                case "LuaIgnoreAttribute":
                     return true;
                 default:
                     return false;
