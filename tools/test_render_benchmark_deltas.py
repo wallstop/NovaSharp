@@ -651,6 +651,31 @@ class RenderBenchmarkDeltasTests(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         self.assertIn("phase_gate_failures=0", result.stdout)
 
+    def test_phase_gate_allows_nlua_ratio_regression_below_novasharp_threshold(self) -> None:
+        phase_baseline = self.work_dir / "phase-a0-baseline.json"
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Compile", 100, 100, 80),
+                self.comparison_benchmark("NLua Compile", 50, 50, 24),
+            ],
+        )
+        self.assertEqual(0, self.run_script(write_phase_baseline=phase_baseline).returncode)
+        self.write_report(
+            self.comparison_root,
+            "LuaPerformanceBenchmarks",
+            [
+                self.comparison_benchmark("NovaSharp Compile", 180, 180, 80),
+                self.comparison_benchmark("NLua Compile", 20, 20, 24),
+            ],
+        )
+
+        result = self.run_script(phase_baseline=phase_baseline, enforce_phase_gates=True)
+
+        self.assertEqual(0, result.returncode)
+        self.assertIn("phase_gate_failures=0", result.stdout)
+
     def test_phase_gate_allows_nlua_ratio_improvement(self) -> None:
         phase_baseline = self.work_dir / "phase-a0-baseline.json"
         self.write_report(

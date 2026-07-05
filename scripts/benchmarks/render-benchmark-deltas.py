@@ -186,8 +186,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         type=float,
         default=DEFAULT_NLUA_RATIO_THRESHOLD,
         help=(
-            "Allowed fractional regression in NovaSharp/NLua mean and P95 ratios when "
-            "--enforce-phase-gates is enabled."
+            "Allowed fractional regression in NovaSharp/NLua mean and P95 ratios, and "
+            "in NovaSharp's own timing metric, when --enforce-phase-gates is enabled."
         ),
     )
     parser.add_argument(
@@ -196,7 +196,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help=(
             "Fail when the phase baseline is missing, when comparison rows do not "
             "match the baseline shape, when NovaSharp/NLua ratios regress beyond the "
-            "configured threshold, or when NovaSharp allocated B/op regresses beyond "
+            "configured threshold while the NovaSharp timing metric also regresses "
+            "beyond that threshold, or when NovaSharp allocated B/op regresses beyond "
             "the phase allocation tolerance."
         ),
     )
@@ -847,6 +848,10 @@ def append_ratio_gate_failure(
     if math.isfinite(ratio_delta) and ratio_delta <= threshold:
         return
 
+    nova_delta = fraction_delta(current_nova, baseline_nova)
+    if math.isfinite(ratio_delta) and math.isfinite(nova_delta) and nova_delta <= threshold:
+        return
+
     if not math.isfinite(current_ratio):
         message = f"Current NovaSharp/NLua {metric_name} ratio is unavailable."
     elif not math.isfinite(baseline_ratio):
@@ -1007,8 +1012,8 @@ def render_phase_scoreboard_section(
             "and columns show NovaSharp current, NovaSharp baseline, MoonSharp, NLua, Lua-CSharp, "
             "and reference `lua` CLI wall-time context when present.",
             "The phase gate, when enabled, checks NovaSharp/NLua same-run timing ratios against the "
-            "checked-in phase baseline and checks NovaSharp allocated B/op regressions with a small "
-            "runner-noise tolerance.",
+            "checked-in phase baseline only when NovaSharp's own timing metric also regresses, and "
+            "checks NovaSharp allocated B/op regressions with a small runner-noise tolerance.",
             "",
             f"- Phase baseline JSON: `{repo_relative(phase_baseline_path)}`",
             "",

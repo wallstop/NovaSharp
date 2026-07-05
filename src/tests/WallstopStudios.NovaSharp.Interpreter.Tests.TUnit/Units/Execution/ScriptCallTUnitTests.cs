@@ -188,6 +188,97 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task DynValueArgumentsBindToWritableLocalSlots(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue function = script.DoString(
+                """
+                return function(a, ...)
+                    local b, c = ...
+                    a = a + 10
+                    b = b + 20
+                    c = c + 30
+                    return a, b, c, select("#", ...)
+                end
+                """
+            );
+            DynValue first = DynValue.FromInteger(1);
+            DynValue second = DynValue.NewInteger(2);
+            DynValue third = DynValue.FromInteger(3);
+
+            DynValue result = script.Call(function, first, second, third);
+
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(11d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(22d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[2].Number).IsEqualTo(33d).ConfigureAwait(false);
+            await Assert.That(result.Tuple[3].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(first.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(second.ReadOnly).IsFalse().ConfigureAwait(false);
+            await Assert.That(third.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert.That(third.Number).IsEqualTo(3d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task VarargCaptureCopiesScalarWrappersButKeepsTableReferences(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue returnVarargs = script.DoString("return function(...) return ... end");
+            DynValue captureTable = script.DoString("return function(...) return {...} end");
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewString("two");
+
+            DynValue returned = script.Call(returnVarargs, first, second);
+            first.AssignSlot(DynValue.NewNumber(10));
+            second.AssignSlot(DynValue.NewString("changed"));
+
+            await Assert.That(returned.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(returned.Tuple[1].String).IsEqualTo("two").ConfigureAwait(false);
+
+            DynValue third = DynValue.NewNumber(3);
+            DynValue fourth = DynValue.NewString("four");
+            DynValue captured = script.Call(captureTable, third, fourth);
+            third.AssignSlot(DynValue.NewNumber(30));
+            fourth.AssignSlot(DynValue.NewString("changed"));
+
+            await Assert.That(captured.Table.Get(1).Number).IsEqualTo(3d).ConfigureAwait(false);
+            await Assert.That(captured.Table.Get(2).String).IsEqualTo("four").ConfigureAwait(false);
+
+            Table table = new(script);
+            table.Set("field", DynValue.NewNumber(1));
+            DynValue tableArg = DynValue.NewTable(table);
+            DynValue tableCapture = script.Call(captureTable, tableArg, DynValue.NewNumber(0));
+            DynValue capturedTable = tableCapture.Table.Get(1);
+            capturedTable.Table.Set("field", DynValue.NewNumber(2));
+
+            await Assert.That(capturedTable.Table).IsSameReferenceAs(table).ConfigureAwait(false);
+            await Assert.That(table.Get("field").Number).IsEqualTo(2d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task TablePackVarargsCopiesScalarWrappers(LuaCompatibilityVersion version)
+        {
+            Script script = new(version, CoreModulePresets.Complete);
+            DynValue pack = script.DoString("return function(...) return table.pack(...) end");
+            DynValue first = DynValue.NewNumber(1);
+            DynValue second = DynValue.NewString("two");
+
+            DynValue packed = script.Call(pack, first, second);
+            first.AssignSlot(DynValue.NewNumber(10));
+            second.AssignSlot(DynValue.NewString("changed"));
+
+            await Assert.That(packed.Table.Get(1).Number).IsEqualTo(1d).ConfigureAwait(false);
+            await Assert.That(packed.Table.Get(2).String).IsEqualTo("two").ConfigureAwait(false);
+            await Assert.That(packed.Table.Get("n").Number).IsEqualTo(2d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
