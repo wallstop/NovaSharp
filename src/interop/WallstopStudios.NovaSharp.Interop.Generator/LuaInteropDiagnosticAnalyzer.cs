@@ -314,7 +314,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             IFieldSymbol field = member as IFieldSymbol;
             if (field != null)
             {
-                AnalyzeType(context, field, field.Type, bindingName);
+                AnalyzeReturnType(context, field, field.Type, bindingName);
             }
         }
 

@@ -430,6 +430,34 @@ namespace Fixtures
                 .ConfigureAwait(false);
         }
 
+        [Test]
+        public async Task AnalyzerReportsAsyncFieldsUntilAdapterPackageExists()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using System.Threading.Tasks;
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember(""pending"")]
+        public Task<int> pending;
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0005").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("Lua member 'pending'")
+                .ConfigureAwait(false);
+        }
+
         private static async Task<Diagnostic[]> AnalyzeAsync(string source)
         {
             CSharpParseOptions parseOptions = CSharpParseOptions.Default.WithLanguageVersion(

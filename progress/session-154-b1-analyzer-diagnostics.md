@@ -19,6 +19,7 @@ Date: 2026-07-05
 - Addressed Cursor Bugbot feedback by rejecting ref/ref-readonly method returns with `NS0003` and reporting async Lua properties as `NS0005`.
 - Addressed additional review feedback by validating indexer parameter types and treating any `[LuaIgnore]` marker as a full validation skip for that member.
 - Addressed follow-up Bugbot feedback by rejecting ref/ref-readonly property and indexer returns with `NS0003`.
+- Addressed late Copilot feedback by reporting async Lua fields as `NS0005`.
 
 ## Rationale
 
