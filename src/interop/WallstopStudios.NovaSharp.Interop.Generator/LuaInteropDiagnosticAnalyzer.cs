@@ -356,14 +356,44 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     continue;
                 }
 
+                bool hasLuaNameAttribute = false;
+                bool hasValidLuaName = false;
                 foreach (AttributeData attribute in attributes.Attributes)
                 {
+                    if (
+                        IsAttribute(attribute, AttributeNames.LuaMember)
+                        || IsAttribute(attribute, AttributeNames.LuaMetamethod)
+                    )
+                    {
+                        hasLuaNameAttribute = true;
+                    }
+
                     string luaName = GetLuaName(member, attribute);
                     if (luaName == null)
                     {
                         continue;
                     }
 
+                    hasValidLuaName = true;
+                    if (exposedNames.ContainsKey(luaName))
+                    {
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                LuaInteropDiagnostics.NameCollision,
+                                GetLocation(member),
+                                type.Name,
+                                luaName
+                            )
+                        );
+                        continue;
+                    }
+
+                    exposedNames.Add(luaName, member);
+                }
+
+                if (hasLuaNameAttribute && !hasValidLuaName)
+                {
+                    string luaName = member.Name;
                     if (exposedNames.ContainsKey(luaName))
                     {
                         context.ReportDiagnostic(

@@ -307,6 +307,32 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerReportsCollisionsUsingInvalidMemberNameFallbacks()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember("""")]
+        public int Health { get; set; }
+
+        [LuaMember(""Health"")]
+        public int Score { get; set; }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertDiagnosticIdsAsync(diagnostics, "NS0004", "NS0007").ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsSignatureDiagnosticsWhenLuaNameIsInvalid()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(
