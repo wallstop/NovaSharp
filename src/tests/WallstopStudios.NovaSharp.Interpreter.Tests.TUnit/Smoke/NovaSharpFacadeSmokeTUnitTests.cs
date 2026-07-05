@@ -408,6 +408,48 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         }
 
         [Test]
+        public async Task LuaMetamethodKindValuesMatchPublicContract()
+        {
+            (LuaMetamethodKind Kind, int Value)[] expected =
+            {
+                (LuaMetamethodKind.Custom, 0),
+                (LuaMetamethodKind.Add, 1),
+                (LuaMetamethodKind.Subtract, 2),
+                (LuaMetamethodKind.Multiply, 3),
+                (LuaMetamethodKind.Modulo, 4),
+                (LuaMetamethodKind.Power, 5),
+                (LuaMetamethodKind.Divide, 6),
+                (LuaMetamethodKind.FloorDivide, 7),
+                (LuaMetamethodKind.BitwiseAnd, 8),
+                (LuaMetamethodKind.BitwiseOr, 9),
+                (LuaMetamethodKind.BitwiseXor, 10),
+                (LuaMetamethodKind.BitwiseNot, 11),
+                (LuaMetamethodKind.ShiftLeft, 12),
+                (LuaMetamethodKind.ShiftRight, 13),
+                (LuaMetamethodKind.UnaryMinus, 14),
+                (LuaMetamethodKind.Concat, 15),
+                (LuaMetamethodKind.Length, 16),
+                (LuaMetamethodKind.Equal, 17),
+                (LuaMetamethodKind.LessThan, 18),
+                (LuaMetamethodKind.LessThanOrEqual, 19),
+                (LuaMetamethodKind.Index, 20),
+                (LuaMetamethodKind.NewIndex, 21),
+                (LuaMetamethodKind.Call, 22),
+                (LuaMetamethodKind.Close, 23),
+                (LuaMetamethodKind.GarbageCollect, 24),
+                (LuaMetamethodKind.Mode, 25),
+                (LuaMetamethodKind.Name, 26),
+                (LuaMetamethodKind.Pairs, 27),
+                (LuaMetamethodKind.ToString, 28),
+            };
+
+            foreach ((LuaMetamethodKind kind, int value) in expected)
+            {
+                await Assert.That((int)kind).IsEqualTo(value).ConfigureAwait(false);
+            }
+        }
+
+        [Test]
         public async Task SourceGeneratorAttributeTargetsMatchPublicContract()
         {
             AttributeUsageAttribute objectUsage =

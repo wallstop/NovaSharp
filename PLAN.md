@@ -281,7 +281,7 @@ Pit-of-success targets: a sandboxed mod host in **<15 lines**; a bound game API 
 
 **Exit criteria**: bound GameApi sample <30 lines; trimmed publish emits zero NovaSharp trim warnings; generated path verified reflection-free.
 
-**Progress**: B1 started on 2026-07-05 with the public attribute contract in core: `LuaObjectAttribute`, `LuaMemberAttribute`, `LuaMetamethodAttribute`, `LuaMetamethodKind`, and `LuaIgnoreAttribute`, with public API baseline coverage and reflection smoke tests for metadata, target scopes, and invalid names. Generator/analyzer behavior is not implemented yet. See [progress/session-150-b1-source-generator-attributes.md](progress/session-150-b1-source-generator-attributes.md).
+**Progress**: B1 started on 2026-07-05 with the public attribute contract in core: `LuaObjectAttribute`, `LuaMemberAttribute`, `LuaMetamethodAttribute`, `LuaMetamethodKind`, and `LuaIgnoreAttribute`, with public API baseline coverage and reflection smoke tests for metadata, target scopes, and invalid names. Review follow-up made the attribute target smoke test diagnostic on missing `[AttributeUsage]` metadata and pinned explicit public numeric values for every `LuaMetamethodKind` member. Generator/analyzer behavior is not implemented yet. See [progress/session-150-b1-source-generator-attributes.md](progress/session-150-b1-source-generator-attributes.md), [progress/session-152-copilot-review-diagnostics.md](progress/session-152-copilot-review-diagnostics.md), and [progress/session-153-metamethod-enum-contract.md](progress/session-153-metamethod-enum-contract.md).
 
 #### Phase B2 — Unity package
 

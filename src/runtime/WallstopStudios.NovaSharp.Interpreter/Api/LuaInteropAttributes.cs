@@ -186,147 +186,147 @@ namespace NovaSharp
         /// <summary>
         /// A custom metamethod name supplied by string.
         /// </summary>
-        Custom,
+        Custom = 0,
 
         /// <summary>
         /// The __add metamethod.
         /// </summary>
-        Add,
+        Add = 1,
 
         /// <summary>
         /// The __sub metamethod.
         /// </summary>
-        Subtract,
+        Subtract = 2,
 
         /// <summary>
         /// The __mul metamethod.
         /// </summary>
-        Multiply,
+        Multiply = 3,
 
         /// <summary>
         /// The __mod metamethod.
         /// </summary>
-        Modulo,
+        Modulo = 4,
 
         /// <summary>
         /// The __pow metamethod.
         /// </summary>
-        Power,
+        Power = 5,
 
         /// <summary>
         /// The __div metamethod.
         /// </summary>
-        Divide,
+        Divide = 6,
 
         /// <summary>
         /// The __idiv metamethod.
         /// </summary>
-        FloorDivide,
+        FloorDivide = 7,
 
         /// <summary>
         /// The __band metamethod.
         /// </summary>
-        BitwiseAnd,
+        BitwiseAnd = 8,
 
         /// <summary>
         /// The __bor metamethod.
         /// </summary>
-        BitwiseOr,
+        BitwiseOr = 9,
 
         /// <summary>
         /// The __bxor metamethod.
         /// </summary>
-        BitwiseXor,
+        BitwiseXor = 10,
 
         /// <summary>
         /// The __bnot metamethod.
         /// </summary>
-        BitwiseNot,
+        BitwiseNot = 11,
 
         /// <summary>
         /// The __shl metamethod.
         /// </summary>
-        ShiftLeft,
+        ShiftLeft = 12,
 
         /// <summary>
         /// The __shr metamethod.
         /// </summary>
-        ShiftRight,
+        ShiftRight = 13,
 
         /// <summary>
         /// The __unm metamethod.
         /// </summary>
-        UnaryMinus,
+        UnaryMinus = 14,
 
         /// <summary>
         /// The __concat metamethod.
         /// </summary>
-        Concat,
+        Concat = 15,
 
         /// <summary>
         /// The __len metamethod.
         /// </summary>
-        Length,
+        Length = 16,
 
         /// <summary>
         /// The __eq metamethod.
         /// </summary>
-        Equal,
+        Equal = 17,
 
         /// <summary>
         /// The __lt metamethod.
         /// </summary>
-        LessThan,
+        LessThan = 18,
 
         /// <summary>
         /// The __le metamethod.
         /// </summary>
-        LessThanOrEqual,
+        LessThanOrEqual = 19,
 
         /// <summary>
         /// The __index metamethod.
         /// </summary>
-        Index,
+        Index = 20,
 
         /// <summary>
         /// The __newindex metamethod.
         /// </summary>
-        NewIndex,
+        NewIndex = 21,
 
         /// <summary>
         /// The __call metamethod.
         /// </summary>
-        Call,
+        Call = 22,
 
         /// <summary>
         /// The __close metamethod.
         /// </summary>
-        Close,
+        Close = 23,
 
         /// <summary>
         /// The __gc metamethod.
         /// </summary>
-        GarbageCollect,
+        GarbageCollect = 24,
 
         /// <summary>
         /// The __mode metamethod.
         /// </summary>
-        Mode,
+        Mode = 25,
 
         /// <summary>
         /// The __name metamethod.
         /// </summary>
-        Name,
+        Name = 26,
 
         /// <summary>
         /// The __pairs metamethod.
         /// </summary>
-        Pairs,
+        Pairs = 27,
 
         /// <summary>
         /// The __tostring metamethod.
         /// </summary>
-        ToString,
+        ToString = 28,
     }
 
     /// <summary>
