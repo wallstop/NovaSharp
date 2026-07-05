@@ -572,6 +572,34 @@ namespace Fixtures
         }
 
         [Test]
+        public async Task AnalyzerReportsRefReturnMethodsAndStillChecksParameters()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        private static int Value;
+
+        [LuaMember(""current"")]
+        public unsafe ref int Current(int* value)
+        {
+            return ref Value;
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertDiagnosticCountAsync(diagnostics, "NS0003", 2).ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task AnalyzerReportsRefProperties()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(
@@ -608,6 +636,38 @@ namespace Fixtures
                 .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
                 .Contains("a ref return")
                 .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsRefReturnIndexersAndStillChecksParameters()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using System;
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        private static int Value;
+
+        [LuaMember(""current"")]
+        public ref int this[DateTime key]
+        {
+            get
+            {
+                return ref Value;
+            }
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertDiagnosticIdsAsync(diagnostics, "NS0002", "NS0003").ConfigureAwait(false);
         }
 
         [Test]

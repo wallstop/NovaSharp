@@ -634,7 +634,6 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                             : "a ref return"
                     )
                 );
-                return;
             }
 
             AnalyzeReturnType(context, property, property.Type, bindingName);
@@ -693,7 +692,6 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                             : "a ref return"
                     )
                 );
-                return;
             }
 
             if (method.IsAsync && method.ReturnsVoid)
