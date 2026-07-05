@@ -162,6 +162,13 @@ namespace Fixtures
                 .ConfigureAwait(false);
 
             await AssertDiagnosticCountAsync(diagnostics, "NS0006", 2).ConfigureAwait(false);
+            string combinedMessage =
+                diagnostics[0].GetMessage(CultureInfo.InvariantCulture)
+                + Environment.NewLine
+                + diagnostics[1].GetMessage(CultureInfo.InvariantCulture);
+            await Assert.That(combinedMessage).Contains("operator +").ConfigureAwait(false);
+            await Assert.That(combinedMessage).Contains("operator int").ConfigureAwait(false);
+            await Assert.That(combinedMessage).Contains("Fixtures.NumberBox").ConfigureAwait(false);
         }
 
         [Test]
@@ -354,6 +361,42 @@ namespace Fixtures
             await Assert
                 .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
                 .Contains("Lua binding 'timestamp'")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsAllMetamethodNamesForSharedMemberDiagnostics()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using System;
+using NovaSharp;
+
+namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMetamethod(LuaMetamethodKind.Add)]
+        [LuaMetamethod(LuaMetamethodKind.Subtract)]
+        public DateTime Combine()
+        {
+            return DateTime.UtcNow;
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0002").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("__add")
+                .ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("__sub")
                 .ConfigureAwait(false);
         }
 

@@ -290,12 +290,13 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             INamedTypeSymbol containingType = member.ContainingType;
             if (containingType == null || !HasAttribute(containingType, AttributeNames.LuaObject))
             {
-                string containingName = containingType == null ? "<unknown>" : containingType.Name;
+                string containingName =
+                    containingType == null ? "<unknown>" : GetTypeDisplayName(containingType);
                 context.ReportDiagnostic(
                     Diagnostic.Create(
                         LuaInteropDiagnostics.MemberRequiresLuaObject,
                         GetLocation(member),
-                        member.Name,
+                        GetMemberDisplayName(member),
                         containingName
                     )
                 );
@@ -544,6 +545,16 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             return attributeClass == null ? "<unknown>" : attributeClass.Name;
         }
 
+        private static string GetMemberDisplayName(ISymbol member)
+        {
+            return member.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+        }
+
+        private static string GetTypeDisplayName(INamedTypeSymbol type)
+        {
+            return type.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+        }
+
         private static string GetLuaName(ISymbol member, AttributeData attribute)
         {
             if (IsAttribute(attribute, AttributeNames.LuaMember))
@@ -558,16 +569,30 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
 
         private static string GetLuaBindingName(ISymbol member, AttributeSet attributes)
         {
+            List<string> luaNames = null;
             foreach (AttributeData attribute in attributes.Attributes)
             {
                 string luaName = GetLuaName(member, attribute);
                 if (luaName != null)
                 {
-                    return luaName;
+                    if (luaNames == null)
+                    {
+                        luaNames = new List<string>();
+                    }
+
+                    if (!luaNames.Contains(luaName))
+                    {
+                        luaNames.Add(luaName);
+                    }
                 }
             }
 
-            return member.Name;
+            if (luaNames == null)
+            {
+                return member.Name;
+            }
+
+            return luaNames.Count == 1 ? luaNames[0] : string.Join(", ", luaNames);
         }
 
         private static void AnalyzeMemberSignature(
