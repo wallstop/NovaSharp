@@ -8,11 +8,12 @@ Date: 2026-07-06
 - Addressed Copilot review feedback on the generator runtime test by asserting the generated `Team` property exists before reading it through reflection.
 - Addressed follow-up adversarial review feedback by routing generated `ulong` and unsigned enum argument/property writes through a generated `__NovaSharpGeneratedReadUInt64(...)` helper.
 - Added runtime coverage that assigns a high `ulong`-backed enum table constant back through a generated enum property and verifies the CLR property receives the expected enum value.
+- Addressed follow-up Copilot feedback by tracking enum underlying types in the generator model and emitting checked underlying casts before enum casts, so narrow unsigned enum setters reject out-of-range Lua values instead of truncating.
 
 ## Validation
 
-- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests` completed with exit code 0: 34 tests passed, 0 failed.
-- `./scripts/test/quick.sh --full -c LuaInteropGeneratorTUnitTests` completed with exit code 0: 18 tests passed, 0 failed.
+- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests` completed with exit code 0: 34 tests passed, 0 failed after the review fixes.
+- `./scripts/test/quick.sh --full -c LuaInteropGeneratorTUnitTests` completed with exit code 0: 18 tests passed, 0 failed after the review fixes.
 - `./scripts/build/quick.sh` completed with exit code 0.
 - `git diff --check` completed with exit code 0.
 - `./scripts/test/quick.sh` completed with exit code 0: 14,904 tests passed, 0 failed, 0 skipped.

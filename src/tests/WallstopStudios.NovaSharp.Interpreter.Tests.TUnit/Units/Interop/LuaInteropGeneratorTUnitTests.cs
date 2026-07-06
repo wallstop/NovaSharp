@@ -199,6 +199,9 @@ using NovaSharp;
             LuaValue highMaskResult = await engine
                 .RunAsync("EnumApi.Mask = EnumApi.UnsignedMask.High; return EnumApi.Mask")
                 .ConfigureAwait(false);
+            LuaValue smallMaskOverflowCaught = await engine
+                .RunAsync("return pcall(function() EnumApi.SmallMask = 256 end)")
+                .ConfigureAwait(false);
 
             await Assert
                 .That(highMaskResult.AsNumber())
@@ -208,6 +211,7 @@ using NovaSharp;
                 .That(maskProperty.GetValue(enumApi))
                 .IsEqualTo(Enum.Parse(unsignedMaskType, "High"))
                 .ConfigureAwait(false);
+            await Assert.That(smallMaskOverflowCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
         }
 
         [Test]
@@ -788,6 +792,9 @@ using NovaSharp;
 
         [LuaMember]
         public UnsignedMask Mask { get; set; }
+
+        [LuaMember]
+        public SmallUnsignedMask SmallMask { get; set; }
     }
 
     public enum SignedMode : long
@@ -800,6 +807,12 @@ using NovaSharp;
     {
         Low = 4UL,
         High = 9223372036854775808UL,
+    }
+
+    public enum SmallUnsignedMask : byte
+    {
+        Low = 1,
+        High = 255,
     }
 }
 ";

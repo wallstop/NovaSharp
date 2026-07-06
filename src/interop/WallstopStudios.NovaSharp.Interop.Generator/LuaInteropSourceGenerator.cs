@@ -478,10 +478,12 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
 
             if (type.TypeKind == TypeKind.Enum)
             {
+                ITypeSymbol underlyingType = namedType.EnumUnderlyingType;
                 return new TypeModel(
                     LuaInteropTypeKind.Enum,
                     GetTypeSyntax(type),
-                    IsUnsignedEnumUnderlyingType(namedType.EnumUnderlyingType)
+                    IsUnsignedEnumUnderlyingType(underlyingType),
+                    GetTypeSyntax(underlyingType)
                 );
             }
 
@@ -1520,14 +1522,21 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     builder.Append(')');
                     if (type.IsUnsigned)
                     {
+                        builder.Append("checked((");
+                        builder.Append(type.EnumUnderlyingCodeType);
+                        builder.Append(')');
                         builder.Append("__NovaSharpGeneratedReadUInt64(");
                         builder.Append(argument);
-                        builder.Append(')');
+                        builder.Append("))");
                         return;
                     }
 
+                    builder.Append("checked((");
+                    builder.Append(type.EnumUnderlyingCodeType);
+                    builder.Append(')');
                     builder.Append(argument);
                     builder.Append(".AsInteger()");
+                    builder.Append(')');
                     return;
                 default:
                     builder.Append("default(");
@@ -1988,11 +1997,17 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 "object"
             );
 
-            public TypeModel(LuaInteropTypeKind kind, string codeType, bool isUnsigned = false)
+            public TypeModel(
+                LuaInteropTypeKind kind,
+                string codeType,
+                bool isUnsigned = false,
+                string enumUnderlyingCodeType = ""
+            )
             {
                 Kind = kind;
                 CodeType = codeType;
                 IsUnsigned = isUnsigned;
+                EnumUnderlyingCodeType = enumUnderlyingCodeType;
             }
 
             /// <summary>
@@ -2009,6 +2024,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             /// Gets whether this type is represented with an unsigned runtime value.
             /// </summary>
             public bool IsUnsigned { get; }
+
+            /// <summary>
+            /// Gets the generated C# syntax for this enum type's underlying integral type.
+            /// </summary>
+            public string EnumUnderlyingCodeType { get; }
 
             /// <summary>
             /// Gets whether this type is supported for generated argument unpacking.

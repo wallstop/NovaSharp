@@ -99,7 +99,7 @@ namespace Fixtures
                     instance.Health = checked((int)args[2].AsInteger());
                     return global::NovaSharp.LuaValue.Nil;
                 case @"Team":
-                    instance.Team = (global::Fixtures.Team)args[2].AsInteger();
+                    instance.Team = (global::Fixtures.Team)checked((int)args[2].AsInteger());
                     return global::NovaSharp.LuaValue.Nil;
             }
 
