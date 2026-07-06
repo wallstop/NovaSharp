@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     using NovaSharp;
     using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Debugging;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
@@ -20,6 +21,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
     public sealed class ProcessorCoreLifecycleTUnitTests
     {
         private static readonly TimeSpan WorkerJoinTimeout = TimeSpan.FromSeconds(10);
+        private const int DeepNonTailCallFixtureDepth = 80;
+        private const int LargeVarargFixtureCount = 528;
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
@@ -118,6 +121,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             }
         }
 
+        private static int GetDeepNonTailCallDepth() =>
+            VmStackDefaults.ExecutionStackInitialCapacity + 16;
+
+        private static int GetLargeVarargCount() => VmStackDefaults.ValueStackInitialCapacity + 16;
+
         [global::TUnit.Core.Test]
         public async Task EnterAndLeaveProcessorUpdateParentCoroutineStack()
         {
@@ -209,6 +217,144 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             await Assert.That(child.ParentProcessorForTests == parent).IsTrue();
             await Assert.That(child.State).IsEqualTo(CoroutineState.NotStarted);
+            await Assert
+                .That(child.GetValueStackForTests().Capacity)
+                .IsEqualTo(VmStackDefaults.ValueStackInitialCapacity);
+            await Assert
+                .That(child.GetExecutionStackForTests().Capacity)
+                .IsEqualTo(VmStackDefaults.ExecutionStackInitialCapacity);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task MainProcessorUsesSmallGrowableStacks()
+        {
+            Script script = new();
+            Processor processor = script.GetMainProcessorForTests();
+            FastStack<DynValue> valueStack = processor.GetValueStackForTests();
+            FastStack<CallStackItem> executionStack = processor.GetExecutionStackForTests();
+
+            await Assert
+                .That(valueStack.Capacity)
+                .IsEqualTo(VmStackDefaults.ValueStackInitialCapacity);
+            await Assert
+                .That(executionStack.Capacity)
+                .IsEqualTo(VmStackDefaults.ExecutionStackInitialCapacity);
+
+            for (int i = 0; i <= VmStackDefaults.ValueStackInitialCapacity; i++)
+            {
+                valueStack.Push(DynValue.NewNumber(i));
+            }
+
+            for (int i = 0; i <= VmStackDefaults.ExecutionStackInitialCapacity; i++)
+            {
+                executionStack.Push(new CallStackItem());
+            }
+
+            await Assert
+                .That(valueStack.Count)
+                .IsEqualTo(VmStackDefaults.ValueStackInitialCapacity + 1);
+            await Assert
+                .That(valueStack.Capacity)
+                .IsGreaterThan(VmStackDefaults.ValueStackInitialCapacity);
+            await Assert
+                .That(executionStack.Count)
+                .IsEqualTo(VmStackDefaults.ExecutionStackInitialCapacity + 1);
+            await Assert
+                .That(executionStack.Capacity)
+                .IsGreaterThan(VmStackDefaults.ExecutionStackInitialCapacity);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task CreatedCoroutineUsesSmallGrowableStacks()
+        {
+            Script script = new();
+            DynValue function = script.LoadString("return 1");
+
+            DynValue coroutineValue = script.CreateCoroutine(function);
+            Processor coroutineProcessor = coroutineValue.Coroutine.GetProcessorForTests();
+
+            await Assert
+                .That(
+                    coroutineProcessor.ParentProcessorForTests == script.GetMainProcessorForTests()
+                )
+                .IsTrue();
+            await Assert.That(coroutineProcessor.State).IsEqualTo(CoroutineState.NotStarted);
+            await Assert
+                .That(coroutineProcessor.GetValueStackForTests().Capacity)
+                .IsEqualTo(VmStackDefaults.ValueStackInitialCapacity);
+            await Assert
+                .That(coroutineProcessor.GetExecutionStackForTests().Capacity)
+                .IsEqualTo(VmStackDefaults.ExecutionStackInitialCapacity);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task NonTailRecursionGrowsExecutionStackPastInitialCapacity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            Processor processor = script.GetMainProcessorForTests();
+
+            // Keep the fixture-extracted Lua literal-only; these asserts catch capacity drift.
+            int configuredDepth = GetDeepNonTailCallDepth();
+            await Assert.That(configuredDepth).IsEqualTo(DeepNonTailCallFixtureDepth);
+
+            DynValue result = script.DoString(
+                @"
+                local function recurse(n)
+                    if n == 0 then
+                        return 1
+                    end
+
+                    return 1 + recurse(n - 1)
+                end
+
+                return recurse(80)
+            "
+            );
+
+            await Assert.That(result.Number).IsEqualTo(configuredDepth + 1d);
+            await Assert
+                .That(processor.GetExecutionStackForTests().Capacity)
+                .IsGreaterThan(VmStackDefaults.ExecutionStackInitialCapacity);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task LargeVarargCallGrowsValueStackPastInitialCapacity(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = new(version);
+            Processor processor = script.GetMainProcessorForTests();
+
+            // Keep the fixture-extracted Lua literal-only; these asserts catch capacity drift.
+            int configuredCount = GetLargeVarargCount();
+            await Assert.That(configuredCount).IsEqualTo(LargeVarargFixtureCount);
+
+            DynValue result = script.DoString(
+                @"
+                local function count(...)
+                    return select('#', ...)
+                end
+
+                local function values(n)
+                    if n == 0 then
+                        return
+                    end
+
+                    return n, values(n - 1)
+                end
+
+                return count(values(528))
+            "
+            );
+
+            await Assert.That(result.Number).IsEqualTo((double)configuredCount);
+            await Assert
+                .That(processor.GetValueStackForTests().Capacity)
+                .IsGreaterThan(VmStackDefaults.ValueStackInitialCapacity);
         }
 
         [global::TUnit.Core.Test]

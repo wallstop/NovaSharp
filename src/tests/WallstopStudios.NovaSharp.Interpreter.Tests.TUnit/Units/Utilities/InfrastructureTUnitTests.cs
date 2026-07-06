@@ -114,6 +114,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Utilities
 
             await Assert.That(state.ValueStack).IsNotNull().ConfigureAwait(false);
             await Assert.That(state.ExecutionStack).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(state.ValueStack.Capacity)
+                .IsEqualTo(VmStackDefaults.ValueStackInitialCapacity)
+                .ConfigureAwait(false);
+            await Assert
+                .That(state.ExecutionStack.Capacity)
+                .IsEqualTo(VmStackDefaults.ExecutionStackInitialCapacity)
+                .ConfigureAwait(false);
             await Assert.That(state.InstructionPtr).IsEqualTo(0).ConfigureAwait(false);
             await Assert
                 .That(state.State)

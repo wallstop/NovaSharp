@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoreLifecycleTUnitTests.cs:207
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoreLifecycleTUnitTests.cs:398
 -- @test: ProcessorCoreLifecycleTUnitTests.CoroutineYieldPassesValuesWhenYieldingIsAllowed
 function worker()
                     coroutine.yield('pause')

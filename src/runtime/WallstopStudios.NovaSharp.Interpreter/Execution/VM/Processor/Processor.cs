@@ -14,8 +14,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     /// </summary>
     internal sealed partial class Processor
     {
-        private const int StackSize = 131072;
-
         private readonly ByteCode _rootChunk;
 
         private readonly FastStack<DynValue> _valueStack;
@@ -376,8 +374,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="byteCode">Root chunk to execute.</param>
         public Processor(Script script, Table globalContext, ByteCode byteCode)
         {
-            _valueStack = new FastStack<DynValue>(StackSize);
-            _executionStack = new FastStack<CallStackItem>(StackSize);
+            _valueStack = new FastStack<DynValue>(VmStackDefaults.ValueStackInitialCapacity);
+            _executionStack = new FastStack<CallStackItem>(
+                VmStackDefaults.ExecutionStackInitialCapacity
+            );
             _coroutinesStack = new List<Processor>();
 
             _debug = new DebugContext();
@@ -393,8 +393,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private Processor(Processor parentProcessor)
         {
-            _valueStack = new FastStack<DynValue>(StackSize);
-            _executionStack = new FastStack<CallStackItem>(StackSize);
+            _valueStack = new FastStack<DynValue>(VmStackDefaults.ValueStackInitialCapacity);
+            _executionStack = new FastStack<CallStackItem>(
+                VmStackDefaults.ExecutionStackInitialCapacity
+            );
             _debug = parentProcessor._debug;
             _rootChunk = parentProcessor._rootChunk;
             _globalTable = parentProcessor._globalTable;

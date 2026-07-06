@@ -15,9 +15,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         private T[] _storage;
         private int _headIdx;
 
-        public FastStack(int maxCapacity)
+        public FastStack(int startingCapacity)
         {
-            _storage = new T[maxCapacity];
+            _storage = new T[startingCapacity];
         }
 
         public T this[int index]
@@ -194,6 +194,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _headIdx; }
+        }
+
+        /// <summary>
+        /// Gets the current backing storage capacity.
+        /// </summary>
+        internal int Capacity
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _storage.Length; }
         }
 
         int IList<T>.IndexOf(T item)
