@@ -743,6 +743,22 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 );
             }
 
+            if (
+                method.ContainingType != null
+                && method.ContainingType.TypeKind == TypeKind.Struct
+                && !method.IsReadOnly
+            )
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        LuaInteropDiagnostics.UnsupportedSignatureShape,
+                        GetLocation(method),
+                        bindingName,
+                        "a mutable value-type receiver"
+                    )
+                );
+            }
+
             if (method.IsAsync && method.ReturnsVoid)
             {
                 context.ReportDiagnostic(
@@ -903,11 +919,6 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             if (namedType == null)
             {
                 return false;
-            }
-
-            if (HasAttribute(namedType, AttributeNames.LuaObject))
-            {
-                return true;
             }
 
             return IsNamedType(namedType, "NovaSharp", "LuaValue")

@@ -58,6 +58,15 @@ namespace NovaSharp
         }
 
         /// <summary>
+        /// Wraps this function as a Lua value for assignment or calls.
+        /// </summary>
+        public LuaValue ToValue()
+        {
+            _owner.ThrowIfDisposed();
+            return _owner.Wrap(_function);
+        }
+
+        /// <summary>
         /// Returns the underlying VM function after validating engine ownership.
         /// </summary>
         internal DynValue ToDynValue(LuaEngine expectedOwner)

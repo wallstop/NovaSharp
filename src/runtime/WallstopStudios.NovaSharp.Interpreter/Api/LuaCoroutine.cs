@@ -134,6 +134,15 @@ namespace NovaSharp
             }
         }
 
+        /// <summary>
+        /// Wraps this coroutine as a Lua value for assignment or calls.
+        /// </summary>
+        public LuaValue ToValue()
+        {
+            _owner.ThrowIfDisposed();
+            return _owner.Wrap(_coroutineValue);
+        }
+
         private static LuaCoroutineState ToFacadeState(CoroutineState state)
         {
             switch (state)

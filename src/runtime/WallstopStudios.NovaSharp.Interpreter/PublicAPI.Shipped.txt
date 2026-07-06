@@ -16,12 +16,24 @@ NovaSharp.ILuaScriptLoader.ResolveFileName(System.String filename, NovaSharp.Lua
 NovaSharp.ILuaScriptLoader.ResolveModuleName(System.String moduleName, NovaSharp.LuaTable globals) -> System.String
 NovaSharp.ILuaTimeProvider
 NovaSharp.ILuaTimeProvider.GetUtcNow() -> System.DateTimeOffset
+NovaSharp.LuaCallback
+NovaSharp.LuaCallback..ctor(System.Object object, System.IntPtr method)
+NovaSharp.LuaCallback.BeginInvoke(NovaSharp.LuaContext context, System.ReadOnlySpan<NovaSharp.LuaValue> args, System.AsyncCallback callback, System.Object object) -> System.IAsyncResult
+NovaSharp.LuaCallback.EndInvoke(System.IAsyncResult result) -> NovaSharp.LuaValue
+NovaSharp.LuaCallback.Invoke(NovaSharp.LuaContext context, System.ReadOnlySpan<NovaSharp.LuaValue> args) -> NovaSharp.LuaValue
 NovaSharp.LuaChunk
 NovaSharp.LuaChunk.Run() -> NovaSharp.LuaValue
 NovaSharp.LuaChunk.Run(NovaSharp.LuaValue arg0) -> NovaSharp.LuaValue
 NovaSharp.LuaChunk.Run(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1) -> NovaSharp.LuaValue
 NovaSharp.LuaChunk.Run(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1, NovaSharp.LuaValue arg2) -> NovaSharp.LuaValue
 NovaSharp.LuaChunk.Run(System.ReadOnlySpan<NovaSharp.LuaValue> args) -> NovaSharp.LuaValue
+NovaSharp.LuaContext
+NovaSharp.LuaContext.Engine -> NovaSharp.LuaEngine
+NovaSharp.LuaContext.Equals(NovaSharp.LuaContext other) -> System.Boolean
+NovaSharp.LuaContext.Equals(System.Object obj) -> System.Boolean
+NovaSharp.LuaContext.GetHashCode() -> System.Int32
+NovaSharp.LuaContext.op_Equality(NovaSharp.LuaContext left, NovaSharp.LuaContext right) -> System.Boolean
+NovaSharp.LuaContext.op_Inequality(NovaSharp.LuaContext left, NovaSharp.LuaContext right) -> System.Boolean
 NovaSharp.LuaCoreModules
 NovaSharp.LuaCoreModules.Basic
 NovaSharp.LuaCoreModules.Bit32
@@ -48,6 +60,7 @@ NovaSharp.LuaCoroutine.Resume(NovaSharp.LuaValue arg0) -> NovaSharp.LuaValue
 NovaSharp.LuaCoroutine.Resume(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1) -> NovaSharp.LuaValue
 NovaSharp.LuaCoroutine.Resume(System.ReadOnlySpan<NovaSharp.LuaValue> args) -> NovaSharp.LuaValue
 NovaSharp.LuaCoroutine.State -> NovaSharp.LuaCoroutineState
+NovaSharp.LuaCoroutine.ToValue() -> NovaSharp.LuaValue
 NovaSharp.LuaCoroutineState
 NovaSharp.LuaCoroutineState.Dead
 NovaSharp.LuaCoroutineState.ForceSuspended
@@ -65,6 +78,7 @@ NovaSharp.LuaEngine.Call(NovaSharp.LuaFunction function, System.ReadOnlySpan<Nov
 NovaSharp.LuaEngine.Compile(System.String code, System.String chunkName = null) -> NovaSharp.LuaChunk
 NovaSharp.LuaEngine.Create() -> NovaSharp.LuaEngine
 NovaSharp.LuaEngine.Create(NovaSharp.LuaEngineOptions options) -> NovaSharp.LuaEngine
+NovaSharp.LuaEngine.CreateCallback(NovaSharp.LuaCallback callback, System.String name = null) -> NovaSharp.LuaValue
 NovaSharp.LuaEngine.CreateCoroutine(NovaSharp.LuaFunction function) -> NovaSharp.LuaCoroutine
 NovaSharp.LuaEngine.CreateTable(System.Int32 arrayCapacity = 0, System.Int32 hashCapacity = 0) -> NovaSharp.LuaTable
 NovaSharp.LuaEngine.Dispose() -> System.Void
@@ -98,6 +112,7 @@ NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0) -> NovaSharp.LuaValue
 NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1) -> NovaSharp.LuaValue
 NovaSharp.LuaFunction.Call(NovaSharp.LuaValue arg0, NovaSharp.LuaValue arg1, NovaSharp.LuaValue arg2) -> NovaSharp.LuaValue
 NovaSharp.LuaFunction.Call(System.ReadOnlySpan<NovaSharp.LuaValue> args) -> NovaSharp.LuaValue
+NovaSharp.LuaFunction.ToValue() -> NovaSharp.LuaValue
 NovaSharp.LuaIgnoreAttribute
 NovaSharp.LuaIgnoreAttribute..ctor()
 NovaSharp.LuaKind

@@ -4,13 +4,27 @@ namespace Fixtures
     partial record struct CounterRecordApi
     {
         [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
-        private static global::NovaSharp.LuaValue __NovaSharpGeneratedDispatch(global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args, string memberName)
+        public static void __NovaSharpGeneratedRegister(global::NovaSharp.LuaEngine engine, global::NovaSharp.LuaTable destination, CounterRecordApi instance)
+        {
+            if (engine == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(engine));
+            }
+            if (destination == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(destination));
+            }
+
+            global::NovaSharp.LuaTable objectTable = engine.CreateTable(0, 0);
+            destination.Set(@"CounterRecordApi", objectTable.ToValue());
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
+        private static global::NovaSharp.LuaValue __NovaSharpGeneratedDispatch(CounterRecordApi instance, global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args, string memberName)
         {
             _ = args;
             switch (memberName)
             {
-                case @"Count":
-                    break;
             }
 
             return global::NovaSharp.LuaValue.Nil;
@@ -21,7 +35,7 @@ namespace Fixtures
         {
             get
             {
-                return @"object:CounterRecordApi|type:Fixtures.CounterRecordApi|member:Count";
+                return @"object:CounterRecordApi|type:Fixtures.CounterRecordApi";
             }
         }
     }

@@ -4,13 +4,35 @@ namespace Fixtures
     partial record SaveApi
     {
         [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
-        private static global::NovaSharp.LuaValue __NovaSharpGeneratedDispatch(global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args, string memberName)
+        public static void __NovaSharpGeneratedRegister(global::NovaSharp.LuaEngine engine, global::NovaSharp.LuaTable destination, SaveApi instance)
         {
+            if (engine == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(engine));
+            }
+            if (destination == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(destination));
+            }
+            if (instance == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(instance));
+            }
+
+            global::NovaSharp.LuaTable objectTable = engine.CreateTable(0, 0);
+            destination.Set(@"SaveApi", objectTable.ToValue());
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
+        private static global::NovaSharp.LuaValue __NovaSharpGeneratedDispatch(SaveApi instance, global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args, string memberName)
+        {
+            if (instance == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(instance));
+            }
             _ = args;
             switch (memberName)
             {
-                case @"Name":
-                    break;
             }
 
             return global::NovaSharp.LuaValue.Nil;
@@ -21,7 +43,7 @@ namespace Fixtures
         {
             get
             {
-                return @"object:SaveApi|type:Fixtures.SaveApi|member:Name";
+                return @"object:SaveApi|type:Fixtures.SaveApi";
             }
         }
     }

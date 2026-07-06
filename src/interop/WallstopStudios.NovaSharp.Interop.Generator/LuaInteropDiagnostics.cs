@@ -25,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             Category,
             DiagnosticSeverity.Error,
             true,
-            "Generated interop supports Lua facade types, primitives, enums, and other LuaObject types."
+            "Generated interop supports Lua facade types, primitives, and enums."
         );
 
         public static readonly DiagnosticDescriptor UnsupportedSignatureShape =
