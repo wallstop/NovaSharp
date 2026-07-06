@@ -280,14 +280,14 @@ jobs:
           echo "failed=${failed}" >> "$GITHUB_OUTPUT"
 
       - name: Download runtime benchmark artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: runtime-benchmark-artifacts
           path: artifacts/benchmarkdotnet/runtime-download
 
       - name: Download comparison benchmark artifacts
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           pattern: comparison-*
