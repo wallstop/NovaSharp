@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783306742208,
+  "lastUpdate": 1783362928790,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1486,6 +1486,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 356.761,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3dc5bc0c396d5decbeaf8dfcb87d29fd0071508a",
+          "message": "[codex] Implement proper Lua tail calls (#73)\n\n## Summary\n\n- Implement proper Lua tail-call frame reuse for legal `return f(...)`\ncalls while preserving caller frames when `<close>` variables,\ncontinuations, or error handlers require it.\n- Add Lua 5.2+ `debug.getinfo(..., \"t\").istailcall` behavior and\ngrowable `FastStack` storage.\n- Harden Lua 5.4+ `xpcall` unwind ordering around message handlers and\nthrowing close handlers.\n- Add focused TUnit coverage plus standalone Lua fixtures, and update\n`PLAN.md` / session progress.\n\n## Validation\n\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh --full -c ErrorHandlingModuleTUnitTests`\n- `./scripts/test/quick.sh --full -c TailCallTUnitTests`\n- `./scripts/test/quick.sh --full -c CloseAttributeTUnitTests`\n- `./scripts/test/quick.sh --full -c ProcessorCoroutineCloseTUnitTests`\n- `./scripts/test/quick.sh --full -c ProcessorStackTraceTUnitTests`\n- `./scripts/test/quick.sh --full -c FastStackTUnitTests`\n- `./scripts/test/quick.sh`\n- `scripts/tests/run-lua-fixtures-fast.sh` plus\n`scripts/tests/compare-lua-outputs.py --enforce` for Lua 5.1, 5.2, 5.3,\n5.4, and 5.5\n- `git diff --cached --check`\n- `bash ./scripts/dev/pre-commit.sh`\n\n## Review Loop\n\n- Adversarial review found and drove fixes for Lua 5.4 `xpcall` +\n`<close>` replacement-error ordering.\n- Follow-up adversarial review found and drove fixes for recursive\nmessage-handler re-entry and nested `xpcall` handler boundaries.\n- Final adversarial review reported no remaining issues after focused\ntests and independent probes.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **High Risk**\n> Changes core VM call/return and error-unwind paths plus Lua 5.4+ close\nsemantics; regressions would affect stack depth, protected calls, and\ndebug stack reporting.\n> \n> **Overview**\n> Implements **proper Lua tail-call semantics** for legal `return\nf(...)` sites: the VM reuses the caller frame immediately when safe,\nskips sandbox depth checks for frame-replacing tail calls, and **does\nnot** reuse when `<close>` variables, continuations, or error handlers\nare active. The old stack-depth `TailCallOptimizationThreshold` no\nlonger gates tail calls (property kept for compatibility).\n> \n> **`FastStack`** now grows geometrically instead of hitting a fixed\ncapacity ceiling.\n> \n> **Lua 5.2+** `debug.getinfo` gains the `t` option and default\n`istailcall` behavior; tail frames clear `name`/`namewhat` and stack\ntraces mark tail frames via `WatchItem.IsTailCall`.\n> \n> **Lua 5.4+ `xpcall` unwind** is reworked: message handlers run before\nclose handlers, close errors can replace the active error with correct\nhandler decoration, remaining closes still run, and recursive\nmessage-handler re-entry is blocked. `<close>` invocation routes through\nthe VM `Call` path with instruction context.\n> \n> Adds broad **TUnit** and **Lua fixture** coverage for tail calls,\nsandbox depth, nested `xpcall`, and close ordering; **PLAN.md** /\nsession notes document A5 progress.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n79313f6f43b2aa4a0b924944d716cf264141a703. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-06T11:29:31-07:00",
+          "tree_id": "db42655612d1811f025b41cc7eb31c750e8f1a68",
+          "url": "https://github.com/wallstop/NovaSharp/commit/3dc5bc0c396d5decbeaf8dfcb87d29fd0071508a"
+        },
+        "date": 1783362928142,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 82.768,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 86.771,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 85.015,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 138.188,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 139.739,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 141.925,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 155.069,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 155.861,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 153.181,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 166.965,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 173.359,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 173.493,
             "unit": "ns",
             "extra": ""
           }
