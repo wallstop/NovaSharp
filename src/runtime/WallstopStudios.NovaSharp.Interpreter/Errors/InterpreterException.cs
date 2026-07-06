@@ -98,6 +98,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         /// </remarks>
         public bool DoNotDecorateMessage { get; set; }
 
+        internal bool ErrorHandlerBeforeUnwindDecorated { get; set; }
+
         /// <summary>
         /// Formats <see cref="DecoratedMessage"/> with the best available script context.
         /// </summary>

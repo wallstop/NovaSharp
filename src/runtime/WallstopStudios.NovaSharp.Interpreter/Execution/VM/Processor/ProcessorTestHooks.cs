@@ -178,7 +178,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         internal void ExecBeginFnForTests(Instruction instruction)
         {
-            ExecBeginFn(instruction);
+            ExecBeginFn(instruction, instructionPtr: -1);
         }
 
         /// <summary>
@@ -190,7 +190,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue errorValue
         )
         {
-            CloseSymbolsSubset(frame, symbols, errorValue);
+            CloseSymbolsSubset(frame, symbols, errorValue, instructionPtr: -1);
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         internal void ExecRetForTests(Instruction instruction)
         {
-            ExecRet(instruction);
+            ExecRet(instruction, instructionPtr: -1);
         }
 
         /// <summary>

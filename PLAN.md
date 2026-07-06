@@ -148,11 +148,15 @@ Sub-steps, each landing green:
 
 #### Phase A5 — Call path + interop signatures (~3-4 weeks)
 
+- [x] Proper Lua tail-call semantics landed ahead of A5: frame reuse is immediate for legal `return f(...)` calls; callability is resolved before dropping the caller; pending `<close>` variables, continuations, and error handlers block reuse; sandbox call-depth checks do not count frame-replacing tail calls; Lua 5.2+ `debug.getinfo(..., "t")` reports `istailcall`.
+- [x] Removed the current fixed VM stack ceiling by making the array-backed `FastStack` grow geometrically. Shrinking initial stack sizes and adding a configurable ceiling remain in A5.
 - [ ] `CallStackItem` → struct frames in a growable stack; delete `CallStackItemPool(s)`.
 - [ ] Shrink per-Script stacks: grow-on-demand from 512 values / 64 frames (currently 2 × 131,072 = >2 MiB); geometric growth, configurable ceiling. This is also the coroutine-cost fix.
 - [ ] Args as stack windows (base + count); CLR callbacks receive `ReadOnlySpan<LuaValue>`; multi-return via return-buffer writer. `LuaValue[]` tuples remain only for varargs capture / `table.pack`, pooled.
 - [ ] Migrate `CallbackFunction.ClrCallback` to the span-based form; migrate ~20 `CoreLib/` modules **one module per PR** (per-module fixture suites localize failures).
 - [ ] **No exceptions on hot call/return/yield paths.**
+
+**Progress**: Proper Lua tail-call frame reuse and growable `FastStack` landed on 2026-07-06, with follow-up hardening for `xpcall` message-handler ordering across Lua 5.4 `<close>` errors. See [progress/session-165-proper-tail-calls-close-errors.md](progress/session-165-proper-tail-calls-close-errors.md).
 
 **Exit criteria**: fib/hanoi ≤2-3x of NLua; **Lua→CLR interop benchmark beats NLua outright**; `new Script()` <100 KB; coroutine create/resume near-zero steady-state alloc.
 
@@ -338,6 +342,7 @@ ______________________________________________________________________
 | Auto-yield timing shift | A3 | Assert yield happens, not exact instruction index |
 | **Table iteration order change** | A4 | Fixtures compare vs reference Lua (order already differs); shuffled-iteration smoke test; `next`-contract fixtures added pre-rewrite |
 | `#`/border semantics with array part | A4 | Port PUC border search exactly; per-version `#` fixtures; fuzz vs reference lua |
+| Proper tail calls and `<close>` interaction | A5 | Tail-call tests cover stack depth, `istailcall`, sandbox depth, callable `__call`, and Lua 5.4+ close-handler exclusion |
 | CoreLib signature migration typos | A5 | One module per PR; per-module fixture gates |
 | Int/float subtype (5.3+) | all | `LuaNumber` union preserved verbatim; numeric edge-case fixtures as canary |
 

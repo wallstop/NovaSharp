@@ -134,7 +134,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             args = ModuleArgumentValidation.RequireArguments(args, nameof(args));
 
             DynValue target = args[0];
-            string what = ResolveWhatOption(args, 1);
+            string what = ResolveWhatOption(executionContext.Script, args, 1);
 
             switch (target.Type)
             {
@@ -1008,6 +1008,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             {
                 info.Set("activelines", DynValue.NewTable(new Table(script)));
             }
+
+            if (ContainsWhatFlag(what, 't'))
+            {
+                info.Set("istailcall", DynValue.False);
+            }
         }
 
         private static void PopulateInfoFromFrame(
@@ -1039,7 +1044,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
 
             if (ContainsWhatFlag(what, 'n'))
             {
-                if (frame.Name != null)
+                if (frame.IsTailCall)
+                {
+                    info.Set("name", DynValue.Nil);
+                    info.Set("namewhat", DynValue.NewString(string.Empty));
+                }
+                else if (frame.Name != null)
                 {
                     info.Set("name", DynValue.NewString(frame.Name));
                     info.Set("namewhat", DynValue.NewString("global"));
@@ -1059,6 +1069,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             if (ContainsWhatFlag(what, 'L'))
             {
                 info.Set("activelines", DynValue.NewTable(new Table(script)));
+            }
+
+            if (ContainsWhatFlag(what, 't'))
+            {
+                info.Set("istailcall", DynValue.FromBoolean(frame.IsTailCall));
             }
         }
 
@@ -1138,28 +1153,40 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return sourceName.Substring(0, 57) + "...";
         }
 
-        private static string ResolveWhatOption(CallbackArguments args, int optionIndex)
+        private static string ResolveWhatOption(
+            Script script,
+            CallbackArguments args,
+            int optionIndex
+        )
         {
-            string what = "nSluf";
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                script.CompatibilityVersion
+            );
+            string what = version >= LuaCompatibilityVersion.Lua52 ? "nSltuf" : "nSluf";
             if (args.Count > optionIndex && args[optionIndex].IsNotNil())
             {
                 what = args.AsType(optionIndex, "getinfo", DataType.String, false).String;
             }
 
-            ValidateWhatOption(what, optionIndex);
+            ValidateWhatOption(script, what, optionIndex);
             return what;
         }
 
-        private static void ValidateWhatOption(string what, int optionIndex)
+        private static void ValidateWhatOption(Script script, string what, int optionIndex)
         {
             if (string.IsNullOrEmpty(what))
             {
                 return;
             }
 
+            LuaCompatibilityVersion version = LuaVersionDefaults.Resolve(
+                script.CompatibilityVersion
+            );
+            string validFlags = version >= LuaCompatibilityVersion.Lua52 ? "nSlufLt" : "nSlufL";
+
             foreach (char flag in what)
             {
-                if (!ContainsWhatFlag("nSlufL", flag))
+                if (!ContainsWhatFlag(validFlags, flag))
                 {
                     throw ScriptRuntimeException.BadArgument(
                         optionIndex,

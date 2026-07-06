@@ -20,6 +20,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     {
         private const int YieldSpecialTrap = -99;
 
+        private readonly struct TailCallFrameReuseState
+        {
+            public TailCallFrameReuseState(
+                int returnAddress,
+                CallbackFunction errorHandler,
+                CallbackFunction continuation,
+                DynValue errorHandlerBeforeUnwind
+            )
+            {
+                ReturnAddress = returnAddress;
+                ErrorHandler = errorHandler;
+                Continuation = continuation;
+                ErrorHandlerBeforeUnwind = errorHandlerBeforeUnwind;
+            }
+
+            public int ReturnAddress { get; }
+
+            public CallbackFunction ErrorHandler { get; }
+
+            public CallbackFunction Continuation { get; }
+
+            public DynValue ErrorHandlerBeforeUnwind { get; }
+        }
+
         /// <summary>
         /// Gets or sets how many instructions the VM may execute before automatically yielding.
         /// </summary>
@@ -214,9 +238,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                                 null,
                                 null,
                                 i.OpCode == OpCode.ThisCall,
-                                i.Name
+                                i.Name,
+                                allowTailCallFrameReuse: true
                             );
                             shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
+
+                            if (instructionPtr < 0 && instructionPtr != YieldSpecialTrap)
+                            {
+                                goto return_to_native_code;
+                            }
 
                             break;
                         case OpCode.Scalar:
@@ -270,22 +300,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             ExecMkTuple(i);
                             break;
                         case OpCode.Enter:
-                            ExecEnter(i);
+                            ExecEnter(i, instructionPtr);
                             break;
                         case OpCode.Leave:
-                            ExecLeave(i);
+                            ExecLeave(i, instructionPtr);
                             break;
                         case OpCode.Exit:
-                            ExecExit(i);
+                            ExecExit(i, instructionPtr);
                             break;
                         case OpCode.Clean:
-                            ClearBlockData(i);
+                            ClearBlockData(i, instructionPtr);
                             break;
                         case OpCode.Closure:
                             ExecClosure(i);
                             break;
                         case OpCode.BeginFn:
-                            ExecBeginFn(i);
+                            ExecBeginFn(i, instructionPtr);
                             break;
                         case OpCode.ToBool:
                             _valueStack.Push(
@@ -296,10 +326,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             ExecArgs(i);
                             break;
                         case OpCode.Ret:
-                            instructionPtr = ExecRet(i);
+                            instructionPtr = ExecRet(i, instructionPtr);
                             shouldYieldToCaller = instructionPtr == YieldSpecialTrap;
 
-                            if (instructionPtr < 0)
+                            if (instructionPtr < 0 && instructionPtr != YieldSpecialTrap)
                             {
                                 goto return_to_native_code;
                             }
@@ -429,22 +459,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     }
                 }
 
-                for (int i = 0; i < _executionStack.Count; i++)
-                {
-                    CallStackItem c = _executionStack.Peek(i);
+                DecorateNearestErrorHandlerBeforeUnwind(exception, instructionPtr);
 
-                    if (c.ErrorHandlerBeforeUnwind != null)
-                    {
-                        exception.DecoratedMessage = PerformMessageDecorationBeforeUnwind(
-                            c.ErrorHandlerBeforeUnwind,
-                            exception.DecoratedMessage,
-                            GetCurrentSourceRef(instructionPtr)
-                        );
-                    }
-                }
-
-                DynValue closeError = DynValue.NewString(exception.DecoratedMessage);
-
+                ScriptRuntimeException activeException = exception;
                 while (_executionStack.Count > 0)
                 {
                     CallStackItem csi = PopToBasePointer();
@@ -452,7 +469,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                     try
                     {
-                        CloseAllPendingBlocks(csi, closeError);
+                        DynValue closeError = DynValue.NewString(activeException.DecoratedMessage);
+                        try
+                        {
+                            CloseAllPendingBlocks(
+                                csi,
+                                closeError,
+                                instructionPtr,
+                                decorateCloseErrorsBeforeUnwind: true
+                            );
+                        }
+                        catch (ScriptRuntimeException closeException)
+                        {
+                            activeException = closeException;
+                        }
 
                         if (csi.ErrorHandler != null)
                         {
@@ -477,7 +507,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                                 )
                             )
                             {
-                                cbargs[0] = DynValue.NewString(exception.DecoratedMessage);
+                                cbargs[0] = DynValue.NewString(activeException.DecoratedMessage);
 
                                 DynValue handled = errorHandler.Invoke(
                                     new ScriptExecutionContext(this, errorHandler, sourceRef),
@@ -492,7 +522,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                         if ((csi.Flags & CallStackItemFlags.EntryPoint) != 0)
                         {
-                            exception.Rethrow();
+                            activeException.Rethrow();
                             throw;
                         }
                     }
@@ -505,12 +535,93 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     }
                 }
 
-                exception.Rethrow();
+                activeException.Rethrow();
                 throw;
             }
 
             return_to_native_code:
             return _valueStack.Pop();
+        }
+
+        private void DecorateNearestErrorHandlerBeforeUnwind(
+            ScriptRuntimeException exception,
+            int instructionPtr
+        )
+        {
+            DecorateNearestErrorHandlerBeforeUnwind(exception, instructionPtr, currentFrame: null);
+        }
+
+        private void DecorateNearestErrorHandlerBeforeUnwind(
+            ScriptRuntimeException exception,
+            int instructionPtr,
+            CallStackItem currentFrame
+        )
+        {
+            if (exception.ErrorHandlerBeforeUnwindDecorated)
+            {
+                return;
+            }
+
+            if (TryDecorateErrorHandlerBeforeUnwind(currentFrame, exception, instructionPtr))
+            {
+                return;
+            }
+
+            int framesToScan = _executionStack.Count;
+            if (_errorHandlerBeforeUnwindScanBoundaryDepth >= 0)
+            {
+                framesToScan = Math.Max(
+                    0,
+                    _executionStack.Count - _errorHandlerBeforeUnwindScanBoundaryDepth
+                );
+            }
+
+            for (int i = 0; i < framesToScan; i++)
+            {
+                CallStackItem frame = _executionStack.Peek(i);
+                if (TryDecorateErrorHandlerBeforeUnwind(frame, exception, instructionPtr))
+                {
+                    return;
+                }
+            }
+        }
+
+        private bool TryDecorateErrorHandlerBeforeUnwind(
+            CallStackItem frame,
+            ScriptRuntimeException exception,
+            int instructionPtr
+        )
+        {
+            if (frame == null || frame.ErrorHandler == null)
+            {
+                return false;
+            }
+
+            DynValue messageHandler = frame.ErrorHandlerBeforeUnwind;
+            if (messageHandler != null)
+            {
+                if (frame.ErrorHandlerBeforeUnwindInProgress)
+                {
+                    return true;
+                }
+
+                frame.ErrorHandlerBeforeUnwindInProgress = true;
+                try
+                {
+                    exception.DecoratedMessage = PerformMessageDecorationBeforeUnwind(
+                        messageHandler,
+                        exception.DecoratedMessage,
+                        GetCurrentSourceRef(instructionPtr)
+                    );
+                    exception.ErrorHandlerBeforeUnwindDecorated = true;
+                }
+                finally
+                {
+                    frame.ErrorHandlerBeforeUnwindInProgress = false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -590,7 +701,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 if (!slot.IsNil())
                 {
                     DynValue previous = slot.Clone();
-                    CloseValue(symref, previous, DynValue.Nil);
+                    CloseValue(symref, previous, DynValue.Nil, instructionPtr: -1);
                 }
             }
 
@@ -604,9 +715,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 && stackframe.ToBeClosedIndices.Contains(index);
         }
 
-        private void ExecEnter(Instruction i)
+        private void ExecEnter(Instruction i, int instructionPtr)
         {
-            ClearBlockData(i);
+            ClearBlockData(i, instructionPtr);
 
             CallStackItem stackframe = _executionStack.Peek();
 
@@ -638,18 +749,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private void ExecLeave(Instruction i)
+        private void ExecLeave(Instruction i, int instructionPtr)
         {
             CallStackItem stackframe = _executionStack.Peek();
-            CloseCurrentBlock(stackframe, DynValue.Nil);
-            ClearBlockData(i);
+            CloseCurrentBlock(stackframe, DynValue.Nil, instructionPtr);
+            ClearBlockData(i, instructionPtr);
         }
 
-        private void ExecExit(Instruction i)
+        private void ExecExit(Instruction i, int instructionPtr)
         {
             CallStackItem stackframe = _executionStack.Peek();
-            CloseCurrentBlock(stackframe, DynValue.Nil);
-            ClearBlockData(i);
+            CloseCurrentBlock(stackframe, DynValue.Nil, instructionPtr);
+            ClearBlockData(i, instructionPtr);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -677,7 +788,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private void CloseValue(SymbolRef symbol, DynValue value, DynValue error)
+        private void CloseValue(
+            SymbolRef symbol,
+            DynValue value,
+            DynValue error,
+            int instructionPtr
+        )
         {
             DynValue scalar = value?.ToScalar() ?? DynValue.Nil;
 
@@ -695,10 +811,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             DynValue err = error ?? DynValue.Nil;
 
-            GetScript().Call(metamethod, scalar, err);
+            if (metamethod.Type == DataType.Function)
+            {
+                Call(metamethod, scalar, err);
+                return;
+            }
+
+            if (metamethod.Type == DataType.ClrFunction)
+            {
+                CallbackFunction callback = metamethod.Callback;
+                ScriptExecutionContext context = new(
+                    this,
+                    callback,
+                    GetCurrentSourceRef(instructionPtr)
+                );
+                if (callback.HasArgumentViewCallback)
+                {
+                    callback.InvokeArgumentViewFixed(context, scalar, err);
+                }
+                else
+                {
+                    callback.InvokeLegacyFixed(context, scalar, err);
+                }
+                return;
+            }
+
+            throw ScriptRuntimeException.CloseMetamethodExpected(scalar);
         }
 
-        private void CloseCurrentBlock(CallStackItem stackframe, DynValue error)
+        private void CloseCurrentBlock(CallStackItem stackframe, DynValue error, int instructionPtr)
         {
             if (stackframe.BlocksToClose == null || stackframe.BlocksToClose.Count == 0)
             {
@@ -722,29 +863,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
             }
 
+            DynValue activeError = error ?? DynValue.Nil;
+            ScriptRuntimeException closeException = null;
             for (int idx = closers.Count - 1; idx >= 0; idx--)
             {
                 SymbolRef sym = closers[idx];
                 DynValue slot = stackframe.LocalScope[sym.IndexValue];
 
-                if (slot != null && !slot.IsNil())
-                {
-                    DynValue previous = slot.Clone();
-                    CloseValue(sym, previous, error);
-                    slot.AssignSlot(DynValue.Nil);
-                }
+                closeException = CloseValueAndTrackError(
+                    sym,
+                    slot,
+                    ref activeError,
+                    closeException,
+                    stackframe,
+                    instructionPtr,
+                    decorateCloseErrorsBeforeUnwind: true
+                );
             }
 
             ListPool<SymbolRef>.Return(closers);
+
+            if (closeException != null)
+            {
+                throw closeException;
+            }
         }
 
         private void CloseAllPendingBlocks(CallStackItem stackframe, DynValue error)
+        {
+            CloseAllPendingBlocks(
+                stackframe,
+                error,
+                instructionPtr: -1,
+                decorateCloseErrorsBeforeUnwind: false
+            );
+        }
+
+        private void CloseAllPendingBlocks(
+            CallStackItem stackframe,
+            DynValue error,
+            int instructionPtr,
+            bool decorateCloseErrorsBeforeUnwind
+        )
         {
             if (stackframe.BlocksToClose == null || stackframe.BlocksToClose.Count == 0)
             {
                 return;
             }
 
+            DynValue activeError = error ?? DynValue.Nil;
+            ScriptRuntimeException closeException = null;
             while (stackframe.BlocksToClose.Count > 0)
             {
                 List<SymbolRef> closers = stackframe.BlocksToClose[^1];
@@ -769,18 +937,76 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     SymbolRef sym = closers[idx];
                     DynValue slot = stackframe.LocalScope[sym.IndexValue];
 
-                    if (slot != null && !slot.IsNil())
-                    {
-                        DynValue previous = slot.Clone();
-                        CloseValue(sym, previous, error);
-                        slot.AssignSlot(DynValue.Nil);
-                    }
+                    closeException = CloseValueAndTrackError(
+                        sym,
+                        slot,
+                        ref activeError,
+                        closeException,
+                        stackframe,
+                        instructionPtr,
+                        decorateCloseErrorsBeforeUnwind
+                    );
                 }
 
                 ListPool<SymbolRef>.Return(closers);
             }
 
             stackframe.ToBeClosedIndices?.Clear();
+
+            if (closeException != null)
+            {
+                throw closeException;
+            }
+        }
+
+        private ScriptRuntimeException CloseValueAndTrackError(
+            SymbolRef symbol,
+            DynValue slot,
+            ref DynValue activeError,
+            ScriptRuntimeException activeException,
+            CallStackItem stackframe,
+            int instructionPtr,
+            bool decorateCloseErrorsBeforeUnwind
+        )
+        {
+            if (slot == null || slot.IsNil())
+            {
+                return activeException;
+            }
+
+            DynValue previous = slot.Clone();
+            int previousBoundaryDepth = _errorHandlerBeforeUnwindScanBoundaryDepth;
+            _errorHandlerBeforeUnwindScanBoundaryDepth = _executionStack.Count;
+            try
+            {
+                CloseValue(symbol, previous, activeError, instructionPtr);
+            }
+            catch (ScriptRuntimeException closeException)
+            {
+                if (closeException.CallStack == null)
+                {
+                    FillDebugData(closeException, instructionPtr);
+                }
+
+                if (decorateCloseErrorsBeforeUnwind)
+                {
+                    DecorateNearestErrorHandlerBeforeUnwind(
+                        closeException,
+                        instructionPtr,
+                        stackframe
+                    );
+                }
+
+                activeError = DynValue.NewString(closeException.DecoratedMessage);
+                activeException = closeException;
+            }
+            finally
+            {
+                _errorHandlerBeforeUnwindScanBoundaryDepth = previousBoundaryDepth;
+                slot.AssignSlot(DynValue.Nil);
+            }
+
+            return activeException;
         }
 
         private void ExecStoreLcl(Instruction i)
@@ -1088,7 +1314,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             _valueStack.Push(DynValue.FromBoolean(!(v.CastToBool())));
         }
 
-        private void ExecBeginFn(Instruction i)
+        private void ExecBeginFn(Instruction i, int instructionPtr)
         {
             CallStackItem cur = _executionStack.Peek();
 
@@ -1096,7 +1322,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             cur.LocalScope = DynValueArrayPool.Rent(i.NumVal);
             cur._localScopeSize = i.NumVal;
 
-            ClearBlockData(i);
+            ClearBlockData(i, instructionPtr);
 
             if (cur.BlocksToClose == null)
             {
@@ -1342,66 +1568,36 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallbackFunction Continuation = null,
             bool thisCall = false,
             string debugText = null,
-            DynValue unwindHandler = null
+            DynValue unwindHandler = null,
+            bool allowTailCallFrameReuse = false
         )
         {
-            // Check sandbox call stack depth limit before making a call
-            CheckSandboxCallStackDepth();
-
             DynValue fn = _valueStack.Peek(argsCount);
             CallStackItemFlags Flags = (thisCall ? CallStackItemFlags.MethodCall : default);
+            bool canReuseTailCallFrame =
+                allowTailCallFrameReuse
+                && CanReuseFrameForKnownTailCallSite(
+                    instructionPtr,
+                    handler,
+                    Continuation,
+                    unwindHandler
+                );
+            bool canReuseLuaTailCallFrame = canReuseTailCallFrame && fn.Type == DataType.Function;
+            SourceRef callingSourceRef = GetCurrentSourceRef(instructionPtr - 1);
 
-            // if TCO threshold reached
-            if (
-                (
-                    _executionStack.Count > _script.Options.TailCallOptimizationThreshold
-                    && _executionStack.Count > 1
-                )
-                || (
-                    _valueStack.Count > _script.Options.TailCallOptimizationThreshold
-                    && _valueStack.Count > 1
-                )
-            )
+            if (!canReuseTailCallFrame || fn.Type == DataType.ClrFunction)
             {
-                // and the "will-be" return address is valid (we don't want to crash here)
-                if (instructionPtr >= 0 && instructionPtr < _rootChunk.Code.Count)
-                {
-                    Instruction i = _rootChunk.Code[instructionPtr];
-
-                    // and we are followed *exactly* by a RET 1
-                    if (i.OpCode == OpCode.Ret && i.NumVal == 1)
-                    {
-                        CallStackItem csi = _executionStack.Peek();
-
-                        // if the current stack item has no "odd" things pending and neither has the new coming one..
-                        if (
-                            csi.ClrFunction == null
-                            && csi.Continuation == null
-                            && csi.ErrorHandler == null
-                            && csi.ErrorHandlerBeforeUnwind == null
-                            && Continuation == null
-                            && unwindHandler == null
-                            && handler == null
-                        )
-                        {
-                            instructionPtr = PerformTco(instructionPtr, argsCount);
-                            Flags |= CallStackItemFlags.TailCall;
-                        }
-                    }
-                }
+                CheckSandboxCallStackDepth();
             }
 
             if (fn.Type == DataType.ClrFunction)
             {
-                // instructionPtr - 1: instructionPtr already points to the next instruction at this moment
-                // but we need the current instruction here
-                SourceRef sref = GetCurrentSourceRef(instructionPtr - 1);
                 CallbackFunction callback = fn.Callback;
 
                 CallStackItem frame = CallStackItemPool.Rent();
                 frame.ClrFunction = callback;
                 frame.ReturnAddress = instructionPtr;
-                frame.CallingSourceRef = sref;
+                frame.CallingSourceRef = callingSourceRef;
                 frame.BasePointer = -1;
                 frame.ErrorHandler = handler;
                 frame.Continuation = Continuation;
@@ -1422,7 +1618,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 }
                 else
                 {
-                    ScriptExecutionContext context = new(this, callback, sref);
+                    ScriptExecutionContext context = new(this, callback, callingSourceRef);
                     if (callback.HasArgumentViewCallback)
                     {
                         ret = callback.InvokeArgumentViewStack(
@@ -1449,21 +1645,35 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 CallStackItemPool.Return(_executionStack.Pop());
 
-                return InternalCheckForTailRequests(null, instructionPtr);
+                return InternalCheckForTailRequests(null, instructionPtr, allowTailCallFrameReuse);
             }
             else if (fn.Type == DataType.Function)
             {
+                CallbackFunction effectiveHandler = handler;
+                CallbackFunction effectiveContinuation = Continuation;
+                DynValue effectiveUnwindHandler = unwindHandler;
+
+                if (canReuseLuaTailCallFrame)
+                {
+                    TailCallFrameReuseState reuseState = PerformTco(instructionPtr, argsCount);
+                    instructionPtr = reuseState.ReturnAddress;
+                    effectiveHandler = reuseState.ErrorHandler;
+                    effectiveContinuation = reuseState.Continuation;
+                    effectiveUnwindHandler = reuseState.ErrorHandlerBeforeUnwind;
+                    Flags |= CallStackItemFlags.TailCall;
+                }
+
                 _valueStack.Push(DynValue.FromNumber(argsCount));
                 CallStackItem frame = CallStackItemPool.Rent();
                 frame.BasePointer = _valueStack.Count;
                 frame.ReturnAddress = instructionPtr;
                 frame.DebugEntryPoint = fn.Function.EntryPointByteCodeLocation;
-                frame.CallingSourceRef = GetCurrentSourceRef(instructionPtr - 1); // See right above in GetCurrentSourceRef(instructionPtr - 1)
+                frame.CallingSourceRef = callingSourceRef;
                 frame.ClosureScope = fn.Function.ClosureContext;
                 frame.Function = fn;
-                frame.ErrorHandler = handler;
-                frame.Continuation = Continuation;
-                frame.ErrorHandlerBeforeUnwind = unwindHandler;
+                frame.ErrorHandler = effectiveHandler;
+                frame.Continuation = effectiveContinuation;
+                frame.ErrorHandlerBeforeUnwind = effectiveUnwindHandler;
                 frame.Flags = Flags;
                 _executionStack.Push(frame);
                 return fn.Function.EntryPointByteCodeLocation;
@@ -1492,10 +1702,81 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     _valueStack.Push(tmp[i]);
                 }
 
-                return InternalExecCall(argsCount + 1, instructionPtr, handler, Continuation);
+                return InternalExecCall(
+                    argsCount + 1,
+                    instructionPtr,
+                    handler,
+                    Continuation,
+                    unwindHandler: unwindHandler,
+                    allowTailCallFrameReuse: allowTailCallFrameReuse
+                );
             }
 
             throw ScriptRuntimeException.AttemptToCallNonFunc(fn.Type, debugText);
+        }
+
+        private bool CanReuseFrameForKnownTailCallSite(
+            int instructionPtr,
+            CallbackFunction handler,
+            CallbackFunction continuation,
+            DynValue unwindHandler
+        )
+        {
+            if (!IsTailCallReturnSite(instructionPtr))
+            {
+                return false;
+            }
+
+            CallStackItem currentFrame = _executionStack.Peek();
+            return CanReuseFrameForLuaTailCall(currentFrame, handler, continuation, unwindHandler);
+        }
+
+        private bool IsTailCallReturnSite(int instructionPtr)
+        {
+            if (instructionPtr < 0 || instructionPtr >= _rootChunk.Code.Count)
+            {
+                return false;
+            }
+
+            Instruction next = _rootChunk.Code[instructionPtr];
+            return next.OpCode == OpCode.Ret && next.NumVal == 1;
+        }
+
+        private static bool CanReuseFrameForLuaTailCall(
+            CallStackItem currentFrame,
+            CallbackFunction handler,
+            CallbackFunction continuation,
+            DynValue unwindHandler
+        )
+        {
+            return currentFrame.ClrFunction == null
+                && handler == null
+                && continuation == null
+                && unwindHandler == null
+                && !HasPendingCloseHandlers(currentFrame);
+        }
+
+        private static bool HasPendingCloseHandlers(CallStackItem frame)
+        {
+            if (frame.ToBeClosedIndices != null && frame.ToBeClosedIndices.Count > 0)
+            {
+                return true;
+            }
+
+            if (frame.BlocksToClose == null)
+            {
+                return false;
+            }
+
+            foreach (List<SymbolRef> block in frame.BlocksToClose)
+            {
+                if (block != null && block.Count > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private DynValue InvokeLegacyCallbackFromStack(
@@ -1588,8 +1869,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 || metamethod.Type == DataType.ClrFunction;
         }
 
-        private int PerformTco(int instructionPtr, int argsCount)
+        private TailCallFrameReuseState PerformTco(int instructionPtr, int argsCount)
         {
+            System.Diagnostics.Debug.Assert(!HasPendingCloseHandlers(_executionStack.Peek()));
+
             // Use pooled array for tail call optimization
             using PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
                 argsCount + 1,
@@ -1606,7 +1889,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem csi = PopToBasePointer();
             try
             {
-                int retpoint = csi.ReturnAddress;
+                TailCallFrameReuseState reuseState = new(
+                    csi.ReturnAddress,
+                    csi.ErrorHandler,
+                    csi.Continuation,
+                    csi.ErrorHandlerBeforeUnwind
+                );
                 int argscnt = (int)(_valueStack.Pop().Number);
                 _valueStack.RemoveLast(argscnt + 1);
 
@@ -1616,7 +1904,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     _valueStack.Push(args[i]);
                 }
 
-                return retpoint;
+                return reuseState;
             }
             finally
             {
@@ -1624,7 +1912,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
         }
 
-        private int ExecRet(Instruction i)
+        private int ExecRet(Instruction i, int instructionPtr)
         {
             CallStackItem csi = _executionStack.Peek();
             int retpoint = csi.ReturnAddress;
@@ -1644,7 +1932,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 throw new InternalErrorException("RET supports only 0 and 1 ret val scenarios");
             }
 
-            CloseAllPendingBlocks(csi, DynValue.Nil);
+            CloseAllPendingBlocks(
+                csi,
+                DynValue.Nil,
+                instructionPtr,
+                decorateCloseErrorsBeforeUnwind: true
+            );
 
             CallStackItem popped = PopToBasePointer();
             System.Diagnostics.Debug.Assert(object.ReferenceEquals(csi, popped));
@@ -1660,7 +1953,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 if (i.NumVal == 1)
                 {
-                    retpoint = InternalCheckForTailRequests(i, retpoint);
+                    retpoint = InternalCheckForTailRequests(
+                        i,
+                        retpoint,
+                        allowTailCallFrameReuse: false
+                    );
                 }
 
                 continuation = csi.Continuation;
@@ -1686,7 +1983,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return retpoint;
         }
 
-        private int InternalCheckForTailRequests(Instruction i, int instructionPtr)
+        private int InternalCheckForTailRequests(
+            Instruction i,
+            int instructionPtr,
+            bool allowTailCallFrameReuse
+        )
         {
             DynValue tail = _valueStack.Peek(0);
 
@@ -1711,7 +2012,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     tcd.Continuation,
                     false,
                     null,
-                    tcd.ErrorHandlerBeforeUnwind
+                    tcd.ErrorHandlerBeforeUnwind,
+                    allowTailCallFrameReuse
                 );
             }
             else if (tail.Type == DataType.YieldRequest)

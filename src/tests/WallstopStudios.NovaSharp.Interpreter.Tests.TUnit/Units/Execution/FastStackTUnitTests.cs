@@ -29,6 +29,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        public async Task PushGrowsPastInitialCapacity()
+        {
+            FastStack<int> stack = new(1);
+
+            stack.Push(1);
+            stack.Push(2);
+            stack.Push(3);
+
+            await Assert.That(stack.Count).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(stack.Peek()).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(stack.Peek(1)).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(stack.Peek(2)).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task RemoveLastClearsMultipleEntries()
         {
             FastStack<int> stack = new(6);
@@ -67,6 +82,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(stack.Peek()).IsEqualTo(30).ConfigureAwait(false);
             await Assert.That(stack.Peek(1)).IsEqualTo(20).ConfigureAwait(false);
             await Assert.That(stack.Peek(2)).IsEqualTo(7).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ExpandGrowsPastInitialCapacity()
+        {
+            FastStack<int> stack = new(1);
+
+            stack.Push(7);
+            stack.Expand(3);
+
+            await Assert.That(stack.Count).IsEqualTo(4).ConfigureAwait(false);
+
+            stack.Set(0, 40);
+            stack.Set(1, 30);
+            stack.Set(2, 20);
+
+            await Assert.That(stack.Peek()).IsEqualTo(40).ConfigureAwait(false);
+            await Assert.That(stack.Peek(1)).IsEqualTo(30).ConfigureAwait(false);
+            await Assert.That(stack.Peek(2)).IsEqualTo(20).ConfigureAwait(false);
+            await Assert.That(stack.Peek(3)).IsEqualTo(7).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

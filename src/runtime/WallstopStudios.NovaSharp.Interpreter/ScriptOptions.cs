@@ -100,16 +100,11 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public Stream Stderr { get; set; }
 
         /// <summary>
-        /// Gets or sets the stack depth threshold at which NovaSharp starts doing
-        /// tail call optimizations.
-        /// TCOs can provide the little benefit of avoiding stack overflows in corner case
-        /// scenarios, at the expense of losing debug information and error stack traces
-        /// in all other, more common scenarios. NovaSharp choice is to start performing
-        /// TCOs only after a certain threshold of stack usage is reached - by default
-        /// half the current stack depth (128K entries), thus 64K entries, on either
-        /// the internal stacks.
-        /// Set this to int.MaxValue to disable TCOs entirely, or to 0 to always have
-        /// TCOs enabled.
+        /// Gets or sets the legacy tail-call optimization threshold.
+        /// Proper Lua tail calls are required language semantics and are always honored
+        /// when a call is in tail position. This property is retained for source and
+        /// binary compatibility with older NovaSharp hosts and no longer controls Lua
+        /// tail-call behavior.
         /// </summary>
         public int TailCallOptimizationThreshold { get; set; }
 

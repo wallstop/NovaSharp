@@ -7,12 +7,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     using System.Runtime.CompilerServices;
 
     /// <summary>
-    /// Fixed-capacity, array-backed stack used by the VM for hot paths where dynamic allocation is undesirable.
+    /// Array-backed stack used by the VM for hot paths. The stack grows on demand while keeping contiguous storage.
     /// </summary>
     /// <typeparam name="T">Element type stored in the stack.</typeparam>
     internal class FastStack<T> : IList<T>
     {
-        private readonly T[] _storage;
+        private T[] _storage;
         private int _headIdx;
 
         public FastStack(int maxCapacity)
@@ -34,6 +34,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Push(T item)
         {
+            EnsureCapacity(_headIdx + 1);
             _storage[_headIdx++] = item;
             return item;
         }
@@ -43,7 +44,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// </summary>
         public void Expand(int size)
         {
+            if (size <= 0)
+            {
+                return;
+            }
+
+            EnsureCapacity(_headIdx + size);
             _headIdx += size;
+        }
+
+        private void EnsureCapacity(int requiredCapacity)
+        {
+            if (requiredCapacity <= _storage.Length)
+            {
+                return;
+            }
+
+            int newCapacity = _storage.Length == 0 ? 4 : _storage.Length * 2;
+            while (newCapacity < requiredCapacity)
+            {
+                newCapacity *= 2;
+            }
+
+            Array.Resize(ref _storage, newCapacity);
         }
 
         private void Zero(int index)
