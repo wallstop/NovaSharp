@@ -13,13 +13,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     /// </content>
     internal sealed partial class Processor
     {
-        private void ClearBlockData(Instruction i)
+        private void ClearBlockData(Instruction i, int instructionPtr = -1)
         {
             CallStackItem stackframe = _executionStack.Peek();
 
             if (i.SymbolList != null && i.SymbolList.Length > 0)
             {
-                CloseSymbolsSubset(stackframe, i.SymbolList, DynValue.Nil);
+                CloseSymbolsSubset(stackframe, i.SymbolList, DynValue.Nil, instructionPtr);
             }
 
             int from = i.NumVal;
@@ -36,7 +36,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private void CloseSymbolsSubset(
             CallStackItem stackframe,
             SymbolRef[] symbols,
-            DynValue error
+            DynValue error,
+            int instructionPtr
         )
         {
             if (symbols == null || symbols.Length == 0)
@@ -44,6 +45,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 return;
             }
 
+            DynValue activeError = error ?? DynValue.Nil;
+            ScriptRuntimeException closeException = null;
             foreach (SymbolRef sym in symbols)
             {
                 stackframe.ToBeClosedIndices?.Remove(sym.IndexValue);
@@ -77,12 +80,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                 DynValue slot = stackframe.LocalScope[sym.IndexValue];
 
-                if (slot != null && !slot.IsNil())
-                {
-                    DynValue previous = slot.Clone();
-                    CloseValue(sym, previous, error);
-                    slot.AssignSlot(DynValue.Nil);
-                }
+                closeException = CloseValueAndTrackError(
+                    sym,
+                    slot,
+                    ref activeError,
+                    closeException,
+                    stackframe,
+                    instructionPtr,
+                    decorateCloseErrorsBeforeUnwind: true
+                );
+            }
+
+            if (closeException != null)
+            {
+                throw closeException;
             }
         }
 

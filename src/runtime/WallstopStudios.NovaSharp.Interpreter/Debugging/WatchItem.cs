@@ -52,6 +52,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Debugging
         public SourceRef Location { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether this call-stack item was entered by a tail call.
+        /// </summary>
+        internal bool IsTailCall { get; set; }
+
+        /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
         /// <returns>

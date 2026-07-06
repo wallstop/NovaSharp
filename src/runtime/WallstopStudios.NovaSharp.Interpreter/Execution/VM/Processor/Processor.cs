@@ -30,6 +30,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         private int _savedInstructionPtr = -1;
         private readonly DebugContext _debug;
         private DynValue _lastCloseError = DynValue.Nil;
+        private int _errorHandlerBeforeUnwindScanBoundaryDepth = -1;
 
         private readonly ref struct ClrCallArguments
         {

@@ -607,6 +607,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             Location = startingRef,
                             Name = c.ClrFunction.Name,
                             Value = includeFunctions ? DynValue.FromCallback(c.ClrFunction) : null,
+                            IsTailCall = false,
                         }
                     );
                 }
@@ -621,6 +622,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             Name = callname,
                             Value = includeFunctions ? GetFrameFunction(c) : null,
                             Location = startingRef,
+                            IsTailCall = (c.Flags & CallStackItemFlags.TailCall) != 0,
                         }
                     );
                 }

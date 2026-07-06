@@ -56,6 +56,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         {
             DecoratedMessage = Message;
             DoNotDecorateMessage = true;
+            ErrorHandlerBeforeUnwindDecorated = ex.ErrorHandlerBeforeUnwindDecorated;
         }
 
         /// <summary>

@@ -623,6 +623,315 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.CoreLib
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
+        public async Task NestedXpcallHandledErrorDoesNotInvokeOuterHandler(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue tuple = script.DoString(
+                @"
+                local outer_count = 0
+                local inner_count = 0
+
+                local function middle()
+                    local ok, message = xpcall(function()
+                        error('err', 0)
+                    end, function(message)
+                        inner_count = inner_count + 1
+                        return 'inner:' .. message
+                    end)
+
+                    return ok, message
+                end
+
+                local ok, protected_ok, message = xpcall(function()
+                    local inner_ok, inner_message = middle()
+                    return inner_ok, inner_message
+                end, function(message)
+                    outer_count = outer_count + 1
+                    return 'outer:' .. message
+                end)
+
+                return ok, protected_ok, message, outer_count, inner_count
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].String).IsEqualTo("inner:err").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[3].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[4].Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task NestedXpcallTailHandledErrorDoesNotInvokeOuterHandler(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue tuple = script.DoString(
+                @"
+                local outer_count = 0
+                local inner_count = 0
+
+                local function fail()
+                    error('err', 0)
+                end
+
+                local function middle()
+                    return xpcall(function()
+                        return fail()
+                    end, function(message)
+                        inner_count = inner_count + 1
+                        return 'inner:' .. message
+                    end)
+                end
+
+                local ok, protected_ok, message = xpcall(function()
+                    return middle()
+                end, function(message)
+                    outer_count = outer_count + 1
+                    return 'outer:' .. message
+                end)
+
+                return ok, protected_ok, message, outer_count, inner_count
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[2].String).IsEqualTo("inner:err").ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[3].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[4].Number).IsEqualTo(1d).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task XpcallMessageHandlerRunsBeforeCloseHandlers(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue result = script.DoString(
+                @"
+                local events = {}
+                local mt = {
+                    __close = function()
+                        events[#events + 1] = 'close'
+                    end
+                }
+
+                local function inner()
+                    local handle <close> = setmetatable({}, mt)
+                    error('boom', 0)
+                end
+
+                xpcall(function()
+                    inner()
+                end, function(message)
+                    events[#events + 1] = 'handler'
+                    return message
+                end)
+
+                return table.concat(events, ',')
+                "
+            );
+
+            await Assert.That(result.String).IsEqualTo("handler,close").ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task XpcallMessageHandlerErrorDoesNotReenterMessageHandler(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue tuple = script.DoString(
+                @"
+                return xpcall(function()
+                    error('boom', 0)
+                end, function()
+                    error('handlererr', 0)
+                end)
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .Contains("error in error handling")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task XpcallCloseErrorReplacesOriginalErrorAndClosesRemainingValues(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue tuple = script.DoString(
+                @"
+                local events = {}
+                local first_mt = {
+                    __close = function(_, err)
+                        events[#events + 1] = 'first:' .. tostring(err)
+                    end
+                }
+                local throwing_mt = {
+                    __close = function(_, err)
+                        events[#events + 1] = 'throwing:' .. tostring(err)
+                        error('closeerr', 0)
+                    end
+                }
+                local last_mt = {
+                    __close = function(_, err)
+                        events[#events + 1] = 'last:' .. tostring(err)
+                    end
+                }
+
+                local ok, message = xpcall(function()
+                    local first <close> = setmetatable({}, first_mt)
+                    local throwing <close> = setmetatable({}, throwing_mt)
+                    local last <close> = setmetatable({}, last_mt)
+                    error('boom', 0)
+                end, function(message)
+                    events[#events + 1] = 'handler:' .. tostring(message)
+                    return 'handled:' .. tostring(message)
+                end)
+
+                return ok, message, table.concat(events, '|')
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .IsEqualTo("handled:closeerr")
+                .ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[2].String)
+                .IsEqualTo(
+                    "handler:boom|last:handled:boom|throwing:handled:boom|handler:closeerr|first:handled:closeerr"
+                )
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task NestedXpcallCloseErrorUsesInnerMessageHandler(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue tuple = script.DoString(
+                @"
+                local events = {}
+                local outer_count = 0
+                local inner_count = 0
+                local mt = {
+                    __close = function(_, err)
+                        events[#events + 1] = 'close:' .. tostring(err)
+                        error('closeerr', 0)
+                    end
+                }
+
+                local ok, protected_ok, message = xpcall(function()
+                    return xpcall(function()
+                        local handle <close> = setmetatable({}, mt)
+                        error('boom', 0)
+                    end, function(message)
+                        inner_count = inner_count + 1
+                        events[#events + 1] = 'inner:' .. tostring(message)
+                        return 'inner:' .. tostring(message)
+                    end)
+                end, function(message)
+                    outer_count = outer_count + 1
+                    events[#events + 1] = 'outer:' .. tostring(message)
+                    return 'outer:' .. tostring(message)
+                end)
+
+                return ok, protected_ok, message, outer_count, inner_count, table.concat(events, '|')
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsTrue().ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[1].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[2].String)
+                .IsEqualTo("inner:closeerr")
+                .ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[3].Number).IsEqualTo(0d).ConfigureAwait(false);
+            await Assert.That(tuple.Tuple[4].Number).IsEqualTo(2d).ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[5].String)
+                .IsEqualTo("inner:boom|close:inner:boom|inner:closeerr")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua54)]
+        public async Task XpcallReturnCloseErrorRunsHandlerBeforeRemainingClose(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateScriptWithVersion(version);
+
+            DynValue tuple = script.DoString(
+                @"
+                local events = {}
+                local first_mt = {
+                    __close = function(_, err)
+                        events[#events + 1] = 'first:' .. tostring(err)
+                    end
+                }
+                local throwing_mt = {
+                    __close = function(_, err)
+                        events[#events + 1] = 'throwing:' .. tostring(err)
+                        error('closeerr', 0)
+                    end
+                }
+                local last_mt = {
+                    __close = function(_, err)
+                        events[#events + 1] = 'last:' .. tostring(err)
+                    end
+                }
+
+                local ok, message = xpcall(function()
+                    local first <close> = setmetatable({}, first_mt)
+                    local throwing <close> = setmetatable({}, throwing_mt)
+                    local last <close> = setmetatable({}, last_mt)
+                    return 'ok'
+                end, function(message)
+                    events[#events + 1] = 'handler:' .. tostring(message)
+                    return 'handled:' .. tostring(message)
+                end)
+
+                return ok, message, table.concat(events, '|')
+                "
+            );
+
+            await Assert.That(tuple.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[1].String)
+                .IsEqualTo("handled:closeerr")
+                .ConfigureAwait(false);
+            await Assert
+                .That(tuple.Tuple[2].String)
+                .IsEqualTo("last:nil|throwing:nil|handler:closeerr|first:handled:closeerr")
+                .ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
         public async Task XpcallReturnsSuccessWhenFunctionSucceeds(LuaCompatibilityVersion version)
         {
             Script script = CreateScriptWithVersion(version);

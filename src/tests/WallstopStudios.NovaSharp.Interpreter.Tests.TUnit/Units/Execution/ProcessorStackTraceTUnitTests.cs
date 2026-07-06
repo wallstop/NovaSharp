@@ -67,11 +67,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 end
 
                 local function level2()
-                    return level3()
+                    local value = level3()
+                    return value
                 end
 
                 function level1()
-                    return level2()
+                    local value = level2()
+                    return value
                 end
             "
             );

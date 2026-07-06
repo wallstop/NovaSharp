@@ -51,6 +51,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         public DynValue ErrorHandlerBeforeUnwind { get; set; }
 
+        internal bool ErrorHandlerBeforeUnwindInProgress { get; set; }
+
         /// <summary>
         /// Stack index of the base pointer for the frame.
         /// </summary>
@@ -105,6 +107,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             Continuation = null;
             ErrorHandler = null;
             ErrorHandlerBeforeUnwind = null;
+            ErrorHandlerBeforeUnwindInProgress = false;
             BasePointer = 0;
             ReturnAddress = 0;
             if (LocalScope != null)
