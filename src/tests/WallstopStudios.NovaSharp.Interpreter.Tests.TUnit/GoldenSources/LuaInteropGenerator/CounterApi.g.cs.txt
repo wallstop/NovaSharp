@@ -16,6 +16,11 @@ namespace Fixtures
             }
 
             global::NovaSharp.LuaTable objectTable = engine.CreateTable(0, 0);
+            global::NovaSharp.LuaTable metatable = engine.CreateTable(0, 2);
+            metatable.Set(@"__index", engine.CreateCallback((_, args) => __NovaSharpGeneratedIndex(instance, args), @"CounterApi.__index"));
+            metatable.Set(@"__newindex", engine.CreateCallback((_, args) => __NovaSharpGeneratedNewIndex(instance, args), @"CounterApi.__newindex"));
+            objectTable.SetMetatable(metatable);
+
             destination.Set(@"CounterApi", objectTable.ToValue());
         }
 
@@ -31,11 +36,55 @@ namespace Fixtures
         }
 
         [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
+        private static global::NovaSharp.LuaValue __NovaSharpGeneratedIndex(CounterApi instance, global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args)
+        {
+            if (args.Length != 2)
+            {
+                throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(@"Lua metamethod '__index' expects 2 argument(s).");
+            }
+            if (args[1].Kind != global::NovaSharp.LuaKind.String)
+            {
+                return global::NovaSharp.LuaValue.Nil;
+            }
+
+            string key = args[1].AsString();
+            switch (key)
+            {
+                case @"Count":
+                    return global::NovaSharp.LuaValue.FromInteger((long)instance.Count);
+            }
+
+            return global::NovaSharp.LuaValue.Nil;
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
+        private static global::NovaSharp.LuaValue __NovaSharpGeneratedNewIndex(CounterApi instance, global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args)
+        {
+            if (args.Length != 3)
+            {
+                throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(@"Lua metamethod '__newindex' expects 3 argument(s).");
+            }
+            if (args[1].Kind != global::NovaSharp.LuaKind.String)
+            {
+                throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(@"Lua member keys must be strings.");
+            }
+
+            string key = args[1].AsString();
+            switch (key)
+            {
+                case @"Count":
+                    throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(@"Lua member 'Count' is read-only.");
+            }
+
+            throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(global::System.String.Concat(@"Lua member '", key, @"' is not writable."));
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
         private static string __NovaSharpGeneratedManifest
         {
             get
             {
-                return @"object:CounterApi|type:Fixtures.CounterApi";
+                return @"object:CounterApi|type:Fixtures.CounterApi|member:Count";
             }
         }
     }

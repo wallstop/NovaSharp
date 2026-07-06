@@ -14,8 +14,18 @@ namespace NovaSharp
 
         internal LuaTable(LuaEngine owner, Table table)
         {
-            _owner = owner ?? throw new ArgumentNullException(nameof(owner));
-            _table = table ?? throw new ArgumentNullException(nameof(table));
+            if (owner == null)
+            {
+                throw new ArgumentNullException(nameof(owner));
+            }
+
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            _owner = owner;
+            _table = table;
         }
 
         /// <summary>
@@ -105,6 +115,31 @@ namespace NovaSharp
             try
             {
                 _table.Set(key, value.ToDynValue(_owner));
+            }
+            catch (InterpreterException exception)
+            {
+                throw LuaException.Wrap(exception);
+            }
+        }
+
+        /// <summary>
+        /// Sets or clears this table's metatable.
+        /// </summary>
+        /// <remarks>
+        /// This host-side API bypasses Lua's <c>__metatable</c> protection and is not equivalent
+        /// to Lua's <c>setmetatable</c> library function.
+        /// </remarks>
+        public void SetMetatable(LuaTable metatable)
+        {
+            _owner.ThrowIfDisposed();
+            if (metatable != null)
+            {
+                LuaEngine.EnsureSameOwner(metatable.Owner, _owner);
+            }
+
+            try
+            {
+                _table.MetaTable = metatable == null ? null : metatable.Table;
             }
             catch (InterpreterException exception)
             {

@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Interop
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Globalization;
     using System.IO;
     using System.Reflection;
     using System.Threading.Tasks;
@@ -157,8 +158,16 @@ using NovaSharp;
                 "__NovaSharpGeneratedRegisterEnumTables",
                 BindingFlags.NonPublic | BindingFlags.Static
             );
+            MethodInfo objectRegisterMethod = enumApiType.GetMethod(
+                "__NovaSharpGeneratedRegister",
+                BindingFlags.Public | BindingFlags.Static
+            );
+            PropertyInfo maskProperty = enumApiType.GetProperty("Mask");
+            Type unsignedMaskType = assembly.GetType("Fixtures.UnsignedMask", throwOnError: true);
 
             await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
+            await Assert.That(objectRegisterMethod).IsNotNull().ConfigureAwait(false);
+            await Assert.That(maskProperty).IsNotNull().ConfigureAwait(false);
 
             using LuaEngine engine = LuaEngine.Create();
             LuaTable destination = engine.CreateTable();
@@ -183,6 +192,26 @@ using NovaSharp;
                 .That(unsignedMaskTable.Get("High").AsNumber())
                 .IsEqualTo(9223372036854775808d)
                 .ConfigureAwait(false);
+
+            object enumApi = Activator.CreateInstance(enumApiType);
+            objectRegisterMethod.Invoke(null, new object[] { engine, engine.Globals, enumApi });
+
+            LuaValue highMaskResult = await engine
+                .RunAsync("EnumApi.Mask = EnumApi.UnsignedMask.High; return EnumApi.Mask")
+                .ConfigureAwait(false);
+            LuaValue smallMaskOverflowCaught = await engine
+                .RunAsync("return pcall(function() EnumApi.SmallMask = 256 end)")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(highMaskResult.AsNumber())
+                .IsEqualTo(9223372036854775808d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(maskProperty.GetValue(enumApi))
+                .IsEqualTo(Enum.Parse(unsignedMaskType, "High"))
+                .ConfigureAwait(false);
+            await Assert.That(smallMaskOverflowCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
         }
 
         [Test]
@@ -288,9 +317,11 @@ using NovaSharp;
                 BindingFlags.Public | BindingFlags.Static
             );
             PropertyInfo healthProperty = playerApiType.GetProperty("Health");
+            PropertyInfo teamProperty = playerApiType.GetProperty("Team");
 
             await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
             await Assert.That(healthProperty).IsNotNull().ConfigureAwait(false);
+            await Assert.That(teamProperty).IsNotNull().ConfigureAwait(false);
 
             using LuaEngine engine = LuaEngine.Create();
             registerMethod.Invoke(null, new object[] { engine, engine.Globals, player });
@@ -301,6 +332,15 @@ using NovaSharp;
             LuaValue moveResult = await engine
                 .RunAsync("return player.move(20, 22)")
                 .ConfigureAwait(false);
+            LuaValue healthResult = await engine
+                .RunAsync("return player.Health")
+                .ConfigureAwait(false);
+            LuaValue healthSetResult = await engine
+                .RunAsync("player.Health = 5; return player.Health")
+                .ConfigureAwait(false);
+            LuaValue teamSetResult = await engine
+                .RunAsync("player.Team = player['Fixtures.Team'].Blue; return player.Team")
+                .ConfigureAwait(false);
             LuaValue tostringResult = await engine
                 .RunAsync("return player.__tostring()")
                 .ConfigureAwait(false);
@@ -310,15 +350,81 @@ using NovaSharp;
             LuaValue typeErrorCaught = await engine
                 .RunAsync("return pcall(function() player.move('x', 1) end)")
                 .ConfigureAwait(false);
+            LuaValue setterTypeErrorCaught = await engine
+                .RunAsync("return pcall(function() player.Health = 'x' end)")
+                .ConfigureAwait(false);
+            LuaValue unknownSetterErrorCaught = await engine
+                .RunAsync("return pcall(function() player.Unknown = 1 end)")
+                .ConfigureAwait(false);
+            LuaValue numericIndexIsNil = await engine
+                .RunAsync("return player[1] == nil")
+                .ConfigureAwait(false);
+            LuaValue numericSetterHasFocusedError = await engine
+                .RunAsync(
+                    "local ok, err = pcall(function() player[1] = 2 end); return not ok and string.find(tostring(err), 'Lua member keys must be strings.', 1, true) ~= nil"
+                )
+                .ConfigureAwait(false);
 
             await Assert.That(enumResult.AsInteger()).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(moveResult.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(healthResult.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
+            await Assert.That(healthSetResult.AsInteger()).IsEqualTo(5).ConfigureAwait(false);
+            await Assert.That(teamSetResult.AsInteger()).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(tostringResult.AsString()).IsEqualTo("player").ConfigureAwait(false);
             await Assert.That(arityErrorCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
             await Assert.That(typeErrorCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
+            await Assert.That(setterTypeErrorCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
+            await Assert.That(unknownSetterErrorCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
+            await Assert.That(numericIndexIsNil.AsBoolean()).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(numericSetterHasFocusedError.AsBoolean())
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That((int)healthProperty.GetValue(player))
-                .IsEqualTo(42)
+                .IsEqualTo(5)
+                .ConfigureAwait(false);
+            await Assert
+                .That(Convert.ToInt32(teamProperty.GetValue(player), CultureInfo.InvariantCulture))
+                .IsEqualTo(2)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task GeneratedRegistrationBindsFieldsWithLiveTableAccess()
+        {
+            GeneratorOutput output = RunGeneratorWithCompilation(FieldApiSource);
+            Assembly assembly = EmitAssembly(output.Compilation);
+            Type fieldApiType = assembly.GetType("Fixtures.FieldApi", throwOnError: true);
+            object fieldApi = Activator.CreateInstance(fieldApiType);
+            MethodInfo registerMethod = fieldApiType.GetMethod(
+                "__NovaSharpGeneratedRegister",
+                BindingFlags.Public | BindingFlags.Static
+            );
+            FieldInfo countField = fieldApiType.GetField("count");
+
+            await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
+            await Assert.That(countField).IsNotNull().ConfigureAwait(false);
+
+            using LuaEngine engine = LuaEngine.Create();
+            registerMethod.Invoke(null, new object[] { engine, engine.Globals, fieldApi });
+
+            LuaValue countResult = await engine
+                .RunAsync("fields.Count = 12; return fields.Count")
+                .ConfigureAwait(false);
+            LuaValue readonlyResult = await engine
+                .RunAsync("return fields.ReadOnlyCount")
+                .ConfigureAwait(false);
+            LuaValue readonlySetterCaught = await engine
+                .RunAsync("return pcall(function() fields.ReadOnlyCount = 1 end)")
+                .ConfigureAwait(false);
+
+            await Assert.That(countResult.AsInteger()).IsEqualTo(12).ConfigureAwait(false);
+            await Assert.That(readonlyResult.AsInteger()).IsEqualTo(7).ConfigureAwait(false);
+            await Assert.That(readonlySetterCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That((int)countField.GetValue(fieldApi))
+                .IsEqualTo(12)
                 .ConfigureAwait(false);
         }
 
@@ -699,6 +805,9 @@ using NovaSharp;
 
         [LuaMember]
         public UnsignedMask Mask { get; set; }
+
+        [LuaMember]
+        public SmallUnsignedMask SmallMask { get; set; }
     }
 
     public enum SignedMode : long
@@ -711,6 +820,12 @@ using NovaSharp;
     {
         Low = 4UL,
         High = 9223372036854775808UL,
+    }
+
+    public enum SmallUnsignedMask : byte
+    {
+        Low = 1,
+        High = 255,
     }
 }
 ";
@@ -930,6 +1045,24 @@ using NovaSharp;
         {
             return 42;
         }
+    }
+}
+";
+
+        private const string FieldApiSource =
+            @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject(""fields"")]
+    public partial class FieldApi
+    {
+        [LuaMember(""Count"")]
+        public int count;
+
+        [LuaMember(""ReadOnlyCount"")]
+        public readonly int readOnlyCount = 7;
     }
 }
 ";

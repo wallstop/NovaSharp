@@ -232,6 +232,7 @@ NovaSharp.LuaTable.Remove(System.Int32 key) -> System.Boolean
 NovaSharp.LuaTable.Remove(System.String key) -> System.Boolean
 NovaSharp.LuaTable.Set(System.Int32 key, NovaSharp.LuaValue value) -> System.Void
 NovaSharp.LuaTable.Set(System.String key, NovaSharp.LuaValue value) -> System.Void
+NovaSharp.LuaTable.SetMetatable(NovaSharp.LuaTable metatable) -> System.Void
 NovaSharp.LuaTable.ToValue() -> NovaSharp.LuaValue
 NovaSharp.LuaValue
 NovaSharp.LuaValue.AsBoolean() -> System.Boolean
