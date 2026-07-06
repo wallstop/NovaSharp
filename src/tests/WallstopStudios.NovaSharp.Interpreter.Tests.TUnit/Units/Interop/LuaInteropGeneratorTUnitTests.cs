@@ -158,8 +158,16 @@ using NovaSharp;
                 "__NovaSharpGeneratedRegisterEnumTables",
                 BindingFlags.NonPublic | BindingFlags.Static
             );
+            MethodInfo objectRegisterMethod = enumApiType.GetMethod(
+                "__NovaSharpGeneratedRegister",
+                BindingFlags.Public | BindingFlags.Static
+            );
+            PropertyInfo maskProperty = enumApiType.GetProperty("Mask");
+            Type unsignedMaskType = assembly.GetType("Fixtures.UnsignedMask", throwOnError: true);
 
             await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
+            await Assert.That(objectRegisterMethod).IsNotNull().ConfigureAwait(false);
+            await Assert.That(maskProperty).IsNotNull().ConfigureAwait(false);
 
             using LuaEngine engine = LuaEngine.Create();
             LuaTable destination = engine.CreateTable();
@@ -183,6 +191,22 @@ using NovaSharp;
             await Assert
                 .That(unsignedMaskTable.Get("High").AsNumber())
                 .IsEqualTo(9223372036854775808d)
+                .ConfigureAwait(false);
+
+            object enumApi = Activator.CreateInstance(enumApiType);
+            objectRegisterMethod.Invoke(null, new object[] { engine, engine.Globals, enumApi });
+
+            LuaValue highMaskResult = await engine
+                .RunAsync("EnumApi.Mask = EnumApi.UnsignedMask.High; return EnumApi.Mask")
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(highMaskResult.AsNumber())
+                .IsEqualTo(9223372036854775808d)
+                .ConfigureAwait(false);
+            await Assert
+                .That(maskProperty.GetValue(enumApi))
+                .IsEqualTo(Enum.Parse(unsignedMaskType, "High"))
                 .ConfigureAwait(false);
         }
 
@@ -289,9 +313,11 @@ using NovaSharp;
                 BindingFlags.Public | BindingFlags.Static
             );
             PropertyInfo healthProperty = playerApiType.GetProperty("Health");
+            PropertyInfo teamProperty = playerApiType.GetProperty("Team");
 
             await Assert.That(registerMethod).IsNotNull().ConfigureAwait(false);
             await Assert.That(healthProperty).IsNotNull().ConfigureAwait(false);
+            await Assert.That(teamProperty).IsNotNull().ConfigureAwait(false);
 
             using LuaEngine engine = LuaEngine.Create();
             registerMethod.Invoke(null, new object[] { engine, engine.Globals, player });
@@ -342,12 +368,7 @@ using NovaSharp;
                 .IsEqualTo(5)
                 .ConfigureAwait(false);
             await Assert
-                .That(
-                    Convert.ToInt32(
-                        playerApiType.GetProperty("Team").GetValue(player),
-                        CultureInfo.InvariantCulture
-                    )
-                )
+                .That(Convert.ToInt32(teamProperty.GetValue(player), CultureInfo.InvariantCulture))
                 .IsEqualTo(2)
                 .ConfigureAwait(false);
         }

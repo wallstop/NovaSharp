@@ -762,6 +762,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 AppendUnsignedReturnHelper(builder, model);
             }
 
+            if (NeedsUnsignedArgumentHelper(model))
+            {
+                AppendUnsignedArgumentHelper(builder, model);
+            }
+
             AppendGeneratedCodeAttribute(builder, model.NamespaceName.Length > 0 ? 2 : 1);
             AppendIndent(builder, model.NamespaceName.Length > 0 ? 2 : 1);
             builder.AppendLine("private static string __NovaSharpGeneratedManifest");
@@ -872,6 +877,43 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             return false;
         }
 
+        private static bool NeedsUnsignedArgumentHelper(LuaObjectModel model)
+        {
+            foreach (MemberModel member in model.Members)
+            {
+                if (!member.IsDispatchable)
+                {
+                    continue;
+                }
+
+                if (member.BindingKind != MemberBindingKind.Method)
+                {
+                    if (member.CanWrite && NeedsUnsignedArgumentRead(member.ReturnType))
+                    {
+                        return true;
+                    }
+
+                    continue;
+                }
+
+                foreach (ParameterModel parameter in member.Parameters)
+                {
+                    if (NeedsUnsignedArgumentRead(parameter.Type))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool NeedsUnsignedArgumentRead(TypeModel type)
+        {
+            return type.Kind == LuaInteropTypeKind.UInt64
+                || (type.Kind == LuaInteropTypeKind.Enum && type.IsUnsigned);
+        }
+
         private static void AppendUnsignedReturnHelper(StringBuilder builder, LuaObjectModel model)
         {
             int memberIndent = model.NamespaceName.Length > 0 ? 2 : 1;
@@ -895,6 +937,52 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             builder.AppendLine();
             AppendIndent(builder, bodyIndent);
             builder.AppendLine("return global::NovaSharp.LuaValue.FromNumber((double)value);");
+            AppendIndent(builder, memberIndent);
+            builder.AppendLine("}");
+            builder.AppendLine();
+        }
+
+        private static void AppendUnsignedArgumentHelper(
+            StringBuilder builder,
+            LuaObjectModel model
+        )
+        {
+            int memberIndent = model.NamespaceName.Length > 0 ? 2 : 1;
+            int bodyIndent = model.NamespaceName.Length > 0 ? 3 : 2;
+
+            AppendGeneratedCodeAttribute(builder, memberIndent);
+            AppendIndent(builder, memberIndent);
+            builder.AppendLine(
+                "private static ulong __NovaSharpGeneratedReadUInt64(global::NovaSharp.LuaValue value)"
+            );
+            AppendIndent(builder, memberIndent);
+            builder.AppendLine("{");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("if (value.Kind == global::NovaSharp.LuaKind.Integer)");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("{");
+            AppendIndent(builder, bodyIndent + 1);
+            builder.AppendLine("return checked((ulong)value.AsInteger());");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("}");
+            builder.AppendLine();
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("double number = value.AsNumber();");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine(
+                "if (number < 0d || number >= 18446744073709551616d || number != global::System.Math.Truncate(number))"
+            );
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("{");
+            AppendIndent(builder, bodyIndent + 1);
+            builder.AppendLine(
+                "throw new global::System.OverflowException(@\"Lua value is outside the range of System.UInt64.\");"
+            );
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("}");
+            builder.AppendLine();
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("return checked((ulong)number);");
             AppendIndent(builder, memberIndent);
             builder.AppendLine("}");
             builder.AppendLine();
@@ -1387,12 +1475,16 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 case LuaInteropTypeKind.SByte:
                 case LuaInteropTypeKind.UInt16:
                 case LuaInteropTypeKind.UInt32:
-                case LuaInteropTypeKind.UInt64:
                     builder.Append("checked((");
                     builder.Append(type.CodeType);
                     builder.Append(')');
                     builder.Append(argument);
                     builder.Append(".AsInteger())");
+                    return;
+                case LuaInteropTypeKind.UInt64:
+                    builder.Append("__NovaSharpGeneratedReadUInt64(");
+                    builder.Append(argument);
+                    builder.Append(')');
                     return;
                 case LuaInteropTypeKind.Double:
                     builder.Append(argument);
@@ -1426,6 +1518,14 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     builder.Append('(');
                     builder.Append(type.CodeType);
                     builder.Append(')');
+                    if (type.IsUnsigned)
+                    {
+                        builder.Append("__NovaSharpGeneratedReadUInt64(");
+                        builder.Append(argument);
+                        builder.Append(')');
+                        return;
+                    }
+
                     builder.Append(argument);
                     builder.Append(".AsInteger()");
                     return;

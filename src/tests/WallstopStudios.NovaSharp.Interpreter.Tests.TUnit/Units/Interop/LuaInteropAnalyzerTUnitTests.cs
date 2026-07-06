@@ -668,7 +668,7 @@ using NovaSharp;
         }
 
         [Test]
-        public async Task AnalyzerReportsSupportedIndexerShapes()
+        public async Task AnalyzerReportsIndexerShapesAsUnsupported()
         {
             Diagnostic[] diagnostics = await AnalyzeAsync(
                     @"
