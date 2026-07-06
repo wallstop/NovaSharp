@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783290867458,
+  "lastUpdate": 1783297204428,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1294,6 +1294,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 340.821,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "16b6dae845601943c5b4bf491a1e4fd5b9835d66",
+          "message": "[codex] Add generated interop registration callbacks (#59)\n\n## Summary\n- Add the public `LuaCallback`/`LuaContext` host callback surface and\n`LuaEngine.CreateCallback`.\n- Generate `__NovaSharpGeneratedRegister(...)` for `[LuaObject]`\npartials with enum table exposure and direct method callbacks.\n- Add typed generated argument unpacking/return wrapping, keyword member\nescaping, unsigned return handling, facade value round-tripping, and\nanalyzer hardening for unsupported `[LuaObject]` member signatures.\n\n## Validation\n- `dotnet build\nsrc/interop/WallstopStudios.NovaSharp.Interop.Generator/WallstopStudios.NovaSharp.Interop.Generator.csproj\n--no-restore`\n- `dotnet build\nsrc/runtime/WallstopStudios.NovaSharp.Interpreter/WallstopStudios.NovaSharp.Interpreter.csproj\n--no-restore`\n- `./scripts/test/quick.sh --full -c LuaInteropGeneratorTUnitTests` (15\npassed)\n- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests` (31\npassed)\n- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` (51\npassed)\n- `./scripts/build/quick.sh`\n- `dotnet tool run csharpier format .`\n- `git diff --check`\n- `./scripts/test/quick.sh` (14,898 passed)\n- `bash ./scripts/dev/pre-commit.sh`\n- pre-push hook on `git push -u origin dev/wallstop/plan-16`\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Expands the public NovaSharp API and generated interop registration\npath used by future Unity/modding hosts; behavior is heavily tested but\nproperty binding and zero-allocation callbacks remain unfinished.\n> \n> **Overview**\n> Adds the **public host callback surface** (`LuaCallback`,\n`LuaContext`, `LuaEngine.CreateCallback`) and wires the B1 source\ngenerator to **register `[LuaObject]` types at runtime** instead of\nemitting placeholder dispatch only.\n> \n> Generated companion partials now expose\n**`__NovaSharpGeneratedRegister(...)`**, which builds an object table,\nattaches **enum subtables**, installs **per-method callbacks** via\n`CreateCallback`, and publishes the table under the Lua object name.\nDispatch is **instance-based** with **string-switch** routing, **typed\narg unpack** and **return wrapping** for primitives and facade types\n(`LuaValue`/`LuaTable`/`LuaFunction`/`LuaCoroutine`), **C# keyword\nescaping**, **unsigned return** handling, and **ScriptRuntimeException**\nfor arity/type errors so Lua `pcall` can catch them.\n> \n> **Analyzer/generator tightening:** `[LuaObject]`-typed members are\n**NS0002** (no longer “supported”); **mutable struct methods** are\n**NS0003**; duplicate Lua names **prefer dispatchable methods**;\nmanifests list **callback members only** (properties/fields deferred).\n**`ToValue()`** on `LuaFunction`/`LuaCoroutine` supports callback\nreturns. PLAN marks **enum auto-exposure** done; golden and integration\ntests cover registration, keywords, unsigned, facade round-trip,\nreadonly structs, and reflection-free output.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nd0aff8c1e02bb273531fe18a667aab510a05acf7. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\n---------\n\nCo-authored-by: copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>",
+          "timestamp": "2026-07-05T17:14:54-07:00",
+          "tree_id": "305c612fcecbd13f08ade5397db813b563aa11fd",
+          "url": "https://github.com/wallstop/NovaSharp/commit/16b6dae845601943c5b4bf491a1e4fd5b9835d66"
+        },
+        "date": 1783297204144,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 170.625,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 171.062,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 176.205,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 273.159,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 272.926,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 282.488,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 311.739,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 321.138,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 306.969,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 346.969,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 346.949,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 361.323,
             "unit": "ns",
             "extra": ""
           }
