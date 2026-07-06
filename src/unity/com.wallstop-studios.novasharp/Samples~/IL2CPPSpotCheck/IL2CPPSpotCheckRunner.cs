@@ -138,13 +138,7 @@ end
                 message = "<no-message>";
             }
 
-            return string.Concat(
-                FailPrefix,
-                " errorType=",
-                exceptionType,
-                " message=",
-                message
-            );
+            return string.Concat(FailPrefix, " errorType=", exceptionType, " message=", message);
         }
 
         private static string ToSingleLogLine(string value)

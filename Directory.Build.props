@@ -22,14 +22,11 @@
         <TargetNamespacePrefix>WallstopStudios.NovaSharp</TargetNamespacePrefix>
         <NamespacePrefixExcludedNamespaces>NovaSharp.Interpreter.LuaPort</NamespacePrefixExcludedNamespaces>
         <EnforcedNamespacePrefix Condition="'$(EnforcedNamespacePrefix)' == ''"
-            >$(LegacyNamespacePrefix)</EnforcedNamespacePrefix
-        >
+            >$(LegacyNamespacePrefix)</EnforcedNamespacePrefix>
         <NamespacePrefixDiagnosticSeverity Condition="'$(NamespacePrefixDiagnosticSeverity)' == ''"
-            >suggestion</NamespacePrefixDiagnosticSeverity
-        >
+            >suggestion</NamespacePrefixDiagnosticSeverity>
         <EnableNamespacePrefixRule Condition="'$(EnableNamespacePrefixRule)' == ''"
-            >true</EnableNamespacePrefixRule
-        >
+            >true</EnableNamespacePrefixRule>
 
         <!-- NuGet package metadata (shared across all packable projects) -->
         <Authors>Wallstop Studios</Authors>
