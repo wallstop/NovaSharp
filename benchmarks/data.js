@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783297204428,
+  "lastUpdate": 1783306742208,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1390,6 +1390,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 361.323,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e09e1aabd75a01afdf05f91ba8485b0143f35348",
+          "message": "[codex] Add generated property field bindings (#60)\n\n## Summary\n\n- Adds live generated property and field binding for supported\n`[LuaMember]` members through generated `__index`/`__newindex`\nmetatables.\n- Adds `LuaTable.SetMetatable(...)` to the root facade so generated\nregistration does not depend on the Lua metatable library being loaded.\n- Hardens analyzer diagnostics so static generated members, indexer\nproperties, and const/static fields are rejected instead of silently\nskipped by the generator.\n- Updates B1 PLAN/progress notes and golden generator snapshots.\n\n## Validation\n\n- `./scripts/test/quick.sh --full -c LuaInteropAnalyzerTUnitTests` (34\npassed, 0 failed)\n- `./scripts/test/quick.sh --full -c LuaInteropGeneratorTUnitTests` (18\npassed, 0 failed)\n- `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` (51\npassed, 0 failed)\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh` (14,904 passed, 0 failed, 0 skipped)\n- `git diff --check`\n- `bash ./scripts/dev/pre-commit.sh`\n- `git push` pre-push hook\n\n## Notes\n\n`LuaTable.Get(...)` and `LuaTable.Set(...)` remain raw facade\noperations. The generated property/field binding guarantee in this slice\nis for normal Lua script access against the registered table.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Changes generated Lua–CLR binding semantics and adds a public table\nAPI; risk is mitigated by broad tests and analyzer alignment, but\nincorrect metatable or enum conversion behavior could affect mod-facing\ninterop.\n> \n> **Overview**\n> Extends the B1 interop source generator so **`[LuaMember]` properties\nand fields** are exposed through generated **`__index` / `__newindex`**\nmetatables instead of table entries, while methods and enum tables stay\non the object table. Registration attaches that metatable via a new\n**`LuaTable.SetMetatable(...)`** facade API (documented as bypassing Lua\n`__metatable` protection).\n> \n> The generator models **method vs property vs field** bindings,\nread/write rules (e.g. init-only/readonly/value-type copies read-only),\nand **duplicate Lua name resolution** by binding priority. **Unsigned\n`ulong` and unsigned enums** use a generated\n**`__NovaSharpGeneratedReadUInt64`** helper with **checked underlying\ncasts** before enum assignment; non-string keys return nil on read and\nerror on write.\n> \n> The **analyzer** now reports **NS0003** for static\nmethods/properties/fields, indexer properties, and const fields that the\ngenerator does not emit. Golden outputs, runtime tests (stale snapshot\nafter method mutation, fields, enum round-trip), and PLAN/session notes\nare updated.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n1258a591b97559a69d986233243ee5282b1e6f21. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-05T19:53:49-07:00",
+          "tree_id": "45be844fc55c4dfc75696dcbf5c67273345d78a8",
+          "url": "https://github.com/wallstop/NovaSharp/commit/e09e1aabd75a01afdf05f91ba8485b0143f35348"
+        },
+        "date": 1783306741921,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 163.185,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 169.561,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 170.481,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 270.062,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 266.74,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 280.471,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 305.527,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 302.322,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 307.216,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 336.179,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 356.875,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 356.761,
             "unit": "ns",
             "extra": ""
           }
