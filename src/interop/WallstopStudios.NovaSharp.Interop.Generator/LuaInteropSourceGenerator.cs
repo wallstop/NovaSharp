@@ -479,6 +479,11 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             if (type.TypeKind == TypeKind.Enum)
             {
                 ITypeSymbol underlyingType = namedType.EnumUnderlyingType;
+                if (underlyingType == null)
+                {
+                    return TypeModel.Unsupported;
+                }
+
                 return new TypeModel(
                     LuaInteropTypeKind.Enum,
                     GetTypeSyntax(type),
