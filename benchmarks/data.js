@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783362928790,
+  "lastUpdate": 1783371474135,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1582,6 +1582,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 173.493,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "21e673eb7cc8e9af3277afbaab7018080d75b510",
+          "message": "Shrink initial VM stack capacities (#74)\n\n## Summary\n- shrink initial VM value/call stack capacities to 512 values and 64\ncall frames while preserving geometric growth\n- apply the smaller defaults to main processors, child coroutine\nprocessors, and execution-state snapshots\n- add targeted TUnit and Lua fixture coverage for small defaults and\ngrowth past the initial capacities\n- split configurable deterministic stack ceilings into the remaining A5\nPLAN item\n\n## Local validation\n- `./scripts/test/quick.sh --full -c ProcessorCoreLifecycleTUnitTests`\n-> 44 passed, 0 failed\n- `./scripts/test/quick.sh --full -c FastStackTUnitTests` -> 13 passed,\n0 failed\n- `./scripts/test/quick.sh --full -c InfrastructureTUnitTests` -> 6\npassed, 0 failed\n- `./scripts/build/quick.sh` -> passed\n- `./scripts/test/quick.sh` -> 15,013 passed, 0 failed\n- `bash ./scripts/dev/pre-commit.sh` -> passed\n- scoped `ProcessorCoreLifecycleTUnitTests/` Lua fixture runs across Lua\n5.1-5.5: the two new fixtures returned rc 0 for both reference Lua and\nNovaSharp; the raw directory still reports the existing\n`YieldingFromMainChunkThrowsCannotYieldMain` error fixture as failing\nfor both runtimes\n\n## PR CI\n- `CSharpier` -> success\n- `Benchmarks` -> success\n- `Tests` -> success\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Touches core VM stack allocation for every Script and coroutine; wrong\ndefaults or broken growth could cause stack overflow or excess memory,\nbut geometric growth is unchanged and new tests cover deep calls and\nlarge varargs.\n> \n> **Overview**\n> **Phase A5** reduces per-processor memory by replacing eager\n**131,072-slot** value and call stacks with shared defaults of **512**\nvalue slots and **64** call frames, while keeping existing geometric\n`FastStack` growth so deep recursion and large varargs still work.\n> \n> `VmStackDefaults` centralizes those sizes; `Processor` (main and child\ncoroutine constructors), `ExecutionState` snapshots, and `FastStack`\n(constructor renamed to `startingCapacity`, new internal `Capacity`) all\nuse the shared constants instead of a fixed huge allocation.\n> \n> Tests and fixtures assert initial capacities on main/child/coroutine\nprocessors and `ExecutionState`, plus growth past defaults via deep\nnon-tail recursion (80 frames) and a 528-argument vararg call; PLAN\nmarks the initial shrink done and leaves configurable stack ceilings as\nfollow-up.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\na2a0857bff0ac54237b2bcfa34b0178000607694. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-06T13:52:15-07:00",
+          "tree_id": "d3a96cc4e3d1e8ebcaacb56e9d60770352ebb9b6",
+          "url": "https://github.com/wallstop/NovaSharp/commit/21e673eb7cc8e9af3277afbaab7018080d75b510"
+        },
+        "date": 1783371473449,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 168.131,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 180.272,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 178.553,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 284.412,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 292.628,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 291.158,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 374.223,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 394.998,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 323.08,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 342.486,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 356.051,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 368.783,
             "unit": "ns",
             "extra": ""
           }
