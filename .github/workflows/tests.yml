@@ -450,7 +450,7 @@ jobs:
           python-version: '3.12'
 
       - name: Cache reference Lua ${{ matrix.lua-version }}
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .lua-cache/${{ runner.os }}/lua-${{ matrix.lua-version }}
           key: reference-lua-${{ runner.os }}-${{ matrix.lua-version }}-${{ hashFiles('.github/workflows/tests.yml') }}
