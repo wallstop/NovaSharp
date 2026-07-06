@@ -43,7 +43,7 @@ jobs:
       NOVASHARP_SKIP_PERFORMANCE_DOC: '1'
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -111,7 +111,7 @@ jobs:
       DOTNET_ROLL_FORWARD: Major
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -202,7 +202,7 @@ jobs:
       DOTNET_ROLL_FORWARD: Major
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -256,7 +256,7 @@ jobs:
     if: always()
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
