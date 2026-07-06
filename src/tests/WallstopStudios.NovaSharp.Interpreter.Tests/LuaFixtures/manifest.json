@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1779,
+  "total_snippets": 1781,
   "novasharp_only": 460,
-  "comparable": 1319,
+  "comparable": 1321,
   "by_version": {
-    "5.1": 872,
-    "5.2": 581,
-    "5.3": 819,
-    "5.4": 859,
-    "5.5": 900
+    "5.1": 874,
+    "5.2": 583,
+    "5.3": 821,
+    "5.4": 861,
+    "5.5": 902
   },
   "snippets": [
     {
@@ -20930,8 +20930,36 @@
       "expects_error": false
     },
     {
+      "path": "ProcessorCoreLifecycleTUnitTests/NonTailRecursionGrowsExecutionStackPastInitialCapacity.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\ProcessorExecution\\ProcessorCoreLifecycleTUnitTests.cs:294",
+      "test": "ProcessorCoreLifecycleTUnitTests.NonTailRecursionGrowsExecutionStackPastInitialCapacity",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ProcessorCoreLifecycleTUnitTests/LargeVarargCallGrowsValueStackPastInitialCapacity.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\ProcessorExecution\\ProcessorCoreLifecycleTUnitTests.cs:323",
+      "test": "ProcessorCoreLifecycleTUnitTests.LargeVarargCallGrowsValueStackPastInitialCapacity",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
       "path": "ProcessorCoreLifecycleTUnitTests/CoroutineYieldPassesValuesWhenYieldingIsAllowed.lua",
-      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\ProcessorExecution\\ProcessorCoreLifecycleTUnitTests.cs:207",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\ProcessorExecution\\ProcessorCoreLifecycleTUnitTests.cs:398",
       "test": "ProcessorCoreLifecycleTUnitTests.CoroutineYieldPassesValuesWhenYieldingIsAllowed",
       "lua_versions": [
         "5.1",
@@ -20945,7 +20973,7 @@
     },
     {
       "path": "ProcessorCoreLifecycleTUnitTests/YieldingFromMainChunkThrowsCannotYieldMain.lua",
-      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\ProcessorExecution\\ProcessorCoreLifecycleTUnitTests.cs:234",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\ProcessorExecution\\ProcessorCoreLifecycleTUnitTests.cs:425",
       "test": "ProcessorCoreLifecycleTUnitTests.YieldingFromMainChunkThrowsCannotYieldMain",
       "lua_versions": [
         "5.1",
@@ -20959,7 +20987,7 @@
     },
     {
       "path": "ProcessorCoreLifecycleTUnitTests/YieldingWithClrBoundaryInsideCoroutineThrowsCannotYield.lua",
-      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\ProcessorExecution\\ProcessorCoreLifecycleTUnitTests.cs:249",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\ProcessorExecution\\ProcessorCoreLifecycleTUnitTests.cs:440",
       "test": "ProcessorCoreLifecycleTUnitTests.YieldingWithClrBoundaryInsideCoroutineThrowsCannotYield",
       "lua_versions": [
         "5.1",

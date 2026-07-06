@@ -151,12 +151,13 @@ Sub-steps, each landing green:
 - [x] Proper Lua tail-call semantics landed ahead of A5: frame reuse is immediate for legal `return f(...)` calls; callability is resolved before dropping the caller; pending `<close>` variables, continuations, and error handlers block reuse; sandbox call-depth checks do not count frame-replacing tail calls; Lua 5.2+ `debug.getinfo(..., "t")` reports `istailcall`.
 - [x] Removed the current fixed VM stack ceiling by making the array-backed `FastStack` grow geometrically. Shrinking initial stack sizes and adding a configurable ceiling remain in A5.
 - [ ] `CallStackItem` → struct frames in a growable stack; delete `CallStackItemPool(s)`.
-- [ ] Shrink per-Script stacks: grow-on-demand from 512 values / 64 frames (currently 2 × 131,072 = >2 MiB); geometric growth, configurable ceiling. This is also the coroutine-cost fix.
+- [x] Shrink initial per-processor stacks to grow-on-demand 512 value slots / 64 call frames for main processors, child coroutine processors, and execution-state snapshots.
+- [ ] Add a configurable VM stack ceiling with deterministic overflow errors. This is the remaining coroutine-cost guardrail after the initial-size shrink.
 - [ ] Args as stack windows (base + count); CLR callbacks receive `ReadOnlySpan<LuaValue>`; multi-return via return-buffer writer. `LuaValue[]` tuples remain only for varargs capture / `table.pack`, pooled.
 - [ ] Migrate `CallbackFunction.ClrCallback` to the span-based form; migrate ~20 `CoreLib/` modules **one module per PR** (per-module fixture suites localize failures).
 - [ ] **No exceptions on hot call/return/yield paths.**
 
-**Progress**: Proper Lua tail-call frame reuse and growable `FastStack` landed on 2026-07-06, with follow-up hardening for `xpcall` message-handler ordering across Lua 5.4 `<close>` errors. See [progress/session-165-proper-tail-calls-close-errors.md](progress/session-165-proper-tail-calls-close-errors.md).
+**Progress**: Proper Lua tail-call frame reuse and growable `FastStack` landed on 2026-07-06, with follow-up hardening for `xpcall` message-handler ordering across Lua 5.4 `<close>` errors. The first coroutine-cost stack shrink landed later on 2026-07-06: processors and execution-state snapshots now start with 512 value slots / 64 call frames and grow geometrically, with targeted coverage for main processors, child coroutine processors, deep non-tail recursion past the initial frame capacity, and large vararg calls past the initial value capacity. Configurable ceilings remain open. See [progress/session-165-proper-tail-calls-close-errors.md](progress/session-165-proper-tail-calls-close-errors.md) and [progress/session-166-a5-shrink-vm-stacks.md](progress/session-166-a5-shrink-vm-stacks.md).
 
 **Exit criteria**: fib/hanoi ≤2-3x of NLua; **Lua→CLR interop benchmark beats NLua outright**; `new Script()` <100 KB; coroutine create/resume near-zero steady-state alloc.
 
