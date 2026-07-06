@@ -356,6 +356,14 @@ using NovaSharp;
             LuaValue unknownSetterErrorCaught = await engine
                 .RunAsync("return pcall(function() player.Unknown = 1 end)")
                 .ConfigureAwait(false);
+            LuaValue numericIndexIsNil = await engine
+                .RunAsync("return player[1] == nil")
+                .ConfigureAwait(false);
+            LuaValue numericSetterHasFocusedError = await engine
+                .RunAsync(
+                    "local ok, err = pcall(function() player[1] = 2 end); return not ok and string.find(tostring(err), 'Lua member keys must be strings.', 1, true) ~= nil"
+                )
+                .ConfigureAwait(false);
 
             await Assert.That(enumResult.AsInteger()).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(moveResult.AsInteger()).IsEqualTo(42).ConfigureAwait(false);
@@ -367,6 +375,11 @@ using NovaSharp;
             await Assert.That(typeErrorCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
             await Assert.That(setterTypeErrorCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
             await Assert.That(unknownSetterErrorCaught.AsBoolean()).IsFalse().ConfigureAwait(false);
+            await Assert.That(numericIndexIsNil.AsBoolean()).IsTrue().ConfigureAwait(false);
+            await Assert
+                .That(numericSetterHasFocusedError.AsBoolean())
+                .IsTrue()
+                .ConfigureAwait(false);
             await Assert
                 .That((int)healthProperty.GetValue(player))
                 .IsEqualTo(5)

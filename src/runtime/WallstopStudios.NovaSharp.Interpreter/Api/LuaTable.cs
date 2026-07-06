@@ -125,6 +125,10 @@ namespace NovaSharp
         /// <summary>
         /// Sets or clears this table's metatable.
         /// </summary>
+        /// <remarks>
+        /// This host-side API bypasses Lua's <c>__metatable</c> protection and is not equivalent
+        /// to Lua's <c>setmetatable</c> library function.
+        /// </remarks>
         public void SetMetatable(LuaTable metatable)
         {
             _owner.ThrowIfDisposed();

@@ -1219,6 +1219,15 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
 
             AppendMetamethodArityCheck(builder, bodyIndent, "__index", 2);
             AppendIndent(builder, bodyIndent);
+            builder.AppendLine("if (args[1].Kind != global::NovaSharp.LuaKind.String)");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("{");
+            AppendIndent(builder, bodyIndent + 1);
+            builder.AppendLine("return global::NovaSharp.LuaValue.Nil;");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("}");
+            builder.AppendLine();
+            AppendIndent(builder, bodyIndent);
             builder.AppendLine("string key = args[1].AsString();");
             AppendIndent(builder, bodyIndent);
             builder.AppendLine("switch (key)");
@@ -1279,6 +1288,19 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             }
 
             AppendMetamethodArityCheck(builder, bodyIndent, "__newindex", 3);
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("if (args[1].Kind != global::NovaSharp.LuaKind.String)");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("{");
+            AppendIndent(builder, bodyIndent + 1);
+            builder.Append(
+                "throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException("
+            );
+            AppendStringLiteral(builder, "Lua member keys must be strings.");
+            builder.AppendLine(");");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("}");
+            builder.AppendLine();
             AppendIndent(builder, bodyIndent);
             builder.AppendLine("string key = args[1].AsString();");
             AppendIndent(builder, bodyIndent);

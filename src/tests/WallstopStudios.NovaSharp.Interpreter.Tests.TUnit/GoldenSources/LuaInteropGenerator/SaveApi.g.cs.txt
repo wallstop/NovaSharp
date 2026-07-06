@@ -54,6 +54,11 @@ namespace Fixtures
             {
                 throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(@"Lua metamethod '__index' expects 2 argument(s).");
             }
+            if (args[1].Kind != global::NovaSharp.LuaKind.String)
+            {
+                return global::NovaSharp.LuaValue.Nil;
+            }
+
             string key = args[1].AsString();
             switch (key)
             {
@@ -75,6 +80,11 @@ namespace Fixtures
             {
                 throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(@"Lua metamethod '__newindex' expects 3 argument(s).");
             }
+            if (args[1].Kind != global::NovaSharp.LuaKind.String)
+            {
+                throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(@"Lua member keys must be strings.");
+            }
+
             string key = args[1].AsString();
             switch (key)
             {
