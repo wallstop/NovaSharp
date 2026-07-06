@@ -629,7 +629,7 @@ jobs:
 
       - name: Comment benchmark comparison deltas on PR
         if: github.event_name == 'pull_request' && steps.benchmark_deltas.outputs.has_report == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           BENCHMARK_DELTAS_FILE: ${{ steps.benchmark_deltas.outputs.report_file }}
           BENCHMARK_CHANGED: ${{ steps.benchmark_deltas.outputs.changed }}
