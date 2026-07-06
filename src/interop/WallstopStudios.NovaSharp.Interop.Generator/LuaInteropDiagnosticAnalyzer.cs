@@ -661,7 +661,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             IFieldSymbol field = member as IFieldSymbol;
             if (field != null)
             {
-                AnalyzeReturnType(context, field, field.Type, bindingName);
+                AnalyzeFieldSignature(context, field, bindingName);
             }
         }
 
@@ -671,6 +671,30 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             string bindingName
         )
         {
+            if (property.IsStatic)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        LuaInteropDiagnostics.UnsupportedSignatureShape,
+                        GetLocation(property),
+                        bindingName,
+                        "a static property"
+                    )
+                );
+            }
+
+            if (property.Parameters.Length != 0)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        LuaInteropDiagnostics.UnsupportedSignatureShape,
+                        GetLocation(property),
+                        bindingName,
+                        "an indexer property"
+                    )
+                );
+            }
+
             if (property.RefKind != RefKind.None)
             {
                 context.ReportDiagnostic(
@@ -715,6 +739,18 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             if (method.MethodKind == MethodKind.Constructor)
             {
                 return;
+            }
+
+            if (method.IsStatic)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        LuaInteropDiagnostics.UnsupportedSignatureShape,
+                        GetLocation(method),
+                        bindingName,
+                        "a static method"
+                    )
+                );
             }
 
             if (method.IsGenericMethod)
@@ -796,6 +832,38 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
 
                 AnalyzeType(context, parameter, parameter.Type, bindingName);
             }
+        }
+
+        private static void AnalyzeFieldSignature(
+            SymbolAnalysisContext context,
+            IFieldSymbol field,
+            string bindingName
+        )
+        {
+            if (field.IsConst)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        LuaInteropDiagnostics.UnsupportedSignatureShape,
+                        GetLocation(field),
+                        bindingName,
+                        "a const field"
+                    )
+                );
+            }
+            else if (field.IsStatic)
+            {
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        LuaInteropDiagnostics.UnsupportedSignatureShape,
+                        GetLocation(field),
+                        bindingName,
+                        "a static field"
+                    )
+                );
+            }
+
+            AnalyzeReturnType(context, field, field.Type, bindingName);
         }
 
         private static void AnalyzeReturnType(

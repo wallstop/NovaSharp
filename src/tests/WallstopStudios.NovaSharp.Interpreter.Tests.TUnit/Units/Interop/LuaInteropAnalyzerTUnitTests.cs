@@ -658,11 +658,86 @@ using NovaSharp;
                 )
                 .ConfigureAwait(false);
 
-            await AssertSingleDiagnosticAsync(diagnostics, "NS0002").ConfigureAwait(false);
+            await Assert.That(diagnostics.Length).IsEqualTo(2).ConfigureAwait(false);
+            await AssertDiagnosticCountByIdAsync(diagnostics, "NS0002", 1).ConfigureAwait(false);
+            await AssertDiagnosticCountByIdAsync(diagnostics, "NS0003", 1).ConfigureAwait(false);
             await Assert
-                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .That(CombineMessages(diagnostics))
                 .Contains("Lua binding 'byDate'")
                 .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsSupportedIndexerShapes()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember(""byIndex"")]
+        public int this[int index]
+        {
+            get
+            {
+                return index;
+            }
+        }
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertSingleDiagnosticAsync(diagnostics, "NS0003").ConfigureAwait(false);
+            await Assert
+                .That(diagnostics[0].GetMessage(CultureInfo.InvariantCulture))
+                .Contains("an indexer property")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task AnalyzerReportsStaticMembersAndConstFields()
+        {
+            Diagnostic[] diagnostics = await AnalyzeAsync(
+                    @"
+using NovaSharp;
+
+/*fixture*/ namespace Fixtures
+{
+    [LuaObject]
+    public partial class PlayerApi
+    {
+        [LuaMember(""staticMethod"")]
+        public static int StaticMethod()
+        {
+            return 1;
+        }
+
+        [LuaMember(""staticProperty"")]
+        public static int StaticProperty { get; set; }
+
+        [LuaMember(""staticField"")]
+        public static int StaticField;
+
+        [LuaMember(""constField"")]
+        public const int ConstField = 4;
+    }
+}
+"
+                )
+                .ConfigureAwait(false);
+
+            await AssertDiagnosticCountAsync(diagnostics, "NS0003", 4).ConfigureAwait(false);
+            string messages = CombineMessages(diagnostics);
+            await Assert.That(messages).Contains("a static method").ConfigureAwait(false);
+            await Assert.That(messages).Contains("a static property").ConfigureAwait(false);
+            await Assert.That(messages).Contains("a static field").ConfigureAwait(false);
+            await Assert.That(messages).Contains("a const field").ConfigureAwait(false);
         }
 
         [Test]
@@ -824,7 +899,9 @@ using NovaSharp;
                 )
                 .ConfigureAwait(false);
 
-            await AssertDiagnosticIdsAsync(diagnostics, "NS0002", "NS0003").ConfigureAwait(false);
+            await Assert.That(diagnostics.Length).IsEqualTo(3).ConfigureAwait(false);
+            await AssertDiagnosticCountByIdAsync(diagnostics, "NS0002", 1).ConfigureAwait(false);
+            await AssertDiagnosticCountByIdAsync(diagnostics, "NS0003", 2).ConfigureAwait(false);
         }
 
         [Test]
@@ -1139,6 +1216,35 @@ using NovaSharp;
 
                 await Assert.That(count).IsEqualTo(1).ConfigureAwait(false);
             }
+        }
+
+        private static async Task AssertDiagnosticCountByIdAsync(
+            Diagnostic[] diagnostics,
+            string expectedId,
+            int expectedCount
+        )
+        {
+            int count = 0;
+            foreach (Diagnostic diagnostic in diagnostics)
+            {
+                if (diagnostic.Id == expectedId)
+                {
+                    count++;
+                }
+            }
+
+            await Assert.That(count).IsEqualTo(expectedCount).ConfigureAwait(false);
+        }
+
+        private static string CombineMessages(Diagnostic[] diagnostics)
+        {
+            List<string> messages = new List<string>();
+            foreach (Diagnostic diagnostic in diagnostics)
+            {
+                messages.Add(diagnostic.GetMessage(CultureInfo.InvariantCulture));
+            }
+
+            return string.Join(Environment.NewLine, messages);
         }
     }
 }

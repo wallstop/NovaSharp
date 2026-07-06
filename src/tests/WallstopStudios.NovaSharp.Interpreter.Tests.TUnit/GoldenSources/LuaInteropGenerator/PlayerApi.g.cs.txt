@@ -23,6 +23,10 @@ namespace Fixtures
             __NovaSharpGeneratedRegisterEnumTables(engine, objectTable);
             objectTable.Set(@"__tostring", engine.CreateCallback((_, args) => __NovaSharpGeneratedDispatch(instance, args, @"__tostring"), @"player.__tostring"));
             objectTable.Set(@"move", engine.CreateCallback((_, args) => __NovaSharpGeneratedDispatch(instance, args, @"move"), @"player.move"));
+            global::NovaSharp.LuaTable metatable = engine.CreateTable(0, 2);
+            metatable.Set(@"__index", engine.CreateCallback((_, args) => __NovaSharpGeneratedIndex(instance, args), @"player.__index"));
+            metatable.Set(@"__newindex", engine.CreateCallback((_, args) => __NovaSharpGeneratedNewIndex(instance, args), @"player.__newindex"));
+            objectTable.SetMetatable(metatable);
 
             destination.Set(@"player", objectTable.ToValue());
         }
@@ -55,6 +59,54 @@ namespace Fixtures
         }
 
         [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
+        private static global::NovaSharp.LuaValue __NovaSharpGeneratedIndex(PlayerApi instance, global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args)
+        {
+            if (instance == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(instance));
+            }
+            if (args.Length != 2)
+            {
+                throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(@"Lua metamethod '__index' expects 2 argument(s).");
+            }
+            string key = args[1].AsString();
+            switch (key)
+            {
+                case @"Health":
+                    return global::NovaSharp.LuaValue.FromInteger((long)instance.Health);
+                case @"Team":
+                    return global::NovaSharp.LuaValue.FromInteger((long)instance.Team);
+            }
+
+            return global::NovaSharp.LuaValue.Nil;
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
+        private static global::NovaSharp.LuaValue __NovaSharpGeneratedNewIndex(PlayerApi instance, global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args)
+        {
+            if (instance == null)
+            {
+                throw new global::System.ArgumentNullException(nameof(instance));
+            }
+            if (args.Length != 3)
+            {
+                throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(@"Lua metamethod '__newindex' expects 3 argument(s).");
+            }
+            string key = args[1].AsString();
+            switch (key)
+            {
+                case @"Health":
+                    instance.Health = checked((int)args[2].AsInteger());
+                    return global::NovaSharp.LuaValue.Nil;
+                case @"Team":
+                    instance.Team = (global::Fixtures.Team)args[2].AsInteger();
+                    return global::NovaSharp.LuaValue.Nil;
+            }
+
+            throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(global::System.String.Concat(@"Lua member '", key, @"' is not writable."));
+        }
+
+        [global::System.CodeDom.Compiler.GeneratedCode(@"WallstopStudios.NovaSharp.Interop.Generator", @"3.0.0")]
         private static void __NovaSharpGeneratedRegisterEnumTables(global::NovaSharp.LuaEngine engine, global::NovaSharp.LuaTable destination)
         {
             if (engine == null)
@@ -77,7 +129,7 @@ namespace Fixtures
         {
             get
             {
-                return @"object:player|type:Fixtures.PlayerApi|member:__tostring|member:move|enum:Fixtures.Team";
+                return @"object:player|type:Fixtures.PlayerApi|member:Health|member:Team|member:__tostring|member:move|enum:Fixtures.Team";
             }
         }
     }

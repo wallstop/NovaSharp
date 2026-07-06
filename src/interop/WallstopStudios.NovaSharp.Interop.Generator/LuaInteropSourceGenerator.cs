@@ -98,7 +98,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                     MemberModel existing;
                     if (
                         !members.TryGetValue(luaName, out existing)
-                        || (!existing.IsDispatchable && candidate.IsDispatchable)
+                        || candidate.BindingPriority > existing.BindingPriority
                     )
                     {
                         members[luaName] = candidate;
@@ -250,16 +250,35 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
         )
         {
             IMethodSymbol method = member as IMethodSymbol;
-            if (method == null || !CanEmitMethod(method, isReferenceType))
+            if (method != null)
             {
-                return new MemberModel(
-                    luaName,
-                    isDispatchable: false,
-                    null,
-                    null,
-                    false,
-                    TypeModel.Unsupported
-                );
+                return CreateMethodMemberModel(method, luaName, isReferenceType);
+            }
+
+            IPropertySymbol property = member as IPropertySymbol;
+            if (property != null)
+            {
+                return CreatePropertyMemberModel(property, luaName, isReferenceType);
+            }
+
+            IFieldSymbol field = member as IFieldSymbol;
+            if (field != null)
+            {
+                return CreateFieldMemberModel(field, luaName, isReferenceType);
+            }
+
+            return MemberModel.Unsupported(luaName);
+        }
+
+        private static MemberModel CreateMethodMemberModel(
+            IMethodSymbol method,
+            string luaName,
+            bool isReferenceType
+        )
+        {
+            if (!CanEmitMethod(method, isReferenceType))
+            {
+                return MemberModel.Unsupported(luaName);
             }
 
             ParameterModel[] parameters = new ParameterModel[method.Parameters.Length];
@@ -268,14 +287,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 TypeModel parameterType = CreateTypeModel(method.Parameters[i].Type);
                 if (!parameterType.IsSupported)
                 {
-                    return new MemberModel(
-                        luaName,
-                        isDispatchable: false,
-                        null,
-                        null,
-                        false,
-                        TypeModel.Unsupported
-                    );
+                    return MemberModel.Unsupported(luaName);
                 }
 
                 parameters[i] = new ParameterModel(parameterType);
@@ -286,23 +298,91 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 : CreateTypeModel(method.ReturnType);
             if (!method.ReturnsVoid && !returnType.IsSupportedReturn)
             {
-                return new MemberModel(
-                    luaName,
-                    isDispatchable: false,
-                    null,
-                    null,
-                    false,
-                    TypeModel.Unsupported
-                );
+                return MemberModel.Unsupported(luaName);
             }
 
             return new MemberModel(
                 luaName,
+                MemberBindingKind.Method,
                 isDispatchable: true,
                 EscapeIdentifier(method.Name),
                 parameters,
                 method.ReturnsVoid,
-                returnType
+                returnType,
+                canRead: false,
+                canWrite: false
+            );
+        }
+
+        private static MemberModel CreatePropertyMemberModel(
+            IPropertySymbol property,
+            string luaName,
+            bool isReferenceType
+        )
+        {
+            if (
+                property.IsStatic
+                || property.Parameters.Length != 0
+                || property.RefKind != RefKind.None
+            )
+            {
+                return MemberModel.Unsupported(luaName);
+            }
+
+            TypeModel propertyType = CreateTypeModel(property.Type);
+            if (!propertyType.IsSupportedReturn)
+            {
+                return MemberModel.Unsupported(luaName);
+            }
+
+            bool canRead = property.GetMethod != null;
+            bool canWrite =
+                isReferenceType && property.SetMethod != null && !property.SetMethod.IsInitOnly;
+            if (!canRead && !canWrite)
+            {
+                return MemberModel.Unsupported(luaName);
+            }
+
+            return new MemberModel(
+                luaName,
+                MemberBindingKind.Property,
+                isDispatchable: true,
+                EscapeIdentifier(property.Name),
+                Array.Empty<ParameterModel>(),
+                returnsVoid: false,
+                propertyType,
+                canRead,
+                canWrite
+            );
+        }
+
+        private static MemberModel CreateFieldMemberModel(
+            IFieldSymbol field,
+            string luaName,
+            bool isReferenceType
+        )
+        {
+            if (field.IsStatic || field.IsConst)
+            {
+                return MemberModel.Unsupported(luaName);
+            }
+
+            TypeModel fieldType = CreateTypeModel(field.Type);
+            if (!fieldType.IsSupportedReturn)
+            {
+                return MemberModel.Unsupported(luaName);
+            }
+
+            return new MemberModel(
+                luaName,
+                MemberBindingKind.Field,
+                isDispatchable: true,
+                EscapeIdentifier(field.Name),
+                Array.Empty<ParameterModel>(),
+                returnsVoid: false,
+                fieldType,
+                canRead: true,
+                canWrite: isReferenceType && !field.IsReadOnly
             );
         }
 
@@ -342,7 +422,12 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
 
             // Struct instances are captured by value, so non-readonly methods would mutate
             // a copy and changes would not persist across calls. Only dispatch readonly methods.
-            if (method.ContainingType?.TypeKind == TypeKind.Struct && !method.IsReadOnly)
+            INamedTypeSymbol containingType = method.ContainingType;
+            if (
+                containingType != null
+                && containingType.TypeKind == TypeKind.Struct
+                && !method.IsReadOnly
+            )
             {
                 return false;
             }
@@ -641,7 +726,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             builder.AppendLine("{");
             foreach (MemberModel member in model.Members)
             {
-                if (!member.IsDispatchable)
+                if (!member.IsDispatchable || member.BindingKind != MemberBindingKind.Method)
                 {
                     continue;
                 }
@@ -661,6 +746,12 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             AppendIndent(builder, model.NamespaceName.Length > 0 ? 2 : 1);
             builder.AppendLine("}");
             builder.AppendLine();
+            if (HasAccessorMembers(model))
+            {
+                AppendGeneratedIndexMethod(builder, model);
+                AppendGeneratedNewIndexMethod(builder, model);
+            }
+
             if (model.ReferencedEnums.Length > 0)
             {
                 AppendEnumRegistrationMethod(builder, model);
@@ -862,7 +953,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             int tableCapacity = model.ReferencedEnums.Length;
             foreach (MemberModel member in model.Members)
             {
-                if (member.IsDispatchable)
+                if (member.IsDispatchable && member.BindingKind == MemberBindingKind.Method)
                 {
                     tableCapacity++;
                 }
@@ -898,7 +989,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             bool emittedCallback = false;
             foreach (MemberModel member in model.Members)
             {
-                if (!member.IsDispatchable)
+                if (!member.IsDispatchable || member.BindingKind != MemberBindingKind.Method)
                 {
                     continue;
                 }
@@ -916,7 +1007,29 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 emittedCallback = true;
             }
 
-            if (model.ReferencedEnums.Length > 0 || emittedCallback)
+            if (HasAccessorMembers(model))
+            {
+                AppendIndent(builder, bodyIndent);
+                builder.AppendLine(
+                    "global::NovaSharp.LuaTable metatable = engine.CreateTable(0, 2);"
+                );
+                AppendIndent(builder, bodyIndent);
+                builder.Append(
+                    "metatable.Set(@\"__index\", engine.CreateCallback((_, args) => __NovaSharpGeneratedIndex(instance, args), "
+                );
+                AppendStringLiteral(builder, string.Concat(model.LuaName, ".__index"));
+                builder.AppendLine("));");
+                AppendIndent(builder, bodyIndent);
+                builder.Append(
+                    "metatable.Set(@\"__newindex\", engine.CreateCallback((_, args) => __NovaSharpGeneratedNewIndex(instance, args), "
+                );
+                AppendStringLiteral(builder, string.Concat(model.LuaName, ".__newindex"));
+                builder.AppendLine("));");
+                AppendIndent(builder, bodyIndent);
+                builder.AppendLine("objectTable.SetMetatable(metatable);");
+            }
+
+            if (model.ReferencedEnums.Length > 0 || emittedCallback || HasAccessorMembers(model))
             {
                 builder.AppendLine();
             }
@@ -973,8 +1086,193 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             }
 
             builder.Append("return ");
-            AppendReturnValue(builder, member.ReturnType, "instance." + member.ClrName, member);
+            AppendReturnValue(
+                builder,
+                member.ReturnType,
+                CreateCallExpression("instance." + member.ClrName, member)
+            );
             builder.AppendLine(";");
+        }
+
+        private static bool HasAccessorMembers(LuaObjectModel model)
+        {
+            foreach (MemberModel member in model.Members)
+            {
+                if (member.IsDispatchable && member.BindingKind != MemberBindingKind.Method)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void AppendGeneratedIndexMethod(StringBuilder builder, LuaObjectModel model)
+        {
+            int memberIndent = model.NamespaceName.Length > 0 ? 2 : 1;
+            int bodyIndent = model.NamespaceName.Length > 0 ? 3 : 2;
+            int switchIndent = model.NamespaceName.Length > 0 ? 4 : 3;
+
+            AppendGeneratedCodeAttribute(builder, memberIndent);
+            AppendIndent(builder, memberIndent);
+            builder.AppendLine(
+                "private static global::NovaSharp.LuaValue __NovaSharpGeneratedIndex("
+                    + model.TypeName
+                    + " instance, global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args)"
+            );
+            AppendIndent(builder, memberIndent);
+            builder.AppendLine("{");
+            if (model.RequiresInstanceNullCheck)
+            {
+                AppendNullCheck(builder, bodyIndent, "instance");
+            }
+
+            AppendMetamethodArityCheck(builder, bodyIndent, "__index", 2);
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("string key = args[1].AsString();");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("switch (key)");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("{");
+            foreach (MemberModel member in model.Members)
+            {
+                if (
+                    !member.IsDispatchable
+                    || member.BindingKind == MemberBindingKind.Method
+                    || !member.CanRead
+                )
+                {
+                    continue;
+                }
+
+                AppendIndent(builder, switchIndent);
+                builder.Append("case ");
+                AppendStringLiteral(builder, member.LuaName);
+                builder.AppendLine(":");
+                AppendIndent(builder, switchIndent + 1);
+                builder.Append("return ");
+                AppendReturnValue(builder, member.ReturnType, "instance." + member.ClrName);
+                builder.AppendLine(";");
+            }
+
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("}");
+            builder.AppendLine();
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("return global::NovaSharp.LuaValue.Nil;");
+            AppendIndent(builder, memberIndent);
+            builder.AppendLine("}");
+            builder.AppendLine();
+        }
+
+        private static void AppendGeneratedNewIndexMethod(
+            StringBuilder builder,
+            LuaObjectModel model
+        )
+        {
+            int memberIndent = model.NamespaceName.Length > 0 ? 2 : 1;
+            int bodyIndent = model.NamespaceName.Length > 0 ? 3 : 2;
+            int switchIndent = model.NamespaceName.Length > 0 ? 4 : 3;
+
+            AppendGeneratedCodeAttribute(builder, memberIndent);
+            AppendIndent(builder, memberIndent);
+            builder.AppendLine(
+                "private static global::NovaSharp.LuaValue __NovaSharpGeneratedNewIndex("
+                    + model.TypeName
+                    + " instance, global::System.ReadOnlySpan<global::NovaSharp.LuaValue> args)"
+            );
+            AppendIndent(builder, memberIndent);
+            builder.AppendLine("{");
+            if (model.RequiresInstanceNullCheck)
+            {
+                AppendNullCheck(builder, bodyIndent, "instance");
+            }
+
+            AppendMetamethodArityCheck(builder, bodyIndent, "__newindex", 3);
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("string key = args[1].AsString();");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("switch (key)");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("{");
+            foreach (MemberModel member in model.Members)
+            {
+                if (!member.IsDispatchable || member.BindingKind == MemberBindingKind.Method)
+                {
+                    continue;
+                }
+
+                AppendIndent(builder, switchIndent);
+                builder.Append("case ");
+                AppendStringLiteral(builder, member.LuaName);
+                builder.AppendLine(":");
+                if (member.CanWrite)
+                {
+                    AppendIndent(builder, switchIndent + 1);
+                    builder.Append("instance.");
+                    builder.Append(member.ClrName);
+                    builder.Append(" = ");
+                    AppendArgumentRead(builder, member.ReturnType, 2);
+                    builder.AppendLine(";");
+                    AppendIndent(builder, switchIndent + 1);
+                    builder.AppendLine("return global::NovaSharp.LuaValue.Nil;");
+                    continue;
+                }
+
+                AppendIndent(builder, switchIndent + 1);
+                builder.Append(
+                    "throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException("
+                );
+                AppendStringLiteral(
+                    builder,
+                    string.Concat("Lua member '", member.LuaName, "' is read-only.")
+                );
+                builder.AppendLine(");");
+            }
+
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("}");
+            builder.AppendLine();
+            AppendIndent(builder, bodyIndent);
+            builder.Append(
+                "throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException(global::System.String.Concat(@\"Lua member '\", key, @\"' is not writable.\"));"
+            );
+            builder.AppendLine();
+            AppendIndent(builder, memberIndent);
+            builder.AppendLine("}");
+            builder.AppendLine();
+        }
+
+        private static void AppendMetamethodArityCheck(
+            StringBuilder builder,
+            int bodyIndent,
+            string metamethodName,
+            int expectedLength
+        )
+        {
+            AppendIndent(builder, bodyIndent);
+            builder.Append("if (args.Length != ");
+            builder.Append(expectedLength.ToString(CultureInfo.InvariantCulture));
+            builder.AppendLine(")");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("{");
+            AppendIndent(builder, bodyIndent + 1);
+            builder.Append(
+                "throw new global::WallstopStudios.NovaSharp.Interpreter.Errors.ScriptRuntimeException("
+            );
+            AppendStringLiteral(
+                builder,
+                string.Concat(
+                    "Lua metamethod '",
+                    metamethodName,
+                    "' expects ",
+                    expectedLength.ToString(CultureInfo.InvariantCulture),
+                    " argument(s)."
+                )
+            );
+            builder.AppendLine(");");
+            AppendIndent(builder, bodyIndent);
+            builder.AppendLine("}");
         }
 
         private static void AppendArgumentList(StringBuilder builder, MemberModel member)
@@ -996,16 +1294,14 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
         private static void AppendReturnValue(
             StringBuilder builder,
             TypeModel returnType,
-            string callTarget,
-            MemberModel member
+            string valueExpression
         )
         {
-            string callExpression = CreateCallExpression(callTarget, member);
             switch (returnType.Kind)
             {
                 case LuaInteropTypeKind.Boolean:
                     builder.Append("global::NovaSharp.LuaValue.FromBoolean(");
-                    builder.Append(callExpression);
+                    builder.Append(valueExpression);
                     builder.Append(')');
                     return;
                 case LuaInteropTypeKind.Byte:
@@ -1016,32 +1312,32 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                 case LuaInteropTypeKind.UInt16:
                 case LuaInteropTypeKind.UInt32:
                     builder.Append("global::NovaSharp.LuaValue.FromInteger((long)");
-                    builder.Append(callExpression);
+                    builder.Append(valueExpression);
                     builder.Append(')');
                     return;
                 case LuaInteropTypeKind.UInt64:
                     builder.Append("__NovaSharpGeneratedToLuaValue((ulong)");
-                    builder.Append(callExpression);
+                    builder.Append(valueExpression);
                     builder.Append(')');
                     return;
                 case LuaInteropTypeKind.Double:
                 case LuaInteropTypeKind.Single:
                     builder.Append("global::NovaSharp.LuaValue.FromNumber((double)");
-                    builder.Append(callExpression);
+                    builder.Append(valueExpression);
                     builder.Append(')');
                     return;
                 case LuaInteropTypeKind.String:
                     builder.Append("global::NovaSharp.LuaValue.FromString(");
-                    builder.Append(callExpression);
+                    builder.Append(valueExpression);
                     builder.Append(')');
                     return;
                 case LuaInteropTypeKind.LuaValue:
-                    builder.Append(callExpression);
+                    builder.Append(valueExpression);
                     return;
                 case LuaInteropTypeKind.LuaTable:
                 case LuaInteropTypeKind.LuaFunction:
                 case LuaInteropTypeKind.LuaCoroutine:
-                    builder.Append(callExpression);
+                    builder.Append(valueExpression);
                     builder.Append(".ToValue()");
                     return;
                 case LuaInteropTypeKind.Enum:
@@ -1054,7 +1350,7 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
                         builder.Append("global::NovaSharp.LuaValue.FromInteger((long)");
                     }
 
-                    builder.Append(callExpression);
+                    builder.Append(valueExpression);
                     builder.Append(')');
                     return;
                 default:
@@ -1467,19 +1763,43 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
         {
             public MemberModel(
                 string luaName,
+                MemberBindingKind bindingKind,
                 bool isDispatchable,
                 string clrName,
                 ParameterModel[] parameters,
                 bool returnsVoid,
-                TypeModel returnType
+                TypeModel returnType,
+                bool canRead,
+                bool canWrite
             )
             {
                 LuaName = luaName;
+                BindingKind = bindingKind;
                 IsDispatchable = isDispatchable;
                 ClrName = clrName;
-                Parameters = parameters ?? Array.Empty<ParameterModel>();
+                Parameters = parameters == null ? Array.Empty<ParameterModel>() : parameters;
                 ReturnsVoid = returnsVoid;
                 ReturnType = returnType;
+                CanRead = canRead;
+                CanWrite = canWrite;
+            }
+
+            /// <summary>
+            /// Creates an unsupported member placeholder that can still reserve a Lua-visible name.
+            /// </summary>
+            public static MemberModel Unsupported(string luaName)
+            {
+                return new MemberModel(
+                    luaName,
+                    MemberBindingKind.Unsupported,
+                    isDispatchable: false,
+                    null,
+                    null,
+                    false,
+                    TypeModel.Unsupported,
+                    canRead: false,
+                    canWrite: false
+                );
             }
 
             /// <summary>
@@ -1488,12 +1808,37 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             public string LuaName { get; }
 
             /// <summary>
+            /// Gets the generated binding kind.
+            /// </summary>
+            public MemberBindingKind BindingKind { get; }
+
+            /// <summary>
+            /// Gets the priority used when duplicate Lua names are present.
+            /// </summary>
+            public int BindingPriority
+            {
+                get
+                {
+                    switch (BindingKind)
+                    {
+                        case MemberBindingKind.Method:
+                            return 2;
+                        case MemberBindingKind.Property:
+                        case MemberBindingKind.Field:
+                            return 1;
+                        default:
+                            return 0;
+                    }
+                }
+            }
+
+            /// <summary>
             /// Gets whether this member can be emitted as a generated callback.
             /// </summary>
             public bool IsDispatchable { get; }
 
             /// <summary>
-            /// Gets the CLR method name.
+            /// Gets the CLR member name.
             /// </summary>
             public string ClrName { get; }
 
@@ -1511,6 +1856,16 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             /// Gets the return type model when the method returns a value.
             /// </summary>
             public TypeModel ReturnType { get; }
+
+            /// <summary>
+            /// Gets whether this generated accessor supports reads.
+            /// </summary>
+            public bool CanRead { get; }
+
+            /// <summary>
+            /// Gets whether this generated accessor supports writes.
+            /// </summary>
+            public bool CanWrite { get; }
         }
 
         private sealed class ParameterModel
@@ -1592,6 +1947,14 @@ namespace WallstopStudios.NovaSharp.Interop.Generator
             UInt16,
             UInt32,
             UInt64,
+        }
+
+        private enum MemberBindingKind
+        {
+            Unsupported,
+            Method,
+            Property,
+            Field,
         }
 
         private sealed class EnumModel
