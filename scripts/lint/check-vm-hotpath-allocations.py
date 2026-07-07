@@ -72,12 +72,12 @@ RULES = [
     ),
     Rule(
         "dynvalue-new-number",
-        re.compile(r"\bDynValue\.NewNumber\s*\("),
+        re.compile(rf"\b{QUALIFIED_DYNVALUE}\.NewNumber\s*\("),
         "DynValue.NewNumber in a VM opcode/call path allocates a numeric wrapper.",
     ),
     Rule(
         "dynvalue-new-integer",
-        re.compile(r"\bDynValue\.NewInteger\s*\("),
+        re.compile(rf"\b{QUALIFIED_DYNVALUE}\.NewInteger\s*\("),
         "DynValue.NewInteger in a VM opcode/call path allocates an integer wrapper.",
     ),
     Rule(
@@ -516,6 +516,18 @@ def update_pending_implicit_array_initializer(current_pending: bool, code: str) 
 def run_self_tests() -> None:
     cases = [
         ("DynValue value = new();", None, {"new-dynvalue"}),
+        ("DynValue.NewNumber(1);", None, {"dynvalue-new-number"}),
+        ("DynValue.NewInteger(1);", None, {"dynvalue-new-integer"}),
+        (
+            "WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue.NewNumber(1);",
+            None,
+            {"dynvalue-new-number"},
+        ),
+        (
+            "global::WallstopStudios.NovaSharp.Interpreter.DataTypes.DynValue.NewInteger(1);",
+            None,
+            {"dynvalue-new-integer"},
+        ),
         ("return new(DataType.Nil, null);", "DynValue", {"new-dynvalue"}),
         (
             "return new(this, callback, sourceRef);",

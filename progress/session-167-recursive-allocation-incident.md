@@ -24,6 +24,7 @@ Documented `FibonacciRecursive Execute` as a tracked allocation incident in `PLA
 - Added standalone Lua fixtures for the new recursion smokes under the comparison corpus so reference-Lua CI runs them. The Lua corpus extractor was run, but its broad legacy generated-output churn was not kept because it was unrelated to this scoped allocation guard.
 - Added `scripts/lint/check-vm-hotpath-allocations.py` plus CI/pre-commit wiring. The guard rejects new non-allowlisted `new DynValue`, `DynValue.NewNumber`, `DynValue.NewInteger`, `new List<DynValue>`, `new DynValue[]`, visible-DynValue implicit `new[]` arrays, and `new ScriptExecutionContext` in VM processor files and current callback/context call-path files. It also catches matching target-typed `new(...)` declaration, return, expression-bodied return, stack-push, and direct callback `Invoke(new(...), ...)` context construction forms while allowlisting existing debt by source context.
 - Addressed PR review feedback by teaching the allocation lint to ignore regular, interpolated, and multiline verbatim C# strings before scanning for allocation patterns, with self-tests covering the false-positive cases.
+- Addressed follow-up PR review feedback by extending `DynValue.NewNumber` and `DynValue.NewInteger` lint rules to catch namespace-qualified and `global::`-qualified member calls.
 - Added `.llm` guidance that VM opcode and Lua-call paths must be allocation-free after warmup, using inline `LuaValue`, stack windows, spans, and explicit slow-path allowlists.
 
 ## Validation
