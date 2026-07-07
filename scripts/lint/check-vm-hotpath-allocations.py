@@ -316,15 +316,25 @@ def strip_comments_and_strings(
     line: str,
     inside_block_comment: bool,
     raw_string_quote_count: int,
-) -> tuple[str, bool, int]:
+    inside_verbatim_string: bool,
+) -> tuple[str, bool, int, bool]:
     output: list[str] = []
     index = 0
     while index < len(line):
+        if inside_verbatim_string:
+            end_index = find_verbatim_string_end(line, index)
+            if end_index < 0:
+                return "".join(output), inside_block_comment, raw_string_quote_count, True
+            output.append('""')
+            index = end_index + 1
+            inside_verbatim_string = False
+            continue
+
         if raw_string_quote_count > 0:
             delimiter = '"' * raw_string_quote_count
             end_index = line.find(delimiter, index)
             if end_index < 0:
-                return "".join(output), inside_block_comment, raw_string_quote_count
+                return "".join(output), inside_block_comment, raw_string_quote_count, False
             output.append('""')
             index = end_index + raw_string_quote_count
             raw_string_quote_count = 0
@@ -333,13 +343,23 @@ def strip_comments_and_strings(
         if inside_block_comment:
             end_index = line.find("*/", index)
             if end_index < 0:
-                return "".join(output), True, raw_string_quote_count
+                return "".join(output), True, raw_string_quote_count, inside_verbatim_string
             index = end_index + 2
             inside_block_comment = False
             continue
 
         char = line[index]
         next_char = line[index + 1] if index + 1 < len(line) else ""
+        verbatim_string_prefix_length = get_verbatim_string_prefix_length(line, index)
+        if verbatim_string_prefix_length > 0:
+            content_start = index + verbatim_string_prefix_length
+            end_index = find_verbatim_string_end(line, content_start)
+            output.append('""')
+            if end_index < 0:
+                return "".join(output), inside_block_comment, raw_string_quote_count, True
+            index = end_index + 1
+            continue
+
         raw_string_match = RAW_STRING_PREFIX_PATTERN.match(line, index)
         if raw_string_match is not None:
             delimiter_start = raw_string_match.group(0).find('"')
@@ -349,7 +369,7 @@ def strip_comments_and_strings(
             end_index = line.find(delimiter, content_start)
             output.append('""')
             if end_index < 0:
-                return "".join(output), inside_block_comment, quote_count
+                return "".join(output), inside_block_comment, quote_count, inside_verbatim_string
             index = end_index + quote_count
             continue
 
@@ -367,7 +387,26 @@ def strip_comments_and_strings(
         output.append(char)
         index += 1
 
-    return "".join(output), inside_block_comment, raw_string_quote_count
+    return "".join(output), inside_block_comment, raw_string_quote_count, inside_verbatim_string
+
+
+def get_verbatim_string_prefix_length(line: str, index: int) -> int:
+    if line.startswith('@"', index):
+        return 2
+    if line.startswith('$@"', index) or line.startswith('@$"', index):
+        return 3
+    return 0
+
+
+def find_verbatim_string_end(line: str, index: int) -> int:
+    while index < len(line):
+        if line[index] == '"':
+            if index + 1 < len(line) and line[index + 1] == '"':
+                index += 2
+                continue
+            return index
+        index += 1
+    return -1
 
 
 def skip_csharp_string_or_char(line: str, index: int) -> int:
@@ -375,7 +414,7 @@ def skip_csharp_string_or_char(line: str, index: int) -> int:
     index += 1
     while index < len(line):
         char = line[index]
-        if char == "\\" and quote != "@":
+        if char == "\\":
             index += 2
             continue
         if char == quote:
@@ -618,6 +657,32 @@ def run_self_tests() -> None:
             [],
         ),
         (
+            "verbatim_multiline_strings_are_ignored",
+            [
+                "string script = @\"",
+                "new DynValue();",
+                "DynValue.NewNumber(1);",
+                "\";",
+            ],
+            [],
+        ),
+        (
+            "interpolated_verbatim_multiline_strings_are_ignored",
+            [
+                "string script = $@\"",
+                "new List<DynValue>();",
+                "\";",
+            ],
+            [],
+        ),
+        (
+            "verbatim_strings_with_escaped_quotes_are_ignored",
+            [
+                "string script = @\"prefix \"\" quoted new DynValue(); \"\" suffix\";",
+            ],
+            [],
+        ),
+        (
             "raw_multiline_strings_are_ignored",
             [
                 "string script = \"\"\"",
@@ -699,12 +764,19 @@ def analyze_lines(
     stripped_lines: list[str] = []
     inside_block_comment = False
     raw_string_quote_count = 0
+    inside_verbatim_string = False
 
     for line in lines:
-        stripped_line, inside_block_comment, raw_string_quote_count = strip_comments_and_strings(
+        (
+            stripped_line,
+            inside_block_comment,
+            raw_string_quote_count,
+            inside_verbatim_string,
+        ) = strip_comments_and_strings(
             line,
             inside_block_comment,
             raw_string_quote_count,
+            inside_verbatim_string,
         )
         stripped_lines.append(stripped_line)
 
