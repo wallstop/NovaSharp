@@ -123,6 +123,9 @@ jobs:
       - name: Enforce tooling setup consistency
         run: ./scripts/ci/check-tooling-consistency.sh
         shell: bash
+      - name: Enforce VM hot-path allocation guard
+        run: ./scripts/ci/check-vm-hotpath-allocations.sh
+        shell: bash
 
   dotnet-tests:
     needs: lint

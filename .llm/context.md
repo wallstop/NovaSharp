@@ -122,6 +122,7 @@ ______________________________________________________________________
 
 - **Use pooled collections** — `ListPool<T>.Get()`, `HashSetPool<T>.Get()` with `using`
 - **Use `ZStringBuilder.Create()`** — Never `StringBuilder` or `$"..."` in hot paths
+- **VM opcode and Lua-call paths must be allocation-free** — Use inline `LuaValue`, stack windows, spans, and explicit slow-path allowlists instead of `DynValue` scalar factories, `DynValue[]`, or callback context materialization
 - **NEVER `.ToString()` on enums** — Use `TokenTypeStrings.GetName()` etc.
 - **Avoid closures/LINQ** — Use explicit loops in hot paths
 - **Use `HashCodeHelper.HashCode()`** — Never bespoke hash patterns

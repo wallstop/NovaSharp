@@ -43,6 +43,8 @@ ______________________________________________________________________
 | `new T[]` with variable size      | Array allocation               | `SystemArrayPool<T>.Get()`     |
 | Boxing struct to object           | Box allocation                 | Generic methods                |
 
+VM opcode and ordinary Lua-call paths are stricter than general runtime code: they must be allocation-free after warmup. Use inline `LuaValue`, stack windows, spans, and explicit slow-path allowlists; do not add `new DynValue`, `DynValue.NewNumber`, `DynValue.NewInteger`, `new DynValue[]`, `new List<DynValue>`, or `new ScriptExecutionContext` to hot processor/call paths without updating the VM allocation guard and documenting why it is not hot.
+
 ______________________________________________________________________
 
 ## Core Principles

@@ -18,11 +18,13 @@ Scripts in this folder run before the main build/test stages (either locally or 
 - `check-test-finally.sh` — Runs `scripts/lint/check-test-finally.py` to ensure tests continue using the shared cleanup scopes instead of reintroducing manual `try`/`finally` blocks.
 - `check-temp-path-usage.sh` — Runs `scripts/lint/check-temp-path-usage.py`, which flags any new references to `Path.GetTempPath()` inside the test tree so contributors keep using `TempFileScope`/`TempDirectoryScope` for cleanup.
 - `check-shell-executable.sh` — Runs `scripts/lint/check-shell-executable.py`, which fails when any `.sh` file in the repository is missing the executable bit in git. This prevents CI failures from permission denied errors on Linux/macOS runners.
+- `check-vm-hotpath-allocations.sh` — Runs `scripts/lint/check-vm-hotpath-allocations.py`, rejecting new non-allowlisted allocations in VM opcode and Lua-call hot paths.
 
 ## Usage
 
 ```bash
 NOVASHARP_BASE_REF=origin/main bash ./scripts/ci/ensure-readme-updates.sh
+./scripts/ci/check-vm-hotpath-allocations.sh
 ```
 
 - When running in GitHub Actions, the workflow supplies `NOVASHARP_BASE_REF` automatically so the script diff uses the merge base for the PR (or `HEAD^` on direct pushes).
