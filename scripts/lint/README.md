@@ -135,6 +135,18 @@ python scripts/lint/check-luanumber-usage.py --detailed
 python scripts/lint/check-luanumber-usage.py --fail-on-issues
 ```
 
+### check-vm-hotpath-allocations.py
+
+Rejects new allocation patterns in VM opcode and Lua-call hot paths. The guard flags non-allowlisted `new DynValue`, `DynValue.NewNumber`, `DynValue.NewInteger`, `new List<DynValue>`, `new DynValue[]`, visible-DynValue implicit `new[]` arrays, and `new ScriptExecutionContext` usage in the VM processor files plus current callback/context call-path files. It also catches matching target-typed `new(...)` declaration, return, expression-bodied return, stack-push, and direct callback `Invoke(new(...), ...)` context construction forms. Existing A1/A5 allocation debt is explicitly allowlisted by source context with reasons so those entries can be removed as the value and call layouts are fixed.
+
+```bash
+# Basic check
+python scripts/lint/check-vm-hotpath-allocations.py
+
+# Include allowlisted current allocation debt
+python scripts/lint/check-vm-hotpath-allocations.py --detailed
+```
+
 ## Adding New Lint Scripts
 
 1. Create a Python script following the existing patterns (use `pathlib.rglob()` for searching, return exit code 0 on success, 1 on violation).

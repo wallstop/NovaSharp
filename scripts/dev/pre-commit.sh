@@ -619,6 +619,19 @@ check_tooling_consistency() {
   fi
 }
 
+check_vm_hotpath_allocations() {
+  vm_output="$(git diff --cached --name-only --diff-filter=ACM -- 'src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/CallbackFunction.cs' 'src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/ScriptExecutionContext.cs' 'src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM' 'scripts/lint/check-vm-hotpath-allocations.py' 'scripts/ci/check-vm-hotpath-allocations.sh' || printf '')"
+  if [ -z "$vm_output" ]; then
+    return
+  fi
+
+  log "[pre-commit] Checking VM hot-path allocation patterns..."
+  if ! run_python scripts/lint/check-vm-hotpath-allocations.py; then
+    printf '%s\n' "[pre-commit] ERROR: VM hot-path allocation lint failed. See message above." >&2
+    exit 1
+  fi
+}
+
 check_yaml_lint() {
   yaml_output="$(git diff --cached --name-only --diff-filter=ACM -- '*.yml' '*.yaml' || printf '')"
   if [ -z "$yaml_output" ]; then
@@ -803,6 +816,7 @@ check_namespace_alignment
 check_shell_executable
 check_shell_python_invocation
 check_tooling_consistency
+check_vm_hotpath_allocations
 check_yaml_lint
 check_github_actions_lint
 check_test_lint

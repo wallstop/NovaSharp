@@ -44,6 +44,7 @@ These hooks check for issues and **fail the commit** if problems are found:
 | **Branding Check**  | Prevents legacy "MoonSharp" identifiers in staged content | All staged files    |
 | **Namespace Audit** | Validates declared namespaces match directory layout      | All `src/**/*.cs`   |
 | **Tooling Setup**   | Keeps devcontainer, hooks, and local tool setup aligned   | Always              |
+| **VM Allocation**   | Rejects new VM opcode/Lua-call hot-path allocation traps  | VM/call path files  |
 | **YAML Lint**       | Validates staged `.yml`/`.yaml` files with yamllint       | YAML files          |
 | **Actionlint**      | Validates staged GitHub Actions workflows                 | Workflow YAML files |
 | **Test Lint Suite** | Enforces test infrastructure patterns (see below)         | `src/tests/**/*.cs` |
@@ -113,6 +114,10 @@ python scripts/lint/check-tooling-consistency.py
 ```
 
 Typical fixes are aligning `.devcontainer/Dockerfile` with `global.json`, using manifest-local tools through `dotnet tool restore` plus `dotnet tool run`, and avoiding devcontainer mounts over `.dotnet/tools`.
+
+### VM allocation guard fails
+
+Move the allocation out of the opcode/call hot path, use inline stack values or stack-window/span APIs, or add a narrow allowlist entry with a reason only for an intentional slow path.
 
 ### Skipping hooks temporarily
 

@@ -41,6 +41,20 @@ Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author
 
 **Conclusion**: the decisive variable is interop density, not raw VM speed. A tuned managed interpreter realistically lands **2-5x of native C Lua on pure compute** (currently 10-15x) and **beats NLua outright on interop-heavy workloads** — which is the actual Unity modding workload. Two caveats on the compute target: (a) this holds on desktop CoreCLR; **IL2CPP/AOT will be worse** (Puerts data: interpreted Lua ~11x behind IL2CPP-native script paths on fib(40)), so compute-heavy scripts stay the weak flank; (b) supporting data clusters here — gopher-lua ≈3.2x on fib(35), LuaJ interpreted ≈1.5-3x — but no managed interpreter has *consistently beaten* C Lua without compiling to host bytecode, so sub-2x claims are unproven territory. WattleScript's "~6x recoverable via struct conversion" is a widely-repeated **developer claim with no published benchmark** (traceable to MoonSharp issue #320 comments, not the WattleScript README) — treat as motivating, not evidence. Lua-CSharp proved the struct-value recipe works on IL2CPP.
 
+#### Recursive compute allocation incident (tracked)
+
+The Phase A0 baseline makes recursive pure-Lua compute a current allocation incident, not a cleanup footnote. `FibonacciRecursive Execute` (`fib(30)`) allocates **2,132,514,592 B/op** in NovaSharp versus **144 B/op** in NLua and **200 B/op** in Lua-CSharp. The same heap-scalar pattern appears across other compute rows:
+
+| Scenario | NovaSharp Execute | NLua Execute | Lua-CSharp Execute |
+| ------------------ | --------------------------- | ------------------------ | --------------------------- |
+| FibonacciRecursive | 1,239,599 μs / 2,132.5 MB | 189,531 μs / 144 B | 307,508 μs / 200 B |
+| TowerOfHanoi | 21,924 μs / 40.3 MB | 2,358 μs / 24 B | 3,773 μs / 144 B |
+| NumericLoops | 1,992 μs / 2.8 MB | 701 μs / 144 B | 616 μs / 0 B |
+| BinaryTrees | 53,147 μs / 83.9 MB | 17,138 μs / 144 B | 15,590 μs / 10.2 MB |
+| SpectralNorm | 44,336 μs / 77.1 MB | 4,449 μs / 144 B | 6,740 μs / 4,992 B |
+
+The root cause is structural: every hot Lua scalar is still a heap `DynValue`, arithmetic opcodes allocate fresh wrappers (`DynValue.NewNumber(...)`), and ordinary non-tail calls still move arguments/returns through `DynValue` stack objects. `fib(30)` performs millions of calls and arithmetic operations, so per-op wrapper allocation compounds into gigabytes. A1 (`LuaValue` inline stack values) and A5 (stack-window calls) are the primary fixes; later specialization can improve speed but cannot remove this allocation class by itself.
+
 ### Root Causes (confirmed in source)
 
 1. **`DynValue` is a sealed heap class** (`src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/DynValue.cs`) — every Lua value is a GC allocation with mutable wrapper/read-only baggage that still needs the A1 slot/value split. Native Lua's TValue is 16 inline bytes.
@@ -66,6 +80,7 @@ Sources: `docs/Performance.md` MoonSharp baseline (2025-11-08); MoonSharp author
 1. Each phase ends with: targeted tests, `./scripts/build/quick.sh`, `./scripts/test/quick.sh`, `compare-lua-outputs.py --enforce` (5 versions), scoreboard run with committed JSON baseline, PR CI observed green.
 1. Allocation claims are verified by **B/op BenchmarkDotNet regression gates** with exact enforcement for sub-1 KiB baselines and small runner-noise tolerance for larger rows; speed claims are reported in the scoreboard and guarded in CI by ratio-vs-NLua catastrophic regression gates that only block when NovaSharp's own timing metric also crosses the 100% default threshold until a less noisy benchmark methodology is available.
 1. IL2CPP spot-check (minimal stopwatch Unity player scene) at phase boundaries A1, A5, A8, B2 — RyuJIT wins don't automatically translate.
+1. **Baseline ratchet**: once a benchmark row improves on a representative runner, refresh the phase baseline so the lower allocation floor becomes the permanent CI guard. Do not leave old high-allocation baselines in place after an allocation fix lands.
 
 ______________________________________________________________________
 
@@ -114,7 +129,7 @@ Sub-steps, each landing green:
 
 **Progress**: A1a prep started on 2026-07-04 by removing the per-instance `DynValue.ReferenceId` backing field, moving internal/debug identity consumers off that field, and deleting the mutable `_hashCode` cache. A no-field `ReferenceId` compatibility getter remains until the struct conversion removes wrapper identity entirely. `debug.upvalueid` now keeps its own stable debug handle identity. On 2026-07-04, bytecode literal boundaries were hardened so direct `LiteralExpression` constants, `ByteCode.EmitLiteral(...)`, and binary chunk deserialization store read-only literal snapshots instead of writable `DynValue` wrappers. Copilot follow-up made `EmitLiteral(...)` reject null explicitly and kept dumped numeric literals on cached factory paths before enforcing read-only storage. This seals an instruction-literal aliasing gap before the struct conversion. On 2026-07-05, direct local/upvalue whole-slot mutation was centralized behind `DynValue.AssignSlot(...)`, making one remaining mutable-wrapper boundary explicit for the slot/value split while leaving table-key and literal snapshot protections intact. Later on 2026-07-05, fixed-parameter binding stopped cloning scalar arguments because `AssignSlot(...)` already copies value fields into owned local slots; adversarial review kept vararg capture cloning because escaped vararg tuples and table constructors can otherwise expose caller-owned mutable wrappers. Also on 2026-07-05, numeric-loop `INCR` stopped calling `CloneAsWritable()` for read-only top stack numbers and now replaces that stack entry with an explicit writable numeric slot before `AssignNumber(...)`; escaped vararg capture now reuses already-read-only scalar snapshots and clones only mutable scalar wrappers. Mutable escaped vararg capture is now the only remaining production `CloneAsWritable()` use. `DynValue.AssignNumber(...)` remains as a separate intentional numeric-slot mutation path for `ExecIncr` until the value-struct conversion removes wrapper mutation entirely. The `_readOnly`/`AsReadOnly`/`CloneAsWritable` machinery remains intentionally open because it still protects mutable local/upvalue slots, cached singleton values, mutable escaped vararg copies, and table-key hash stability until the slot/value split lands. A1b fixture hardening was completed on 2026-07-04 with focused TUnit and standalone Lua coverage for `select('#', ...)`, expanded nil tuples, expression-list arity adjustment, statement-position expansion, and `table.pack(...).n`; the scoped comparison harness matched reference Lua 5.1-5.5 for the new fixtures. See [progress/session-147-a1a-dynvalue-identity-hash-prep.md](progress/session-147-a1a-dynvalue-identity-hash-prep.md), [progress/session-148-a1b-tuples-table-borders.md](progress/session-148-a1b-tuples-table-borders.md), [progress/session-149-a1a-literal-boundary-hardening.md](progress/session-149-a1a-literal-boundary-hardening.md), [progress/session-151-a1a-slot-mutation-boundary.md](progress/session-151-a1a-slot-mutation-boundary.md), [progress/session-156-a1a-argument-slot-copy.md](progress/session-156-a1a-argument-slot-copy.md), and [progress/session-159-a1a-incr-writable-slot.md](progress/session-159-a1a-incr-writable-slot.md).
 
-**Exit criteria**: fixtures green on 5.1-5.5; NumericLoops **0 B/op steady-state**; compute suite ≥1.5-2x vs A0 baseline; no test relies on value reference identity.
+**Exit criteria**: fixtures green on 5.1-5.5; `FibonacciRecursive Execute` **≤1 KiB/op**; NumericLoops **0 B/op steady-state**; no `DynValue.NewNumber`-style allocation from VM arithmetic paths; compute suite ≥1.5-2x vs A0 baseline; no test relies on value reference identity.
 
 #### Phase A2 — Struct `Instruction` + packed chunks (~1-2 weeks)
 
@@ -159,7 +174,7 @@ Sub-steps, each landing green:
 
 **Progress**: Proper Lua tail-call frame reuse and growable `FastStack` landed on 2026-07-06, with follow-up hardening for `xpcall` message-handler ordering across Lua 5.4 `<close>` errors. The first coroutine-cost stack shrink landed later on 2026-07-06: processors and execution-state snapshots now start with 512 value slots / 64 call frames and grow geometrically, with targeted coverage for main processors, child coroutine processors, deep non-tail recursion past the initial frame capacity, and large vararg calls past the initial value capacity. Configurable ceilings remain open. See [progress/session-165-proper-tail-calls-close-errors.md](progress/session-165-proper-tail-calls-close-errors.md) and [progress/session-166-a5-shrink-vm-stacks.md](progress/session-166-a5-shrink-vm-stacks.md).
 
-**Exit criteria**: fib/hanoi ≤2-3x of NLua; **Lua→CLR interop benchmark beats NLua outright**; `new Script()` <100 KB; coroutine create/resume near-zero steady-state alloc.
+**Exit criteria**: fib/hanoi ≤2-3x of NLua; one-arg/one-result Lua calls allocate **0 B steady-state after warmup**; vararg/tuple allocation remains only for escaped multi-return/vararg cases; **Lua→CLR interop benchmark beats NLua outright**; `new Script()` <100 KB; coroutine create/resume near-zero steady-state alloc.
 
 #### Phase A6 — Strings (~1-2 weeks)
 
@@ -371,7 +386,7 @@ The roadmap is sound and unusually well-grounded. Its highest-stakes calls were 
 
 ### A4.5 — Opcode specialization & inline caches (NEW; ~1-2 weeks; the biggest missing win)
 
-The roadmap has no opcode specialization, inline caching, or fastcall — the single most evidence-backed gap. All of the following are **self-modifying `Instruction[]` quickening: AOT-safe, IL2CPP-safe, no codegen**, and complementary to (cheaper than) the A8 register VM. Slot into the schedule after A4 (needs the new table) and before the A8 gate is evaluated.
+The roadmap has no opcode specialization, inline caching, or fastcall — the single most evidence-backed gap. All of the following are **self-modifying `Instruction[]` quickening: AOT-safe, IL2CPP-safe, no codegen**, and complementary to (cheaper than) the A8 register VM. Slot into the schedule after A1/A5 have removed heap scalar/call allocation and after A4 has supplied the new table layout; quickening can improve dispatch and cache locality, but it does **not** replace A1/A5 for the gigabyte-class recursive allocation incident.
 
 - [ ] **Table-field slot inline cache** for constant-key `GetTable`/`SetTable` (predicted hash slot + dynamic correction). Luau's highest-value IC; makes `obj.field` near-constant-time.
 - [ ] **Type-specialized arithmetic opcodes** with counter-based deopt (e.g. `Add` → `AddInt`/`AddFloat` fast paths reverting to generic on type miss). CPython PEP 659: ~10-15% aggregate, 10-25% per specialized op.
