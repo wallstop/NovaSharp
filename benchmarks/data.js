@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783371474135,
+  "lastUpdate": 1783440398155,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1678,6 +1678,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 368.783,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c335732e84e3029f2032decc33986315e8586962",
+          "message": "Track recursive allocation guardrails (#75)\n\n## Summary\n\nTracks the Phase A0 recursive compute allocation incident in `PLAN.md`\nand adds guardrails for the A1/A5 work that must remove scalar-wrapper\nand call-path allocation.\n\n## Changes\n\n- Documented `FibonacciRecursive Execute` allocation evidence and\ntightened A1/A5 exit criteria around recursive compute, numeric opcode\nwrappers, and one-arg Lua call allocation.\n- Added `RecursiveAllocationBenchmarks` that prepares the returned Lua\nfunction once and measures repeated execution of the prepared recursive\ncallable.\n- Added TUnit allocation smoke tests and comparison-corpus Lua fixtures\nfor precompiled recursive calls.\n- Added `scripts/lint/check-vm-hotpath-allocations.py`, CI wiring,\npre-commit wiring, and docs for blocking new non-allowlisted VM\nopcode/Lua-call allocation patterns while keeping current A1/A5 debt\nexplicit.\n\n## Validation\n\n- `./scripts/test/quick.sh --full -c PrecompiledRecursiveCallAllocation`\n- `./scripts/build/quick.sh`\n- `./scripts/test/quick.sh --no-build`\n- `dotnet build\nsrc/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj\n-c Release --no-restore`\n- `bash ./scripts/dev/pre-commit.sh`\n- `python scripts/lint/check-vm-hotpath-allocations.py`\n- `python -m py_compile scripts/lint/check-vm-hotpath-allocations.py`\n- `python tools/test_lua_fixture_metadata.py`\n- Scoped recursive fixtures passed against reference Lua and NovaSharp\nfor Lua 5.1, 5.2, 5.3, 5.4, and 5.5; full-corpus CI comparison remains\nthe authoritative enforcement path.\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Changes are mostly documentation, benchmarks, and static lint with\nallowlisted existing debt; no VM execution behavior is modified in this\nPR.\n> \n> **Overview**\n> Documents the Phase A0 **recursive compute allocation incident** in\n`PLAN.md` (benchmark evidence, root-cause framing) and **tightens A1/A5\nexit criteria** plus a **baseline-ratchet** rule so improved allocation\nrows become permanent CI floors.\n> \n> Adds **regression probes**: `RecursiveAllocationBenchmarks`, TUnit\nallocation smokes with intentional “current red” byte ceilings, and\nmatching Lua comparison fixtures for recursive workloads.\n> \n> Introduces **`check-vm-hotpath-allocations.py`** (CI + staged\npre-commit) to block **new** non-allowlisted `DynValue` /\n`ScriptExecutionContext` / related allocations in VM opcode and Lua-call\npaths while **explicitly allowlisting** existing A1/A5 debt. Updates\ncontributor docs (`.llm`, lint READMEs) to require allocation-free VM\npaths after warmup.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nbe4cd3bac24024df2c11845f38ccd51ce46b1619. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-07T09:01:05-07:00",
+          "tree_id": "efe2ee655bb7509b05a3a915a132896d9c4e6f12",
+          "url": "https://github.com/wallstop/NovaSharp/commit/c335732e84e3029f2032decc33986315e8586962"
+        },
+        "date": 1783440397764,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 178.268,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 197.551,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 175.491,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 297.384,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 321.503,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 311.55,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 327.224,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 353.108,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 354.369,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 355.365,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 367.89,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 370.422,
             "unit": "ns",
             "extra": ""
           }
