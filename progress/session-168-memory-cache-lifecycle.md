@@ -21,6 +21,7 @@
 - Addressed third adversarial review by documenting that `ScratchScope` remains benchmark-only, adding generic-pool retain-floor and max-trim coverage, and moving the production stack-retention estimator out of the processor test-hook partial.
 - Addressed Copilot review feedback by making `SharedPoolRegistry` track a registry-level peak of aggregated current retained bytes instead of summing per-pool historical peaks, and by making `Script.GetMemoryStatistics()` track this engine facade's peak from the current combined estimate.
 - Merged `origin/main` after PR creation to clear the dirty merge state; the only manual conflict was regenerated `docs/audits/naming_audit.log`.
+- Addressed CI follow-up failures by linking the new retention research note from `docs/README.md` and rewriting the registry peak regression test so it does not assume unrelated process-wide pools are idle during the full parallel test run.
 
 ## Validation So Far
 
@@ -44,7 +45,11 @@
 - After Copilot feedback and merge from `main`, `git diff --check` passed.
 - Bugbot reviewed commit `d56723fc` and found no new issues before the follow-up push.
 - Copilot reviewed commit `d56723fc` and left one actionable issue; the aggregate peak-statistics fix above addresses it.
+- CI `lint` failed on commit `bc0e672b` because `docs/README.md` did not link `docs/performance/memory-cache-retention-research.md`; fixed and locally verified `NOVASHARP_BASE_REF=$(git rev-parse origin/main) ./scripts/ci/ensure-readme-updates.sh`.
+- CI `dotnet-tests (ubuntu-latest)` failed on commit `d264b1de` because the registry peak regression test asserted exact global retained bytes while the full suite may retain unrelated process-wide pool entries concurrently; fixed by asserting peak/current relationships with large per-pool estimates.
+- After hardening the CI-failing test, `./scripts/test/quick.sh --full -c MemoryPoolLifecycleTUnitTests` passed: 19 tests.
+- After hardening the CI-failing test, `./scripts/test/quick.sh` passed: 15,046 tests.
 
 ## Open Validation
 
-- Push the follow-up commits, retrigger Bugbot and Copilot, then await PR CI and reviewer feedback.
+- Push the CI follow-up fix, retrigger Bugbot and Copilot, then await PR CI and reviewer feedback.

@@ -62,23 +62,26 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task SharedPoolRegistryPeakTracksAggregateRetainedBytesNotSumOfPoolPeaks()
         {
+            const int elementBytes = 1_000_000;
+
             SharedPoolRegistry.Trim(PoolTrimLevel.Critical);
             SharedPoolRegistry.TestHooks.ResetPeakEstimatedRetainedBytes();
             using GenericPool<object> first = new(
                 static () => new object(),
                 maxPoolSize: 4,
                 name: "FirstPeakTestPool",
-                estimateSizeBytes: static _ => 100
+                estimateSizeBytes: static _ => elementBytes
             );
             using GenericPool<object> second = new(
                 static () => new object(),
                 maxPoolSize: 4,
                 name: "SecondPeakTestPool",
-                estimateSizeBytes: static _ => 100
+                estimateSizeBytes: static _ => elementBytes
             );
 
             first.Return(new object());
             first.Return(new object());
+            SharedPoolRegistry.TestHooks.ResetPeakEstimatedRetainedBytes();
             PoolStatistics afterFirstPeak = SharedPoolRegistry.GetStatistics();
 
             first.Trim(PoolTrimLevel.Critical);
@@ -87,19 +90,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
 
             await Assert
                 .That(afterFirstPeak.EstimatedRetainedBytes)
-                .IsEqualTo(200)
+                .IsGreaterThanOrEqualTo(elementBytes * 2)
                 .ConfigureAwait(false);
             await Assert
                 .That(afterFirstPeak.PeakRetainedBytes)
-                .IsEqualTo(200)
+                .IsEqualTo(afterFirstPeak.EstimatedRetainedBytes)
                 .ConfigureAwait(false);
             await Assert
                 .That(afterSecondPeak.EstimatedRetainedBytes)
-                .IsEqualTo(100)
+                .IsLessThan(afterFirstPeak.PeakRetainedBytes)
                 .ConfigureAwait(false);
             await Assert
                 .That(afterSecondPeak.PeakRetainedBytes)
-                .IsEqualTo(200)
+                .IsEqualTo(afterFirstPeak.PeakRetainedBytes)
                 .ConfigureAwait(false);
         }
 
