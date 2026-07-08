@@ -27,7 +27,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     internal static class ObjectArrayPool
     {
         private const int MaxSmallArraySize = 8;
-        private const int MaxCachedLargeArrayBytes = 1024 * 1024;
+        internal const int MaxCachedLargeArrayBytes = 1024 * 1024;
         private static readonly TimeSpan IdleTimeout = TimeSpan.FromSeconds(60);
 
         [ThreadStatic]
@@ -256,6 +256,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             }
             else
             {
+                if (clearArray)
+                {
+                    Array.Clear(array, 0, array.Length);
+                }
+
                 Interlocked.Increment(ref DroppedCount);
             }
         }

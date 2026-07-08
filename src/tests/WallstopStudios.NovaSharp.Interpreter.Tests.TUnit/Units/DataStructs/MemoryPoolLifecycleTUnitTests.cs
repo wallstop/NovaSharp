@@ -449,6 +449,38 @@ return recurse(80)
         }
 
         [Test]
+        public async Task SystemArrayPoolClearsOversizedDroppedReferenceArrayWhenRequested()
+        {
+            int oversizedLength =
+                (int)(
+                    (SystemArrayPool.MaxCachedArrayBytes - IntPtr.Size)
+                    / PoolElementSize<object>.EstimatedBytes
+                ) + 1;
+            object[] array = new object[oversizedLength];
+            array[0] = new object();
+
+            SystemArrayPool<object>.Return(array, clearArray: true);
+
+            await Assert.That(array[0]).IsNull().ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ObjectArrayPoolClearsOversizedDroppedArrayWhenRequested()
+        {
+            int oversizedLength =
+                (int)(
+                    (ObjectArrayPool.MaxCachedLargeArrayBytes - IntPtr.Size)
+                    / PoolElementSize<object>.EstimatedBytes
+                ) + 1;
+            object[] array = new object[oversizedLength];
+            array[0] = new object();
+
+            ObjectArrayPool.Return(array, clearArray: true);
+
+            await Assert.That(array[0]).IsNull().ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task SystemArrayPoolSharedRetentionIsOpaqueToNovaSharpStatistics()
         {
             GC.KeepAlive(new OpaqueArrayProbe());

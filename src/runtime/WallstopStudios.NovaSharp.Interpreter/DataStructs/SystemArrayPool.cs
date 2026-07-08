@@ -221,6 +221,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 > SystemArrayPool.MaxCachedArrayBytes
             )
             {
+                if (clearArray)
+                {
+                    Array.Clear(array, 0, array.Length);
+                }
+
                 SystemArrayPool.RecordDropped();
                 return;
             }

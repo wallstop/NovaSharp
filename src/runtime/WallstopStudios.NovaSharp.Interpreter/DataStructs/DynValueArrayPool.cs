@@ -252,6 +252,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             }
             else
             {
+                if (clearArray)
+                {
+                    Array.Clear(array, 0, array.Length);
+                }
+
                 Interlocked.Increment(ref DroppedCount);
             }
         }

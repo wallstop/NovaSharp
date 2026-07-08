@@ -24,6 +24,7 @@
 - Addressed CI follow-up failures by linking the new retention research note from `docs/README.md` and rewriting the registry peak regression test so it does not assume unrelated process-wide pools are idle during the full parallel test run.
 - Addressed follow-up reviewer risks by aggregating `SystemArrayPool<T>` into one shared registry target, making DynValue oversize retention tests derive their length from the byte cap, giving closed generic collection pools distinct diagnostic names, pruning dead coroutine weak references during registration, avoiding `CallStackItemPool` helper-stack allocation for memory-pressure/critical trim, and pairing trim-epoch `Volatile.Read` sites with `Volatile.Write`.
 - Addressed macOS CI risk in the facade coroutine memory smoke test by moving the coroutine-retention byte assertion to script-local test coverage and leaving the public facade smoke test to assert monotonic peak/stat invariants that remain valid while process-wide shared pools are trimmed concurrently.
+- Addressed Copilot follow-up feedback by clearing oversized dropped reference arrays when callers requested clearing in `SystemArrayPool<T>`, `DynValueArrayPool`, and `ObjectArrayPool`.
 
 ## Validation So Far
 
@@ -61,6 +62,12 @@
 - After moving the coroutine memory assertion to script-local coverage, `dotnet tool run csharpier check` on the touched C# files passed.
 - After moving the coroutine memory assertion to script-local coverage, `git diff --check` passed.
 - After moving the coroutine memory assertion to script-local coverage, `./scripts/test/quick.sh` passed: 15,049 tests.
+- After the oversized-array clearing fix, `./scripts/test/quick.sh --full -c MemoryPoolLifecycleTUnitTests` passed: 24 tests.
+- After the oversized-array clearing fix, `./scripts/test/quick.sh -c DynValueArrayPoolTUnitTests` passed: 24 tests.
+- After the oversized-array clearing fix, `./scripts/test/quick.sh --full -c SystemArrayPoolTUnitTests` passed: 41 tests.
+- After the oversized-array clearing fix, `dotnet tool run csharpier check` on the touched C# files passed.
+- After the oversized-array clearing fix, `git diff --check` passed.
+- After the oversized-array clearing fix, `./scripts/test/quick.sh` passed: 15,051 tests.
 
 ## Open Validation
 

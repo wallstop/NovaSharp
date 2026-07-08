@@ -183,7 +183,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
                 )
             )
             {
-                // Just use it
+                first[0] = DynValue.NewString("retained");
             }
 
             using PooledResource<DynValue[]> pooled2 = DynValueArrayPool.Get(
@@ -192,6 +192,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
             );
             // Large arrays are not pooled, so should be different instances
             await Assert.That(second).IsNotSameReferenceAs(first).ConfigureAwait(false);
+            await Assert.That(first[0]).IsNull().ConfigureAwait(false);
         }
 
         [Test]
