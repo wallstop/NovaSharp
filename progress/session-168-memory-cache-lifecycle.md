@@ -19,6 +19,8 @@
 - Addressed final adversarial review by adding benchmark-only scratch prototypes, tracking total peak retained bytes through the public facade, retaining stack/queue instances after `TrimExcess()`, adding a real deep-recursion call-stack retention probe, and aligning public trim-level docs.
 - Addressed second adversarial review by serializing lifecycle tests that trim process-wide pools, aligning `ScratchScope` prototype lifetime with other scratch variants, and fixing stale `DynValueArrayPool` small-bucket comments.
 - Addressed third adversarial review by documenting that `ScratchScope` remains benchmark-only, adding generic-pool retain-floor and max-trim coverage, and moving the production stack-retention estimator out of the processor test-hook partial.
+- Addressed Copilot review feedback by making `SharedPoolRegistry` track a registry-level peak of aggregated current retained bytes instead of summing per-pool historical peaks, and by making `Script.GetMemoryStatistics()` track this engine facade's peak from the current combined estimate.
+- Merged `origin/main` after PR creation to clear the dirty merge state; the only manual conflict was regenerated `docs/audits/naming_audit.log`.
 
 ## Validation So Far
 
@@ -35,7 +37,14 @@
 - `python3 -m json.tool progress/benchmarks/phase-a0.5-memory-retention-baseline.json` passed.
 - `git diff --check` passed.
 - `./scripts/benchmarks/run-phase-a0-scoreboard.sh --enforce-phase-gates` passed with `regressed=false` and `phase_gate_failures=0`.
+- After Copilot feedback and merge from `main`, `./scripts/test/quick.sh --full -c MemoryPoolLifecycleTUnitTests` passed: 19 tests.
+- After Copilot feedback and merge from `main`, `./scripts/test/quick.sh -c NovaSharpFacadeSmokeTUnitTests` passed: 54 tests.
+- After Copilot feedback and merge from `main`, `./scripts/build/quick.sh` passed.
+- After Copilot feedback and merge from `main`, `./scripts/test/quick.sh` passed: 15,046 tests.
+- After Copilot feedback and merge from `main`, `git diff --check` passed.
+- Bugbot reviewed commit `d56723fc` and found no new issues before the follow-up push.
+- Copilot reviewed commit `d56723fc` and left one actionable issue; the aggregate peak-statistics fix above addresses it.
 
 ## Open Validation
 
-- PR CI and reviewer feedback loop.
+- Push the follow-up commits, retrigger Bugbot and Copilot, then await PR CI and reviewer feedback.
