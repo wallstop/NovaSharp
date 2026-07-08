@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783440398155,
+  "lastUpdate": 1783528370233,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1774,6 +1774,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 370.422,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "wallstop@wallstopstudios.com",
+            "name": "Eli Pinkerton",
+            "username": "wallstop"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2b46da8d2435492d3b898db3f56ede85d6b04429",
+          "message": "Add Phase A0.5 memory cache lifecycle (#76)\n\n## Summary\n\n- insert Phase A0.5 before A1 and document the memory-cache retention\nresearch/inventory\n- add explicit trim/stat lifecycle contracts plus public LuaEngine\nmemory trim/stat APIs\n- upgrade NovaSharp-owned pools with bounded idle/critical trim\nbehavior, capacity/byte admission caps, and retention tests\n- record Phase A0.5 retention benchmark baseline and benchmark-only\nscratch prototypes\n\n## Validation\n\n- ./scripts/test/quick.sh --full -c MemoryPoolLifecycleTUnitTests\n- ./scripts/test/quick.sh -c DynValueArrayPoolTUnitTests\n- ./scripts/test/quick.sh -c ScriptCompilationCacheTUnitTests\n- ./scripts/test/quick.sh -c NovaSharpFacadeSmokeTUnitTests\n- ./scripts/build/quick.sh\n- ./scripts/test/quick.sh\n- bash ./scripts/dev/pre-commit.sh\n- dotnet build\nsrc/tooling/WallstopStudios.NovaSharp.Benchmarks/WallstopStudios.NovaSharp.Benchmarks.csproj\n-c Release -m --verbosity quiet\n- MemoryRetentionBenchmarks ShortRun\n- dotnet run -c Release --project\nartifacts/retention-probe/retention-probe.csproj\n- python3 -m json.tool\nprogress/benchmarks/phase-a0.5-memory-retention-baseline.json\n- git diff --check --cached\n- ./scripts/benchmarks/run-phase-a0-scoreboard.sh --enforce-phase-gates\n(`regressed=false`, `phase_gate_failures=0`)\n\n## Notes\n\n- retained-byte values are approximate diagnostics, not exact managed\nobject graph measurements\n- runtime ScratchScope adoption is intentionally deferred because the\nbenchmark-only prototype did not beat existing pool/ArrayPool variants\nin this baseline\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Medium Risk**\n> Changes hot-path pooling and adds process-wide trim semantics that\nhosts must invoke correctly; incorrect trim behavior could affect\nretention or concurrency, though tests and explicit “do not trim\nrented/live values” contracts mitigate this.\n> \n> **Overview**\n> Introduces **Phase A0.5** in the roadmap and a retention research note\nso later VM work must follow an explicit trim-aware pool lifecycle\nmodel.\n> \n> Hosts can call **`LuaEngine.TrimMemory`** and\n**`GetMemoryStatistics`** (with **`LuaMemoryTrimLevel`** /\n**`LuaMemoryStatistics`**) to drive idle, memory-pressure, and critical\ntrims and read approximate retained bytes, trim/drop counts, and\ncompilation-cache entry counts. Trims affect **process-wide**\nNovaSharp-owned pools plus the engine’s reclaimable compilation cache;\nscript-lifetime source/bytecode and `ArrayPool<T>.Shared` internals stay\nopaque.\n> \n> Runtime pools gain **`SharedPoolRegistry`**, timestamped\n**`GenericPool`** retention with idle/warm/min floors, collection\n**capacity caps** (drop oversized lists/sets/dicts), array **byte\ncaps**, and trim hooks on **`DynValueArrayPool`**,\n**`ObjectArrayPool`**, **`CallStackItemPool`**, and\n**`SystemArrayPool`**. **`Script`** aggregates engine metadata\n(VM/coroutine stack estimates, append-only compile artifacts) into\npublic stats; user coroutines register weakly for retention accounting.\n> \n> Adds **`MemoryPoolLifecycleTUnitTests`**, facade smoke coverage, a\n**`phase-a0.5-memory-retention-baseline.json`** benchmark artifact, and\ndocs index linkage; documentation audit log reflects new public/internal\nsurface without XML docs on several pool APIs.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n9b178e4eac0cc0c03ba352b948ab886080723e36. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->",
+          "timestamp": "2026-07-08T09:27:23-07:00",
+          "tree_id": "69eb24ae8b8d6ccdcef942830f72b820ab5026ef",
+          "url": "https://github.com/wallstop/NovaSharp/commit/2b46da8d2435492d3b898db3f56ede85d6b04429"
+        },
+        "date": 1783528369924,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 384.494,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 390.409,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 394.678,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 542.402,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 538.581,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 561.145,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 590.839,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 596.359,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 605.199,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 610.295,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 625.965,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 648.924,
             "unit": "ns",
             "extra": ""
           }
