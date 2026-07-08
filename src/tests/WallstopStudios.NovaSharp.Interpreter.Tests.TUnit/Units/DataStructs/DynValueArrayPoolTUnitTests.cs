@@ -170,7 +170,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         public async Task LargeArraysAreNotPooled()
         {
             // Arrays above the wrapper's approximate 1 MiB byte cap are not returned to pool.
-            const int oversizedLength = 200000;
+            int oversizedLength =
+                (int)(
+                    (DynValueArrayPool.MaxCachedLargeArrayBytes - IntPtr.Size)
+                    / PoolElementSize<DynValue>.EstimatedBytes
+                ) + 1;
             DynValue[] first;
             using (
                 PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(

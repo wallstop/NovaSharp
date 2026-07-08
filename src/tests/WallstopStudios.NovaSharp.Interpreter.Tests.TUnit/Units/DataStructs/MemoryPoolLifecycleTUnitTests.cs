@@ -2,11 +2,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
 {
     using System;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
     using System.Threading;
     using System.Threading.Tasks;
     using global::NovaSharp;
     using global::TUnit.Assertions;
     using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
@@ -463,6 +465,78 @@ return recurse(80)
                 .IsEqualTo(systemBefore.DroppedCount)
                 .ConfigureAwait(false);
             await Assert.That(systemAfter.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SystemArrayPoolRegistersOneSharedRegistryTargetAcrossElementTypes()
+        {
+            int[] integers = SystemArrayPool<int>.Rent(1);
+            object[] objects = SystemArrayPool<object>.Rent(1);
+            SystemArrayPool<int>.Return(integers);
+            SystemArrayPool<object>.Return(objects);
+
+            int targetCount = SharedPoolRegistry.TestHooks.CountTargetsByName("SystemArrayPool");
+
+            await Assert.That(targetCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task CoroutineMemoryStatisticsTrackingPrunesDeadReferencesOnRegistration()
+        {
+            Script script = new();
+            DynValue function = script.LoadFunction(
+                "function() return 1 end",
+                funcFriendlyName: "coroutine_ref"
+            );
+
+            CreateTransientCoroutines(script, function, 300);
+            int before = script.GetTrackedCoroutineCountForMemoryStatisticsForTests();
+
+            ForceFullCollection();
+            CreateTransientCoroutines(script, function, 256);
+            int after = script.GetTrackedCoroutineCountForMemoryStatisticsForTests();
+
+            await Assert.That(before).IsGreaterThanOrEqualTo(300).ConfigureAwait(false);
+            await Assert.That(after).IsLessThan(before).ConfigureAwait(false);
+            GC.KeepAlive(function);
+        }
+
+        [Test]
+        public async Task ScriptLocalMemoryStatisticsIncludeCoroutineStackRetention()
+        {
+            Script script = new();
+            DynValue function = script.LoadFunction(
+                "function() coroutine.yield(1); return 2 end",
+                funcFriendlyName: "coroutine_stack"
+            );
+
+            long before = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
+            DynValue coroutineValue = script.CreateCoroutine(function);
+            long afterCreate = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
+
+            coroutineValue.Coroutine.Resume();
+            long afterYield = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
+
+            await Assert.That(afterCreate).IsGreaterThan(before).ConfigureAwait(false);
+            await Assert.That(afterYield).IsGreaterThan(before).ConfigureAwait(false);
+            GC.KeepAlive(coroutineValue);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void CreateTransientCoroutines(Script script, DynValue function, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                DynValue coroutine = script.CreateCoroutine(function);
+                GC.KeepAlive(coroutine);
+            }
+        }
+
+        private static void ForceFullCollection()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
 
         private sealed class FakePoolClock : IPoolClock

@@ -27,7 +27,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             producer: () => new List<T>(),
             maxPoolSize: 32,
             onRelease: static list => list.Clear(),
-            name: "ListPool",
+            name: $"ListPool<{typeof(T).FullName ?? typeof(T).Name}>",
             shouldRetainOnReturn: static list => list.Capacity <= MaxRetainedCapacity,
             estimateSizeBytes: static list =>
                 IntPtr.Size + (list.Capacity * PoolElementSize<T>.EstimatedBytes)
@@ -169,7 +169,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             producer: () => new HashSet<T>(),
             maxPoolSize: 16,
             onRelease: static set => set.Clear(),
-            name: "HashSetPool",
+            name: $"HashSetPool<{typeof(T).FullName ?? typeof(T).Name}>",
             shouldRetainOnReturn: static set => set.EnsureCapacity(0) <= MaxRetainedCapacity,
             estimateSizeBytes: static set =>
                 IntPtr.Size + (set.EnsureCapacity(0) * PoolElementSize<T>.EstimatedBytes)
@@ -242,7 +242,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             producer: () => new Dictionary<TKey, TValue>(),
             maxPoolSize: 16,
             onRelease: static dict => dict.Clear(),
-            name: "DictionaryPool",
+            name: $"DictionaryPool<{typeof(TKey).FullName ?? typeof(TKey).Name},{typeof(TValue).FullName ?? typeof(TValue).Name}>",
             shouldRetainOnReturn: static dict => dict.EnsureCapacity(0) <= MaxRetainedCapacity,
             estimateSizeBytes: static dict =>
                 IntPtr.Size
@@ -302,7 +302,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 stack.Clear();
                 stack.TrimExcess();
             },
-            name: "StackPool"
+            name: $"StackPool<{typeof(T).FullName ?? typeof(T).Name}>"
         );
 
         /// <summary>
@@ -350,7 +350,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 queue.Clear();
                 queue.TrimExcess();
             },
-            name: "QueuePool"
+            name: $"QueuePool<{typeof(T).FullName ?? typeof(T).Name}>"
         );
 
         /// <summary>

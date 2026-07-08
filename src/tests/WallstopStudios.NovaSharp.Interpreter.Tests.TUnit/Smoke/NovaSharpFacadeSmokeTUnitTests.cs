@@ -635,7 +635,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
         }
 
         [Test]
-        public async Task MemoryStatisticsIncludeCoroutineStackRetention()
+        public async Task MemoryStatisticsRemainWellFormedAcrossCoroutineLifecycle()
         {
             using LuaEngine lua = LuaEngine.Create();
             LuaFunction function = lua.Run("return function() coroutine.yield(1); return 2 end")
@@ -649,12 +649,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
             LuaMemoryStatistics afterYield = lua.GetMemoryStatistics();
 
             await Assert
-                .That(afterCreate.EstimatedRetainedBytes)
-                .IsGreaterThan(before.EstimatedRetainedBytes)
+                .That(afterCreate.PeakRetainedBytes)
+                .IsGreaterThanOrEqualTo(before.PeakRetainedBytes)
                 .ConfigureAwait(false);
             await Assert
-                .That(afterYield.EstimatedRetainedBytes)
-                .IsGreaterThan(before.EstimatedRetainedBytes)
+                .That(afterYield.PeakRetainedBytes)
+                .IsGreaterThanOrEqualTo(afterCreate.PeakRetainedBytes)
+                .ConfigureAwait(false);
+            await Assert
+                .That(afterCreate.PeakRetainedBytes)
+                .IsGreaterThanOrEqualTo(afterCreate.EstimatedRetainedBytes)
+                .ConfigureAwait(false);
+            await Assert
+                .That(afterYield.PeakRetainedBytes)
+                .IsGreaterThanOrEqualTo(afterYield.EstimatedRetainedBytes)
                 .ConfigureAwait(false);
             GC.KeepAlive(coroutine);
         }

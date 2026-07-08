@@ -95,7 +95,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             if (cache == null)
             {
                 cache = new SmallArrayCache();
-                cache._observedTrimEpoch = Volatile.Read(ref TrimEpoch);
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
                 ThreadLocalSmallArrays = cache;
                 RegisterCache(cache);
             }
@@ -352,7 +352,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                     Interlocked.Increment(ref DroppedCount);
                 }
 
-                cache._observedTrimEpoch = Volatile.Read(ref TrimEpoch);
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
             }
 
             return new PoolTrimResult(trimmedCount, releasedBytes);

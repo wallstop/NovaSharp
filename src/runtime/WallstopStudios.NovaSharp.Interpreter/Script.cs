@@ -47,6 +47,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private readonly List<SourceCode> _sources = new();
         private readonly List<WeakReference<Coroutine>> _coroutinesForMemoryStatistics = new();
         private readonly object _coroutinesForMemoryStatisticsSyncRoot = new();
+        private const int CoroutineMemoryStatisticsPruneInterval = 256;
+        private int _nextCoroutineMemoryStatisticsPruneCount =
+            CoroutineMemoryStatisticsPruneInterval;
         private long _peakEstimatedRetainedBytes;
         private readonly Table _globalTable;
         private IDebugger _debugger;
@@ -734,6 +737,14 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
             lock (_coroutinesForMemoryStatisticsSyncRoot)
             {
+                if (
+                    _coroutinesForMemoryStatistics.Count >= _nextCoroutineMemoryStatisticsPruneCount
+                )
+                {
+                    PruneDeadCoroutineReferencesLocked();
+                    ScheduleNextCoroutineReferencePruneLocked();
+                }
+
                 _coroutinesForMemoryStatistics.Add(new WeakReference<Coroutine>(coroutine));
             }
         }
@@ -755,9 +766,34 @@ namespace WallstopStudios.NovaSharp.Interpreter
 
                     bytes += coroutine.GetEstimatedRetainedBytesForMemoryStatistics();
                 }
+
+                ScheduleNextCoroutineReferencePruneLocked();
             }
 
             return bytes;
+        }
+
+        private void PruneDeadCoroutineReferencesLocked()
+        {
+            for (int i = _coroutinesForMemoryStatistics.Count - 1; i >= 0; i--)
+            {
+                if (!_coroutinesForMemoryStatistics[i].TryGetTarget(out _))
+                {
+                    _coroutinesForMemoryStatistics.RemoveAt(i);
+                }
+            }
+        }
+
+        private void ScheduleNextCoroutineReferencePruneLocked()
+        {
+            int currentCount = Math.Max(
+                _coroutinesForMemoryStatistics.Count,
+                CoroutineMemoryStatisticsPruneInterval
+            );
+            _nextCoroutineMemoryStatisticsPruneCount =
+                currentCount > int.MaxValue - CoroutineMemoryStatisticsPruneInterval
+                    ? int.MaxValue
+                    : currentCount + CoroutineMemoryStatisticsPruneInterval;
         }
 
         private static long EstimateStringBytes(string value)
@@ -4806,6 +4842,19 @@ namespace WallstopStudios.NovaSharp.Interpreter
         internal ByteCode GetByteCodeForTests()
         {
             return _byteCode;
+        }
+
+        internal int GetTrackedCoroutineCountForMemoryStatisticsForTests()
+        {
+            lock (_coroutinesForMemoryStatisticsSyncRoot)
+            {
+                return _coroutinesForMemoryStatistics.Count;
+            }
+        }
+
+        internal long GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()
+        {
+            return EstimateScriptRetainedBytes();
         }
 
         /// <summary>

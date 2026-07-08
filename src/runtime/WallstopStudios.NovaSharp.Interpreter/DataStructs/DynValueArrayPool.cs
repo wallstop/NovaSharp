@@ -28,7 +28,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     internal static class DynValueArrayPool
     {
         private const int MaxSmallArraySize = 16;
-        private const int MaxCachedLargeArrayBytes = 1024 * 1024;
+        internal const int MaxCachedLargeArrayBytes = 1024 * 1024;
         private static readonly TimeSpan IdleTimeout = TimeSpan.FromSeconds(60);
 
         [ThreadStatic]
@@ -96,7 +96,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             if (cache == null)
             {
                 cache = new SmallArrayCache();
-                cache._observedTrimEpoch = Volatile.Read(ref TrimEpoch);
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
                 ThreadLocalSmallArrays = cache;
                 RegisterCache(cache);
             }
@@ -372,7 +372,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                     Interlocked.Increment(ref DroppedCount);
                 }
 
-                cache._observedTrimEpoch = Volatile.Read(ref TrimEpoch);
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
             }
 
             return new PoolTrimResult(trimmedCount, releasedBytes);

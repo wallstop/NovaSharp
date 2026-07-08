@@ -22,6 +22,8 @@
 - Addressed Copilot review feedback by making `SharedPoolRegistry` track a registry-level peak of aggregated current retained bytes instead of summing per-pool historical peaks, and by making `Script.GetMemoryStatistics()` track this engine facade's peak from the current combined estimate.
 - Merged `origin/main` after PR creation to clear the dirty merge state; the only manual conflict was regenerated `docs/audits/naming_audit.log`.
 - Addressed CI follow-up failures by linking the new retention research note from `docs/README.md` and rewriting the registry peak regression test so it does not assume unrelated process-wide pools are idle during the full parallel test run.
+- Addressed follow-up reviewer risks by aggregating `SystemArrayPool<T>` into one shared registry target, making DynValue oversize retention tests derive their length from the byte cap, giving closed generic collection pools distinct diagnostic names, pruning dead coroutine weak references during registration, avoiding `CallStackItemPool` helper-stack allocation for memory-pressure/critical trim, and pairing trim-epoch `Volatile.Read` sites with `Volatile.Write`.
+- Addressed macOS CI risk in the facade coroutine memory smoke test by moving the coroutine-retention byte assertion to script-local test coverage and leaving the public facade smoke test to assert monotonic peak/stat invariants that remain valid while process-wide shared pools are trimmed concurrently.
 
 ## Validation So Far
 
@@ -49,6 +51,16 @@
 - CI `dotnet-tests (ubuntu-latest)` failed on commit `d264b1de` because the registry peak regression test asserted exact global retained bytes while the full suite may retain unrelated process-wide pool entries concurrently; fixed by asserting peak/current relationships with large per-pool estimates.
 - After hardening the CI-failing test, `./scripts/test/quick.sh --full -c MemoryPoolLifecycleTUnitTests` passed: 19 tests.
 - After hardening the CI-failing test, `./scripts/test/quick.sh` passed: 15,046 tests.
+- After follow-up reviewer hardening, `./scripts/test/quick.sh -c DynValueArrayPoolTUnitTests` passed: 24 tests.
+- After follow-up reviewer hardening, `dotnet tool run csharpier check` on the touched C# files passed.
+- After follow-up reviewer hardening, `./scripts/test/quick.sh --full -c MemoryPoolLifecycleTUnitTests` passed: 21 tests.
+- After follow-up reviewer hardening, `./scripts/build/quick.sh` passed.
+- After follow-up reviewer hardening, `./scripts/test/quick.sh` passed: 15,048 tests.
+- After moving the coroutine memory assertion to script-local coverage, `./scripts/test/quick.sh --full -c MemoryPoolLifecycleTUnitTests` passed: 22 tests.
+- After moving the coroutine memory assertion to script-local coverage, `./scripts/test/quick.sh --full -c NovaSharpFacadeSmokeTUnitTests` passed: 54 tests.
+- After moving the coroutine memory assertion to script-local coverage, `dotnet tool run csharpier check` on the touched C# files passed.
+- After moving the coroutine memory assertion to script-local coverage, `git diff --check` passed.
+- After moving the coroutine memory assertion to script-local coverage, `./scripts/test/quick.sh` passed: 15,049 tests.
 
 ## Open Validation
 

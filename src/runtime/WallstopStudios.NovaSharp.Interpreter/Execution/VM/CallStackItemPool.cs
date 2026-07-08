@@ -95,7 +95,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             if (cache == null)
             {
                 cache = new CallStackCache();
-                cache._observedTrimEpoch = Volatile.Read(ref TrimEpoch);
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
                 ThreadLocalPool = cache;
                 RegisterCache(cache);
             }
@@ -223,16 +223,32 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 if (cache._pool.Count == 0)
                 {
-                    cache._observedTrimEpoch = Volatile.Read(ref TrimEpoch);
+                    Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
                     return PoolTrimResult.Empty;
+                }
+
+                if (level != PoolTrimLevel.Idle)
+                {
+                    while (cache._pool.Count > 0)
+                    {
+                        cache._pool.Pop();
+                        trimmedCount++;
+                        RemoveRetainedItem();
+                        Interlocked.Increment(ref DroppedCount);
+                    }
+
+                    Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
+                    return new PoolTrimResult(
+                        trimmedCount,
+                        (long)trimmedCount * EstimatedItemBytes
+                    );
                 }
 
                 Stack<PoolEntry> kept = new(cache._pool.Count);
                 while (cache._pool.Count > 0)
                 {
                     PoolEntry entry = cache._pool.Pop();
-                    bool trim =
-                        level != PoolTrimLevel.Idle || now - entry.ReturnedAt >= idleTimeoutTicks;
+                    bool trim = now - entry.ReturnedAt >= idleTimeoutTicks;
                     if (trim)
                     {
                         trimmedCount++;
@@ -250,7 +266,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     cache._pool.Push(kept.Pop());
                 }
 
-                cache._observedTrimEpoch = Volatile.Read(ref TrimEpoch);
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
             }
 
             return new PoolTrimResult(trimmedCount, (long)trimmedCount * EstimatedItemBytes);

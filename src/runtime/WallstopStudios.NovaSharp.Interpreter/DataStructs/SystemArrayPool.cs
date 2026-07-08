@@ -32,15 +32,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// } // Automatically returned to pool here
     /// </code>
     /// </remarks>
-    internal static class SystemArrayPool<T>
+    internal static class SystemArrayPool
     {
-        private const int MaxCachedArrayBytes = 1024 * 1024;
+        internal const int MaxCachedArrayBytes = 1024 * 1024;
 
-        private static readonly Action<T[]> ReturnToPoolCleared = array =>
-            Return(array, clearArray: true);
-        private static readonly Action<T[]> ReturnToPoolUncleared = array =>
-            Return(array, clearArray: false);
-        private static readonly Action<T[]> NoOpReturn = _ => { };
         private static long TrimCount;
         private static long DroppedCount;
 
@@ -49,23 +44,68 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             SharedPoolRegistry.Register(new SystemArrayPoolTrimTarget());
         }
 
+        internal static void EnsureRegistered() { }
+
+        internal static void RecordDropped()
+        {
+            Interlocked.Increment(ref DroppedCount);
+        }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            return new PoolStatistics(
+                nameof(SystemArrayPool),
+                0,
+                0L,
+                0L,
+                Volatile.Read(ref TrimCount),
+                Volatile.Read(ref DroppedCount)
+            );
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            _ = level;
+            Interlocked.Increment(ref TrimCount);
+            return PoolTrimResult.Empty;
+        }
+
+        internal static long EstimateArrayBytes<T>(int length)
+        {
+            return IntPtr.Size + ((long)length * PoolElementSize<T>.EstimatedBytes);
+        }
+
         private sealed class SystemArrayPoolTrimTarget : IPoolTrimTarget
         {
             public string Name
             {
-                get { return "SystemArrayPool"; }
+                get { return nameof(SystemArrayPool); }
             }
 
             public PoolStatistics GetStatistics()
             {
-                return SystemArrayPool<T>.GetStatistics();
+                return SystemArrayPool.GetStatistics();
             }
 
             public PoolTrimResult Trim(PoolTrimLevel level)
             {
-                return SystemArrayPool<T>.Trim(level);
+                return SystemArrayPool.Trim(level);
             }
         }
+    }
+
+    internal static class SystemArrayPool<T>
+    {
+        static SystemArrayPool()
+        {
+            SystemArrayPool.EnsureRegistered();
+        }
+
+        private static readonly Action<T[]> ReturnToPoolCleared = array =>
+            Return(array, clearArray: true);
+        private static readonly Action<T[]> ReturnToPoolUncleared = array =>
+            Return(array, clearArray: false);
+        private static readonly Action<T[]> NoOpReturn = _ => { };
 
         /// <summary>
         /// Gets a pooled array of at least the specified length and outputs it for immediate use.
@@ -176,9 +216,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 return;
             }
 
-            if (EstimateArrayBytes(array.Length) > MaxCachedArrayBytes)
+            if (
+                SystemArrayPool.EstimateArrayBytes<T>(array.Length)
+                > SystemArrayPool.MaxCachedArrayBytes
+            )
             {
-                Interlocked.Increment(ref DroppedCount);
+                SystemArrayPool.RecordDropped();
                 return;
             }
 
@@ -232,26 +275,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
         internal static PoolStatistics GetStatistics()
         {
-            return new PoolStatistics(
-                "SystemArrayPool",
-                0,
-                0L,
-                0L,
-                Volatile.Read(ref TrimCount),
-                Volatile.Read(ref DroppedCount)
-            );
+            return SystemArrayPool.GetStatistics();
         }
 
         internal static PoolTrimResult Trim(PoolTrimLevel level)
         {
-            _ = level;
-            Interlocked.Increment(ref TrimCount);
-            return PoolTrimResult.Empty;
-        }
-
-        private static long EstimateArrayBytes(int length)
-        {
-            return IntPtr.Size + ((long)length * PoolElementSize<T>.EstimatedBytes);
+            return SystemArrayPool.Trim(level);
         }
     }
 }

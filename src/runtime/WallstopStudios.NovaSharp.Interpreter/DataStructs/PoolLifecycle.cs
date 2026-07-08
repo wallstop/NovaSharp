@@ -276,6 +276,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 }
             }
 
+            internal static int CountTargetsByName(string name)
+            {
+                int count = 0;
+
+                lock (SyncRoot)
+                {
+                    for (int i = 0; i < Targets.Count; i++)
+                    {
+                        if (string.Equals(Targets[i].Name, name, StringComparison.Ordinal))
+                        {
+                            count++;
+                        }
+                    }
+                }
+
+                return count;
+            }
+
             internal static void SetClock(IPoolClock clock)
             {
                 IPoolClock effectiveClock = clock != null ? clock : StopwatchPoolClock.Instance;

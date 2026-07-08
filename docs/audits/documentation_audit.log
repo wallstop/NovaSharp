@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 142 undocumented public/internal type declarations.
+Found 150 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -78,14 +78,20 @@ Found 142 undocumented public/internal type declarations.
   - line 215: missing XML docs for `GetStatistics()`
   - line 269: missing XML docs for `class TestHooks`
   - line 271: missing XML docs for `IsRegistered()`
-  - line 279: missing XML docs for `SetClock()`
-  - line 285: missing XML docs for `ResetClock()`
-  - line 290: missing XML docs for `ResetPeakEstimatedRetainedBytes()`
+  - line 279: missing XML docs for `CountTargetsByName()`
+  - line 297: missing XML docs for `SetClock()`
+  - line 303: missing XML docs for `ResetClock()`
+  - line 308: missing XML docs for `ResetPeakEstimatedRetainedBytes()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/SystemArrayPool.cs
-  - line 59: missing XML docs for `GetStatistics()`
-  - line 64: missing XML docs for `Trim()`
-  - line 233: missing XML docs for `GetStatistics()`
-  - line 245: missing XML docs for `Trim()`
+  - line 47: missing XML docs for `EnsureRegistered()`
+  - line 49: missing XML docs for `RecordDropped()`
+  - line 54: missing XML docs for `GetStatistics()`
+  - line 66: missing XML docs for `Trim()`
+  - line 85: missing XML docs for `GetStatistics()`
+  - line 90: missing XML docs for `Trim()`
+  - line 97: missing XML docs for `class SystemArrayPool`
+  - line 276: missing XML docs for `GetStatistics()`
+  - line 281: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataTypes/UserData.cs
   - line 582: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Errors/InterpreterException.cs
@@ -114,9 +120,11 @@ Found 142 undocumented public/internal type declarations.
   - line 96: missing XML docs for `Clone()`
   - line 313: missing XML docs for `EnterIsolationScope()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Script.cs
-  - line 620: missing XML docs for `BeginDefaultOptionsScope()`
-  - line 728: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
-  - line 4933: missing XML docs for `Dispose()`
+  - line 623: missing XML docs for `BeginDefaultOptionsScope()`
+  - line 731: missing XML docs for `RegisterCoroutineForMemoryStatistics()`
+  - line 4847: missing XML docs for `GetTrackedCoroutineCountForMemoryStatisticsForTests()`
+  - line 4855: missing XML docs for `GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests()`
+  - line 4982: missing XML docs for `Dispose()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Utilities/OneOf/FastOneOf2.cs
   - line 198: missing XML docs for `FromT0()`
   - line 211: missing XML docs for `FromT1()`
