@@ -337,6 +337,30 @@ namespace NovaSharp
         }
 
         /// <summary>
+        /// Explicitly trims process-wide NovaSharp-owned shared pools and this engine's reclaimable cache metadata.
+        /// </summary>
+        public void TrimMemory(LuaMemoryTrimLevel level)
+        {
+            ThrowIfDisposed();
+            _script.TrimMemory(ToPoolTrimLevel(level));
+        }
+
+        /// <summary>
+        /// Gets approximate retained-memory statistics for this engine plus process-wide NovaSharp shared pools.
+        /// </summary>
+        /// <remarks>
+        /// Statistics include this engine's script-lifetime metadata and VM stacks together with
+        /// static shared pools used by all engines in the current process. Arrays delegated to
+        /// <see cref="System.Buffers.ArrayPool{T}.Shared"/> are intentionally opaque and are not
+        /// counted as retained NovaSharp-owned pool entries.
+        /// </remarks>
+        public LuaMemoryStatistics GetMemoryStatistics()
+        {
+            ThrowIfDisposed();
+            return _script.GetMemoryStatistics();
+        }
+
+        /// <summary>
         /// Disposes the facade and invalidates handles created by it.
         /// </summary>
         public void Dispose()
@@ -610,6 +634,21 @@ namespace NovaSharp
                     return LuaCompatibilityVersion.Lua51;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(version));
+            }
+        }
+
+        private static PoolTrimLevel ToPoolTrimLevel(LuaMemoryTrimLevel level)
+        {
+            switch (level)
+            {
+                case LuaMemoryTrimLevel.Idle:
+                    return PoolTrimLevel.Idle;
+                case LuaMemoryTrimLevel.MemoryPressure:
+                    return PoolTrimLevel.MemoryPressure;
+                case LuaMemoryTrimLevel.Critical:
+                    return PoolTrimLevel.Critical;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(level));
             }
         }
 

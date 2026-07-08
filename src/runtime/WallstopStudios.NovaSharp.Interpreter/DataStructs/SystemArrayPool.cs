@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Buffers;
+    using System.Threading;
 
     /// <summary>
     /// Provides pooled arrays of any element type via <see cref="ArrayPool{T}.Shared"/>,
@@ -33,13 +34,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// </remarks>
     internal static class SystemArrayPool<T>
     {
-        private const int MaxCachedArraySize = 1024 * 1024; // 1MB worth of elements
+        private const int MaxCachedArrayBytes = 1024 * 1024;
 
         private static readonly Action<T[]> ReturnToPoolCleared = array =>
             Return(array, clearArray: true);
         private static readonly Action<T[]> ReturnToPoolUncleared = array =>
             Return(array, clearArray: false);
         private static readonly Action<T[]> NoOpReturn = _ => { };
+        private static long TrimCount;
+        private static long DroppedCount;
+
+        static SystemArrayPool()
+        {
+            SharedPoolRegistry.Register(new SystemArrayPoolTrimTarget());
+        }
+
+        private sealed class SystemArrayPoolTrimTarget : IPoolTrimTarget
+        {
+            public string Name
+            {
+                get { return "SystemArrayPool"; }
+            }
+
+            public PoolStatistics GetStatistics()
+            {
+                return SystemArrayPool<T>.GetStatistics();
+            }
+
+            public PoolTrimResult Trim(PoolTrimLevel level)
+            {
+                return SystemArrayPool<T>.Trim(level);
+            }
+        }
 
         /// <summary>
         /// Gets a pooled array of at least the specified length and outputs it for immediate use.
@@ -139,7 +165,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// </param>
         /// <remarks>
         /// <para>
-        /// Very large arrays (over <see cref="MaxCachedArraySize"/> elements) are not returned to
+        /// Very large arrays (over the approximate 1 MiB byte cap) are not returned to
         /// the pool to avoid memory bloat.
         /// </para>
         /// </remarks>
@@ -150,9 +176,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 return;
             }
 
-            // Don't return very large arrays to prevent memory bloat
-            if (array.Length > MaxCachedArraySize)
+            if (EstimateArrayBytes(array.Length) > MaxCachedArrayBytes)
             {
+                Interlocked.Increment(ref DroppedCount);
                 return;
             }
 
@@ -202,6 +228,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             Array.Copy(array, startIndex, result, 0, length);
             Return(array, clearArray: true);
             return result;
+        }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            return new PoolStatistics(
+                "SystemArrayPool",
+                0,
+                0L,
+                0L,
+                Volatile.Read(ref TrimCount),
+                Volatile.Read(ref DroppedCount)
+            );
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            _ = level;
+            Interlocked.Increment(ref TrimCount);
+            return PoolTrimResult.Empty;
+        }
+
+        private static long EstimateArrayBytes(int length)
+        {
+            return IntPtr.Size + ((long)length * PoolElementSize<T>.EstimatedBytes);
         }
     }
 }

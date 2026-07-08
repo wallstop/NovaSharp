@@ -76,6 +76,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             // Only track user-created coroutines, not the main processor's pseudo-coroutine
             if (proc.State != CoroutineState.Main)
             {
+                OwnerScript?.RegisterCoroutineForMemoryStatistics(this);
                 TrackAllocation(OwnerScript);
             }
         }
@@ -1022,6 +1023,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             return _processor;
+        }
+
+        /// <summary>
+        /// Gets approximate retained bytes for this coroutine's backing VM stacks.
+        /// </summary>
+        internal long GetEstimatedRetainedBytesForMemoryStatistics()
+        {
+            if (Type != CoroutineType.Coroutine || _processor == null)
+            {
+                return 0L;
+            }
+
+            return BaseCoroutineOverhead
+                + _processor.GetEstimatedRetainedStackBytesForMemoryStatistics();
         }
 
         /// <summary>

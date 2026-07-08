@@ -45,6 +45,9 @@ namespace WallstopStudios.NovaSharp.Interpreter
         private readonly Processor _mainProcessor;
         private readonly ByteCode _byteCode;
         private readonly List<SourceCode> _sources = new();
+        private readonly List<WeakReference<Coroutine>> _coroutinesForMemoryStatistics = new();
+        private readonly object _coroutinesForMemoryStatisticsSyncRoot = new();
+        private long _peakEstimatedRetainedBytes;
         private readonly Table _globalTable;
         private IDebugger _debugger;
         private readonly Table[] _typeMetatables = new Table[(int)LuaTypeExtensions.MaxMetaTypes];
@@ -661,6 +664,128 @@ namespace WallstopStudios.NovaSharp.Interpreter
         public void ClearCompilationCache()
         {
             _compilationCache?.Clear();
+        }
+
+        /// <summary>
+        /// Trims process-wide NovaSharp-owned shared pools and reclaimable per-script cache metadata.
+        /// </summary>
+        internal PoolTrimResult TrimMemory(PoolTrimLevel level)
+        {
+            if (level == PoolTrimLevel.MemoryPressure || level == PoolTrimLevel.Critical)
+            {
+                if (_compilationCache != null)
+                {
+                    _compilationCache.Clear();
+                }
+            }
+
+            return SharedPoolRegistry.Trim(level);
+        }
+
+        /// <summary>
+        /// Gets approximate retained-memory statistics for process-wide shared pools and this script's metadata.
+        /// </summary>
+        internal global::NovaSharp.LuaMemoryStatistics GetMemoryStatistics()
+        {
+            PoolStatistics sharedPoolStatistics = SharedPoolRegistry.GetStatistics();
+            long scriptRetainedBytes = EstimateScriptRetainedBytes();
+            long estimatedRetainedBytes =
+                sharedPoolStatistics.EstimatedRetainedBytes + scriptRetainedBytes;
+            long peakEstimatedRetainedBytes = UpdatePeakEstimatedRetainedBytes(
+                Math.Max(estimatedRetainedBytes, sharedPoolStatistics.PeakRetainedBytes)
+            );
+
+            return new global::NovaSharp.LuaMemoryStatistics(
+                sharedPoolStatistics.RetainedCount,
+                estimatedRetainedBytes,
+                peakEstimatedRetainedBytes,
+                sharedPoolStatistics.TrimCount,
+                sharedPoolStatistics.DroppedCount,
+                CompilationCacheCount
+            );
+        }
+
+        private long EstimateScriptRetainedBytes()
+        {
+            long bytes = _mainProcessor.GetEstimatedRetainedStackBytesForMemoryStatistics();
+            bytes += EstimateCoroutineRetainedBytes();
+            bytes += IntPtr.Size + ((long)_byteCode.Code.Capacity * 128L);
+
+            for (int i = 0; i < _sources.Count; i++)
+            {
+                SourceCode source = _sources[i];
+                bytes += EstimateStringBytes(source.Name);
+                bytes += EstimateStringBytes(source.Code);
+                if (source.Refs != null)
+                {
+                    bytes += IntPtr.Size + ((long)source.Refs.Capacity * 32L);
+                }
+            }
+
+            return bytes;
+        }
+
+        internal void RegisterCoroutineForMemoryStatistics(Coroutine coroutine)
+        {
+            if (coroutine == null)
+            {
+                throw new ArgumentNullException(nameof(coroutine));
+            }
+
+            lock (_coroutinesForMemoryStatisticsSyncRoot)
+            {
+                _coroutinesForMemoryStatistics.Add(new WeakReference<Coroutine>(coroutine));
+            }
+        }
+
+        private long EstimateCoroutineRetainedBytes()
+        {
+            long bytes = 0L;
+
+            lock (_coroutinesForMemoryStatisticsSyncRoot)
+            {
+                for (int i = _coroutinesForMemoryStatistics.Count - 1; i >= 0; i--)
+                {
+                    WeakReference<Coroutine> reference = _coroutinesForMemoryStatistics[i];
+                    if (!reference.TryGetTarget(out Coroutine coroutine))
+                    {
+                        _coroutinesForMemoryStatistics.RemoveAt(i);
+                        continue;
+                    }
+
+                    bytes += coroutine.GetEstimatedRetainedBytesForMemoryStatistics();
+                }
+            }
+
+            return bytes;
+        }
+
+        private static long EstimateStringBytes(string value)
+        {
+            if (value == null)
+            {
+                return 0L;
+            }
+
+            return IntPtr.Size + ((long)value.Length * sizeof(char));
+        }
+
+        private long UpdatePeakEstimatedRetainedBytes(long value)
+        {
+            long snapshot;
+            do
+            {
+                snapshot = Volatile.Read(ref _peakEstimatedRetainedBytes);
+                if (value <= snapshot)
+                {
+                    return snapshot;
+                }
+            } while (
+                Interlocked.CompareExchange(ref _peakEstimatedRetainedBytes, value, snapshot)
+                != snapshot
+            );
+
+            return value;
         }
 
         /// <summary>

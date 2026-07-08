@@ -1528,5 +1528,52 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Scri
                 .ConfigureAwait(false);
             await Assert.That(script.CompilationCacheCount).IsEqualTo(1).ConfigureAwait(false);
         }
+
+        [global::TUnit.Core.Test]
+        public async Task UniqueLoadsKeepLruCacheBoundedButAppendSourceAndByteCode()
+        {
+            ScriptOptions options = new() { EnableScriptCaching = true, ScriptCacheMaxEntries = 2 };
+            Script script = new(CoreModulePresets.Complete, options);
+            string[] codes = { "return 1", "return 2", "return 3", "return 4", "return 5" };
+            string[] names =
+            {
+                "unique_1.lua",
+                "unique_2.lua",
+                "unique_3.lua",
+                "unique_4.lua",
+                "unique_5.lua",
+            };
+
+            int initialSourceCount = script.SourceCodeCount;
+            int initialInstructionCount = script.GetByteCodeForTests().Code.Count;
+
+            for (int i = 0; i < codes.Length; i++)
+            {
+                script.DoString(codes[i], codeFriendlyName: names[i]);
+            }
+
+            int postLoadInstructionCount = script.GetByteCodeForTests().Code.Count;
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + codes.Length)
+                .ConfigureAwait(false);
+            await Assert
+                .That(postLoadInstructionCount)
+                .IsGreaterThan(initialInstructionCount)
+                .ConfigureAwait(false);
+
+            script.ClearCompilationCache();
+
+            await Assert.That(script.CompilationCacheCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert
+                .That(script.SourceCodeCount)
+                .IsEqualTo(initialSourceCount + codes.Length)
+                .ConfigureAwait(false);
+            await Assert
+                .That(script.GetByteCodeForTests().Code.Count)
+                .IsEqualTo(postLoadInstructionCount)
+                .ConfigureAwait(false);
+        }
     }
 }

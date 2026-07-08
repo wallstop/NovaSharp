@@ -582,6 +582,83 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Smoke
                 .ConfigureAwait(false);
         }
 
+        [Test]
+        public async Task MemoryStatisticsReportsApproximateRetainedState()
+        {
+            LuaEngineOptions options = new LuaEngineOptions
+            {
+                EnableScriptCaching = true,
+                ScriptCacheMaxEntries = 4,
+            };
+            using LuaEngine lua = LuaEngine.Create(options);
+
+            lua.Run("return 42", "memory_stats.lua");
+            LuaMemoryStatistics before = lua.GetMemoryStatistics();
+            lua.TrimMemory(LuaMemoryTrimLevel.Critical);
+            LuaMemoryStatistics after = lua.GetMemoryStatistics();
+
+            await Assert.That(before.EstimatedRetainedBytes).IsGreaterThan(0).ConfigureAwait(false);
+            await Assert
+                .That(before.PeakRetainedBytes)
+                .IsGreaterThanOrEqualTo(before.EstimatedRetainedBytes)
+                .ConfigureAwait(false);
+            await Assert
+                .That(after.TrimCount)
+                .IsGreaterThanOrEqualTo(before.TrimCount)
+                .ConfigureAwait(false);
+            await Assert.That(after.EstimatedRetainedBytes).IsGreaterThan(0).ConfigureAwait(false);
+            await Assert
+                .That(after.PeakRetainedBytes)
+                .IsGreaterThanOrEqualTo(after.EstimatedRetainedBytes)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task MemoryPressureTrimClearsCompilationCacheEntriesOnly()
+        {
+            LuaEngineOptions options = new LuaEngineOptions
+            {
+                EnableScriptCaching = true,
+                ScriptCacheMaxEntries = 4,
+            };
+            using LuaEngine lua = LuaEngine.Create(options);
+
+            lua.Run("return 42", "memory_cache_entry.lua");
+            LuaMemoryStatistics before = lua.GetMemoryStatistics();
+
+            lua.TrimMemory(LuaMemoryTrimLevel.MemoryPressure);
+
+            LuaMemoryStatistics after = lua.GetMemoryStatistics();
+            await Assert.That(before.CompilationCacheEntryCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(after.CompilationCacheEntryCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(after.EstimatedRetainedBytes).IsGreaterThan(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task MemoryStatisticsIncludeCoroutineStackRetention()
+        {
+            using LuaEngine lua = LuaEngine.Create();
+            LuaFunction function = lua.Run("return function() coroutine.yield(1); return 2 end")
+                .AsFunction();
+
+            LuaMemoryStatistics before = lua.GetMemoryStatistics();
+            LuaCoroutine coroutine = lua.CreateCoroutine(function);
+            LuaMemoryStatistics afterCreate = lua.GetMemoryStatistics();
+
+            coroutine.Resume();
+            LuaMemoryStatistics afterYield = lua.GetMemoryStatistics();
+
+            await Assert
+                .That(afterCreate.EstimatedRetainedBytes)
+                .IsGreaterThan(before.EstimatedRetainedBytes)
+                .ConfigureAwait(false);
+            await Assert
+                .That(afterYield.EstimatedRetainedBytes)
+                .IsGreaterThan(before.EstimatedRetainedBytes)
+                .ConfigureAwait(false);
+            GC.KeepAlive(coroutine);
+        }
+
         private static string[] EnumerateFacadeApi()
         {
             return EnumerateFacadeTypes()
