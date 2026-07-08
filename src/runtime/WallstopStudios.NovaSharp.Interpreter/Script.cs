@@ -692,7 +692,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             long estimatedRetainedBytes =
                 sharedPoolStatistics.EstimatedRetainedBytes + scriptRetainedBytes;
             long peakEstimatedRetainedBytes = UpdatePeakEstimatedRetainedBytes(
-                Math.Max(estimatedRetainedBytes, sharedPoolStatistics.PeakRetainedBytes)
+                estimatedRetainedBytes
             );
 
             return new global::NovaSharp.LuaMemoryStatistics(

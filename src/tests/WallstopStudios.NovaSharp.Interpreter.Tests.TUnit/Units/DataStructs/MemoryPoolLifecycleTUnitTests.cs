@@ -60,6 +60,50 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         }
 
         [Test]
+        public async Task SharedPoolRegistryPeakTracksAggregateRetainedBytesNotSumOfPoolPeaks()
+        {
+            SharedPoolRegistry.Trim(PoolTrimLevel.Critical);
+            SharedPoolRegistry.TestHooks.ResetPeakEstimatedRetainedBytes();
+            using GenericPool<object> first = new(
+                static () => new object(),
+                maxPoolSize: 4,
+                name: "FirstPeakTestPool",
+                estimateSizeBytes: static _ => 100
+            );
+            using GenericPool<object> second = new(
+                static () => new object(),
+                maxPoolSize: 4,
+                name: "SecondPeakTestPool",
+                estimateSizeBytes: static _ => 100
+            );
+
+            first.Return(new object());
+            first.Return(new object());
+            PoolStatistics afterFirstPeak = SharedPoolRegistry.GetStatistics();
+
+            first.Trim(PoolTrimLevel.Critical);
+            second.Return(new object());
+            PoolStatistics afterSecondPeak = SharedPoolRegistry.GetStatistics();
+
+            await Assert
+                .That(afterFirstPeak.EstimatedRetainedBytes)
+                .IsEqualTo(200)
+                .ConfigureAwait(false);
+            await Assert
+                .That(afterFirstPeak.PeakRetainedBytes)
+                .IsEqualTo(200)
+                .ConfigureAwait(false);
+            await Assert
+                .That(afterSecondPeak.EstimatedRetainedBytes)
+                .IsEqualTo(100)
+                .ConfigureAwait(false);
+            await Assert
+                .That(afterSecondPeak.PeakRetainedBytes)
+                .IsEqualTo(200)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task GenericPoolTrimHonorsRetainFloorsAndMaxTrimPerOperation()
         {
             using GenericPool<object> pool = new(

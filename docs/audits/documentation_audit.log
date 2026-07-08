@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 141 undocumented public/internal type declarations.
+Found 142 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -72,14 +72,15 @@ Found 141 undocumented public/internal type declarations.
   - line 121: missing XML docs for `Empty`
   - line 133: missing XML docs for `GetTimestamp()`
   - line 138: missing XML docs for `ToTimestampTicks()`
-  - line 169: missing XML docs for `Register()`
-  - line 185: missing XML docs for `Unregister()`
-  - line 198: missing XML docs for `Trim()`
-  - line 214: missing XML docs for `GetStatistics()`
-  - line 251: missing XML docs for `class TestHooks`
-  - line 253: missing XML docs for `IsRegistered()`
-  - line 261: missing XML docs for `SetClock()`
-  - line 267: missing XML docs for `ResetClock()`
+  - line 170: missing XML docs for `Register()`
+  - line 186: missing XML docs for `Unregister()`
+  - line 199: missing XML docs for `Trim()`
+  - line 215: missing XML docs for `GetStatistics()`
+  - line 269: missing XML docs for `class TestHooks`
+  - line 271: missing XML docs for `IsRegistered()`
+  - line 279: missing XML docs for `SetClock()`
+  - line 285: missing XML docs for `ResetClock()`
+  - line 290: missing XML docs for `ResetPeakEstimatedRetainedBytes()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/SystemArrayPool.cs
   - line 59: missing XML docs for `GetStatistics()`
   - line 64: missing XML docs for `Trim()`

@@ -160,6 +160,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         private static readonly object SyncRoot = new();
         private static readonly List<IPoolTrimTarget> Targets = new();
         private static IPoolClock ClockSnapshot = StopwatchPoolClock.Instance;
+        private static long PeakEstimatedRetainedBytes;
 
         internal static IPoolClock Clock
         {
@@ -216,7 +217,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             IPoolTrimTarget[] targets = SnapshotTargets();
             int retainedCount = 0;
             long estimatedRetainedBytes = 0L;
-            long peakRetainedBytes = 0L;
             long trimCount = 0L;
             long droppedCount = 0L;
 
@@ -225,10 +225,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 PoolStatistics statistics = targets[i].GetStatistics();
                 retainedCount += statistics.RetainedCount;
                 estimatedRetainedBytes += statistics.EstimatedRetainedBytes;
-                peakRetainedBytes += statistics.PeakRetainedBytes;
                 trimCount += statistics.TrimCount;
                 droppedCount += statistics.DroppedCount;
             }
+            long peakRetainedBytes = UpdatePeakEstimatedRetainedBytes(estimatedRetainedBytes);
 
             return new PoolStatistics(
                 "SharedPoolRegistry",
@@ -246,6 +246,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             {
                 return Targets.ToArray();
             }
+        }
+
+        private static long UpdatePeakEstimatedRetainedBytes(long value)
+        {
+            long snapshot;
+            do
+            {
+                snapshot = Volatile.Read(ref PeakEstimatedRetainedBytes);
+                if (value <= snapshot)
+                {
+                    return snapshot;
+                }
+            } while (
+                Interlocked.CompareExchange(ref PeakEstimatedRetainedBytes, value, snapshot)
+                != snapshot
+            );
+
+            return value;
         }
 
         internal static class TestHooks
@@ -267,6 +285,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             internal static void ResetClock()
             {
                 Volatile.Write(ref ClockSnapshot, StopwatchPoolClock.Instance);
+            }
+
+            internal static void ResetPeakEstimatedRetainedBytes()
+            {
+                Volatile.Write(ref PeakEstimatedRetainedBytes, 0L);
             }
         }
     }
