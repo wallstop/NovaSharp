@@ -2,6 +2,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Buffers;
+    using System.Collections.Generic;
+    using System.Threading;
 
     /// <summary>
     /// Provides pooled <see cref="object"/> arrays to reduce allocations in CLR interop paths.
@@ -25,24 +27,80 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     internal static class ObjectArrayPool
     {
         private const int MaxSmallArraySize = 8;
-        private const int MaxCachedLargeArraySize = 256;
+        internal const int MaxCachedLargeArrayBytes = 1024 * 1024;
+        private static readonly TimeSpan IdleTimeout = TimeSpan.FromSeconds(60);
 
         [ThreadStatic]
-        private static object[][] ThreadLocalSmallArrays;
+        private static SmallArrayCache ThreadLocalSmallArrays;
 
         private static readonly Action<object[]> ReturnToPool = array =>
             Return(array, clearArray: true);
         private static readonly Action<object[]> NoOpReturn = _ => { };
+        private static readonly object CacheRegistrySyncRoot = new();
+        private static readonly List<WeakReference<SmallArrayCache>> SmallArrayCaches = new();
+        private static long TrimEpoch;
+        private static long TrimCount;
+        private static long DroppedCount;
+        private static long RetainedSmallBytes;
+        private static long PeakRetainedSmallBytes;
 
-        private static object[][] GetSmallArrays()
+        static ObjectArrayPool()
         {
-            object[][] arrays = ThreadLocalSmallArrays;
-            if (arrays == null)
+            SharedPoolRegistry.Register(new ObjectArrayPoolTrimTarget());
+        }
+
+        private readonly struct SmallArrayEntry
+        {
+            internal SmallArrayEntry(object[] array, long returnedAt)
             {
-                arrays = new object[MaxSmallArraySize + 1][];
-                ThreadLocalSmallArrays = arrays;
+                Array = array;
+                ReturnedAt = returnedAt;
             }
-            return arrays;
+
+            internal object[] Array { get; }
+
+            internal long ReturnedAt { get; }
+        }
+
+        private sealed class SmallArrayCache
+        {
+            internal readonly object _syncRoot = new();
+            internal readonly SmallArrayEntry[] _entries = new SmallArrayEntry[
+                MaxSmallArraySize + 1
+            ];
+            internal long _observedTrimEpoch;
+        }
+
+        private sealed class ObjectArrayPoolTrimTarget : IPoolTrimTarget
+        {
+            public string Name
+            {
+                get { return nameof(ObjectArrayPool); }
+            }
+
+            public PoolStatistics GetStatistics()
+            {
+                return ObjectArrayPool.GetStatistics();
+            }
+
+            public PoolTrimResult Trim(PoolTrimLevel level)
+            {
+                return ObjectArrayPool.Trim(level);
+            }
+        }
+
+        private static SmallArrayCache GetSmallArrays()
+        {
+            SmallArrayCache cache = ThreadLocalSmallArrays;
+            if (cache == null)
+            {
+                cache = new SmallArrayCache();
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
+                ThreadLocalSmallArrays = cache;
+                RegisterCache(cache);
+            }
+            ApplyPendingTrim(cache);
+            return cache;
         }
 
         /// <summary>
@@ -70,16 +128,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
             if (minimumLength <= MaxSmallArraySize)
             {
-                object[][] arrays = GetSmallArrays();
-                object[] cached = arrays[minimumLength];
-                if (cached != null)
+                SmallArrayCache cache = GetSmallArrays();
+                lock (cache._syncRoot)
                 {
-                    arrays[minimumLength] = null;
-                    array = cached;
-                }
-                else
-                {
-                    array = new object[minimumLength];
+                    SmallArrayEntry entry = cache._entries[minimumLength];
+                    object[] cached = entry.Array;
+                    if (cached != null)
+                    {
+                        cache._entries[minimumLength] = default;
+                        RemoveRetainedSmallArray(cached);
+                        array = cached;
+                    }
+                    else
+                    {
+                        array = new object[minimumLength];
+                    }
                 }
                 return new PooledResource<object[]>(array, ReturnToPool);
             }
@@ -126,12 +189,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
             if (minimumLength <= MaxSmallArraySize)
             {
-                object[][] arrays = GetSmallArrays();
-                object[] cached = arrays[minimumLength];
-                if (cached != null)
+                SmallArrayCache cache = GetSmallArrays();
+                lock (cache._syncRoot)
                 {
-                    arrays[minimumLength] = null;
-                    return cached;
+                    SmallArrayEntry entry = cache._entries[minimumLength];
+                    object[] cached = entry.Array;
+                    if (cached != null)
+                    {
+                        cache._entries[minimumLength] = default;
+                        RemoveRetainedSmallArray(cached);
+                        return cached;
+                    }
                 }
                 return new object[minimumLength];
             }
@@ -162,15 +230,216 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                     Array.Clear(array, 0, array.Length);
                 }
 
-                object[][] arrays = GetSmallArrays();
-                arrays[array.Length] = array;
+                SmallArrayCache cache = GetSmallArrays();
+                lock (cache._syncRoot)
+                {
+                    SmallArrayEntry existing = cache._entries[array.Length];
+                    if (existing.Array != null && !ReferenceEquals(existing.Array, array))
+                    {
+                        DropSmallArray(existing.Array);
+                        AddRetainedSmallArray(array);
+                    }
+                    else if (existing.Array == null)
+                    {
+                        AddRetainedSmallArray(array);
+                    }
+
+                    cache._entries[array.Length] = new SmallArrayEntry(
+                        array,
+                        SharedPoolRegistry.Clock.GetTimestamp()
+                    );
+                }
             }
-            else if (array.Length <= MaxCachedLargeArraySize)
+            else if (EstimateArrayBytes(array.Length) <= MaxCachedLargeArrayBytes)
             {
                 ArrayPool<object>.Shared.Return(array, clearArray);
             }
-            // Arrays larger than MaxCachedLargeArraySize are not returned to the pool
-            // to avoid bloating the shared pool with oversized arrays.
+            else
+            {
+                if (clearArray)
+                {
+                    Array.Clear(array, 0, array.Length);
+                }
+
+                Interlocked.Increment(ref DroppedCount);
+            }
+        }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            int retainedCount = 0;
+            long retainedBytes = 0L;
+
+            SmallArrayCache[] caches = SnapshotCaches();
+            for (int i = 0; i < caches.Length; i++)
+            {
+                SmallArrayCache cache = caches[i];
+                ApplyPendingTrim(cache);
+                lock (cache._syncRoot)
+                {
+                    for (int slot = 1; slot < cache._entries.Length; slot++)
+                    {
+                        object[] array = cache._entries[slot].Array;
+                        if (array != null)
+                        {
+                            retainedCount++;
+                            retainedBytes += EstimateArrayBytes(array.Length);
+                        }
+                    }
+                }
+            }
+
+            return new PoolStatistics(
+                nameof(ObjectArrayPool),
+                retainedCount,
+                retainedBytes,
+                Volatile.Read(ref PeakRetainedSmallBytes),
+                Volatile.Read(ref TrimCount),
+                Volatile.Read(ref DroppedCount)
+            );
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            Interlocked.Increment(ref TrimCount);
+            if (level == PoolTrimLevel.Critical)
+            {
+                Interlocked.Increment(ref TrimEpoch);
+            }
+
+            SmallArrayCache[] caches = SnapshotCaches();
+            int trimmedCount = 0;
+            long releasedBytes = 0L;
+            long now = SharedPoolRegistry.Clock.GetTimestamp();
+
+            for (int i = 0; i < caches.Length; i++)
+            {
+                PoolTrimResult result = TrimCache(caches[i], level, now);
+                trimmedCount += result.TrimmedCount;
+                releasedBytes += result.EstimatedReleasedBytes;
+            }
+
+            return new PoolTrimResult(trimmedCount, releasedBytes);
+        }
+
+        private static PoolTrimResult TrimCache(
+            SmallArrayCache cache,
+            PoolTrimLevel level,
+            long now
+        )
+        {
+            int trimmedCount = 0;
+            long releasedBytes = 0L;
+            long idleTimeoutTicks = SharedPoolRegistry.Clock.ToTimestampTicks(IdleTimeout);
+
+            lock (cache._syncRoot)
+            {
+                for (int i = 1; i < cache._entries.Length; i++)
+                {
+                    SmallArrayEntry entry = cache._entries[i];
+                    object[] array = entry.Array;
+                    if (array == null)
+                    {
+                        continue;
+                    }
+
+                    bool trim =
+                        level != PoolTrimLevel.Idle || now - entry.ReturnedAt >= idleTimeoutTicks;
+                    if (!trim)
+                    {
+                        continue;
+                    }
+
+                    cache._entries[i] = default;
+                    trimmedCount++;
+                    releasedBytes += EstimateArrayBytes(array.Length);
+                    RemoveRetainedSmallArray(array);
+                    Interlocked.Increment(ref DroppedCount);
+                }
+
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
+            }
+
+            return new PoolTrimResult(trimmedCount, releasedBytes);
+        }
+
+        private static void ApplyPendingTrim(SmallArrayCache cache)
+        {
+            long epoch = Volatile.Read(ref TrimEpoch);
+            if (Volatile.Read(ref cache._observedTrimEpoch) == epoch)
+            {
+                return;
+            }
+
+            TrimCache(cache, PoolTrimLevel.Critical, SharedPoolRegistry.Clock.GetTimestamp());
+        }
+
+        private static void RegisterCache(SmallArrayCache cache)
+        {
+            lock (CacheRegistrySyncRoot)
+            {
+                SmallArrayCaches.Add(new WeakReference<SmallArrayCache>(cache));
+            }
+        }
+
+        private static SmallArrayCache[] SnapshotCaches()
+        {
+            lock (CacheRegistrySyncRoot)
+            {
+                List<SmallArrayCache> caches = new(SmallArrayCaches.Count);
+                for (int i = SmallArrayCaches.Count - 1; i >= 0; i--)
+                {
+                    WeakReference<SmallArrayCache> weakReference = SmallArrayCaches[i];
+                    if (weakReference.TryGetTarget(out SmallArrayCache cache))
+                    {
+                        caches.Add(cache);
+                    }
+                    else
+                    {
+                        SmallArrayCaches.RemoveAt(i);
+                    }
+                }
+
+                return caches.ToArray();
+            }
+        }
+
+        private static void AddRetainedSmallArray(object[] array)
+        {
+            long retainedBytes = Interlocked.Add(
+                ref RetainedSmallBytes,
+                EstimateArrayBytes(array.Length)
+            );
+            UpdatePeak(ref PeakRetainedSmallBytes, retainedBytes);
+        }
+
+        private static void RemoveRetainedSmallArray(object[] array)
+        {
+            Interlocked.Add(ref RetainedSmallBytes, -EstimateArrayBytes(array.Length));
+        }
+
+        private static void DropSmallArray(object[] array)
+        {
+            RemoveRetainedSmallArray(array);
+            Interlocked.Increment(ref DroppedCount);
+        }
+
+        private static long EstimateArrayBytes(int length)
+        {
+            return IntPtr.Size + ((long)length * PoolElementSize<object>.EstimatedBytes);
+        }
+
+        private static void UpdatePeak(ref long target, long value)
+        {
+            long snapshot;
+            do
+            {
+                snapshot = Volatile.Read(ref target);
+                if (value <= snapshot)
+                {
+                    return;
+                }
+            } while (Interlocked.CompareExchange(ref target, value, snapshot) != snapshot);
         }
     }
 }

@@ -21,10 +21,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// </remarks>
     internal static class ListPool<T>
     {
+        private const int MaxRetainedCapacity = 4096;
+
         private static readonly GenericPool<List<T>> Pool = new(
             producer: () => new List<T>(),
             maxPoolSize: 32,
-            onRelease: list => list.Clear()
+            onRelease: static list => list.Clear(),
+            name: $"ListPool<{typeof(T).FullName ?? typeof(T).Name}>",
+            shouldRetainOnReturn: static list => list.Capacity <= MaxRetainedCapacity,
+            estimateSizeBytes: static list =>
+                IntPtr.Size + (list.Capacity * PoolElementSize<T>.EstimatedBytes)
         );
 
         /// <summary>
@@ -138,6 +144,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             Return(list);
             return result;
         }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            return Pool.GetStatistics();
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            return Pool.Trim(level);
+        }
     }
 
     /// <summary>
@@ -147,10 +163,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// <typeparam name="T">The element type for the sets.</typeparam>
     internal static class HashSetPool<T>
     {
+        private const int MaxRetainedCapacity = 4096;
+
         private static readonly GenericPool<HashSet<T>> Pool = new(
             producer: () => new HashSet<T>(),
             maxPoolSize: 16,
-            onRelease: set => set.Clear()
+            onRelease: static set => set.Clear(),
+            name: $"HashSetPool<{typeof(T).FullName ?? typeof(T).Name}>",
+            shouldRetainOnReturn: static set => set.EnsureCapacity(0) <= MaxRetainedCapacity,
+            estimateSizeBytes: static set =>
+                IntPtr.Size + (set.EnsureCapacity(0) * PoolElementSize<T>.EstimatedBytes)
         );
 
         /// <summary>
@@ -194,6 +216,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 Pool.Return(set);
             }
         }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            return Pool.GetStatistics();
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            return Pool.Trim(level);
+        }
     }
 
     /// <summary>
@@ -204,10 +236,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// <typeparam name="TValue">The value type for the dictionaries.</typeparam>
     internal static class DictionaryPool<TKey, TValue>
     {
+        private const int MaxRetainedCapacity = 4096;
+
         private static readonly GenericPool<Dictionary<TKey, TValue>> Pool = new(
             producer: () => new Dictionary<TKey, TValue>(),
             maxPoolSize: 16,
-            onRelease: dict => dict.Clear()
+            onRelease: static dict => dict.Clear(),
+            name: $"DictionaryPool<{typeof(TKey).FullName ?? typeof(TKey).Name},{typeof(TValue).FullName ?? typeof(TValue).Name}>",
+            shouldRetainOnReturn: static dict => dict.EnsureCapacity(0) <= MaxRetainedCapacity,
+            estimateSizeBytes: static dict =>
+                IntPtr.Size
+                + (
+                    dict.EnsureCapacity(0)
+                    * (
+                        PoolElementSize<TKey>.EstimatedBytes
+                        + PoolElementSize<TValue>.EstimatedBytes
+                    )
+                )
         );
 
         /// <summary>
@@ -230,6 +275,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         {
             return Pool.Get(out dictionary);
         }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            return Pool.GetStatistics();
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            return Pool.Trim(level);
+        }
     }
 
     /// <summary>
@@ -242,7 +297,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         private static readonly GenericPool<Stack<T>> Pool = new(
             producer: () => new Stack<T>(),
             maxPoolSize: 16,
-            onRelease: stack => stack.Clear()
+            onRelease: static stack =>
+            {
+                stack.Clear();
+                stack.TrimExcess();
+            },
+            name: $"StackPool<{typeof(T).FullName ?? typeof(T).Name}>"
         );
 
         /// <summary>
@@ -263,6 +323,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         {
             return Pool.Get(out stack);
         }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            return Pool.GetStatistics();
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            return Pool.Trim(level);
+        }
     }
 
     /// <summary>
@@ -275,7 +345,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         private static readonly GenericPool<Queue<T>> Pool = new(
             producer: () => new Queue<T>(),
             maxPoolSize: 16,
-            onRelease: queue => queue.Clear()
+            onRelease: static queue =>
+            {
+                queue.Clear();
+                queue.TrimExcess();
+            },
+            name: $"QueuePool<{typeof(T).FullName ?? typeof(T).Name}>"
         );
 
         /// <summary>
@@ -295,6 +370,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         public static PooledResource<Queue<T>> Get(out Queue<T> queue)
         {
             return Pool.Get(out queue);
+        }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            return Pool.GetStatistics();
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            return Pool.Trim(level);
         }
     }
 }

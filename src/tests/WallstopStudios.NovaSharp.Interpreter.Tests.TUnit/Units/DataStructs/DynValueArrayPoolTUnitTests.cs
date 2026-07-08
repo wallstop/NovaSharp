@@ -169,19 +169,30 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         [Test]
         public async Task LargeArraysAreNotPooled()
         {
-            // Arrays larger than MaxCachedLargeArraySize are not returned to pool
+            // Arrays above the wrapper's approximate 1 MiB byte cap are not returned to pool.
+            int oversizedLength =
+                (int)(
+                    (DynValueArrayPool.MaxCachedLargeArrayBytes - IntPtr.Size)
+                    / PoolElementSize<DynValue>.EstimatedBytes
+                ) + 1;
             DynValue[] first;
-            using (PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(2000, out first))
+            using (
+                PooledResource<DynValue[]> pooled = DynValueArrayPool.Get(
+                    oversizedLength,
+                    out first
+                )
+            )
             {
-                // Just use it
+                first[0] = DynValue.NewString("retained");
             }
 
             using PooledResource<DynValue[]> pooled2 = DynValueArrayPool.Get(
-                2000,
+                oversizedLength,
                 out DynValue[] second
             );
             // Large arrays are not pooled, so should be different instances
             await Assert.That(second).IsNotSameReferenceAs(first).ConfigureAwait(false);
+            await Assert.That(first[0]).IsNull().ConfigureAwait(false);
         }
 
         [Test]

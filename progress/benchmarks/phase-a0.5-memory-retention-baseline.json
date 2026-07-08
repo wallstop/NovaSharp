@@ -1,0 +1,135 @@
+{
+  "schema": "novasharp.phase-a0.5-memory-retention-baseline.v1",
+  "generatedAt": "2026-07-08T09:00:13+00:00",
+  "sourceArtifact": "artifacts/benchmarkdotnet/phase-a0.5-memory-retention/results/WallstopStudios.NovaSharp.Benchmarks.MemoryRetentionBenchmarks-report-full-compressed.json",
+  "environment": {
+    "benchmarkDotNetVersion": "0.15.8",
+    "os": "Linux Debian GNU/Linux 12 (bookworm)",
+    "processor": "Intel Core Ultra 9 288V",
+    "runtime": ".NET 8.0.28 (8.0.28, 8.0.2826.26413)",
+    "dotnetSdk": "9.0.306",
+    "job": "ShortRun",
+    "iterationCount": 10,
+    "launchCount": 1,
+    "warmupCount": 2
+  },
+  "notes": [
+    "Pool byte counts are approximate diagnostics, not exact object-graph accounting.",
+    "Private bytes and working set are process diagnostics only and are not hard gates.",
+    "Estimated retained bytes after critical trim include script-lifetime source/bytecode metadata that A0.5 intentionally characterizes but does not reclaim.",
+    "Scratch prototypes are benchmark-only comparisons; they do not report LuaEngine trim diagnostics."
+  ],
+  "benchmarks": [
+    {
+      "method": "CompilationBurstAfterCriticalTrimRetainedBytes",
+      "meanNs": 246710.6689453125,
+      "p95Ns": 249138.8315917969,
+      "allocatedBytesPerOperation": 567844,
+      "gen0Per1KOperations": 83.0078125,
+      "gen1Per1KOperations": 41.015625,
+      "gen2Per1KOperations": 41.015625,
+      "diagnosticsAfterCriticalTrim": {
+        "retainedPoolCount": 0,
+        "estimatedRetainedBytes": 159044,
+        "peakRetainedBytes": 159044,
+        "trimCount": 6,
+        "droppedCount": 7,
+        "compilationCacheEntryCount": 0,
+        "privateBytes": 66002944,
+        "workingSetBytes": 53751808
+      }
+    },
+    {
+      "method": "CallbackBurstAfterCriticalTrimRetainedBytes",
+      "meanNs": 173341.19555664062,
+      "p95Ns": 246538.6467773437,
+      "allocatedBytesPerOperation": 348923,
+      "gen0Per1KOperations": 41.015625,
+      "gen1Per1KOperations": 41.015625,
+      "gen2Per1KOperations": 41.015625,
+      "diagnosticsAfterCriticalTrim": {
+        "retainedPoolCount": 0,
+        "estimatedRetainedBytes": 30828,
+        "peakRetainedBytes": 30828,
+        "trimCount": 13,
+        "droppedCount": 15,
+        "compilationCacheEntryCount": 0,
+        "privateBytes": 66506752,
+        "workingSetBytes": 55091200
+      }
+    },
+    {
+      "method": "CompilationBurstWorkingSetBytes",
+      "meanNs": 538379.1490234375,
+      "p95Ns": 978716.230078125,
+      "allocatedBytesPerOperation": 581426,
+      "gen0Per1KOperations": 82.03125,
+      "gen1Per1KOperations": 41.015625,
+      "gen2Per1KOperations": 41.015625,
+      "diagnosticsAfterCriticalTrim": {
+        "retainedPoolCount": 0,
+        "estimatedRetainedBytes": 159044,
+        "peakRetainedBytes": 159044,
+        "trimCount": 20,
+        "droppedCount": 22,
+        "compilationCacheEntryCount": 0,
+        "privateBytes": 67096576,
+        "workingSetBytes": 55549952
+      }
+    },
+    {
+      "method": "CompileScratchPoolPerBufferPrototype",
+      "meanNs": 11213.956587049695,
+      "p95Ns": 11302.478396606446,
+      "allocatedBytesPerOperation": 0,
+      "gen0Per1KOperations": 0,
+      "gen1Per1KOperations": 0,
+      "gen2Per1KOperations": 0
+    },
+    {
+      "method": "CompileScratchArrayPoolPrototype",
+      "meanNs": 11352.975935194227,
+      "p95Ns": 11477.243075561524,
+      "allocatedBytesPerOperation": 0,
+      "gen0Per1KOperations": 0,
+      "gen1Per1KOperations": 0,
+      "gen2Per1KOperations": 0
+    },
+    {
+      "method": "CompileScratchScopePrototype",
+      "meanNs": 11472.301788330078,
+      "p95Ns": 11689.552175140381,
+      "allocatedBytesPerOperation": 7936,
+      "gen0Per1KOperations": 1.251220703125,
+      "gen1Per1KOperations": 0,
+      "gen2Per1KOperations": 0
+    },
+    {
+      "method": "VmScratchPoolPerBufferPrototype",
+      "meanNs": 8883.673851013184,
+      "p95Ns": 8923.827257537843,
+      "allocatedBytesPerOperation": 0,
+      "gen0Per1KOperations": 0,
+      "gen1Per1KOperations": 0,
+      "gen2Per1KOperations": 0
+    },
+    {
+      "method": "VmScratchArrayPoolPrototype",
+      "meanNs": 9332.796264648438,
+      "p95Ns": 9476.502746582031,
+      "allocatedBytesPerOperation": 0,
+      "gen0Per1KOperations": 0,
+      "gen1Per1KOperations": 0,
+      "gen2Per1KOperations": 0
+    },
+    {
+      "method": "VmScratchScopePrototype",
+      "meanNs": 11594.199055480956,
+      "p95Ns": 11737.542953491211,
+      "allocatedBytesPerOperation": 7936,
+      "gen0Per1KOperations": 1.251220703125,
+      "gen1Per1KOperations": 0,
+      "gen2Per1KOperations": 0
+    }
+  ]
+}

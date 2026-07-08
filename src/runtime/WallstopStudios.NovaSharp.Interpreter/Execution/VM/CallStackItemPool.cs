@@ -3,6 +3,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using System.Threading;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
 
     /// <summary>
@@ -29,22 +30,77 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     internal static class CallStackItemPool
     {
         private const int MaxPoolSize = 64;
+        private const int EstimatedItemBytes = 128;
+        private static readonly TimeSpan IdleTimeout = TimeSpan.FromSeconds(60);
 
         [ThreadStatic]
-        private static Stack<CallStackItem> ThreadLocalPool;
+        private static CallStackCache ThreadLocalPool;
 
         private static readonly Action<CallStackItem> ReturnToPool = item => Return(item);
+        private static readonly object CacheRegistrySyncRoot = new();
+        private static readonly List<WeakReference<CallStackCache>> Caches = new();
+        private static long TrimEpoch;
+        private static long TrimCount;
+        private static long DroppedCount;
+        private static long RetainedBytes;
+        private static long PeakRetainedBytes;
+
+        static CallStackItemPool()
+        {
+            SharedPoolRegistry.Register(new CallStackItemPoolTrimTarget());
+        }
+
+        private readonly struct PoolEntry
+        {
+            internal PoolEntry(CallStackItem item, long returnedAt)
+            {
+                Item = item;
+                ReturnedAt = returnedAt;
+            }
+
+            internal CallStackItem Item { get; }
+
+            internal long ReturnedAt { get; }
+        }
+
+        private sealed class CallStackCache
+        {
+            internal readonly object _syncRoot = new();
+            internal readonly Stack<PoolEntry> _pool = new(16);
+            internal long _observedTrimEpoch;
+        }
+
+        private sealed class CallStackItemPoolTrimTarget : IPoolTrimTarget
+        {
+            public string Name
+            {
+                get { return nameof(CallStackItemPool); }
+            }
+
+            public PoolStatistics GetStatistics()
+            {
+                return CallStackItemPool.GetStatistics();
+            }
+
+            public PoolTrimResult Trim(PoolTrimLevel level)
+            {
+                return CallStackItemPool.Trim(level);
+            }
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Stack<CallStackItem> GetPool()
+        private static CallStackCache GetPool()
         {
-            Stack<CallStackItem> pool = ThreadLocalPool;
-            if (pool == null)
+            CallStackCache cache = ThreadLocalPool;
+            if (cache == null)
             {
-                pool = new Stack<CallStackItem>(16);
-                ThreadLocalPool = pool;
+                cache = new CallStackCache();
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
+                ThreadLocalPool = cache;
+                RegisterCache(cache);
             }
-            return pool;
+            ApplyPendingTrim(cache);
+            return cache;
         }
 
         /// <summary>
@@ -54,15 +110,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <returns>A <see cref="PooledResource{T}"/> that returns the item to the pool when disposed.</returns>
         public static PooledResource<CallStackItem> Get(out CallStackItem item)
         {
-            Stack<CallStackItem> pool = GetPool();
-            if (pool.TryPop(out CallStackItem pooledItem))
-            {
-                item = pooledItem;
-            }
-            else
-            {
-                item = new CallStackItem();
-            }
+            item = Rent();
             return new PooledResource<CallStackItem>(item, ReturnToPool);
         }
 
@@ -77,11 +125,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static CallStackItem Rent()
         {
-            Stack<CallStackItem> pool = GetPool();
-            if (pool.TryPop(out CallStackItem item))
+            CallStackCache cache = GetPool();
+            lock (cache._syncRoot)
             {
-                return item;
+                if (cache._pool.Count > 0)
+                {
+                    PoolEntry entry = cache._pool.Pop();
+                    RemoveRetainedItem();
+                    return entry.Item;
+                }
             }
+
             return new CallStackItem();
         }
 
@@ -98,12 +152,189 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             item.Reset();
 
-            Stack<CallStackItem> pool = GetPool();
-            if (pool.Count < MaxPoolSize)
+            CallStackCache cache = GetPool();
+            lock (cache._syncRoot)
             {
-                pool.Push(item);
+                if (cache._pool.Count < MaxPoolSize)
+                {
+                    cache._pool.Push(new PoolEntry(item, SharedPoolRegistry.Clock.GetTimestamp()));
+                    AddRetainedItem();
+                    return;
+                }
             }
-            // Items beyond MaxPoolSize are discarded to prevent unbounded growth
+
+            Interlocked.Increment(ref DroppedCount);
+        }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            int retainedCount = 0;
+            CallStackCache[] caches = SnapshotCaches();
+            for (int i = 0; i < caches.Length; i++)
+            {
+                CallStackCache cache = caches[i];
+                ApplyPendingTrim(cache);
+                lock (cache._syncRoot)
+                {
+                    retainedCount += cache._pool.Count;
+                }
+            }
+
+            long retainedBytes = (long)retainedCount * EstimatedItemBytes;
+            return new PoolStatistics(
+                nameof(CallStackItemPool),
+                retainedCount,
+                retainedBytes,
+                Volatile.Read(ref PeakRetainedBytes),
+                Volatile.Read(ref TrimCount),
+                Volatile.Read(ref DroppedCount)
+            );
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            Interlocked.Increment(ref TrimCount);
+            if (level == PoolTrimLevel.Critical)
+            {
+                Interlocked.Increment(ref TrimEpoch);
+            }
+
+            CallStackCache[] caches = SnapshotCaches();
+            int trimmedCount = 0;
+            long releasedBytes = 0L;
+            long now = SharedPoolRegistry.Clock.GetTimestamp();
+
+            for (int i = 0; i < caches.Length; i++)
+            {
+                PoolTrimResult result = TrimCache(caches[i], level, now);
+                trimmedCount += result.TrimmedCount;
+                releasedBytes += result.EstimatedReleasedBytes;
+            }
+
+            return new PoolTrimResult(trimmedCount, releasedBytes);
+        }
+
+        private static PoolTrimResult TrimCache(CallStackCache cache, PoolTrimLevel level, long now)
+        {
+            int trimmedCount = 0;
+            long idleTimeoutTicks = SharedPoolRegistry.Clock.ToTimestampTicks(IdleTimeout);
+
+            lock (cache._syncRoot)
+            {
+                if (cache._pool.Count == 0)
+                {
+                    Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
+                    return PoolTrimResult.Empty;
+                }
+
+                if (level != PoolTrimLevel.Idle)
+                {
+                    while (cache._pool.Count > 0)
+                    {
+                        cache._pool.Pop();
+                        trimmedCount++;
+                        RemoveRetainedItem();
+                        Interlocked.Increment(ref DroppedCount);
+                    }
+
+                    Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
+                    return new PoolTrimResult(
+                        trimmedCount,
+                        (long)trimmedCount * EstimatedItemBytes
+                    );
+                }
+
+                Stack<PoolEntry> kept = new(cache._pool.Count);
+                while (cache._pool.Count > 0)
+                {
+                    PoolEntry entry = cache._pool.Pop();
+                    bool trim = now - entry.ReturnedAt >= idleTimeoutTicks;
+                    if (trim)
+                    {
+                        trimmedCount++;
+                        RemoveRetainedItem();
+                        Interlocked.Increment(ref DroppedCount);
+                    }
+                    else
+                    {
+                        kept.Push(entry);
+                    }
+                }
+
+                while (kept.Count > 0)
+                {
+                    cache._pool.Push(kept.Pop());
+                }
+
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
+            }
+
+            return new PoolTrimResult(trimmedCount, (long)trimmedCount * EstimatedItemBytes);
+        }
+
+        private static void ApplyPendingTrim(CallStackCache cache)
+        {
+            long epoch = Volatile.Read(ref TrimEpoch);
+            if (Volatile.Read(ref cache._observedTrimEpoch) == epoch)
+            {
+                return;
+            }
+
+            TrimCache(cache, PoolTrimLevel.Critical, SharedPoolRegistry.Clock.GetTimestamp());
+        }
+
+        private static void RegisterCache(CallStackCache cache)
+        {
+            lock (CacheRegistrySyncRoot)
+            {
+                Caches.Add(new WeakReference<CallStackCache>(cache));
+            }
+        }
+
+        private static CallStackCache[] SnapshotCaches()
+        {
+            lock (CacheRegistrySyncRoot)
+            {
+                List<CallStackCache> caches = new(Caches.Count);
+                for (int i = Caches.Count - 1; i >= 0; i--)
+                {
+                    WeakReference<CallStackCache> weakReference = Caches[i];
+                    if (weakReference.TryGetTarget(out CallStackCache cache))
+                    {
+                        caches.Add(cache);
+                    }
+                    else
+                    {
+                        Caches.RemoveAt(i);
+                    }
+                }
+
+                return caches.ToArray();
+            }
+        }
+
+        private static void AddRetainedItem()
+        {
+            long bytes = Interlocked.Add(ref RetainedBytes, EstimatedItemBytes);
+            UpdatePeak(ref PeakRetainedBytes, bytes);
+        }
+
+        private static void RemoveRetainedItem()
+        {
+            Interlocked.Add(ref RetainedBytes, -EstimatedItemBytes);
+        }
+
+        private static void UpdatePeak(ref long target, long value)
+        {
+            long snapshot;
+            do
+            {
+                snapshot = Volatile.Read(ref target);
+                if (value <= snapshot)
+                {
+                    return;
+                }
+            } while (Interlocked.CompareExchange(ref target, value, snapshot) != snapshot);
         }
     }
 }

@@ -1,0 +1,696 @@
+namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using global::NovaSharp;
+    using global::TUnit.Assertions;
+    using global::TUnit.Core;
+    using WallstopStudios.NovaSharp.Interpreter;
+    using WallstopStudios.NovaSharp.Interpreter.DataStructs;
+    using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
+    using WallstopStudios.NovaSharp.Tests.TestInfrastructure.Scopes;
+
+    [NotInParallel(nameof(SharedPoolRegistry))]
+    public sealed class MemoryPoolLifecycleTUnitTests
+    {
+        [Test]
+        public async Task GenericPoolIdleTrimUsesDeterministicClock()
+        {
+            FakePoolClock clock = new();
+            using GenericPool<object> pool = new(
+                static () => new object(),
+                maxPoolSize: 4,
+                idleTimeout: TimeSpan.FromSeconds(60),
+                clock: clock,
+                name: "FakeClockPool"
+            );
+
+            object first;
+            using (pool.Get(out first)) { }
+
+            PoolStatistics before = pool.GetStatistics();
+            PoolTrimResult early = pool.Trim(PoolTrimLevel.Idle);
+            clock.Advance(TimeSpan.FromSeconds(61));
+            PoolTrimResult afterIdle = pool.Trim(PoolTrimLevel.Idle);
+            PoolStatistics after = pool.GetStatistics();
+
+            await Assert.That(before.RetainedCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(early.TrimmedCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(afterIdle.TrimmedCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(after.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task DisposedGenericPoolUnregistersFromSharedRegistry()
+        {
+            GenericPool<object> pool = new(
+                static () => new object(),
+                maxPoolSize: 1,
+                name: "TransientTestPool"
+            );
+
+            bool afterCreate = SharedPoolRegistry.TestHooks.IsRegistered(pool);
+            pool.Dispose();
+            bool afterDispose = SharedPoolRegistry.TestHooks.IsRegistered(pool);
+
+            await Assert.That(afterCreate).IsTrue().ConfigureAwait(false);
+            await Assert.That(afterDispose).IsFalse().ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SharedPoolRegistryPeakTracksAggregateRetainedBytesNotSumOfPoolPeaks()
+        {
+            const int elementBytes = 1_000_000;
+
+            SharedPoolRegistry.Trim(PoolTrimLevel.Critical);
+            SharedPoolRegistry.TestHooks.ResetPeakEstimatedRetainedBytes();
+            using GenericPool<object> first = new(
+                static () => new object(),
+                maxPoolSize: 4,
+                name: "FirstPeakTestPool",
+                estimateSizeBytes: static _ => elementBytes
+            );
+            using GenericPool<object> second = new(
+                static () => new object(),
+                maxPoolSize: 4,
+                name: "SecondPeakTestPool",
+                estimateSizeBytes: static _ => elementBytes
+            );
+
+            first.Return(new object());
+            first.Return(new object());
+            SharedPoolRegistry.TestHooks.ResetPeakEstimatedRetainedBytes();
+            PoolStatistics afterFirstPeak = SharedPoolRegistry.GetStatistics();
+
+            first.Trim(PoolTrimLevel.Critical);
+            second.Return(new object());
+            PoolStatistics afterSecondPeak = SharedPoolRegistry.GetStatistics();
+
+            await Assert
+                .That(afterFirstPeak.EstimatedRetainedBytes)
+                .IsGreaterThanOrEqualTo(elementBytes * 2)
+                .ConfigureAwait(false);
+            await Assert
+                .That(afterFirstPeak.PeakRetainedBytes)
+                .IsEqualTo(afterFirstPeak.EstimatedRetainedBytes)
+                .ConfigureAwait(false);
+            await Assert
+                .That(afterSecondPeak.EstimatedRetainedBytes)
+                .IsLessThan(afterFirstPeak.PeakRetainedBytes)
+                .ConfigureAwait(false);
+            await Assert
+                .That(afterSecondPeak.PeakRetainedBytes)
+                .IsEqualTo(afterFirstPeak.PeakRetainedBytes)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task GenericPoolTrimHonorsRetainFloorsAndMaxTrimPerOperation()
+        {
+            using GenericPool<object> pool = new(
+                static () => new object(),
+                maxPoolSize: 6,
+                name: "RetainFloorPool",
+                minRetainCount: 1,
+                warmRetainCount: 3,
+                idleTimeout: TimeSpan.Zero,
+                maxTrimPerOperation: 1
+            );
+            for (int i = 0; i < 5; i++)
+            {
+                pool.Return(new object());
+            }
+
+            PoolTrimResult firstIdle = pool.Trim(PoolTrimLevel.Idle);
+            PoolStatistics afterFirstIdle = pool.GetStatistics();
+            PoolTrimResult secondIdle = pool.Trim(PoolTrimLevel.Idle);
+            PoolStatistics afterSecondIdle = pool.GetStatistics();
+            PoolTrimResult thirdIdle = pool.Trim(PoolTrimLevel.Idle);
+            PoolTrimResult critical = pool.Trim(PoolTrimLevel.Critical);
+            PoolStatistics afterCritical = pool.GetStatistics();
+
+            await Assert.That(firstIdle.TrimmedCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(afterFirstIdle.RetainedCount).IsEqualTo(4).ConfigureAwait(false);
+            await Assert.That(secondIdle.TrimmedCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(afterSecondIdle.RetainedCount).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(thirdIdle.TrimmedCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(critical.TrimmedCount).IsEqualTo(2).ConfigureAwait(false);
+            await Assert.That(afterCritical.RetainedCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task GenericPoolGetWaitsForConcurrentReturnAccounting()
+        {
+            using ManualResetEventSlim estimateEntered = new(false);
+            using ManualResetEventSlim allowEstimate = new(false);
+            using ManualResetEventSlim getStarted = new(false);
+            using ManualResetEventSlim getObserved = new(false);
+            int blockedEstimate = 0;
+            GenericPoolAtomicityProbe rented = null;
+            using GenericPool<GenericPoolAtomicityProbe> pool = new(
+                static () => new GenericPoolAtomicityProbe(0),
+                maxPoolSize: 4,
+                name: "AtomicGetReturnPool",
+                estimateSizeBytes: item =>
+                {
+                    if (item.Id == 2 && Interlocked.CompareExchange(ref blockedEstimate, 1, 0) == 0)
+                    {
+                        estimateEntered.Set();
+                        if (!allowEstimate.Wait(TimeSpan.FromSeconds(10)))
+                        {
+                            throw new TimeoutException(
+                                "Timed out waiting to release pooled return accounting."
+                            );
+                        }
+                    }
+
+                    return 1;
+                }
+            );
+            pool.Return(new GenericPoolAtomicityProbe(1));
+            Task returnTask = Task.Run(() => pool.Return(new GenericPoolAtomicityProbe(2)));
+            Task getTask = null;
+            using DeferredActionScope releaseEstimate = DeferredActionScope.Run(() =>
+                allowEstimate.Set()
+            );
+
+            bool estimateEnteredInTime = estimateEntered.Wait(TimeSpan.FromSeconds(10));
+            await Assert.That(estimateEnteredInTime).IsTrue().ConfigureAwait(false);
+
+            getTask = Task.Run(() =>
+            {
+                getStarted.Set();
+                PooledResource<GenericPoolAtomicityProbe> pooled = pool.Get(out rented);
+                getObserved.Set();
+                pooled.Dispose();
+            });
+
+            bool getStartedInTime = getStarted.Wait(TimeSpan.FromSeconds(10));
+            await Assert.That(getStartedInTime).IsTrue().ConfigureAwait(false);
+            bool observedBeforeReturnAccountingCompleted = getObserved.Wait(
+                TimeSpan.FromMilliseconds(250)
+            );
+            await Assert
+                .That(observedBeforeReturnAccountingCompleted)
+                .IsFalse()
+                .ConfigureAwait(false);
+
+            allowEstimate.Set();
+            Task returnCompleted = await Task.WhenAny(
+                    returnTask,
+                    Task.Delay(TimeSpan.FromSeconds(10))
+                )
+                .ConfigureAwait(false);
+            Task getCompleted = await Task.WhenAny(getTask, Task.Delay(TimeSpan.FromSeconds(10)))
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ReferenceEquals(returnCompleted, returnTask))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(ReferenceEquals(getCompleted, getTask))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await returnTask.ConfigureAwait(false);
+            await getTask.ConfigureAwait(false);
+
+            await Assert.That(rented).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(pool.GetStatistics().RetainedCount)
+                .IsEqualTo(2)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ListPoolCriticalTrimDropsRetainedEntries()
+        {
+            GC.KeepAlive(new CriticalTrimProbe());
+            ListPool<CriticalTrimProbe>.Return(ListPool<CriticalTrimProbe>.Rent());
+
+            PoolTrimResult result = ListPool<CriticalTrimProbe>.Trim(PoolTrimLevel.Critical);
+            PoolStatistics statistics = ListPool<CriticalTrimProbe>.GetStatistics();
+
+            await Assert.That(result.TrimmedCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(statistics.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ListPoolDropsOversizedCapacityOnReturn()
+        {
+            GC.KeepAlive(new CapacityDropProbe());
+            List<CapacityDropProbe> oversized = ListPool<CapacityDropProbe>.Rent(4097);
+            ListPool<CapacityDropProbe>.Return(oversized);
+
+            PoolStatistics statistics = ListPool<CapacityDropProbe>.GetStatistics();
+            List<CapacityDropProbe> rented = ListPool<CapacityDropProbe>.Rent();
+            using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
+                ListPool<CapacityDropProbe>.Return(rented)
+            );
+
+            await Assert.That(statistics.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(rented).IsNotSameReferenceAs(oversized).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task HashSetPoolDropsClearedOversizedCapacityOnReturn()
+        {
+            HashSetPool<CapacityDropProbe>.Trim(PoolTrimLevel.Critical);
+            PooledResource<HashSet<CapacityDropProbe>> pooled = HashSetPool<CapacityDropProbe>.Get(
+                out HashSet<CapacityDropProbe> oversized
+            );
+            for (int i = 0; i < 4097; i++)
+            {
+                oversized.Add(new CapacityDropProbe());
+            }
+            oversized.Clear();
+            pooled.Dispose();
+
+            PoolStatistics statistics = HashSetPool<CapacityDropProbe>.GetStatistics();
+            using PooledResource<HashSet<CapacityDropProbe>> nextPooled =
+                HashSetPool<CapacityDropProbe>.Get(out HashSet<CapacityDropProbe> rented);
+
+            await Assert.That(statistics.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(rented).IsNotSameReferenceAs(oversized).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task DictionaryPoolDropsClearedOversizedCapacityOnReturn()
+        {
+            DictionaryPool<CapacityDropProbe, CapacityDropProbe>.Trim(PoolTrimLevel.Critical);
+            PooledResource<Dictionary<CapacityDropProbe, CapacityDropProbe>> pooled =
+                DictionaryPool<CapacityDropProbe, CapacityDropProbe>.Get(
+                    out Dictionary<CapacityDropProbe, CapacityDropProbe> oversized
+                );
+            for (int i = 0; i < 4097; i++)
+            {
+                oversized.Add(new CapacityDropProbe(), new CapacityDropProbe());
+            }
+            oversized.Clear();
+            pooled.Dispose();
+
+            PoolStatistics statistics = DictionaryPool<
+                CapacityDropProbe,
+                CapacityDropProbe
+            >.GetStatistics();
+            using PooledResource<Dictionary<CapacityDropProbe, CapacityDropProbe>> nextPooled =
+                DictionaryPool<CapacityDropProbe, CapacityDropProbe>.Get(
+                    out Dictionary<CapacityDropProbe, CapacityDropProbe> rented
+                );
+
+            await Assert.That(statistics.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(rented).IsNotSameReferenceAs(oversized).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task StackPoolTrimsCapacityAndRetainsClearedInstanceOnReturn()
+        {
+            StackPool<CapacityDropProbe>.Trim(PoolTrimLevel.Critical);
+            PooledResource<Stack<CapacityDropProbe>> pooled = StackPool<CapacityDropProbe>.Get(
+                out Stack<CapacityDropProbe> oversized
+            );
+            for (int i = 0; i < 4097; i++)
+            {
+                oversized.Push(new CapacityDropProbe());
+            }
+            oversized.Clear();
+            pooled.Dispose();
+
+            PoolStatistics statistics = StackPool<CapacityDropProbe>.GetStatistics();
+            using PooledResource<Stack<CapacityDropProbe>> nextPooled =
+                StackPool<CapacityDropProbe>.Get(out Stack<CapacityDropProbe> rented);
+
+            await Assert.That(statistics.RetainedCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(rented).IsSameReferenceAs(oversized).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task QueuePoolTrimsCapacityAndRetainsClearedInstanceOnReturn()
+        {
+            QueuePool<CapacityDropProbe>.Trim(PoolTrimLevel.Critical);
+            PooledResource<Queue<CapacityDropProbe>> pooled = QueuePool<CapacityDropProbe>.Get(
+                out Queue<CapacityDropProbe> oversized
+            );
+            for (int i = 0; i < 4097; i++)
+            {
+                oversized.Enqueue(new CapacityDropProbe());
+            }
+            oversized.Clear();
+            pooled.Dispose();
+
+            PoolStatistics statistics = QueuePool<CapacityDropProbe>.GetStatistics();
+            using PooledResource<Queue<CapacityDropProbe>> nextPooled =
+                QueuePool<CapacityDropProbe>.Get(out Queue<CapacityDropProbe> rented);
+
+            await Assert.That(statistics.RetainedCount).IsEqualTo(1).ConfigureAwait(false);
+            await Assert.That(rented).IsSameReferenceAs(oversized).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task CriticalTrimDoesNotAffectRentedCollection()
+        {
+            GC.KeepAlive(new RentedProbe());
+            System.Collections.Generic.List<RentedProbe> rented = ListPool<RentedProbe>.Rent();
+
+            PoolTrimResult trimWhileRented = ListPool<RentedProbe>.Trim(PoolTrimLevel.Critical);
+            ListPool<RentedProbe>.Return(rented);
+            System.Collections.Generic.List<RentedProbe> next = ListPool<RentedProbe>.Rent();
+            using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
+                ListPool<RentedProbe>.Return(next)
+            );
+
+            await Assert.That(trimWhileRented.TrimmedCount).IsEqualTo(0).ConfigureAwait(false);
+            await Assert.That(next).IsSameReferenceAs(rented).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task DynValueArrayPoolCriticalTrimClearsSmallBucket()
+        {
+            DynValue[] first = DynValueArrayPool.Rent(3);
+            DynValueArrayPool.Return(first);
+
+            DynValueArrayPool.Trim(PoolTrimLevel.Critical);
+            DynValue[] second = DynValueArrayPool.Rent(3);
+            using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
+                DynValueArrayPool.Return(second)
+            );
+
+            await Assert.That(second).IsNotSameReferenceAs(first).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ObjectArrayPoolCriticalTrimClearsSmallBucket()
+        {
+            object[] first = ObjectArrayPool.Rent(2);
+            ObjectArrayPool.Return(first);
+
+            ObjectArrayPool.Trim(PoolTrimLevel.Critical);
+            object[] second = ObjectArrayPool.Rent(2);
+            using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
+                ObjectArrayPool.Return(second)
+            );
+
+            await Assert.That(second).IsNotSameReferenceAs(first).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SmallArrayReplacementKeepsPeakBytesAtLeastCurrentRetainedBytes()
+        {
+            DynValueArrayPool.Trim(PoolTrimLevel.Critical);
+            ObjectArrayPool.Trim(PoolTrimLevel.Critical);
+
+            DynValueArrayPool.Return(new DynValue[3]);
+            DynValueArrayPool.Return(new DynValue[3]);
+            DynValueArrayPool.Return(new DynValue[4]);
+
+            ObjectArrayPool.Return(new object[3]);
+            ObjectArrayPool.Return(new object[3]);
+            ObjectArrayPool.Return(new object[4]);
+
+            PoolStatistics dynValueStatistics = DynValueArrayPool.GetStatistics();
+            PoolStatistics objectStatistics = ObjectArrayPool.GetStatistics();
+
+            await Assert
+                .That(dynValueStatistics.PeakRetainedBytes)
+                .IsGreaterThanOrEqualTo(dynValueStatistics.EstimatedRetainedBytes)
+                .ConfigureAwait(false);
+            await Assert
+                .That(objectStatistics.PeakRetainedBytes)
+                .IsGreaterThanOrEqualTo(objectStatistics.EstimatedRetainedBytes)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task RegistryCriticalTrimReachesWorkerThreadSmallArrayCache()
+        {
+            using ManualResetEventSlim returned = new(false);
+            using ManualResetEventSlim trimmed = new(false);
+            DynValue[] first = null;
+            DynValue[] second = null;
+
+            Task worker = Task.Run(() =>
+            {
+                first = DynValueArrayPool.Rent(4);
+                DynValueArrayPool.Return(first);
+                returned.Set();
+                if (!trimmed.Wait(TimeSpan.FromSeconds(10)))
+                {
+                    throw new TimeoutException("Timed out waiting for registry trim.");
+                }
+
+                second = DynValueArrayPool.Rent(4);
+                DynValueArrayPool.Return(second);
+            });
+            bool returnedInTime = returned.Wait(TimeSpan.FromSeconds(10));
+
+            SharedPoolRegistry.Trim(PoolTrimLevel.Critical);
+            trimmed.Set();
+            Task completed = await Task.WhenAny(worker, Task.Delay(TimeSpan.FromSeconds(10)))
+                .ConfigureAwait(false);
+
+            await Assert.That(returnedInTime).IsTrue().ConfigureAwait(false);
+            await Assert.That(ReferenceEquals(completed, worker)).IsTrue().ConfigureAwait(false);
+            await worker.ConfigureAwait(false);
+            await Assert.That(second).IsNotSameReferenceAs(first).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task CallStackItemPoolCriticalTrimDropsReturnedFrames()
+        {
+            CallStackItemPool.Trim(PoolTrimLevel.Critical);
+            CallStackItem first = CallStackItemPool.Rent();
+            CallStackItem second = CallStackItemPool.Rent();
+            CallStackItemPool.Return(first);
+            CallStackItemPool.Return(second);
+
+            CallStackItemPool.Trim(PoolTrimLevel.Critical);
+            CallStackItem afterFirst = CallStackItemPool.Rent();
+            CallStackItem afterSecond = CallStackItemPool.Rent();
+            using DeferredActionScope cleanup = DeferredActionScope.Run(() =>
+            {
+                CallStackItemPool.Return(afterFirst);
+                CallStackItemPool.Return(afterSecond);
+            });
+
+            bool reused =
+                ReferenceEquals(afterFirst, first)
+                || ReferenceEquals(afterFirst, second)
+                || ReferenceEquals(afterSecond, first)
+                || ReferenceEquals(afterSecond, second);
+
+            await Assert.That(reused).IsFalse().ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task CallStackItemPoolCriticalTrimDropsFramesReturnedByDeepRecursion()
+        {
+            CallStackItemPool.Trim(PoolTrimLevel.Critical);
+            using LuaEngine lua = LuaEngine.Create();
+
+            LuaValue result = await lua.RunAsync(
+                    @"
+local function recurse(n)
+    if n == 0 then
+        return 0
+    end
+
+    return 1 + recurse(n - 1)
+end
+
+return recurse(80)
+",
+                    "deep_recursion_pool.lua"
+                )
+                .ConfigureAwait(false);
+
+            PoolStatistics afterRun = CallStackItemPool.GetStatistics();
+            PoolTrimResult trim = CallStackItemPool.Trim(PoolTrimLevel.Critical);
+            PoolStatistics afterTrim = CallStackItemPool.GetStatistics();
+
+            await Assert.That(result.AsInteger()).IsEqualTo(80).ConfigureAwait(false);
+            await Assert.That(afterRun.RetainedCount).IsGreaterThan(0).ConfigureAwait(false);
+            await Assert.That(trim.TrimmedCount).IsGreaterThan(0).ConfigureAwait(false);
+            await Assert.That(afterTrim.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SystemArrayPoolDropsArraysOverByteCap()
+        {
+            PoolStatistics before = SystemArrayPool<int>.GetStatistics();
+            int[] array = SystemArrayPool<int>.Rent(300000);
+
+            SystemArrayPool<int>.Return(array);
+
+            PoolStatistics after = SystemArrayPool<int>.GetStatistics();
+            await Assert
+                .That(after.DroppedCount)
+                .IsGreaterThan(before.DroppedCount)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SystemArrayPoolClearsOversizedDroppedReferenceArrayWhenRequested()
+        {
+            int oversizedLength =
+                (int)(
+                    (SystemArrayPool.MaxCachedArrayBytes - IntPtr.Size)
+                    / PoolElementSize<object>.EstimatedBytes
+                ) + 1;
+            object[] array = new object[oversizedLength];
+            array[0] = new object();
+
+            SystemArrayPool<object>.Return(array, clearArray: true);
+
+            await Assert.That(array[0]).IsNull().ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task ObjectArrayPoolClearsOversizedDroppedArrayWhenRequested()
+        {
+            int oversizedLength =
+                (int)(
+                    (ObjectArrayPool.MaxCachedLargeArrayBytes - IntPtr.Size)
+                    / PoolElementSize<object>.EstimatedBytes
+                ) + 1;
+            object[] array = new object[oversizedLength];
+            array[0] = new object();
+
+            ObjectArrayPool.Return(array, clearArray: true);
+
+            await Assert.That(array[0]).IsNull().ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SystemArrayPoolSharedRetentionIsOpaqueToNovaSharpStatistics()
+        {
+            GC.KeepAlive(new OpaqueArrayProbe());
+            PoolStatistics systemBefore = SystemArrayPool<OpaqueArrayProbe>.GetStatistics();
+
+            OpaqueArrayProbe[] opaqueValues = SystemArrayPool<OpaqueArrayProbe>.Rent(1024);
+
+            SystemArrayPool<OpaqueArrayProbe>.Return(opaqueValues);
+
+            PoolStatistics systemAfter = SystemArrayPool<OpaqueArrayProbe>.GetStatistics();
+
+            await Assert
+                .That(systemAfter.DroppedCount)
+                .IsEqualTo(systemBefore.DroppedCount)
+                .ConfigureAwait(false);
+            await Assert.That(systemAfter.RetainedCount).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task SystemArrayPoolRegistersOneSharedRegistryTargetAcrossElementTypes()
+        {
+            int[] integers = SystemArrayPool<int>.Rent(1);
+            object[] objects = SystemArrayPool<object>.Rent(1);
+            SystemArrayPool<int>.Return(integers);
+            SystemArrayPool<object>.Return(objects);
+
+            int targetCount = SharedPoolRegistry.TestHooks.CountTargetsByName("SystemArrayPool");
+
+            await Assert.That(targetCount).IsEqualTo(1).ConfigureAwait(false);
+        }
+
+        [Test]
+        public async Task CoroutineMemoryStatisticsTrackingPrunesDeadReferencesOnRegistration()
+        {
+            Script script = new();
+            DynValue function = script.LoadFunction(
+                "function() return 1 end",
+                funcFriendlyName: "coroutine_ref"
+            );
+
+            CreateTransientCoroutines(script, function, 300);
+            int before = script.GetTrackedCoroutineCountForMemoryStatisticsForTests();
+
+            ForceFullCollection();
+            CreateTransientCoroutines(script, function, 256);
+            int after = script.GetTrackedCoroutineCountForMemoryStatisticsForTests();
+
+            await Assert.That(before).IsGreaterThanOrEqualTo(300).ConfigureAwait(false);
+            await Assert.That(after).IsLessThan(before).ConfigureAwait(false);
+            GC.KeepAlive(function);
+        }
+
+        [Test]
+        public async Task ScriptLocalMemoryStatisticsIncludeCoroutineStackRetention()
+        {
+            Script script = new();
+            DynValue function = script.LoadFunction(
+                "function() coroutine.yield(1); return 2 end",
+                funcFriendlyName: "coroutine_stack"
+            );
+
+            long before = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
+            DynValue coroutineValue = script.CreateCoroutine(function);
+            long afterCreate = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
+
+            coroutineValue.Coroutine.Resume();
+            long afterYield = script.GetEstimatedScriptRetainedBytesForMemoryStatisticsForTests();
+
+            await Assert.That(afterCreate).IsGreaterThan(before).ConfigureAwait(false);
+            await Assert.That(afterYield).IsGreaterThan(before).ConfigureAwait(false);
+            GC.KeepAlive(coroutineValue);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void CreateTransientCoroutines(Script script, DynValue function, int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                DynValue coroutine = script.CreateCoroutine(function);
+                GC.KeepAlive(coroutine);
+            }
+        }
+
+        private static void ForceFullCollection()
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        }
+
+        private sealed class FakePoolClock : IPoolClock
+        {
+            private long _ticks;
+
+            public long GetTimestamp()
+            {
+                return _ticks;
+            }
+
+            public long ToTimestampTicks(TimeSpan duration)
+            {
+                return duration.Ticks;
+            }
+
+            internal void Advance(TimeSpan duration)
+            {
+                _ticks += duration.Ticks;
+            }
+        }
+
+        private sealed class GenericPoolAtomicityProbe
+        {
+            internal GenericPoolAtomicityProbe(int id)
+            {
+                Id = id;
+            }
+
+            internal int Id { get; }
+        }
+
+        private sealed class CriticalTrimProbe { }
+
+        private sealed class CapacityDropProbe { }
+
+        private sealed class RentedProbe { }
+
+        private sealed class OpaqueArrayProbe { }
+    }
+}

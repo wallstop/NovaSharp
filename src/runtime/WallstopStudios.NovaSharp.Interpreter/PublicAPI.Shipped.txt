@@ -82,9 +82,11 @@ NovaSharp.LuaEngine.CreateCallback(NovaSharp.LuaCallback callback, System.String
 NovaSharp.LuaEngine.CreateCoroutine(NovaSharp.LuaFunction function) -> NovaSharp.LuaCoroutine
 NovaSharp.LuaEngine.CreateTable(System.Int32 arrayCapacity = 0, System.Int32 hashCapacity = 0) -> NovaSharp.LuaTable
 NovaSharp.LuaEngine.Dispose() -> System.Void
+NovaSharp.LuaEngine.GetMemoryStatistics() -> NovaSharp.LuaMemoryStatistics
 NovaSharp.LuaEngine.Globals -> NovaSharp.LuaTable
 NovaSharp.LuaEngine.Run(System.String code, System.String chunkName = null) -> NovaSharp.LuaValue
 NovaSharp.LuaEngine.RunAsync(System.String code, System.String chunkName = null, System.Threading.CancellationToken cancellationToken = default) -> System.Threading.Tasks.ValueTask<NovaSharp.LuaValue>
+NovaSharp.LuaEngine.TrimMemory(NovaSharp.LuaMemoryTrimLevel level) -> System.Void
 NovaSharp.LuaEngineOptions
 NovaSharp.LuaEngineOptions..ctor()
 NovaSharp.LuaEngineOptions..ctor(NovaSharp.LuaEngineOptions defaults)
@@ -130,6 +132,22 @@ NovaSharp.LuaMemberAttribute
 NovaSharp.LuaMemberAttribute..ctor()
 NovaSharp.LuaMemberAttribute..ctor(System.String name)
 NovaSharp.LuaMemberAttribute.Name -> System.String
+NovaSharp.LuaMemoryStatistics
+NovaSharp.LuaMemoryStatistics.CompilationCacheEntryCount -> System.Int32
+NovaSharp.LuaMemoryStatistics.DroppedCount -> System.Int64
+NovaSharp.LuaMemoryStatistics.Equals(NovaSharp.LuaMemoryStatistics other) -> System.Boolean
+NovaSharp.LuaMemoryStatistics.Equals(System.Object obj) -> System.Boolean
+NovaSharp.LuaMemoryStatistics.EstimatedRetainedBytes -> System.Int64
+NovaSharp.LuaMemoryStatistics.GetHashCode() -> System.Int32
+NovaSharp.LuaMemoryStatistics.PeakRetainedBytes -> System.Int64
+NovaSharp.LuaMemoryStatistics.RetainedPoolCount -> System.Int64
+NovaSharp.LuaMemoryStatistics.TrimCount -> System.Int64
+NovaSharp.LuaMemoryStatistics.op_Equality(NovaSharp.LuaMemoryStatistics left, NovaSharp.LuaMemoryStatistics right) -> System.Boolean
+NovaSharp.LuaMemoryStatistics.op_Inequality(NovaSharp.LuaMemoryStatistics left, NovaSharp.LuaMemoryStatistics right) -> System.Boolean
+NovaSharp.LuaMemoryTrimLevel
+NovaSharp.LuaMemoryTrimLevel.Critical
+NovaSharp.LuaMemoryTrimLevel.Idle
+NovaSharp.LuaMemoryTrimLevel.MemoryPressure
 NovaSharp.LuaMetamethodAttribute
 NovaSharp.LuaMetamethodAttribute..ctor(NovaSharp.LuaMetamethodKind kind)
 NovaSharp.LuaMetamethodAttribute..ctor(System.String name)

@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Buffers;
+    using System.Threading;
 
     /// <summary>
     /// Provides pooled arrays of any element type via <see cref="ArrayPool{T}.Shared"/>,
@@ -31,9 +32,74 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// } // Automatically returned to pool here
     /// </code>
     /// </remarks>
+    internal static class SystemArrayPool
+    {
+        internal const int MaxCachedArrayBytes = 1024 * 1024;
+
+        private static long TrimCount;
+        private static long DroppedCount;
+
+        static SystemArrayPool()
+        {
+            SharedPoolRegistry.Register(new SystemArrayPoolTrimTarget());
+        }
+
+        internal static void EnsureRegistered() { }
+
+        internal static void RecordDropped()
+        {
+            Interlocked.Increment(ref DroppedCount);
+        }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            return new PoolStatistics(
+                nameof(SystemArrayPool),
+                0,
+                0L,
+                0L,
+                Volatile.Read(ref TrimCount),
+                Volatile.Read(ref DroppedCount)
+            );
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            _ = level;
+            Interlocked.Increment(ref TrimCount);
+            return PoolTrimResult.Empty;
+        }
+
+        internal static long EstimateArrayBytes<T>(int length)
+        {
+            return IntPtr.Size + ((long)length * PoolElementSize<T>.EstimatedBytes);
+        }
+
+        private sealed class SystemArrayPoolTrimTarget : IPoolTrimTarget
+        {
+            public string Name
+            {
+                get { return nameof(SystemArrayPool); }
+            }
+
+            public PoolStatistics GetStatistics()
+            {
+                return SystemArrayPool.GetStatistics();
+            }
+
+            public PoolTrimResult Trim(PoolTrimLevel level)
+            {
+                return SystemArrayPool.Trim(level);
+            }
+        }
+    }
+
     internal static class SystemArrayPool<T>
     {
-        private const int MaxCachedArraySize = 1024 * 1024; // 1MB worth of elements
+        static SystemArrayPool()
+        {
+            SystemArrayPool.EnsureRegistered();
+        }
 
         private static readonly Action<T[]> ReturnToPoolCleared = array =>
             Return(array, clearArray: true);
@@ -139,7 +205,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// </param>
         /// <remarks>
         /// <para>
-        /// Very large arrays (over <see cref="MaxCachedArraySize"/> elements) are not returned to
+        /// Very large arrays (over the approximate 1 MiB byte cap) are not returned to
         /// the pool to avoid memory bloat.
         /// </para>
         /// </remarks>
@@ -150,9 +216,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 return;
             }
 
-            // Don't return very large arrays to prevent memory bloat
-            if (array.Length > MaxCachedArraySize)
+            if (
+                SystemArrayPool.EstimateArrayBytes<T>(array.Length)
+                > SystemArrayPool.MaxCachedArrayBytes
+            )
             {
+                if (clearArray)
+                {
+                    Array.Clear(array, 0, array.Length);
+                }
+
+                SystemArrayPool.RecordDropped();
                 return;
             }
 
@@ -202,6 +276,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             Array.Copy(array, startIndex, result, 0, length);
             Return(array, clearArray: true);
             return result;
+        }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            return SystemArrayPool.GetStatistics();
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            return SystemArrayPool.Trim(level);
         }
     }
 }

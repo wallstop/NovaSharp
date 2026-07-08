@@ -2,6 +2,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System;
     using System.Buffers;
+    using System.Collections.Generic;
+    using System.Threading;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
 
     /// <summary>
@@ -10,7 +12,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// <remarks>
     /// <para>
     /// Function calls are the most frequent allocation source in the interpreter loop.
-    /// This pool uses thread-local caching for small arrays (≤8 elements) and falls back
+    /// This pool uses thread-local caching for small arrays (≤16 elements) and falls back
     /// to <see cref="ArrayPool{T}.Shared"/> for larger arrays.
     /// </para>
     /// <para>
@@ -26,24 +28,80 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     internal static class DynValueArrayPool
     {
         private const int MaxSmallArraySize = 16;
-        private const int MaxCachedLargeArraySize = 1024;
+        internal const int MaxCachedLargeArrayBytes = 1024 * 1024;
+        private static readonly TimeSpan IdleTimeout = TimeSpan.FromSeconds(60);
 
         [ThreadStatic]
-        private static DynValue[][] ThreadLocalSmallArrays;
+        private static SmallArrayCache ThreadLocalSmallArrays;
 
         private static readonly Action<DynValue[]> ReturnToPool = array =>
             Return(array, clearArray: true);
         private static readonly Action<DynValue[]> NoOpReturn = _ => { };
+        private static readonly object CacheRegistrySyncRoot = new();
+        private static readonly List<WeakReference<SmallArrayCache>> SmallArrayCaches = new();
+        private static long TrimEpoch;
+        private static long TrimCount;
+        private static long DroppedCount;
+        private static long RetainedSmallBytes;
+        private static long PeakRetainedSmallBytes;
 
-        private static DynValue[][] GetSmallArrays()
+        static DynValueArrayPool()
         {
-            DynValue[][] arrays = ThreadLocalSmallArrays;
-            if (arrays == null)
+            SharedPoolRegistry.Register(new DynValueArrayPoolTrimTarget());
+        }
+
+        private readonly struct SmallArrayEntry
+        {
+            internal SmallArrayEntry(DynValue[] array, long returnedAt)
             {
-                arrays = new DynValue[MaxSmallArraySize + 1][];
-                ThreadLocalSmallArrays = arrays;
+                Array = array;
+                ReturnedAt = returnedAt;
             }
-            return arrays;
+
+            internal DynValue[] Array { get; }
+
+            internal long ReturnedAt { get; }
+        }
+
+        private sealed class SmallArrayCache
+        {
+            internal readonly object _syncRoot = new();
+            internal readonly SmallArrayEntry[] _entries = new SmallArrayEntry[
+                MaxSmallArraySize + 1
+            ];
+            internal long _observedTrimEpoch;
+        }
+
+        private sealed class DynValueArrayPoolTrimTarget : IPoolTrimTarget
+        {
+            public string Name
+            {
+                get { return nameof(DynValueArrayPool); }
+            }
+
+            public PoolStatistics GetStatistics()
+            {
+                return DynValueArrayPool.GetStatistics();
+            }
+
+            public PoolTrimResult Trim(PoolTrimLevel level)
+            {
+                return DynValueArrayPool.Trim(level);
+            }
+        }
+
+        private static SmallArrayCache GetSmallArrays()
+        {
+            SmallArrayCache cache = ThreadLocalSmallArrays;
+            if (cache == null)
+            {
+                cache = new SmallArrayCache();
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
+                ThreadLocalSmallArrays = cache;
+                RegisterCache(cache);
+            }
+            ApplyPendingTrim(cache);
+            return cache;
         }
 
         /// <summary>
@@ -71,16 +129,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
             if (minimumLength <= MaxSmallArraySize)
             {
-                DynValue[][] arrays = GetSmallArrays();
-                DynValue[] cached = arrays[minimumLength];
-                if (cached != null)
+                SmallArrayCache cache = GetSmallArrays();
+                lock (cache._syncRoot)
                 {
-                    arrays[minimumLength] = null;
-                    array = cached;
-                }
-                else
-                {
-                    array = new DynValue[minimumLength];
+                    SmallArrayEntry entry = cache._entries[minimumLength];
+                    DynValue[] cached = entry.Array;
+                    if (cached != null)
+                    {
+                        cache._entries[minimumLength] = default;
+                        RemoveRetainedSmallArray(cached);
+                        array = cached;
+                    }
+                    else
+                    {
+                        array = new DynValue[minimumLength];
+                    }
                 }
                 return new PooledResource<DynValue[]>(array, ReturnToPool);
             }
@@ -108,7 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// The array may contain stale data and should be cleared or overwritten before use.
         /// </returns>
         /// <remarks>
-        /// For small arrays (≤8 elements), uses thread-local caching for zero-contention access.
+        /// For small arrays (≤16 elements), uses thread-local caching for zero-contention access.
         /// Larger arrays are obtained from <see cref="ArrayPool{T}.Shared"/>.
         /// Always pair with <see cref="Return"/> to avoid memory leaks.
         /// Prefer using the <see cref="Get(int, out DynValue[])"/> method with a using statement instead.
@@ -122,12 +185,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 
             if (minimumLength <= MaxSmallArraySize)
             {
-                DynValue[][] arrays = GetSmallArrays();
-                DynValue[] cached = arrays[minimumLength];
-                if (cached != null)
+                SmallArrayCache cache = GetSmallArrays();
+                lock (cache._syncRoot)
                 {
-                    arrays[minimumLength] = null;
-                    return cached;
+                    SmallArrayEntry entry = cache._entries[minimumLength];
+                    DynValue[] cached = entry.Array;
+                    if (cached != null)
+                    {
+                        cache._entries[minimumLength] = default;
+                        RemoveRetainedSmallArray(cached);
+                        return cached;
+                    }
                 }
                 return new DynValue[minimumLength];
             }
@@ -158,15 +226,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                     Array.Clear(array, 0, array.Length);
                 }
 
-                DynValue[][] arrays = GetSmallArrays();
-                arrays[array.Length] = array;
+                SmallArrayCache cache = GetSmallArrays();
+                lock (cache._syncRoot)
+                {
+                    SmallArrayEntry existing = cache._entries[array.Length];
+                    if (existing.Array != null && !ReferenceEquals(existing.Array, array))
+                    {
+                        DropSmallArray(existing.Array);
+                        AddRetainedSmallArray(array);
+                    }
+                    else if (existing.Array == null)
+                    {
+                        AddRetainedSmallArray(array);
+                    }
+
+                    cache._entries[array.Length] = new SmallArrayEntry(
+                        array,
+                        SharedPoolRegistry.Clock.GetTimestamp()
+                    );
+                }
             }
-            else if (array.Length <= MaxCachedLargeArraySize)
+            else if (EstimateArrayBytes(array.Length) <= MaxCachedLargeArrayBytes)
             {
                 ArrayPool<DynValue>.Shared.Return(array, clearArray);
             }
-            // Arrays larger than MaxCachedLargeArraySize are not returned to the pool
-            // to avoid bloating the shared pool with oversized arrays.
+            else
+            {
+                if (clearArray)
+                {
+                    Array.Clear(array, 0, array.Length);
+                }
+
+                Interlocked.Increment(ref DroppedCount);
+            }
         }
 
         /// <summary>
@@ -191,6 +283,183 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             Array.Copy(array, 0, result, 0, length);
             Return(array, clearArray: true);
             return result;
+        }
+
+        internal static PoolStatistics GetStatistics()
+        {
+            int retainedCount = 0;
+            long retainedBytes = 0L;
+
+            SmallArrayCache[] caches = SnapshotCaches();
+            for (int i = 0; i < caches.Length; i++)
+            {
+                SmallArrayCache cache = caches[i];
+                ApplyPendingTrim(cache);
+                lock (cache._syncRoot)
+                {
+                    for (int slot = 1; slot < cache._entries.Length; slot++)
+                    {
+                        DynValue[] array = cache._entries[slot].Array;
+                        if (array != null)
+                        {
+                            retainedCount++;
+                            retainedBytes += EstimateArrayBytes(array.Length);
+                        }
+                    }
+                }
+            }
+
+            return new PoolStatistics(
+                nameof(DynValueArrayPool),
+                retainedCount,
+                retainedBytes,
+                Volatile.Read(ref PeakRetainedSmallBytes),
+                Volatile.Read(ref TrimCount),
+                Volatile.Read(ref DroppedCount)
+            );
+        }
+
+        internal static PoolTrimResult Trim(PoolTrimLevel level)
+        {
+            Interlocked.Increment(ref TrimCount);
+            if (level == PoolTrimLevel.Critical)
+            {
+                Interlocked.Increment(ref TrimEpoch);
+            }
+
+            SmallArrayCache[] caches = SnapshotCaches();
+            int trimmedCount = 0;
+            long releasedBytes = 0L;
+            long now = SharedPoolRegistry.Clock.GetTimestamp();
+
+            for (int i = 0; i < caches.Length; i++)
+            {
+                PoolTrimResult result = TrimCache(caches[i], level, now);
+                trimmedCount += result.TrimmedCount;
+                releasedBytes += result.EstimatedReleasedBytes;
+            }
+
+            return new PoolTrimResult(trimmedCount, releasedBytes);
+        }
+
+        private static PoolTrimResult TrimCache(
+            SmallArrayCache cache,
+            PoolTrimLevel level,
+            long now
+        )
+        {
+            int trimmedCount = 0;
+            long releasedBytes = 0L;
+            long idleTimeoutTicks = SharedPoolRegistry.Clock.ToTimestampTicks(IdleTimeout);
+
+            lock (cache._syncRoot)
+            {
+                for (int i = 1; i < cache._entries.Length; i++)
+                {
+                    SmallArrayEntry entry = cache._entries[i];
+                    DynValue[] array = entry.Array;
+                    if (array == null)
+                    {
+                        continue;
+                    }
+
+                    bool trim =
+                        level != PoolTrimLevel.Idle || now - entry.ReturnedAt >= idleTimeoutTicks;
+                    if (!trim)
+                    {
+                        continue;
+                    }
+
+                    cache._entries[i] = default;
+                    trimmedCount++;
+                    releasedBytes += EstimateArrayBytes(array.Length);
+                    RemoveRetainedSmallArray(array);
+                    Interlocked.Increment(ref DroppedCount);
+                }
+
+                Volatile.Write(ref cache._observedTrimEpoch, Volatile.Read(ref TrimEpoch));
+            }
+
+            return new PoolTrimResult(trimmedCount, releasedBytes);
+        }
+
+        private static void ApplyPendingTrim(SmallArrayCache cache)
+        {
+            long epoch = Volatile.Read(ref TrimEpoch);
+            if (Volatile.Read(ref cache._observedTrimEpoch) == epoch)
+            {
+                return;
+            }
+
+            TrimCache(cache, PoolTrimLevel.Critical, SharedPoolRegistry.Clock.GetTimestamp());
+        }
+
+        private static void RegisterCache(SmallArrayCache cache)
+        {
+            lock (CacheRegistrySyncRoot)
+            {
+                SmallArrayCaches.Add(new WeakReference<SmallArrayCache>(cache));
+            }
+        }
+
+        private static SmallArrayCache[] SnapshotCaches()
+        {
+            lock (CacheRegistrySyncRoot)
+            {
+                List<SmallArrayCache> caches = new(SmallArrayCaches.Count);
+                for (int i = SmallArrayCaches.Count - 1; i >= 0; i--)
+                {
+                    WeakReference<SmallArrayCache> weakReference = SmallArrayCaches[i];
+                    if (weakReference.TryGetTarget(out SmallArrayCache cache))
+                    {
+                        caches.Add(cache);
+                    }
+                    else
+                    {
+                        SmallArrayCaches.RemoveAt(i);
+                    }
+                }
+
+                return caches.ToArray();
+            }
+        }
+
+        private static void AddRetainedSmallArray(DynValue[] array)
+        {
+            long retainedBytes = Interlocked.Add(
+                ref RetainedSmallBytes,
+                EstimateArrayBytes(array.Length)
+            );
+            UpdatePeak(ref PeakRetainedSmallBytes, retainedBytes);
+        }
+
+        private static void RemoveRetainedSmallArray(DynValue[] array)
+        {
+            Interlocked.Add(ref RetainedSmallBytes, -EstimateArrayBytes(array.Length));
+        }
+
+        private static void DropSmallArray(DynValue[] array)
+        {
+            RemoveRetainedSmallArray(array);
+            Interlocked.Increment(ref DroppedCount);
+        }
+
+        private static long EstimateArrayBytes(int length)
+        {
+            return IntPtr.Size + ((long)length * PoolElementSize<DynValue>.EstimatedBytes);
+        }
+
+        private static void UpdatePeak(ref long target, long value)
+        {
+            long snapshot;
+            do
+            {
+                snapshot = Volatile.Read(ref target);
+                if (value <= snapshot)
+                {
+                    return;
+                }
+            } while (Interlocked.CompareExchange(ref target, value, snapshot) != snapshot);
         }
     }
 }
