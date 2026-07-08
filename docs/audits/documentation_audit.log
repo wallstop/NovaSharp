@@ -2,7 +2,7 @@
 
 _Generated via tools/DocumentationAudit/documentation_audit.py_
 
-Found 150 undocumented public/internal type declarations.
+Found 151 undocumented public/internal type declarations.
 
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Compatibility/Attributes.cs
   - line 9: missing XML docs for `class ComVisibleAttribute`
@@ -50,8 +50,9 @@ Found 150 undocumented public/internal type declarations.
   - line 288: missing XML docs for `GetStatistics()`
   - line 322: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/GenericPool.cs
-  - line 27: missing XML docs for `Value`
-  - line 29: missing XML docs for `ReturnedAt`
+  - line 28: missing XML docs for `Value`
+  - line 30: missing XML docs for `ReturnedAt`
+  - line 32: missing XML docs for `EstimatedSizeBytes`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/ObjectArrayPool.cs
   - line 60: missing XML docs for `Array`
   - line 62: missing XML docs for `ReturnedAt`
@@ -60,28 +61,28 @@ Found 150 undocumented public/internal type declarations.
   - line 268: missing XML docs for `GetStatistics()`
   - line 302: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/PoolLifecycle.cs
-  - line 88: missing XML docs for `Name`
-  - line 90: missing XML docs for `RetainedCount`
-  - line 92: missing XML docs for `EstimatedRetainedBytes`
-  - line 94: missing XML docs for `PeakRetainedBytes`
-  - line 96: missing XML docs for `TrimCount`
-  - line 98: missing XML docs for `DroppedCount`
-  - line 100: missing XML docs for `Empty()`
-  - line 117: missing XML docs for `TrimmedCount`
-  - line 119: missing XML docs for `EstimatedReleasedBytes`
-  - line 121: missing XML docs for `Empty`
-  - line 133: missing XML docs for `GetTimestamp()`
-  - line 138: missing XML docs for `ToTimestampTicks()`
-  - line 170: missing XML docs for `Register()`
-  - line 186: missing XML docs for `Unregister()`
-  - line 199: missing XML docs for `Trim()`
-  - line 215: missing XML docs for `GetStatistics()`
-  - line 269: missing XML docs for `class TestHooks`
-  - line 271: missing XML docs for `IsRegistered()`
-  - line 279: missing XML docs for `CountTargetsByName()`
-  - line 297: missing XML docs for `SetClock()`
-  - line 303: missing XML docs for `ResetClock()`
-  - line 308: missing XML docs for `ResetPeakEstimatedRetainedBytes()`
+  - line 89: missing XML docs for `Name`
+  - line 91: missing XML docs for `RetainedCount`
+  - line 93: missing XML docs for `EstimatedRetainedBytes`
+  - line 95: missing XML docs for `PeakRetainedBytes`
+  - line 97: missing XML docs for `TrimCount`
+  - line 99: missing XML docs for `DroppedCount`
+  - line 101: missing XML docs for `Empty()`
+  - line 118: missing XML docs for `TrimmedCount`
+  - line 120: missing XML docs for `EstimatedReleasedBytes`
+  - line 122: missing XML docs for `Empty`
+  - line 134: missing XML docs for `GetTimestamp()`
+  - line 139: missing XML docs for `ToTimestampTicks()`
+  - line 171: missing XML docs for `Register()`
+  - line 187: missing XML docs for `Unregister()`
+  - line 200: missing XML docs for `Trim()`
+  - line 216: missing XML docs for `GetStatistics()`
+  - line 270: missing XML docs for `class TestHooks`
+  - line 272: missing XML docs for `IsRegistered()`
+  - line 280: missing XML docs for `CountTargetsByName()`
+  - line 298: missing XML docs for `SetClock()`
+  - line 304: missing XML docs for `ResetClock()`
+  - line 309: missing XML docs for `ResetPeakEstimatedRetainedBytes()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/DataStructs/SystemArrayPool.cs
   - line 47: missing XML docs for `EnsureRegistered()`
   - line 49: missing XML docs for `RecordDropped()`

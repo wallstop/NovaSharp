@@ -25,6 +25,8 @@
 - Addressed follow-up reviewer risks by aggregating `SystemArrayPool<T>` into one shared registry target, making DynValue oversize retention tests derive their length from the byte cap, giving closed generic collection pools distinct diagnostic names, pruning dead coroutine weak references during registration, avoiding `CallStackItemPool` helper-stack allocation for memory-pressure/critical trim, and pairing trim-epoch `Volatile.Read` sites with `Volatile.Write`.
 - Addressed macOS CI risk in the facade coroutine memory smoke test by moving the coroutine-retention byte assertion to script-local test coverage and leaving the public facade smoke test to assert monotonic peak/stat invariants that remain valid while process-wide shared pools are trimmed concurrently.
 - Addressed Copilot follow-up feedback by clearing oversized dropped reference arrays when callers requested clearing in `SystemArrayPool<T>`, `DynValueArrayPool`, and `ObjectArrayPool`.
+- Addressed latest Bugbot feedback by serializing `GenericPool<T>` retained-entry pops with lifecycle accounting, storing each entry's estimated retained size on return so `Get` does not recompute size callbacks while locked, and adding a concurrent return/get regression.
+- Addressed latest Copilot feedback by clarifying that memory-pressure trim attempts to release spare entries while preserving warm floors and may be bounded per non-critical operation.
 
 ## Validation So Far
 
@@ -68,7 +70,16 @@
 - After the oversized-array clearing fix, `dotnet tool run csharpier check` on the touched C# files passed.
 - After the oversized-array clearing fix, `git diff --check` passed.
 - After the oversized-array clearing fix, `./scripts/test/quick.sh` passed: 15,051 tests.
+- After the generic-pool accounting race fix, `./scripts/test/quick.sh --full -c MemoryPoolLifecycleTUnitTests` passed: 25 tests.
+- After the generic-pool accounting race fix, `./scripts/test/quick.sh -c DynValueArrayPoolTUnitTests` passed: 24 tests.
+- After the generic-pool accounting race fix, `./scripts/test/quick.sh --full -c SystemArrayPoolTUnitTests` passed: 41 tests.
+- After the generic-pool accounting race fix, `dotnet tool run csharpier check` on the touched C# files passed.
+- After the generic-pool accounting race fix, `git diff --check` passed.
+- After the generic-pool accounting race fix, `./scripts/build/quick.sh` passed.
+- After the generic-pool accounting race fix, `./scripts/test/quick.sh` passed: 15,052 tests.
+- After the generic-pool accounting race fix, `bash ./scripts/dev/pre-commit.sh` completed successfully.
+- Two adversarial sub-agent review passes over the generic-pool follow-up found no must-fix issues; both noted the intentional throughput tradeoff from serializing retained `Get` with return/trim/dispose accounting.
 
 ## Open Validation
 
-- Push the CI follow-up fix, retrigger Bugbot and Copilot, then await PR CI and reviewer feedback.
+- Run full local validation, push the follow-up fix, retrigger Bugbot and Copilot, then await PR CI and reviewer feedback.

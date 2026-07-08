@@ -143,6 +143,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataStructs
         }
 
         [Test]
+        public async Task GenericPoolGetWaitsForConcurrentReturnAccounting()
+        {
+            using ManualResetEventSlim estimateEntered = new(false);
+            using ManualResetEventSlim allowEstimate = new(false);
+            using ManualResetEventSlim getStarted = new(false);
+            using ManualResetEventSlim getObserved = new(false);
+            int blockedEstimate = 0;
+            GenericPoolAtomicityProbe rented = null;
+            using GenericPool<GenericPoolAtomicityProbe> pool = new(
+                static () => new GenericPoolAtomicityProbe(0),
+                maxPoolSize: 4,
+                name: "AtomicGetReturnPool",
+                estimateSizeBytes: item =>
+                {
+                    if (item.Id == 2 && Interlocked.CompareExchange(ref blockedEstimate, 1, 0) == 0)
+                    {
+                        estimateEntered.Set();
+                        if (!allowEstimate.Wait(TimeSpan.FromSeconds(10)))
+                        {
+                            throw new TimeoutException(
+                                "Timed out waiting to release pooled return accounting."
+                            );
+                        }
+                    }
+
+                    return 1;
+                }
+            );
+            pool.Return(new GenericPoolAtomicityProbe(1));
+            Task returnTask = Task.Run(() => pool.Return(new GenericPoolAtomicityProbe(2)));
+            Task getTask = null;
+            using DeferredActionScope releaseEstimate = DeferredActionScope.Run(() =>
+                allowEstimate.Set()
+            );
+
+            bool estimateEnteredInTime = estimateEntered.Wait(TimeSpan.FromSeconds(10));
+            await Assert.That(estimateEnteredInTime).IsTrue().ConfigureAwait(false);
+
+            getTask = Task.Run(() =>
+            {
+                getStarted.Set();
+                PooledResource<GenericPoolAtomicityProbe> pooled = pool.Get(out rented);
+                getObserved.Set();
+                pooled.Dispose();
+            });
+
+            bool getStartedInTime = getStarted.Wait(TimeSpan.FromSeconds(10));
+            await Assert.That(getStartedInTime).IsTrue().ConfigureAwait(false);
+            bool observedBeforeReturnAccountingCompleted = getObserved.Wait(
+                TimeSpan.FromMilliseconds(250)
+            );
+            await Assert
+                .That(observedBeforeReturnAccountingCompleted)
+                .IsFalse()
+                .ConfigureAwait(false);
+
+            allowEstimate.Set();
+            Task returnCompleted = await Task.WhenAny(
+                    returnTask,
+                    Task.Delay(TimeSpan.FromSeconds(10))
+                )
+                .ConfigureAwait(false);
+            Task getCompleted = await Task.WhenAny(getTask, Task.Delay(TimeSpan.FromSeconds(10)))
+                .ConfigureAwait(false);
+
+            await Assert
+                .That(ReferenceEquals(returnCompleted, returnTask))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await Assert
+                .That(ReferenceEquals(getCompleted, getTask))
+                .IsTrue()
+                .ConfigureAwait(false);
+            await returnTask.ConfigureAwait(false);
+            await getTask.ConfigureAwait(false);
+
+            await Assert.That(rented).IsNotNull().ConfigureAwait(false);
+            await Assert
+                .That(pool.GetStatistics().RetainedCount)
+                .IsEqualTo(2)
+                .ConfigureAwait(false);
+        }
+
+        [Test]
         public async Task ListPoolCriticalTrimDropsRetainedEntries()
         {
             GC.KeepAlive(new CriticalTrimProbe());
@@ -589,6 +673,16 @@ return recurse(80)
             {
                 _ticks += duration.Ticks;
             }
+        }
+
+        private sealed class GenericPoolAtomicityProbe
+        {
+            internal GenericPoolAtomicityProbe(int id)
+            {
+                Id = id;
+            }
+
+            internal int Id { get; }
         }
 
         private sealed class CriticalTrimProbe { }

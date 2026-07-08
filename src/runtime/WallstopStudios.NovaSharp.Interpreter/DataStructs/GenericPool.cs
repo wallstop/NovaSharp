@@ -10,7 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// <typeparam name="T">The type of objects to pool.</typeparam>
     /// <remarks>
     /// This implementation follows the WallstopStudios.UnityHelpers pattern:
-    /// - Thread-safe via ConcurrentStack
+    /// - Thread-safe via ConcurrentStack with serialized lifecycle accounting
     /// - RAII pattern via PooledResource
     /// - Configurable callbacks for get/release/dispose lifecycle
     /// </remarks>
@@ -18,15 +18,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     {
         private readonly struct PoolEntry
         {
-            internal PoolEntry(T value, long returnedAt)
+            internal PoolEntry(T value, long returnedAt, int estimatedSizeBytes)
             {
                 Value = value;
                 ReturnedAt = returnedAt;
+                EstimatedSizeBytes = estimatedSizeBytes;
             }
 
             internal T Value { get; }
 
             internal long ReturnedAt { get; }
+
+            internal int EstimatedSizeBytes { get; }
         }
 
         private readonly Func<T> _producer;
@@ -164,12 +167,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// <returns>A PooledResource wrapping the retrieved instance.</returns>
         public PooledResource<T> Get(out T value)
         {
-            if (_pool.TryPop(out PoolEntry entry))
+            PoolEntry entry = default;
+            bool hasEntry;
+            lock (_syncRoot)
+            {
+                hasEntry = _pool.TryPop(out entry);
+                if (hasEntry)
+                {
+                    Interlocked.Decrement(ref _retainedCount);
+                    Interlocked.Add(ref _estimatedRetainedBytes, -entry.EstimatedSizeBytes);
+                }
+            }
+
+            if (hasEntry)
             {
                 value = entry.Value;
-                int sizeBytes = EstimateSizeBytes(value);
-                Interlocked.Decrement(ref _retainedCount);
-                Interlocked.Add(ref _estimatedRetainedBytes, -sizeBytes);
             }
             else
             {
@@ -229,7 +241,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 long estimatedBytes = Interlocked.Add(ref _estimatedRetainedBytes, sizeBytes);
                 UpdatePeak(ref _peakRetainedCount, retainedCount);
                 UpdatePeak(ref _peakRetainedBytes, estimatedBytes);
-                _pool.Push(new PoolEntry(value, Clock.GetTimestamp()));
+                _pool.Push(new PoolEntry(value, Clock.GetTimestamp(), sizeBytes));
             }
         }
 
@@ -272,7 +284,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                     if (trimEntry || _disposed)
                     {
                         trimmedCount++;
-                        releasedBytes += EstimateSizeBytes(entry.Value);
+                        releasedBytes += entry.EstimatedSizeBytes;
                         DropValue(entry.Value);
                     }
                     else
@@ -320,7 +332,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 while (_pool.TryPop(out PoolEntry entry))
                 {
                     Interlocked.Decrement(ref _retainedCount);
-                    Interlocked.Add(ref _estimatedRetainedBytes, -EstimateSizeBytes(entry.Value));
+                    Interlocked.Add(ref _estimatedRetainedBytes, -entry.EstimatedSizeBytes);
                     DisposeValue(entry.Value);
                 }
             }
@@ -342,7 +354,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 entries[index] = entry;
                 index++;
                 Interlocked.Decrement(ref _retainedCount);
-                Interlocked.Add(ref _estimatedRetainedBytes, -EstimateSizeBytes(entry.Value));
+                Interlocked.Add(ref _estimatedRetainedBytes, -entry.EstimatedSizeBytes);
             }
 
             if (index == entries.Length)
@@ -358,8 +370,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         private void RetainDrainedEntry(PoolEntry entry)
         {
             int retainedCount = Interlocked.Increment(ref _retainedCount);
-            int sizeBytes = EstimateSizeBytes(entry.Value);
-            long estimatedBytes = Interlocked.Add(ref _estimatedRetainedBytes, sizeBytes);
+            long estimatedBytes = Interlocked.Add(
+                ref _estimatedRetainedBytes,
+                entry.EstimatedSizeBytes
+            );
             UpdatePeak(ref _peakRetainedCount, retainedCount);
             UpdatePeak(ref _peakRetainedBytes, estimatedBytes);
             _pool.Push(entry);

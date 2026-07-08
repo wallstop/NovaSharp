@@ -11,7 +11,7 @@ namespace NovaSharp
         Idle = 0,
 
         /// <summary>
-        /// Releases spare entries while preserving configured warm-retain floors.
+        /// Attempts to release spare entries while preserving configured warm-retain floors.
         /// </summary>
         MemoryPressure = 1,
 

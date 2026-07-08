@@ -16,7 +16,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         Idle = 0,
 
         /// <summary>
-        /// Drop retained entries down to the warm-retain floor.
+        /// Attempt to drop spare retained entries while preserving warm-retain floors. Non-critical
+        /// trims may be bounded per operation.
         /// </summary>
         MemoryPressure = 1,
 
