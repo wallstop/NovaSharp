@@ -152,15 +152,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [Test]
-        [AllLuaVersions]
-        public async Task RepeatedCaughtStackOverflowsKeepVmHealthy(LuaCompatibilityVersion version)
+        // Exercise both the call-stack ceiling and the value-stack ceiling: each trips the overflow at a
+        // different point relative to renting a call frame, and neither must leak or corrupt the frame pool.
+        [global::TUnit.Core.Arguments(64, 0)]
+        [global::TUnit.Core.Arguments(0, 4096)]
+        public async Task RepeatedCaughtStackOverflowsKeepVmHealthy(
+            int maxCallStackSize,
+            int maxValueStackSize
+        )
         {
-            ScriptOptions options = new() { MaxVmCallStackSize = 48 };
-            Script script = NewScript(version, options);
+            ScriptOptions options = new()
+            {
+                MaxVmCallStackSize = maxCallStackSize,
+                MaxVmValueStackSize = maxValueStackSize,
+            };
+            Script script = NewScript(LuaCompatibilityVersion.Latest, options);
 
-            // Every overflow rents a call frame right before the push that trips the ceiling; the rent must
-            // not leak or corrupt the frame pool. Drive many caught overflows, then confirm the VM still
-            // executes normally (pool/stacks recovered cleanly each time).
+            // Drive many caught overflows, then confirm the VM still executes normally (pool/stacks
+            // recovered cleanly each time, no rented frame orphaned on the overflow path).
             DynValue result = script.DoString(
                 @"
                 local function f(n) return 1 + f(n + 1) end

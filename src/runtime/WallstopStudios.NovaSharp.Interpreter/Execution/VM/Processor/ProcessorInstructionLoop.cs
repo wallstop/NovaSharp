@@ -1663,8 +1663,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     Flags |= CallStackItemFlags.TailCall;
                 }
 
-                CallStackItem frame = RentCallFrame();
+                // Push arguments before renting so a value-stack overflow throws with nothing rented; the
+                // rent then only happens once both the value and execution stacks are known to have room.
                 _valueStack.Push(DynValue.FromNumber(argsCount));
+                CallStackItem frame = RentCallFrame();
                 frame.BasePointer = _valueStack.Count;
                 frame.ReturnAddress = instructionPtr;
                 frame.DebugEntryPoint = fn.Function.EntryPointByteCodeLocation;
