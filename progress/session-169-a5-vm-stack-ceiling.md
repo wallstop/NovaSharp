@@ -75,6 +75,14 @@ This session makes NovaSharp match that contract.
     returned) on every caught overflow. Fixed by routing all four call-frame rent sites through a
     `RentCallFrame()` helper that checks the execution-stack ceiling and throws *before* renting, so the
     subsequent push can never exceed the ceiling. Added `RepeatedCaughtStackOverflowsKeepVmHealthy`.
+  - Medium (fifth review pass): a stack overflow thrown while transitioning CLR->Lua left orphaned value
+    slots when a CLR `pcall`/`xpcall` target caught it. Root cause was pre-existing and error-agnostic: the
+    exception unwind's EntryPoint case rethrew without removing the CLR entry layout (function slot +
+    argument count) below the frame's base pointer, unlike the normal-return path. Fixed the unwind to
+    mirror the return cleanup, and made the two CLR->Lua entry-setup methods transactional so an overflow
+    during setup (before the frame is on the execution stack) also rolls its value pushes back. Added
+    `ClrReentrantOverflowCaughtByPcallLeavesNoOrphanedValueSlots`, which measures the value-stack depth
+    across the caught overflow via a new internal `ScriptExecutionContext` test hook.
   - Copilot was unable to review (account quota reached).
 - Pre-existing flaky test surfaced on macOS CI and hardened in this PR (fragile-check rewrite):
   `MemoryPoolLifecycleTUnitTests.CoroutineMemoryStatisticsTrackingPrunesDeadReferencesOnRegistration`

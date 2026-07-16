@@ -194,6 +194,56 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [Test]
+        public async Task ClrReentrantOverflowCaughtByPcallLeavesNoOrphanedValueSlots()
+        {
+            ScriptOptions options = new() { MaxVmCallStackSize = 64 };
+            Script script = new(
+                new ScriptOptions(options) { CompatibilityVersion = LuaCompatibilityVersion.Latest }
+            );
+
+            int depthBefore = -1;
+            int depthAfter = -1;
+
+            // A CLR callback that re-enters Lua via context.Call. Recursing through this boundary overflows
+            // the call ceiling inside the CLR->Lua entry setup, which runs outside the instruction loop's
+            // unwind. When pcall's target is a CLR function, pcall invokes it directly and catches the
+            // overflow in CLR (ErrorHandlingModule CLR-target path), so the entry setup must roll back the
+            // value-stack slots it pushed or they are left orphaned on the shared value stack.
+            script.Globals["reenter"] = DynValue.NewCallback(
+                (context, args) => context.Call(args[0])
+            );
+            script.Globals["probe_before"] = DynValue.NewCallback(
+                (context, _) =>
+                {
+                    depthBefore = context.GetCallingProcessorValueStackDepthForTests();
+                    return DynValue.Nil;
+                }
+            );
+            script.Globals["probe_after"] = DynValue.NewCallback(
+                (context, _) =>
+                {
+                    depthAfter = context.GetCallingProcessorValueStackDepthForTests();
+                    return DynValue.Nil;
+                }
+            );
+
+            script.DoString(
+                @"
+                local function f() return reenter(f) end
+                probe_before()
+                local ok, err = pcall(reenter, f)
+                assert(ok == false and tostring(err):find('stack overflow') ~= nil)
+                probe_after()
+                "
+            );
+
+            // Both probes run at the same syntactic position in the main chunk, so absent a leak the value
+            // stack is at the identical depth; any orphaned slots from the caught overflow show up as drift.
+            await Assert.That(depthBefore).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
+            await Assert.That(depthAfter).IsEqualTo(depthBefore).ConfigureAwait(false);
+        }
+
+        [Test]
         [AllLuaVersions]
         public async Task CoroutineInheritsBakedCeilingAfterOptionMutation(
             LuaCompatibilityVersion version

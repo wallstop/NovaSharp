@@ -522,6 +522,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                         if ((csi.Flags & CallStackItemFlags.EntryPoint) != 0)
                         {
+                            // Mirror the normal-return cleanup: a Lua EntryPoint frame keeps its CLR entry
+                            // layout (function slot + argument count) below the base pointer, which
+                            // PopToBasePointer does not crop. Remove it before leaving the VM or a CLR
+                            // caller that catches this error (e.g. a pcall CLR target) is left with orphaned
+                            // value-stack slots.
+                            if (csi.ClrFunction == null)
+                            {
+                                int argscnt = (int)(_valueStack.Pop().Number);
+                                _valueStack.RemoveLast(argscnt + 1);
+                            }
+
                             activeException.Rethrow();
                             throw;
                         }

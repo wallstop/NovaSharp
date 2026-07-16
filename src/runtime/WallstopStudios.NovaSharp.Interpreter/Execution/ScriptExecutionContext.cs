@@ -423,6 +423,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution
         public Coroutine CallingCoroutine => _processor.AssociatedCoroutine;
 
         /// <summary>
+        /// Test-only hook exposing the calling processor's current value-stack depth, used to assert the VM
+        /// leaves no orphaned value slots when a stack overflow is thrown during CLR-to-Lua call setup.
+        /// </summary>
+        internal int GetCallingProcessorValueStackDepthForTests()
+        {
+            return _processor.GetValueStackForTests().Count;
+        }
+
+        /// <summary>
         /// Determines whether the current CLR callback is allowed to yield back into Lua (Lua 5.4 §3.3.4 coroutines).
         /// </summary>
         /// <returns><c>true</c> when the call originated from a resumable coroutine and the VM is prepared to yield.</returns>
