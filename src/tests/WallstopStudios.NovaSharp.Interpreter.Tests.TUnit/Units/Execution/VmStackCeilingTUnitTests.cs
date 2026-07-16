@@ -153,6 +153,39 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [Test]
         [AllLuaVersions]
+        public async Task RepeatedCaughtStackOverflowsKeepVmHealthy(LuaCompatibilityVersion version)
+        {
+            ScriptOptions options = new() { MaxVmCallStackSize = 48 };
+            Script script = NewScript(version, options);
+
+            // Every overflow rents a call frame right before the push that trips the ceiling; the rent must
+            // not leak or corrupt the frame pool. Drive many caught overflows, then confirm the VM still
+            // executes normally (pool/stacks recovered cleanly each time).
+            DynValue result = script.DoString(
+                @"
+                local function f(n) return 1 + f(n + 1) end
+                local failures = 0
+                for _ = 1, 50 do
+                    local ok, err = pcall(f, 0)
+                    if not ok and tostring(err):find('stack overflow') then
+                        failures = failures + 1
+                    end
+                end
+                local function sum(n)
+                    if n == 0 then return 0 end
+                    return 1 + sum(n - 1)
+                end
+                return failures, sum(20)
+                "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Number).IsEqualTo(50).ConfigureAwait(false);
+            await Assert.That(result.Tuple[1].Number).IsEqualTo(20).ConfigureAwait(false);
+        }
+
+        [Test]
+        [AllLuaVersions]
         public async Task CoroutineInheritsBakedCeilingAfterOptionMutation(
             LuaCompatibilityVersion version
         )

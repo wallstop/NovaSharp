@@ -70,6 +70,11 @@ This session makes NovaSharp match that contract.
   - Low: `FastStack.EnsureCapacity`'s geometric-doubling loop could integer-overflow and spin forever for a
     ceiling above ~`Int32.MaxValue / 2`. Fixed by growing to exactly the required size (bounded by the
     ceiling) when doubling is insufficient or would overflow. Added regression tests for both.
+  - Medium (second review pass): `CallStackItemPool.Rent()` ran before the `_executionStack.Push` that
+    trips the ceiling, so an overflow orphaned the rented frame (pool-bypass; the frame is GC'd rather than
+    returned) on every caught overflow. Fixed by routing all four call-frame rent sites through a
+    `RentCallFrame()` helper that checks the execution-stack ceiling and throws *before* renting, so the
+    subsequent push can never exceed the ceiling. Added `RepeatedCaughtStackOverflowsKeepVmHealthy`.
   - Copilot was unable to review (account quota reached).
 - Pre-existing flaky test surfaced on macOS CI and hardened in this PR (fragile-check rewrite):
   `MemoryPoolLifecycleTUnitTests.CoroutineMemoryStatisticsTrackingPrunesDeadReferencesOnRegistration`

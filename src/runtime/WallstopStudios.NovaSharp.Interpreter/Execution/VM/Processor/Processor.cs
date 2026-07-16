@@ -691,7 +691,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int argCount = PushAdjustedArguments(args);
             _valueStack.Push(DynValue.FromNumber(argCount)); // func args count
 
-            CallStackItem frame = CallStackItemPool.Rent();
+            CallStackItem frame = RentCallFrame();
             frame.BasePointer = _valueStack.Count;
             frame.DebugEntryPoint = function.Function.EntryPointByteCodeLocation;
             frame.ReturnAddress = -1;
@@ -712,10 +712,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             // RET cleanup expects the CLR entry layout: function slot followed by argument count.
             // Stack-level debug/getfenv paths read the frame metadata and closure scope instead.
+            CallStackItem frame = RentCallFrame();
             _valueStack.Push(DynValue.Void);
             _valueStack.Push(DynValue.FromNumber(0));
 
-            CallStackItem frame = CallStackItemPool.Rent();
             frame.BasePointer = _valueStack.Count;
             frame.DebugEntryPoint = entryPointAddress;
             frame.ReturnAddress = -1;
