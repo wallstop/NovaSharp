@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783528370233,
+  "lastUpdate": 1784221893958,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1870,6 +1870,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 648.924,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "3724c7aa67157c05147564abe30d78e0950c2db8",
+          "message": "Bump requests from 2.32.5 to 2.34.2 (#66)\n\nBumps [requests](https://github.com/psf/requests) from 2.32.5 to 2.34.2.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/psf/requests/releases\">requests's\nreleases</a>.</em></p>\n<blockquote>\n<h2>v2.34.2</h2>\n<h2>2.34.2 (2026-05-14)</h2>\n<ul>\n<li>Moved <code>headers</code> input type back to <code>Mapping</code>\nto avoid invariance issues with <code>MutableMapping</code> and inferred\ndict types. Users calling <code>Request.headers.update()</code> may need\nto narrow typing in their code. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7441\">#7441</a>)</li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/psf/requests/blob/main/HISTORY.md#2342-2026-05-14\">https://github.com/psf/requests/blob/main/HISTORY.md#2342-2026-05-14</a></p>\n<h2>v2.34.1</h2>\n<h2>2.34.1 (2026-05-13)</h2>\n<p><strong>Bugfixes</strong></p>\n<ul>\n<li>Widened <code>json</code> input type from <code>dict</code> and\n<code>list</code> to <code>Mapping</code>\nand <code>Sequence</code>. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7436\">#7436</a>)</li>\n<li>Changed <code>headers</code> input type to MutableMapping and\nremoved <code>None</code> from\n<code>Request.headers</code> typing to improve handling for users. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7431\">#7431</a>)</li>\n<li><code>Response.reason</code> moved from <code>str | None</code> to\n<code>str</code> to improve handling\nfor users. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7437\">#7437</a>)</li>\n<li>Fixed a bug where some bodies with custom <code>__getattr__</code>\nimplementations\nweren't being properly detected as Iterables. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7433\">#7433</a>)</li>\n</ul>\n<h2>New Contributors</h2>\n<ul>\n<li><a href=\"https://github.com/k223kim\"><code>@​k223kim</code></a> made\ntheir first contribution in <a\nhref=\"https://redirect.github.com/psf/requests/pull/7433\">psf/requests#7433</a></li>\n</ul>\n<p><strong>Full Changelog</strong>: <a\nhref=\"https://github.com/psf/requests/blob/main/HISTORY.md#2341-2026-05-13\">https://github.com/psf/requests/blob/main/HISTORY.md#2341-2026-05-13</a></p>\n<h2>v2.34.0</h2>\n<h2>2.34.0 (2026-05-11)</h2>\n<p><strong>Announcements</strong></p>\n<ul>\n<li>\n<p>Requests 2.34.0 introduces inline types, replacing those provided by\ntypeshed. Public API types should be fully compatible with mypy,\npyright,\nand ty. <strong>We believe types are comprehensive but if you find\nissues, please\nreport them to the <a\nhref=\"https://redirect.github.com/psf/requests/issues/7271\">pinned\ntracking issue</a>.</strong></p>\n<p>Special thanks to <a\nhref=\"https://github.com/bastimeyer\"><code>@​bastimeyer</code></a>, <a\nhref=\"https://github.com/cthoyt\"><code>@​cthoyt</code></a>, <a\nhref=\"https://github.com/edgarrmondragon\"><code>@​edgarrmondragon</code></a>,\nand <a href=\"https://github.com/srittau\"><code>@​srittau</code></a> for\nhelping review and test the types ahead of the release. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7272\">#7272</a>)</p>\n</li>\n</ul>\n<p><strong>Improvements</strong></p>\n<ul>\n<li>Digest Auth hashing algorithms have added\n<code>usedforsecurity=False</code> to clarify\nsecurity considerations. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7310\">#7310</a>)</li>\n<li>Requests added support for Python 3.15 based on beta1. Downstream\nprojects\nshould be able to start testing prior to its release in October. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7422\">#7422</a>)</li>\n<li>Requests added support for Python 3.14t. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7419\">#7419</a>)</li>\n</ul>\n<p><strong>Bugfixes</strong></p>\n<ul>\n<li><code>Response.history</code> no longer contains a reference to\nitself, preventing\naccidental looping when traversing the history list. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7328\">#7328</a>)</li>\n<li>Requests no longer performs greedy matching on no_proxy domains.\nThe</li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/psf/requests/blob/main/HISTORY.md\">requests's\nchangelog</a>.</em></p>\n<blockquote>\n<h2>2.34.2 (2026-05-14)</h2>\n<ul>\n<li>Moved <code>headers</code> input type back to <code>Mapping</code>\nto avoid invariance issues\nwith <code>MutableMapping</code> and inferred dict types. Users calling\n<code>Request.headers.update()</code> may need to narrow typing in their\ncode. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7441\">#7441</a>)</li>\n</ul>\n<h2>2.34.1 (2026-05-13)</h2>\n<p><strong>Bugfixes</strong></p>\n<ul>\n<li>Widened <code>json</code> input type from <code>dict</code> and\n<code>list</code> to <code>Mapping</code>\nand <code>Sequence</code>. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7436\">#7436</a>)</li>\n<li>Changed <code>headers</code> input type to MutableMapping and\nremoved <code>None</code> from\n<code>Request.headers</code> typing to improve handling for users. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7431\">#7431</a>)</li>\n<li><code>Response.reason</code> moved from <code>str | None</code> to\n<code>str</code> to improve handling\nfor users. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7437\">#7437</a>)</li>\n<li>Fixed a bug where some bodies with custom <code>__getattr__</code>\nimplementations\nweren't being properly detected as Iterables. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7433\">#7433</a>)</li>\n</ul>\n<h2>2.34.0 (2026-05-11)</h2>\n<p><strong>Announcements</strong></p>\n<ul>\n<li>\n<p>Requests 2.34.0 introduces inline types, replacing those provided by\ntypeshed. Public API types should be fully compatible with mypy,\npyright,\nand ty. We believe types are comprehensive but if you find issues,\nplease\nreport them to the pinned tracking issue.</p>\n<p>Special thanks to <a\nhref=\"https://github.com/bastimeyer\"><code>@​bastimeyer</code></a>, <a\nhref=\"https://github.com/cthoyt\"><code>@​cthoyt</code></a>, <a\nhref=\"https://github.com/edgarrmondragon\"><code>@​edgarrmondragon</code></a>,\nand <a href=\"https://github.com/srittau\"><code>@​srittau</code></a> for\nhelping review and test the types ahead of the release. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7272\">#7272</a>)</p>\n</li>\n</ul>\n<p><strong>Improvements</strong></p>\n<ul>\n<li>Digest Auth hashing algorithms have added\n<code>usedforsecurity=False</code> to clarify\nsecurity considerations. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7310\">#7310</a>)</li>\n<li>Requests added support for Python 3.15 based on beta1. Downstream\nprojects\nshould be able to start testing prior to its release in October. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7422\">#7422</a>)</li>\n<li>Requests added support for Python 3.14t. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7419\">#7419</a>)</li>\n</ul>\n<p><strong>Bugfixes</strong></p>\n<ul>\n<li><code>Response.history</code> no longer contains a reference to\nitself, preventing\naccidental looping when traversing the history list. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7328\">#7328</a>)</li>\n<li>Requests no longer performs greedy matching on no_proxy domains. The\nproxy_bypass implementation has been updated with CPython's fix from\nbpo-39057. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7427\">#7427</a>)</li>\n<li>Requests no longer incorrectly strips duplicate leading slashes in\nURI paths. This should address user issues with specific presigned\nURLs. Note the full fix requires urllib3 2.7.0+. (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7315\">#7315</a>)</li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/psf/requests/commit/6e83187b8feb273ed4c6cdab5efd8d54901dfab3\"><code>6e83187</code></a>\nv2.34.2</li>\n<li><a\nhref=\"https://github.com/psf/requests/commit/84d10f0be83e8f6aeca8a05230c52216431c4d0b\"><code>84d10f0</code></a>\nMove Request.headers back to Mapping (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7441\">#7441</a>)</li>\n<li><a\nhref=\"https://github.com/psf/requests/commit/b7b549b54571d03950b16afd2d01bc6ff0348224\"><code>b7b549b</code></a>\nv2.34.1</li>\n<li><a\nhref=\"https://github.com/psf/requests/commit/e511bc72777a94c45d004e010c597925092e1efe\"><code>e511bc7</code></a>\nFix mutability issues with headers input types (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7431\">#7431</a>)</li>\n<li><a\nhref=\"https://github.com/psf/requests/commit/5691f596134c2feb121e595c77a0178921fcce61\"><code>5691f59</code></a>\nUpdate JsonType containers to read-based collections (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7436\">#7436</a>)</li>\n<li><a\nhref=\"https://github.com/psf/requests/commit/2144213c307691710c9d665700860fc4993c3035\"><code>2144213</code></a>\nConstrain Response.reason to str (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7437\">#7437</a>)</li>\n<li><a\nhref=\"https://github.com/psf/requests/commit/6404f345e562d962abe6700a1c357ec1e7e18232\"><code>6404f34</code></a>\nFix <code>prepare_body</code> stream detection for\n<code>__getattr__</code>-based file wrappers (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7\">#7</a>...</li>\n<li><a\nhref=\"https://github.com/psf/requests/commit/0b401c76b6e80a4eecf3c690085b2553f6e261ca\"><code>0b401c7</code></a>\nv2.34.0</li>\n<li><a\nhref=\"https://github.com/psf/requests/commit/86b378d3f60f828daa13ca50aa82e287ff7b66b4\"><code>86b378d</code></a>\nAlign Session.get parameters with requests.get (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7429\">#7429</a>)</li>\n<li><a\nhref=\"https://github.com/psf/requests/commit/a4f9a5999bdb9bf2d6e7c8aa973b28cacb17134f\"><code>a4f9a59</code></a>\nPort bpo-39057 to Requests (<a\nhref=\"https://redirect.github.com/psf/requests/issues/7427\">#7427</a>)</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/psf/requests/compare/v2.32.5...v2.34.2\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility\nscore](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=requests&package-manager=pip&previous-version=2.32.5&new-version=2.34.2)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop\nDependabot creating any more for this major version (unless you reopen\nthe PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop\nDependabot creating any more for this minor version (unless you reopen\nthe PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop\nDependabot creating any more for this dependency (unless you reopen the\nPR or upgrade to it yourself)\n\n\n</details>\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Dependency pin-only change in tooling requirements with no runtime\ncode modified.\n> \n> **Overview**\n> Updates the pinned **`requests`** version in\n`requirements.tooling.txt` from **2.32.5** to **2.34.2** for tooling/dev\ninstalls. No application code changes in this repo.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\nd63a197fd9731bc3f6f8eb4b57f04d4c2957aafa. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-07-16T10:02:59-07:00",
+          "tree_id": "11d71757e8090b4b89df7188bf0af8c40b2753a2",
+          "url": "https://github.com/wallstop/NovaSharp/commit/3724c7aa67157c05147564abe30d78e0950c2db8"
+        },
+        "date": 1784221893437,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 400.66,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 407.829,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 392.099,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 539.141,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 553.105,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 579.946,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 605.801,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 604.053,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 607.46,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 611.437,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 633.445,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 636.476,
             "unit": "ns",
             "extra": ""
           }
