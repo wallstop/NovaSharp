@@ -2,5 +2,5 @@ mdformat==1.0.0
 mdformat-gfm==1.0.0
 markdown-it-py==4.2.0
 requests==2.34.2
-codespell==2.4.2
+codespell==2.4.3
 yamllint==1.38.0
