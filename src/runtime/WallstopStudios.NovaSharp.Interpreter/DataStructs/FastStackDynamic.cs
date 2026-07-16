@@ -2,6 +2,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
 
 #if USE_DYNAMIC_STACKS
     /// <summary>
@@ -9,8 +10,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// </summary>
     internal class FastStack<T> : FastStackDynamic<T>
     {
-        public FastStack(int startingCapacity)
-            : base(startingCapacity) { }
+        public FastStack(int startingCapacity, int maxCapacity = 0)
+            : base(startingCapacity, maxCapacity) { }
     }
 #endif
 
@@ -20,8 +21,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
     /// <typeparam name="T">Element type stored in the stack.</typeparam>
     internal class FastStackDynamic<T> : List<T>
     {
-        public FastStackDynamic(int startingCapacity)
-            : base(startingCapacity) { }
+        private readonly int _maxCapacity;
+
+        public FastStackDynamic(int startingCapacity, int maxCapacity = 0)
+            : base(
+                maxCapacity > 0 && startingCapacity > maxCapacity ? maxCapacity : startingCapacity
+            )
+        {
+            _maxCapacity = maxCapacity;
+        }
+
+        private void GuardGrowth(int requiredCount)
+        {
+            if (_maxCapacity > 0 && requiredCount > _maxCapacity)
+            {
+                throw ScriptRuntimeException.StackOverflow();
+            }
+        }
 
         /// <summary>
         /// Replaces the value at the given offset from the top of the stack.
@@ -38,6 +54,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Push(T item)
         {
+            GuardGrowth(Count + 1);
             Add(item);
             return item;
         }
@@ -47,6 +64,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         /// </summary>
         public void Expand(int size)
         {
+            if (size <= 0)
+            {
+                return;
+            }
+
+            GuardGrowth(Count + size);
             for (int i = 0; i < size; i++)
             {
                 Add(default(T));

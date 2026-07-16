@@ -12,13 +12,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// Gets the value stack snapshot.
         /// </summary>
         public FastStack<DynValue> ValueStack { get; } =
-            new(VmStackDefaults.ValueStackInitialCapacity);
+            new(VmStackDefaults.ValueStackInitialCapacity, VmStackDefaults.ValueStackMaxCapacity);
 
         /// <summary>
         /// Gets the call stack snapshot.
         /// </summary>
         public FastStack<CallStackItem> ExecutionStack { get; } =
-            new(VmStackDefaults.ExecutionStackInitialCapacity);
+            new(
+                VmStackDefaults.ExecutionStackInitialCapacity,
+                VmStackDefaults.ExecutionStackMaxCapacity
+            );
 
         /// <summary>
         /// Gets or sets the instruction pointer at the time of suspension.

@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1781,
+  "total_snippets": 1782,
   "novasharp_only": 460,
-  "comparable": 1321,
+  "comparable": 1322,
   "by_version": {
-    "5.1": 874,
-    "5.2": 583,
-    "5.3": 821,
-    "5.4": 861,
-    "5.5": 902
+    "5.1": 875,
+    "5.2": 584,
+    "5.3": 822,
+    "5.4": 862,
+    "5.5": 903
   },
   "snippets": [
     {
@@ -21949,6 +21949,20 @@
       "path": "ScriptRunTUnitTests/RunStringExecutesCodeWithDefaultScript.lua",
       "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\ScriptExecution\\ScriptRunTUnitTests.cs:26",
       "test": "ScriptRunTUnitTests.RunStringExecutesCodeWithDefaultScript",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "VmStackCeilingTUnitTests/StackOverflowIsCatchableViaPcall.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\VmStackCeilingTUnitTests.cs:65",
+      "test": "VmStackCeilingTUnitTests.StackOverflowIsCatchableViaPcall",
       "lua_versions": [
         "5.1",
         "5.2",

@@ -374,9 +374,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="byteCode">Root chunk to execute.</param>
         public Processor(Script script, Table globalContext, ByteCode byteCode)
         {
-            _valueStack = new FastStack<DynValue>(VmStackDefaults.ValueStackInitialCapacity);
+            _valueStack = new FastStack<DynValue>(
+                VmStackDefaults.ValueStackInitialCapacity,
+                script.Options.MaxVmValueStackSize
+            );
             _executionStack = new FastStack<CallStackItem>(
-                VmStackDefaults.ExecutionStackInitialCapacity
+                VmStackDefaults.ExecutionStackInitialCapacity,
+                script.Options.MaxVmCallStackSize
             );
             _coroutinesStack = new List<Processor>();
 
@@ -393,9 +397,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private Processor(Processor parentProcessor)
         {
-            _valueStack = new FastStack<DynValue>(VmStackDefaults.ValueStackInitialCapacity);
+            _valueStack = new FastStack<DynValue>(
+                VmStackDefaults.ValueStackInitialCapacity,
+                parentProcessor._script.Options.MaxVmValueStackSize
+            );
             _executionStack = new FastStack<CallStackItem>(
-                VmStackDefaults.ExecutionStackInitialCapacity
+                VmStackDefaults.ExecutionStackInitialCapacity,
+                parentProcessor._script.Options.MaxVmCallStackSize
             );
             _debug = parentProcessor._debug;
             _rootChunk = parentProcessor._rootChunk;

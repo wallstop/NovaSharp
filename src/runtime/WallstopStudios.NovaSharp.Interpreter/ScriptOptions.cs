@@ -4,6 +4,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
     using System.IO;
     using Loaders;
     using WallstopStudios.NovaSharp.Interpreter.Compatibility;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.VM;
     using WallstopStudios.NovaSharp.Interpreter.Infrastructure;
     using WallstopStudios.NovaSharp.Interpreter.Options;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
@@ -52,6 +53,8 @@ namespace WallstopStudios.NovaSharp.Interpreter
             LuaCompatibleErrors = defaults.LuaCompatibleErrors;
             EnableScriptCaching = defaults.EnableScriptCaching;
             ScriptCacheMaxEntries = defaults.ScriptCacheMaxEntries;
+            MaxVmValueStackSize = defaults.MaxVmValueStackSize;
+            MaxVmCallStackSize = defaults.MaxVmCallStackSize;
             Sandbox =
                 defaults.Sandbox == SandboxOptions.Unrestricted
                     ? SandboxOptions.Unrestricted
@@ -191,5 +194,25 @@ namespace WallstopStudios.NovaSharp.Interpreter
         /// Defaults to 64.
         /// </summary>
         public int ScriptCacheMaxEntries { get; set; } = 64;
+
+        /// <summary>
+        /// Gets or sets the maximum number of value-stack slots a single coroutine's VM stack may grow to
+        /// before a deterministic Lua <c>stack overflow</c> error is raised. This is a hard safety ceiling
+        /// that bounds runaway recursion and expression blow-up so the host cannot be driven to memory
+        /// exhaustion. It is independent of and complementary to <see cref="Sandboxing.SandboxOptions.MaxCallStackDepth"/>,
+        /// which is an opt-in security limit.
+        /// Set to 0 (or a negative value) to disable the ceiling and allow unbounded growth.
+        /// Defaults to <see cref="VmStackDefaults.ValueStackMaxCapacity"/> (1,000,000).
+        /// </summary>
+        public int MaxVmValueStackSize { get; set; } = VmStackDefaults.ValueStackMaxCapacity;
+
+        /// <summary>
+        /// Gets or sets the maximum number of call frames a single coroutine's VM stack may grow to before a
+        /// deterministic Lua <c>stack overflow</c> error is raised. Acts as a backstop to
+        /// <see cref="MaxVmValueStackSize"/> for runaway recursion depth.
+        /// Set to 0 (or a negative value) to disable the ceiling and allow unbounded growth.
+        /// Defaults to <see cref="VmStackDefaults.ExecutionStackMaxCapacity"/> (1,000,000).
+        /// </summary>
+        public int MaxVmCallStackSize { get; set; } = VmStackDefaults.ExecutionStackMaxCapacity;
     }
 }
