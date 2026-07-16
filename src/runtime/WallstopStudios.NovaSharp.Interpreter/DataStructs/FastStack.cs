@@ -81,10 +81,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 throw ScriptRuntimeException.StackOverflow();
             }
 
+            // Grow geometrically for amortized O(1) appends. Guard the doubling against int overflow:
+            // a very large ceiling can push _storage.Length past Int32.MaxValue / 2, so fall back to the
+            // exact required size (bounded by the ceiling above) instead of looping on a wrapped value.
             int newCapacity = _storage.Length == 0 ? 4 : _storage.Length * 2;
-            while (newCapacity < requiredCapacity)
+            if (newCapacity < requiredCapacity)
             {
-                newCapacity *= 2;
+                newCapacity = requiredCapacity;
             }
 
             if (_maxCapacity > 0 && newCapacity > _maxCapacity)

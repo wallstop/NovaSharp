@@ -397,13 +397,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private Processor(Processor parentProcessor)
         {
+            // Inherit the ceilings baked into the parent's stacks (ultimately the main processor's, captured
+            // at script creation) so every coroutine under a script shares one limit even if ScriptOptions is
+            // mutated after the main processor was built.
             _valueStack = new FastStack<DynValue>(
                 VmStackDefaults.ValueStackInitialCapacity,
-                parentProcessor._script.Options.MaxVmValueStackSize
+                parentProcessor._valueStack.MaxCapacity
             );
             _executionStack = new FastStack<CallStackItem>(
                 VmStackDefaults.ExecutionStackInitialCapacity,
-                parentProcessor._script.Options.MaxVmCallStackSize
+                parentProcessor._executionStack.MaxCapacity
             );
             _debug = parentProcessor._debug;
             _rootChunk = parentProcessor._rootChunk;

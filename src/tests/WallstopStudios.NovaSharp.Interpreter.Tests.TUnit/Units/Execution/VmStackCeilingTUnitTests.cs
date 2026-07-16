@@ -150,5 +150,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
             await Assert.That(exception.Message).Contains("stack overflow").ConfigureAwait(false);
         }
+
+        [Test]
+        [AllLuaVersions]
+        public async Task CoroutineInheritsBakedCeilingAfterOptionMutation(
+            LuaCompatibilityVersion version
+        )
+        {
+            ScriptOptions options = new() { MaxVmCallStackSize = 40 };
+            Script script = NewScript(version, options);
+
+            // Raising the option after the script (and its main processor) was built must not lift the
+            // ceiling for coroutines created later: they inherit the ceiling baked at script creation.
+            script.Options.MaxVmCallStackSize = 0;
+
+            DynValue result = script.DoString(
+                @"
+                local co = coroutine.create(function()
+                    local function f(n) return 1 + f(n + 1) end
+                    return f(0)
+                end)
+                local ok, err = coroutine.resume(co)
+                return ok, tostring(err)
+                "
+            );
+
+            await Assert.That(result.Type).IsEqualTo(DataType.Tuple).ConfigureAwait(false);
+            await Assert.That(result.Tuple[0].Boolean).IsFalse().ConfigureAwait(false);
+            await Assert
+                .That(result.Tuple[1].String)
+                .Contains("stack overflow")
+                .ConfigureAwait(false);
+        }
     }
 }

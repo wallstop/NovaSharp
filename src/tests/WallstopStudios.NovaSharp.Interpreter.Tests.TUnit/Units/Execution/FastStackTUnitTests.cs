@@ -77,6 +77,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
+        public async Task GrowthJumpBeyondDoublingAllocatesExactRequired()
+        {
+            // A single expand far past double the capacity must grow to exactly the required size in one
+            // step (this is the same fallback branch that guards the doubling against int overflow) rather
+            // than looping. Unbounded ceiling, so no clamp applies.
+            FastStack<int> stack = new(2);
+
+            stack.Expand(1000);
+
+            await Assert.That(stack.Count).IsEqualTo(1000).ConfigureAwait(false);
+            await Assert.That(stack.Capacity).IsEqualTo(1000).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
         public async Task PushPeekAndPopRoundTripValues()
         {
             FastStack<int> stack = new(8);
