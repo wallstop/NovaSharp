@@ -266,7 +266,7 @@ jobs:
         shell: bash
       - name: Evaluate coverage threshold
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           COVERAGE_THRESHOLD_LINE: "80"
           COVERAGE_THRESHOLD_BRANCH: "80"
@@ -359,7 +359,7 @@ jobs:
             }
       - name: Comment coverage on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -861,7 +861,7 @@ jobs:
         shell: bash
 
       - name: Comment Lua comparison report on PR
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           LUA_COMPARISON_REPORT_FILE: ${{ steps.lua_report.outputs.report_file }}
           LUA_COMPARISON_CHANGED: ${{ steps.lua_report.outputs.changed }}
