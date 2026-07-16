@@ -6,9 +6,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
     using System.Threading.Tasks;
     using global::TUnit.Assertions;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     public sealed class FastStackTUnitTests
     {
+        [global::TUnit.Core.Test]
+        public async Task DefaultMaxCapacityIsUnbounded()
+        {
+            FastStack<int> stack = new(4);
+
+            await Assert.That(stack.MaxCapacity).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GrowthWithinMaxCapacitySucceeds()
+        {
+            FastStack<int> stack = new(2, maxCapacity: 8);
+
+            for (int i = 0; i < 8; i++)
+            {
+                stack.Push(i);
+            }
+
+            await Assert.That(stack.Count).IsEqualTo(8).ConfigureAwait(false);
+            await Assert.That(stack.MaxCapacity).IsEqualTo(8).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task PushBeyondMaxCapacityThrowsStackOverflow()
+        {
+            FastStack<int> stack = new(2, maxCapacity: 4);
+
+            for (int i = 0; i < 4; i++)
+            {
+                stack.Push(i);
+            }
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                stack.Push(99)
+            );
+
+            await Assert.That(exception.Message).Contains("stack overflow").ConfigureAwait(false);
+            // The failed push must not have corrupted the stack.
+            await Assert.That(stack.Count).IsEqualTo(4).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task ExpandBeyondMaxCapacityThrowsStackOverflow()
+        {
+            FastStack<int> stack = new(2, maxCapacity: 4);
+
+            ScriptRuntimeException exception = Assert.Throws<ScriptRuntimeException>(() =>
+                stack.Expand(5)
+            );
+
+            await Assert.That(exception.Message).Contains("stack overflow").ConfigureAwait(false);
+            await Assert.That(stack.Count).IsEqualTo(0).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GrowthClampsBackingArrayToMaxCapacity()
+        {
+            // Geometric doubling from 3 would overshoot to 12; the ceiling must clamp it to 10.
+            FastStack<int> stack = new(3, maxCapacity: 10);
+
+            stack.Expand(10);
+
+            await Assert.That(stack.Count).IsEqualTo(10).ConfigureAwait(false);
+            await Assert.That(stack.Capacity).IsEqualTo(10).ConfigureAwait(false);
+        }
+
+        [global::TUnit.Core.Test]
+        public async Task GrowthJumpBeyondDoublingAllocatesExactRequired()
+        {
+            // A single expand far past double the capacity must grow to exactly the required size in one
+            // step (this is the same fallback branch that guards the doubling against int overflow) rather
+            // than looping. Unbounded ceiling, so no clamp applies.
+            FastStack<int> stack = new(2);
+
+            stack.Expand(1000);
+
+            await Assert.That(stack.Count).IsEqualTo(1000).ConfigureAwait(false);
+            await Assert.That(stack.Capacity).IsEqualTo(1000).ConfigureAwait(false);
+        }
+
         [global::TUnit.Core.Test]
         public async Task PushPeekAndPopRoundTripValues()
         {

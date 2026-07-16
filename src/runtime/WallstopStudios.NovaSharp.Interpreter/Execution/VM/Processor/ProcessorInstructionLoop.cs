@@ -522,6 +522,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                         if ((csi.Flags & CallStackItemFlags.EntryPoint) != 0)
                         {
+                            // Mirror the normal-return cleanup: a Lua EntryPoint frame keeps its CLR entry
+                            // layout (function slot + argument count) below the base pointer, which
+                            // PopToBasePointer does not crop. Remove it before leaving the VM or a CLR
+                            // caller that catches this error (e.g. a pcall CLR target) is left with orphaned
+                            // value-stack slots.
+                            if (csi.ClrFunction == null)
+                            {
+                                int argscnt = (int)(_valueStack.Pop().Number);
+                                _valueStack.RemoveLast(argscnt + 1);
+                            }
+
                             activeException.Rethrow();
                             throw;
                         }
@@ -1594,7 +1605,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 CallbackFunction callback = fn.Callback;
 
-                CallStackItem frame = CallStackItemPool.Rent();
+                CallStackItem frame = RentCallFrame();
                 frame.ClrFunction = callback;
                 frame.ReturnAddress = instructionPtr;
                 frame.CallingSourceRef = callingSourceRef;
@@ -1663,8 +1674,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     Flags |= CallStackItemFlags.TailCall;
                 }
 
+                // Push arguments before renting so a value-stack overflow throws with nothing rented; the
+                // rent then only happens once both the value and execution stacks are known to have room.
                 _valueStack.Push(DynValue.FromNumber(argsCount));
-                CallStackItem frame = CallStackItemPool.Rent();
+                CallStackItem frame = RentCallFrame();
                 frame.BasePointer = _valueStack.Count;
                 frame.ReturnAddress = instructionPtr;
                 frame.DebugEntryPoint = fn.Function.EntryPointByteCodeLocation;
@@ -2952,6 +2965,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     );
                 }
             }
+        }
+
+        /// <summary>
+        /// Rents a pooled call frame after verifying the execution stack is below its configured ceiling.
+        /// Checking before renting means an overflow throws with nothing rented, so the pooled frame is never
+        /// leaked on the (pcall-catchable) overflow path. The subsequent push then cannot exceed the ceiling.
+        /// </summary>
+        /// <returns>A pooled call frame the caller must push and eventually return.</returns>
+        private CallStackItem RentCallFrame()
+        {
+            int maxCapacity = _executionStack.MaxCapacity;
+            if (maxCapacity > 0 && _executionStack.Count >= maxCapacity)
+            {
+                throw ScriptRuntimeException.StackOverflow();
+            }
+
+            return CallStackItemPool.Rent();
         }
 
         /// <summary>

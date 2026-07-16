@@ -8,6 +8,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.DataStructs;
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
     /// Executes bytecode for a script, coordinating stacks, coroutines, and debugger integrations.
@@ -374,9 +375,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// <param name="byteCode">Root chunk to execute.</param>
         public Processor(Script script, Table globalContext, ByteCode byteCode)
         {
-            _valueStack = new FastStack<DynValue>(VmStackDefaults.ValueStackInitialCapacity);
+            _valueStack = new FastStack<DynValue>(
+                VmStackDefaults.ValueStackInitialCapacity,
+                script.Options.MaxVmValueStackSize
+            );
             _executionStack = new FastStack<CallStackItem>(
-                VmStackDefaults.ExecutionStackInitialCapacity
+                VmStackDefaults.ExecutionStackInitialCapacity,
+                script.Options.MaxVmCallStackSize
             );
             _coroutinesStack = new List<Processor>();
 
@@ -393,9 +398,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         /// </summary>
         private Processor(Processor parentProcessor)
         {
-            _valueStack = new FastStack<DynValue>(VmStackDefaults.ValueStackInitialCapacity);
+            // Inherit the ceilings baked into the parent's stacks (ultimately the main processor's, captured
+            // at script creation) so every coroutine under a script shares one limit even if ScriptOptions is
+            // mutated after the main processor was built.
+            _valueStack = new FastStack<DynValue>(
+                VmStackDefaults.ValueStackInitialCapacity,
+                parentProcessor._valueStack.MaxCapacity
+            );
             _executionStack = new FastStack<CallStackItem>(
-                VmStackDefaults.ExecutionStackInitialCapacity
+                VmStackDefaults.ExecutionStackInitialCapacity,
+                parentProcessor._executionStack.MaxCapacity
             );
             _debug = parentProcessor._debug;
             _rootChunk = parentProcessor._rootChunk;
@@ -668,29 +680,43 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             ClrCallArguments args
         )
         {
-            if (function == null)
+            // This entry setup runs outside the instruction loop's unwind, so a stack overflow thrown here
+            // must leave the value stack pristine: a CLR pcall/xpcall target can catch the error, after which
+            // orphaned slots would be popped in place of real call args and corrupt later execution.
+            // RentCallFrame() checks the execution-stack ceiling before renting, so nothing is ever rented on
+            // the overflow path; only the value slots pushed below need rolling back.
+            int valueStackBaseline = _valueStack.Count;
+            try
             {
-                function = _valueStack.Peek();
+                if (function == null)
+                {
+                    function = _valueStack.Peek();
+                }
+                else
+                {
+                    _valueStack.Push(function); // func val
+                }
+
+                int argCount = PushAdjustedArguments(args);
+                _valueStack.Push(DynValue.FromNumber(argCount)); // func args count
+
+                CallStackItem frame = RentCallFrame();
+                frame.BasePointer = _valueStack.Count;
+                frame.DebugEntryPoint = function.Function.EntryPointByteCodeLocation;
+                frame.ReturnAddress = -1;
+                frame.ClosureScope = function.Function.ClosureContext;
+                frame.Function = function;
+                frame.CallingSourceRef = SourceRef.GetClrLocation();
+                frame.Flags = Flags;
+                _executionStack.Push(frame);
+
+                return function.Function.EntryPointByteCodeLocation;
             }
-            else
+            catch (ScriptRuntimeException)
             {
-                _valueStack.Push(function); // func val
+                _valueStack.CropAtCount(valueStackBaseline);
+                throw;
             }
-
-            int argCount = PushAdjustedArguments(args);
-            _valueStack.Push(DynValue.FromNumber(argCount)); // func args count
-
-            CallStackItem frame = CallStackItemPool.Rent();
-            frame.BasePointer = _valueStack.Count;
-            frame.DebugEntryPoint = function.Function.EntryPointByteCodeLocation;
-            frame.ReturnAddress = -1;
-            frame.ClosureScope = function.Function.ClosureContext;
-            frame.Function = function;
-            frame.CallingSourceRef = SourceRef.GetClrLocation();
-            frame.Flags = Flags;
-            _executionStack.Push(frame);
-
-            return function.Function.EntryPointByteCodeLocation;
         }
 
         private void PushChunkEntryPointStackFrame(
@@ -701,18 +727,29 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             // RET cleanup expects the CLR entry layout: function slot followed by argument count.
             // Stack-level debug/getfenv paths read the frame metadata and closure scope instead.
-            _valueStack.Push(DynValue.Void);
-            _valueStack.Push(DynValue.FromNumber(0));
+            // As in PushClrToScriptStackFrame, this runs outside the loop's unwind, so roll the value slots
+            // back if a stack overflow is thrown during setup (RentCallFrame never rents on that path).
+            int valueStackBaseline = _valueStack.Count;
+            try
+            {
+                _valueStack.Push(DynValue.Void);
+                _valueStack.Push(DynValue.FromNumber(0));
 
-            CallStackItem frame = CallStackItemPool.Rent();
-            frame.BasePointer = _valueStack.Count;
-            frame.DebugEntryPoint = entryPointAddress;
-            frame.ReturnAddress = -1;
-            frame.ClosureScope = closureScope;
-            frame.Function = function;
-            frame.CallingSourceRef = SourceRef.GetClrLocation();
-            frame.Flags = CallStackItemFlagsPresets.CallEntryPoint;
-            _executionStack.Push(frame);
+                CallStackItem frame = RentCallFrame();
+                frame.BasePointer = _valueStack.Count;
+                frame.DebugEntryPoint = entryPointAddress;
+                frame.ReturnAddress = -1;
+                frame.ClosureScope = closureScope;
+                frame.Function = function;
+                frame.CallingSourceRef = SourceRef.GetClrLocation();
+                frame.Flags = CallStackItemFlagsPresets.CallEntryPoint;
+                _executionStack.Push(frame);
+            }
+            catch (ScriptRuntimeException)
+            {
+                _valueStack.CropAtCount(valueStackBaseline);
+                throw;
+            }
         }
 
         private int PushAdjustedArguments(ClrCallArguments args)

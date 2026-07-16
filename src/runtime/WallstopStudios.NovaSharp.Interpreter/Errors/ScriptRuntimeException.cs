@@ -505,6 +505,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Errors
         }
 
         /// <summary>
+        /// Creates the Lua "stack overflow" error raised when the VM value or call stack grows past its
+        /// configured ceiling. Matches the reference interpreter's catchable stack overflow error.
+        /// </summary>
+        /// <returns>
+        /// The exception to be raised.
+        /// </returns>
+        public static ScriptRuntimeException StackOverflow()
+        {
+            return new ScriptRuntimeException("stack overflow");
+        }
+
+        /// <summary>
         /// Creates the Lua 5.4 "__close" error raised when a variable marked with &lt;close&gt; resolves to a value
         /// without a callable <c>__close</c> metamethod (§3.3.8).
         /// </summary>

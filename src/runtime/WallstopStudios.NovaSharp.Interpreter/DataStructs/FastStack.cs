@@ -1,23 +1,38 @@
+#if !USE_DYNAMIC_STACKS
 namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
-#if !USE_DYNAMIC_STACKS
-
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;
+    using WallstopStudios.NovaSharp.Interpreter.Errors;
 
     /// <summary>
-    /// Array-backed stack used by the VM for hot paths. The stack grows on demand while keeping contiguous storage.
+    /// Array-backed stack used by the VM for hot paths. The stack grows on demand while keeping contiguous storage,
+    /// up to an optional ceiling beyond which growth raises a deterministic Lua stack overflow error.
     /// </summary>
     /// <typeparam name="T">Element type stored in the stack.</typeparam>
     internal class FastStack<T> : IList<T>
     {
         private T[] _storage;
         private int _headIdx;
+        private readonly int _maxCapacity;
 
-        public FastStack(int startingCapacity)
+        /// <summary>
+        /// Creates an array-backed stack.
+        /// </summary>
+        /// <param name="startingCapacity">Initial backing-array capacity.</param>
+        /// <param name="maxCapacity">
+        /// Maximum backing-array capacity the stack may grow to. A value of <c>0</c> or less means unbounded growth.
+        /// </param>
+        public FastStack(int startingCapacity, int maxCapacity = 0)
         {
+            if (maxCapacity > 0 && startingCapacity > maxCapacity)
+            {
+                startingCapacity = maxCapacity;
+            }
+
             _storage = new T[startingCapacity];
+            _maxCapacity = maxCapacity;
         }
 
         public T this[int index]
@@ -60,10 +75,23 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
                 return;
             }
 
-            int newCapacity = _storage.Length == 0 ? 4 : _storage.Length * 2;
-            while (newCapacity < requiredCapacity)
+            if (_maxCapacity > 0 && requiredCapacity > _maxCapacity)
             {
-                newCapacity *= 2;
+                throw ScriptRuntimeException.StackOverflow();
+            }
+
+            // Grow geometrically for amortized O(1) appends. Guard the doubling against int overflow:
+            // a very large ceiling can push _storage.Length past Int32.MaxValue / 2, so fall back to the
+            // exact required size (bounded by the ceiling above) instead of looping on a wrapped value.
+            int newCapacity = _storage.Length == 0 ? 4 : _storage.Length * 2;
+            if (newCapacity < requiredCapacity)
+            {
+                newCapacity = requiredCapacity;
+            }
+
+            if (_maxCapacity > 0 && newCapacity > _maxCapacity)
+            {
+                newCapacity = _maxCapacity;
             }
 
             Array.Resize(ref _storage, newCapacity);
@@ -203,6 +231,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get { return _storage.Length; }
+        }
+
+        /// <summary>
+        /// Gets the maximum backing storage capacity, or <c>0</c> when growth is unbounded.
+        /// </summary>
+        internal int MaxCapacity
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _maxCapacity; }
         }
 
         int IList<T>.IndexOf(T item)
