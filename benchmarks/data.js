@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784221893958,
+  "lastUpdate": 1784240635574,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -1966,6 +1966,102 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
             "value": 636.476,
+            "unit": "ns",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4443200b592d3c27574a0d9d5632b7e8922dbd7e",
+          "message": "Bump codespell from 2.4.2 to 2.4.3 (#79)\n\nBumps [codespell](https://github.com/codespell-project/codespell) from\n2.4.2 to 2.4.3.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/codespell-project/codespell/releases\">codespell's\nreleases</a>.</em></p>\n<blockquote>\n<h2>v2.4.3</h2>\n<!-- raw HTML omitted -->\n<h2>What's Changed</h2>\n<ul>\n<li>Add 'radback' to dictionary with correction by <a\nhref=\"https://github.com/Flo3561\"><code>@​Flo3561</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3883\">codespell-project/codespell#3883</a></li>\n<li>Add 'repetirion' to dictionary corrections by <a\nhref=\"https://github.com/Flo3561\"><code>@​Flo3561</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3885\">codespell-project/codespell#3885</a></li>\n<li>Need to specify a version of Python version after all by <a\nhref=\"https://github.com/DimitriPapadopoulos\"><code>@​DimitriPapadopoulos</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3887\">codespell-project/codespell#3887</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3889\">codespell-project/codespell#3889</a></li>\n<li>Add cases for &quot;modulle&quot; -&gt; &quot;module&quot; by <a\nhref=\"https://github.com/utzcoz\"><code>@​utzcoz</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3888\">codespell-project/codespell#3888</a></li>\n<li>Add case &quot;auido&quot; -&gt; &quot;audio&quot; by <a\nhref=\"https://github.com/utzcoz\"><code>@​utzcoz</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3890\">codespell-project/codespell#3890</a></li>\n<li>Add credentilas-&gt;credentials and friends by <a\nhref=\"https://github.com/peternewman\"><code>@​peternewman</code></a> in\n<a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3895\">codespell-project/codespell#3895</a></li>\n<li>Add the case &quot;cubid&quot; -&gt; &quot;cubic&quot; by <a\nhref=\"https://github.com/utzcoz\"><code>@​utzcoz</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3891\">codespell-project/codespell#3891</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3897\">codespell-project/codespell#3897</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3900\">codespell-project/codespell#3900</a></li>\n<li>Bump codecov/codecov-action from 5 to 6 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3902\">codespell-project/codespell#3902</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3904\">codespell-project/codespell#3904</a></li>\n<li>Add <code>magntiude-&gt;magnitude</code> by <a\nhref=\"https://github.com/nathanjmcdougall\"><code>@​nathanjmcdougall</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3899\">codespell-project/codespell#3899</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3909\">codespell-project/codespell#3909</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3912\">codespell-project/codespell#3912</a></li>\n<li>Add the case &quot;instanc&quot; -&gt; &quot;instance&quot; by <a\nhref=\"https://github.com/utzcoz\"><code>@​utzcoz</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3896\">codespell-project/codespell#3896</a></li>\n<li>gampad -&gt; gamepad (and plural) by <a\nhref=\"https://github.com/julianstirling\"><code>@​julianstirling</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3906\">codespell-project/codespell#3906</a></li>\n<li>Add typos of <code>monotonic</code> and <code>monotonicity</code> by\n<a\nhref=\"https://github.com/nathanjmcdougall\"><code>@​nathanjmcdougall</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3898\">codespell-project/codespell#3898</a></li>\n<li>Add spelling correction for multipile(s)/vulnerabities. by <a\nhref=\"https://github.com/cfi-gb\"><code>@​cfi-gb</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3905\">codespell-project/codespell#3905</a></li>\n<li>Add 'simpilfy -&gt; simplify' by <a\nhref=\"https://github.com/alexreinking\"><code>@​alexreinking</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3913\">codespell-project/codespell#3913</a></li>\n<li>fix(packaging): prevent unwanted files and tests from being\ninstalled by <a\nhref=\"https://github.com/mikelolasagasti\"><code>@​mikelolasagasti</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3911\">codespell-project/codespell#3911</a></li>\n<li>Add skarhoj-&gt;SKAARHOJ to dictionary corrections by <a\nhref=\"https://github.com/peternewman\"><code>@​peternewman</code></a> in\n<a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3908\">codespell-project/codespell#3908</a></li>\n<li>Improve the dictionary by <a\nhref=\"https://github.com/algonell\"><code>@​algonell</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3914\">codespell-project/codespell#3914</a></li>\n<li>Add spelling correction for accorss/accors. by <a\nhref=\"https://github.com/cfi-gb\"><code>@​cfi-gb</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3916\">codespell-project/codespell#3916</a></li>\n<li>Bump autofix-ci/action from 1.3.3 to 1.3.4 by <a\nhref=\"https://github.com/dependabot\"><code>@​dependabot</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3921\">codespell-project/codespell#3921</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3923\">codespell-project/codespell#3923</a></li>\n<li>Add <code>influecer-&gt;influencer</code> and <code>influnce*</code>\ntypos to dictionary by <a\nhref=\"https://github.com/nathanjmcdougall\"><code>@​nathanjmcdougall</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3925\">codespell-project/codespell#3925</a></li>\n<li>Add typos for <code>excavate</code> and variants by <a\nhref=\"https://github.com/nathanjmcdougall\"><code>@​nathanjmcdougall</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3926\">codespell-project/codespell#3926</a></li>\n<li>Dict: Add corrections for memoy by <a\nhref=\"https://github.com/mdeweerd\"><code>@​mdeweerd</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3924\">codespell-project/codespell#3924</a></li>\n<li><code>overheda -&gt; overhead</code> by <a\nhref=\"https://github.com/George-Ogden\"><code>@​George-Ogden</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3919\">codespell-project/codespell#3919</a></li>\n<li><code>inclusize-&gt;inclusive</code> and variants by <a\nhref=\"https://github.com/George-Ogden\"><code>@​George-Ogden</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3918\">codespell-project/codespell#3918</a></li>\n<li>Add spelling corrections for authorization by <a\nhref=\"https://github.com/cfi-gb\"><code>@​cfi-gb</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3922\">codespell-project/codespell#3922</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3927\">codespell-project/codespell#3927</a></li>\n<li>Don't fix Voight by <a\nhref=\"https://github.com/DimitriPapadopoulos\"><code>@​DimitriPapadopoulos</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3929\">codespell-project/codespell#3929</a></li>\n<li>Add spelling corrections for interstect and interstection by <a\nhref=\"https://github.com/korli\"><code>@​korli</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3928\">codespell-project/codespell#3928</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3930\">codespell-project/codespell#3930</a></li>\n<li>Improve output in interactive mode by <a\nhref=\"https://github.com/darkmattercoder\"><code>@​darkmattercoder</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3884\">codespell-project/codespell#3884</a></li>\n<li>feat: support codespell:ignore-next-line directive by <a\nhref=\"https://github.com/SAY-5\"><code>@​SAY-5</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3931\">codespell-project/codespell#3931</a></li>\n<li>Add woork-&gt;work and formace-&gt;format and friends by <a\nhref=\"https://github.com/peternewman\"><code>@​peternewman</code></a> in\n<a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3828\">codespell-project/codespell#3828</a></li>\n<li>shortctu -&gt; shortcut by <a\nhref=\"https://github.com/George-Ogden\"><code>@​George-Ogden</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3934\">codespell-project/codespell#3934</a></li>\n<li>A couple typos by <a\nhref=\"https://github.com/DimitriPapadopoulos\"><code>@​DimitriPapadopoulos</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3935\">codespell-project/codespell#3935</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3937\">codespell-project/codespell#3937</a></li>\n<li>[pre-commit.ci] pre-commit autoupdate by <a\nhref=\"https://github.com/pre-commit-ci\"><code>@​pre-commit-ci</code></a>[bot]\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3942\">codespell-project/codespell#3942</a></li>\n<li>reclaculate-&gt;recalculate by <a\nhref=\"https://github.com/adamgann\"><code>@​adamgann</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3936\">codespell-project/codespell#3936</a></li>\n<li>Add spelling correction for improprt. by <a\nhref=\"https://github.com/cfi-gb\"><code>@​cfi-gb</code></a> in <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3939\">codespell-project/codespell#3939</a></li>\n<li>Dictionary plasic-plastic by <a\nhref=\"https://github.com/julianstirling\"><code>@​julianstirling</code></a>\nin <a\nhref=\"https://redirect.github.com/codespell-project/codespell/pull/3938\">codespell-project/codespell#3938</a></li>\n</ul>\n<!-- raw HTML omitted -->\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/57b21406f092110c18776e39b0bda50d37c945c8\"><code>57b2140</code></a>\nRead only [tool.codespell] from TOML config (<a\nhref=\"https://redirect.github.com/codespell-project/codespell/issues/3975\">#3975</a>)</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/23b8d940332bcff6369872b53964d4137c586728\"><code>23b8d94</code></a>\n[pre-commit.ci] pre-commit autoupdate</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/926c4d6ff083acc62bc04c102e0a9b2091d754f1\"><code>926c4d6</code></a>\n[pre-commit.ci] pre-commit autoupdate</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/820a3011e0bfe3f90789ba41e751a26656bea7ab\"><code>820a301</code></a>\nMerge pull request <a\nhref=\"https://redirect.github.com/codespell-project/codespell/issues/3967\">#3967</a>\nfrom codespell-project/peternewman-patch-1</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/9fe42c964c90f65a9a2841847af4e093c67ec817\"><code>9fe42c9</code></a>\nAdd common misspellings for reseeve-&gt;reserve to dictionary</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/725173c815cee1b781b85ec51eb43dc4f51dcd0f\"><code>725173c</code></a>\n[pre-commit.ci] pre-commit autoupdate</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/86c13ee4dce0010e8d8119ded33694806e37ca8f\"><code>86c13ee</code></a>\n[pre-commit.ci] pre-commit autoupdate</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/7b9f36ce634c551107a3a4a5c25782a2245d7658\"><code>7b9f36c</code></a>\nBump actions/checkout from 6 to 7</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/bcc1b804a83b8a146586101431b063c07cfcc699\"><code>bcc1b80</code></a>\nAdd spelling corrections for simpe and variants.</li>\n<li><a\nhref=\"https://github.com/codespell-project/codespell/commit/89584cc1479d0f8dbfd501925673b6be6d460fe1\"><code>89584cc</code></a>\n[pre-commit.ci] pre-commit autoupdate</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/codespell-project/codespell/compare/v2.4.2...v2.4.3\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Single dev-dependency version bump with no runtime or application\nlogic changes.\n> \n> **Overview**\n> Updates the pinned **codespell** version in `requirements.tooling.txt`\nfrom **2.4.2** to **2.4.3**, so devcontainer setup, pre-commit spelling\naudits, and CI use the newer release (expanded dictionary and tooling\nfixes upstream; no repo code changes).\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n9b0e8e23af31f15119d602f06636422ebff0eb7b. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-07-16T15:18:14-07:00",
+          "tree_id": "59df3fdaeab6fb4971680abf1b0326aa83b65735",
+          "url": "https://github.com/wallstop/NovaSharp/commit/4443200b592d3c27574a0d9d5632b7e8922dbd7e"
+        },
+        "date": 1784240634860,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 0)",
+            "value": 380.929,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 0)",
+            "value": 396.823,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 0)",
+            "value": 406.647,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 1)",
+            "value": 551.32,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 1)",
+            "value": 534.167,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 1)",
+            "value": 538.297,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 2)",
+            "value": 563.421,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 2)",
+            "value": 590.833,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 2)",
+            "value": 565.771,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.ScriptCallFixedArity(Arity: 3)",
+            "value": 590.636,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaEngineCallFixedArity(Arity: 3)",
+            "value": 630.562,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarksB0FacadeCallOverhead.LuaFunctionCallFixedArity(Arity: 3)",
+            "value": 614.668,
             "unit": "ns",
             "extra": ""
           }
