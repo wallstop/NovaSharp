@@ -83,7 +83,7 @@ jobs:
         shell: bash
 
       - name: Setup .NET (formatting gate)
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
       - name: Restore dotnet tools
@@ -142,7 +142,7 @@ jobs:
       # Lint checks already passed in the 'lint' job (this job has needs: lint).
       # Skip redundant branding/namespace/naming/spelling/documentation/fixture-catalog steps.
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
           cache: true
@@ -189,7 +189,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.tooling.txt
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
           # Note: cache not needed here - this job only runs formatters, not restore
@@ -234,7 +234,7 @@ jobs:
       # Lint checks already passed in the 'lint' job.
       # Skip redundant branding/namespace checks.
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
           cache: true
@@ -667,7 +667,7 @@ jobs:
           & "$LuaBinDir\lua.exe" -v
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
           cache: true
