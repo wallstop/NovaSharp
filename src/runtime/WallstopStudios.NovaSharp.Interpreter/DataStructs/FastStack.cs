@@ -1,7 +1,6 @@
+#if !USE_DYNAMIC_STACKS
 namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
 {
-#if !USE_DYNAMIC_STACKS
-
     using System;
     using System.Collections.Generic;
     using System.Runtime.CompilerServices;

@@ -31,6 +31,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataStructs
             _maxCapacity = maxCapacity;
         }
 
+        /// <summary>
+        /// Gets the maximum element count the stack may grow to, or <c>0</c> when growth is unbounded.
+        /// Mirrors the array-backed <c>FastStack.MaxCapacity</c> so the baked-ceiling contract holds under
+        /// the <c>USE_DYNAMIC_STACKS</c> profiling build.
+        /// </summary>
+        internal int MaxCapacity
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get { return _maxCapacity; }
+        }
+
         private void GuardGrowth(int requiredCount)
         {
             if (_maxCapacity > 0 && requiredCount > _maxCapacity)
