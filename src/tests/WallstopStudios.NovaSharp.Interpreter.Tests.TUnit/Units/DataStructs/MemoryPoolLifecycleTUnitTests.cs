@@ -605,9 +605,20 @@ return recurse(80)
                 funcFriendlyName: "coroutine_ref"
             );
 
-            CreateTransientCoroutines(script, function, 300);
+            // Hold the first batch strongly alive so the tracked count reflects every one of them,
+            // independent of GC timing. Transient coroutines can be collected (and pruned) mid-creation,
+            // which made the "before" count nondeterministic and this test flaky on some runners.
+            DynValue[] retained = new DynValue[300];
+            for (int i = 0; i < retained.Length; i++)
+            {
+                retained[i] = script.CreateCoroutine(function);
+            }
             int before = script.GetTrackedCoroutineCountForMemoryStatisticsForTests();
 
+            // Release the first batch and force collection so its weak references become dead, then register
+            // enough new coroutines to cross the prune interval: dead references must drop from the list.
+            Array.Clear(retained, 0, retained.Length);
+            retained = null;
             ForceFullCollection();
             CreateTransientCoroutines(script, function, 256);
             int after = script.GetTrackedCoroutineCountForMemoryStatisticsForTests();
