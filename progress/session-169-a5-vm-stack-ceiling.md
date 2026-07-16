@@ -61,13 +61,22 @@ This session makes NovaSharp match that contract.
 - `python3 tools/test_lua_fixture_metadata.py`: OK.
 - Reference Lua 5.1-5.4 + NovaSharp CLI parity confirmed for the fixture.
 
-## Notes / Observations
+## Review loop
 
-- Pre-existing flaky test observed (unrelated to this change):
+- Cursor Bugbot flagged two issues on the first push, both fixed in a follow-up commit:
+  - Medium: child coroutine processors re-read live `ScriptOptions` instead of the ceiling baked at script
+    creation, so a post-creation option mutation could give coroutines a different ceiling. Fixed by having
+    child processors inherit `parentProcessor._valueStack.MaxCapacity` / `._executionStack.MaxCapacity`.
+  - Low: `FastStack.EnsureCapacity`'s geometric-doubling loop could integer-overflow and spin forever for a
+    ceiling above ~`Int32.MaxValue / 2`. Fixed by growing to exactly the required size (bounded by the
+    ceiling) when doubling is insufficient or would overflow. Added regression tests for both.
+  - Copilot was unable to review (account quota reached).
+- Pre-existing flaky test surfaced on macOS CI and hardened in this PR (fragile-check rewrite):
   `MemoryPoolLifecycleTUnitTests.CoroutineMemoryStatisticsTrackingPrunesDeadReferencesOnRegistration`
-  intermittently fails its `before >= 300` assertion. `before` is a weak-reference count of transient
-  coroutines subject to GC collecting them mid-loop; it is independent of the stack-ceiling change (which
-  touches no coroutine tracking or memory statistics). Left for a separate, focused hardening.
+  asserted `before >= 300` on the raw weak-reference list count, but pruning fires once the 256 prune
+  interval is crossed mid-creation, and GC collected the transient coroutines first (macOS found 118). The
+  first batch is now held strongly alive through the `before` read; the assertion is deterministic and the
+  behavior under test is unchanged. Independent of the stack-ceiling change.
 
 ## Remaining A5 work
 
