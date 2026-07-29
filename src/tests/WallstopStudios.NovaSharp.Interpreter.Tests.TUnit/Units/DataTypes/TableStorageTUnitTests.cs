@@ -527,6 +527,57 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             }
         }
 
+        /// <summary>
+        /// Compaction must shrink an oversized array part too, not only reclaim hash nodes.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CollectingArrayOnlyNilsShrinksTheArrayPart(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateTrackedScript(version);
+            Table table = new(script);
+
+            // No hash keys at all, so nothing on the hash side can trigger the rebuild.
+            for (int i = 1; i <= 100; i++)
+            {
+                table.Set(i, DynValue.NewNumber(i));
+            }
+
+            long filled = script.AllocationTracker.CurrentBytes;
+
+            for (int i = 41; i <= 100; i++)
+            {
+                table.Set(i, DynValue.Nil);
+            }
+
+            table.CollectDeadKeys();
+
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsLessThan(filled)
+                .ConfigureAwait(false);
+
+            await Assert.That(table.Count).IsEqualTo(40).ConfigureAwait(false);
+            await Assert.That(table.Length).IsEqualTo(40).ConfigureAwait(false);
+            for (int i = 1; i <= 40; i++)
+            {
+                await Assert.That(table.RawGet(i).Number).IsEqualTo(i).ConfigureAwait(false);
+            }
+
+            await Assert.That(table.RawGet(41)).IsNull().ConfigureAwait(false);
+
+            // The shrunken store must still grow again cleanly.
+            for (int i = 41; i <= 120; i++)
+            {
+                table.Set(i, DynValue.NewNumber(i));
+            }
+
+            await Assert.That(table.Length).IsEqualTo(120).ConfigureAwait(false);
+            await Assert.That(table.RawGet(120).Number).IsEqualTo(120).ConfigureAwait(false);
+        }
+
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task ManyCollidingStringKeysStayIndividuallyAddressable(

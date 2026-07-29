@@ -296,6 +296,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public void CollectDeadKeys()
         {
+            bool reclaimed = false;
+
             DynValue[] array = _array;
             if (array != null)
             {
@@ -306,6 +308,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                     {
                         array[i] = null;
                         _arrayCount--;
+                        reclaimed = true;
                     }
                 }
             }
@@ -321,13 +324,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                         node.key = null;
                         node.value = null;
                         _deadCount++;
+                        reclaimed = true;
                     }
                 }
+            }
 
-                if (_deadCount > 0)
-                {
-                    Rehash(0, hasPendingEntry: false);
-                }
+            // Rebuild whenever anything was reclaimed, not just when a hash node died. A table whose
+            // nils all lived in the array part would otherwise keep an array sized for keys it no
+            // longer holds, and keep it charged against the sandbox memory limit. _deadCount is
+            // checked too so nodes removed earlier by Remove() are compacted here as well.
+            if (reclaimed || _deadCount > 0)
+            {
+                Rehash(0, hasPendingEntry: false);
             }
         }
 
