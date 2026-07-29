@@ -495,6 +495,38 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             await Assert.That(table.Count).IsEqualTo(9).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Non-positive integer keys sit outside the array key space, so writing and removing them
+        /// must leave the border alone.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task NonPositiveKeysDoNotDisturbTheBorder(LuaCompatibilityVersion version)
+        {
+            Table table = new(new Script(version));
+            for (int i = 1; i <= 6; i++)
+            {
+                table.Set(i, DynValue.NewNumber(i));
+            }
+
+            await Assert.That(table.Length).IsEqualTo(6).ConfigureAwait(false);
+
+            table.Set(0, DynValue.NewString("zero"));
+            table.Set(-4, DynValue.NewString("negative"));
+            await Assert.That(table.Length).IsEqualTo(6).ConfigureAwait(false);
+
+            await Assert.That(table.Remove(0)).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.Remove(-4)).IsTrue().ConfigureAwait(false);
+            await Assert.That(table.Remove(-999)).IsFalse().ConfigureAwait(false);
+
+            await Assert.That(table.Length).IsEqualTo(6).ConfigureAwait(false);
+            await Assert.That(table.Count).IsEqualTo(6).ConfigureAwait(false);
+            for (int i = 1; i <= 6; i++)
+            {
+                await Assert.That(table.RawGet(i).Number).IsEqualTo(i).ConfigureAwait(false);
+            }
+        }
+
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task ManyCollidingStringKeysStayIndividuallyAddressable(

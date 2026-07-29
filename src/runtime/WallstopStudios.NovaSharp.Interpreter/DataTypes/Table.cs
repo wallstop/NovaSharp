@@ -865,9 +865,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(int key)
         {
-            bool removed =
-                key > 0 ? _storage.RemoveInt(key) : _storage.RemoveValue(DynValue.FromNumber(key));
-            return OnEntryRemoved(removed, true);
+            // Non-positive keys are not part of the array key space, so they route -- and report --
+            // exactly as Set(int) and Remove(DynValue) do for the same key.
+            bool isArrayKey = key > 0;
+            bool removed = isArrayKey
+                ? _storage.RemoveInt(key)
+                : _storage.RemoveValue(DynValue.FromNumber(key));
+            return OnEntryRemoved(removed, isArrayKey);
         }
 
         /// <summary>
