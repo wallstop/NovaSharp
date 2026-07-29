@@ -25,8 +25,8 @@ For fast iterative development, use the quick build and test scripts:
 - `test/` — Quick test runner (`quick.sh`) with filtering support for fast iterative testing.
 - `tests/` — Lua specification parity harnesses, the aggregate Lua comparison report renderer (`render-lua-comparison-report.py`), and test utilities.
 - `packaging/` — NuGet and Unity package builders (`build-unity-package.ps1` / `build-unity-package.sh`) that produce UPM-compatible packages. CI integration via `.github/workflows/nuget-publish.yml` handles NuGet.org and GitHub Packages publishing.
-- `ci/` — Repository health guards (e.g., README/link enforcement) that run locally or in CI before builds/tests execute.
-- `dev/` — Local developer utilities, including the shared pre-commit hook installer/driver that auto-fixes formatting issues before commits and `github-auth-session.sh`, which reads a GitHub PAT and exports it as `GH_TOKEN` for the current shell only, without writing it to disk.
+- `ci/` — Repository health guards (e.g., README/link enforcement, GitHub Pages Liquid syntax) that run locally or in CI before builds/tests execute.
+- `dev/` — Local developer utilities, including the shared pre-commit hook installer/driver and GitHub CLI authentication helpers for either the current shell or every shell in the current container.
 - `branding/` — Guardrail scripts (e.g., `ensure-novasharp-branding.sh`) that prevent regressions to the legacy brand.
 - `lint/` — Static analysis helpers that enforce test isolation patterns (console capture coordination, platform hooks, temp path usage, userdata scoping), prevent manual `finally` blocks in tests, guard VM hot paths against new allocation traps, and keep developer tooling setup aligned.
 - `modernization/` — One-off helpers such as `generate-moonsharp-audit.ps1` used during the modernization campaign.
