@@ -1,5 +1,6 @@
 namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 {
+    using System;
     using System.Collections.Generic;
     using System.Globalization;
     using System.Threading.Tasks;
@@ -273,6 +274,177 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 .That(script.AllocationTracker.CurrentBytes)
                 .IsEqualTo(empty)
                 .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Drives the storage through a long deterministic mix of writes, nil writes, removals, and
+        /// dead-key collection, checking it against a dictionary model after every step.
+        /// </summary>
+        /// <remarks>
+        /// Array/hash rebalancing happens on rehash, so the interesting states are the ones where a
+        /// key migrates between the parts or a slot is reclaimed. Enumerating those by hand misses
+        /// cases; this drives them out instead. The seed is fixed so a failure reproduces exactly.
+        /// </remarks>
+        [global::TUnit.Core.Test]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 20260729)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54, 8675309)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51, 1234567)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53, 424242)]
+        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55, 99991)]
+        public async Task RandomizedOperationsTrackADictionaryModel(
+            LuaCompatibilityVersion version,
+            int seed
+        )
+        {
+            Table table = new(new Script(version));
+
+            // The model holds every key the table should report, including keys whose value is nil,
+            // because writing nil creates an entry the table still counts and can traverse.
+            Dictionary<string, DynValue> model = new();
+
+            // A local xorshift keeps the sequence reproducible without System.Random, which the
+            // analyzers reject even for test data.
+            uint state = (uint)seed | 1u;
+            int Next(int minValue, int maxValue)
+            {
+                state ^= state << 13;
+                state ^= state >> 17;
+                state ^= state << 5;
+                return minValue + (int)(state % (uint)(maxValue - minValue));
+            }
+
+            string KeyName(int kind, int index)
+            {
+                return (kind == 0 ? "i:" : "s:") + index.ToString(CultureInfo.InvariantCulture);
+            }
+
+            void DropNilEntries()
+            {
+                foreach (string dead in new List<string>(model.Keys))
+                {
+                    if (model[dead].IsNil())
+                    {
+                        model.Remove(dead);
+                    }
+                }
+            }
+
+            // Mirrors Table._containsNilEntries: writing nil arms it, and the table collects dead
+            // keys by itself on the next insert of a fresh key, without the caller asking.
+            bool containsNilEntries = false;
+
+            void Write(int kind, int index, DynValue value)
+            {
+                string name = KeyName(kind, index);
+                bool hadEntry = model.TryGetValue(name, out DynValue previous);
+
+                if (kind == 0)
+                {
+                    table.Set(index, value);
+                }
+                else
+                {
+                    table.Set("field" + index.ToString(CultureInfo.InvariantCulture), value);
+                }
+
+                model[name] = value;
+
+                if (containsNilEntries && !value.IsNil() && (!hadEntry || previous.IsNil()))
+                {
+                    DropNilEntries();
+                    containsNilEntries = false;
+                }
+                else if (value.IsNil())
+                {
+                    containsNilEntries = true;
+                }
+            }
+
+            for (int step = 0; step < 4000; step++)
+            {
+                int kind = Next(0, 2);
+
+                // Mix a dense prefix (which should migrate into the array part) with sparse keys
+                // (which must stay in the hash part).
+                int index = kind == 0 && Next(0, 4) != 0 ? Next(1, 90) : Next(1, 40000);
+
+                switch (Next(0, 10))
+                {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                        Write(kind, index, DynValue.NewNumber(step));
+                        break;
+                    case 5:
+                    case 6:
+                        Write(kind, index, DynValue.Nil);
+                        break;
+                    case 7:
+                    case 8:
+                        if (kind == 0)
+                        {
+                            table.Remove(index);
+                        }
+                        else
+                        {
+                            table.Remove("field" + index.ToString(CultureInfo.InvariantCulture));
+                        }
+
+                        model.Remove(KeyName(kind, index));
+                        if (model.Count == 0)
+                        {
+                            // Emptying the table also resets its nil-entry flag.
+                            containsNilEntries = false;
+                        }
+
+                        break;
+                    default:
+                        table.CollectDeadKeys();
+                        DropNilEntries();
+                        containsNilEntries = false;
+                        break;
+                }
+
+                if (step % 97 != 0)
+                {
+                    continue;
+                }
+
+                await Assert.That(table.Count).IsEqualTo(model.Count).ConfigureAwait(false);
+
+                Dictionary<string, DynValue> traversed = new();
+                foreach (TablePair pair in table.GetPairsEnumerator())
+                {
+                    string name =
+                        pair.Key.Type == DataType.String
+                            ? string.Concat("s:", pair.Key.String.AsSpan("field".Length))
+                            : "i:" + ((int)pair.Key.Number).ToString(CultureInfo.InvariantCulture);
+
+                    await Assert.That(traversed.ContainsKey(name)).IsFalse().ConfigureAwait(false);
+                    traversed[name] = pair.Value;
+                }
+
+                await Assert.That(traversed.Count).IsEqualTo(model.Count).ConfigureAwait(false);
+
+                foreach (KeyValuePair<string, DynValue> entry in model)
+                {
+                    await Assert
+                        .That(traversed.ContainsKey(entry.Key))
+                        .IsTrue()
+                        .ConfigureAwait(false);
+
+                    string[] parts = entry.Key.Split(':');
+                    DynValue read =
+                        parts[0] == "i"
+                            ? table.RawGet(int.Parse(parts[1], CultureInfo.InvariantCulture))
+                            : table.RawGet("field" + parts[1]);
+
+                    await Assert.That(read).IsNotNull().ConfigureAwait(false);
+                    await Assert.That(read.Equals(entry.Value)).IsTrue().ConfigureAwait(false);
+                }
+            }
         }
 
         [global::TUnit.Core.Test]
