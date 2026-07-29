@@ -24,24 +24,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </remarks>
         internal DynValue CachedDynValue { get; set; }
 
-        // Estimated base memory overhead for an empty Table (LinkedList, three indexes, metadata).
-        // This is a conservative estimate: 4 object headers + 3 dictionary overheads + misc.
-        private const int BaseTableOverhead = 256;
+        // Estimated fixed cost of an empty Table: object header, field storage, and the empty
+        // TableStorage. The array/node/bucket tables are accounted separately as they are allocated.
+        private const int BaseTableOverhead = 96;
 
-        // Estimated overhead per entry (LinkedListNode, TablePair struct, dictionary entry overhead).
-        private const int PerEntryOverhead = 64;
-
-        private readonly LinkedList<TablePair> _values;
-        private readonly LinkedListIndex<DynValue, TablePair> _valueMap;
-        private readonly LinkedListIndex<string, TablePair> _stringMap;
-        private readonly LinkedListIndex<int, TablePair> _arrayMap;
+        private TableStorage _storage;
         private readonly Script _owner;
 
         private int _initArray;
         private int _constructorArrayLength;
         private int _cachedLength = -1;
         private bool _containsNilEntries;
-        private int _trackedEntryCount;
+        private long _trackedBytes;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Table"/> class.
@@ -49,10 +43,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="owner">The owner script.</param>
         public Table(Script owner)
         {
-            _values = new LinkedList<TablePair>();
-            _stringMap = new LinkedListIndex<string, TablePair>(_values);
-            _arrayMap = new LinkedListIndex<int, TablePair>(_values);
-            _valueMap = new LinkedListIndex<DynValue, TablePair>(_values);
             _owner = owner;
 
             // Track initial allocation if memory tracking is enabled
@@ -61,6 +51,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             {
                 tracker.RecordAllocation(BaseTableOverhead);
             }
+
+            _trackedBytes = BaseTableOverhead;
         }
 
         /// <summary>
@@ -95,21 +87,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public void Clear()
         {
-            AllocationTracker tracker = _owner?.AllocationTracker;
-            if (tracker != null && _trackedEntryCount > 0)
-            {
-                tracker.RecordDeallocation((long)_trackedEntryCount * PerEntryOverhead);
-            }
-
-            _values.Clear();
-            _stringMap.Clear();
-            _arrayMap.Clear();
-            _valueMap.Clear();
+            _storage.Clear();
             _initArray = 0;
             _constructorArrayLength = 0;
             _cachedLength = -1;
             _containsNilEntries = false;
-            _trackedEntryCount = 0;
+            SyncTrackedMemory();
+        }
+
+        /// <summary>
+        /// Reports the storage currently retained by this table to the owner's allocation tracker.
+        /// </summary>
+        /// <remarks>
+        /// The tracker reflects the array, node, and bucket tables actually held, so a table that
+        /// stays large after its entries are nil'd keeps counting against a sandbox memory limit.
+        /// </remarks>
+        private void SyncTrackedMemory()
+        {
+            AllocationTracker tracker = _owner?.AllocationTracker;
+            if (tracker == null)
+            {
+                return;
+            }
+
+            long current = BaseTableOverhead + _storage.StructuralBytes;
+            long delta = current - _trackedBytes;
+            if (delta > 0)
+            {
+                tracker.RecordAllocation(delta);
+            }
+            else if (delta < 0)
+            {
+                tracker.RecordDeallocation(-delta);
+            }
+
+            _trackedBytes = current;
         }
 
         /// <summary>
@@ -272,37 +284,37 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             this.CheckScriptOwnership(value);
-            PerformTableSet(
-                _arrayMap,
-                Length + 1,
-                DynValue.FromNumber(Length + 1),
-                value,
-                true,
-                Length + 1
-            );
+            int appendKey = Length + 1;
+            DynValue previous = _storage.SetInt(appendKey, value);
+            OnEntryWritten(previous, value, true, appendKey, appendKey);
         }
 
-        private void PerformTableSet<T>(
-            LinkedListIndex<T, TablePair> listIndex,
-            T key,
-            DynValue keyDynValue,
+        /// <summary>
+        /// Updates the derived border/nil bookkeeping after an entry has been written to storage.
+        /// </summary>
+        /// <param name="prev">The value the key held before the write, or <c>null</c> when it was absent.</param>
+        /// <param name="value">The value just written.</param>
+        /// <param name="isNumber">Whether the key travelled the integer route.</param>
+        /// <param name="numericKey">The integer key when <paramref name="isNumber"/> is set; otherwise zero.</param>
+        /// <param name="appendKey">The key being appended for the array fast path, or -1.</param>
+        /// <param name="isConstructorField">Whether the write came from a table constructor.</param>
+        private void OnEntryWritten(
+            DynValue prev,
             DynValue value,
             bool isNumber,
+            int numericKey,
             int appendKey,
             bool isConstructorField = false
         )
         {
-            TablePair prev = listIndex.Set(key, new TablePair(keyDynValue, value));
-            bool writesNilToMissingKey =
-                value.IsNil() && (prev.Value == null || prev.Value.IsNil());
+            bool writesNilToMissingKey = value.IsNil() && (prev == null || prev.IsNil());
             bool targetsConstructorArrayField =
                 !isConstructorField
                 && _constructorArrayLength > 0
                 && isNumber
-                && key is int arrayIndex
-                && arrayIndex > 0
-                && arrayIndex <= _constructorArrayLength
-                && prev.Value != null;
+                && numericKey > 0
+                && numericKey <= _constructorArrayLength
+                && prev != null;
             bool preservesLua54AbsentNilWrite =
                 !isConstructorField
                 && _constructorArrayLength > 0
@@ -313,7 +325,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 && _constructorArrayLength > 0
                 && isNumber
                 && value.IsNil()
-                && prev.Value == null
+                && prev == null
                 && ResolveCompatibilityVersion() != LuaCompatibilityVersion.Lua54;
             bool preservesConstructorArrayLength =
                 !clearsAbsentNumericNilWrite
@@ -333,26 +345,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _cachedLength = -1;
             }
 
-            // Track entry additions/removals for memory accounting
-            AllocationTracker tracker = _owner?.AllocationTracker;
-            if (tracker != null)
-            {
-                bool wasEmpty = prev.Value == null || prev.Value.IsNil();
-                bool isNowEmpty = value.IsNil();
-
-                if (wasEmpty && !isNowEmpty)
-                {
-                    // New entry added
-                    tracker.RecordAllocation(PerEntryOverhead);
-                    _trackedEntryCount++;
-                }
-                else if (!wasEmpty && isNowEmpty)
-                {
-                    // Entry removed (set to nil)
-                    tracker.RecordDeallocation(PerEntryOverhead);
-                    _trackedEntryCount--;
-                }
-            }
+            SyncTrackedMemory();
 
             // If this is an insert, we can invalidate all iterators and collect dead keys
             if (
@@ -360,7 +353,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 && !preservesConstructorArrayLength
                 && _containsNilEntries
                 && value.IsNotNil()
-                && (prev.Value == null || prev.Value.IsNil())
+                && (prev == null || prev.IsNil())
             )
             {
                 CollectDeadKeys();
@@ -378,18 +371,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             else if (isNumber)
             {
                 // If this is an array insert, we might have to invalidate the array length
-                if (prev.Value == null || prev.Value.IsNilOrNan())
+                if (prev == null || prev.IsNilOrNan())
                 {
                     // If this is an array append, let's check the next element before blindly invalidating
                     if (appendKey >= 0)
                     {
-                        LinkedListNode<TablePair> next = _arrayMap.Find(appendKey + 1);
-                        if (
-                            _cachedLength >= 0
-                            && (
-                                next == null || next.Value.Value == null || next.Value.Value.IsNil()
-                            )
-                        )
+                        DynValue next = _storage.GetInt(appendKey + 1);
+                        if (_cachedLength >= 0 && (next == null || next.IsNil()))
                         {
                             _cachedLength += 1;
                         }
@@ -424,7 +412,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             this.CheckScriptOwnership(value);
-            PerformTableSet(_stringMap, key, DynValue.NewString(key), value, false, -1);
+            DynValue previous = _storage.SetString(key, value);
+            OnEntryWritten(previous, value, false, 0, -1);
         }
 
         /// <summary>
@@ -440,7 +429,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             this.CheckScriptOwnership(value);
-            PerformTableSet(_arrayMap, key, DynValue.FromNumber(key), value, true, -1);
+
+            if (key <= 0)
+            {
+                // Non-positive integers are not part of the array key space; route them exactly like
+                // the equivalent Lua key so host and script writes address the same entry.
+                DynValue nonPositiveKey = DynValue.FromNumber(key);
+                DynValue replaced = _storage.SetValue(nonPositiveKey, value);
+                OnEntryWritten(replaced, value, false, 0, -1);
+                return;
+            }
+
+            DynValue previous = _storage.SetInt(key, value);
+            OnEntryWritten(previous, value, true, key, -1);
         }
 
         /// <summary>
@@ -492,10 +493,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(key);
             this.CheckScriptOwnership(value);
 
-            // Ensure key stability in _valueMap by making it readonly to prevent hash corruption
-            DynValue stableKey = key;
-
-            PerformTableSet(_valueMap, stableKey, stableKey, value, false, -1);
+            DynValue previous = _storage.SetValue(key, value);
+            OnEntryWritten(previous, value, false, 0, -1);
         }
 
         /// <summary>
@@ -699,11 +698,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return RawGet(key1, key2, key3) ?? DynValue.Nil;
         }
 
-        private static DynValue RawGetValue(LinkedListNode<TablePair> linkedListNode)
-        {
-            return linkedListNode?.Value.Value;
-        }
-
         /// <summary>
         /// Gets the value associated with the specified key,
         /// without bringing to Nil the non-existent values.
@@ -711,7 +705,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(string key)
         {
-            return RawGetValue(_stringMap.Find(key));
+            return key == null ? null : _storage.GetString(key);
         }
 
         /// <summary>
@@ -721,7 +715,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <param name="key">The key.</param>
         public DynValue RawGet(int key)
         {
-            return RawGetValue(_arrayMap.Find(key));
+            return key > 0 ? _storage.GetInt(key) : _storage.GetValue(DynValue.FromNumber(key));
         }
 
         /// <summary>
@@ -752,7 +746,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 }
             }
 
-            return RawGetValue(_valueMap.Find(key));
+            return _storage.GetValue(key);
         }
 
         /// <summary>
@@ -826,20 +820,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return ResolveNestedKeys(key1, key2, key3, out object key).RawGet(key);
         }
 
-        private bool PerformTableRemove<T>(
-            LinkedListIndex<T, TablePair> listIndex,
-            T key,
-            bool isNumber
-        )
+        private bool OnEntryRemoved(bool removed, bool isNumber)
         {
-            LinkedListNode<TablePair> node = listIndex.Find(key);
-            if (node == null)
-            {
-                return false;
-            }
-
-            bool removedNonNil = node.Value.Value != null && node.Value.Value.IsNotNil();
-            bool removed = listIndex.Remove(key);
             if (!removed)
             {
                 return false;
@@ -855,13 +837,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 _cachedLength = -1;
             }
 
-            AllocationTracker tracker = _owner?.AllocationTracker;
-            if (tracker != null && removedNonNil)
+            if (_storage.Count == 0)
             {
-                tracker.RecordDeallocation(PerEntryOverhead);
-                _trackedEntryCount--;
+                // An emptied table should not keep holding its tables against a memory limit.
+                _storage.Clear();
+                _containsNilEntries = false;
             }
 
+            SyncTrackedMemory();
             return true;
         }
 
@@ -872,7 +855,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(string key)
         {
-            return PerformTableRemove(_stringMap, key, false);
+            return key != null && OnEntryRemoved(_storage.RemoveString(key), false);
         }
 
         /// <summary>
@@ -882,7 +865,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if values was successfully removed; otherwise, <c>false</c>.</returns>
         public bool Remove(int key)
         {
-            return PerformTableRemove(_arrayMap, key, true);
+            // Non-positive keys are not part of the array key space, so they route -- and report --
+            // exactly as Set(int) and Remove(DynValue) do for the same key.
+            bool isArrayKey = key > 0;
+            bool removed = isArrayKey
+                ? _storage.RemoveInt(key)
+                : _storage.RemoveValue(DynValue.FromNumber(key));
+            return OnEntryRemoved(removed, isArrayKey);
         }
 
         /// <summary>
@@ -913,7 +902,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 }
             }
 
-            return PerformTableRemove(_valueMap, key, false);
+            return OnEntryRemoved(_storage.RemoveValue(key), false);
         }
 
         /// <summary>
@@ -985,94 +974,90 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public void CollectDeadKeys()
         {
-            for (LinkedListNode<TablePair> node = _values.First; node != null; )
-            {
-                LinkedListNode<TablePair> next = node.Next;
-                if (node.Value.Value.IsNil())
-                {
-                    Remove(node.Value.Key);
-                }
+            _storage.CollectDeadKeys();
 
-                node = next;
+            if (_storage.Count == 0)
+            {
+                _storage.Clear();
             }
 
             _containsNilEntries = false;
             _constructorArrayLength = 0;
             _cachedLength = -1;
+            SyncTrackedMemory();
         }
 
         /// <summary>
         /// Returns the next pair from a value
         /// </summary>
+        /// <returns>
+        /// The next non-nil pair, <see cref="TablePair.Nil"/> once the traversal is exhausted, or
+        /// <c>null</c> when <paramref name="v"/> is not a key of this table.
+        /// </returns>
         public TablePair? NextKey(DynValue v)
         {
-            while (true)
+            if (v == null)
             {
-                if (v == null)
-                {
-                    throw new ArgumentNullException(nameof(v));
-                }
-
-                if (v.IsNil())
-                {
-                    LinkedListNode<TablePair> node = _values.First;
-
-                    if (node == null)
-                    {
-                        return TablePair.Nil;
-                    }
-
-                    if (!node.Value.Value.IsNil())
-                    {
-                        return node.Value;
-                    }
-
-                    v = node.Value.Key;
-                    continue;
-                }
-
-                switch (v.Type)
-                {
-                    case DataType.String:
-                        return GetNextOf(_stringMap.Find(v.String));
-                    case DataType.Number:
-                    {
-                        int idx = GetIntegralKey(v.Number);
-
-                        if (idx > 0)
-                        {
-                            return GetNextOf(_arrayMap.Find(idx));
-                        }
-
-                        break;
-                    }
-                }
-
-                return GetNextOf(_valueMap.Find(v));
+                throw new ArgumentNullException(nameof(v));
             }
+
+            int arrayIndex;
+            int nodeIndex;
+            if (v.IsNil())
+            {
+                arrayIndex = 0;
+                nodeIndex = 0;
+            }
+            else if (!TryLocateKey(v, out arrayIndex, out nodeIndex))
+            {
+                return null;
+            }
+
+            return _storage.TryAdvance(
+                ref arrayIndex,
+                ref nodeIndex,
+                skipNilValues: true,
+                out TablePair pair
+            )
+                ? pair
+                : TablePair.Nil;
         }
 
-        private static TablePair? GetNextOf(LinkedListNode<TablePair> linkedListNode)
+        /// <summary>
+        /// Resolves the traversal cursor that sits immediately after <paramref name="key"/>.
+        /// </summary>
+        private bool TryLocateKey(DynValue key, out int arrayIndex, out int nodeIndex)
         {
-            while (true)
+            switch (key.Type)
             {
-                if (linkedListNode == null)
+                case DataType.String:
+                    return _storage.TryLocateString(key.String, out arrayIndex, out nodeIndex);
+                case DataType.Number:
                 {
-                    return null;
-                }
+                    int idx = GetIntegralKey(key.Number);
+                    if (idx > 0)
+                    {
+                        return _storage.TryLocateInt(idx, out arrayIndex, out nodeIndex);
+                    }
 
-                if (linkedListNode.Next == null)
-                {
-                    return TablePair.Nil;
-                }
-
-                linkedListNode = linkedListNode.Next;
-
-                if (!linkedListNode.Value.Value.IsNil())
-                {
-                    return linkedListNode.Value;
+                    break;
                 }
             }
+
+            return _storage.TryLocateValue(key, out arrayIndex, out nodeIndex);
+        }
+
+        /// <summary>
+        /// Advances a traversal cursor, used by the allocation-free table enumerators.
+        /// </summary>
+        internal bool TryAdvanceEntry(
+            ref int arrayIndex,
+            ref int nodeIndex,
+            bool skipNilValues,
+            out TablePair pair
+        )
+        {
+            return _storage.TryAdvance(ref arrayIndex, ref nodeIndex, skipNilValues, out pair);
         }
 
         /// <summary>
@@ -1113,16 +1098,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         private int CalculatePrefixLength()
         {
             int length = 0;
-
-            for (
-                int i = 1;
-                _arrayMap.TryGetValue(i, out LinkedListNode<TablePair> node)
-                    && node?.Value.Value != null
-                    && node.Value.Value.IsNotNil();
-                i++
-            )
+            while (IsArrayValueNotNil(length + 1))
             {
-                length = i;
+                length++;
             }
 
             return length;
@@ -1169,9 +1147,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private bool IsArrayValueNotNil(int index)
         {
-            return _arrayMap.TryGetValue(index, out LinkedListNode<TablePair> node)
-                && node?.Value.Value != null
-                && node.Value.Value.IsNotNil();
+            if (index < 1)
+            {
+                return false;
+            }
+
+            DynValue value = _storage.GetInt(index);
+            return value != null && value.IsNotNil();
         }
 
         /// <summary>
@@ -1204,15 +1186,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             if (key.Type == DataType.String)
             {
                 this.CheckScriptOwnership(value);
-                PerformTableSet(
-                    _stringMap,
-                    key.String,
-                    DynValue.NewString(key.String),
-                    value,
-                    false,
-                    -1,
-                    isConstructorField: true
-                );
+                DynValue previousString = _storage.SetString(key.String, value);
+                OnEntryWritten(previousString, value, false, 0, -1, isConstructorField: true);
                 return;
             }
 
@@ -1223,15 +1198,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 if (idx > 0)
                 {
                     this.CheckScriptOwnership(value);
-                    PerformTableSet(
-                        _arrayMap,
-                        idx,
-                        DynValue.FromNumber(idx),
-                        value,
-                        true,
-                        -1,
-                        isConstructorField: true
-                    );
+                    DynValue previousInt = _storage.SetInt(idx, value);
+                    OnEntryWritten(previousInt, value, true, idx, -1, isConstructorField: true);
                     ExtendConstructorArrayLengthThroughContiguousFields();
                     return;
                 }
@@ -1240,16 +1208,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(key);
             this.CheckScriptOwnership(value);
 
-            DynValue stableKey = key;
-            PerformTableSet(
-                _valueMap,
-                stableKey,
-                stableKey,
-                value,
-                false,
-                -1,
-                isConstructorField: true
-            );
+            DynValue previous = _storage.SetValue(key, value);
+            OnEntryWritten(previous, value, false, 0, -1, isConstructorField: true);
         }
 
         /// <summary>
@@ -1269,15 +1229,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 DynValue value = val.ToScalar();
                 this.CheckScriptOwnership(value);
                 _initArray++;
-                PerformTableSet(
-                    _arrayMap,
-                    _initArray,
-                    DynValue.FromNumber(_initArray),
-                    value,
-                    true,
-                    -1,
-                    isConstructorField: true
-                );
+                DynValue previous = _storage.SetInt(_initArray, value);
+                OnEntryWritten(previous, value, true, _initArray, -1, isConstructorField: true);
                 _constructorArrayLength = _initArray;
                 ExtendConstructorArrayLengthThroughContiguousFields();
             }
@@ -1330,25 +1283,31 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         private IEnumerable<TablePair> EnumeratePairs()
         {
-            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            int arrayIndex = 0;
+            int nodeIndex = 0;
+            while (_storage.TryAdvance(ref arrayIndex, ref nodeIndex, false, out TablePair pair))
             {
-                yield return node.Value;
+                yield return pair;
             }
         }
 
         private IEnumerable<DynValue> EnumerateKeys()
         {
-            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            int arrayIndex = 0;
+            int nodeIndex = 0;
+            while (_storage.TryAdvance(ref arrayIndex, ref nodeIndex, false, out TablePair pair))
             {
-                yield return node.Value.Key;
+                yield return pair.Key;
             }
         }
 
         private IEnumerable<DynValue> EnumerateValues()
         {
-            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            int arrayIndex = 0;
+            int nodeIndex = 0;
+            while (_storage.TryAdvance(ref arrayIndex, ref nodeIndex, false, out TablePair pair))
             {
-                yield return node.Value.Value;
+                yield return pair.Value;
             }
         }
 
@@ -1367,7 +1326,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )]
         public TablePairsEnumerator GetPairsEnumerator()
         {
-            return new TablePairsEnumerator(_values);
+            return new TablePairsEnumerator(this);
         }
 
         /// <summary>
@@ -1381,7 +1340,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )]
         public TableKeysEnumerator GetKeysEnumerator()
         {
-            return new TableKeysEnumerator(_values);
+            return new TableKeysEnumerator(this);
         }
 
         /// <summary>
@@ -1395,7 +1354,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )]
         public TableValuesEnumerator GetValuesEnumerator()
         {
-            return new TableValuesEnumerator(_values);
+            return new TableValuesEnumerator(this);
         }
 
         /// <summary>
@@ -1409,7 +1368,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         )]
         public TableNonNilPairsEnumerator GetNonNilPairsEnumerator()
         {
-            return new TableNonNilPairsEnumerator(_values);
+            return new TableNonNilPairsEnumerator(this);
         }
 
         /// <summary>
@@ -1424,13 +1383,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public int FillPairs(Span<TablePair> destination)
         {
             int index = 0;
-            for (
-                LinkedListNode<TablePair> node = _values.First;
-                node != null && index < destination.Length;
-                node = node.Next
+            int arrayIndex = 0;
+            int nodeIndex = 0;
+            while (
+                index < destination.Length
+                && _storage.TryAdvance(ref arrayIndex, ref nodeIndex, false, out TablePair pair)
             )
             {
-                destination[index++] = node.Value;
+                destination[index++] = pair;
             }
             return index;
         }
@@ -1443,13 +1403,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public int FillKeys(Span<DynValue> destination)
         {
             int index = 0;
-            for (
-                LinkedListNode<TablePair> node = _values.First;
-                node != null && index < destination.Length;
-                node = node.Next
+            int arrayIndex = 0;
+            int nodeIndex = 0;
+            while (
+                index < destination.Length
+                && _storage.TryAdvance(ref arrayIndex, ref nodeIndex, false, out TablePair pair)
             )
             {
-                destination[index++] = node.Value.Key;
+                destination[index++] = pair.Key;
             }
             return index;
         }
@@ -1462,13 +1423,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         public int FillValues(Span<DynValue> destination)
         {
             int index = 0;
-            for (
-                LinkedListNode<TablePair> node = _values.First;
-                node != null && index < destination.Length;
-                node = node.Next
+            int arrayIndex = 0;
+            int nodeIndex = 0;
+            while (
+                index < destination.Length
+                && _storage.TryAdvance(ref arrayIndex, ref nodeIndex, false, out TablePair pair)
             )
             {
-                destination[index++] = node.Value.Value;
+                destination[index++] = pair.Value;
             }
             return index;
         }
@@ -1488,9 +1450,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             destination.Clear();
-            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            int arrayIndex = 0;
+            int nodeIndex = 0;
+            while (_storage.TryAdvance(ref arrayIndex, ref nodeIndex, false, out TablePair pair))
             {
-                destination.Add(node.Value);
+                destination.Add(pair);
             }
             return destination;
         }
@@ -1510,9 +1474,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             destination.Clear();
-            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            int arrayIndex = 0;
+            int nodeIndex = 0;
+            while (_storage.TryAdvance(ref arrayIndex, ref nodeIndex, false, out TablePair pair))
             {
-                destination.Add(node.Value.Key);
+                destination.Add(pair.Key);
             }
             return destination;
         }
@@ -1532,9 +1498,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             }
 
             destination.Clear();
-            for (LinkedListNode<TablePair> node = _values.First; node != null; node = node.Next)
+            int arrayIndex = 0;
+            int nodeIndex = 0;
+            while (_storage.TryAdvance(ref arrayIndex, ref nodeIndex, false, out TablePair pair))
             {
-                destination.Add(node.Value.Value);
+                destination.Add(pair.Value);
             }
             return destination;
         }
@@ -1546,6 +1514,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// This count includes entries where the value has been set to nil.
         /// For the "array length" (consecutive non-nil integer keys starting at 1), use <see cref="Length"/>.
         /// </remarks>
-        public int Count => _values.Count;
+        public int Count => _storage.Count;
     }
 }

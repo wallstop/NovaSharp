@@ -45,6 +45,20 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Gets the reference payload with no type test, or <c>null</c> for values that carry none.
+        /// </summary>
+        /// <remarks>
+        /// Lets hot lookup paths (table hash probes) compare a candidate key by reference without
+        /// paying for the <c>isinst</c> that the typed accessors such as <see cref="String"/> emit.
+        /// Callers must establish the type themselves before treating the result as anything
+        /// specific.
+        /// </remarks>
+        internal object ReferencePayload
+        {
+            get { return _object; }
+        }
+
+        /// <summary>
         /// Gets the function (valid only if the <see cref="Type"/> is <see cref="DataType.Function"/>)
         /// </summary>
         public Closure Function

@@ -6,6 +6,7 @@ The scripts in this folder keep local commits tidy by auto-fixing formatting iss
 
 - `pre-commit.sh` — Comprehensive pre-commit hook that runs auto-fixes and validation checks (see details below).
 - `install-hooks.sh` — Configures `core.hooksPath` to `.githooks` so Git invokes the shared `pre-commit` hook from this repository.
+- `github-auth-session.sh` — Silently reads a GitHub PAT and exports it as `GH_TOKEN` for the current shell session without writing it to disk.
 
 ## Usage
 
@@ -15,7 +16,15 @@ bash ./scripts/dev/install-hooks.sh
 
 # Optional: run manually outside of Git hooks
 bash ./scripts/dev/pre-commit.sh
+
+# Make a GitHub PAT available to gh in this terminal only
+source ./scripts/dev/github-auth-session.sh
+
+# Remove it before closing the terminal, if desired
+unset GH_TOKEN
 ```
+
+`github-auth-session.sh` must be sourced rather than executed because a child process cannot update its parent shell's environment. It replaces any existing `GH_TOKEN`, validates that token through the GitHub API, and relies on the shell process lifetime for cleanup.
 
 ## Pre-commit Hook Details
 
