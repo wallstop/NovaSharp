@@ -27,7 +27,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             CallStackItem frame = new()
             {
-                LocalScope = new[] { closable },
+                LocalScope = new[] { new ValueSlot(closable) },
                 BlocksToClose = new List<List<SymbolRef>> { new List<SymbolRef> { symbol } },
                 ToBeClosedIndices = new HashSet<int> { 0 },
             };
@@ -40,7 +40,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             );
 
             await Assert.That(closed).IsTrue();
-            await Assert.That(frame.LocalScope[0].IsNil()).IsTrue();
+            await Assert.That(frame.LocalScope[0].Value.IsNil()).IsTrue();
             bool containsIndex =
                 frame.ToBeClosedIndices != null && frame.ToBeClosedIndices.Contains(0);
             await Assert.That(containsIndex).IsFalse();
@@ -60,7 +60,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             SymbolRef symbol = SymbolRef.Local("resource", 0, SymbolRefAttributes.ToBeClosed);
             CallStackItem frame = new()
             {
-                LocalScope = new[] { DynValue.NewTable(new Table(script)) },
+                LocalScope = new[] { new ValueSlot(DynValue.NewTable(new Table(script))) },
                 BlocksToClose = new List<List<SymbolRef>> { new List<SymbolRef> { symbol } },
                 ToBeClosedIndices = new HashSet<int> { 0 },
             };
@@ -83,7 +83,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             CallStackItem frame = new()
             {
-                LocalScope = new[] { closable, DynValue.NewNumber(7) },
+                LocalScope = new[]
+                {
+                    new ValueSlot(closable),
+                    new ValueSlot(DynValue.NewNumber(7)),
+                },
                 BlocksToClose = new List<List<SymbolRef>>
                 {
                     new List<SymbolRef>
@@ -126,7 +130,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             CallStackItem frame = new()
             {
-                LocalScope = new[] { DynValue.NewNumber(1), DynValue.NewNumber(2) },
+                LocalScope = new[]
+                {
+                    new ValueSlot(DynValue.NewNumber(1)),
+                    new ValueSlot(DynValue.NewNumber(2)),
+                },
             };
             processor.PushCallStackFrameForTests(frame);
 
@@ -140,8 +148,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             processor.ClearBlockDataForTests(instruction);
 
             double[] remaining = frame
-                .LocalScope.Where(value => value != null)
-                .Select(value => value.Number)
+                .LocalScope.Where(slot => slot != null)
+                .Select(slot => slot.Value.Number)
                 .ToArray();
 
             await Assert.That(remaining.Length).IsEqualTo(2);

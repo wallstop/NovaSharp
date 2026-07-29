@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1782,
+  "total_snippets": 1787,
   "novasharp_only": 460,
-  "comparable": 1322,
+  "comparable": 1327,
   "by_version": {
-    "5.1": 875,
-    "5.2": 584,
-    "5.3": 822,
-    "5.4": 862,
-    "5.5": 903
+    "5.1": 880,
+    "5.2": 589,
+    "5.3": 827,
+    "5.4": 867,
+    "5.5": 908
   },
   "snippets": [
     {
@@ -21963,6 +21963,76 @@
       "path": "VmStackCeilingTUnitTests/StackOverflowIsCatchableViaPcall.lua",
       "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\Units\\Execution\\VmStackCeilingTUnitTests.cs:65",
       "test": "VmStackCeilingTUnitTests.StackOverflowIsCatchableViaPcall",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/ClosureCapturedBeforeAssignmentSeesLaterValue.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:112",
+      "test": "ValueSlotSemanticsTUnitTests.ClosureCapturedBeforeAssignmentSeesLaterValue",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/ClosuresShareOneCellForTheSameLocal.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:92",
+      "test": "ValueSlotSemanticsTUnitTests.ClosuresShareOneCellForTheSameLocal",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/NumericForControlVariableIsSnapshotPerIteration.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:73",
+      "test": "ValueSlotSemanticsTUnitTests.NumericForControlVariableIsSnapshotPerIteration",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/ReassigningLocalDoesNotRewriteStoredValue.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:30",
+      "test": "ValueSlotSemanticsTUnitTests.ReassigningLocalDoesNotRewriteStoredValue",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/ReassigningUpvalueDoesNotRewriteStoredValue.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:51",
+      "test": "ValueSlotSemanticsTUnitTests.ReassigningUpvalueDoesNotRewriteStoredValue",
       "lua_versions": [
         "5.1",
         "5.2",

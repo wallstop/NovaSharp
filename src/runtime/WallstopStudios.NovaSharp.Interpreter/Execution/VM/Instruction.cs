@@ -335,17 +335,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     if (numSubtype == 0)
                     {
                         // Integer subtype - read as Int64 to preserve full precision
-                        return DynValue.FromInteger(rd.ReadInt64()).AsReadOnly();
+                        return DynValue.FromInteger(rd.ReadInt64());
                     }
                     else
                     {
                         // Float subtype - read as double
-                        return DynValue.FromFloat(rd.ReadDouble()).AsReadOnly();
+                        return DynValue.FromFloat(rd.ReadDouble());
                     }
                 case DataType.String:
-                    return DynValue.NewString(rd.ReadString()).AsReadOnly();
+                    return DynValue.NewString(rd.ReadString());
                 case DataType.Table:
-                    return DynValue.NewTable(envTable).AsReadOnly();
+                    return DynValue.NewTable(envTable);
                 default:
                     throw new NotSupportedException(
                         ZString.Concat("Unsupported type in chunk dump : ", dt)

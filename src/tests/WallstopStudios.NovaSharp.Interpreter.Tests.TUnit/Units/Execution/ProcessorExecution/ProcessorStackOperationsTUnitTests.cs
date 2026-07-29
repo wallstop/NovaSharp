@@ -21,15 +21,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
         private static readonly double[] AscendingTriple = { 2d, 3d, 4d };
 
         [global::TUnit.Core.Test]
-        public async Task ExecIncrReplacesReadOnlyNumericSlotBeforeIncrement()
+        public async Task ExecIncrPublishesFreshCounterWithoutMutatingPrevious()
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
             FastStack<DynValue> valueStack = processor.GetValueStackForTests();
             valueStack.Clear();
             valueStack.Push(DynValue.NewNumber(1));
-            DynValue readOnlyValue = DynValue.NewNumber(2).AsReadOnly();
-            valueStack.Push(readOnlyValue);
+            DynValue previousCounter = DynValue.NewNumber(2);
+            valueStack.Push(previousCounter);
 
             Instruction instruction = new(SourceRef.GetClrLocation()) { NumVal = 1 };
             processor.ExecIncrForTests(instruction);
@@ -37,20 +37,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             DynValue result = valueStack.Peek();
 
             await Assert.That(result.Number).IsEqualTo(3d);
-            await Assert.That(result.ReadOnly).IsFalse();
-            await Assert.That(result).IsNotSameReferenceAs(readOnlyValue);
-            await Assert.That(readOnlyValue.ReadOnly).IsTrue();
+            await Assert.That(result).IsNotSameReferenceAs(previousCounter);
+
+            // The prior counter may already have been stored into the loop variable's slot,
+            // so incrementing must never write through it.
+            await Assert.That(previousCounter.Number).IsEqualTo(2d);
         }
 
         [global::TUnit.Core.Test]
-        public async Task ExecIncrRejectsReadOnlyNonNumericTop()
+        public async Task ExecIncrRejectsNonNumericTop()
         {
             Script script = new();
             Processor processor = script.GetMainProcessorForTests();
             FastStack<DynValue> valueStack = processor.GetValueStackForTests();
             valueStack.Clear();
             valueStack.Push(DynValue.NewNumber(1));
-            DynValue readOnlyValue = DynValue.NewString("not-number").AsReadOnly();
+            DynValue readOnlyValue = DynValue.NewString("not-number");
             valueStack.Push(readOnlyValue);
 
             Instruction instruction = new(SourceRef.GetClrLocation()) { NumVal = 1 };
@@ -60,7 +62,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             await Assert.That(exception.Message).Contains("Can't assign number to type String");
             await Assert.That(valueStack.Peek()).IsSameReferenceAs(readOnlyValue);
-            await Assert.That(readOnlyValue.ReadOnly).IsTrue();
             await Assert.That(readOnlyValue.String).IsEqualTo("not-number");
         }
 
@@ -92,7 +93,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             {
                 BlocksToClose = new List<List<SymbolRef>> { new List<SymbolRef>() },
                 ToBeClosedIndices = new HashSet<int> { 0 },
-                LocalScope = Array.Empty<DynValue>(),
+                LocalScope = Array.Empty<ValueSlot>(),
                 ClosureScope = new ClosureContext(),
             };
             processor.PushCallStackFrameForTests(frame);
@@ -203,13 +204,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             CallStackItem frame = new()
             {
-                LocalScope = new[] { DynValue.NewNil() },
+                LocalScope = new[] { new ValueSlot() },
                 ClosureScope = new ClosureContext(),
             };
             processor.PushCallStackFrameForTests(frame);
 
             processor.AssignGenericSymbol(SymbolRef.Local("value", 0), DynValue.NewNumber(7));
-            await Assert.That(frame.LocalScope[0].Number).IsEqualTo(7d);
+            await Assert.That(frame.LocalScope[0].Value.Number).IsEqualTo(7d);
         }
 
         [global::TUnit.Core.Test]
@@ -221,11 +222,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
 
             ClosureContext closure = new(
                 new[] { SymbolRef.UpValue("uv", 0) },
-                new[] { DynValue.NewNil() }
+                new[] { new ValueSlot() }
             );
             CallStackItem frame = new()
             {
-                LocalScope = Array.Empty<DynValue>(),
+                LocalScope = Array.Empty<ValueSlot>(),
                 ClosureScope = closure,
             };
             processor.PushCallStackFrameForTests(frame);

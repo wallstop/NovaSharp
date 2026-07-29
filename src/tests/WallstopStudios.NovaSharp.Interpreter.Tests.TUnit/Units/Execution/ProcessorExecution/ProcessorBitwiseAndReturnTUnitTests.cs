@@ -23,7 +23,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution.Proc
             CallStackItem frame = new()
             {
                 ReturnAddress = 0,
-                LocalScope = Array.Empty<DynValue>(),
+                LocalScope = Array.Empty<ValueSlot>(),
                 ClosureScope = new ClosureContext(),
             };
             processor.PushCallStackFrameForTests(frame);

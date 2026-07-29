@@ -482,7 +482,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(value);
 
             // Ensure key stability in _valueMap by making it readonly to prevent hash corruption
-            DynValue stableKey = key.ReadOnly ? key : key.AsReadOnly();
+            DynValue stableKey = key;
 
             PerformTableSet(_valueMap, stableKey, stableKey, value, false, -1);
         }
@@ -1229,7 +1229,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(key);
             this.CheckScriptOwnership(value);
 
-            DynValue stableKey = key.ReadOnly ? key : key.AsReadOnly();
+            DynValue stableKey = key;
             PerformTableSet(
                 _valueMap,
                 stableKey,

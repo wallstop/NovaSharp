@@ -598,7 +598,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return DynValue.Nil;
             }
 
-            closure[index].AssignSlot(args[2]);
+            closure.GetSlot(index).Value = args[2];
 
             return DynValue.NewString(closure.Symbols[index]);
         }
@@ -640,7 +640,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             // Make f1's n1-th upvalue refer to f2's n2-th upvalue (per Lua 5.2+ spec)
-            c1.ClosureContext[n1] = c2.ClosureContext[n2];
+            c1.ClosureContext.SetSlot(n1, c2.ClosureContext.GetSlot(n2));
 
             return DynValue.Void;
         }
@@ -1231,7 +1231,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             SymbolRef symbol = frame.DebugSymbols[zeroBased];
-            DynValue value = frame.LocalScope[zeroBased] ?? DynValue.Nil;
+            DynValue value = frame.LocalScope[zeroBased]?.Value ?? DynValue.Nil;
             string name = symbol?.Name ?? string.Empty;
 
             return DynValue.NewTuple(DynValue.NewString(name), value);
@@ -1258,15 +1258,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             SymbolRef symbol = frame.DebugSymbols[zeroBased];
-            DynValue slot = frame.LocalScope[zeroBased];
+            ValueSlot slot = frame.LocalScope[zeroBased];
 
             if (slot == null)
             {
-                slot = DynValue.NewNil();
+                slot = new ValueSlot();
                 frame.LocalScope[zeroBased] = slot;
             }
 
-            slot.AssignSlot(newValue);
+            slot.Value = newValue;
 
             string name = symbol?.Name ?? string.Empty;
             return DynValue.NewString(name);

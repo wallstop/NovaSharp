@@ -189,7 +189,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
-        public async Task DynValueArgumentsBindToWritableLocalSlots(LuaCompatibilityVersion version)
+        public async Task DynValueArgumentsDoNotAliasHostValues(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
             DynValue function = script.DoString(
@@ -213,9 +213,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(result.Tuple[1].Number).IsEqualTo(22d).ConfigureAwait(false);
             await Assert.That(result.Tuple[2].Number).IsEqualTo(33d).ConfigureAwait(false);
             await Assert.That(result.Tuple[3].Number).IsEqualTo(2d).ConfigureAwait(false);
-            await Assert.That(first.ReadOnly).IsTrue().ConfigureAwait(false);
-            await Assert.That(second.ReadOnly).IsFalse().ConfigureAwait(false);
-            await Assert.That(third.ReadOnly).IsTrue().ConfigureAwait(false);
             await Assert.That(first.Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(second.Number).IsEqualTo(2d).ConfigureAwait(false);
             await Assert.That(third.Number).IsEqualTo(3d).ConfigureAwait(false);
@@ -223,7 +220,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
-        public async Task VarargCaptureCopiesScalarWrappersButKeepsTableReferences(
+        public async Task VarargCapturePreservesScalarsAndKeepsTableReferences(
             LuaCompatibilityVersion version
         )
         {
@@ -234,8 +231,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue second = DynValue.NewString("two");
 
             DynValue returned = script.Call(returnVarargs, first, second);
-            first.AssignSlot(DynValue.NewNumber(10));
-            second.AssignSlot(DynValue.NewString("changed"));
 
             await Assert.That(returned.Tuple[0].Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(returned.Tuple[1].String).IsEqualTo("two").ConfigureAwait(false);
@@ -243,8 +238,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue third = DynValue.NewNumber(3);
             DynValue fourth = DynValue.NewString("four");
             DynValue captured = script.Call(captureTable, third, fourth);
-            third.AssignSlot(DynValue.NewNumber(30));
-            fourth.AssignSlot(DynValue.NewString("changed"));
 
             await Assert.That(captured.Table.Get(1).Number).IsEqualTo(3d).ConfigureAwait(false);
             await Assert.That(captured.Table.Get(2).String).IsEqualTo("four").ConfigureAwait(false);
@@ -262,7 +255,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
-        public async Task TablePackVarargsCopiesScalarWrappers(LuaCompatibilityVersion version)
+        public async Task TablePackVarargsPreservesScalars(LuaCompatibilityVersion version)
         {
             Script script = new(version, CoreModulePresets.Complete);
             DynValue pack = script.DoString("return function(...) return table.pack(...) end");
@@ -270,8 +263,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             DynValue second = DynValue.NewString("two");
 
             DynValue packed = script.Call(pack, first, second);
-            first.AssignSlot(DynValue.NewNumber(10));
-            second.AssignSlot(DynValue.NewString("changed"));
 
             await Assert.That(packed.Table.Get(1).Number).IsEqualTo(1d).ConfigureAwait(false);
             await Assert.That(packed.Table.Get(2).String).IsEqualTo("two").ConfigureAwait(false);

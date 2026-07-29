@@ -74,14 +74,19 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Closure"/> class from a list of resolved locals.
+        /// Initializes a new instance of the <see cref="Closure"/> class from a list of captured cells.
         /// This overload avoids enumerator allocation by using the list directly.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="idx">The bytecode entry point index.</param>
         /// <param name="symbols">The symbol references for upvalues.</param>
-        /// <param name="resolvedLocals">The resolved local values.</param>
-        internal Closure(Script script, int idx, SymbolRef[] symbols, List<DynValue> resolvedLocals)
+        /// <param name="resolvedLocals">The captured local/upvalue cells.</param>
+        internal Closure(
+            Script script,
+            int idx,
+            SymbolRef[] symbols,
+            List<ValueSlot> resolvedLocals
+        )
         {
             OwnerScript = script;
             EntryPointByteCodeLocation = idx;
@@ -99,14 +104,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Closure"/> class from an array of resolved locals.
+        /// Initializes a new instance of the <see cref="Closure"/> class from an array of captured cells.
         /// This overload avoids enumerator allocation entirely.
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="idx">The bytecode entry point index.</param>
         /// <param name="symbols">The symbol references for upvalues.</param>
-        /// <param name="resolvedLocals">The resolved local values.</param>
-        internal Closure(Script script, int idx, SymbolRef[] symbols, DynValue[] resolvedLocals)
+        /// <param name="resolvedLocals">The captured local/upvalue cells.</param>
+        internal Closure(Script script, int idx, SymbolRef[] symbols, ValueSlot[] resolvedLocals)
         {
             OwnerScript = script;
             EntryPointByteCodeLocation = idx;
@@ -128,7 +133,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         /// <param name="script">The script.</param>
         /// <param name="idx">The bytecode entry point index.</param>
-        /// <param name="environmentValue">The mutable environment upvalue slot for this closure.</param>
+        /// <param name="environmentValue">The initial environment value for this closure.</param>
         internal Closure(Script script, int idx, DynValue environmentValue)
         {
             OwnerScript = script;
@@ -149,36 +154,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             EntryPointByteCodeLocation = idx;
             ClosureContext = closureContext ?? EmptyClosure;
             TrackAllocation(script, ClosureContext.Count);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Closure"/> class.
-        /// </summary>
-        /// <param name="script">The script.</param>
-        /// <param name="idx">The index.</param>
-        /// <param name="symbols">The symbols.</param>
-        /// <param name="resolvedLocals">The resolved locals.</param>
-        internal Closure(
-            Script script,
-            int idx,
-            SymbolRef[] symbols,
-            IEnumerable<DynValue> resolvedLocals
-        )
-        {
-            OwnerScript = script;
-
-            EntryPointByteCodeLocation = idx;
-
-            if (symbols.Length > 0)
-            {
-                ClosureContext = new ClosureContext(symbols, resolvedLocals);
-            }
-            else
-            {
-                ClosureContext = EmptyClosure;
-            }
-
-            TrackAllocation(script, symbols.Length);
         }
 
         /// <summary>
@@ -587,14 +562,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Gets a readonly copy of the value of an upvalue.
+        /// Gets the current value of an upvalue.
         /// To set the value, use <see cref="SetUpValue(int, DynValue)"/>.
         /// </summary>
         /// <param name="idx">The index of the upvalue.</param>
-        /// <returns>A readonly copy of the upvalue value.</returns>
+        /// <returns>The upvalue value.</returns>
         public DynValue GetUpValue(int idx)
         {
-            return ClosureContext[idx]?.AsReadOnly() ?? DynValue.Nil;
+            return ClosureContext[idx];
         }
 
         /// <summary>
@@ -610,26 +585,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 throw new ArgumentOutOfRangeException(nameof(idx));
             }
 
-            DynValue slot = ClosureContext[idx];
-            if (slot == null)
-            {
-                ClosureContext[idx] = value?.Clone() ?? DynValue.NewNil();
-            }
-            else
-            {
-                slot.AssignSlot(value ?? DynValue.Nil);
-            }
+            ClosureContext.GetSlot(idx).Value = value;
         }
 
         /// <summary>
-        /// Gets the mutable internal reference to an upvalue.
-        /// Internal use only - allows direct slot mutation via <see cref="DynValue.AssignSlot(DynValue)"/>.
+        /// Gets the mutable cell backing an upvalue, so that host code can rebind the variable
+        /// itself (and every closure sharing it) rather than a copy of its value.
         /// </summary>
         /// <param name="idx">The index of the upvalue.</param>
-        /// <returns>The mutable internal DynValue reference.</returns>
-        internal DynValue GetUpValueMutable(int idx)
+        /// <returns>The captured <see cref="ValueSlot"/>.</returns>
+        internal ValueSlot GetUpValueSlot(int idx)
         {
-            return ClosureContext[idx];
+            return ClosureContext.GetSlot(idx);
         }
 
         /// <summary>

@@ -107,10 +107,10 @@ Found 151 undocumented public/internal type declarations.
   - line 169: missing XML docs for `GetStatistics()`
   - line 194: missing XML docs for `Trim()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Execution/VM/Processor/ProcessorInstructionLoop.cs
-  - line 38: missing XML docs for `ReturnAddress`
-  - line 40: missing XML docs for `ErrorHandler`
-  - line 42: missing XML docs for `Continuation`
-  - line 44: missing XML docs for `ErrorHandlerBeforeUnwind`
+  - line 39: missing XML docs for `ReturnAddress`
+  - line 41: missing XML docs for `ErrorHandler`
+  - line 43: missing XML docs for `Continuation`
+  - line 45: missing XML docs for `ErrorHandlerBeforeUnwind`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/Interop/UserDataRegistries/ExtensionMethodsRegistry.cs
   - line 40: missing XML docs for `SyncRoot`
   - line 42: missing XML docs for `Registry`

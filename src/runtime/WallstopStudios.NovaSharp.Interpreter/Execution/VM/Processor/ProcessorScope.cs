@@ -25,7 +25,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             int from = i.NumVal;
             int to = i.NumVal2;
 
-            DynValue[] array = stackframe.LocalScope;
+            ValueSlot[] array = stackframe.LocalScope;
 
             if (to >= 0 && from >= 0 && to >= from)
             {
@@ -78,7 +78,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     }
                 }
 
-                DynValue slot = stackframe.LocalScope[sym.IndexValue];
+                ValueSlot slot = stackframe.LocalScope[sym.IndexValue];
 
                 closeException = CloseValueAndTrackError(
                     sym,
@@ -112,7 +112,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         symref.NameValue
                     );
                 case SymbolRefType.Local:
-                    return GetTopNonClrFunction().LocalScope[symref.IndexValue];
+                    return GetTopNonClrFunction().LocalScope[symref.IndexValue]?.Value
+                        ?? DynValue.Nil;
                 case SymbolRefType.UpValue:
                     return GetTopNonClrFunction().ClosureScope[symref.IndexValue];
                 default:
@@ -170,14 +171,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 case SymbolRefType.UpValue:
                     {
                         CallStackItem stackframe = GetTopNonClrFunction();
-
-                        DynValue v = stackframe.ClosureScope[symref.IndexValue];
-                        if (v == null)
-                        {
-                            stackframe.ClosureScope[symref.IndexValue] = v = DynValue.NewNil();
-                        }
-
-                        v.AssignSlot(value);
+                        stackframe.ClosureScope.GetSlot(symref.IndexValue).Value = value;
                     }
                     break;
                 case SymbolRefType.DefaultEnv:

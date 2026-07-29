@@ -19,11 +19,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
     public sealed class VmCorrectnessRegressionTUnitTests
     {
         /// <summary>
-        /// Verifies that Closure.GetUpValue returns a readonly copy, not the mutable internal reference.
+        /// Verifies that a value read out of an upvalue is a snapshot: rebinding the upvalue
+        /// afterwards must not retroactively change the value the caller already holds.
         /// </summary>
         [Test]
         [AllLuaVersions]
-        public async Task GetUpValueReturnsReadonlyCopy(LuaCompatibilityVersion version)
+        public async Task GetUpValueSnapshotIsUnaffectedByLaterSetUpValue(
+            LuaCompatibilityVersion version
+        )
         {
             Script script = new(version);
             DynValue function = script.DoString(
@@ -48,10 +51,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
 
             await Assert.That(xIndex).IsGreaterThanOrEqualTo(0).ConfigureAwait(false);
 
-            DynValue upvalue = closure.GetUpValue(xIndex);
+            DynValue snapshot = closure.GetUpValue(xIndex);
+            await Assert.That(snapshot.Number).IsEqualTo(10d).ConfigureAwait(false);
 
-            // The returned value should be readonly
-            await Assert.That(upvalue.ReadOnly).IsTrue().ConfigureAwait(false);
+            closure.SetUpValue(xIndex, DynValue.NewNumber(99));
+
+            await Assert.That(snapshot.Number).IsEqualTo(10d).ConfigureAwait(false);
+            await Assert
+                .That(closure.GetUpValue(xIndex).Number)
+                .IsEqualTo(99d)
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -179,26 +188,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         /// <summary>
-        /// Verifies that value-map keys snapshot mutable numeric keys before insertion.
-        /// </summary>
-        [Test]
-        public async Task TableKeySafetySnapshotsMutableNumericKeys()
-        {
-            Script script = new();
-            Table table = new(script);
-            DynValue key = DynValue.NewNumber(1.5d);
-
-            table.Set(key, DynValue.NewString("original"));
-            key.AssignNumber(2.5d);
-
-            DynValue originalLookup = table.Get(DynValue.NewNumber(1.5d));
-            DynValue mutatedLookup = table.Get(key);
-
-            await Assert.That(originalLookup.String).IsEqualTo("original").ConfigureAwait(false);
-            await Assert.That(mutatedLookup.IsNil()).IsTrue().ConfigureAwait(false);
-        }
-
-        /// <summary>
         /// Verifies that userdata keys snapshot CLR object hashes before insertion.
         /// </summary>
         [Test]
@@ -306,35 +295,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         }
 
         /// <summary>
-        /// Verifies that DynValue.AssignSlot is internal and not accessible for external modification.
-        /// This is verified by the fact that this test file compiles (AssignSlot is internal but accessible
-        /// due to InternalsVisibleTo) and we can use it, but external code cannot.
-        /// </summary>
-        [Test]
-        public async Task AssignSlotIsInternalButAccessibleToTests()
-        {
-            // This test verifies that slot assignment still works for internal use
-            DynValue targetSlot = CreateWritableLocalSlot(DynValue.NewNumber(1));
-            ReplaceWritableLocalSlot(targetSlot, DynValue.NewNumber(2));
-
-            await Assert.That(targetSlot.Number).IsEqualTo(2d).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Verifies that DynValue.AssignSlot throws on readonly values.
-        /// </summary>
-        [Test]
-        public async Task AssignSlotThrowsOnReadonlyValues()
-        {
-            DynValue readonlyValue = DynValue.True;
-
-            await Assert
-                .That(() => readonlyValue.AssignSlot(DynValue.False))
-                .Throws<ScriptRuntimeException>()
-                .ConfigureAwait(false);
-        }
-
-        /// <summary>
         /// Verifies that closure upvalue sharing still works after modifications.
         /// Two closures should see each other's changes to shared upvalues.
         /// </summary>
@@ -370,18 +330,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue result = script.DoString("return type(debug.upvaluejoin)");
 
             await Assert.That(result.String).IsEqualTo("function").ConfigureAwait(false);
-        }
-
-        private static DynValue CreateWritableLocalSlot(DynValue initialValue)
-        {
-            DynValue slot = DynValue.NewNil();
-            ReplaceWritableLocalSlot(slot, initialValue);
-            return slot;
-        }
-
-        private static void ReplaceWritableLocalSlot(DynValue slot, DynValue value)
-        {
-            slot.AssignSlot(value);
         }
     }
 }

@@ -20,7 +20,11 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
                 SymbolRef.Global("beta", SymbolRef.DefaultEnv),
             };
 
-            DynValue[] values = new[] { DynValue.NewNumber(1), DynValue.NewString("two") };
+            ValueSlot[] values = new[]
+            {
+                new ValueSlot(DynValue.NewNumber(1)),
+                new ValueSlot(DynValue.NewString("two")),
+            };
 
             ClosureContext context = new(symbols, values);
 
@@ -48,7 +52,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
         [global::TUnit.Core.Test]
         public async Task ConstructorThrowsOnNullSymbols()
         {
-            DynValue[] values = new[] { DynValue.NewNumber(1) };
+            ValueSlot[] values = new[] { new ValueSlot(DynValue.NewNumber(1)) };
 
             ArgumentNullException exception = Assert.Throws<ArgumentNullException>(() =>
                 _ = new ClosureContext(null, values)
