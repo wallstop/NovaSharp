@@ -1,23 +1,19 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "allocation"
-- "GC pressure"
-- "memory leak"
-- "foreach allocation"
-- "delegate allocation"
-- "params allocation"
-- "closure allocation"
-  category: performance
-  related:
-- high-performance-csharp
-- refactor-to-zero-alloc
-- zstring-migration
-  priority: core
-
-______________________________________________________________________
-
+  - "allocation"
+  - "GC pressure"
+  - "memory leak"
+  - "foreach allocation"
+  - "delegate allocation"
+  - "params allocation"
+  - "closure allocation"
+category: performance
+related:
+  - high-performance-csharp
+  - refactor-to-zero-alloc
+  - zstring-migration
+priority: core
+---
 # Skill: Allocation Traps
 
 **When to use**: Reviewing code for hidden allocations, investigating GC pressure, or unexplained performance issues.

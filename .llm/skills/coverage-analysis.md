@@ -1,20 +1,16 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "coverage"
-- "code coverage"
-- "coverage report"
-- "test coverage"
-- "untested code"
-  category: testing
-  related:
-- tunit-test-writing
-- lua-fixture-creation
-  priority: reference
-
-______________________________________________________________________
-
+  - "coverage"
+  - "code coverage"
+  - "coverage report"
+  - "test coverage"
+  - "untested code"
+category: testing
+related:
+  - tunit-test-writing
+  - lua-fixture-creation
+priority: reference
+---
 # Skill: Coverage Analysis
 
 **When to use**: Running code coverage, interpreting reports, finding coverage gaps.

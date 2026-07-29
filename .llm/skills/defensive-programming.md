@@ -1,20 +1,16 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "defensive programming"
-- "error handling"
-- "robust code"
-- "graceful failure"
-- "null handling"
-  category: core
-  related:
-- high-performance-csharp
-- correctness-then-performance
-  priority: core
-
-______________________________________________________________________
-
+  - "defensive programming"
+  - "error handling"
+  - "robust code"
+  - "graceful failure"
+  - "null handling"
+category: core
+related:
+  - high-performance-csharp
+  - correctness-then-performance
+priority: core
+---
 # Skill: Defensive Programming
 
 **When to use**: Writing any production code, especially in parsers, interpreters, and public APIs.

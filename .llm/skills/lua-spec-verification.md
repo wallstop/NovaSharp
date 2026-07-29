@@ -1,22 +1,18 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "Lua spec"
-- "reference Lua"
-- "spec compliance"
-- "behavior verification"
-- "lua5.4"
-- "lua5.1"
-  category: lua
-  related:
-- lua-fixture-creation
-- lua-comparison-harness
-- test-failure-investigation
-  priority: core
-
-______________________________________________________________________
-
+  - "Lua spec"
+  - "reference Lua"
+  - "spec compliance"
+  - "behavior verification"
+  - "lua5.4"
+  - "lua5.1"
+category: lua
+related:
+  - lua-fixture-creation
+  - lua-comparison-harness
+  - test-failure-investigation
+priority: core
+---
 # Skill: Verifying Lua Spec Compliance
 
 **When to use**: Investigating whether NovaSharp behavior matches reference Lua.

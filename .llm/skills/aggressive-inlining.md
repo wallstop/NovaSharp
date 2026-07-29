@@ -1,20 +1,16 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "inlining"
-- "AggressiveInlining"
-- "MethodImpl"
-- "method inlining"
-- "hot path optimization"
-  category: performance
-  related:
-- high-performance-csharp
-- unity-gc-patterns
-  priority: reference
-
-______________________________________________________________________
-
+  - "inlining"
+  - "AggressiveInlining"
+  - "MethodImpl"
+  - "method inlining"
+  - "hot path optimization"
+category: performance
+related:
+  - high-performance-csharp
+  - unity-gc-patterns
+priority: reference
+---
 # Skill: Aggressive Inlining
 
 **When to use**: Optimizing hot path methods for maximum performance, especially in interpreter loops and frequently-called code.

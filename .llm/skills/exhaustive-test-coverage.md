@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "test coverage"
-- "write tests"
-- "test cases"
-- "edge cases"
-- "test patterns"
-  category: testing
-  related:
-- tunit-test-writing
-- lua-fixture-creation
-- test-failure-investigation
-  priority: core
-
-______________________________________________________________________
-
+  - "test coverage"
+  - "write tests"
+  - "test cases"
+  - "edge cases"
+  - "test patterns"
+category: testing
+related:
+  - tunit-test-writing
+  - lua-fixture-creation
+  - test-failure-investigation
+priority: core
+---
 # Skill: Exhaustive Test Coverage
 
 **When to use**: Writing tests for any new feature or bug fix.

@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "opcode"
-- "bytecode"
-- "VM instruction"
-- "add instruction"
-- "execution loop"
-  category: lua
-  related:
-- codebase-navigation
-- tunit-test-writing
-- lua-fixture-creation
-  priority: reference
-
-______________________________________________________________________
-
+  - "opcode"
+  - "bytecode"
+  - "VM instruction"
+  - "add instruction"
+  - "execution loop"
+category: lua
+related:
+  - codebase-navigation
+  - tunit-test-writing
+  - lua-fixture-creation
+priority: reference
+---
 # Skill: Adding New VM Opcodes
 
 **When to use**: Implementing new bytecode instructions in the NovaSharp VM.

@@ -1,24 +1,20 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "performance"
-- "allocation"
-- "zero-alloc"
-- "GC pressure"
-- "hot path"
-- "pooling"
-- "optimization"
-  category: performance
-  related:
-- correctness-then-performance
-- allocation-traps
-- zstring-migration
-- span-optimization
-  priority: core
-
-______________________________________________________________________
-
+  - "performance"
+  - "allocation"
+  - "zero-alloc"
+  - "GC pressure"
+  - "hot path"
+  - "pooling"
+  - "optimization"
+category: performance
+related:
+  - correctness-then-performance
+  - allocation-traps
+  - zstring-migration
+  - span-optimization
+priority: core
+---
 # High-Performance C# Coding Guidelines
 
 **PRIORITY REMINDER**: Performance is the SECOND priority after correctness. A fast implementation that breaks Lua spec compliance is REJECTED. See [correctness-then-performance](correctness-then-performance.md).

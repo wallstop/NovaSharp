@@ -1,18 +1,14 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "new skill"
-- "add skill"
-- "skill documentation"
-- "llm documentation"
-  category: meta
-  related:
-- documentation-and-changelog
-  priority: reference
-
-______________________________________________________________________
-
+  - "new skill"
+  - "add skill"
+  - "skill documentation"
+  - "llm documentation"
+category: meta
+related:
+  - documentation-and-changelog
+priority: reference
+---
 # Skill: Adding New Skills
 
 **When to use**: Creating or modifying LLM skill documentation in `.llm/skills/`.
@@ -192,7 +188,7 @@ Run the indexer after creating/modifying skills:
 # Generate index and validate
 python3 tools/LlmSkillIndexer/llm_skill_indexer.py
 
-# Check mode (fails on errors)
+# Check mode (fails on warnings, errors, missing output, or a stale index)
 python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check
 ```
 

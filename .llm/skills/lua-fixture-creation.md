@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "lua fixture"
-- "lua test file"
-- "create .lua test"
-- "lua version test"
-  category: lua
-  related:
-- lua-comparison-harness
-- lua-spec-verification
-- tunit-test-writing
-- exhaustive-test-coverage
-  priority: core
-
-______________________________________________________________________
-
+  - "lua fixture"
+  - "lua test file"
+  - "create .lua test"
+  - "lua version test"
+category: lua
+related:
+  - lua-comparison-harness
+  - lua-spec-verification
+  - tunit-test-writing
+  - exhaustive-test-coverage
+priority: core
+---
 # Skill: Creating Lua Test Fixtures
 
 **When to use**: Creating `.lua` test files for cross-interpreter verification.

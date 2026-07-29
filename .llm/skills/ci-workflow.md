@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "CI"
-- "pre-commit"
-- "workflow"
-- "GitHub Actions"
-- "formatting"
-- "validation"
-  category: workflow
-  related:
-- tunit-test-writing
-- test-failure-investigation
-  priority: core
-
-______________________________________________________________________
-
+  - "CI"
+  - "pre-commit"
+  - "workflow"
+  - "GitHub Actions"
+  - "formatting"
+  - "validation"
+category: workflow
+related:
+  - tunit-test-writing
+  - test-failure-investigation
+priority: core
+---
 # Skill: CI/CD Workflow
 
 **When to use**: Before completing ANY code changes, and when modifying CI/CD configuration.

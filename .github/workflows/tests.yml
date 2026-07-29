@@ -81,6 +81,10 @@ jobs:
           NOVASHARP_BASE_REF: ${{ steps.doc_diff_base.outputs.merge_base }}
         run: ./scripts/ci/check-markdown.sh
         shell: bash
+      - name: Verify LLM skill metadata and index
+        run: |
+          python3 tools/LlmSkillIndexer/test_llm_skill_indexer.py
+          python3 tools/LlmSkillIndexer/llm_skill_indexer.py --check
 
       - name: Setup .NET (formatting gate)
         uses: actions/setup-dotnet@v6

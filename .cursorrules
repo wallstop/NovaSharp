@@ -19,6 +19,7 @@
 3. **NEVER discard output** - No `>/dev/null` or `2>/dev/null`
 4. **Lua Spec = Source of Truth** - Fix NovaSharp, never tests
 5. **Multi-Version Testing** - All tests run on Lua 5.1-5.5
+6. **Mandatory post-work improvement gate** - After every large change or investigation, and before declaring it complete, follow [`.llm/skills/post-work-reflection.md`](.llm/skills/post-work-reflection.md). Fix discovered defects, capture reusable techniques or durable knowledge in the appropriate `.llm` artifact, and obtain an independent review when agents are available.
 
 ## Build & Test
 

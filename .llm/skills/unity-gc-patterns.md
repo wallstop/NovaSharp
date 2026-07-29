@@ -1,22 +1,18 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "Unity"
-- "Unity GC"
-- "IL2CPP"
-- "AOT"
-- "Boehm"
-- "Unity allocation"
-  category: performance
-  related:
-- high-performance-csharp
-- refactor-to-zero-alloc
-- aggressive-inlining
-  priority: recommended
-
-______________________________________________________________________
-
+  - "Unity"
+  - "Unity GC"
+  - "IL2CPP"
+  - "AOT"
+  - "Boehm"
+  - "Unity allocation"
+category: performance
+related:
+  - high-performance-csharp
+  - refactor-to-zero-alloc
+  - aggressive-inlining
+priority: recommended
+---
 # Skill: Unity Garbage Collection Patterns
 
 **When to use**: Writing or optimizing code that will run in Unity, especially for IL2CPP/AOT builds.

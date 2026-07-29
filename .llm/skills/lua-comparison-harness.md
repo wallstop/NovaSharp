@@ -1,22 +1,18 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "comparison harness"
-- "lua comparison"
-- "cross-interpreter"
-- "fixture verification"
-- "reference Lua"
-- "diff expected actual"
-  category: lua
-  related:
-- lua-fixture-creation
-- lua-spec-verification
-- test-failure-investigation
-  priority: recommended
-
-______________________________________________________________________
-
+  - "comparison harness"
+  - "lua comparison"
+  - "cross-interpreter"
+  - "fixture verification"
+  - "reference Lua"
+  - "diff expected actual"
+category: lua
+related:
+  - lua-fixture-creation
+  - lua-spec-verification
+  - test-failure-investigation
+priority: recommended
+---
 # Skill: Lua Comparison Harness
 
 **When to use**: Running fixtures against reference Lua interpreters to verify NovaSharp compliance.

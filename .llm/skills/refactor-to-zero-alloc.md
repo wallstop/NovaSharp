@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "refactor allocation"
-- "eliminate allocation"
-- "zero allocation"
-- "remove LINQ"
-- "closure elimination"
-  category: performance
-  related:
-- high-performance-csharp
-- allocation-traps
-- zstring-migration
-  priority: recommended
-
-______________________________________________________________________
-
+  - "refactor allocation"
+  - "eliminate allocation"
+  - "zero allocation"
+  - "remove LINQ"
+  - "closure elimination"
+category: performance
+related:
+  - high-performance-csharp
+  - allocation-traps
+  - zstring-migration
+priority: recommended
+---
 # Skill: Refactoring to Zero-Allocation Patterns
 
 **When to use**: Eliminating GC allocations from existing code by converting to pooled collections, eliminating LINQ, removing closures, and using zero-allocation string building.

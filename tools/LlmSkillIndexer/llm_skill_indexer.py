@@ -9,12 +9,12 @@ Usage:
     python3 tools/LlmSkillIndexer/llm_skill_indexer.py [--check] [--verbose]
 
 Options:
-    --check     Exit with non-zero if validation warnings/errors found
+    --check     Validate metadata and the committed index without writing files
     --verbose   Show detailed output for each skill
 
 Exit codes:
-    0  Success (or warnings in non-check mode)
-    1  Error (files over 500 lines in check mode)
+    0  Generation completed, or check mode found no issues
+    1  Check mode found warnings, errors, a missing index, or a stale index
 """
 
 import argparse
@@ -34,6 +34,7 @@ LINE_ERROR_THRESHOLD = 500
 # Valid category and priority values
 VALID_CATEGORIES = {"core", "performance", "testing", "lua", "workflow", "meta"}
 VALID_PRIORITIES = {"core", "recommended", "reference"}
+VALID_METADATA_KEYS = {"triggers", "category", "related", "priority"}
 
 
 @dataclass
@@ -128,14 +129,60 @@ def count_lines(content: str) -> int:
 
 def validate_metadata(skill: SkillMetadata, metadata: dict) -> None:
     """Validate extracted metadata and add warnings/errors."""
+    for unknown_key in sorted(set(metadata) - VALID_METADATA_KEYS):
+        skill.validation_warnings.append(
+            f"Unknown front-matter field '{unknown_key}'."
+        )
+
+    for required_key in ("triggers", "category", "priority"):
+        if required_key not in metadata:
+            skill.validation_warnings.append(
+                f"Missing required front-matter field '{required_key}'."
+            )
+
+    triggers = metadata.get("triggers")
+    if triggers is not None and (
+        not isinstance(triggers, list)
+        or not triggers
+        or any(not isinstance(trigger, str) or not trigger.strip() for trigger in triggers)
+    ):
+        skill.validation_warnings.append(
+            "Front-matter field 'triggers' must be a non-empty list of strings."
+        )
+
+    category = metadata.get("category")
+    if category is not None and (
+        not isinstance(category, str) or not category.strip()
+    ):
+        skill.validation_warnings.append(
+            "Front-matter field 'category' must be a non-empty string."
+        )
+
+    priority = metadata.get("priority")
+    if priority is not None and (
+        not isinstance(priority, str) or not priority.strip()
+    ):
+        skill.validation_warnings.append(
+            "Front-matter field 'priority' must be a non-empty string."
+        )
+
+    related = metadata.get("related")
+    if related is not None and (
+        not isinstance(related, list)
+        or any(not isinstance(item, str) or not item.strip() for item in related)
+    ):
+        skill.validation_warnings.append(
+            "Front-matter field 'related' must be a list of non-empty strings."
+        )
+
     # Check category
-    if skill.category and skill.category not in VALID_CATEGORIES:
+    if isinstance(skill.category, str) and skill.category and skill.category not in VALID_CATEGORIES:
         skill.validation_warnings.append(
             f"Unknown category '{skill.category}'. Valid: {', '.join(sorted(VALID_CATEGORIES))}"
         )
 
     # Check priority
-    if skill.priority and skill.priority not in VALID_PRIORITIES:
+    if isinstance(skill.priority, str) and skill.priority and skill.priority not in VALID_PRIORITIES:
         skill.validation_warnings.append(
             f"Unknown priority '{skill.priority}'. Valid: {', '.join(sorted(VALID_PRIORITIES))}"
         )
@@ -218,6 +265,14 @@ def generate_index(repo_root: Path) -> dict:
         skill = process_skill_file(skill_file, repo_root)
         skills.append(skill)
 
+    skill_names = {skill.name for skill in skills}
+    for skill in skills:
+        for related_name in skill.related:
+            if related_name not in skill_names:
+                skill.validation_warnings.append(
+                    f"Related skill '{related_name}' does not exist."
+                )
+
     # Build index structure
     index = {
         "version": "1.0.0",
@@ -236,7 +291,11 @@ def generate_index(repo_root: Path) -> dict:
 
     # Build category index
     for skill in skills:
-        cat = skill.category or "uncategorized"
+        cat = (
+            skill.category
+            if isinstance(skill.category, str) and skill.category
+            else "uncategorized"
+        )
         if cat not in index["categories"]:
             index["categories"][cat] = []
         index["categories"][cat].append(skill.name)
@@ -300,6 +359,26 @@ def print_validation_report(index: dict, verbose: bool = False) -> None:
         print(f"\nTotal: {summary['total_errors']} error(s), {summary['total_warnings']} warning(s)", file=sys.stderr)
 
 
+def check_index(index: dict, output_path: Path, rendered_index: str) -> list[str]:
+    """Return fail-closed check-mode errors without modifying the index."""
+    errors = []
+    summary = index["validation_summary"]
+
+    if summary["total_errors"] > 0:
+        errors.append("Skill metadata has validation errors.")
+    if summary["total_warnings"] > 0:
+        errors.append("Skill metadata has validation warnings.")
+    if not output_path.exists():
+        errors.append(f"Generated index is missing: {output_path}")
+    elif output_path.read_text(encoding='utf-8') != rendered_index:
+        errors.append(
+            "Generated index is stale. "
+            "Run tools/LlmSkillIndexer/llm_skill_indexer.py and commit the result."
+        )
+
+    return errors
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate skills index from .llm/skills/*.md files"
@@ -307,7 +386,7 @@ def main():
     parser.add_argument(
         '--check',
         action='store_true',
-        help='Exit with non-zero if validation errors found'
+        help='Validate metadata and committed index without writing files'
     )
     parser.add_argument(
         '--verbose',
@@ -341,14 +420,20 @@ def main():
     # Print validation report
     print_validation_report(index, verbose=args.verbose)
 
-    # Write output
     output_path = Path(args.output) if args.output else (repo_root / '.llm' / 'skills-index.json')
-    output_path.write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
-    print(f"\nWrote index to: {output_path}", file=sys.stderr)
+    rendered_index = json.dumps(index, indent=2) + '\n'
 
-    # Exit code based on validation
-    if args.check and index["validation_summary"]["total_errors"] > 0:
-        sys.exit(1)
+    if args.check:
+        check_errors = check_index(index, output_path, rendered_index)
+        if check_errors:
+            for check_error in check_errors:
+                print(f"\nERROR: {check_error}", file=sys.stderr)
+            sys.exit(1)
+        print(f"\nIndex is current: {output_path}", file=sys.stderr)
+        sys.exit(0)
+
+    output_path.write_text(rendered_index, encoding='utf-8')
+    print(f"\nWrote index to: {output_path}", file=sys.stderr)
 
     sys.exit(0)
 

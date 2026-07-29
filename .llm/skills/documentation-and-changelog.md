@@ -1,21 +1,17 @@
-______________________________________________________________________
-
+---
 triggers:
-
-- "documentation"
-- "changelog"
-- "XML docs"
-- "code comments"
-- "CHANGELOG.md"
-- "keep a changelog"
-  category: workflow
-  related:
-- tunit-test-writing
-- lua-fixture-creation
-  priority: recommended
-
-______________________________________________________________________
-
+  - "documentation"
+  - "changelog"
+  - "XML docs"
+  - "code comments"
+  - "CHANGELOG.md"
+  - "keep a changelog"
+category: workflow
+related:
+  - tunit-test-writing
+  - lua-fixture-creation
+priority: recommended
+---
 # Skill: Documentation and Changelog Management
 
 **When to use**: After implementing any new feature, fixing a bug, or making any user-facing change.
