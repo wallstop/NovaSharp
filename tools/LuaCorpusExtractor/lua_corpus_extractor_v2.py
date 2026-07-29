@@ -12,10 +12,21 @@ Each extracted file includes a metadata header:
     -- @source: path/to/test.cs:123
     -- @test: TestClass.TestMethod
 
+Curated metadata is authoritative
+---------------------------------
+`@lua-versions`, `@novasharp-only`, and `@expects-error` are decided by a human
+against reference Lua and are the only three keys the comparison harness reads.
+The heuristics in this file cannot rediscover those decisions, so for a fixture
+that already exists on disk the committed header wins: only `@source`, `@test`,
+and the snippet body are refreshed, and curated comment lines are kept verbatim.
+Pass `--refresh-metadata` to deliberately recompute instead — expect to re-audit
+every fixture it changes.
+
 Usage:
     python tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py
     python tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py --dry-run
     python tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py --output-dir custom/path
+    python tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py --refresh-metadata
 """
 
 from __future__ import annotations
@@ -35,6 +46,16 @@ DEFAULT_TEST_DIRS = [
     ROOT / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests.TUnit",
     ROOT / "src" / "tests" / "WallstopStudios.NovaSharp.Interpreter.Tests",
 ]
+
+sys.path.insert(0, str(ROOT / "tools"))
+from lua_version_utils import ALL_LUA_VERSIONS, parse_lua_versions  # noqa: E402
+
+# Header keys a human curates against reference Lua. These are exactly the keys
+# `scripts/tests/compare-lua-outputs.py` reads, and the only ones this tool must
+# never overwrite on an existing fixture.
+CURATED_KEYS = ("@lua-versions", "@novasharp-only", "@expects-error")
+# Keys this tool owns and always refreshes from the test source.
+REFRESHED_KEYS = ("@source", "@test")
 
 # Pattern to match DoString calls with various string literal forms
 DOSTRING_CALL_PATTERN = re.compile(
@@ -245,7 +266,16 @@ class LuaVersionCompatibility:
     
     @property
     def compatible_versions(self) -> list[str]:
-        """Return list of compatible Lua versions."""
+        """Return list of compatible Lua versions.
+
+        A NovaSharp-only fixture has none: it is never run against a reference
+        interpreter. Reporting versions here made the manifest disagree with the
+        `novasharp-only` header it was generated from, so a regeneration that
+        read that header back produced a different manifest.
+        """
+        if self.novasharp_only:
+            return []
+
         versions = []
         if self.lua_51:
             versions.append("5.1")
@@ -284,7 +314,10 @@ class LuaSnippet:
     compatibility: LuaVersionCompatibility
     expects_error: bool = False
     snippet_index: int = 0
-    
+    # Header of the already-committed fixture, when one exists. Present means the
+    # curated metadata in that header is authoritative for this snippet.
+    curated_header_lines: list[str] | None = None
+
     @property
     def output_filename(self) -> str:
         """Generate the output filename for this snippet."""
@@ -297,17 +330,33 @@ class LuaSnippet:
         """Generate the relative output path."""
         return f"{self.test_class}/{self.output_filename}"
     
+    @property
+    def refreshed_values(self) -> dict[str, str]:
+        """Header values this tool owns and rewrites on every run."""
+        return {
+            "@source": f"{self.source_file}:{self.line_number}",
+            "@test": f"{self.test_class}.{self.test_method}",
+        }
+
     def generate_header(self) -> str:
-        """Generate the metadata header for the Lua file."""
-        lines = [
-            f"-- @lua-versions: {self.compatibility.version_string}",
-            f"-- @novasharp-only: {str(self.compatibility.novasharp_only).lower()}",
-            f"-- @expects-error: {str(self.expects_error).lower()}",
-            f"-- @source: {self.source_file}:{self.line_number}",
-            f"-- @test: {self.test_class}.{self.test_method}",
-        ]
-        if self.compatibility.reasons:
-            lines.append(f"-- Compatibility notes: {'; '.join(self.compatibility.reasons)}")
+        """Generate the metadata header for the Lua file.
+
+        For a fixture that already exists, the committed header is reused with
+        only `@source` / `@test` refreshed, so curated markers and hand-written
+        compatibility notes survive regeneration.
+        """
+        if self.curated_header_lines is not None:
+            lines = rewrite_curated_header(self.curated_header_lines, self.refreshed_values)
+        else:
+            lines = [
+                f"-- @lua-versions: {self.compatibility.version_string}",
+                f"-- @novasharp-only: {str(self.compatibility.novasharp_only).lower()}",
+                f"-- @expects-error: {str(self.expects_error).lower()}",
+                f"-- @source: {self.refreshed_values['@source']}",
+                f"-- @test: {self.refreshed_values['@test']}",
+            ]
+            if self.compatibility.reasons:
+                lines.append(f"-- Compatibility notes: {'; '.join(self.compatibility.reasons)}")
         lines.append("")
         return "\n".join(lines)
 
@@ -336,6 +385,197 @@ class ExtractionResult:
         return [s for s in self.snippets 
                 if not s.compatibility.novasharp_only 
                 and version in s.compatibility.compatible_versions]
+
+
+def split_fixture_header(text: str) -> tuple[list[str], str]:
+    """Split a fixture into its leading `--` comment header and its Lua body."""
+    lines = text.splitlines()
+    header_length = 0
+    for line in lines:
+        if not line.startswith("--"):
+            break
+        header_length += 1
+
+    header = lines[:header_length]
+    body = "\n".join(lines[header_length:])
+    return header, body
+
+
+def strip_absorbed_body_prefix(header_lines: list[str], lua_code: str) -> list[str]:
+    """Remove snippet comments that `split_fixture_header` mistook for header.
+
+    A fixture body may itself begin with unindented Lua comments, and those are
+    indistinguishable from header lines by shape alone. The extracted snippet is
+    the ground truth: any tail of `header_lines` that matches the snippet's own
+    leading comments belongs to the body, not the header. Without this the
+    comments are emitted twice, once more on every regeneration.
+    """
+    body_lines = lua_code.splitlines()
+    leading = 0
+    for line in body_lines:
+        if not line.startswith("--"):
+            break
+        leading += 1
+
+    while leading > 0:
+        if len(header_lines) >= leading and header_lines[-leading:] == body_lines[:leading]:
+            return header_lines[:-leading]
+        leading -= 1
+
+    return header_lines
+
+
+def parse_header_metadata(header_lines: list[str]) -> dict[str, str]:
+    """Return the `@key: value` pairs in a fixture header, keyed lowercase."""
+    metadata: dict[str, str] = {}
+    for line in header_lines:
+        stripped = line[2:].strip()
+        if not stripped.startswith("@") or ":" not in stripped:
+            continue
+        key, value = stripped.split(":", 1)
+        metadata[key.strip().lower()] = value.strip()
+    return metadata
+
+
+def rewrite_curated_header(header_lines: list[str], refreshed: dict[str, str]) -> list[str]:
+    """Return `header_lines` with only the tool-owned keys refreshed.
+
+    Curated keys, hand-written notes, ordering, and any unrecognised `@key` are
+    preserved exactly. A tool-owned key missing from the committed header is
+    appended after the last `@key` line so old fixtures gain it without churn.
+    """
+    rewritten: list[str] = []
+    seen: set[str] = set()
+    last_key_index = -1
+
+    for line in header_lines:
+        stripped = line[2:].strip()
+        if stripped.startswith("@") and ":" in stripped:
+            key = stripped.split(":", 1)[0].strip().lower()
+            if key in refreshed:
+                line = f"-- {key}: {refreshed[key]}"
+                seen.add(key)
+            last_key_index = len(rewritten)
+        rewritten.append(line)
+
+    missing = [f"-- {key}: {refreshed[key]}" for key in REFRESHED_KEYS if key not in seen]
+    if missing:
+        insert_at = last_key_index + 1 if last_key_index >= 0 else len(rewritten)
+        rewritten[insert_at:insert_at] = missing
+
+    return rewritten
+
+
+def compatibility_from_metadata(metadata: dict[str, str]) -> LuaVersionCompatibility | None:
+    """Build a compatibility record from curated header metadata.
+
+    Returns None when the header carries neither curated version key, so callers
+    can fall back to the computed value.
+    """
+    versions_text = metadata.get("@lua-versions")
+    novasharp_only_text = metadata.get("@novasharp-only")
+    if versions_text is None and novasharp_only_text is None:
+        return None
+
+    novasharp_only = False
+    if novasharp_only_text is not None:
+        novasharp_only = novasharp_only_text.strip().lower() == "true"
+    elif versions_text is not None and "novasharp-only" in versions_text.lower():
+        novasharp_only = True
+
+    if versions_text is None:
+        versions = list(ALL_LUA_VERSIONS)
+    elif versions_text.strip().lower() == "none" or "novasharp-only" in versions_text.lower():
+        versions = []
+    else:
+        versions = parse_lua_versions(versions_text)
+
+    return LuaVersionCompatibility(
+        lua_51="5.1" in versions,
+        lua_52="5.2" in versions,
+        lua_53="5.3" in versions,
+        lua_54="5.4" in versions,
+        lua_55="5.5" in versions,
+        novasharp_only=novasharp_only,
+    )
+
+
+@dataclass(frozen=True)
+class CuratedOverride:
+    """One curated header value that differs from what the heuristics computed."""
+
+    path: str
+    key: str
+    curated: str
+    computed: str
+
+
+def apply_curated_metadata(
+    result: ExtractionResult, output_dir: Path
+) -> list[CuratedOverride]:
+    """Let committed fixture headers win over recomputed metadata.
+
+    Runs before both `write_snippets` and `write_manifest` so the files on disk
+    and the manifest always agree. Returns the curated-vs-computed divergences
+    for reporting.
+    """
+    overrides: list[CuratedOverride] = []
+
+    for snippet in result.snippets:
+        existing = output_dir / snippet.output_path
+        try:
+            text = existing.read_text(encoding="utf-8")
+        except (FileNotFoundError, NotADirectoryError):
+            continue
+        except (OSError, UnicodeDecodeError) as error:
+            result.errors.append(f"{existing}: could not read curated header: {error}")
+            continue
+
+        header_lines, _ = split_fixture_header(text)
+        header_lines = strip_absorbed_body_prefix(header_lines, snippet.lua_code)
+        if not header_lines:
+            continue
+
+        metadata = parse_header_metadata(header_lines)
+        snippet.curated_header_lines = header_lines
+
+        curated_compatibility = compatibility_from_metadata(metadata)
+        if curated_compatibility is not None:
+            if curated_compatibility.version_string != snippet.compatibility.version_string:
+                overrides.append(
+                    CuratedOverride(
+                        snippet.output_path,
+                        "@lua-versions",
+                        curated_compatibility.version_string,
+                        snippet.compatibility.version_string,
+                    )
+                )
+            if curated_compatibility.novasharp_only != snippet.compatibility.novasharp_only:
+                overrides.append(
+                    CuratedOverride(
+                        snippet.output_path,
+                        "@novasharp-only",
+                        str(curated_compatibility.novasharp_only).lower(),
+                        str(snippet.compatibility.novasharp_only).lower(),
+                    )
+                )
+            snippet.compatibility = curated_compatibility
+
+        expects_error_text = metadata.get("@expects-error")
+        if expects_error_text is not None:
+            curated_expects_error = expects_error_text.strip().lower() == "true"
+            if curated_expects_error != snippet.expects_error:
+                overrides.append(
+                    CuratedOverride(
+                        snippet.output_path,
+                        "@expects-error",
+                        str(curated_expects_error).lower(),
+                        str(snippet.expects_error).lower(),
+                    )
+                )
+            snippet.expects_error = curated_expects_error
+
+    return overrides
 
 
 def unescape_csharp_string(content: str, is_verbatim: bool = False) -> str:
@@ -669,7 +909,11 @@ def extract_snippets_from_file(file_path: Path) -> Iterator[LuaSnippet]:
         
         yield LuaSnippet(
             lua_code=lua_code.strip(),
-            source_file=str(file_path.relative_to(ROOT)),
+            # POSIX separators unconditionally: `str(PurePath)` is OS-native, so
+            # regenerating on Linux rewrote every fixture written on Windows and
+            # vice versa, burying real metadata changes in thousands of
+            # separator-only diffs.
+            source_file=file_path.relative_to(ROOT).as_posix(),
             line_number=line_number,
             test_class=test_class,
             test_method=test_method,
@@ -756,6 +1000,39 @@ def write_manifest(result: ExtractionResult, output_dir: Path, dry_run: bool = F
     manifest_path.write_text(json.dumps(manifest, indent=2), encoding='utf-8')
 
 
+def print_curation_summary(
+    result: ExtractionResult, overrides: list[CuratedOverride]
+) -> None:
+    """Report how many fixtures kept curated metadata, and where it diverged."""
+    preserved = sum(1 for s in result.snippets if s.curated_header_lines is not None)
+    new_fixtures = result.total_snippets - preserved
+
+    print(f"\n=== Curated Metadata ===")
+    print(f"Existing fixtures (header preserved): {preserved}")
+    print(f"New fixtures (metadata computed):     {new_fixtures}")
+
+    if not overrides:
+        print("Curated headers agree with the recomputed metadata.")
+        return
+
+    by_key: dict[str, list[CuratedOverride]] = {}
+    for override in overrides:
+        by_key.setdefault(override.key, []).append(override)
+
+    print(
+        f"Kept {len(overrides)} curated value(s) that the heuristics would have changed:"
+    )
+    for key in CURATED_KEYS:
+        entries = by_key.get(key, [])
+        if not entries:
+            continue
+        print(f"  {key}: {len(entries)}")
+        for entry in entries[:5]:
+            print(f"    {entry.path}: kept {entry.curated!r} (computed {entry.computed!r})")
+        if len(entries) > 5:
+            print(f"    ... and {len(entries) - 5} more")
+
+
 def print_summary(result: ExtractionResult) -> None:
     """Print extraction summary."""
     print(f"\n=== Lua Corpus Extraction Summary ===")
@@ -795,14 +1072,32 @@ def main() -> int:
         action='store_true',
         help="Only write the manifest file, not individual Lua files"
     )
-    
+    parser.add_argument(
+        '--refresh-metadata',
+        action='store_true',
+        help=(
+            "Recompute @lua-versions / @novasharp-only / @expects-error for fixtures "
+            "that already exist, discarding curated values. Every changed fixture must "
+            "be re-audited against reference Lua before committing."
+        )
+    )
+
     args = parser.parse_args()
-    
+
     print(f"Extracting Lua snippets from test files...")
     result = extract_all_snippets(DEFAULT_TEST_DIRS)
-    
+
+    if args.refresh_metadata:
+        print(
+            "\n[--refresh-metadata] Curated fixture metadata will be overwritten; "
+            "re-audit every changed fixture against reference Lua."
+        )
+    else:
+        overrides = apply_curated_metadata(result, args.output_dir)
+        print_curation_summary(result, overrides)
+
     print_summary(result)
-    
+
     if not args.manifest_only:
         write_snippets(result, args.output_dir, dry_run=args.dry_run)
     
