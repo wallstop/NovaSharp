@@ -108,7 +108,7 @@ namespace WallstopStudios.NovaSharp.Hardwire.Utils
                 list.Add(new HardwireParameterDescriptor(entry.Table));
             }
 
-            return list;
+            return list.AsReadOnly();
         }
 
         /// <summary>

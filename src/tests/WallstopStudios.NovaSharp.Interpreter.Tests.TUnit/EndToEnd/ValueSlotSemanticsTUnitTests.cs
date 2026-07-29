@@ -74,6 +74,85 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 .ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Every loop form must give each iteration a fresh cell for its body-locals, otherwise all
+        /// closures made in the loop would alias one cell and report the final value. Cell freshness
+        /// depends on the block-clear that nulls the slot at each iteration's scope entry, so all
+        /// loop forms are covered, not just numeric <c>for</c>. Expectations were taken from
+        /// reference lua5.1-lua5.5.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task EveryLoopFormGivesEachIterationItsOwnCell(LuaCompatibilityVersion version)
+        {
+            (string Body, string Expected)[] cases =
+            {
+                ("for i = 1, 3 do fns[#fns + 1] = function() return i end end", "1,2,3"),
+                (
+                    "for _, v in ipairs({ 10, 20, 30 }) do fns[#fns + 1] = function() return v end end",
+                    "10,20,30"
+                ),
+                (
+                    "for i = 1, 3 do local x = i * 100 fns[#fns + 1] = function() return x end end",
+                    "100,200,300"
+                ),
+                (
+                    "local n = 0 while n < 3 do n = n + 1 local y = n * 7 fns[#fns + 1] = function() return y end end",
+                    "7,14,21"
+                ),
+                (
+                    "local m = 0 repeat m = m + 1 local z = m * 5 fns[#fns + 1] = function() return z end until m >= 3",
+                    "5,10,15"
+                ),
+            };
+
+            Script script = new Script(version, CoreModulePresets.Complete);
+            foreach ((string body, string expected) in cases)
+            {
+                string code =
+                    $@"
+                    local fns = {{}}
+                    {body}
+                    local out = {{}}
+                    for i = 1, #fns do out[i] = tostring(fns[i]()) end
+                    return table.concat(out, "","")
+                    ";
+                await EndToEndDynValueAssert
+                    .ExpectAsync(script.DoString(code), expected)
+                    .ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// A closure that mutates its captured per-iteration local must keep writing through to that
+        /// iteration's own cell across repeated invocations.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task PerIterationCellsStayIndependentAcrossMutatingCalls(
+            LuaCompatibilityVersion version
+        )
+        {
+            string code =
+                @"
+                local fns = {}
+                for i = 1, 3 do
+                    local k = i
+                    fns[#fns + 1] = function() k = k + 1 return k end
+                end
+                local function drain()
+                    local out = {}
+                    for i = 1, #fns do out[i] = tostring(fns[i]()) end
+                    return table.concat(out, "","")
+                end
+                return drain(), drain()
+                ";
+            Script script = new Script(version, CoreModulePresets.Complete);
+            await EndToEndDynValueAssert
+                .ExpectAsync(script.DoString(code), "2,3,4", "3,4,5")
+                .ConfigureAwait(false);
+        }
+
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task ClosuresShareOneCellForTheSameLocal(LuaCompatibilityVersion version)

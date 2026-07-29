@@ -125,3 +125,49 @@ box showed up to ±25% run-to-run variance on wall time, so the benchmark CI leg
 - Remaining A1 work is unchanged: **A1c** (class→struct conversion) and **A1d** (tuning). The slot
   boxes introduced here are exactly what A1c needs, since a `readonly struct LuaValue` cannot be
   captured by reference.
+
+______________________________________________________________________
+
+## Review round 1 (PR #86)
+
+**Cursor Bugbot — 1 issue, confirmed real and fixed.** *Accidental `List.AsReadOnly` removal*
+(`HardwireParameterDescriptor.cs:111`). The sweep that stripped `DynValue.AsReadOnly()` call sites
+was a text substitution on `.AsReadOnly()`, which also matched `list.AsReadOnly()` — a
+`List<T>.AsReadOnly()` returning a `ReadOnlyCollection<T>`, entirely unrelated to `DynValue`.
+`LoadDescriptorsFromTable` was silently widened to hand back the mutable backing list. Restored, and
+every other site the substitution touched was audited: all remaining removals were on `DynValue`
+receivers. Lesson: a regex over a method *name* cannot distinguish receivers — the audit should have
+been part of the original edit, not a follow-up.
+
+**GitHub Copilot** declined to review: the requesting account has hit its review quota.
+
+**CI — `benchmark aggregate report` failed**, 16 identical Phase A0 gate rows: `Cached Compile`
+allocation rose from **208 B to 216 B** (+8 B against a 0 B tolerance — exact enforcement for
+sub-1 KiB baselines, per the methodology rule). Real and attributable: binding `_ENV` at chunk entry
+now allocates a `ValueSlot` cell, partly offset by `DynValue` shrinking after `_readOnly` was
+removed.
+
+Fixed rather than re-baselined. `Table` gained a `CachedDynValue` wrapper and `DynValue.FromTable`,
+mirroring the existing `FromClosure`/`FromCallback` pattern, and the two chunk-entry sites in
+`Script.cs` now reuse it. Caching one wrapper per table is *newly* safe precisely because of this
+PR: with mutable values a shared wrapper was an aliasing hazard, and with immutable values it cannot
+be reassigned out from under a holder. Equality is unchanged — `DynValue.Equals` compares tables by
+their underlying `Table` reference either way.
+
+Local probe replicating `NovaSharpCachedCompile`: **216 B/op → 168 B/op**, i.e. 40 B *below* the
+committed baseline rather than 8 B above it.
+
+**Added coverage.** An adversarial pass on the riskiest property — per-iteration cell freshness —
+found the original tests only covered numeric `for`. Cell freshness depends on the block-clear that
+nulls the slot at each iteration's scope entry, so a miss in any other loop form would alias every
+closure in that loop onto one cell. Added `EveryLoopFormGivesEachIterationItsOwnCell` (numeric
+`for`, generic `for`, body-local in `for`, `while`, `repeat`) and
+`PerIterationCellsStayIndependentAcrossMutatingCalls`. All expectations were taken from reference
+lua5.1-5.5 first; NovaSharp matched all five versions on all six forms.
+
+Re-verified: **15,106 tests pass**, `compare-lua-outputs.py --enforce` clean on 5.1 and 5.4, VM
+hot-path allocation gate OK.
+
+The generated fixture for `EveryLoopFormGivesEachIterationItsOwnCell` was dropped: the test is
+data-driven via C# interpolation, so the extractor emitted an unresolved `{body}` placeholder rather
+than runnable Lua. The other six fixtures round-trip cleanly.

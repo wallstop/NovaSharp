@@ -537,6 +537,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
+        /// Returns a DynValue wrapping the specified table, reusing the table's cached wrapper when available.
+        /// </summary>
+        /// <param name="table">The table to wrap.</param>
+        /// <returns>A <see cref="DynValue"/> representing the table.</returns>
+        /// <remarks>
+        /// Mirrors <see cref="FromClosure"/>. Sharing one wrapper per table is safe because values
+        /// are immutable, so a chunk entry point can bind <c>_ENV</c> without allocating a wrapper
+        /// on every load from the compilation cache.
+        /// </remarks>
+        internal static DynValue FromTable(Table table)
+        {
+            if (table == null)
+            {
+                return Nil;
+            }
+
+            DynValue cached = table.CachedDynValue;
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            DynValue newValue = NewTable(table);
+            table.CachedDynValue = newValue;
+            return newValue;
+        }
+
+        /// <summary>
         /// Returns a DynValue wrapping the specified CLR callback, reusing the callback's cached wrapper when available.
         /// </summary>
         internal static DynValue FromCallback(CallbackFunction function)
