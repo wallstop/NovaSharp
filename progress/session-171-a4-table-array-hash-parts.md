@@ -251,6 +251,37 @@ eight new fixtures. Filed as a follow-up.
 
 ______________________________________________________________________
 
+## Review round on PR #89
+
+Cursor Bugbot raised four issues. All four were real and all four are fixed, each with a regression
+test confirmed to fail without its fix. Copilot never ran — it returned "the user who requested the
+review has reached their quota limit" on every attempt — so Bugbot was the only automated reviewer
+that examined this code.
+
+| Finding | Fix | Test signature without the fix |
+| ------------------------------------ | -------- | ------------------------------------- |
+| Compaction left an empty hash allocated | a86d31d2 | 160 B retained (header + 4 nodes + header + 4 buckets) |
+| Non-positive `Remove(int)` flag mismatch | bd039700 | none — cache-only, so the test asserts the border instead |
+| Fixture excluded from the harness | 94313507 | fixture tagged `@novasharp-only: true` |
+| Array-only nils skipped the rebuild | 05ced969 | retained bytes exactly unchanged after collect |
+
+The third deserves singling out: `SparseAndDenseIntegerKeysCoexist.lua` was auto-tagged
+`@novasharp-only: true` because the extractor's injected-variable heuristic regexes its list against
+raw snippet text *including comments*, and the comment read "dense prefix into the **array** part".
+That silently excluded the fixture from `compare-lua-outputs.py`, which made this session's claim
+that all eight fixtures were verified against reference Lua false for one of them. Seven were.
+
+**The pattern matters more than any individual fix.** Every finding concerned retained memory or
+bookkeeping; not one was a wrong answer to a Lua program. The randomized differential test compares
+reads, counts, and traversal against a dictionary model, so it is structurally blind to "correct
+result, holding more memory than it should" — and that is exactly the class this phase made
+security-relevant by putting sandbox memory limits on real retained capacity. Four hand-written
+assertions were the only thing guarding it. Refreshing the Phase A0 baseline (#92) so CI catches
+retained-memory regressions should be treated as a prerequisite for trusting this area, not a
+nice-to-have.
+
+______________________________________________________________________
+
 ## Follow-ups
 
 - **Fix the extractor** so it preserves `@lua-versions`, `@novasharp-only`, and `@expects-error`
