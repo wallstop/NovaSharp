@@ -27,7 +27,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     {
         private static readonly ConditionalWeakTable<object, DebugHookState> HookStates = new();
         private static readonly object DefaultHookKey = new();
-        private static readonly ConditionalWeakTable<DynValue, DynValue> UpvalueIdentifiers = new();
+        private static readonly ConditionalWeakTable<ValueSlot, DynValue> UpvalueIdentifiers =
+            new();
         private static readonly IUserDataDescriptor UpvalueIdentifierDescriptorInstance =
             new UpvalueIdentifierDescriptor();
 
@@ -533,7 +534,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            DynValue slot = closure[index];
+            ValueSlot slot = closure.GetSlot(index);
 
             if (slot == null)
             {
@@ -1394,7 +1395,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return false;
         }
 
-        private static DynValue GetUpvalueIdentifier(DynValue upvalueSlot)
+        /// <summary>
+        /// Mints (or reuses) the stable identity handle for an upvalue.
+        /// </summary>
+        /// <param name="upvalueSlot">The mutable cell backing the upvalue.</param>
+        /// <remarks>
+        /// Keyed by the <see cref="ValueSlot"/> cell rather than the value it currently holds.
+        /// <c>debug.upvalueid</c> exists so a program can tell whether two closures share the same
+        /// variable, so the identity must track the variable: keying by value would both collide
+        /// unrelated upvalues that happen to hold the same shared instance (nil, true, a cached
+        /// small integer) and change the identity of one upvalue whenever it is assigned.
+        /// </remarks>
+        private static DynValue GetUpvalueIdentifier(ValueSlot upvalueSlot)
         {
             return UpvalueIdentifiers.GetValue(
                 upvalueSlot,
@@ -1417,13 +1429,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             private static int ReferenceIdCounter;
 
-            public UpvalueIdentifier(DynValue slot)
+            public UpvalueIdentifier(ValueSlot slot)
             {
                 Upvalue = slot ?? throw new ArgumentNullException(nameof(slot));
                 ReferenceId = Interlocked.Increment(ref ReferenceIdCounter);
             }
 
-            public DynValue Upvalue { get; }
+            public ValueSlot Upvalue { get; }
 
             public int ReferenceId { get; }
 

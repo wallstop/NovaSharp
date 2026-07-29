@@ -171,3 +171,47 @@ hot-path allocation gate OK.
 The generated fixture for `EveryLoopFormGivesEachIterationItsOwnCell` was dropped: the test is
 data-driven via C# interpolation, so the extractor emitted an unresolved `{body}` placeholder rather
 than runnable Lua. The other six fixtures round-trip cleanly.
+
+## Review round 2 (PR #86)
+
+**Cursor Bugbot — 1 issue, confirmed real and fixed: `debug.upvalueid` keyed by value, not cell.**
+More serious than round 1's finding. `UpvalueIdentifiers` is a `ConditionalWeakTable` that mints one
+stable handle per upvalue, and it was keyed off `ClosureContext`'s indexer — which *used* to hand
+back the mutable cell and now hands back the value. Two concrete spec violations resulted, both
+confirmed by running the same probe against reference lua5.2-5.5 before and after:
+
+| Property | Reference | Pre-fix | Post-fix |
+| ------------------------------------------------------ | --------- | ------- | -------- |
+| Distinct upvalues both holding `nil` share an id | false | **true** | false |
+| Identity stable across assignment to the upvalue | true | **false** | true |
+| Two closures over one local share an id | true | true | true |
+| Distinct upvalues both holding the same small int share | false | false | false |
+| `upvaluejoin`ed upvalues share an id | true | true | true |
+
+The first is false sharing — every unassigned upvalue holds the same `DynValue.Nil` singleton, so
+they all collapsed onto one identity, defeating the entire point of `upvalueid` ("check whether
+different closures share upvalues"). The second is the mirror image: assigning to a variable handed
+it a new identity. `UpvalueIdentifiers`, `GetUpvalueIdentifier`, and `UpvalueIdentifier.Upvalue` are
+now typed to `ValueSlot`, and the call site uses `closure.GetSlot(index)`.
+
+**Swept the class, not just the instance.** Anything keyed on `DynValue` *identity* is newly suspect,
+because this PR makes values shared and cached far more aggressively. Findings: no
+`ConditionalWeakTable<DynValue, …>` remains anywhere; the `Dictionary<DynValue, DynValue>` hits in
+`TableConversions` are interop target-type checks using value equality, not identity; and every
+remaining `ClosureContext[...]` / `context[0]` / `closure[index]` read is a genuine *value* read
+(`getupvalue`, `getfenv`, `OpCode.UpValue`, `GetGenericSymbol`, `Closure.GetUpValue`), while every
+mutation or identity use now routes through `GetSlot`/`SetSlot`. `upvalueid` was the sole identity
+consumer.
+
+Locked in by `UpvalueIdTracksTheCellNotTheValue` (Lua 5.2+, all four versions), asserting all four
+distinguishing properties. Full suite: **15,110 pass**.
+
+### Why both review findings shared a root cause
+
+Round 1 and round 2 are the same mistake in different clothes: a mechanical, name-based edit applied
+without checking what the *receiver* was. Round 1 stripped `.AsReadOnly()` regardless of whether the
+receiver was a `DynValue` or a `List<T>`. Round 2 changed what `ClosureContext`'s indexer returns
+without auditing which callers wanted the cell versus the value. In both cases the compiler stayed
+silent because the replacement type-checked. The generalizable guard is the sweep above — when a
+type's identity semantics change, enumerate the identity consumers explicitly rather than trusting
+the build.

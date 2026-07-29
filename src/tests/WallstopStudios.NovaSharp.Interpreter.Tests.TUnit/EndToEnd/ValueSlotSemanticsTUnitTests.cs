@@ -153,6 +153,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.EndToEnd
                 .ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// <c>debug.upvalueid</c> exists so a program can tell whether two closures share the same
+        /// variable, so its identity must track the cell, never the value the cell currently holds.
+        /// Keying by value would both collide unrelated upvalues that happen to hold the same shared
+        /// instance (nil, true, a cached small integer) and change one upvalue's identity whenever it
+        /// is assigned. Expectations were taken from reference lua5.2-lua5.5.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [LuaVersionsFrom(LuaCompatibilityVersion.Lua52)]
+        public async Task UpvalueIdTracksTheCellNotTheValue(LuaCompatibilityVersion version)
+        {
+            string code =
+                @"
+                local function mkNil() local v = nil return function() return v end end
+                local function mkInt(n) local v = n return function() return v end end
+                local function pair()
+                    local v = 0
+                    return function() return v end, function() v = v + 1 end
+                end
+
+                -- distinct variables that merely hold the same value must not collide
+                local sharesNil = debug.upvalueid(mkNil(), 1) == debug.upvalueid(mkNil(), 1)
+                local sharesInt = debug.upvalueid(mkInt(1), 1) == debug.upvalueid(mkInt(1), 1)
+
+                -- two closures over one variable must share, and stay stable across assignment
+                local read, bump = pair()
+                local sharesLocal = debug.upvalueid(read, 1) == debug.upvalueid(bump, 1)
+                local before = debug.upvalueid(read, 1)
+                bump()
+                bump()
+                local stable = debug.upvalueid(read, 1) == before
+
+                return sharesNil, sharesInt, sharesLocal, stable
+                ";
+            Script script = new Script(version, CoreModulePresets.Complete);
+            await EndToEndDynValueAssert
+                .ExpectAsync(script.DoString(code), false, false, true, true)
+                .ConfigureAwait(false);
+        }
+
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task ClosuresShareOneCellForTheSameLocal(LuaCompatibilityVersion version)

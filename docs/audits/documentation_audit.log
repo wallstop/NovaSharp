@@ -8,19 +8,19 @@ Found 151 undocumented public/internal type declarations.
   - line 9: missing XML docs for `class ComVisibleAttribute`
   - line 14: missing XML docs for `class GuidAttribute`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/DebugModule.cs
-  - line 1411: missing XML docs for `Function`
-  - line 1412: missing XML docs for `Mask`
-  - line 1413: missing XML docs for `Count`
-  - line 1426: missing XML docs for `Upvalue`
-  - line 1428: missing XML docs for `ReferenceId`
-  - line 1430: missing XML docs for `ToString()`
-  - line 1441: missing XML docs for `Name`
-  - line 1443: missing XML docs for `Type`
-  - line 1445: missing XML docs for `Index()`
-  - line 1450: missing XML docs for `SetIndex()`
-  - line 1461: missing XML docs for `AsString()`
-  - line 1471: missing XML docs for `MetaIndex()`
-  - line 1476: missing XML docs for `IsTypeCompatible()`
+  - line 1423: missing XML docs for `Function`
+  - line 1424: missing XML docs for `Mask`
+  - line 1425: missing XML docs for `Count`
+  - line 1438: missing XML docs for `Upvalue`
+  - line 1440: missing XML docs for `ReferenceId`
+  - line 1442: missing XML docs for `ToString()`
+  - line 1453: missing XML docs for `Name`
+  - line 1455: missing XML docs for `Type`
+  - line 1457: missing XML docs for `Index()`
+  - line 1462: missing XML docs for `SetIndex()`
+  - line 1473: missing XML docs for `AsString()`
+  - line 1483: missing XML docs for `MetaIndex()`
+  - line 1488: missing XML docs for `IsTypeCompatible()`
 - src/runtime/WallstopStudios.NovaSharp.Interpreter/CoreLib/IO/FileUserDataDescriptor.cs
   - line 20: missing XML docs for `Name`
   - line 22: missing XML docs for `Type`

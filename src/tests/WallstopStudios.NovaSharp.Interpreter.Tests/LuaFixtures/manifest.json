@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1788,
+  "total_snippets": 1789,
   "novasharp_only": 460,
-  "comparable": 1328,
+  "comparable": 1329,
   "by_version": {
     "5.1": 881,
-    "5.2": 590,
-    "5.3": 828,
-    "5.4": 868,
-    "5.5": 909
+    "5.2": 591,
+    "5.3": 829,
+    "5.4": 869,
+    "5.5": 910
   },
   "snippets": [
     {
@@ -22049,6 +22049,19 @@
       "test": "ValueSlotSemanticsTUnitTests.PerIterationCellsStayIndependentAcrossMutatingCalls",
       "lua_versions": [
         "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/UpvalueIdTracksTheCellNotTheValue.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:192",
+      "test": "ValueSlotSemanticsTUnitTests.UpvalueIdTracksTheCellNotTheValue",
+      "lua_versions": [
         "5.2",
         "5.3",
         "5.4",
