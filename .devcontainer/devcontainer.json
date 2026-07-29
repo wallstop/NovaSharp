@@ -20,33 +20,27 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                // C# Development (Roslyn LSP - modern, stable)
                 "ms-dotnettools.csharp",
-                // Testing
                 "bits.csharp-test-filter",
-                // Code Quality
                 "usernamehw.errorlens",
                 "editorconfig.editorconfig",
                 "DavidAnson.vscode-markdownlint",
-                // Git
                 "eamodio.gitlens",
                 "mhutchie.git-graph",
                 "GitHub.vscode-pull-request-github",
                 "GitHub.vscode-github-actions",
                 "GitHub.remotehub",
-                // Lua (for test fixtures)
                 "sumneko.lua",
-                // Productivity
                 "streetsidesoftware.code-spell-checker",
                 "gruntfuggly.todo-tree",
                 "aaron-bond.better-comments",
                 "pkief.material-icon-theme",
                 "GitHub.github-vscode-theme",
                 "dracula-theme.theme-dracula",
-                // AI / Copilot
                 "github.copilot",
                 "github.copilot-chat",
-                "anthropic.claude-code"
+                "anthropic.claude-code",
+                "github.vscode-github-actions"
             ],
             "settings": {
                 // ============================================================

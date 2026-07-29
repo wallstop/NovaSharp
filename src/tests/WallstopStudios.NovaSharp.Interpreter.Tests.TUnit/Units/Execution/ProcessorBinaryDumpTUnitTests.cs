@@ -157,19 +157,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
 
         [global::TUnit.Core.Test]
         [AllLuaVersions]
-        public async Task UndumpStoresLiteralValuesAsReadOnly(LuaCompatibilityVersion version)
+        public async Task UndumpRestoresLiteralValues(LuaCompatibilityVersion version)
         {
-            await AssertUndumpedLiteralIsReadOnly("return 42", DataType.Number, version)
+            await AssertUndumpedLiteral("return 42", DataType.Number, version)
                 .ConfigureAwait(false);
-            await AssertUndumpedLiteralIsReadOnly("return nil", DataType.Nil, version)
+            await AssertUndumpedLiteral("return nil", DataType.Nil, version).ConfigureAwait(false);
+            await AssertUndumpedLiteral("return true", DataType.Boolean, version)
                 .ConfigureAwait(false);
-            await AssertUndumpedLiteralIsReadOnly("return true", DataType.Boolean, version)
-                .ConfigureAwait(false);
-            await AssertUndumpedLiteralIsReadOnly("return 'constant'", DataType.String, version)
+            await AssertUndumpedLiteral("return 'constant'", DataType.String, version)
                 .ConfigureAwait(false);
         }
 
-        private static async Task AssertUndumpedLiteralIsReadOnly(
+        private static async Task AssertUndumpedLiteral(
             string code,
             DataType expectedType,
             LuaCompatibilityVersion version
@@ -190,7 +189,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 expectedType
             );
 
-            await Assert.That(literal.ReadOnly).IsTrue().ConfigureAwait(false);
+            await Assert.That(literal).IsNotNull().ConfigureAwait(false);
+            await Assert.That(literal.Type).IsEqualTo(expectedType).ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]

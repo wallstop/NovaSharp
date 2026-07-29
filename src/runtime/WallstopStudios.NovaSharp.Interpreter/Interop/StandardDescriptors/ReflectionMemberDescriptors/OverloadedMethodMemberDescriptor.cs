@@ -62,6 +62,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         }
 
         private const int CacheSize = 5;
+        private const int LastCallInlineArgumentLimit = 7;
 
         private class OverloadCacheItem
         {
@@ -85,9 +86,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
             public DataType arg0Type;
             public DataType arg1Type;
             public DataType arg2Type;
+            public DataType arg3Type;
+            public DataType arg4Type;
+            public DataType arg5Type;
+            public DataType arg6Type;
             public Type arg0UserDataType;
             public Type arg1UserDataType;
             public Type arg2UserDataType;
+            public Type arg3UserDataType;
+            public Type arg4UserDataType;
+            public Type arg5UserDataType;
+            public Type arg6UserDataType;
         }
 
         private readonly List<IOverloadableMemberDescriptor> _overloads = new();
@@ -427,7 +436,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
         /// (e.g., in a tight loop). It avoids iterating through the full cache array.
         /// </summary>
         /// <remarks>
-        /// The check handles up to 3 arguments inline (common case) without allocations.
+        /// The check handles up to 7 arguments inline (public fixed-arity call surface) without allocations.
         /// For calls with more arguments, falls through to the full cache lookup.
         /// </remarks>
         private bool CheckLastCallMatch(bool hasObject, CallbackArguments args)
@@ -450,80 +459,66 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
                 return false;
             }
 
-            // For 0-3 arguments, do inline comparison (most common cases)
-            // This avoids any loop overhead for typical method calls
             int argCount = args.Count;
 
-            if (argCount > 3)
+            if (argCount > LastCallInlineArgumentLimit)
             {
-                // Fall through to full cache for 4+ arguments
                 return false;
             }
 
-            // Check argument 0
-            if (argCount >= 1)
+            for (int i = 0; i < argCount; i++)
             {
-                if (args[0].Type != _lastCall.arg0Type)
+                DynValue arg = args[i];
+                if (arg.Type != GetLastCallArgumentType(i))
                 {
                     return false;
                 }
 
-                if (args[0].Type == DataType.UserData)
+                Type lastCallUserDataType = GetLastCallArgumentUserDataType(i);
+                if (arg.Type == DataType.UserData)
                 {
-                    if (args[0].UserData.Descriptor.Type != _lastCall.arg0UserDataType)
+                    if (arg.UserData.Descriptor.Type != lastCallUserDataType)
                     {
                         return false;
                     }
                 }
-                else if (_lastCall.arg0UserDataType != null)
-                {
-                    return false;
-                }
-            }
-
-            // Check argument 1
-            if (argCount >= 2)
-            {
-                if (args[1].Type != _lastCall.arg1Type)
-                {
-                    return false;
-                }
-
-                if (args[1].Type == DataType.UserData)
-                {
-                    if (args[1].UserData.Descriptor.Type != _lastCall.arg1UserDataType)
-                    {
-                        return false;
-                    }
-                }
-                else if (_lastCall.arg1UserDataType != null)
-                {
-                    return false;
-                }
-            }
-
-            // Check argument 2
-            if (argCount >= 3)
-            {
-                if (args[2].Type != _lastCall.arg2Type)
-                {
-                    return false;
-                }
-
-                if (args[2].Type == DataType.UserData)
-                {
-                    if (args[2].UserData.Descriptor.Type != _lastCall.arg2UserDataType)
-                    {
-                        return false;
-                    }
-                }
-                else if (_lastCall.arg2UserDataType != null)
+                else if (lastCallUserDataType != null)
                 {
                     return false;
                 }
             }
 
             return true;
+        }
+
+        private DataType GetLastCallArgumentType(int index)
+        {
+            return index switch
+            {
+                0 => _lastCall.arg0Type,
+                1 => _lastCall.arg1Type,
+                2 => _lastCall.arg2Type,
+                3 => _lastCall.arg3Type,
+                4 => _lastCall.arg4Type,
+                5 => _lastCall.arg5Type,
+                6 => _lastCall.arg6Type,
+                _ => default,
+            };
+        }
+
+        private Type GetLastCallArgumentUserDataType(int index)
+        {
+            return index switch
+            {
+                0 => _lastCall.arg0UserDataType,
+                1 => _lastCall.arg1UserDataType,
+                2 => _lastCall.arg2UserDataType,
+                3 => _lastCall.arg3UserDataType,
+                4 => _lastCall.arg4UserDataType,
+                5 => _lastCall.arg5UserDataType,
+                6 => _lastCall.arg6UserDataType,
+                _ => null,
+            };
         }
 
         /// <summary>
@@ -543,33 +538,51 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
             _lastCall.arg0UserDataType = null;
             _lastCall.arg1UserDataType = null;
             _lastCall.arg2UserDataType = null;
+            _lastCall.arg3UserDataType = null;
+            _lastCall.arg4UserDataType = null;
+            _lastCall.arg5UserDataType = null;
+            _lastCall.arg6UserDataType = null;
 
-            // Store up to 3 arguments inline
-            if (args.Count >= 1)
+            int cachedArgumentCount = Math.Min(args.Count, LastCallInlineArgumentLimit);
+            for (int i = 0; i < cachedArgumentCount; i++)
             {
-                _lastCall.arg0Type = args[0].Type;
-                if (args[0].Type == DataType.UserData)
-                {
-                    _lastCall.arg0UserDataType = args[0].UserData.Descriptor.Type;
-                }
+                UpdateLastCallArgument(i, args[i]);
             }
+        }
 
-            if (args.Count >= 2)
+        private void UpdateLastCallArgument(int index, DynValue arg)
+        {
+            Type userDataType = arg.Type == DataType.UserData ? arg.UserData.Descriptor.Type : null;
+            switch (index)
             {
-                _lastCall.arg1Type = args[1].Type;
-                if (args[1].Type == DataType.UserData)
-                {
-                    _lastCall.arg1UserDataType = args[1].UserData.Descriptor.Type;
-                }
-            }
-
-            if (args.Count >= 3)
-            {
-                _lastCall.arg2Type = args[2].Type;
-                if (args[2].Type == DataType.UserData)
-                {
-                    _lastCall.arg2UserDataType = args[2].UserData.Descriptor.Type;
-                }
+                case 0:
+                    _lastCall.arg0Type = arg.Type;
+                    _lastCall.arg0UserDataType = userDataType;
+                    break;
+                case 1:
+                    _lastCall.arg1Type = arg.Type;
+                    _lastCall.arg1UserDataType = userDataType;
+                    break;
+                case 2:
+                    _lastCall.arg2Type = arg.Type;
+                    _lastCall.arg2UserDataType = userDataType;
+                    break;
+                case 3:
+                    _lastCall.arg3Type = arg.Type;
+                    _lastCall.arg3UserDataType = userDataType;
+                    break;
+                case 4:
+                    _lastCall.arg4Type = arg.Type;
+                    _lastCall.arg4UserDataType = userDataType;
+                    break;
+                case 5:
+                    _lastCall.arg5Type = arg.Type;
+                    _lastCall.arg5UserDataType = userDataType;
+                    break;
+                case 6:
+                    _lastCall.arg6Type = arg.Type;
+                    _lastCall.arg6UserDataType = userDataType;
+                    break;
             }
         }
 
@@ -932,6 +945,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Interop.StandardDescriptors.Refl
             public static int GetLastCallArgCount(OverloadedMethodMemberDescriptor descriptor)
             {
                 return descriptor._lastCall.argCount;
+            }
+
+            /// <summary>
+            /// Evaluates the last-call fast-path matcher with a supplied argument signature.
+            /// </summary>
+            public static bool LastCallMatches(
+                OverloadedMethodMemberDescriptor descriptor,
+                bool hasObject,
+                CallbackArguments args
+            )
+            {
+                return descriptor.CheckLastCallMatch(hasObject, args);
             }
         }
     }

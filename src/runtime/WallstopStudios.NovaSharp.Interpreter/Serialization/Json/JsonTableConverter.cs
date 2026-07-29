@@ -487,7 +487,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Serialization.Json
             {
                 numberValue = -numberValue;
             }
-            return DynValue.NewNumber(numberValue).AsReadOnly();
+            return DynValue.NewNumber(numberValue);
         }
 
         private static string ReplaceOrdinal(string text, string oldValue, string newValue)

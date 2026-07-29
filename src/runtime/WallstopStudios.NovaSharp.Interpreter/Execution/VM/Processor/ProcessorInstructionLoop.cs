@@ -10,6 +10,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
     using WallstopStudios.NovaSharp.Interpreter.DataTypes;
     using WallstopStudios.NovaSharp.Interpreter.Errors;
     using WallstopStudios.NovaSharp.Interpreter.Execution;
+    using WallstopStudios.NovaSharp.Interpreter.Execution.Scopes;
     using WallstopStudios.NovaSharp.Interpreter.Interop.PredefinedUserData;
     using WallstopStudios.NovaSharp.Interpreter.Sandboxing;
 
@@ -367,16 +368,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             ExecExpTuple(i);
                             break;
                         case OpCode.Local:
-                            DynValue[] scope = _executionStack.Peek().LocalScope;
+                            ValueSlot[] scope = _executionStack.Peek().LocalScope;
                             int index = i.Symbol.IndexValue;
-                            _valueStack.Push(scope[index].AsReadOnly());
+                            _valueStack.Push(scope[index].Value);
                             break;
                         case OpCode.UpValue:
                             _valueStack.Push(
-                                _executionStack
-                                    .Peek()
-                                    .ClosureScope[i.Symbol.IndexValue]
-                                    .AsReadOnly()
+                                _executionStack.Peek().ClosureScope[i.Symbol.IndexValue]
                             );
                             break;
                         case OpCode.StoreUpv:
@@ -697,10 +695,10 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         {
             CallStackItem stackframe = _executionStack.Peek();
 
-            DynValue slot = stackframe.LocalScope[symref.IndexValue];
+            ValueSlot slot = stackframe.LocalScope[symref.IndexValue];
             if (slot == null)
             {
-                stackframe.LocalScope[symref.IndexValue] = slot = DynValue.NewNil();
+                stackframe.LocalScope[symref.IndexValue] = slot = new ValueSlot();
             }
 
             bool isToBeClosed = IsSymbolToBeClosed(stackframe, symref.IndexValue);
@@ -709,14 +707,14 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             {
                 EnsureToBeClosedValue(symref, value);
 
-                if (!slot.IsNil())
+                DynValue previous = slot.Value;
+                if (!previous.IsNil())
                 {
-                    DynValue previous = slot.Clone();
                     CloseValue(symref, previous, DynValue.Nil, instructionPtr: -1);
                 }
             }
 
-            slot.AssignSlot(value);
+            slot.Value = value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -879,7 +877,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             for (int idx = closers.Count - 1; idx >= 0; idx--)
             {
                 SymbolRef sym = closers[idx];
-                DynValue slot = stackframe.LocalScope[sym.IndexValue];
+                ValueSlot slot = stackframe.LocalScope[sym.IndexValue];
 
                 closeException = CloseValueAndTrackError(
                     sym,
@@ -946,7 +944,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 for (int idx = closers.Count - 1; idx >= 0; idx--)
                 {
                     SymbolRef sym = closers[idx];
-                    DynValue slot = stackframe.LocalScope[sym.IndexValue];
+                    ValueSlot slot = stackframe.LocalScope[sym.IndexValue];
 
                     closeException = CloseValueAndTrackError(
                         sym,
@@ -972,7 +970,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private ScriptRuntimeException CloseValueAndTrackError(
             SymbolRef symbol,
-            DynValue slot,
+            ValueSlot slot,
             ref DynValue activeError,
             ScriptRuntimeException activeException,
             CallStackItem stackframe,
@@ -980,12 +978,12 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             bool decorateCloseErrorsBeforeUnwind
         )
         {
-            if (slot == null || slot.IsNil())
+            DynValue previous = slot?.Value;
+            if (previous == null || previous.IsNil())
             {
                 return activeException;
             }
 
-            DynValue previous = slot.Clone();
             int previousBoundaryDepth = _errorHandlerBeforeUnwindScanBoundaryDepth;
             _errorHandlerBeforeUnwindScanBoundaryDepth = _executionStack.Count;
             try
@@ -1014,7 +1012,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             finally
             {
                 _errorHandlerBeforeUnwindScanBoundaryDepth = previousBoundaryDepth;
-                slot.AssignSlot(DynValue.Nil);
+                slot.Value = DynValue.Nil;
             }
 
             return activeException;
@@ -1035,13 +1033,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
             CallStackItem stackframe = _executionStack.Peek();
 
-            DynValue v = stackframe.ClosureScope[symref.IndexValue];
-            if (v == null)
-            {
-                stackframe.ClosureScope[symref.IndexValue] = v = DynValue.NewNil();
-            }
-
-            v.AssignSlot(value);
+            stackframe.ClosureScope.GetSlot(symref.IndexValue).Value = value;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1074,7 +1066,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
         private void ExecClosure(Instruction i)
         {
-            using (ListPool<DynValue>.Get(i.SymbolList.Length, out List<DynValue> resolvedSymbols))
+            using (
+                ListPool<ValueSlot>.Get(i.SymbolList.Length, out List<ValueSlot> resolvedSymbols)
+            )
             {
                 foreach (SymbolRef symbol in i.SymbolList)
                 {
@@ -1088,15 +1082,24 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private DynValue GetUpValueSymbol(SymbolRef s)
+        private ValueSlot GetUpValueSymbol(SymbolRef s)
         {
             if (s.Type == SymbolRefType.Local)
             {
-                return _executionStack.Peek().LocalScope[s.IndexValue];
+                CallStackItem frame = _executionStack.Peek();
+                ValueSlot slot = frame.LocalScope[s.IndexValue];
+                if (slot == null)
+                {
+                    // Capturing a local that has not been assigned yet still has to share the cell
+                    // the eventual assignment will write to, so materialize it now.
+                    frame.LocalScope[s.IndexValue] = slot = new ValueSlot();
+                }
+
+                return slot;
             }
             else if (s.Type == SymbolRefType.UpValue)
             {
-                return _executionStack.Peek().ClosureScope[s.IndexValue];
+                return _executionStack.Peek().ClosureScope.GetSlot(s.IndexValue);
             }
             throw new InvalidOperationException("Unsupported symbol type in closure capture.");
         }
@@ -1282,20 +1285,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             DynValue top = _valueStack.Peek(0);
             DynValue btm = _valueStack.Peek(i.NumVal);
 
-            if (top.ReadOnly)
+            if (top.Type != DataType.Number)
             {
-                if (top.Type != DataType.Number)
-                {
-                    throw new InternalErrorException("Can't assign number to type {0}", top.Type);
-                }
-
-                top = DynValue.NewNumber(top.LuaNumber);
-                _valueStack.Set(0, top);
+                throw new InternalErrorException("Can't assign number to type {0}", top.Type);
             }
 
             // Use LuaNumber.Add to preserve integer precision for large values.
             // Raw double addition causes precision loss near maxinteger, leading to infinite loops.
-            top.AssignNumber(LuaNumber.Add(top.LuaNumber, btm.LuaNumber));
+            // The counter is replaced rather than mutated: values are immutable, so the previous
+            // counter may already have been stored into the loop variable's slot or a table.
+            _valueStack.Set(0, DynValue.NewNumber(LuaNumber.Add(top.LuaNumber, btm.LuaNumber)));
         }
 
         private void ExecCNot(Instruction i)
@@ -1330,8 +1329,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             CallStackItem cur = _executionStack.Peek();
 
             cur.DebugSymbols = i.SymbolList;
-            cur.LocalScope = DynValueArrayPool.Rent(i.NumVal);
-            cur._localScopeSize = i.NumVal;
+            cur.LocalScope = SystemArrayPool<ValueSlot>.Rent(i.NumVal);
 
             ClearBlockData(i, instructionPtr);
 
@@ -1550,8 +1548,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                         for (int ii = 0; ii < len; ii++, i++)
                         {
-                            DynValue scalar = argsList[i].ToScalar();
-                            pooledVarargs[ii] = scalar.ReadOnly ? scalar : scalar.CloneAsWritable();
+                            pooledVarargs[ii] = argsList[i].ToScalar();
                         }
 
                         DynValue[] varargs = DynValueArrayPool.ToArrayAndReturn(pooledVarargs, len);
@@ -2483,13 +2480,21 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             return result;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsNaN(DynValue value)
+        {
+            return value.Type == DataType.Number && double.IsNaN(value.Number);
+        }
+
         private int ExecEq(Instruction i, int instructionPtr)
         {
             DynValue r = _valueStack.Pop().ToScalar();
             DynValue l = _valueStack.Pop().ToScalar();
 
-            // first we do a brute force equals over the references
-            if (ReferenceEquals(r, l))
+            // First a brute force equals over the references. Values are immutable and shared, so
+            // identity implies equality for every Lua type except NaN, which is never equal to
+            // itself - not even to the very same wrapper instance (`local x = 0/0; x == x`).
+            if (ReferenceEquals(r, l) && !IsNaN(r))
             {
                 _valueStack.Push(DynValue.True);
                 return instructionPtr;
@@ -2860,7 +2865,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
 
                         if (!v.IsNil())
                         {
-                            _valueStack.Push(v.AsReadOnly());
+                            _valueStack.Push(v);
                             return instructionPtr;
                         }
                     }
@@ -2899,7 +2904,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         );
                     }
 
-                    _valueStack.Push(v.AsReadOnly());
+                    _valueStack.Push(v);
                     return instructionPtr;
                 }
                 else

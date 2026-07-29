@@ -13,6 +13,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// </summary>
     public class Table : RefIdObject, IScriptPrivateResource
     {
+        /// <summary>
+        /// Gets or sets a cached <see cref="DynValue"/> wrapping this table.
+        /// Used by <see cref="DynValue.FromTable"/> to avoid repeated allocations.
+        /// </summary>
+        /// <remarks>
+        /// Safe to share only because values are immutable: a single wrapper cannot be reassigned
+        /// out from under an unrelated holder. Equality is unaffected — <see cref="DynValue.Equals"/>
+        /// compares tables by their underlying <see cref="Table"/> reference either way.
+        /// </remarks>
+        internal DynValue CachedDynValue { get; set; }
+
         // Estimated base memory overhead for an empty Table (LinkedList, three indexes, metadata).
         // This is a conservative estimate: 4 object headers + 3 dictionary overheads + misc.
         private const int BaseTableOverhead = 256;
@@ -482,7 +493,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(value);
 
             // Ensure key stability in _valueMap by making it readonly to prevent hash corruption
-            DynValue stableKey = key.ReadOnly ? key : key.AsReadOnly();
+            DynValue stableKey = key;
 
             PerformTableSet(_valueMap, stableKey, stableKey, value, false, -1);
         }
@@ -1229,7 +1240,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             this.CheckScriptOwnership(key);
             this.CheckScriptOwnership(value);
 
-            DynValue stableKey = key.ReadOnly ? key : key.AsReadOnly();
+            DynValue stableKey = key;
             PerformTableSet(
                 _valueMap,
                 stableKey,

@@ -245,11 +245,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
             }
 
             return AppendInstruction(
-                new Instruction(_currentSourceRef)
-                {
-                    OpCode = OpCode.Literal,
-                    Value = value.AsReadOnly(),
-                }
+                new Instruction(_currentSourceRef) { OpCode = OpCode.Literal, Value = value }
             );
         }
 
@@ -533,7 +529,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     OpCode = OpCode.Meta,
                     Name = funcName,
                     NumVal2 = (int)metaType,
-                    Value = value?.AsReadOnly(),
+                    Value = value,
                 }
             );
         }
@@ -579,7 +575,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         new Instruction(_currentSourceRef)
                         {
                             OpCode = OpCode.Index,
-                            Value = DynValue.NewString(sym.NameValue).AsReadOnly(),
+                            Value = DynValue.NewString(sym.NameValue),
                         }
                     );
                     return 2;
@@ -618,7 +614,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                             Symbol = sym,
                             NumVal = stackofs,
                             NumVal2 = tupleidx,
-                            Value = DynValue.NewString(sym.NameValue).AsReadOnly(),
+                            Value = DynValue.NewString(sym.NameValue),
                         }
                     );
                     return 2;
@@ -706,7 +702,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                 new Instruction(_currentSourceRef)
                 {
                     OpCode = o,
-                    Value = index?.AsReadOnly(),
+                    Value = index,
                     Name = baseName,
                 }
             );
@@ -750,7 +746,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                     OpCode = o,
                     NumVal = stackofs,
                     NumVal2 = tupleidx,
-                    Value = index?.AsReadOnly(),
+                    Value = index,
                     Name = baseName,
                 }
             );

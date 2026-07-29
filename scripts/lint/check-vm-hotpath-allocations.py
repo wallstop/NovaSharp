@@ -237,7 +237,9 @@ ALLOWLIST = [
 
 NUMBER_FACTORY_ALLOWLIST_CONTEXTS = {
     "ExecToNum": [r"DynValue\.NewNumber\s*\(\s*v\.Value\s*\)"],
-    "ExecIncr": [r"DynValue\.NewNumber\s*\(\s*top\.LuaNumber\s*\)"],
+    "ExecIncr": [
+        r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Add\s*\(\s*top\.LuaNumber\s*,\s*btm\.LuaNumber\s*\)\s*\)"
+    ],
     "ExecAdd": [
         r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Add\s*\(\s*lnFast\s*,\s*rnFast\s*\)\s*\)",
         r"DynValue\.NewNumber\s*\(\s*LuaNumber\.Add\s*\(\s*ln\.Value\s*,\s*rn\.Value\s*\)\s*\)",

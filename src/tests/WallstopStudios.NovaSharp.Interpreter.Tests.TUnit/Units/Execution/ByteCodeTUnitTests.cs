@@ -207,28 +207,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         }
 
         [global::TUnit.Core.Test]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua51)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua52)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
-        [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task EmitLiteralFreezesWritableValues(LuaCompatibilityVersion version)
-        {
-            ByteCode byteCode = new(new Script(version));
-            DynValue source = DynValue.NewInteger(7);
-
-            Instruction instruction = byteCode.EmitLiteral(source);
-            source.AssignNumber(LuaNumber.FromInteger(9));
-
-            await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
-            await Assert.That(instruction.Value).IsNotSameReferenceAs(source).ConfigureAwait(false);
-            await Assert
-                .That(instruction.Value.LuaNumber.AsInteger)
-                .IsEqualTo(7L)
-                .ConfigureAwait(false);
-        }
-
-        [global::TUnit.Core.Test]
         public async Task EmitLiteralThrowsWhenValueIsNull()
         {
             ByteCode byteCode = new(new Script());
@@ -246,19 +224,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task EmitIndexFreezesWritableIndexValues(LuaCompatibilityVersion version)
+        public async Task EmitIndexCarriesIndexValue(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script(version));
-            DynValue sourceSlot = CreateWritableStringLocalSlot("before");
+            DynValue index = DynValue.NewString("before");
 
-            Instruction instruction = byteCode.EmitIndex(sourceSlot);
-            ReplaceWritableLocalSlot(sourceSlot, "after");
+            Instruction instruction = byteCode.EmitIndex(index);
 
-            await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(instruction.Value)
-                .IsNotSameReferenceAs(sourceSlot)
-                .ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
         }
 
@@ -268,23 +240,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task EmitIndexSetFreezesWritableIndexValues(LuaCompatibilityVersion version)
+        public async Task EmitIndexSetCarriesIndexValue(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script(version));
-            DynValue sourceSlot = CreateWritableStringLocalSlot("before");
+            DynValue index = DynValue.NewString("before");
 
-            Instruction instruction = byteCode.EmitIndexSet(
-                stackofs: 0,
-                tupleidx: 0,
-                index: sourceSlot
-            );
-            ReplaceWritableLocalSlot(sourceSlot, "after");
+            Instruction instruction = byteCode.EmitIndexSet(stackofs: 0, tupleidx: 0, index: index);
 
-            await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(instruction.Value)
-                .IsNotSameReferenceAs(sourceSlot)
-                .ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
         }
 
@@ -294,23 +256,17 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task EmitMetaFreezesWritablePayloadValues(LuaCompatibilityVersion version)
+        public async Task EmitMetaCarriesPayloadValue(LuaCompatibilityVersion version)
         {
             ByteCode byteCode = new(new Script(version));
-            DynValue sourceSlot = CreateWritableStringLocalSlot("before");
+            DynValue payload = DynValue.NewString("before");
 
             Instruction instruction = byteCode.EmitMeta(
                 "chunk",
                 OpCodeMetadataType.ChunkEntrypoint,
-                sourceSlot
+                payload
             );
-            ReplaceWritableLocalSlot(sourceSlot, "after");
 
-            await Assert.That(instruction.Value.ReadOnly).IsTrue().ConfigureAwait(false);
-            await Assert
-                .That(instruction.Value)
-                .IsNotSameReferenceAs(sourceSlot)
-                .ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("before").ConfigureAwait(false);
         }
 
@@ -341,7 +297,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
                 .That(byteCode.Code[^1].Value.String)
                 .IsEqualTo("globalValue")
                 .ConfigureAwait(false);
-            await Assert.That(byteCode.Code[^1].Value.ReadOnly).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -416,7 +371,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(setter.NumVal).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(setter.NumVal2).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(setter.Value.String).IsEqualTo("globalValue").ConfigureAwait(false);
-            await Assert.That(setter.Value.ReadOnly).IsTrue().ConfigureAwait(false);
         }
 
         [global::TUnit.Core.Test]
@@ -650,16 +604,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.Execution
             await Assert.That(instruction.NumVal).IsEqualTo(1).ConfigureAwait(false);
             await Assert.That(instruction.NumVal2).IsEqualTo(2).ConfigureAwait(false);
             await Assert.That(instruction.Value.String).IsEqualTo("idx").ConfigureAwait(false);
-        }
-
-        private static DynValue CreateWritableStringLocalSlot(string value)
-        {
-            return DynValue.NewString(value);
-        }
-
-        private static void ReplaceWritableLocalSlot(DynValue slot, string value)
-        {
-            slot.AssignSlot(DynValue.NewString(value));
         }
     }
 }

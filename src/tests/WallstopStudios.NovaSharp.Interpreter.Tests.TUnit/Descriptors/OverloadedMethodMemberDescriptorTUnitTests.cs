@@ -956,28 +956,41 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua53)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua54)]
         [global::TUnit.Core.Arguments(LuaCompatibilityVersion.Lua55)]
-        public async Task LastCallCacheFallsThroughForFourPlusArguments(
+        public async Task LastCallCacheMatchesFourThroughSevenArguments(
             LuaCompatibilityVersion version
         )
         {
-            // Test that 4+ argument calls fall through to full cache
             Script script = new(version);
-            UserData.RegisterType<MultiArgClass>();
-            script.Globals["TestClass"] = typeof(MultiArgClass);
+            OverloadedMethodMemberDescriptor descriptor = CreateFixedArityCacheDescriptor();
+            FixedArityCacheClass instance = new();
+            CallbackFunction callback = descriptor.GetCallbackFunction(script, instance);
 
-            DynValue result = script.DoString(
-                @"
-                local obj = TestClass.__new()
-                local total = 0
-                for i = 1, 10 do
-                    total = total + obj.FourArgs(1, 2, 3, 4)
-                end
-                return total
-                "
-            );
+            for (int arity = 4; arity <= 7; arity++)
+            {
+                DynValue result = CallFixedArity(script, callback, arity);
+                CallbackArguments matchArgs = CreateNumberArguments(arity);
 
-            // 1+2+3+4 = 10, repeated 10 times = 100
-            await Assert.That(result.Number).IsEqualTo(100).ConfigureAwait(false);
+                await Assert
+                    .That(result.Number)
+                    .IsEqualTo(ExpectedFixedAritySum(arity))
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(
+                        OverloadedMethodMemberDescriptor.TestHooks.GetLastCallArgCount(descriptor)
+                    )
+                    .IsEqualTo(arity)
+                    .ConfigureAwait(false);
+                await Assert
+                    .That(
+                        OverloadedMethodMemberDescriptor.TestHooks.LastCallMatches(
+                            descriptor,
+                            hasObject: true,
+                            matchArgs
+                        )
+                    )
+                    .IsTrue()
+                    .ConfigureAwait(false);
+            }
         }
 
         [Test]
@@ -1219,6 +1232,114 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             // CountArgs receives CallbackArguments which includes all 3 args
             await Assert.That(result.Number).IsEqualTo(3).ConfigureAwait(false);
         }
+
+        private static OverloadedMethodMemberDescriptor CreateFixedArityCacheDescriptor()
+        {
+            OverloadedMethodMemberDescriptor descriptor = new(
+                nameof(FixedArityCacheClass.Fixed),
+                typeof(FixedArityCacheClass)
+            );
+
+            AddFixedArityOverload(descriptor, typeof(int), typeof(int), typeof(int), typeof(int));
+            AddFixedArityOverload(
+                descriptor,
+                typeof(int),
+                typeof(int),
+                typeof(int),
+                typeof(int),
+                typeof(int)
+            );
+            AddFixedArityOverload(
+                descriptor,
+                typeof(int),
+                typeof(int),
+                typeof(int),
+                typeof(int),
+                typeof(int),
+                typeof(int)
+            );
+            AddFixedArityOverload(
+                descriptor,
+                typeof(int),
+                typeof(int),
+                typeof(int),
+                typeof(int),
+                typeof(int),
+                typeof(int),
+                typeof(int)
+            );
+
+            return descriptor;
+        }
+
+        private static void AddFixedArityOverload(
+            OverloadedMethodMemberDescriptor descriptor,
+            params Type[] parameterTypes
+        )
+        {
+            MethodInfo method = typeof(FixedArityCacheClass).GetMethod(
+                nameof(FixedArityCacheClass.Fixed),
+                parameterTypes
+            );
+            descriptor.AddOverload(new MethodMemberDescriptor(method));
+        }
+
+        private static DynValue CallFixedArity(
+            Script script,
+            CallbackFunction callback,
+            int arity
+        ) =>
+            arity switch
+            {
+                4 => script.Call(
+                    callback,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(4)
+                ),
+                5 => script.Call(
+                    callback,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(4),
+                    DynValue.NewNumber(5)
+                ),
+                6 => script.Call(
+                    callback,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(4),
+                    DynValue.NewNumber(5),
+                    DynValue.NewNumber(6)
+                ),
+                7 => script.Call(
+                    callback,
+                    DynValue.NewNumber(1),
+                    DynValue.NewNumber(2),
+                    DynValue.NewNumber(3),
+                    DynValue.NewNumber(4),
+                    DynValue.NewNumber(5),
+                    DynValue.NewNumber(6),
+                    DynValue.NewNumber(7)
+                ),
+                _ => throw new ArgumentOutOfRangeException(nameof(arity)),
+            };
+
+        private static CallbackArguments CreateNumberArguments(int count)
+        {
+            List<DynValue> args = new(count);
+            for (int i = 1; i <= count; i++)
+            {
+                args.Add(DynValue.NewNumber(i));
+            }
+
+            return new CallbackArguments(args, isMethodCall: false);
+        }
+
+        private static int ExpectedFixedAritySum(int arity) => (arity * (arity + 1)) / 2;
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
             "Design",
@@ -1515,6 +1636,54 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Descriptors
             public int FourArgs(int a, int b, int c, int d)
             {
                 return a + b + c + d;
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage(
+            "Design",
+            "CA1034:Nested types should not be visible",
+            Justification = "Test helper class must be public for reflection descriptor testing."
+        )]
+        public sealed class FixedArityCacheClass
+        {
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int Fixed(int a, int b, int c, int d)
+            {
+                return a + b + c + d;
+            }
+
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int Fixed(int a, int b, int c, int d, int e)
+            {
+                return a + b + c + d + e;
+            }
+
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int Fixed(int a, int b, int c, int d, int e, int f)
+            {
+                return a + b + c + d + e + f;
+            }
+
+            [System.Diagnostics.CodeAnalysis.SuppressMessage(
+                "Performance",
+                "CA1822:Mark members as static",
+                Justification = "Instance method needed for interop overload testing."
+            )]
+            public int Fixed(int a, int b, int c, int d, int e, int f, int g)
+            {
+                return a + b + c + d + e + f + g;
             }
         }
     }

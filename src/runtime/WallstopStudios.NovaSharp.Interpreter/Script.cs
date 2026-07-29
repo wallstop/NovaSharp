@@ -2289,7 +2289,7 @@ namespace WallstopStudios.NovaSharp.Interpreter
             }
 
             Table environment = globalContext ?? _globalTable;
-            ClosureContext closureScope = new(DynValue.NewTable(environment));
+            ClosureContext closureScope = new(DynValue.FromTable(environment));
 
             try
             {
@@ -2445,13 +2445,13 @@ namespace WallstopStudios.NovaSharp.Interpreter
                         this,
                         address,
                         Array.Empty<SymbolRef>(),
-                        Array.Empty<DynValue>()
+                        Array.Empty<Execution.Scopes.ValueSlot>()
                     );
                 }
             }
             else
             {
-                c = new Closure(this, address, DynValue.NewTable(envTable));
+                c = new Closure(this, address, DynValue.FromTable(envTable));
             }
 
             return DynValue.NewClosure(c);

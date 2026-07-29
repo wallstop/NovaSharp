@@ -27,7 +27,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
     {
         private static readonly ConditionalWeakTable<object, DebugHookState> HookStates = new();
         private static readonly object DefaultHookKey = new();
-        private static readonly ConditionalWeakTable<DynValue, DynValue> UpvalueIdentifiers = new();
+        private static readonly ConditionalWeakTable<ValueSlot, DynValue> UpvalueIdentifiers =
+            new();
         private static readonly IUserDataDescriptor UpvalueIdentifierDescriptorInstance =
             new UpvalueIdentifierDescriptor();
 
@@ -533,7 +534,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 );
             }
 
-            DynValue slot = closure[index];
+            ValueSlot slot = closure.GetSlot(index);
 
             if (slot == null)
             {
@@ -598,7 +599,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
                 return DynValue.Nil;
             }
 
-            closure[index].AssignSlot(args[2]);
+            closure.GetSlot(index).Value = args[2];
 
             return DynValue.NewString(closure.Symbols[index]);
         }
@@ -640,7 +641,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             // Make f1's n1-th upvalue refer to f2's n2-th upvalue (per Lua 5.2+ spec)
-            c1.ClosureContext[n1] = c2.ClosureContext[n2];
+            c1.ClosureContext.SetSlot(n1, c2.ClosureContext.GetSlot(n2));
 
             return DynValue.Void;
         }
@@ -1231,7 +1232,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             SymbolRef symbol = frame.DebugSymbols[zeroBased];
-            DynValue value = frame.LocalScope[zeroBased] ?? DynValue.Nil;
+            DynValue value = frame.LocalScope[zeroBased]?.Value ?? DynValue.Nil;
             string name = symbol?.Name ?? string.Empty;
 
             return DynValue.NewTuple(DynValue.NewString(name), value);
@@ -1258,15 +1259,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             }
 
             SymbolRef symbol = frame.DebugSymbols[zeroBased];
-            DynValue slot = frame.LocalScope[zeroBased];
+            ValueSlot slot = frame.LocalScope[zeroBased];
 
             if (slot == null)
             {
-                slot = DynValue.NewNil();
+                slot = new ValueSlot();
                 frame.LocalScope[zeroBased] = slot;
             }
 
-            slot.AssignSlot(newValue);
+            slot.Value = newValue;
 
             string name = symbol?.Name ?? string.Empty;
             return DynValue.NewString(name);
@@ -1394,7 +1395,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
             return false;
         }
 
-        private static DynValue GetUpvalueIdentifier(DynValue upvalueSlot)
+        /// <summary>
+        /// Mints (or reuses) the stable identity handle for an upvalue.
+        /// </summary>
+        /// <param name="upvalueSlot">The mutable cell backing the upvalue.</param>
+        /// <remarks>
+        /// Keyed by the <see cref="ValueSlot"/> cell rather than the value it currently holds.
+        /// <c>debug.upvalueid</c> exists so a program can tell whether two closures share the same
+        /// variable, so the identity must track the variable: keying by value would both collide
+        /// unrelated upvalues that happen to hold the same shared instance (nil, true, a cached
+        /// small integer) and change the identity of one upvalue whenever it is assigned.
+        /// </remarks>
+        private static DynValue GetUpvalueIdentifier(ValueSlot upvalueSlot)
         {
             return UpvalueIdentifiers.GetValue(
                 upvalueSlot,
@@ -1417,13 +1429,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.CoreLib
         {
             private static int ReferenceIdCounter;
 
-            public UpvalueIdentifier(DynValue slot)
+            public UpvalueIdentifier(ValueSlot slot)
             {
                 Upvalue = slot ?? throw new ArgumentNullException(nameof(slot));
                 ReferenceId = Interlocked.Increment(ref ReferenceIdCounter);
             }
 
-            public DynValue Upvalue { get; }
+            public ValueSlot Upvalue { get; }
 
             public int ReferenceId { get; }
 

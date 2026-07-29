@@ -521,7 +521,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.VM
                         {
                             IsError = false,
                             LValue = top.DebugSymbols[i],
-                            Value = top.LocalScope[i],
+                            Value = top.LocalScope[i]?.Value,
                             Name = top.DebugSymbols[i].NameValue,
                         }
                     );

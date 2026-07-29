@@ -24,7 +24,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
         public LiteralExpression(ScriptLoadingContext lcontext, DynValue value)
             : base(lcontext)
         {
-            _value = value?.AsReadOnly() ?? throw new ArgumentNullException(nameof(value));
+            _value = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         public LiteralExpression(ScriptLoadingContext lcontext, Token t)
@@ -40,22 +40,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tree.Expressions
                     if (t.IsFloatLiteralSyntax())
                     {
                         // Float literal syntax (contains . or e/E) - always create float subtype
-                        _value = DynValue.NewFloat(t.GetNumberValue()).AsReadOnly();
+                        _value = DynValue.NewFloat(t.GetNumberValue());
                     }
                     else if (t.TryGetIntegerValue(out long intVal))
                     {
                         // Successfully parsed as integer directly (without double intermediate)
-                        _value = DynValue.NewInteger(intVal).AsReadOnly();
+                        _value = DynValue.NewInteger(intVal);
                     }
                     else
                     {
                         // Integer syntax but too large for long - use float
-                        _value = DynValue.NewFloat(t.GetNumberValue()).AsReadOnly();
+                        _value = DynValue.NewFloat(t.GetNumberValue());
                     }
                     break;
                 case TokenType.String:
                 case TokenType.StringLong:
-                    _value = DynValue.NewString(t.text).AsReadOnly();
+                    _value = DynValue.NewString(t.text);
                     break;
                 case TokenType.True:
                     _value = DynValue.True;

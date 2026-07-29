@@ -15,9 +15,13 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     /// <summary>
     /// A class representing a value in a Lua/NovaSharp script.
     /// </summary>
+    /// <remarks>
+    /// Values are immutable once constructed. Mutable storage lives in the VM's local/upvalue
+    /// slots instead, so a value can be shared freely (pushed on the value stack, used as a table
+    /// key, embedded in an instruction literal) without defensive copying.
+    /// </remarks>
     public sealed class DynValue
     {
-        private bool _readOnly;
         private LuaNumber _number;
         private object _object;
         private DataType _type;
@@ -168,23 +172,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Returns true if this instance is write protected.
-        /// </summary>
-        public bool ReadOnly
-        {
-            get { return _readOnly; }
-        }
-
-        /// <summary>
-        /// Creates a new writable value initialized to Nil.
+        /// Returns the nil value. Values are immutable, so this is the shared <see cref="Nil"/> instance.
         /// </summary>
         public static DynValue NewNil()
         {
-            return new DynValue();
+            return Nil;
         }
 
         /// <summary>
-        /// Creates a new writable value initialized to the specified boolean.
+        /// Creates a value equal to the specified boolean. Prefer <see cref="FromBoolean"/>, which
+        /// returns the shared instance instead of allocating.
         /// </summary>
         public static DynValue NewBoolean(bool v)
         {
@@ -228,7 +225,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 {
                     _number = LuaNumber.FromInteger(i),
                     _type = DataType.Number,
-                    _readOnly = true,
                 };
             }
             return cache;
@@ -245,7 +241,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 {
                     _number = LuaNumber.FromInteger(value),
                     _type = DataType.Number,
-                    _readOnly = true,
                 };
             }
             return cache;
@@ -282,7 +277,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 {
                     _number = LuaNumber.FromFloat(value),
                     _type = DataType.Number,
-                    _readOnly = true,
                 };
             }
             return cache;
@@ -539,6 +533,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
             DynValue newValue = NewClosure(closure);
             closure.CachedDynValue = newValue;
+            return newValue;
+        }
+
+        /// <summary>
+        /// Returns a DynValue wrapping the specified table, reusing the table's cached wrapper when available.
+        /// </summary>
+        /// <param name="table">The table to wrap.</param>
+        /// <returns>A <see cref="DynValue"/> representing the table.</returns>
+        /// <remarks>
+        /// Mirrors <see cref="FromClosure"/>. Sharing one wrapper per table is safe because values
+        /// are immutable, so a chunk entry point can bind <c>_ENV</c> without allocating a wrapper
+        /// on every load from the compilation cache.
+        /// </remarks>
+        internal static DynValue FromTable(Table table)
+        {
+            if (table == null)
+            {
+                return Nil;
+            }
+
+            DynValue cached = table.CachedDynValue;
+            if (cached != null)
+            {
+                return cached;
+            }
+
+            DynValue newValue = NewTable(table);
+            table.CachedDynValue = newValue;
             return newValue;
         }
 
@@ -1137,55 +1159,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Returns this value as readonly - eventually cloning it in the process if it isn't readonly to start with.
-        /// </summary>
-        public DynValue AsReadOnly()
-        {
-            if (ReadOnly)
-            {
-                return this;
-            }
-            else
-            {
-                return Clone(true);
-            }
-        }
-
-        /// <summary>
-        /// Clones this instance.
-        /// </summary>
-        /// <returns></returns>
-        public DynValue Clone()
-        {
-            return Clone(ReadOnly);
-        }
-
-        /// <summary>
-        /// Clones this instance, overriding the "readonly" status.
-        /// </summary>
-        /// <param name="readOnly">if set to <c>true</c> the new instance is set as readonly, or writeable otherwise.</param>
-        /// <returns></returns>
-        public DynValue Clone(bool readOnly)
-        {
-            DynValue v = new()
-            {
-                _object = _object,
-                _number = _number,
-                _type = _type,
-                _readOnly = readOnly,
-            };
-            return v;
-        }
-
-        /// <summary>
-        /// Clones this instance, returning a writable copy.
-        /// </summary>
-        /// <exception cref="System.ArgumentException">Can't clone Symbol values</exception>
-        public DynValue CloneAsWritable()
-        {
-            return Clone(false);
-        }
-
         /// <summary>
         /// A preinitialized, readonly instance, equaling Void
         /// </summary>
@@ -1221,16 +1194,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
         static DynValue()
         {
-            Nil = new DynValue() { _type = DataType.Nil }.AsReadOnly();
-            Void = new DynValue() { _type = DataType.Void }.AsReadOnly();
-            True = NewBoolean(true).AsReadOnly();
-            False = NewBoolean(false).AsReadOnly();
-            EmptyString = NewString(string.Empty).AsReadOnly();
+            Nil = new DynValue() { _type = DataType.Nil };
+            Void = new DynValue() { _type = DataType.Void };
+            True = NewBoolean(true);
+            False = NewBoolean(false);
+            EmptyString = NewString(string.Empty);
             EmptyTuple = new DynValue()
             {
                 _object = Array.Empty<DynValue>(),
                 _type = DataType.Tuple,
-            }.AsReadOnly();
+            };
         }
 
         /// <summary>
@@ -1672,31 +1645,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         }
 
         /// <summary>
-        /// Overwrites this mutable local/upvalue slot with the specified value.
-        /// This method is internal to prevent external code from corrupting VM state and must not be used
-        /// for table keys, instruction literals, or other immutable value snapshots.
-        /// External code should use <see cref="Clone"/> and variable assignment instead.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <exception cref="ScriptRuntimeException">If this instance is readonly.</exception>
-        internal void AssignSlot(DynValue value)
-        {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
-            if (ReadOnly)
-            {
-                throw new ScriptRuntimeException("Assigning on r-value");
-            }
-
-            _number = value._number;
-            _object = value._object;
-            _type = value.Type;
-        }
-
-        /// <summary>
         /// Gets the length of a string or table value.
         /// </summary>
         /// <returns></returns>
@@ -1756,42 +1704,6 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
             return (Type == DataType.Nil)
                 || (Type == DataType.Void)
                 || (Type == DataType.Number && double.IsNaN(Number));
-        }
-
-        /// <summary>
-        /// Changes the numeric value of a number DynValue.
-        /// </summary>
-        internal void AssignNumber(double num)
-        {
-            if (ReadOnly)
-            {
-                throw new InternalErrorException(null, "Writing on r-value");
-            }
-
-            if (Type != DataType.Number)
-            {
-                throw new InternalErrorException("Can't assign number to type {0}", Type);
-            }
-
-            _number = LuaNumber.FromDouble(num);
-        }
-
-        /// <summary>
-        /// Changes the numeric value of a number DynValue using a <see cref="LuaNumber"/>.
-        /// </summary>
-        internal void AssignNumber(LuaNumber num)
-        {
-            if (ReadOnly)
-            {
-                throw new InternalErrorException(null, "Writing on r-value");
-            }
-
-            if (Type != DataType.Number)
-            {
-                throw new InternalErrorException("Can't assign number to type {0}", Type);
-            }
-
-            _number = num;
         }
 
         /// <summary>

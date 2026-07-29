@@ -1,14 +1,14 @@
 {
   "generated_by": "tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py",
-  "total_snippets": 1782,
+  "total_snippets": 1789,
   "novasharp_only": 460,
-  "comparable": 1322,
+  "comparable": 1329,
   "by_version": {
-    "5.1": 875,
-    "5.2": 584,
-    "5.3": 822,
-    "5.4": 862,
-    "5.5": 903
+    "5.1": 881,
+    "5.2": 591,
+    "5.3": 829,
+    "5.4": 869,
+    "5.5": 910
   },
   "snippets": [
     {
@@ -21965,6 +21965,103 @@
       "test": "VmStackCeilingTUnitTests.StackOverflowIsCatchableViaPcall",
       "lua_versions": [
         "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/ClosureCapturedBeforeAssignmentSeesLaterValue.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:112",
+      "test": "ValueSlotSemanticsTUnitTests.ClosureCapturedBeforeAssignmentSeesLaterValue",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/ClosuresShareOneCellForTheSameLocal.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:92",
+      "test": "ValueSlotSemanticsTUnitTests.ClosuresShareOneCellForTheSameLocal",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/NumericForControlVariableIsSnapshotPerIteration.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:73",
+      "test": "ValueSlotSemanticsTUnitTests.NumericForControlVariableIsSnapshotPerIteration",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/ReassigningLocalDoesNotRewriteStoredValue.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:30",
+      "test": "ValueSlotSemanticsTUnitTests.ReassigningLocalDoesNotRewriteStoredValue",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/ReassigningUpvalueDoesNotRewriteStoredValue.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:51",
+      "test": "ValueSlotSemanticsTUnitTests.ReassigningUpvalueDoesNotRewriteStoredValue",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/PerIterationCellsStayIndependentAcrossMutatingCalls.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:152",
+      "test": "ValueSlotSemanticsTUnitTests.PerIterationCellsStayIndependentAcrossMutatingCalls",
+      "lua_versions": [
+        "5.1",
+        "5.2",
+        "5.3",
+        "5.4",
+        "5.5"
+      ],
+      "novasharp_only": false,
+      "expects_error": false
+    },
+    {
+      "path": "ValueSlotSemanticsTUnitTests/UpvalueIdTracksTheCellNotTheValue.lua",
+      "source": "src\\tests\\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\\EndToEnd\\ValueSlotSemanticsTUnitTests.cs:192",
+      "test": "ValueSlotSemanticsTUnitTests.UpvalueIdTracksTheCellNotTheValue",
+      "lua_versions": [
         "5.2",
         "5.3",
         "5.4",

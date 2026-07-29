@@ -8,14 +8,18 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
     /// <summary>
     /// The scope of a closure (container of upvalues)
     /// </summary>
+    /// <remarks>
+    /// Upvalues are stored as <see cref="ValueSlot"/> cells so that captured locals keep sharing a
+    /// single mutable identity while the values they hold stay immutable and allocation-free to read.
+    /// </remarks>
     internal sealed class ClosureContext : IReadOnlyList<DynValue>
     {
         private static readonly IReadOnlyList<string> EnvironmentSymbols = Array.AsReadOnly(
             new[] { WellKnownSymbols.ENV }
         );
 
-        private DynValue _singleValue;
-        private DynValue[] _values;
+        private ValueSlot _singleSlot;
+        private ValueSlot[] _slots;
         private int _count;
 
         /// <summary>
@@ -32,105 +36,103 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         }
 
         /// <summary>
-        /// Gets or sets an upvalue slot.
+        /// Gets the current value of an upvalue.
         /// </summary>
         public DynValue this[int index]
         {
-            get
-            {
-                ValidateIndex(index);
-                return _count == 1 ? _singleValue : _values[index];
-            }
-            set
-            {
-                ValidateIndex(index);
-                if (_count == 1)
-                {
-                    _singleValue = value;
-                    return;
-                }
-
-                _values[index] = value;
-            }
+            get { return GetSlot(index).Value; }
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ClosureContext"/> class from a list of values.
+        /// Gets the mutable cell backing an upvalue.
+        /// </summary>
+        /// <param name="index">The upvalue index.</param>
+        /// <returns>The captured <see cref="ValueSlot"/>.</returns>
+        internal ValueSlot GetSlot(int index)
+        {
+            ValidateIndex(index);
+            return _count == 1 ? _singleSlot : _slots[index];
+        }
+
+        /// <summary>
+        /// Rebinds an upvalue to a different cell, making both closures observe the same variable.
+        /// </summary>
+        /// <param name="index">The upvalue index.</param>
+        /// <param name="slot">The cell to bind; <c>null</c> installs a fresh nil cell.</param>
+        internal void SetSlot(int index, ValueSlot slot)
+        {
+            ValidateIndex(index);
+            slot ??= new ValueSlot();
+            if (_count == 1)
+            {
+                _singleSlot = slot;
+                return;
+            }
+
+            _slots[index] = slot;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ClosureContext"/> class from a list of captured cells.
         /// This overload avoids enumerator allocation by using the list directly.
         /// </summary>
         /// <param name="symbols">The symbol references for each upvalue.</param>
-        /// <param name="values">The resolved upvalue values.</param>
-        internal ClosureContext(SymbolRef[] symbols, List<DynValue> values)
+        /// <param name="slots">The captured upvalue cells.</param>
+        internal ClosureContext(SymbolRef[] symbols, List<ValueSlot> slots)
         {
             if (symbols == null)
             {
                 throw new ArgumentNullException(nameof(symbols));
             }
 
-            if (values == null)
+            if (slots == null)
             {
-                throw new ArgumentNullException(nameof(values));
+                throw new ArgumentNullException(nameof(slots));
             }
 
             Symbols = ExtractSymbolNames(symbols);
-            _count = values.Count;
-            InitializeFromList(values);
+            _count = slots.Count;
+            InitializeFromList(slots);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ClosureContext"/> class from an array of values.
+        /// Initializes a new instance of the <see cref="ClosureContext"/> class from an array of captured cells.
         /// This overload avoids enumerator allocation entirely.
         /// </summary>
         /// <param name="symbols">The symbol references for each upvalue.</param>
-        /// <param name="values">The resolved upvalue values.</param>
-        internal ClosureContext(SymbolRef[] symbols, DynValue[] values)
+        /// <param name="slots">The captured upvalue cells.</param>
+        internal ClosureContext(SymbolRef[] symbols, ValueSlot[] slots)
         {
             if (symbols == null)
             {
                 throw new ArgumentNullException(nameof(symbols));
             }
 
-            if (values == null)
+            if (slots == null)
             {
-                throw new ArgumentNullException(nameof(values));
+                throw new ArgumentNullException(nameof(slots));
             }
 
             Symbols = ExtractSymbolNames(symbols);
-            _count = values.Length;
-            InitializeFromArray(values);
+            _count = slots.Length;
+            InitializeFromArray(slots);
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ClosureContext"/> class for a single _ENV upvalue.
         /// </summary>
-        /// <param name="environmentValue">The mutable environment upvalue slot for this closure.</param>
+        /// <param name="environmentValue">The initial environment value for this closure.</param>
         internal ClosureContext(DynValue environmentValue)
         {
             Symbols = EnvironmentSymbols;
-            _singleValue = environmentValue;
+            _singleSlot = new ValueSlot(environmentValue);
             _count = 1;
-        }
-
-        internal ClosureContext(SymbolRef[] symbols, IEnumerable<DynValue> values)
-        {
-            if (symbols == null)
-            {
-                throw new ArgumentNullException(nameof(symbols));
-            }
-
-            if (values == null)
-            {
-                throw new ArgumentNullException(nameof(values));
-            }
-
-            Symbols = ExtractSymbolNames(symbols);
-            InitializeFromEnumerable(values);
         }
 
         internal ClosureContext()
         {
             Symbols = Array.Empty<string>();
-            _values = Array.Empty<DynValue>();
+            _slots = Array.Empty<ValueSlot>();
         }
 
         private static string[] ExtractSymbolNames(SymbolRef[] symbols)
@@ -148,69 +150,46 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
             return names;
         }
 
-        private void InitializeFromList(List<DynValue> values)
+        private void InitializeFromList(List<ValueSlot> slots)
         {
             if (_count == 0)
             {
-                _values = Array.Empty<DynValue>();
+                _slots = Array.Empty<ValueSlot>();
                 return;
             }
 
             if (_count == 1)
             {
-                _singleValue = values[0];
+                _singleSlot = slots[0] ?? new ValueSlot();
                 return;
             }
 
-            _values = new DynValue[_count];
+            _slots = new ValueSlot[_count];
             for (int i = 0; i < _count; i++)
             {
-                _values[i] = values[i];
+                _slots[i] = slots[i] ?? new ValueSlot();
             }
         }
 
-        private void InitializeFromArray(DynValue[] values)
+        private void InitializeFromArray(ValueSlot[] slots)
         {
             if (_count == 0)
             {
-                _values = Array.Empty<DynValue>();
+                _slots = Array.Empty<ValueSlot>();
                 return;
             }
 
             if (_count == 1)
             {
-                _singleValue = values[0];
+                _singleSlot = slots[0] ?? new ValueSlot();
                 return;
             }
 
-            _values = new DynValue[_count];
-            Array.Copy(values, _values, _count);
-        }
-
-        private void InitializeFromEnumerable(IEnumerable<DynValue> values)
-        {
-            if (values is DynValue[] array)
+            _slots = new ValueSlot[_count];
+            for (int i = 0; i < _count; i++)
             {
-                _count = array.Length;
-                InitializeFromArray(array);
-                return;
+                _slots[i] = slots[i] ?? new ValueSlot();
             }
-
-            if (values is List<DynValue> list)
-            {
-                _count = list.Count;
-                InitializeFromList(list);
-                return;
-            }
-
-            List<DynValue> materialized = new();
-            foreach (DynValue value in values)
-            {
-                materialized.Add(value);
-            }
-
-            _count = materialized.Count;
-            InitializeFromList(materialized);
         }
 
         private void ValidateIndex(int index)
@@ -222,34 +201,34 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
         }
 
         /// <summary>
-        /// Returns an enumerator over the captured upvalue slots.
+        /// Returns an enumerator over the current upvalue values.
         /// </summary>
-        /// <returns>An enumerator over the captured upvalue slots.</returns>
+        /// <returns>An enumerator over the current upvalue values.</returns>
         public Enumerator GetEnumerator()
         {
             return new Enumerator(this);
         }
 
         /// <summary>
-        /// Returns an enumerator over the captured upvalue slots.
+        /// Returns an enumerator over the current upvalue values.
         /// </summary>
-        /// <returns>An enumerator over the captured upvalue slots.</returns>
+        /// <returns>An enumerator over the current upvalue values.</returns>
         IEnumerator<DynValue> IEnumerable<DynValue>.GetEnumerator()
         {
             return GetEnumerator();
         }
 
         /// <summary>
-        /// Returns an enumerator over the captured upvalue slots.
+        /// Returns an enumerator over the current upvalue values.
         /// </summary>
-        /// <returns>An enumerator over the captured upvalue slots.</returns>
+        /// <returns>An enumerator over the current upvalue values.</returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
         /// <summary>
-        /// Enumerates captured upvalue slots without allocating when used directly by foreach.
+        /// Enumerates captured upvalue values without allocating when used directly by foreach.
         /// </summary>
         internal struct Enumerator : IEnumerator<DynValue>
         {
@@ -267,7 +246,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
             }
 
             /// <summary>
-            /// Gets the current captured upvalue slot.
+            /// Gets the current upvalue value.
             /// </summary>
             public DynValue Current
             {
@@ -285,7 +264,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.Execution.Scopes
             }
 
             /// <summary>
-            /// Gets the current captured upvalue slot.
+            /// Gets the current upvalue value.
             /// </summary>
             object IEnumerator.Current
             {
