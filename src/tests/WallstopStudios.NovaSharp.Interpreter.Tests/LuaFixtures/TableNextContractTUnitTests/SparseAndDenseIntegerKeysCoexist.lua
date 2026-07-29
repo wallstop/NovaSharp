@@ -1,12 +1,12 @@
--- @lua-versions: novasharp-only
--- @novasharp-only: true
+-- @lua-versions: 5.1+
+-- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:248
 -- @test: TableNextContractTUnitTests.SparseAndDenseIntegerKeysCoexist
--- Compatibility notes: Uses injected variable: array
 local function check()
-                    -- Forces a dense prefix into the array part and keys far past it into the hash
-                    -- part, then checks every key still reads back and is traversed exactly once.
+                    -- Forces a dense integer prefix into contiguous storage and keys far past it
+                    -- into the hashed side, then checks every key still reads back and is
+                    -- traversed exactly once.
                     local t = {}
                     for i = 1, 64 do t[i] = i end
                     for _, k in ipairs({ 1000, 5000, 100000 }) do t[k] = k end

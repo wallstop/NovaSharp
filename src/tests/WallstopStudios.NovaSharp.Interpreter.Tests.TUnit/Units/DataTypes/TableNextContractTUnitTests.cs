@@ -248,8 +248,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             DynValue result = script.DoString(
                 @"
                 local function check()
-                    -- Forces a dense prefix into the array part and keys far past it into the hash
-                    -- part, then checks every key still reads back and is traversed exactly once.
+                    -- Forces a dense integer prefix into contiguous storage and keys far past it
+                    -- into the hashed side, then checks every key still reads back and is
+                    -- traversed exactly once.
                     local t = {}
                     for i = 1, 64 do t[i] = i end
                     for _, k in ipairs({ 1000, 5000, 100000 }) do t[k] = k end

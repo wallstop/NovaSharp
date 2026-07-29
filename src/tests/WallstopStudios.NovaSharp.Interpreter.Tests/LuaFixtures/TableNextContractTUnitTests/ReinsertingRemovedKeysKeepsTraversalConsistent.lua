@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:290
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/TableNextContractTUnitTests.cs:291
 -- @test: TableNextContractTUnitTests.ReinsertingRemovedKeysKeepsTraversalConsistent
 local function check()
                     -- Churn removes and re-adds keys many times; the traversal must always report
