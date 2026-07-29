@@ -97,6 +97,27 @@ constantly (`entity.health`), and the one that matters most.
 `string read x5` on a 200k-entry table is at parity; that case is memory-latency bound rather than
 hash bound.
 
+### Whole-program allocation, old versus new
+
+The Phase A0 allocation gate fails only on *increases*, with zero tolerance below 1 KiB, so these
+rows were measured directly rather than assumed. Figures are bytes per operation and were identical
+across repeated runs.
+
+| Row | Before | After |
+| ------------------------ | ------------- | ------------- |
+| `new Script()` | 306,220 B/op | 280,228 B/op |
+| cached `DoString` | 440 B/op | 440 B/op |
+| table constructor chunk | 624 B/op | 512 B/op |
+| 32-entry int fill chunk | 10,664 B/op | 7,328 B/op |
+| 3-field table chunk | 1,272 B/op | 936 B/op |
+
+Every row is flat or lower. The cached-compile row — the one PLAN.md records as sensitive enough
+that binding `_ENV` moved it by 8 B — is unchanged to the byte.
+
+Note the ratchet obligation: these are improvements, so the committed Phase A0 baseline should be
+refreshed once a full scoreboard run is available, or the old higher floor stays the permanent CI
+guard.
+
 ______________________________________________________________________
 
 ## Three findings that changed the implementation
