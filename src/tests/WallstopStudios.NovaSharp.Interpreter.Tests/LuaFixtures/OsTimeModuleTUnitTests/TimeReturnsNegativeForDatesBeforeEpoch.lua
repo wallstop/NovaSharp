@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsTimeModuleTUnitTests.cs:123
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsTimeModuleTUnitTests.cs:123
 -- @test: OsTimeModuleTUnitTests.TimeReturnsNegativeForDatesBeforeEpoch
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 return os.time({
                     year = 1969,
                     month = 12,

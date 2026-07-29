@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\MetatableTUnitTests.cs:320
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/MetatableTUnitTests.cs:320
 -- @test: MyObject.IpairsRespectsIndexMetamethodTable53Plus
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 local underlying = {100, 200, 300, 400}
                 local proxy = {}
                 setmetatable(proxy, {

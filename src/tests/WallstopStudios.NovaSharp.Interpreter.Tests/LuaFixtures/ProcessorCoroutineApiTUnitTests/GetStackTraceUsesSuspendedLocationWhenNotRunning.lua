@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineApiTUnitTests.cs:627
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineApiTUnitTests.cs:926
 -- @test: ProcessorCoroutineApiTUnitTests.GetStackTraceUsesSuspendedLocationWhenNotRunning
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 return function()
                     local function inner()
                         coroutine.yield('pause')

@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\TableModuleTUnitTests.cs:284
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:314
 -- @test: TableModuleTUnitTests.InsertTruncatesNonIntegerPositionLua51And52
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 local t = {1, 2, 3}
                 table.insert(t, 1.9, 'x')
                 return t[1]

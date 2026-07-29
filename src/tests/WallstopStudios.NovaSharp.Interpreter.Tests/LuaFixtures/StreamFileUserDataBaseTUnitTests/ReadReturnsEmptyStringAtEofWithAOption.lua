@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: true
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:1009
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:1009
 -- @test: StreamFileUserDataBaseTUnitTests.ReadReturnsEmptyStringAtEofWithAOption
--- Uses injected variable: file
+-- Compatibility notes: Uses injected variable: file
 local f = file
                 local first = f:read('*a')
                 local second = f:read('*a')

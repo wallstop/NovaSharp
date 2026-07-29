@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\MetamethodLtLeFallbackTUnitTests.cs:50
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/MetamethodLtLeFallbackTUnitTests.cs:50
 -- @test: MetamethodLtLeFallbackTUnitTests.LtFallbackToLeWorksInLua51Through54
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 local mt = {
                 __lt = function(a, b) return a.value < b.value end
                 -- Note: __le is intentionally NOT defined

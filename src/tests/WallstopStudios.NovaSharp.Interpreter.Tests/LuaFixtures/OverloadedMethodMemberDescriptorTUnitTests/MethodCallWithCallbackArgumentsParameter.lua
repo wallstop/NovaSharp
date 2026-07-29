@@ -1,8 +1,8 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Descriptors\OverloadedMethodMemberDescriptorTUnitTests.cs:1212
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Descriptors/OverloadedMethodMemberDescriptorTUnitTests.cs:1225
 -- @test: OverloadedMethodMemberDescriptorTUnitTests.MethodCallWithCallbackArgumentsParameter
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 local obj = TestClass.__new()
                 return obj.CountArgs('a', 'b', 'c')

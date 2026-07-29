@@ -1,9 +1,9 @@
 -- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:1532
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1532
 -- @test: DebugModuleTUnitTests.GetLocalFromFunctionReturnsUpValuePlaceholder
--- Test targets Lua 5.1; Lua 5.2+: debug.getlocal with function var (5.2+)
+-- Compatibility notes: Test targets Lua 5.1; Lua 5.2+: debug.getlocal with function var (5.2+)
 local x = 10
                 local function closure()
                     return x

@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineModuleTUnitTests.cs:315
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineModuleTUnitTests.cs:707
 -- @test: ProcessorCoroutineModuleTUnitTests.WrapReturnsFunctionThatResumesCoroutine
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 function buildWrapper()
                     return coroutine.wrap(function()
                         for i = 1, 3 do

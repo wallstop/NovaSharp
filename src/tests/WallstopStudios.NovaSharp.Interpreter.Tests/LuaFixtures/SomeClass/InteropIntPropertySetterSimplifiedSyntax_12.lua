@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataPropertiesTUnitTests.cs:513
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/UserDataPropertiesTUnitTests.cs:513
 -- @test: SomeClass.InteropIntPropertySetterSimplifiedSyntax
--- Uses injected variable: myobj
+-- Compatibility notes: Uses injected variable: myobj
 myobj.RoIntProp = 1; return myobj.RoIntProp;

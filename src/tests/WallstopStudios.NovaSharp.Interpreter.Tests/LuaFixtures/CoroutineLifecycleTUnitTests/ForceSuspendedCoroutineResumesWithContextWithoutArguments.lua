@@ -1,9 +1,8 @@
--- @lua-versions: 5.1
+-- @lua-versions: 5.1+
 -- @novasharp-only: false
--- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\CoroutineLifecycleIntegrationTUnitTests.cs:199
+-- @expects-error: true
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/CoroutineLifecycleTUnitTests.cs:208
 -- @test: CoroutineLifecycleTUnitTests.ForceSuspendedCoroutineResumesWithContextWithoutArguments
--- Test targets Lua 5.1
 function heavyweight()
                     local total = 0
                     for i = 1, 300 do

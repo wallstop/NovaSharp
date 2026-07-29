@@ -1,8 +1,8 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Interop\Descriptors\FunctionMemberDescriptorBaseTUnitTests.cs:82
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Interop/Descriptors/FunctionMemberDescriptorBaseTUnitTests.cs:84
 -- @test: FunctionMemberDescriptorBaseTUnitTests.VarArgsWithUserDataArrayPassthrough
--- Uses injected variable: obj
+-- Compatibility notes: Uses injected variable: obj
 local arr = {1, 2, 3, 4, 5}
                 return obj.SumVarArgs(1, 2, 3)

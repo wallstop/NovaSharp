@@ -1,8 +1,8 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathNumericEdgeCasesTUnitTests.cs:1235
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:1225
 -- @test: MathNumericEdgeCasesTUnitTests.CeilReturnsIntegerWhenResultFitsInRange
--- NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
+-- Compatibility notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
 local v = math.ceil({luaExpression})
                 return math.type(v), v

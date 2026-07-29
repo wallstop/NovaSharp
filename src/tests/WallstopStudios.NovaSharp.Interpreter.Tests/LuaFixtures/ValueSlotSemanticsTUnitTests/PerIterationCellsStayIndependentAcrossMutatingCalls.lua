@@ -1,8 +1,9 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.2, 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
 -- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ValueSlotSemanticsTUnitTests.cs:152
 -- @test: ValueSlotSemanticsTUnitTests.PerIterationCellsStayIndependentAcrossMutatingCalls
+-- Compatibility notes: Test targets Lua 5.2+
 local fns = {}
                 for i = 1, 3 do
                     local k = i

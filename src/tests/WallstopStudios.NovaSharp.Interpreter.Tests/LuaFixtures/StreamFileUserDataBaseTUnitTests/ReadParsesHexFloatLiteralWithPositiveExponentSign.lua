@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:676
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:676
 -- @test: StreamFileUserDataBaseTUnitTests.ReadParsesHexFloatLiteralWithPositiveExponentSign
--- Uses injected variable: file
+-- Compatibility notes: Uses injected variable: file
 local f = file
                 local number = f:read('*n')
                 local rest = f:read('*a')

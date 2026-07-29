@@ -1,9 +1,9 @@
--- @lua-versions: 5.2+
+-- @lua-versions: 5.2, 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\SimpleTUnitTests.cs:1525
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/SimpleTUnitTests.cs:1622
 -- @test: SimpleTUnitTests.EnvTestSuite
--- Lua 5.2+: _ENV variable
+-- Compatibility notes: Lua 5.2+: _ENV variable
 local RES = { }
 
 				RES.T1 = (_ENV == _G) 

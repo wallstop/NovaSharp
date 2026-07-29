@@ -1,9 +1,9 @@
--- @lua-versions: 5.3+
+-- @lua-versions: 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\DeterministicExecutionTUnitTests.cs:502
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/DeterministicExecutionTUnitTests.cs:502
 -- @test: DeterministicExecutionTUnitTests.FullDeterministicExecutionProducesIdenticalResults
--- Lua 5.3+: bitwise OR
+-- Compatibility notes: Lua 5.3+: bitwise OR
 local results = {}
                 results[1] = math.random()
                 results[2] = math.random(1, 1000)

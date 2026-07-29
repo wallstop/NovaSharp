@@ -1,8 +1,8 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Descriptors\OverloadedMethodMemberDescriptorTUnitTests.cs:1190
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Descriptors/OverloadedMethodMemberDescriptorTUnitTests.cs:1203
 -- @test: OverloadedMethodMemberDescriptorTUnitTests.VarArgsMalusAppliedForMultipleVarArgs
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 local obj = TestClass.__new()
                 return obj.WithVarArgs(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)

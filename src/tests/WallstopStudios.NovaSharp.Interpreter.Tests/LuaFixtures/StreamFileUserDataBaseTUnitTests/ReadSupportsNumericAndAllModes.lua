@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:445
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:445
 -- @test: StreamFileUserDataBaseTUnitTests.ReadSupportsNumericAndAllModes
--- Uses injected variable: file
+-- Compatibility notes: Uses injected variable: file
 local f = file
                 local num = f:read('*n')
                 f:seek('set', 5)

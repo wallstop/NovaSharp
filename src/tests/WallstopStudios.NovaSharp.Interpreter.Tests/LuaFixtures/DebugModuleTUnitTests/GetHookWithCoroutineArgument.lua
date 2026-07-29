@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:1793
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1793
 -- @test: DebugModuleTUnitTests.GetHookWithCoroutineArgument
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 local function hookfn() end
                 local co = coroutine.create(function()
                     debug.sethook(hookfn, 'l', 3)

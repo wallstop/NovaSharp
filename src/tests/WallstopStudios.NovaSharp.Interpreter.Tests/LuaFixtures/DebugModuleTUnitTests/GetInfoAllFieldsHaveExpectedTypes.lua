@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:3393
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:3462
 -- @test: DebugModuleTUnitTests.GetInfoAllFieldsHaveExpectedTypes
--- Test targets Lua 5.1
+-- Compatibility notes: Test targets Lua 5.1
 local function sample(a, b)
                     local c = a + b
                     return c

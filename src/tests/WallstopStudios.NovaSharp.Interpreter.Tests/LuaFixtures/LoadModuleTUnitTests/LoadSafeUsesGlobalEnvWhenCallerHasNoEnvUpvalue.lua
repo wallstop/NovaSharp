@@ -1,13 +1,11 @@
--- @lua-versions: 5.2+
+-- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\LoadModuleTUnitTests.cs:381
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleTUnitTests.cs:507
 -- @test: LoadModuleTUnitTests.LoadSafeUsesGlobalEnvWhenCallerHasNoEnvUpvalue
--- NovaSharp-only: loadsafe is a NovaSharp extension; Lua 5.2+ only
--- In Lua 5.2+, if the calling function doesn't reference any globals, it won't have _ENV
--- as an upvalue. In this case, loadsafe should successfully use the script's global environment.
+-- Compatibility notes: NovaSharp: using statement (non-Lua); Test targets Lua 5.1
 local ls = loadsafe
--- This function only uses the local 'ls', so it has no _ENV upvalue in Lua 5.2+.
--- loadsafe should fall back to using the script's global environment.
-local fn = ls('return 42')
-return fn()
+                -- This function only uses the local 'ls', so it has no _ENV upvalue in Lua 5.2+.
+                -- loadsafe should fall back to using the script's global environment.
+                local fn = ls('return 42')
+                return fn()

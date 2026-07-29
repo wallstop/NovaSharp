@@ -1,9 +1,9 @@
--- @lua-versions: 5.2+
+-- @lua-versions: 5.2, 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineModuleTUnitTests.cs:577
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineModuleTUnitTests.cs:969
 -- @test: ProcessorCoroutineModuleTUnitTests.RunningReturnsConsistentValuesInNestedCoroutines
--- Test targets Lua 5.2+
+-- Compatibility notes: Test targets Lua 5.2+
 results = {}
                 function outer()
                     local co, isMain = coroutine.running()

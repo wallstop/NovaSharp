@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataMethodsTUnitTests.cs:1140
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/UserDataMethodsTUnitTests.cs:1140
 -- @test: SomeOtherClassWithDualInterfaces.InteropDualInterfaces
--- Uses injected variable: myobj
+-- Compatibility notes: Uses injected variable: myobj
 return myobj:Test1() .. myobj:Test2()

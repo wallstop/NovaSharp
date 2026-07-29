@@ -1,7 +1,7 @@
--- @lua-versions: 5.4+
+-- @lua-versions: 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:1390
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1390
 -- @test: MathModuleTUnitTests.Log10ReturnsCorrectValues
--- Test targets Lua 5.4+
+-- Compatibility notes: Test targets Lua 5.4+
 return math.log10(1000)

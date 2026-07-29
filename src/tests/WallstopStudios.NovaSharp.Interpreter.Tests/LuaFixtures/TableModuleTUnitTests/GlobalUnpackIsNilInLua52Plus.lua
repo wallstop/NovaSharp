@@ -1,7 +1,7 @@
--- @lua-versions: 5.2+
+-- @lua-versions: 5.2, 5.3, 5.4, 5.5
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\TableModuleTUnitTests.cs:522
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:552
 -- @test: TableModuleTUnitTests.GlobalUnpackIsNilInLua52Plus
--- Test targets Lua 5.2+
+-- Compatibility notes: Test targets Lua 5.2+
 return unpack

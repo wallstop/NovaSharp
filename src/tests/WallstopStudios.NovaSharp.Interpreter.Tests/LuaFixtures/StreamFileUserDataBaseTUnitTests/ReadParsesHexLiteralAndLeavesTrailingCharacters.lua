@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:713
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:713
 -- @test: StreamFileUserDataBaseTUnitTests.ReadParsesHexLiteralAndLeavesTrailingCharacters
--- Uses injected variable: file
+-- Compatibility notes: Uses injected variable: file
 return file:read('*n'), file:read('*a')

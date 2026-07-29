@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Descriptors\ArrayMemberDescriptorTUnitTests.cs:83
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Descriptors/ArrayMemberDescriptorTUnitTests.cs:86
 -- @test: ArrayMemberDescriptorTUnitTests.GetterReturnsArrayElement
--- Uses injected variable: arr
+-- Compatibility notes: Uses injected variable: arr
 return arr[1]

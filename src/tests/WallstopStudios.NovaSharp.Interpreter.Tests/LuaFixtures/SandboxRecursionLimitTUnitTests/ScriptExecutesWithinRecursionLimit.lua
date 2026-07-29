@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Sandbox\SandboxRecursionLimitTUnitTests.cs:62
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Sandbox/SandboxRecursionLimitTUnitTests.cs:62
 -- @test: SandboxRecursionLimitTUnitTests.ScriptExecutesWithinRecursionLimit
--- Test class 'SandboxRecursionLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
+-- Compatibility notes: Test class 'SandboxRecursionLimitTUnitTests' uses NovaSharp-specific Sandbox functionality
 function factorial(n)
                     if n <= 1 then
                         return 1
