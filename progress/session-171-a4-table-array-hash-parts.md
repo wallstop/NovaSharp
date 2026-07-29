@@ -203,8 +203,42 @@ Recorded rather than papered over.
 
 ______________________________________________________________________
 
+## Side finding: the corpus extractor clobbers curated fixture metadata
+
+Adding fixtures requires running `tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py`, which
+rewrites the whole corpus. Re-running the comparison afterwards produced mismatches on Lua 5.1
+through 5.4 that had nothing to do with this branch. The extractor overwrites hand-curated headers:
+
+- `MyObject/IndexSetDoesNotWrackStack.lua` — `@novasharp-only: true` became `false`, dropping the
+  note that table iteration order is implementation-defined. PLAN.md records that exact marker
+  being added on 2026-01-02 to resolve this divergence.
+- `ParserTUnitTests/UnicodeEscapeSequenceIsDecoded.lua` — `@lua-versions: 5.3+` became `5.1+`, so a
+  `\u{...}` escape that only exists from 5.3 was compared against 5.1 and 5.2.
+
+140 fixtures acquired `@novasharp-only: false` this way, and `tools/test_lua_fixture_metadata.py`
+(run by `tests.yml`) fails five assertions against the regenerated corpus. Committing the
+regeneration would have turned CI red for reasons unrelated to A4.
+
+The regeneration also extracted 143 fixtures for tests added in earlier sessions that were never
+committed to the corpus. Two `VmStackCeilingTUnitTests` fixtures genuinely diverge from reference
+Lua — NovaSharp's configurable stack ceiling is deeper than reference Lua's, so bounded recursion
+that errors under `lua5.1` succeeds here, and one repeated-overflow fixture exceeds the harness's
+5 second timeout. That is session 169's A5 work and needs its own metadata decision.
+
+This branch therefore reverts the corpus and manifest to their state on `main` and adds only the
+eight new fixtures. Filed as a follow-up.
+
+______________________________________________________________________
+
 ## Follow-ups
 
+- **Fix the extractor** so it preserves `@lua-versions`, `@novasharp-only`, and `@expects-error`
+  when a fixture already exists, then commit the 143 missing fixtures with correct metadata. Until
+  then, adding a fixture means reverting the collateral by hand, which is how this session lost
+  time.
+- Decide the `@novasharp-only` / `@lua-versions` metadata for the two `VmStackCeilingTUnitTests`
+  divergences, and give the harness a way to express "this fixture is expected to run longer than
+  the default timeout".
 - `string read` on very large string-keyed tables is at parity rather than ahead. Worth revisiting
   after A6 introduces string interning, which would make the reference-equality fast path hit
   almost always.

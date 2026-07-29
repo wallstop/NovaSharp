@@ -9,7 +9,9 @@ NovaSharp's PRIMARY GOAL is to be a **faithful Lua interpreter** that matches th
 1. **ADD REGRESSION TESTS** with standalone `.lua` fixtures runnable against real Lua
 1. **NEVER adjust tests to accommodate bugs** — fix the runtime instead
 
-**Current Status**: Local comparison artifacts were rechecked on 2026-06-27 with `compare-lua-outputs.py --enforce` for Lua 5.1-5.5 and showed zero hard mismatches. PR #49 CI was observed passing on 2026-07-03 after the Phase A0 benchmark baseline gates were hardened.
+**Current Status**: A full local comparison run on 2026-07-29 with `compare-lua-outputs.py --enforce` across Lua 5.1-5.5 reported 0 `mismatch`, 0 `lua_only`, and 0 `nova_only` over 2,142 fixtures per version, with the both-error ratchet unchanged (0 new, 0 changed). PR #49 CI was observed passing on 2026-07-03 after the Phase A0 benchmark baseline gates were hardened.
+
+⚠️ **Known tooling hazard**: `tools/LuaCorpusExtractor/lua_corpus_extractor_v2.py` regenerates the whole corpus and **overwrites curated `@lua-versions` / `@novasharp-only` headers**, which reintroduces divergences that were already resolved and fails `tools/test_lua_fixture_metadata.py` in CI. Adding a fixture currently requires reverting the collateral by hand. See [progress/session-171-a4-table-array-hash-parts.md](progress/session-171-a4-table-array-hash-parts.md).
 
 ______________________________________________________________________
 
