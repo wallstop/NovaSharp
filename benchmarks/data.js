@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785301465890,
+  "lastUpdate": 1785350229352,
   "repoUrl": "https://github.com/wallstop/NovaSharp",
   "entries": {
     "NovaSharp Benchmarks": [
@@ -2110,6 +2110,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
             "value": 1.129,
+            "unit": "μs",
+            "extra": ""
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "920ba327a7bd02cd112aa5b75ba6b725b4a54b3a",
+          "message": "Bump dotnet-reportgenerator-globaltool from 5.5.10 to 5.5.11 (#82)\n\nUpdated\n[dotnet-reportgenerator-globaltool](https://github.com/danielpalme/ReportGenerator)\nfrom 5.5.10 to 5.5.11.\n\n<details>\n<summary>Release notes</summary>\n\n_Sourced from [dotnet-reportgenerator-globaltool's\nreleases](https://github.com/danielpalme/ReportGenerator/releases)._\n\n## 5.5.11\n\n# Changes:\n- #​786 Improved HTML table layout for Firefox\n- #​785 Changed hover color for table rows in HTML reports to improve\nreadability in dark mode\n\nThis release requires .NET Framework 4.7 or .NET 8.0/9.0/10.0\n\nCommits viewable in [compare\nview](https://github.com/danielpalme/ReportGenerator/compare/v5.5.10...v5.5.11).\n</details>\n\n[![Dependabot compatibility\nscore](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=dotnet-reportgenerator-globaltool&package-manager=nuget&previous-version=5.5.10&new-version=5.5.11)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop\nDependabot creating any more for this major version (unless you reopen\nthe PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop\nDependabot creating any more for this minor version (unless you reopen\nthe PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop\nDependabot creating any more for this dependency (unless you reopen the\nPR or upgrade to it yourself)\n\n\n</details>\n\n<!-- CURSOR_SUMMARY -->\n---\n\n> [!NOTE]\n> **Low Risk**\n> Single-version pin in dotnet-tools.json with no application or CI\nlogic changes; only dev-time coverage HTML output may differ slightly.\n> \n> **Overview**\n> Bumps the local **dotnet tool** `dotnet-reportgenerator-globaltool`\nfrom **5.5.10** to **5.5.11** in `.config/dotnet-tools.json`.\n> \n> Upstream changes are limited to **HTML coverage report** presentation\n(Firefox table layout and dark-mode row hover). Coverage workflows that\ninvoke `reportgenerator` (e.g. `scripts/coverage`) will pick up the new\ntool version after `dotnet tool restore`.\n> \n> <sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit\n40b0519e9555c7798df94df8b1d16effd253c995. Bugbot is set up for automated\ncode reviews on this repo. Configure\n[here](https://www.cursor.com/dashboard/bugbot).</sup>\n<!-- /CURSOR_SUMMARY -->\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-07-29T11:31:02-07:00",
+          "tree_id": "97eda085cfa102e7e075bd0b013eec3b93d23399",
+          "url": "https://github.com/wallstop/NovaSharp/commit/920ba327a7bd02cd112aa5b75ba6b725b4a54b3a"
+        },
+        "date": 1785350228920,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"CoroutinePipeline\")",
+            "value": 0.904606,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"NumericLoops\")",
+            "value": 734.153,
+            "unit": "ns",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"TableMutation\")",
+            "value": 7.747,
+            "unit": "μs",
+            "extra": ""
+          },
+          {
+            "name": "WallstopStudios.NovaSharp.Benchmarks.RuntimeBenchmarks.ExecuteScenario(ScenarioName: \"UserDataInterop\")",
+            "value": 1.007,
             "unit": "μs",
             "extra": ""
           }
