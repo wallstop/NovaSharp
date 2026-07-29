@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Compatibility\IntegerBoundaryTUnitTests.cs:761
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Compatibility/IntegerBoundaryTUnitTests.cs:761
 -- @test: IntegerBoundaryTUnitTests.OriginalArm64DiscrepancyFixed
 -- Test targets Lua 5.3+; Lua 5.3+: math.ult (5.3+); Lua 5.3+: math.maxinteger (5.3+); Lua 5.3+: math.mininteger (5.3+)
 return math.ult(math.maxinteger, math.mininteger)

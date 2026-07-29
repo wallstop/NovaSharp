@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\Utf8ModuleTUnitTests.cs:356
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/Utf8ModuleTUnitTests.cs:356
 -- @test: Utf8ModuleTUnitTests.Utf8OffsetNavigatesBoundaries
 -- Test targets Lua 5.3+; Lua 5.3+: utf8 library
 local forward1 = utf8.offset(word, 1)

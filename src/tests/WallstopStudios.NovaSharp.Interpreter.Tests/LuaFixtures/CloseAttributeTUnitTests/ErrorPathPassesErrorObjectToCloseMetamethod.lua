@@ -1,7 +1,7 @@
 -- @lua-versions: 5.4+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\CloseAttributeTUnitTests.cs:97
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/CloseAttributeTUnitTests.cs:97
 -- @test: CloseAttributeTUnitTests.ErrorPathPassesErrorObjectToCloseMetamethod
 -- Test targets Lua 5.4+; Lua 5.4+: close attribute
 local captured = {}

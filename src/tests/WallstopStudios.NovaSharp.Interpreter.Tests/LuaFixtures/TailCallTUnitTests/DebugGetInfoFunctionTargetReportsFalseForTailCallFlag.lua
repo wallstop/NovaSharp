@@ -5,7 +5,6 @@
 -- @test: TailCallTUnitTests.DebugGetInfoFunctionTargetReportsFalseForTailCallFlag
 -- Compatibility notes: Test targets Lua 5.2+
 local function target()
-end
+                end
 
-local info = debug.getinfo(target, 't')
-assert(info.istailcall == false)
+                return debug.getinfo(target, 't').istailcall

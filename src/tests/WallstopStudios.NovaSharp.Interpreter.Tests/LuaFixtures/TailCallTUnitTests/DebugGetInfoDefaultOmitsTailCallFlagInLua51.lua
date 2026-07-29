@@ -5,4 +5,4 @@
 -- @test: TailCallTUnitTests.DebugGetInfoDefaultOmitsTailCallFlagInLua51
 -- Compatibility notes: Test targets Lua 5.1
 local info = debug.getinfo(1)
-assert(info.istailcall == nil)
+                return info.istailcall == nil

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Spec\LuaTableMoveMultiVersionSpecTUnitTests.cs:33
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Spec/LuaTableMoveMultiVersionSpecTUnitTests.cs:33
 -- @test: LuaTableMoveMultiVersionSpecTUnitTests.TableMoveReturnsDestinationTable
 -- Test targets Lua 5.2+; Lua 5.3+: table.move
 local src = { 'a', 'b', 'c' }

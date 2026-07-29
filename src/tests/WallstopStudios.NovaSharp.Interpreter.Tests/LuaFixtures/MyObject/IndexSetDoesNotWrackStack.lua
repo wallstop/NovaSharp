@@ -1,7 +1,7 @@
 -- @lua-versions: 5.3+
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\MetatableTUnitTests.cs:256
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/MetatableTUnitTests.cs:256
 -- @test: MyObject.IndexSetDoesNotWrackStack
 -- Table iteration order is implementation-defined in Lua; NovaSharp may iterate in different order than reference Lua
 local aClass = {}

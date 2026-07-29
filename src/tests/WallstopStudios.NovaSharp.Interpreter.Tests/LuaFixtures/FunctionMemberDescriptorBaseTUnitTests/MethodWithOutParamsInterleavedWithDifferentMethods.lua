@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Interop\Descriptors\FunctionMemberDescriptorBaseTUnitTests.cs:522
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Interop/Descriptors/FunctionMemberDescriptorBaseTUnitTests.cs:524
 -- @test: FunctionMemberDescriptorBaseTUnitTests.MethodWithOutParamsInterleavedWithDifferentMethods
 -- Lua 5.3+: bitwise OR; Uses injected variable: obj
 local results = {}

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTapParityTUnitTests.cs:229
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTapParityTUnitTests.cs:229
 -- @test: DebugModuleTapParityTUnitTests.SetUserValueRejectsNonTablesWithLuaMessage
 -- Lua 5.2+: debug.setuservalue (5.2+)
 local ok, err = pcall(function()
