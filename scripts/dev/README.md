@@ -7,6 +7,7 @@ The scripts in this folder keep local commits tidy by auto-fixing formatting iss
 - `pre-commit.sh` — Comprehensive pre-commit hook that runs auto-fixes and validation checks (see details below).
 - `install-hooks.sh` — Configures `core.hooksPath` to `.githooks` so Git invokes the shared `pre-commit` hook from this repository.
 - `github-auth-session.sh` — Silently reads a GitHub PAT and exports it as `GH_TOKEN` for the current shell session without writing it to disk.
+- `github-auth-container.sh` — Stores a GitHub PAT in the GitHub CLI configuration so `gh` and HTTPS Git operations work in every shell in the current container.
 
 ## Usage
 
@@ -20,11 +21,16 @@ bash ./scripts/dev/pre-commit.sh
 # Make a GitHub PAT available to gh in this terminal only
 source ./scripts/dev/github-auth-session.sh
 
+# Persist that PAT for every shell in this container
+bash ./scripts/dev/github-auth-container.sh
+
 # Remove it before closing the terminal, if desired
 unset GH_TOKEN
 ```
 
 `github-auth-session.sh` must be sourced rather than executed because a child process cannot update its parent shell's environment. It replaces any existing `GH_TOKEN`, validates that token through the GitHub API, and relies on the shell process lifetime for cleanup.
+
+`github-auth-container.sh` can reuse `GH_TOKEN` from the session helper, or prompt silently when no token is exported. It stores the credential in `gh`'s user-only configuration because the container does not provide a reliable system keyring, then configures Git's HTTPS credential helper. The credential survives new shells and container restarts, but not a container rebuild. Remove it with `gh auth logout --hostname github.com`.
 
 ## Pre-commit Hook Details
 
