@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:181
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:181
 -- @test: StreamFileUserDataBaseTUnitTests.FlushWrapsNonScriptExceptions
--- Compatibility notes: Uses injected variable: file
+-- Uses injected variable: file
 return file:flush()

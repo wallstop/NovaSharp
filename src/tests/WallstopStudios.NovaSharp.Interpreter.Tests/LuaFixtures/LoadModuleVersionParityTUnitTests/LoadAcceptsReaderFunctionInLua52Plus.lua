@@ -1,9 +1,9 @@
--- @lua-versions: 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleVersionParityTUnitTests.cs:180
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\LoadModuleVersionParityTUnitTests.cs:180
 -- @test: LoadModuleVersionParityTUnitTests.LoadAcceptsReaderFunctionInLua52Plus
--- Compatibility notes: Test targets Lua 5.2+
+-- Test targets Lua 5.2+
 local done = false
                 local function reader()
                     if done then return nil end

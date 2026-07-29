@@ -1,6 +1,7 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/DynamicTUnitTests.cs:88
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\DynamicTUnitTests.cs:83
 -- @test: DynamicTUnitTests.DynamicAccessFromCSharp
+-- Test targets Lua 5.2+
 t = { ciao = { 'hello' } }

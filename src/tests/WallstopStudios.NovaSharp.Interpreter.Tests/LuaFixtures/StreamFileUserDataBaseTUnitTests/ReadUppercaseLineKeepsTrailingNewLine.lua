@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/StreamFileUserDataBaseTUnitTests.cs:837
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\StreamFileUserDataBaseTUnitTests.cs:837
 -- @test: StreamFileUserDataBaseTUnitTests.ReadUppercaseLineKeepsTrailingNewLine
--- Compatibility notes: Uses injected variable: file
+-- Uses injected variable: file
 local f = file
                 local a = f:read('*L')
                 local b = f:read('*L')

@@ -1,6 +1,0 @@
--- @lua-versions: 5.1+
--- @novasharp-only: false
--- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ColonOperatorBehaviourTUnitTests.cs:95
--- @test: ColonOperatorBehaviourTUnitTests.TreatAsDotKeepsMethodCallForCallbackViews
-return target:invoke(123)

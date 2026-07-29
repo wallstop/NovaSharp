@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/StringLibTUnitTests.cs:275
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\StringLibTUnitTests.cs:275
 -- @test: StringLibTUnitTests.ToStringMetamethodMustReturnStringInLua53Plus
--- Compatibility notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 t = {}
 				mt = {}
 				function mt.__tostring () end

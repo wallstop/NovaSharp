@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleTUnitTests.cs:452
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\LoadModuleTUnitTests.cs:328
 -- @test: LoadModuleTUnitTests.LoadFileSafeUsesSafeEnvironmentWhenNotProvided
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local fn = loadfilesafe('safe.lua'); return fn()

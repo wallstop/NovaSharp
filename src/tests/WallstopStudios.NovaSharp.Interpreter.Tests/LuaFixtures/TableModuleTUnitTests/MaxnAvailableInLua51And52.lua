@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/TableModuleTUnitTests.cs:573
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\TableModuleTUnitTests.cs:543
 -- @test: TableModuleTUnitTests.MaxnAvailableInLua51And52
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 return table.maxn({[5] = true, [3] = true})

@@ -1,8 +1,9 @@
--- @lua-versions: 5.1+
+-- @lua-versions: 5.1
 -- @novasharp-only: false
--- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/DataTypes/CoroutineLifecycleTUnitTests.cs:50
+-- @expects-error: false
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\CoroutineLifecycleIntegrationTUnitTests.cs:51
 -- @test: CoroutineLifecycleTUnitTests.RecycleCoroutineCreatesReusableInstance
+-- Test targets Lua 5.1
 function first()
                     return 'done'
                 end

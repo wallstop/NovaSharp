@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1083
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\BasicModuleTUnitTests.cs:1026
 -- @test: BasicModuleTUnitTests.PrintCallsGlobalTostringInLua51To53
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 function tostring(v)
                     return 'CUSTOM:' .. type(v)
                 end

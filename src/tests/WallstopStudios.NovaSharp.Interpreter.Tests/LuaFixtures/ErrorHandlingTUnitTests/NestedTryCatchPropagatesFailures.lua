@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ErrorHandlingTUnitTests.cs:118
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\ErrorHandlingTUnitTests.cs:118
 -- @test: ErrorHandlingTUnitTests.NestedTryCatchPropagatesFailures
 function a()
                         return try(b) .. 'a'

@@ -1,9 +1,9 @@
--- @lua-versions: 5.4, 5.5
+-- @lua-versions: 5.4+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/BasicModuleTUnitTests.cs:1113
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\BasicModuleTUnitTests.cs:1056
 -- @test: BasicModuleTUnitTests.PrintUsesTostringMetamethodDirectlyInLua54Plus
--- Compatibility notes: Test targets Lua 5.4+
+-- Test targets Lua 5.4+
 function tostring(v)
                     return 'CUSTOM:' .. type(v)
                 end

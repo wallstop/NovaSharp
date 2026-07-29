@@ -1,9 +1,9 @@
--- @lua-versions: 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/GotoTUnitTests.cs:257
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\GotoTUnitTests.cs:257
 -- @test: GotoTUnitTests.GotoJumpOutOfBlocksReturnsValue
--- Compatibility notes: Test targets Lua 5.2+; Lua 5.2+: goto statement (5.2+); Lua 5.2+: label (5.2+)
+-- Test targets Lua 5.2+; Lua 5.2+: goto statement (5.2+); Lua 5.2+: label (5.2+)
 local u = 4
                 do
                     local x = 5

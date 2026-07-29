@@ -1,9 +1,9 @@
 -- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:3360
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:3291
 -- @test: DebugModuleTUnitTests.GetUpvalueAndSetUpvalueRoundTrip
--- Compatibility notes: Test targets Lua 5.1; Lua 5.2+: _ENV variable
+-- Test targets Lua 5.1; Lua 5.2+: _ENV variable
 local captured = 'initial'
                 local function closure()
                     return captured

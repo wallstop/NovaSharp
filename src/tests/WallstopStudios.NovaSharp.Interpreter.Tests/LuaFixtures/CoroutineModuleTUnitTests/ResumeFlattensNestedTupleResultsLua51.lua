@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/CoroutineModuleTUnitTests.cs:417
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\CoroutineModuleTUnitTests.cs:384
 -- @test: CoroutineModuleTUnitTests.ResumeFlattensNestedTupleResultsLua51
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 function returningTuple()
                     return 'tag', coroutine.running()
                 end

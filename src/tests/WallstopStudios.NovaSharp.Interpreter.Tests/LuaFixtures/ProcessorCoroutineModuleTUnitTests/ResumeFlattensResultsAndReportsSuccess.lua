@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineModuleTUnitTests.cs:743
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineModuleTUnitTests.cs:351
 -- @test: ProcessorCoroutineModuleTUnitTests.ResumeFlattensResultsAndReportsSuccess
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 function generator()
                     coroutine.yield('yielded', 42)
                     return 7, 8

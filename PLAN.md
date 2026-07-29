@@ -170,14 +170,30 @@ Sub-steps, each landing green:
 
 #### Phase A4 — Table rewrite (~2-3 weeks; parallelizable with A3)
 
-- [ ] Replace `LinkedList<TablePair>` + three `LinkedListIndex` maps with PUC-style **array part (`LuaValue[]`) + open-addressed hash part** (`(LuaValue key, LuaValue value, int next)[]` node array); PUC `luaH_resize` array/hash split heuristic; border-search `#` semantics per version.
-- [ ] **Before rewriting**: verify no fixture depends on insertion order (fixtures compare against reference Lua, whose order already differs) — smoke-test with a shuffled-iteration debug table; add `next`-contract fixtures (every key visited once; assignment-during-traversal legal; `next` after removal semantics; `#` border behavior per version).
-- [ ] Re-point `AllocationTracker` hooks to actual array/hash sizing.
-- [ ] Keep the public `Table` API shape; swap internals.
+- [x] Replace `LinkedList<TablePair>` + three `LinkedListIndex` maps with PUC-style **array part + open-addressed hash part** (dense node array + bucket table); PUC `luaH_resize` array/hash split heuristic; border-search `#` semantics per version.
+- [x] **Before rewriting**: verify no fixture depends on insertion order (fixtures compare against reference Lua, whose order already differs) — smoke-test with a shuffled-iteration debug table; add `next`-contract fixtures (every key visited once; assignment-during-traversal legal; `next` after removal semantics; `#` border behavior per version).
+- [x] Re-point `AllocationTracker` hooks to actual array/hash sizing.
+- [x] Keep the public `Table` API shape; swap internals.
+- [ ] Re-measure the Phase A0 table-heavy and binary-trees scoreboard rows **after A1c**; at the Lua level the storage win is currently masked by per-op `DynValue` allocation (see Progress).
+- [ ] Delete the array-key memo once A1c makes values a struct, and drop the now-unused `LinkedListIndex<TKey, TValue>`.
 
 **Exit criteria**: table-heavy suite ≥3-5x vs baseline; ~24-40 B/entry; binary-trees ≥2x; `next`-contract fixtures green.
 
-**Progress**: A4 pre-rewrite border coverage started on 2026-07-04 after reference Lua probes found constructor-created holey array tables diverged from NovaSharp's prefix-only `Table.Length`. NovaSharp now preserves original constructor array-field borders across same-slot writes while clearing them for unrelated mutations, and matches the covered Lua 5.1-5.3, 5.4, and 5.5 constructor-border cases. Broader table mutation border behavior remains part of the full A4 table rewrite. See [progress/session-148-a1b-tuples-table-borders.md](progress/session-148-a1b-tuples-table-borders.md).
+**Progress**: A4 pre-rewrite border coverage started on 2026-07-04 after reference Lua probes found constructor-created holey array tables diverged from NovaSharp's prefix-only `Table.Length`. NovaSharp now preserves original constructor array-field borders across same-slot writes while clearing them for unrelated mutations, and matches the covered Lua 5.1-5.3, 5.4, and 5.5 constructor-border cases. See [progress/session-148-a1b-tuples-table-borders.md](progress/session-148-a1b-tuples-table-borders.md).
+
+The storage rewrite landed on 2026-07-29. `TableStorage` is a mutable struct held inline by `Table`, combining a values-only `DynValue[]` array part (slot `i` holds key `i + 1`; `null` means absent, non-null including `Nil` means an entry exists, which is what preserves `Table.Count` and `next`-cursor semantics) with a dense insertion-ordered node array plus bucket table for every other key. Array sizing is PUC's `computesizes` rule, so a lone far-out key such as `t[1 << 25]` costs nothing. Removal marks a node dead instead of recycling its slot, keeping both iteration order and in-flight `next` cursors stable; dead slots are reclaimed at the next rehash. Iteration is array part in index order, then hash nodes in insertion order — deterministic, and closer to reference Lua than the previous pure-insertion order.
+
+The order-change risk was measured before any code was written: reversing iteration order in the *old* storage failed only 28 of 15,110 tests across 7 distinct methods, which made the phase clearly affordable.
+
+Measured on an isolated harness against `Table` directly (200k entries, best of 5, old and new builds interleaved): int fill 49-61 ms / 45.70 MB → 10-11 ms / 13.16 MB; int read ×5 2 ms → 0 ms; insert/remove churn 19-21 ms / 29.66 MB → 6 ms / 14.17 MB; small object-like field read ×2M 13-16 ms → 9-10 ms; string fill 77-91 ms / 60.20 MB → 70-81 ms / 46.80 MB; `next` traversal ×5 22-26 ms → 21-22 ms at 0 B; **retained bytes per entry 149.4 B → 10.5 B**. The ~24-40 B/entry criterion is met and beaten; the ≥3-5x and binary-trees criteria are *not yet visible on the A0 scoreboard* because a Lua-level `t[i] = i` loop is dominated by the per-op `DynValue` allocation A1 exists to remove — those rows are deferred to a re-measure after A1c rather than claimed now.
+
+Three findings came out of measurement rather than review. Storing values only meant traversal synthesized an integer key per step, regressing `next` from 0 B to 45.72 MB per five passes; array keys are now memoized lazily, so an index-only table never pays and a repeatedly traversed one pays once. String probes were dereferencing the key `DynValue` for its type and payload; an internal `DynValue.ReferencePayload` lets probes compare by reference first, which is what a repeated field name hits. A four-chars-per-iteration string hash collided catastrophically under power-of-two bucket masking for structured keys (`"key0".."key199999"` went 6x slower); both hashes now run through a splitmix32 finalizer, and the string hash is seeded per process so a script cannot precompute colliding keys.
+
+`AllocationTracker` now reports the array, node, bucket, and memo tables actually retained rather than a flat 64 B per entry. That closes a sandbox hole: previously a mod could fill a table with a million entries, nil them all, and report its memory back to near zero while still holding every slot.
+
+Two latent host-API bugs surfaced and were fixed: `Table.Set/RawGet/Remove(int)` used a separate key space for non-positive integers, so `table.Set(0, v)` was invisible to `t[0]` in script; and `RawGet((string)null)` threw or not depending on whether the table had ever held a string key. Neither had test coverage; both do now.
+
+Verification: 15,205/15,205 tests green (95 added); `compare-lua-outputs.py --enforce` reported 0 mismatch, 0 `lua_only`, 0 `nova_only` on Lua 5.1-5.5 with the both-error ratchet unchanged; the eight new `next`-contract fixtures produce identical output under all five reference interpreters. See [progress/session-171-a4-table-array-hash-parts.md](progress/session-171-a4-table-array-hash-parts.md).
 
 #### Phase A5 — Call path + interop signatures (~3-4 weeks)
 

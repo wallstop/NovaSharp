@@ -1,9 +1,9 @@
 -- @lua-versions: none
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:912
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:912
 -- @test: DebugModuleTUnitTests.UpvalueJoinThrowsForInvalidIndices
--- Compatibility notes: Test targets Lua 5.1; Lua 5.2+: debug.upvaluejoin (5.2+)
+-- Test targets Lua 5.1; Lua 5.2+: debug.upvaluejoin (5.2+)
 local function f() end
                 local ok, err = pcall(function() debug.upvaluejoin(f, 999, f, 1) end)
                 return ok, err

@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Descriptors/DispatchingUserDataDescriptorTUnitTests.cs:267
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Descriptors\DispatchingUserDataDescriptorTUnitTests.cs:267
 -- @test: DispatchingUserDataDescriptorTUnitTests.IteratorDispatchEnumeratesClrEnumerable
 local total = 0
                 for value in hostAdd do

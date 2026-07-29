@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: true
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathNumericEdgeCasesTUnitTests.cs:979
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathNumericEdgeCasesTUnitTests.cs:981
 -- @test: MathNumericEdgeCasesTUnitTests.AllIntegerSpecifiersRejectTwoPow63
--- Compatibility notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
+-- NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.3+
 return string.format('{specifier}', 2^63)

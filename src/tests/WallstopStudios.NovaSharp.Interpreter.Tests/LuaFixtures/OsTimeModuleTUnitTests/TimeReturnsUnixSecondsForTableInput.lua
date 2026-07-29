@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/OsTimeModuleTUnitTests.cs:26
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\OsTimeModuleTUnitTests.cs:26
 -- @test: OsTimeModuleTUnitTests.TimeReturnsUnixSecondsForTableInput
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 return os.time({
                     year = 1970,
                     month = 1,

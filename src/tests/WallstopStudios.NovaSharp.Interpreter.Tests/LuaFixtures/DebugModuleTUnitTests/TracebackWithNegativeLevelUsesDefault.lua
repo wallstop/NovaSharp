@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:3247
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:3178
 -- @test: DebugModuleTUnitTests.TracebackWithNegativeLevelUsesDefault
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local function test()
                     return debug.traceback('msg', -1)
                 end

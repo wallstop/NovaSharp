@@ -1,7 +1,7 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/MathModuleTUnitTests.cs:1540
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\MathModuleTUnitTests.cs:1540
 -- @test: MathModuleTUnitTests.ModfWithNegativeNumbersReturnsIntegerSubtype
--- Compatibility notes: Test targets Lua 5.3+; Lua 5.3+: math.type (5.3+)
+-- Test targets Lua 5.3+; Lua 5.3+: math.type (5.3+)
 local i, f = math.modf(-3.5); return math.type(i), i, math.type(f), f

@@ -1,9 +1,9 @@
--- @lua-versions: 5.2, 5.3, 5.4, 5.5
+-- @lua-versions: 5.2+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:2421
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:2421
 -- @test: DebugModuleTUnitTests.UpvalueIdDataDrivenSharedUpvalues
--- Compatibility notes: Lua 5.2+: debug.upvalueid (5.2+)
+-- Lua 5.2+: debug.upvalueid (5.2+)
 local shared = 42
                 local function f1() return shared end
                 local function f2() return shared end

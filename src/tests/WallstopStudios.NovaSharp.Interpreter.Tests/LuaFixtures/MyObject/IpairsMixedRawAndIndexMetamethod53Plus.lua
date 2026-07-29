@@ -1,9 +1,9 @@
--- @lua-versions: 5.3, 5.4, 5.5
+-- @lua-versions: 5.3+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/MetatableTUnitTests.cs:377
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\MetatableTUnitTests.cs:377
 -- @test: MyObject.IpairsMixedRawAndIndexMetamethod53Plus
--- Compatibility notes: Test targets Lua 5.3+
+-- Test targets Lua 5.3+
 local underlying = {'a', 'b', 'c', 'd', 'e'}
                 local proxy = {nil, 'B', nil}
                 setmetatable(proxy, {

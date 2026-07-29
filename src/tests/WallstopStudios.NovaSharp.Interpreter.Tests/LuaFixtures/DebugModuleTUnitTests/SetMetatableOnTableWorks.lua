@@ -1,9 +1,9 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTUnitTests.cs:1927
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\DebugModuleTUnitTests.cs:1927
 -- @test: DebugModuleTUnitTests.SetMetatableOnTableWorks
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local t = {}
                 local mt = { __index = function() return 'found' end }
                 debug.setmetatable(t, mt)

@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/UserDataMethodsTUnitTests.cs:584
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataMethodsTUnitTests.cs:584
 -- @test: SomeOtherClassWithDualInterfaces.Unknown
--- Compatibility notes: Uses injected variable: static
+-- Uses injected variable: static
 strlist = { 'ciao', 'hello', 'aloha' };
 				intlist = {  };
 				dictry = { ciao = 39, hello = 78, aloha = 128 };

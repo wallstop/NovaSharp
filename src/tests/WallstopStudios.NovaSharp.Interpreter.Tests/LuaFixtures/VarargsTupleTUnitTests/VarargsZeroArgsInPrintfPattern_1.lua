@@ -1,9 +1,9 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/VarargsTupleTUnitTests.cs:235
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\VarargsTupleTUnitTests.cs:235
 -- @test: VarargsTupleTUnitTests.VarargsZeroArgsInPrintfPattern
--- Compatibility notes: Uses injected variable: r
+-- Uses injected variable: r
 function f(a,b)
                     local debug = 'a: ' .. tostring(a) .. ' b: ' .. tostring(b)
                     return debug

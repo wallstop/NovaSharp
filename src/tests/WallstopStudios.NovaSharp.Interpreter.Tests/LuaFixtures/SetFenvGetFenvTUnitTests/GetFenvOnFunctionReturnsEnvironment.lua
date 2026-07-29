@@ -1,8 +1,8 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/SetFenvGetFenvTUnitTests.cs:113
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\SetFenvGetFenvTUnitTests.cs:113
 -- @test: SetFenvGetFenvTUnitTests.GetFenvOnFunctionReturnsEnvironment
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 local function f() return 1 end
                 return getfenv(f) == _G

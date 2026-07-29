@@ -1,9 +1,9 @@
--- @lua-versions: novasharp-only
--- @novasharp-only: true
+-- @lua-versions: 5.2+
+-- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTapParityTUnitTests.cs:359
+-- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/DebugModuleTapParityTUnitTests.cs:347
 -- @test: DebugModuleTapParityTUnitTests.UpvalueIdReturnsUserDataHandles
--- Compatibility notes: NovaSharp: unresolved C# interpolation placeholder; Test targets Lua 5.1
+-- Lua 5.2+: debug.upvalueid (5.2+)
 local function make()
                     local captured = 1
                     return function()
@@ -12,6 +12,6 @@ local function make()
                     end
                 end
                 local fn = make()
-                local first = debug.upvalueid(fn, {capturedIndex})
-                local second = debug.upvalueid(fn, {capturedIndex})
+                local first = debug.upvalueid(fn, 1)
+                local second = debug.upvalueid(fn, 1)
                 return type(first), first == second

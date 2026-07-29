@@ -1,9 +1,9 @@
--- @lua-versions: 5.4, 5.5
+-- @lua-versions: 5.4+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Units/Execution/ProcessorExecution/ProcessorCoroutineCloseTUnitTests.cs:327
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Units\Execution\ProcessorExecution\ProcessorCoroutineCloseTUnitTests.cs:327
 -- @test: ProcessorCoroutineCloseTUnitTests.ClosePropagatesErrorsFromCloseMetamethod
--- Compatibility notes: Test targets Lua 5.4+; Lua 5.4+: close attribute
+-- Test targets Lua 5.4+; Lua 5.4+: close attribute
 local function new_closable()
                     local resource = {}
                     return setmetatable(resource, {

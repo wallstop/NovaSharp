@@ -1,7 +1,7 @@
 -- @lua-versions: novasharp-only
 -- @novasharp-only: true
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/UserDataEventsTUnitTests.cs:325
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\UserDataEventsTUnitTests.cs:325
 -- @test: SomeClass.InteropSEventDetachAndReregister
--- Compatibility notes: Uses injected variable: myobj
+-- Uses injected variable: myobj
 myobj.MySEvent.remove(handler);

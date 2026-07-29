@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/Modules/LoadModuleTUnitTests.cs:651
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\Modules\LoadModuleTUnitTests.cs:497
 -- @test: LoadModuleTUnitTests.DoFileExecutesLoadedChunk
--- Compatibility notes: Test targets Lua 5.1
+-- Test targets Lua 5.1
 return dofile('script.lua')

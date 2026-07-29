@@ -1,7 +1,7 @@
 -- @lua-versions: 5.1+
 -- @novasharp-only: false
 -- @expects-error: false
--- @source: src/tests/WallstopStudios.NovaSharp.Interpreter.Tests.TUnit/EndToEnd/ErrorHandlingTUnitTests.cs:73
+-- @source: src\tests\WallstopStudios.NovaSharp.Interpreter.Tests.TUnit\EndToEnd\ErrorHandlingTUnitTests.cs:73
 -- @test: ErrorHandlingTUnitTests.NestedPCallPropagatesFailures
 function try(fn)
                         local ok, value = pcall(fn)
