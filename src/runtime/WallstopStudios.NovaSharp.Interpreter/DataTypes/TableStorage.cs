@@ -326,7 +326,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
 
                 if (_deadCount > 0)
                 {
-                    Rehash(0);
+                    Rehash(0, hasPendingEntry: false);
                 }
             }
         }
@@ -564,7 +564,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         {
             if (_nodes == null || _nodeCount == _nodes.Length)
             {
-                Rehash(intKeyCandidate);
+                Rehash(intKeyCandidate, hasPendingEntry: true);
 
                 // The rehash may have grown the array part far enough to swallow this key.
                 DynValue[] grown = _array;
@@ -598,9 +598,15 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// Recomputes the array/hash split using PUC-Lua's sizing heuristic, then rebuilds both parts.
         /// </summary>
         /// <param name="pendingIntKey">
-        /// A positive integer key that is about to be inserted and must be counted, or zero.
+        /// A positive integer key that is about to be inserted and must be counted, or zero when the
+        /// pending entry is not an integer key or there is no pending entry at all.
         /// </param>
-        private void Rehash(int pendingIntKey)
+        /// <param name="hasPendingEntry">
+        /// Whether an insert is waiting on this rebuild. Compaction passes <c>false</c>: without it a
+        /// rebuild that empties the hash part would still reserve a node and bucket table for an
+        /// insert that is never coming, and keep charging it against the sandbox memory limit.
+        /// </param>
+        private void Rehash(int pendingIntKey, bool hasPendingEntry)
         {
             // nums[i] counts integer keys in (2^(i-1), 2^i]; index 0 counts key 1 alone.
             Span<int> nums = stackalloc int[32];
@@ -674,7 +680,8 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
                 }
             }
 
-            bool pendingNeedsHashSlot = pendingIntKey <= 0 || pendingIntKey > arrayCapacity;
+            bool pendingNeedsHashSlot =
+                hasPendingEntry && (pendingIntKey <= 0 || pendingIntKey > arrayCapacity);
             Resize(arrayCapacity, survivingHashEntries + (pendingNeedsHashSlot ? 1 : 0));
         }
 

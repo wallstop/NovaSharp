@@ -447,6 +447,54 @@ namespace WallstopStudios.NovaSharp.Interpreter.Tests.TUnit.Units.DataTypes
             }
         }
 
+        /// <summary>
+        /// Compaction that empties the hash part must hand the node and bucket tables back, not
+        /// reserve a fresh one for an insert that is not coming.
+        /// </summary>
+        [global::TUnit.Core.Test]
+        [AllLuaVersions]
+        public async Task CollectingEveryHashEntryReleasesTheHashTables(
+            LuaCompatibilityVersion version
+        )
+        {
+            Script script = CreateTrackedScript(version);
+            Table table = new(script);
+
+            // A dense prefix that lives entirely in the array part.
+            for (int i = 1; i <= 8; i++)
+            {
+                table.Set(i, DynValue.NewNumber(i));
+            }
+
+            long arrayOnly = script.AllocationTracker.CurrentBytes;
+
+            table.Set("alpha", DynValue.NewNumber(1));
+            table.Set("beta", DynValue.NewNumber(2));
+
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsGreaterThan(arrayOnly)
+                .ConfigureAwait(false);
+
+            table.Set("alpha", DynValue.Nil);
+            table.Set("beta", DynValue.Nil);
+            table.CollectDeadKeys();
+
+            // Every hash entry is gone but the array part still holds live keys, so the table is not
+            // emptied wholesale -- the hash tables have to be released by the rebuild itself.
+            await Assert.That(table.Count).IsEqualTo(8).ConfigureAwait(false);
+            await Assert.That(table.RawGet("alpha")).IsNull().ConfigureAwait(false);
+            await Assert
+                .That(script.AllocationTracker.CurrentBytes)
+                .IsEqualTo(arrayOnly)
+                .ConfigureAwait(false);
+
+            // The store must still accept new hash keys afterwards.
+            table.Set("gamma", DynValue.NewNumber(3));
+            await Assert.That(table.RawGet("gamma").Number).IsEqualTo(3).ConfigureAwait(false);
+            await Assert.That(table.Count).IsEqualTo(9).ConfigureAwait(false);
+        }
+
         [global::TUnit.Core.Test]
         [AllLuaVersions]
         public async Task ManyCollidingStringKeysStayIndividuallyAddressable(
