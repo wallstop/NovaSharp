@@ -236,3 +236,4 @@ manual-review.txt
 # Unity Package Manager sample source templates use a literal Samples~ directory.
 !src/unity/com.wallstop-studios.novasharp/Samples~/
 !src/unity/com.wallstop-studios.novasharp/Samples~/**
+GOAL.md

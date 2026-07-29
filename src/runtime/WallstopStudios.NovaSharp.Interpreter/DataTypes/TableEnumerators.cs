@@ -18,25 +18,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     )]
     public struct TablePairsEnumerator
     {
-        private readonly LinkedList<TablePair> _list;
-        private LinkedListNode<TablePair> _current;
-        private bool _started;
+        private readonly Table _table;
+        private int _arrayIndex;
+        private int _nodeIndex;
+        private TablePair _current;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TablePairsEnumerator"/> struct.
         /// </summary>
-        /// <param name="list">The linked list backing the table.</param>
-        internal TablePairsEnumerator(LinkedList<TablePair> list)
+        /// <param name="table">The table to iterate.</param>
+        internal TablePairsEnumerator(Table table)
         {
-            _list = list;
-            _current = null;
-            _started = false;
+            _table = table;
+            _arrayIndex = 0;
+            _nodeIndex = 0;
+            _current = default;
         }
 
         /// <summary>
         /// Gets the current key/value pair.
         /// </summary>
-        public TablePair Current => _current?.Value ?? default;
+        public TablePair Current => _current;
 
         /// <summary>
         /// Advances the enumerator to the next element.
@@ -44,22 +46,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if the enumerator successfully advanced; <c>false</c> if the end was reached.</returns>
         public bool MoveNext()
         {
-            if (_list == null)
+            if (
+                _table != null
+                && _table.TryAdvanceEntry(ref _arrayIndex, ref _nodeIndex, false, out _current)
+            )
             {
-                return false;
+                return true;
             }
 
-            if (!_started)
-            {
-                _started = true;
-                _current = _list.First;
-            }
-            else
-            {
-                _current = _current?.Next;
-            }
-
-            return _current != null;
+            _current = default;
+            return false;
         }
 
         /// <summary>
@@ -67,8 +63,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public void Reset()
         {
-            _current = null;
-            _started = false;
+            _arrayIndex = 0;
+            _nodeIndex = 0;
+            _current = default;
         }
 
         /// <summary>
@@ -87,25 +84,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     )]
     public struct TableKeysEnumerator
     {
-        private readonly LinkedList<TablePair> _list;
-        private LinkedListNode<TablePair> _current;
-        private bool _started;
+        private readonly Table _table;
+        private int _arrayIndex;
+        private int _nodeIndex;
+        private DynValue _current;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TableKeysEnumerator"/> struct.
         /// </summary>
-        /// <param name="list">The linked list backing the table.</param>
-        internal TableKeysEnumerator(LinkedList<TablePair> list)
+        /// <param name="table">The table to iterate.</param>
+        internal TableKeysEnumerator(Table table)
         {
-            _list = list;
+            _table = table;
+            _arrayIndex = 0;
+            _nodeIndex = 0;
             _current = null;
-            _started = false;
         }
 
         /// <summary>
         /// Gets the current key.
         /// </summary>
-        public DynValue Current => _current?.Value.Key;
+        public DynValue Current => _current;
 
         /// <summary>
         /// Advances the enumerator to the next element.
@@ -113,22 +112,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if the enumerator successfully advanced; <c>false</c> if the end was reached.</returns>
         public bool MoveNext()
         {
-            if (_list == null)
+            if (
+                _table != null
+                && _table.TryAdvanceEntry(
+                    ref _arrayIndex,
+                    ref _nodeIndex,
+                    false,
+                    out TablePair pair
+                )
+            )
             {
-                return false;
+                _current = pair.Key;
+                return true;
             }
 
-            if (!_started)
-            {
-                _started = true;
-                _current = _list.First;
-            }
-            else
-            {
-                _current = _current?.Next;
-            }
-
-            return _current != null;
+            _current = null;
+            return false;
         }
 
         /// <summary>
@@ -136,8 +135,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public void Reset()
         {
+            _arrayIndex = 0;
+            _nodeIndex = 0;
             _current = null;
-            _started = false;
         }
 
         /// <summary>
@@ -156,25 +156,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     )]
     public struct TableValuesEnumerator
     {
-        private readonly LinkedList<TablePair> _list;
-        private LinkedListNode<TablePair> _current;
-        private bool _started;
+        private readonly Table _table;
+        private int _arrayIndex;
+        private int _nodeIndex;
+        private DynValue _current;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TableValuesEnumerator"/> struct.
         /// </summary>
-        /// <param name="list">The linked list backing the table.</param>
-        internal TableValuesEnumerator(LinkedList<TablePair> list)
+        /// <param name="table">The table to iterate.</param>
+        internal TableValuesEnumerator(Table table)
         {
-            _list = list;
+            _table = table;
+            _arrayIndex = 0;
+            _nodeIndex = 0;
             _current = null;
-            _started = false;
         }
 
         /// <summary>
         /// Gets the current value.
         /// </summary>
-        public DynValue Current => _current?.Value.Value;
+        public DynValue Current => _current;
 
         /// <summary>
         /// Advances the enumerator to the next element.
@@ -182,22 +184,22 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if the enumerator successfully advanced; <c>false</c> if the end was reached.</returns>
         public bool MoveNext()
         {
-            if (_list == null)
+            if (
+                _table != null
+                && _table.TryAdvanceEntry(
+                    ref _arrayIndex,
+                    ref _nodeIndex,
+                    false,
+                    out TablePair pair
+                )
+            )
             {
-                return false;
+                _current = pair.Value;
+                return true;
             }
 
-            if (!_started)
-            {
-                _started = true;
-                _current = _list.First;
-            }
-            else
-            {
-                _current = _current?.Next;
-            }
-
-            return _current != null;
+            _current = null;
+            return false;
         }
 
         /// <summary>
@@ -205,8 +207,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public void Reset()
         {
+            _arrayIndex = 0;
+            _nodeIndex = 0;
             _current = null;
-            _started = false;
         }
 
         /// <summary>
@@ -216,7 +219,7 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     }
 
     /// <summary>
-    /// A struct-based enumerator for iterating over table pairs, skipping nil values.
+    /// A struct-based enumerator for iterating over non-nil key/value pairs without heap allocation.
     /// </summary>
     [SuppressMessage(
         "Performance",
@@ -225,25 +228,27 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
     )]
     public struct TableNonNilPairsEnumerator
     {
-        private readonly LinkedList<TablePair> _list;
-        private LinkedListNode<TablePair> _current;
-        private bool _started;
+        private readonly Table _table;
+        private int _arrayIndex;
+        private int _nodeIndex;
+        private TablePair _current;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TableNonNilPairsEnumerator"/> struct.
         /// </summary>
-        /// <param name="list">The linked list backing the table.</param>
-        internal TableNonNilPairsEnumerator(LinkedList<TablePair> list)
+        /// <param name="table">The table to iterate.</param>
+        internal TableNonNilPairsEnumerator(Table table)
         {
-            _list = list;
-            _current = null;
-            _started = false;
+            _table = table;
+            _arrayIndex = 0;
+            _nodeIndex = 0;
+            _current = default;
         }
 
         /// <summary>
         /// Gets the current key/value pair.
         /// </summary>
-        public TablePair Current => _current?.Value ?? default;
+        public TablePair Current => _current;
 
         /// <summary>
         /// Advances the enumerator to the next non-nil element.
@@ -251,28 +256,16 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// <returns><c>true</c> if the enumerator successfully advanced; <c>false</c> if the end was reached.</returns>
         public bool MoveNext()
         {
-            if (_list == null)
+            if (
+                _table != null
+                && _table.TryAdvanceEntry(ref _arrayIndex, ref _nodeIndex, true, out _current)
+            )
             {
-                return false;
+                return true;
             }
 
-            if (!_started)
-            {
-                _started = true;
-                _current = _list.First;
-            }
-            else
-            {
-                _current = _current?.Next;
-            }
-
-            // Skip nil values
-            while (_current is { Value.Value: not null } && _current.Value.Value.IsNil())
-            {
-                _current = _current.Next;
-            }
-
-            return _current != null;
+            _current = default;
+            return false;
         }
 
         /// <summary>
@@ -280,8 +273,9 @@ namespace WallstopStudios.NovaSharp.Interpreter.DataTypes
         /// </summary>
         public void Reset()
         {
-            _current = null;
-            _started = false;
+            _arrayIndex = 0;
+            _nodeIndex = 0;
+            _current = default;
         }
 
         /// <summary>
